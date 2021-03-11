@@ -31,7 +31,6 @@ namespace Trader.Core.Trading.Algorithms.Step
         private static string Type => nameof(StepAlgorithm);
 
         private readonly CancellationTokenSource _cancellation = new();
-        //private readonly Balances _balances = new();
 
         /// <summary>
         /// Set of trades synced from the trading service.
@@ -53,7 +52,7 @@ namespace Trader.Core.Trading.Algorithms.Step
         /// <summary>
         /// Tracks the latest asset price;
         /// </summary>
-        private SymbolPriceTicker? _ticker;
+        //private SymbolPriceTicker? _ticker;
 
         private Balances SyncAccountInfo(AccountInfo accountInfo)
         {
@@ -143,13 +142,15 @@ namespace Trader.Core.Trading.Algorithms.Step
             }
         }
 
-        private async Task SyncAssetPriceAsync()
+        private async Task<SymbolPriceTicker> SyncAssetPriceAsync()
         {
-            _ticker = await _trader.GetSymbolPriceTickerAsync(_options.Symbol, _cancellation.Token);
+            var ticker = await _trader.GetSymbolPriceTickerAsync(_options.Symbol, _cancellation.Token);
 
             _logger.LogInformation(
                 "{Type} {Name} reports latest asset price is {Price} {QuoteAsset}",
-                Type, _name, _ticker.Price, _options.Quote);
+                Type, _name, ticker.Price, _options.Quote);
+
+            return ticker;
         }
 
         public async Task GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo)
@@ -164,20 +165,20 @@ namespace Trader.Core.Trading.Algorithms.Step
             await SyncAccountTradesAsync();
 
             // always update the latest price
-            await SyncAssetPriceAsync();
+            var ticker = await SyncAssetPriceAsync();
 
             if (TryIdentifySignificantTrades(balances)) return;
             if (TrySyncTradingBands(priceFilter, minNotionalFilter)) return;
-            if (await TrySetStartingTradeAsync(symbol, priceFilter, lotSizeFilter, balances)) return;
+            if (await TrySetStartingTradeAsync(symbol, ticker, priceFilter, lotSizeFilter, balances)) return;
             if (await TryCancelRogueSellOrdersAsync()) return;
             if (await TrySetBandSellOrdersAsync()) return;
-            if (await TryCreateLowerBandOrderAsync(symbol, priceFilter, lotSizeFilter, balances)) return;
-            if (await TryCloseOutOfRangeBandsAsync()) return;
+            if (await TryCreateLowerBandOrderAsync(symbol, ticker, priceFilter, lotSizeFilter, balances)) return;
+            if (await TryCloseOutOfRangeBandsAsync(ticker)) return;
         }
 
-        private async Task<bool> TryCloseOutOfRangeBandsAsync()
+        private async Task<bool> TryCloseOutOfRangeBandsAsync(SymbolPriceTicker ticker)
         {
-            var threshold = _ticker.Price / _options.TargetMultiplier / _options.TargetMultiplier;
+            var threshold = ticker.Price / _options.TargetMultiplier / _options.TargetMultiplier;
 
             foreach (var band in _bands.Where(x => x.Status == BandStatus.Ordered && x.OpenPrice < threshold))
             {
@@ -193,11 +194,8 @@ namespace Trader.Core.Trading.Algorithms.Step
             return false;
         }
 
-        private async Task<bool> TryCreateLowerBandOrderAsync(Symbol symbol, PriceSymbolFilter priceFilter, LotSizeSymbolFilter lotSizeFilter, Balances balances)
+        private async Task<bool> TryCreateLowerBandOrderAsync(Symbol symbol, SymbolPriceTicker ticker, PriceSymbolFilter priceFilter, LotSizeSymbolFilter lotSizeFilter, Balances balances)
         {
-            // validate requirements
-            if (_ticker is null) throw new AlgorithmException($"{nameof(_ticker)} is not available");
-
             // identify the lowest band
             var lowBand = _bands.Min;
             if (lowBand is null)
@@ -211,11 +209,11 @@ namespace Trader.Core.Trading.Algorithms.Step
             }
 
             // skip if the current price is at or above the band open price
-            if (_ticker.Price >= lowBand.OpenPrice)
+            if (ticker.Price >= lowBand.OpenPrice)
             {
                 _logger.LogInformation(
                     "{Type} {Name} reports price {Price} {Quote} is within the current band of {OpenPrice} {Quote} to {ClosePrice} {Quote} and will skip new band creation",
-                    Type, _name, _ticker.Price, _options.Quote, lowBand.OpenPrice, _options.Quote, lowBand.ClosePrice, _options.Quote);
+                    Type, _name, ticker.Price, _options.Quote, lowBand.OpenPrice, _options.Quote, lowBand.ClosePrice, _options.Quote);
 
                 // let the algo continue
                 return false;
@@ -234,7 +232,7 @@ namespace Trader.Core.Trading.Algorithms.Step
 
             // find the lower price under the current price
             var lowerPrice = lowBand.OpenPrice;
-            while (lowerPrice > _ticker.Price)
+            while (lowerPrice > ticker.Price)
             {
                 lowerPrice /= _options.TargetMultiplier;
             }
@@ -329,11 +327,8 @@ namespace Trader.Core.Trading.Algorithms.Step
             return fail;
         }
 
-        private async Task<bool> TrySetStartingTradeAsync(Symbol symbol, PriceSymbolFilter priceFilter, LotSizeSymbolFilter lotSizeFilter, Balances balances)
+        private async Task<bool> TrySetStartingTradeAsync(Symbol symbol, SymbolPriceTicker ticker, PriceSymbolFilter priceFilter, LotSizeSymbolFilter lotSizeFilter, Balances balances)
         {
-            // validate requirements
-            if (_ticker is null) throw new AlgorithmException($"{nameof(_ticker)} has not been populated");
-
             // only manage the opening if there are no bands or only a single order band to move around
             if (_bands.Count == 0 || (_bands.Count == 1 && _bands.Single().Status == BandStatus.Ordered))
             {
@@ -394,14 +389,14 @@ namespace Trader.Core.Trading.Algorithms.Step
                 */
 
                 // identify the target low price for the first buy
-                var lowBuyPrice = _ticker.Price / _options.TargetMultiplier;
+                var lowBuyPrice = ticker.Price / _options.TargetMultiplier;
 
                 // under adjust the buy price to the tick size
                 lowBuyPrice = Math.Floor(lowBuyPrice / priceFilter.TickSize) * priceFilter.TickSize;
 
                 _logger.LogInformation(
                     "{Type} {Name} identified first buy target price at {LowPrice} {LowQuote} with current price at {CurrentPrice} {CurrentQuote}",
-                    Type, _name, lowBuyPrice, _options.Quote, _ticker.Price, _options.Quote);
+                    Type, _name, lowBuyPrice, _options.Quote, ticker.Price, _options.Quote);
 
                 // cancel all open buy orders with a open price lower than the lower band to the current price
                 foreach (var order in _orders.Where(x => x.Side == OrderSide.Buy))

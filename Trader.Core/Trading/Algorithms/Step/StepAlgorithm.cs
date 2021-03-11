@@ -49,11 +49,6 @@ namespace Trader.Core.Trading.Algorithms.Step
 
         private readonly SortedSet<Band> _bands = new();
 
-        /// <summary>
-        /// Tracks the latest asset price;
-        /// </summary>
-        //private SymbolPriceTicker? _ticker;
-
         private Balances SyncAccountInfo(AccountInfo accountInfo)
         {
             _logger.LogInformation("{Type} {Name} querying account information...", Type, _name);

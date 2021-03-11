@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -59,23 +58,18 @@ namespace Trader.Core.Trading
             var exchange = await _trader.GetExchangeInfoAsync();
             var accountInfo = await _trader.GetAccountInfoAsync(new GetAccountInfo(null, _clock.UtcNow));
 
-            var tasks = ArrayPool<Task>.Shared.Rent(_algos.Count);
+            var tasks = new List<Task>(_algos.Count);
 
-            for (var i = 0; i < _algos.Count; ++i)
+            foreach (var algo in _algos)
             {
-                tasks[i] = _algos[i] switch
+                tasks.Add(algo switch
                 {
                     IStepAlgorithm step => step.GoAsync(exchange, accountInfo),
-                    _ => throw new NotSupportedException($"Unknown Algorithm '{_algos[i].GetType().FullName}'"),
-                };
+                    _ => throw new NotSupportedException($"Unknown Algorithm '{algo.GetType().FullName}'"),
+                });
             }
 
-            for (var i = 0; i < _algos.Count; ++i)
-            {
-                await tasks[i];
-            }
-
-            ArrayPool<Task>.Shared.Return(tasks);
+            await Task.WhenAll(tasks);
         }
     }
 }

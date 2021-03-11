@@ -33,6 +33,6 @@ namespace Trader.Core.Trading.Algorithms.Step
 
         [Required]
         [Range(1, 100)]
-        public int MaxBands { get; set; } = 10;
+        public int MaxBands { get; set; } = 20;
     }
 }

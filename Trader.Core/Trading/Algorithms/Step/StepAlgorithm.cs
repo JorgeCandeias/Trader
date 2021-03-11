@@ -6,7 +6,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Trader.Core.Time;
-using Trader.Core.Timers;
 
 namespace Trader.Core.Trading.Algorithms.Step
 {
@@ -20,7 +19,7 @@ namespace Trader.Core.Trading.Algorithms.Step
         private readonly ISystemClock _clock;
         private readonly ITradingService _trader;
 
-        public StepAlgorithm(string name, ILogger<StepAlgorithm> logger, IOptionsSnapshot<StepAlgorithmOptions> options, ISafeTimerFactory factory, ISystemClock clock, ITradingService trader)
+        public StepAlgorithm(string name, ILogger<StepAlgorithm> logger, IOptionsSnapshot<StepAlgorithmOptions> options, ISystemClock clock, ITradingService trader)
         {
             _name = name ?? throw new ArgumentNullException(nameof(name));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -32,7 +31,7 @@ namespace Trader.Core.Trading.Algorithms.Step
         private static string Type => nameof(StepAlgorithm);
 
         private readonly CancellationTokenSource _cancellation = new();
-        private readonly Balances _balances = new();
+        //private readonly Balances _balances = new();
 
         /// <summary>
         /// Set of trades synced from the trading service.
@@ -56,21 +55,21 @@ namespace Trader.Core.Trading.Algorithms.Step
         /// </summary>
         private SymbolPriceTicker? _ticker;
 
-        private async Task SyncAccountInfoAsync()
+        private Balances SyncAccountInfo(AccountInfo accountInfo)
         {
             _logger.LogInformation("{Type} {Name} querying account information...", Type, _name);
-
-            var account = await _trader.GetAccountInfoAsync(new GetAccountInfo(null, _clock.UtcNow), _cancellation.Token);
 
             var gotAsset = false;
             var gotQuote = false;
 
-            foreach (var balance in account.Balances)
+            var balances = new Balances();
+
+            foreach (var balance in accountInfo.Balances)
             {
                 if (balance.Asset == _options.Asset)
                 {
-                    _balances.Asset.Free = balance.Free;
-                    _balances.Asset.Locked = balance.Locked;
+                    balances.Asset.Free = balance.Free;
+                    balances.Asset.Locked = balance.Locked;
                     gotAsset = true;
 
                     _logger.LogInformation(
@@ -79,8 +78,8 @@ namespace Trader.Core.Trading.Algorithms.Step
                 }
                 else if (balance.Asset == _options.Quote)
                 {
-                    _balances.Quote.Free = balance.Free;
-                    _balances.Quote.Locked = balance.Locked;
+                    balances.Quote.Free = balance.Free;
+                    balances.Quote.Locked = balance.Locked;
                     gotQuote = true;
 
                     _logger.LogInformation(
@@ -98,6 +97,8 @@ namespace Trader.Core.Trading.Algorithms.Step
             {
                 throw new AlgorithmException($"Could not get balance for quote asset {_options.Quote}");
             }
+
+            return balances;
         }
 
         private async Task SyncAccountTradesAsync()
@@ -151,26 +152,26 @@ namespace Trader.Core.Trading.Algorithms.Step
                 Type, _name, _ticker.Price, _options.Quote);
         }
 
-        public async Task GoAsync(ExchangeInfo exchangeInfo)
+        public async Task GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo)
         {
             var symbol = exchangeInfo.Symbols.Single(x => x.Name == _options.Symbol);
             var priceFilter = symbol.Filters.OfType<PriceSymbolFilter>().Single();
             var lotSizeFilter = symbol.Filters.OfType<LotSizeSymbolFilter>().Single();
             var minNotionalFilter = symbol.Filters.OfType<MinNotionalSymbolFilter>().Single();
 
-            await SyncAccountInfoAsync();
+            var balances = SyncAccountInfo(accountInfo);
             await SyncAccountOpenOrdersAsync();
             await SyncAccountTradesAsync();
 
             // always update the latest price
             await SyncAssetPriceAsync();
 
-            if (TryIdentifySignificantTrades()) return;
+            if (TryIdentifySignificantTrades(balances)) return;
             if (TrySyncTradingBands(priceFilter, minNotionalFilter)) return;
-            if (await TrySetStartingTradeAsync(symbol, priceFilter, lotSizeFilter)) return;
+            if (await TrySetStartingTradeAsync(symbol, priceFilter, lotSizeFilter, balances)) return;
             if (await TryCancelRogueSellOrdersAsync()) return;
             if (await TrySetBandSellOrdersAsync()) return;
-            if (await TryCreateLowerBandOrderAsync(symbol, priceFilter, lotSizeFilter)) return;
+            if (await TryCreateLowerBandOrderAsync(symbol, priceFilter, lotSizeFilter, balances)) return;
             if (await TryCloseOutOfRangeBandsAsync()) return;
         }
 
@@ -192,7 +193,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             return false;
         }
 
-        private async Task<bool> TryCreateLowerBandOrderAsync(Symbol symbol, PriceSymbolFilter priceFilter, LotSizeSymbolFilter lotSizeFilter)
+        private async Task<bool> TryCreateLowerBandOrderAsync(Symbol symbol, PriceSymbolFilter priceFilter, LotSizeSymbolFilter lotSizeFilter, Balances balances)
         {
             // validate requirements
             if (_ticker is null) throw new AlgorithmException($"{nameof(_ticker)} is not available");
@@ -248,14 +249,14 @@ namespace Trader.Core.Trading.Algorithms.Step
             lowerPrice = Math.Floor(lowerPrice / priceFilter.TickSize) * priceFilter.TickSize;
 
             // calculate the amount to pay with
-            var total = Math.Round(Math.Max(_balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand, _options.MinQuoteAssetQuantityPerOrder), symbol.QuoteAssetPrecision);
+            var total = Math.Round(Math.Max(balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand, _options.MinQuoteAssetQuantityPerOrder), symbol.QuoteAssetPrecision);
 
             // ensure there is enough quote asset for it
-            if (total > _balances.Quote.Free)
+            if (total > balances.Quote.Free)
             {
                 _logger.LogWarning(
                     "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}",
-                    Type, _name, total, _options.Quote, _balances.Quote.Free, _options.Quote);
+                    Type, _name, total, _options.Quote, balances.Quote.Free, _options.Quote);
 
                 // there's no money for creating bands so let algo continue
                 return false;
@@ -328,7 +329,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             return fail;
         }
 
-        private async Task<bool> TrySetStartingTradeAsync(Symbol symbol, PriceSymbolFilter priceFilter, LotSizeSymbolFilter lotSizeFilter)
+        private async Task<bool> TrySetStartingTradeAsync(Symbol symbol, PriceSymbolFilter priceFilter, LotSizeSymbolFilter lotSizeFilter, Balances balances)
         {
             // validate requirements
             if (_ticker is null) throw new AlgorithmException($"{nameof(_ticker)} has not been populated");
@@ -437,14 +438,14 @@ namespace Trader.Core.Trading.Algorithms.Step
                     // put the starting order through
 
                     // calculate the amount to pay with
-                    var total = Math.Round(Math.Max(_balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand, _options.MinQuoteAssetQuantityPerOrder), symbol.QuoteAssetPrecision);
+                    var total = Math.Round(Math.Max(balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand, _options.MinQuoteAssetQuantityPerOrder), symbol.QuoteAssetPrecision);
 
                     // ensure there is enough quote asset for it
-                    if (total > _balances.Quote.Free)
+                    if (total > balances.Quote.Free)
                     {
                         _logger.LogWarning(
                             "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}",
-                            Type, _name, total, _options.Quote, _balances.Quote.Free, _options.Quote);
+                            Type, _name, total, _options.Quote, balances.Quote.Free, _options.Quote);
 
                         return false;
                     }
@@ -485,11 +486,11 @@ namespace Trader.Core.Trading.Algorithms.Step
             }
         }
 
-        private bool TryIdentifySignificantTrades()
+        private bool TryIdentifySignificantTrades(Balances balances)
         {
             _significant.Clear();
 
-            var total = _balances.Asset.Total;
+            var total = balances.Asset.Total;
 
             if (total is 0)
             {
@@ -531,14 +532,14 @@ namespace Trader.Core.Trading.Algorithms.Step
             {
                 _logger.LogError(
                     "{Type} {Name} could not identify all significant trades that make up the current asset balance of {Total}",
-                    Type, _name, _balances.Asset.Total);
+                    Type, _name, balances.Asset.Total);
 
                 return true;
             }
 
             _logger.LogInformation(
                 "{Type} {Name} identified {Count} significant trades that make up the asset balance of {Total}",
-                Type, _name, _significant.Count, _balances.Asset.Total);
+                Type, _name, _significant.Count, balances.Asset.Total);
 
             // now prune the significant trades to account interim sales
             var subjects = _significant.ToList();

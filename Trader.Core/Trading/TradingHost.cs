@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Trader.Core.Time;
 using Trader.Core.Timers;
 using Trader.Core.Trading.Algorithms;
 using Trader.Core.Trading.Algorithms.Step;
@@ -16,12 +17,15 @@ namespace Trader.Core.Trading
         private readonly IStepAlgorithmFactory _factory;
         private readonly ISafeTimer _timer;
         private readonly ITradingService _trader;
+        private readonly ISystemClock _clock;
 
-        public TradingHost(ILogger<TradingHost> logger, IStepAlgorithmFactory factory, ISafeTimerFactory timerFactory, ITradingService trader)
+        public TradingHost(ILogger<TradingHost> logger, IStepAlgorithmFactory factory, ISafeTimerFactory timerFactory, ITradingService trader, ISystemClock clock)
         {
             _logger = logger;
             _factory = factory;
             _trader = trader;
+            _clock = clock;
+
             _timer = timerFactory.Create(_ => TickAsync(), TimeSpan.Zero, TimeSpan.FromSeconds(10));
 
             _algos.Add(_factory.Create("BTCGBP-1"));
@@ -52,13 +56,14 @@ namespace Trader.Core.Trading
         {
             // grab the exchange information once to share between all algo instances
             var exchange = await _trader.GetExchangeInfoAsync();
+            var accountInfo = await _trader.GetAccountInfoAsync(new GetAccountInfo(null, _clock.UtcNow));
 
             foreach (var algo in _algos)
             {
                 switch (algo)
                 {
                     case IStepAlgorithm step:
-                        await step.GoAsync(exchange);
+                        await step.GoAsync(exchange, accountInfo);
                         break;
 
                     default:

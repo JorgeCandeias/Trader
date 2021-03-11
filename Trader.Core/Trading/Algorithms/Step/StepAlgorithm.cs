@@ -35,11 +35,6 @@ namespace Trader.Core.Trading.Algorithms.Step
         private readonly Balances _balances = new();
 
         /// <summary>
-        /// Keeps useful exchange parameters.
-        /// </summary>
-        private readonly ExchangeParameters _parameters = new();
-
-        /// <summary>
         /// Set of trades synced from the trading service.
         /// </summary>
         private readonly SortedSet<AccountTrade> _trades = new(new AccountTradeIdComparer());
@@ -60,14 +55,6 @@ namespace Trader.Core.Trading.Algorithms.Step
         /// Tracks the latest asset price;
         /// </summary>
         private SymbolPriceTicker? _ticker;
-
-        private async Task SyncExchangeParametersAsync(ExchangeInfo exchangeInfo)
-        {
-            _parameters.Symbol = exchangeInfo.Symbols.Single(x => x.Name == _options.Symbol);
-            _parameters.PriceFilter = _parameters.Symbol.Filters.OfType<PriceSymbolFilter>().Single();
-            _parameters.LotSizeFilter = _parameters.Symbol.Filters.OfType<LotSizeSymbolFilter>().Single();
-            _parameters.MinNotionalFilter = _parameters.Symbol.Filters.OfType<MinNotionalSymbolFilter>().Single();
-        }
 
         private async Task SyncAccountInfoAsync()
         {
@@ -166,9 +153,11 @@ namespace Trader.Core.Trading.Algorithms.Step
 
         public async Task GoAsync(ExchangeInfo exchangeInfo)
         {
-            // sync trading information
-            // todo: these only need to resync after an algo operation
-            await SyncExchangeParametersAsync(exchangeInfo);
+            var symbol = exchangeInfo.Symbols.Single(x => x.Name == _options.Symbol);
+            var priceFilter = symbol.Filters.OfType<PriceSymbolFilter>().Single();
+            var lotSizeFilter = symbol.Filters.OfType<LotSizeSymbolFilter>().Single();
+            var minNotionalFilter = symbol.Filters.OfType<MinNotionalSymbolFilter>().Single();
+
             await SyncAccountInfoAsync();
             await SyncAccountOpenOrdersAsync();
             await SyncAccountTradesAsync();
@@ -176,18 +165,12 @@ namespace Trader.Core.Trading.Algorithms.Step
             // always update the latest price
             await SyncAssetPriceAsync();
 
-            // run the magic code
-            await RunAlgorithmAsync();
-        }
-
-        private async Task RunAlgorithmAsync()
-        {
             if (TryIdentifySignificantTrades()) return;
-            if (TrySyncTradingBands()) return;
-            if (await TrySetStartingTradeAsync()) return;
+            if (TrySyncTradingBands(priceFilter, minNotionalFilter)) return;
+            if (await TrySetStartingTradeAsync(symbol, priceFilter, lotSizeFilter)) return;
             if (await TryCancelRogueSellOrdersAsync()) return;
             if (await TrySetBandSellOrdersAsync()) return;
-            if (await TryCreateLowerBandOrderAsync()) return;
+            if (await TryCreateLowerBandOrderAsync(symbol, priceFilter, lotSizeFilter)) return;
             if (await TryCloseOutOfRangeBandsAsync()) return;
         }
 
@@ -209,13 +192,10 @@ namespace Trader.Core.Trading.Algorithms.Step
             return false;
         }
 
-        private async Task<bool> TryCreateLowerBandOrderAsync()
+        private async Task<bool> TryCreateLowerBandOrderAsync(Symbol symbol, PriceSymbolFilter priceFilter, LotSizeSymbolFilter lotSizeFilter)
         {
             // validate requirements
-            if (_parameters.PriceFilter is null) throw new AlgorithmException($"{nameof(_parameters.PriceFilter)} is not available");
             if (_ticker is null) throw new AlgorithmException($"{nameof(_ticker)} is not available");
-            if (_parameters.Symbol is null) throw new AlgorithmException($"{nameof(_parameters.Symbol)} is not available");
-            if (_parameters.LotSizeFilter is null) throw new AlgorithmException($"{nameof(_parameters.LotSizeFilter)} is not available");
 
             // identify the lowest band
             var lowBand = _bands.Min;
@@ -265,10 +245,10 @@ namespace Trader.Core.Trading.Algorithms.Step
             }
 
             // under adjust the buy price to the tick size
-            lowerPrice = Math.Floor(lowerPrice / _parameters.PriceFilter.TickSize) * _parameters.PriceFilter.TickSize;
+            lowerPrice = Math.Floor(lowerPrice / priceFilter.TickSize) * priceFilter.TickSize;
 
             // calculate the amount to pay with
-            var total = Math.Round(Math.Max(_balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand, _options.MinQuoteAssetQuantityPerOrder), _parameters.Symbol.QuoteAssetPrecision);
+            var total = Math.Round(Math.Max(_balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand, _options.MinQuoteAssetQuantityPerOrder), symbol.QuoteAssetPrecision);
 
             // ensure there is enough quote asset for it
             if (total > _balances.Quote.Free)
@@ -285,7 +265,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             var quantity = total / lowerPrice;
 
             // round it down to the lot size step
-            quantity = Math.Floor(quantity / _parameters.LotSizeFilter.StepSize) * _parameters.LotSizeFilter.StepSize;
+            quantity = Math.Floor(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
 
             // place the buy order
             var result = await _trader.CreateOrderAsync(new Order(_options.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, lowerPrice, null, null, null, NewOrderResponseType.Full, null, _clock.UtcNow), _cancellation.Token);
@@ -348,13 +328,10 @@ namespace Trader.Core.Trading.Algorithms.Step
             return fail;
         }
 
-        private async Task<bool> TrySetStartingTradeAsync()
+        private async Task<bool> TrySetStartingTradeAsync(Symbol symbol, PriceSymbolFilter priceFilter, LotSizeSymbolFilter lotSizeFilter)
         {
             // validate requirements
             if (_ticker is null) throw new AlgorithmException($"{nameof(_ticker)} has not been populated");
-            if (_parameters.Symbol is null) throw new AlgorithmException($"{nameof(_parameters.Symbol)} has not been populated");
-            if (_parameters.PriceFilter is null) throw new AlgorithmException($"{nameof(_parameters.PriceFilter)} has not been populated");
-            if (_parameters.LotSizeFilter is null) throw new AlgorithmException($"{nameof(_parameters.LotSizeFilter)} has not been populated");
 
             // only manage the opening if there are no bands or only a single order band to move around
             if (_bands.Count == 0 || (_bands.Count == 1 && _bands.Single().Status == BandStatus.Ordered))
@@ -419,7 +396,7 @@ namespace Trader.Core.Trading.Algorithms.Step
                 var lowBuyPrice = _ticker.Price / _options.TargetMultiplier;
 
                 // under adjust the buy price to the tick size
-                lowBuyPrice = Math.Floor(lowBuyPrice / _parameters.PriceFilter.TickSize) * _parameters.PriceFilter.TickSize;
+                lowBuyPrice = Math.Floor(lowBuyPrice / priceFilter.TickSize) * priceFilter.TickSize;
 
                 _logger.LogInformation(
                     "{Type} {Name} identified first buy target price at {LowPrice} {LowQuote} with current price at {CurrentPrice} {CurrentQuote}",
@@ -460,7 +437,7 @@ namespace Trader.Core.Trading.Algorithms.Step
                     // put the starting order through
 
                     // calculate the amount to pay with
-                    var total = Math.Round(Math.Max(_balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand, _options.MinQuoteAssetQuantityPerOrder), _parameters.Symbol.QuoteAssetPrecision);
+                    var total = Math.Round(Math.Max(_balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand, _options.MinQuoteAssetQuantityPerOrder), symbol.QuoteAssetPrecision);
 
                     // ensure there is enough quote asset for it
                     if (total > _balances.Quote.Free)
@@ -476,7 +453,7 @@ namespace Trader.Core.Trading.Algorithms.Step
                     var quantity = total / lowBuyPrice;
 
                     // round it down to the lot size step
-                    quantity = Math.Floor(quantity / _parameters.LotSizeFilter.StepSize) * _parameters.LotSizeFilter.StepSize;
+                    quantity = Math.Floor(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
 
                     var order = await _trader.CreateOrderAsync(new Order(
                         _options.Symbol,
@@ -601,10 +578,8 @@ namespace Trader.Core.Trading.Algorithms.Step
             return false;
         }
 
-        private bool TrySyncTradingBands()
+        private bool TrySyncTradingBands(PriceSymbolFilter priceFilter, MinNotionalSymbolFilter minNotionalFilter)
         {
-            if (_parameters.PriceFilter is null) throw new AlgorithmException($"{nameof(_parameters.PriceFilter)} is required");
-
             _bands.Clear();
 
             // apply the significant buy trades to the bands
@@ -620,7 +595,7 @@ namespace Trader.Core.Trading.Algorithms.Step
                 };
 
                 // adjust the target price to the tick size
-                band.ClosePrice = Math.Floor(band.ClosePrice / _parameters.PriceFilter.TickSize) * _parameters.PriceFilter.TickSize;
+                band.ClosePrice = Math.Floor(band.ClosePrice / priceFilter.TickSize) * priceFilter.TickSize;
 
                 _bands.Add(band);
             }
@@ -639,7 +614,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             }
 
             // identify bands where the target sell is somehow below the notional filter
-            foreach (var band in _bands.Where(x => x.Quantity * x.ClosePrice < _parameters.MinNotionalFilter.MinNotional).ToList())
+            foreach (var band in _bands.Where(x => x.Quantity * x.ClosePrice < minNotionalFilter.MinNotional).ToList())
             {
                 _bands.Remove(band);
 
@@ -669,14 +644,6 @@ namespace Trader.Core.Trading.Algorithms.Step
         }
 
         #region Classes
-
-        private class ExchangeParameters
-        {
-            public Symbol? Symbol { get; set; }
-            public PriceSymbolFilter? PriceFilter { get; set; }
-            public LotSizeSymbolFilter? LotSizeFilter { get; set; }
-            public MinNotionalSymbolFilter? MinNotionalFilter { get; set; }
-        }
 
         private class SignificantTracker
         {

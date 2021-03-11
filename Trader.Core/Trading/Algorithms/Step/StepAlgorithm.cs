@@ -19,7 +19,6 @@ namespace Trader.Core.Trading.Algorithms.Step
 
         private readonly ISystemClock _clock;
         private readonly ITradingService _trader;
-        private readonly ISafeTimer _timer;
 
         public StepAlgorithm(string name, ILogger<StepAlgorithm> logger, IOptionsSnapshot<StepAlgorithmOptions> options, ISafeTimerFactory factory, ISystemClock clock, ITradingService trader)
         {
@@ -28,30 +27,9 @@ namespace Trader.Core.Trading.Algorithms.Step
             _options = options.Get(_name) ?? throw new ArgumentNullException(nameof(options));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
-
-            _timer = factory.Create(TickAsync, TimeSpan.Zero, _options.Tick);
         }
 
         private static string Type => nameof(StepAlgorithm);
-
-        public async Task StartAsync(CancellationToken cancellationToken = default)
-        {
-            _logger.LogInformation("{Type} {Name} starting...", Type, _name);
-
-            await SyncExchangeParametersAsync(cancellationToken);
-
-            await _timer.StartAsync(cancellationToken);
-
-            _logger.LogInformation("{Type} {Name} started", Type, _name);
-        }
-
-        public Task StopAsync(CancellationToken cancellationToken = default)
-        {
-            _timer.StopAsync(cancellationToken);
-            _logger.LogInformation("{Type} {Name} stopped", Type, _name);
-
-            return Task.CompletedTask;
-        }
 
         private readonly CancellationTokenSource _cancellation = new();
         private readonly Balances _balances = new();
@@ -83,11 +61,9 @@ namespace Trader.Core.Trading.Algorithms.Step
         /// </summary>
         private SymbolPriceTicker? _ticker;
 
-        private async Task SyncExchangeParametersAsync(CancellationToken cancellationToken = default)
+        private async Task SyncExchangeParametersAsync(ExchangeInfo exchangeInfo)
         {
-            var exchange = await _trader.GetExchangeInfoAsync(cancellationToken);
-
-            _parameters.Symbol = exchange.Symbols.Single(x => x.Name == _options.Symbol);
+            _parameters.Symbol = exchangeInfo.Symbols.Single(x => x.Name == _options.Symbol);
             _parameters.PriceFilter = _parameters.Symbol.Filters.OfType<PriceSymbolFilter>().Single();
             _parameters.LotSizeFilter = _parameters.Symbol.Filters.OfType<LotSizeSymbolFilter>().Single();
             _parameters.MinNotionalFilter = _parameters.Symbol.Filters.OfType<MinNotionalSymbolFilter>().Single();
@@ -188,10 +164,11 @@ namespace Trader.Core.Trading.Algorithms.Step
                 Type, _name, _ticker.Price, _options.Quote);
         }
 
-        private async Task TickAsync(IDisposable timer)
+        public async Task GoAsync(ExchangeInfo exchangeInfo)
         {
             // sync trading information
             // todo: these only need to resync after an algo operation
+            await SyncExchangeParametersAsync(exchangeInfo);
             await SyncAccountInfoAsync();
             await SyncAccountOpenOrdersAsync();
             await SyncAccountTradesAsync();

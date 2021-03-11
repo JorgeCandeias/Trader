@@ -1,0 +1,23 @@
+﻿using System.Collections.Immutable;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Trader.Core.Trading
+{
+    public interface ITradingService
+    {
+        Task<ExchangeInfo> GetExchangeInfoAsync(CancellationToken cancellationToken = default);
+
+        Task<SymbolPriceTicker> GetSymbolPriceTickerAsync(string symbol, CancellationToken cancellationToken = default);
+
+        Task<ImmutableList<AccountTrade>> GetAccountTradesAsync(GetAccountTrades model, CancellationToken cancellationToken = default);
+
+        Task<ImmutableList<OrderQueryResult>> GetOpenOrdersAsync(GetOpenOrders model, CancellationToken cancellationToken = default);
+
+        Task<CancelStandardOrderResult> CancelOrderAsync(CancelStandardOrder model, CancellationToken cancellationToken = default);
+
+        Task<OrderResult> CreateOrderAsync(Order model, CancellationToken cancellationToken = default);
+
+        Task<AccountInfo> GetAccountInfoAsync(GetAccountInfo model, CancellationToken cancellationToken = default);
+    }
+}

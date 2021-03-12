@@ -165,7 +165,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             if (TryIdentifySignificantTrades(balances)) return;
             if (TrySyncTradingBands(priceFilter, minNotionalFilter)) return;
             if (await TrySetStartingTradeAsync(symbol, ticker, priceFilter, lotSizeFilter, balances)) return;
-            if (await TryCancelRogueSellOrdersAsync()) return;
+            //if (await TryCancelRogueSellOrdersAsync()) return;
             if (await TrySetBandSellOrdersAsync()) return;
             if (await TryCreateLowerBandOrderAsync(symbol, ticker, priceFilter, lotSizeFilter, balances)) return;
             if (await TryCloseOutOfRangeBandsAsync(ticker)) return;
@@ -518,6 +518,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             }
 
             // see if we got all trades
+            /*
             if (total is not 0)
             {
                 _logger.LogError(
@@ -526,6 +527,7 @@ namespace Trader.Core.Trading.Algorithms.Step
 
                 return true;
             }
+            */
 
             _logger.LogInformation(
                 "{Type} {Name} identified {Count} significant trades that make up the asset balance of {Total}",

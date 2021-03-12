@@ -1,7 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System;
+﻿using System;
+using Trader.Core.Trading.Algorithms;
+using Trader.Core.Trading.Algorithms.Accumulator;
 
-namespace Trader.Core.Trading.Algorithms.Accumulator
+namespace Microsoft.Extensions.DependencyInjection
 {
     public static class AccumulatorAlgorithmServiceCollectionExtensions
     {

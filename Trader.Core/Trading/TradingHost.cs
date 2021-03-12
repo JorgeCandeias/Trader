@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Trader.Core.Time;
 using Trader.Core.Timers;
 using Trader.Core.Trading.Algorithms;
+using Trader.Core.Trading.Algorithms.Accumulator;
 using Trader.Core.Trading.Algorithms.Step;
 
 namespace Trader.Core.Trading
@@ -56,6 +57,7 @@ namespace Trader.Core.Trading
                 _tasks.Add(algo switch
                 {
                     IStepAlgorithm step => step.GoAsync(exchange, accountInfo),
+                    IAccumulatorAlgorithm accumulator => accumulator.GoAsync(),
                     _ => throw new NotSupportedException($"Unknown Algorithm '{algo.GetType().FullName}'"),
                 });
             }

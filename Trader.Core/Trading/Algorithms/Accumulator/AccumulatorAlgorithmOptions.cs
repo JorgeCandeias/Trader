@@ -6,9 +6,12 @@ namespace Trader.Core.Trading.Algorithms.Accumulator
     public class AccumulatorAlgorithmOptions
     {
         [Required]
-        public string Name { get; set; } = Empty;
+        public string Symbol { get; set; } = Empty;
 
         [Required]
-        public string Symbol { get; set; } = Empty;
+        public string Asset { get; set; } = Empty;
+
+        [Required]
+        public string Quote { get; set; } = Empty;
     }
 }

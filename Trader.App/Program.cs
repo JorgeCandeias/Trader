@@ -42,7 +42,9 @@ namespace Trader.App
                         .AddStepAlgorithm("LINKGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:LINKGBP", options))
                         .AddStepAlgorithm("DOGEGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:DOGEGBP", options))
                         .AddStepAlgorithm("SXPGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:SXPGBP", options))
-                        .AddStepAlgorithm("DOTGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:DOTGBP", options));
+                        .AddStepAlgorithm("DOTGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:DOTGBP", options))
+                        .AddAccumulatorAlgorithm("BNBGBP", options => context.Configuration.Bind("Trading:Algorithms:Accumulator:BNBGBP", options));
+                        
                 })
                 .RunConsoleAsync();
         }

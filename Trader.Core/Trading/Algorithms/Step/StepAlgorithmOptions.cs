@@ -16,10 +16,6 @@ namespace Trader.Core.Trading.Algorithms.Step
         public string Quote { get; set; } = Empty;
 
         [Required]
-        [Range(typeof(TimeSpan), "0.00:00:01.000", "0.01:00:00.000")]
-        public TimeSpan Tick { get; set; } = TimeSpan.FromSeconds(1);
-
-        [Required]
         [Range(1.01, 2)]
         public decimal TargetMultiplier { get; set; } = 1.01m;
 

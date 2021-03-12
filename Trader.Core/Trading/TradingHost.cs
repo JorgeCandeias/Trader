@@ -14,33 +14,24 @@ namespace Trader.Core.Trading
     internal class TradingHost : ITradingHost, IHostedService
     {
         private readonly ILogger _logger;
-        private readonly IStepAlgorithmFactory _factory;
+        private readonly IEnumerable<ITradingAlgorithm> _algos;
         private readonly ISafeTimer _timer;
         private readonly ITradingService _trader;
         private readonly ISystemClock _clock;
 
-        public TradingHost(ILogger<TradingHost> logger, IStepAlgorithmFactory factory, ISafeTimerFactory timerFactory, ITradingService trader, ISystemClock clock)
+        public TradingHost(ILogger<TradingHost> logger, IEnumerable<ITradingAlgorithm> algos, ISafeTimerFactory timerFactory, ITradingService trader, ISystemClock clock)
         {
             _logger = logger;
-            _factory = factory;
+            _algos = algos;
             _trader = trader;
             _clock = clock;
 
             _timer = timerFactory.Create(_ => TickAsync(), TimeSpan.Zero, TimeSpan.FromSeconds(10));
-
-            _algos.Add(_factory.Create("BTCGBP-1"));
-            _algos.Add(_factory.Create("ETHGBP-1"));
-            _algos.Add(_factory.Create("ADAGBP-1"));
-            _algos.Add(_factory.Create("XRPGBP-1"));
-            _algos.Add(_factory.Create("LINKGBP-1"));
-            _algos.Add(_factory.Create("DOGEGBP-1"));
-            _algos.Add(_factory.Create("SXPGBP-1"));
-            _algos.Add(_factory.Create("DOTGBP-1"));
         }
 
-        private static string Name => nameof(TradingHost);
+        private readonly List<Task> _tasks = new();
 
-        private readonly List<ITradingAlgorithm> _algos = new();
+        private static string Name => nameof(TradingHost);
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
@@ -58,18 +49,18 @@ namespace Trader.Core.Trading
             var exchange = await _trader.GetExchangeInfoAsync();
             var accountInfo = await _trader.GetAccountInfoAsync(new GetAccountInfo(null, _clock.UtcNow));
 
-            var tasks = new List<Task>(_algos.Count);
+            _tasks.Clear();
 
             foreach (var algo in _algos)
             {
-                tasks.Add(algo switch
+                _tasks.Add(algo switch
                 {
                     IStepAlgorithm step => step.GoAsync(exchange, accountInfo),
                     _ => throw new NotSupportedException($"Unknown Algorithm '{algo.GetType().FullName}'"),
                 });
             }
 
-            await Task.WhenAll(tasks);
+            await Task.WhenAll(_tasks);
         }
     }
 }

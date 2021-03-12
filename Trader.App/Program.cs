@@ -33,7 +33,16 @@ namespace Trader.App
                     services.AddTradingHost();
                     services.AddSystemClock();
                     services.AddSafeTimerFactory();
-                    services.AddStepAlgorithm(context.Configuration.GetSection("Trading:Algorithms:Step"));
+
+                    services
+                        .AddStepAlgorithm("BTCGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:BTCGBP", options))
+                        .AddStepAlgorithm("ETHGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:ETHGBP", options))
+                        .AddStepAlgorithm("ADAGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:ADAGBP", options))
+                        .AddStepAlgorithm("XRPGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:XRPGBP", options))
+                        .AddStepAlgorithm("LINKGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:LINKGBP", options))
+                        .AddStepAlgorithm("DOGEGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:DOGEGBP", options))
+                        .AddStepAlgorithm("SXPGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:SXPGBP", options))
+                        .AddStepAlgorithm("DOTGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:DOTGBP", options));
                 })
                 .RunConsoleAsync();
         }

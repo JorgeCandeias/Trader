@@ -9,7 +9,6 @@ using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
 using Trader.Core.Time;
-using Trader.Core.Trading.Algorithms.Step;
 
 namespace Trader.Core.Trading.Binance
 {
@@ -20,17 +19,15 @@ namespace Trader.Core.Trading.Binance
         private readonly BinanceApiClient _client;
         private readonly IHostApplicationLifetime _lifetime;
         private readonly ISystemClock _clock;
-        private readonly IStepAlgorithmFactory _factory;
         private readonly IMapper _mapper;
 
-        public BinanceTradingService(ILogger<BinanceTradingService> logger, IOptions<BinanceOptions> options, BinanceApiClient client, IHostApplicationLifetime lifetime, ISystemClock clock, IStepAlgorithmFactory factory, IMapper mapper)
+        public BinanceTradingService(ILogger<BinanceTradingService> logger, IOptions<BinanceOptions> options, BinanceApiClient client, IHostApplicationLifetime lifetime, ISystemClock clock, IMapper mapper)
         {
             _logger = logger;
             _options = options.Value;
             _client = client;
             _lifetime = lifetime;
             _clock = clock;
-            _factory = factory;
             _mapper = mapper;
         }
 

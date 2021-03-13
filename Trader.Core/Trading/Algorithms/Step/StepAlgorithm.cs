@@ -171,12 +171,14 @@ namespace Trader.Core.Trading.Algorithms.Step
             if (await TryCancelRogueSellOrdersAsync()) return;
             if (await TrySetBandSellOrdersAsync()) return;
             if (await TryCreateLowerBandOrderAsync(symbol, ticker, priceFilter, lotSizeFilter, balances)) return;
-            if (await TryCloseOutOfRangeBandsAsync(ticker)) return;
+            if (await TryCloseOutOfRangeBandsAsync(ticker, priceFilter)) return;
         }
 
-        private async Task<bool> TryCloseOutOfRangeBandsAsync(SymbolPriceTicker ticker)
+        private async Task<bool> TryCloseOutOfRangeBandsAsync(SymbolPriceTicker ticker, PriceSymbolFilter priceFilter)
         {
-            var threshold = ticker.Price / _options.TargetMultiplier / _options.TargetMultiplier;
+            var threshold = ticker.Price / _options.TargetMultiplier;
+
+            threshold = (threshold / priceFilter.TickSize) * priceFilter.TickSize;
 
             foreach (var band in _bands.Where(x => x.Status == BandStatus.Ordered && x.OpenPrice < threshold))
             {
@@ -666,7 +668,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             }
 
             _logger.LogInformation(
-                "{Type} {Name} added {Count} bands as {@Bands}",
+                "{Type} {Name} is managing {Count} bands",
                 Type, _name, _bands.Count, _bands);
 
             // always let the algo continue

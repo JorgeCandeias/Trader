@@ -71,7 +71,7 @@ namespace Trader.Core.Trading
                 _tasks.Add(algo switch
                 {
                     IStepAlgorithm step => step.GoAsync(exchangeInfo, accountInfo),
-                    IAccumulatorAlgorithm accumulator => accumulator.GoAsync(exchangeInfo),
+                    IAccumulatorAlgorithm accumulator => accumulator.GoAsync(exchangeInfo, accountInfo),
 
                     _ => throw new NotSupportedException($"Unknown Algorithm '{algo.GetType().FullName}'"),
                 });

@@ -8,12 +8,12 @@ namespace Trader.Core.Timers
 {
     internal sealed class SafeTimer : ISafeTimer, IDisposable
     {
-        private readonly Func<IDisposable, Task> _callback;
+        private readonly Func<CancellationToken, Task> _callback;
         private readonly TimeSpan _dueTime;
         private readonly TimeSpan _period;
         private readonly ILogger _logger;
 
-        public SafeTimer(Func<IDisposable, Task> callback, TimeSpan dueTime, TimeSpan period, ILogger<SafeTimer> logger)
+        public SafeTimer(Func<CancellationToken, Task> callback, TimeSpan dueTime, TimeSpan period, ILogger<SafeTimer> logger)
         {
             _callback = callback;
             _dueTime = dueTime;
@@ -21,14 +21,22 @@ namespace Trader.Core.Timers
             _logger = logger;
         }
 
+        private readonly CancellationTokenSource _cancellation = new();
+
         private Timer? _timer;
+        private Task? _task;
 
         private async void Handler(object? _)
         {
             // execute the current tick
             try
             {
-                await _callback(this);
+                _task = _callback(_cancellation.Token);
+                await _task;
+            }
+            catch (OperationCanceledException)
+            {
+                // noop
             }
             catch (Exception ex)
             {
@@ -61,15 +69,27 @@ namespace Trader.Core.Timers
             return Task.CompletedTask;
         }
 
-        public Task StopAsync(CancellationToken cancellationToken = default)
+        public async Task StopAsync(CancellationToken cancellationToken = default)
         {
             if (_timer is not null)
             {
+                _cancellation.Cancel();
                 _timer.Dispose();
                 _timer = null;
-            }
 
-            return Task.CompletedTask;
+                var task = Interlocked.Exchange(ref _task, null);
+                if (task is not null)
+                {
+                    try
+                    {
+                        await task;
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // noop
+                    }
+                }
+            }
         }
 
         public void Dispose()

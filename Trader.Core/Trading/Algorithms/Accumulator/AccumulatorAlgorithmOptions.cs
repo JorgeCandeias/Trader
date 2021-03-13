@@ -13,5 +13,9 @@ namespace Trader.Core.Trading.Algorithms.Accumulator
 
         [Required]
         public string Quote { get; set; } = Empty;
+
+        [Required]
+        [Range(0.01, 0.99)]
+        public decimal PullbackRatio { get; set; } = 0.90m;
     }
 }

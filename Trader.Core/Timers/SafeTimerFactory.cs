@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Trader.Core.Timers
@@ -13,7 +14,7 @@ namespace Trader.Core.Timers
             _provider = provider;
         }
 
-        public ISafeTimer Create(Func<IDisposable, Task> callback, TimeSpan dueTime, TimeSpan period)
+        public ISafeTimer Create(Func<CancellationToken, Task> callback, TimeSpan dueTime, TimeSpan period)
         {
             return ActivatorUtilities.CreateInstance<SafeTimer>(_provider, callback, dueTime, period);
         }

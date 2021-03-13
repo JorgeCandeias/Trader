@@ -29,10 +29,12 @@ namespace Trader.App
                 })
                 .ConfigureServices((context, services) =>
                 {
-                    services.AddBinanceTradingService(options => context.Configuration.Bind("Api", options));
-                    services.AddTradingHost();
-                    services.AddSystemClock();
-                    services.AddSafeTimerFactory();
+                    services
+                        .AddBinanceTradingService(options => context.Configuration.Bind("Api", options))
+                        .AddTradingHost()
+                        .AddSystemClock()
+                        .AddSafeTimerFactory()
+                        .AddProfitCalculator();
 
                     services
                         .AddStepAlgorithm("BTCGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:BTCGBP", options))
@@ -44,7 +46,6 @@ namespace Trader.App
                         .AddStepAlgorithm("SXPGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:SXPGBP", options))
                         .AddStepAlgorithm("DOTGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:DOTGBP", options))
                         .AddAccumulatorAlgorithm("BNBGBP", options => context.Configuration.Bind("Trading:Algorithms:Accumulator:BNBGBP", options));
-                        
                 })
                 .RunConsoleAsync();
         }

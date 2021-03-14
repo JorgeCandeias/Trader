@@ -16,8 +16,8 @@ namespace Trader.Core.Trading.Algorithms.Step
         public string Quote { get; set; } = Empty;
 
         [Required]
-        [Range(1.01, 2)]
-        public decimal TargetMultiplier { get; set; } = 1.01m;
+        [Range(0.01, 1)]
+        public decimal TargetPullbackRatio { get; set; } = 0.01m;
 
         [Required]
         [Range(0.001, 1)]
@@ -29,6 +29,6 @@ namespace Trader.Core.Trading.Algorithms.Step
 
         [Required]
         [Range(1, 100)]
-        public int MaxBands { get; set; } = 20;
+        public int MaxBands { get; set; } = 30;
     }
 }

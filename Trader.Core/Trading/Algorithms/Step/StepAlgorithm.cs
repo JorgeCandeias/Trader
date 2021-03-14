@@ -176,19 +176,22 @@ namespace Trader.Core.Trading.Algorithms.Step
 
         private async Task<bool> TryCloseOutOfRangeBandsAsync(SymbolPriceTicker ticker, PriceSymbolFilter priceFilter)
         {
-            var threshold = ticker.Price / _options.TargetMultiplier;
+            // take the lower two bands
+            var bands = _bands.OrderBy(x => x.OpenPrice).Take(2).ToList();
 
-            threshold = (threshold / priceFilter.TickSize) * priceFilter.TickSize;
+            // if there are not at least two bands then skip this step
+            if (bands.Count < 2) return false;
 
-            foreach (var band in _bands.Where(x => x.Status == BandStatus.Ordered && x.OpenPrice < threshold))
+            // if the ticker is above the upper band then close the lower band
+            if (ticker.Price > bands[1].OpenPrice && bands[0].Status == BandStatus.Ordered)
             {
-                foreach (var orderId in band.OpenOrderIds)
+                foreach (var orderId in bands[0].OpenOrderIds)
                 {
                     var result = await _trader.CancelOrderAsync(new CancelStandardOrder(_options.Symbol, orderId, null, null, null, _clock.UtcNow));
 
                     _logger.LogInformation(
-                    "{Type} {Name} closed out-of-range {OrderSide} {OrderType} for {Quantity} {Asset} at {Price} {Quote}",
-                    Type, _name, result.Side, result.Type, result.OriginalQuantity, _options.Asset, result.Price, _options.Quote);
+                        "{Type} {Name} closed out-of-range {OrderSide} {OrderType} for {Quantity} {Asset} at {Price} {Quote}",
+                        Type, _name, result.Side, result.Type, result.OriginalQuantity, _options.Asset, result.Price, _options.Quote);
                 }
 
                 return true;
@@ -199,15 +202,17 @@ namespace Trader.Core.Trading.Algorithms.Step
 
         private async Task<bool> TryCreateLowerBandOrderAsync(Symbol symbol, SymbolPriceTicker ticker, PriceSymbolFilter priceFilter, LotSizeSymbolFilter lotSizeFilter, Balances balances)
         {
-            // identify the lowest band
+            // identify the highest and lowest bands
+            var highBand = _bands.Max;
             var lowBand = _bands.Min;
-            if (lowBand is null)
+
+            if (lowBand is null || highBand is null)
             {
                 _logger.LogError(
                     "{Type} {Name} attempted to create a new lower band without an existing band yet",
                     Type, _name);
 
-                // something went wrong so stop the algo
+                // something went wrong so let the algo reset
                 return true;
             }
 
@@ -215,7 +220,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             if (ticker.Price >= lowBand.OpenPrice)
             {
                 _logger.LogInformation(
-                    "{Type} {Name} reports price {Price} {Quote} is within the current band of {OpenPrice} {Quote} to {ClosePrice} {Quote} and will skip new band creation",
+                    "{Type} {Name} reports price {Price} {Quote} is within the current low band of {OpenPrice} {Quote} to {ClosePrice} {Quote}",
                     Type, _name, ticker.Price, _options.Quote, lowBand.OpenPrice, _options.Quote, lowBand.ClosePrice, _options.Quote);
 
                 // let the algo continue
@@ -233,17 +238,18 @@ namespace Trader.Core.Trading.Algorithms.Step
                 return false;
             }
 
-            // find the lower price under the current price
-            var lowerPrice = lowBand.OpenPrice;
-            while (lowerPrice > ticker.Price)
+            // find the lower price under the current price and low band
+            var lowerPrice = highBand.OpenPrice;
+            var stepPrice = lowerPrice * _options.TargetPullbackRatio;
+            while (lowerPrice > ticker.Price && lowerPrice > lowBand.OpenPrice)
             {
-                lowerPrice /= _options.TargetMultiplier;
+                lowerPrice -= stepPrice;
             }
 
             // protect some weird stuff
             if (lowerPrice <= 0)
             {
-                throw new AlgorithmException($"Somehow we got to a lower price of {lowerPrice}!");
+                throw new AlgorithmException($"Somehow we got to a negative lower price of {lowerPrice}!");
             }
 
             // under adjust the buy price to the tick size
@@ -394,7 +400,7 @@ namespace Trader.Core.Trading.Algorithms.Step
                 */
 
                 // identify the target low price for the first buy
-                var lowBuyPrice = ticker.Price / _options.TargetMultiplier;
+                var lowBuyPrice = ticker.Price * (1m - _options.TargetPullbackRatio);
 
                 // under adjust the buy price to the tick size
                 lowBuyPrice = Math.Floor(lowBuyPrice / priceFilter.TickSize) * priceFilter.TickSize;
@@ -592,7 +598,7 @@ namespace Trader.Core.Trading.Algorithms.Step
                 {
                     Quantity = group.Sum(x => x.Quantity),
                     OpenPrice = group.Sum(x => x.Price * x.Quantity) / group.Sum(x => x.Quantity),
-                    ClosePrice = (group.Sum(x => x.Price * x.Quantity) / group.Sum(x => x.Quantity)) * _options.TargetMultiplier,
+                    //ClosePrice = (group.Sum(x => x.Price * x.Quantity) / group.Sum(x => x.Quantity)) * _options.TargetMultiplier,
                     Status = BandStatus.Open
                 };
 
@@ -611,13 +617,30 @@ namespace Trader.Core.Trading.Algorithms.Step
                 {
                     Quantity = order.OriginalQuantity,
                     OpenPrice = order.Price,
-                    ClosePrice = order.Price * _options.TargetMultiplier,
+                    //ClosePrice = order.Price * _options.TargetMultiplier,
                     Status = BandStatus.Ordered
                 };
 
                 band.OpenOrderIds.Add(order.OrderId);
 
                 _bands.Add(band);
+            }
+
+            // adjust close prices on the bands
+            var ordered = _bands.OrderByDescending(x => x.OpenPrice).ToList();
+            for (var i = 0; i < ordered.Count; ++i)
+            {
+                var band = ordered[i];
+                var higher = i > 0 ? ordered[i - 1] : null;
+
+                if (higher is not null)
+                {
+                    band.ClosePrice = higher.OpenPrice;
+                }
+                else
+                {
+                    band.ClosePrice = band.OpenPrice * (1 + _options.TargetPullbackRatio);
+                }
             }
 
             // identify bands where the target sell is somehow below the notional filter
@@ -630,6 +653,23 @@ namespace Trader.Core.Trading.Algorithms.Step
                 }
             }
 
+            // re-adjust close prices on the bands after taking lefovers out
+            ordered = _bands.OrderByDescending(x => x.OpenPrice).ToList();
+            for (var i = 0; i < ordered.Count; ++i)
+            {
+                var band = ordered[i];
+                var higher = i > 0 ? ordered[i - 1] : null;
+
+                if (higher is not null)
+                {
+                    band.ClosePrice = higher.OpenPrice;
+                }
+                else
+                {
+                    band.ClosePrice = band.OpenPrice * (1 + _options.TargetPullbackRatio);
+                }
+            }
+
             // group all the small bands into a new band
             if (small.Count > 0)
             {
@@ -639,7 +679,7 @@ namespace Trader.Core.Trading.Algorithms.Step
                     OpenPrice = small.Sum(x => x.OpenPrice * x.Quantity) / small.Sum(x => x.Quantity),
                     Status = BandStatus.Open
                 };
-                leftovers.ClosePrice = leftovers.OpenPrice * _options.TargetMultiplier;
+                leftovers.ClosePrice = leftovers.OpenPrice * (1 + _options.TargetPullbackRatio);
                 leftovers.OpenOrderIds.UnionWith(small.SelectMany(x => x.OpenOrderIds));
 
                 // see if the leftovers are sellable
@@ -653,6 +693,12 @@ namespace Trader.Core.Trading.Algorithms.Step
                         "{Type} {Name} ignoring under notional leftovers of {Quantity} {Asset} opening at {OpenPrice} {Quote} and closing at {ClosePrice} {Quote}",
                         Type, _name, leftovers.Quantity, _options.Asset, leftovers.OpenPrice, _options.Quote, leftovers.ClosePrice, _options.Quote);
                 }
+            }
+
+            // adjust all close prices to the tick size
+            foreach (var band in _bands)
+            {
+                band.ClosePrice = Math.Floor(band.ClosePrice / priceFilter.TickSize) * priceFilter.TickSize;
             }
 
             // identify the applicable sell orders for each band

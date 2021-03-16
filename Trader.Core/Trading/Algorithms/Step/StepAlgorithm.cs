@@ -169,7 +169,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             if (TrySyncTradingBands(priceFilter, minNotionalFilter)) return;
             if (await TrySetStartingTradeAsync(symbol, ticker, priceFilter, lotSizeFilter, balances)) return;
             if (await TryCancelRogueSellOrdersAsync()) return;
-            if (await TrySetBandSellOrdersAsync()) return;
+            if (await TrySetBandSellOrdersAsync(balances)) return;
             if (await TryCreateLowerBandOrderAsync(symbol, ticker, priceFilter, lotSizeFilter, balances)) return;
             if (await TryCloseOutOfRangeBandsAsync(ticker, priceFilter)) return;
         }
@@ -228,6 +228,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             }
 
             // skip if we are already at the maximum number of bands
+            /*
             if (_bands.Count >= _options.MaxBands)
             {
                 _logger.LogWarning(
@@ -237,6 +238,7 @@ namespace Trader.Core.Trading.Algorithms.Step
                 // let the algo continue
                 return false;
             }
+            */
 
             // find the lower price under the current price and low band
             var lowerPrice = highBand.OpenPrice;
@@ -288,27 +290,35 @@ namespace Trader.Core.Trading.Algorithms.Step
         /// <summary>
         /// Sets sell orders for open bands that do not have them yet.
         /// </summary>
-        private async Task<bool> TrySetBandSellOrdersAsync()
+        private async Task<bool> TrySetBandSellOrdersAsync(Balances balances)
         {
-            var updated = false;
-
             foreach (var band in _bands.Where(x => x.Status == BandStatus.Open))
             {
                 if (band.CloseOrderId is 0)
                 {
+                    // acount for leftovers
+                    if (band.Quantity > balances.Asset.Free)
+                    {
+                        _logger.LogError(
+                            "{Type} {Name} cannot set band sell order of {Quantity} {Asset} for {Price} {Quote} because there are only {Balance} {Asset} free",
+                            Type, _name, band.Quantity, _options.Asset, band.ClosePrice, _options.Quote, balances.Asset.Free, _options.Asset);
+
+                        return false;
+                    }
+
                     var result = await _trader.CreateOrderAsync(new Order(_options.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, band.Quantity, null, band.ClosePrice, null, null, null, NewOrderResponseType.Full, null, _clock.UtcNow));
 
                     band.CloseOrderId = result.OrderId;
 
-                    updated = true;
-
                     _logger.LogInformation(
                         "{Type} {Name} placed {OrderType} {OrderSide} order for band of {Quantity} {Asset} with {OpenPrice} {Quote} at {ClosePrice} {Quote}",
                         Type, _name, result.Type, result.Side, result.OriginalQuantity, _options.Asset, band.OpenPrice, _options.Quote, result.Price, _options.Quote);
+
+                    return true;
                 }
             }
 
-            return updated;
+            return false;
         }
 
         /// <summary>

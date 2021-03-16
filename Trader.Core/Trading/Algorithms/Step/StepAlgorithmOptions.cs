@@ -27,8 +27,10 @@ namespace Trader.Core.Trading.Algorithms.Step
         [Range(0, 100)]
         public decimal MinQuoteAssetQuantityPerOrder { get; set; } = 11m;
 
+        /*
         [Required]
         [Range(1, 100)]
         public int MaxBands { get; set; } = 30;
+        */
     }
 }

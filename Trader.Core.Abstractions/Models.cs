@@ -388,6 +388,15 @@ namespace Trader.Core
         TimeSpan? ReceiveWindow,
         DateTime Timestamp);
 
+    public record GetAllOrders(
+        string Symbol,
+        long? OrderId,
+        DateTime? StartTime,
+        DateTime? EndTime,
+        int? Limit,
+        TimeSpan? ReceiveWindow,
+        DateTime Timestamp);
+
     public record GetAccountInfo(
         TimeSpan? ReceiveWindow,
         DateTime Timestamp);

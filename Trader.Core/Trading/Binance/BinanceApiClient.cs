@@ -219,6 +219,17 @@ namespace Trader.Core.Trading.Binance
         }
 
         /// <summary>
+        /// Gets all orders.
+        /// </summary>
+        public async Task<IEnumerable<GetOrderResponseModel>> GetAllOrdersAsync(GetAllOrdersRequestModel model, CancellationToken cancellationToken = default)
+        {
+            _ = model ?? throw new ArgumentNullException(nameof(model));
+            _ = model.Symbol ?? throw new ArgumentException($"{nameof(GetOpenOrders.Symbol)} is required");
+
+            return await _client.GetFromJsonAsync<IEnumerable<GetOrderResponseModel>>(Combine("/api/v3/allOrders", model), _jsonOptions, cancellationToken) ?? throw new BinanceUnknownResponseException();
+        }
+
+        /// <summary>
         /// Gets the account information.
         /// </summary>
         public async Task<AccountResponseModel> GetAccountInfoAsync(AccountRequestModel model, CancellationToken cancellationToken = default)

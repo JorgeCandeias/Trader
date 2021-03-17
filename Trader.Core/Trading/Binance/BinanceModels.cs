@@ -153,6 +153,15 @@
         long? RecvWindow,
         long? Timestamp);
 
+    internal record GetAllOrdersRequestModel(
+        string Symbol,
+        long? OrderId,
+        long? StartTime,
+        long? EndTime,
+        int? Limit,
+        long? RecvWindow,
+        long Timestamp);
+
     internal record GetOrderResponseModel(
         string Symbol,
         long OrderId,

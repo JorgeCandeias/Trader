@@ -151,7 +151,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             return ticker;
         }
 
-        public async Task GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo)
+        public async Task GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default)
         {
             var symbol = exchangeInfo.Symbols.Single(x => x.Name == _options.Symbol);
             var priceFilter = symbol.Filters.OfType<PriceSymbolFilter>().Single();
@@ -166,7 +166,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             var ticker = await SyncAssetPriceAsync();
 
             if (TryIdentifySignificantTrades(balances)) return;
-            if (TrySyncTradingBands(priceFilter, minNotionalFilter)) return;
+            if (TryCreateTradingBands(priceFilter, minNotionalFilter)) return;
             if (await TrySetStartingTradeAsync(symbol, ticker, priceFilter, lotSizeFilter, balances)) return;
             if (await TryCancelRogueSellOrdersAsync()) return;
             if (await TrySetBandSellOrdersAsync(balances)) return;
@@ -506,61 +506,42 @@ namespace Trader.Core.Trading.Algorithms.Step
         {
             _significant.Clear();
 
-            var total = balances.Asset.Total;
-
-            if (total is 0)
-            {
-                _logger.LogInformation(
-                    "{Type} {Name} reports current asset value is zero and will not identify significant trades",
-                    Type, _name);
-
-                return false;
-            }
-
-            // keep track of the quantities for the pruning phase
+            // go through all trades in lifo order
+            var balance = balances.Asset.Total;
             var remaining = new Dictionary<long, decimal>();
-
-            foreach (var trade in _trades.Reverse())
+            foreach (var trade in _trades.OrderByDescending(x => x.Time).ThenByDescending(x => x.Id))
             {
+                // affect the balance
                 if (trade.IsBuyer)
                 {
-                    // remove the buy trade from the total to bring it down to zero
-                    total -= trade.Quantity;
+                    // remove the buy trade from the balance to bring it close to zero
+                    balance -= trade.Quantity;
                 }
                 else
                 {
-                    // add the sell trade to the total to move it away from zero
-                    total += trade.Quantity;
+                    // add the sale trade to the balance to move it away from zero
+                    balance += trade.Quantity;
                 }
 
-                // keep as a significant trade for now
+                // keep as a significant trade
                 _significant.Add(trade);
 
-                // keep track of the quantity for the pruning phase
+                // keep track of the remaining quantity
                 remaining[trade.Id] = trade.Quantity;
 
-                // see if we got all the trades that matter
-                if (total is 0) break;
+                // see if the balance zeroed out now
+                if (balance is 0m) break;
             }
 
-            // see if we got all trades
-            /*
-            if (total is not 0)
+            if (balance is not 0)
             {
-                _logger.LogError(
-                    "{Type} {Name} could not identify all significant trades that make up the current asset balance of {Total}",
-                    Type, _name, balances.Asset.Total);
-
-                return true;
+                _logger.LogWarning(
+                    "{Type} {Name} has found {Balance} {Asset} unaccounted for when identifying significant trades",
+                    Type, _name, balance, _options.Asset);
             }
-            */
-
-            _logger.LogInformation(
-                "{Type} {Name} identified {Count} significant trades that make up the asset balance of {Total}",
-                Type, _name, _significant.Count, balances.Asset.Total);
 
             // now prune the significant trades to account interim sales
-            var subjects = _significant.ToList();
+            var subjects = _significant.OrderBy(x => x.Time).ThenBy(x => x.Id).ToList();
 
             for (var i = 0; i < subjects.Count; ++i)
             {
@@ -568,7 +549,7 @@ namespace Trader.Core.Trading.Algorithms.Step
                 var sell = subjects[i];
                 if (!sell.IsBuyer)
                 {
-                    // loop through buys in lifo order
+                    // loop through buys in lifo order to find the matching buy
                     for (var j = i - 1; j >= 0; --j)
                     {
                         var buy = subjects[j];
@@ -594,10 +575,14 @@ namespace Trader.Core.Trading.Algorithms.Step
                 }
             }
 
+            _logger.LogInformation(
+                "{Type} {Name} identified {Count} significant trades that make up the asset balance of {Total}",
+                Type, _name, _significant.Count, balances.Asset.Total);
+
             return false;
         }
 
-        private bool TrySyncTradingBands(PriceSymbolFilter priceFilter, MinNotionalSymbolFilter minNotionalFilter)
+        private bool TryCreateTradingBands(PriceSymbolFilter priceFilter, MinNotionalSymbolFilter minNotionalFilter)
         {
             _bands.Clear();
 
@@ -608,14 +593,10 @@ namespace Trader.Core.Trading.Algorithms.Step
                 {
                     Quantity = group.Sum(x => x.Quantity),
                     OpenPrice = group.Sum(x => x.Price * x.Quantity) / group.Sum(x => x.Quantity),
-                    //ClosePrice = (group.Sum(x => x.Price * x.Quantity) / group.Sum(x => x.Quantity)) * _options.TargetMultiplier,
                     Status = BandStatus.Open
                 };
 
                 band.OpenOrderIds.Add(group.Key);
-
-                // adjust the target price to the tick size
-                band.ClosePrice = Math.Floor(band.ClosePrice / priceFilter.TickSize) * priceFilter.TickSize;
 
                 _bands.Add(band);
             }
@@ -623,104 +604,54 @@ namespace Trader.Core.Trading.Algorithms.Step
             // apply the significant buy orders to the bands
             foreach (var order in _orders.Where(x => x.Side == OrderSide.Buy))
             {
-                var band = new Band
+                if (!_bands.Any(x => x.OpenOrderIds.Contains(order.OrderId)))
                 {
-                    Quantity = order.OriginalQuantity,
-                    OpenPrice = order.Price,
-                    //ClosePrice = order.Price * _options.TargetMultiplier,
-                    Status = BandStatus.Ordered
-                };
+                    var band = new Band
+                    {
+                        Quantity = order.OriginalQuantity,
+                        OpenPrice = order.Price,
+                        Status = BandStatus.Ordered
+                    };
 
-                band.OpenOrderIds.Add(order.OrderId);
+                    band.OpenOrderIds.Add(order.OrderId);
 
-                _bands.Add(band);
+                    _bands.Add(band);
+                }
             }
 
-            // adjust close prices on the bands
-            var ordered = _bands.OrderByDescending(x => x.OpenPrice).ToList();
-            for (var i = 0; i < ordered.Count; ++i)
-            {
-                var band = ordered[i];
-                var higher = i > 0 ? ordered[i - 1] : null;
+            // skip if no bands were created
+            if (_bands.Count == 0) return false;
 
-                if (higher is not null)
+            // figure out the constant step size
+            var stepSize = _bands.Max!.OpenPrice * _options.TargetPullbackRatio;
+
+            // adjust close prices on the bands
+            foreach (var band in _bands)
+            {
+                band.ClosePrice = band.OpenPrice + stepSize;
+                band.ClosePrice = Math.Floor(band.ClosePrice / priceFilter.TickSize) * priceFilter.TickSize;
+            }
+
+            // apply open sell orders to the bands
+            var used = new HashSet<Band>();
+            foreach (var order in _orders.Where(x => x.Side == OrderSide.Sell))
+            {
+                var band = _bands.Except(used).FirstOrDefault(x => x.Quantity == order.OriginalQuantity && x.ClosePrice == order.Price);
+                if (band is not null)
                 {
-                    band.ClosePrice = higher.OpenPrice;
-                }
-                else
-                {
-                    band.ClosePrice = band.OpenPrice * (1 + _options.TargetPullbackRatio);
+                    band.CloseOrderId = order.OrderId;
+                    used.Add(band);
                 }
             }
 
             // identify bands where the target sell is somehow below the notional filter
-            var small = new HashSet<Band>();
             foreach (var band in _bands.Where(x => x.Status == BandStatus.Open && x.Quantity * x.ClosePrice < minNotionalFilter.MinNotional).ToList())
             {
-                if (_bands.Remove(band))
-                {
-                    small.Add(band);
-                }
-            }
+                _logger.LogWarning(
+                    "{Type} {Name} ignoring under notional band of {Quantity} {Asset} opening at {OpenPrice} {Quote} and closing at {ClosePrice} {Quote}",
+                    Type, _name, band.Quantity, _options.Asset, band.OpenPrice, _options.Quote, band.ClosePrice, _options.Quote);
 
-            // re-adjust close prices on the bands after taking lefovers out
-            ordered = _bands.OrderByDescending(x => x.OpenPrice).ToList();
-            for (var i = 0; i < ordered.Count; ++i)
-            {
-                var band = ordered[i];
-                var higher = i > 0 ? ordered[i - 1] : null;
-
-                if (higher is not null)
-                {
-                    band.ClosePrice = higher.OpenPrice;
-                }
-                else
-                {
-                    band.ClosePrice = band.OpenPrice * (1 + _options.TargetPullbackRatio);
-                }
-            }
-
-            // group all the small bands into a new band
-            if (small.Count > 0)
-            {
-                var leftovers = new Band
-                {
-                    Quantity = small.Sum(x => x.Quantity),
-                    OpenPrice = small.Sum(x => x.OpenPrice * x.Quantity) / small.Sum(x => x.Quantity),
-                    Status = BandStatus.Open
-                };
-                leftovers.ClosePrice = leftovers.OpenPrice * (1 + _options.TargetPullbackRatio);
-                leftovers.OpenOrderIds.UnionWith(small.SelectMany(x => x.OpenOrderIds));
-
-                // see if the leftovers are sellable
-                if (leftovers.Quantity * leftovers.ClosePrice >= minNotionalFilter.MinNotional)
-                {
-                    _bands.Add(leftovers);
-                }
-                else
-                {
-                    _logger.LogWarning(
-                        "{Type} {Name} ignoring under notional leftovers of {Quantity} {Asset} opening at {OpenPrice} {Quote} and closing at {ClosePrice} {Quote}",
-                        Type, _name, leftovers.Quantity, _options.Asset, leftovers.OpenPrice, _options.Quote, leftovers.ClosePrice, _options.Quote);
-                }
-            }
-
-            // adjust all close prices to the tick size
-            foreach (var band in _bands)
-            {
-                band.ClosePrice = Math.Floor(band.ClosePrice / priceFilter.TickSize) * priceFilter.TickSize;
-            }
-
-            // identify the applicable sell orders for each band
-            var used = new HashSet<OrderQueryResult>();
-            foreach (var band in _bands)
-            {
-                var order = _orders.Except(used).FirstOrDefault(x => x.Side == OrderSide.Sell && x.OriginalQuantity == band.Quantity && x.Price == band.ClosePrice);
-                if (order is not null)
-                {
-                    band.CloseOrderId = order.OrderId;
-                    used.Add(order);
-                }
+                _bands.Remove(band);
             }
 
             _logger.LogInformation(

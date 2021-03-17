@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Trader.Core.Trading.Algorithms
 {
@@ -7,5 +9,7 @@ namespace Trader.Core.Trading.Algorithms
         string Symbol { get; }
 
         IEnumerable<AccountTrade> GetTrades();
+
+        Task GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default);
     }
 }

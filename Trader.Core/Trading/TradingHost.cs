@@ -8,8 +8,6 @@ using System.Threading.Tasks;
 using Trader.Core.Time;
 using Trader.Core.Timers;
 using Trader.Core.Trading.Algorithms;
-using Trader.Core.Trading.Algorithms.Accumulator;
-using Trader.Core.Trading.Algorithms.Step;
 using Trader.Core.Trading.ProfitCalculation;
 
 namespace Trader.Core.Trading
@@ -64,19 +62,11 @@ namespace Trader.Core.Trading
             var exchangeInfo = await _trader.GetExchangeInfoAsync();
             var accountInfo = await _trader.GetAccountInfoAsync(new GetAccountInfo(null, _clock.UtcNow));
 
-            // execute all algos in parallel
-            _tasks.Clear();
+            // execute all algos in sequence for ease of troubleshooting
             foreach (var algo in _algos)
             {
-                _tasks.Add(algo switch
-                {
-                    IStepAlgorithm step => step.GoAsync(exchangeInfo, accountInfo),
-                    IAccumulatorAlgorithm accumulator => accumulator.GoAsync(exchangeInfo, accountInfo),
-
-                    _ => throw new NotSupportedException($"Unknown Algorithm '{algo.GetType().FullName}'"),
-                });
+                await algo.GoAsync(exchangeInfo, accountInfo);
             }
-            await Task.WhenAll(_tasks);
 
             // calculate all pnl
             var profits = new List<Profit>();

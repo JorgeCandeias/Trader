@@ -57,7 +57,7 @@ namespace Trader.Core.Trading.Algorithms.Accumulator
                 Type, _name, lowBuyPrice, _options.Quote, ticker.Price, _options.Quote);
 
             // cancel all open buy orders with an open price lower than the lower band to the current price
-            var lower = orders.Where(x => x.Side == OrderSide.Buy && x.Price < lowBuyPrice).FirstOrDefault();
+            var lower = orders.FirstOrDefault(x => x.Side == OrderSide.Buy && x.Price < lowBuyPrice);
             if (lower is not null)
             {
                 var result = await _trader.CancelOrderAsync(new CancelStandardOrder(_options.Symbol, lower.OrderId, null, null, null, _clock.UtcNow), cancellationToken);

@@ -14,7 +14,7 @@
             set.Remove(item);
 
             // add the new item - this should always work at this point
-            if (!set.Add(item)) throw new Exception();
+            if (!set.Add(item)) throw new InvalidOperationException();
         }
     }
 }

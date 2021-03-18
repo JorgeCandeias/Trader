@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Trader.Core.Timers
 {
-    internal sealed class SafeTimer : ISafeTimer, IDisposable
+    internal sealed class SafeTimer : ISafeTimer
     {
         private readonly Func<CancellationToken, Task> _callback;
         private readonly TimeSpan _dueTime;

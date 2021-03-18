@@ -131,7 +131,6 @@ namespace Trader.Core.Trading.Algorithms.Step
 
                     ++newCount;
                 }
-
             } while (orders.Count > 0);
 
             // ensure known transient orders not pulled in the prior step are also updated
@@ -159,8 +158,11 @@ namespace Trader.Core.Trading.Algorithms.Step
             }
 
             // pull all new trades
-            for (ImmutableList<AccountTrade> trades; (trades = await _trader.GetAccountTradesAsync(new GetAccountTrades(_options.Symbol, null, null, (_trades.Max?.Id + 1) ?? 0, 1000, null, _clock.UtcNow), cancellationToken)).Count > 0;)
+            ImmutableList<AccountTrade> trades;
+            do
             {
+                trades = await _trader.GetAccountTradesAsync(new GetAccountTrades(_options.Symbol, null, null, (_trades.Max?.Id + 1) ?? 0, 1000, null, _clock.UtcNow), cancellationToken);
+
                 foreach (var trade in trades)
                 {
                     // add the trade to the main set
@@ -173,7 +175,7 @@ namespace Trader.Core.Trading.Algorithms.Step
                     }
                     group.Set(trade);
                 }
-            }
+            } while (trades.Count > 0);
 
             // log the activity only if necessary
             _logger.LogInformation(

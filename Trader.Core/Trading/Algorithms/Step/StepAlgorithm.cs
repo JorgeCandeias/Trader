@@ -263,7 +263,6 @@ namespace Trader.Core.Trading.Algorithms.Step
             }
 
             // skip if we are already at the maximum number of bands
-            /*
             if (_bands.Count >= _options.MaxBands)
             {
                 _logger.LogWarning(
@@ -273,12 +272,11 @@ namespace Trader.Core.Trading.Algorithms.Step
                 // let the algo continue
                 return false;
             }
-            */
 
             // find the lower price under the current price and low band
             var lowerPrice = highBand.OpenPrice;
-            var stepPrice = lowerPrice * _options.TargetPullbackRatio;
-            while (lowerPrice > ticker.Price && lowerPrice > lowBand.OpenPrice)
+            var stepPrice = highBand.ClosePrice - highBand.OpenPrice;
+            while (lowerPrice >= ticker.Price && lowerPrice >= lowBand.OpenPrice)
             {
                 lowerPrice -= stepPrice;
             }

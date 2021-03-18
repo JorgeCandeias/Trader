@@ -469,10 +469,8 @@ namespace Trader.Core.Trading.Algorithms.Step
         private bool TryIdentifySignificantOrders()
         {
             // todo: keep track of the last significant order start so we avoid slowing down when the orders grow and grow
-            //_significant.Clear();
-
-            // todo - remove the first step and go straight to lifo processing over the entire order set
-            // todo - persist all this stuff into sqlite so each tick can operate over the last data only
+            // todo: remove the first step and go straight to lifo processing over the entire order set
+            // todo: persist all this stuff into sqlite so each tick can operate over the last data only
 
             // match significant orders to trades so we can sort significant orders by execution date
             var map = new SortedOrderTradeMapSet();
@@ -484,48 +482,7 @@ namespace Trader.Core.Trading.Algorithms.Step
                 }
             }
 
-            /*
-            // keep track of stuff
-            var balance = balances.Asset.Total;
-            var remaining = new Dictionary<long, decimal>();
-
-            // go through all orders in lifo order
-            foreach (var item in map.Reverse())
-            {
-                if (item.Order.ExecutedQuantity > 0m)
-                {
-                    // affect the balance
-                    if (item.Order.Side == OrderSide.Buy)
-                    {
-                        balance -= item.Order.ExecutedQuantity;
-                    }
-                    else
-                    {
-                        balance += item.Order.ExecutedQuantity;
-                    }
-
-                    // keep as significant order for now
-                    _significant.Set(item.Order);
-
-                    // keep track of the remaining quantity
-                    remaining[item.Order.OrderId] = item.Order.ExecutedQuantity;
-
-                    // see if the balance zeroed out now
-                    if (balance is 0m) break;
-                }
-            }
-
-            if (balance is not 0)
-            {
-                _logger.LogWarning(
-                    "{Type} {Name} has found {Balance} {Asset} unaccounted for when identifying significant trades",
-                    Type, _name, balance, _options.Asset);
-            }
-            */
-
             // now prune the significant trades to account interim sales
-            //var subjects = _significant.ToList();
-
             using var subjects = ArrayPool<OrderTradeMap>.Shared.SegmentOwnerFrom(map);
 
             for (var i = 0; i < subjects.Segment.Count; ++i)

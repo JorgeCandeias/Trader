@@ -31,7 +31,7 @@ namespace System.Buffers
         ArraySegment<T> Segment { get; }
     }
 
-    internal sealed class ArraySegmentOwner<T> : IArraySegmentOwner<T>, IDisposable
+    internal sealed class ArraySegmentOwner<T> : IArraySegmentOwner<T>
     {
         private ArrayPool<T>? _pool;
         private T[]? _array;

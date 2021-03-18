@@ -258,7 +258,7 @@ namespace Trader.Core.Trading.Binance
         {
             public static TypeAccessor TypeAccessor { get; } = TypeAccessor.Create(typeof(T));
 
-            public static ImmutableArray<(string Name, string LowerName)> Names { get; } = TypeAccessor
+            public static ImmutableArray<(string Name, string LowerName)> Names { get; } = TypeCache<T>.TypeAccessor
                 .GetMembers()
                 .Select(x => (x.Name, char.ToLowerInvariant(x.Name[0]) + x.Name[1..]))
                 .ToImmutableArray();

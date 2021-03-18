@@ -65,7 +65,7 @@ namespace Trader.Core.Trading.Binance
                 {
                     var text = await content.ReadAsStringAsync(cancellationToken);
                     var hash = _signer.Sign(text);
-                    var result = text + "&signature=" + text;
+                    var result = text + "&signature=" + hash;
 
                     request.Content = new StringContent(result);
                 }

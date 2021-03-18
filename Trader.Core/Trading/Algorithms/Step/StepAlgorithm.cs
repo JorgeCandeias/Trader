@@ -37,6 +37,11 @@ namespace Trader.Core.Trading.Algorithms.Step
         private readonly CancellationTokenSource _cancellation = new();
 
         /// <summary>
+        /// Keeps track of the relevant account balances.
+        /// </summary>
+        private readonly Balances _balances = new();
+
+        /// <summary>
         /// Keeps track of all orders.
         /// </summary>
         private readonly SortedOrderSet _orders = new();
@@ -63,50 +68,41 @@ namespace Trader.Core.Trading.Algorithms.Step
 
         private readonly SortedSet<Band> _bands = new();
 
-        private Balances SyncAccountInfo(AccountInfo accountInfo)
+        private void SyncAccountInfo(AccountInfo accountInfo)
         {
             _logger.LogInformation("{Type} {Name} querying account information...", Type, _name);
 
             var gotAsset = false;
             var gotQuote = false;
 
-            var balances = new Balances();
-
             foreach (var balance in accountInfo.Balances)
             {
                 if (balance.Asset == _options.Asset)
                 {
-                    balances.Asset.Free = balance.Free;
-                    balances.Asset.Locked = balance.Locked;
-                    gotAsset = true;
+                    _balances.Asset.Free = balance.Free;
+                    _balances.Asset.Locked = balance.Locked;
 
                     _logger.LogInformation(
                         "{Type} {Name} reports balance for base asset {Asset} is (Free = {Free}, Locked = {Locked}, Total = {Total})",
                         Type, _name, _options.Asset, balance.Free, balance.Locked, balance.Free + balance.Locked);
+
+                    gotAsset = true;
                 }
                 else if (balance.Asset == _options.Quote)
                 {
-                    balances.Quote.Free = balance.Free;
-                    balances.Quote.Locked = balance.Locked;
-                    gotQuote = true;
+                    _balances.Quote.Free = balance.Free;
+                    _balances.Quote.Locked = balance.Locked;
 
                     _logger.LogInformation(
                         "{Type} {Name} reports balance for quote asset {Asset} is (Free = {Free}, Locked = {Locked}, Total = {Total})",
                         Type, _name, _options.Quote, balance.Free, balance.Locked, balance.Free + balance.Locked);
+
+                    gotQuote = true;
                 }
             }
 
-            if (!gotAsset)
-            {
-                throw new AlgorithmException($"Could not get balance for base asset {_options.Asset}");
-            }
-
-            if (!gotQuote)
-            {
-                throw new AlgorithmException($"Could not get balance for quote asset {_options.Quote}");
-            }
-
-            return balances;
+            if (!gotAsset) throw new AlgorithmException($"Could not get balance for base asset {_options.Asset}");
+            if (!gotQuote) throw new AlgorithmException($"Could not get balance for quote asset {_options.Quote}");
         }
 
         private async Task SyncAccountOrdersAsync(CancellationToken cancellationToken)
@@ -201,18 +197,18 @@ namespace Trader.Core.Trading.Algorithms.Step
             var lotSizeFilter = symbol.Filters.OfType<LotSizeSymbolFilter>().Single();
             var minNotionalFilter = symbol.Filters.OfType<MinNotionalSymbolFilter>().Single();
 
-            var balances = SyncAccountInfo(accountInfo);
+            SyncAccountInfo(accountInfo);
             await SyncAccountOrdersAsync(cancellationToken);
 
             // always update the latest price
             var ticker = await SyncAssetPriceAsync();
 
-            if (TryIdentifySignificantOrders(balances)) return;
+            if (TryIdentifySignificantOrders()) return;
             if (TryCreateTradingBands(priceFilter, minNotionalFilter)) return;
-            if (await TrySetStartingTradeAsync(symbol, ticker, priceFilter, lotSizeFilter, balances)) return;
+            if (await TrySetStartingTradeAsync(symbol, ticker, priceFilter, lotSizeFilter)) return;
             if (await TryCancelRogueSellOrdersAsync()) return;
-            if (await TrySetBandSellOrdersAsync(balances)) return;
-            if (await TryCreateLowerBandOrderAsync(symbol, ticker, priceFilter, lotSizeFilter, balances)) return;
+            if (await TrySetBandSellOrdersAsync()) return;
+            if (await TryCreateLowerBandOrderAsync(symbol, ticker, priceFilter, lotSizeFilter)) return;
             if (await TryCloseOutOfRangeBandsAsync(ticker, priceFilter)) return;
         }
 
@@ -241,7 +237,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             return true;
         }
 
-        private async Task<bool> TryCreateLowerBandOrderAsync(Symbol symbol, SymbolPriceTicker ticker, PriceSymbolFilter priceFilter, LotSizeSymbolFilter lotSizeFilter, Balances balances)
+        private async Task<bool> TryCreateLowerBandOrderAsync(Symbol symbol, SymbolPriceTicker ticker, PriceSymbolFilter priceFilter, LotSizeSymbolFilter lotSizeFilter)
         {
             // identify the highest and lowest bands
             var highBand = _bands.Max;
@@ -297,14 +293,14 @@ namespace Trader.Core.Trading.Algorithms.Step
             lowerPrice = Math.Floor(lowerPrice / priceFilter.TickSize) * priceFilter.TickSize;
 
             // calculate the amount to pay with
-            var total = Math.Round(Math.Max(balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand, _options.MinQuoteAssetQuantityPerOrder), symbol.QuoteAssetPrecision);
+            var total = Math.Round(Math.Max(_balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand, _options.MinQuoteAssetQuantityPerOrder), symbol.QuoteAssetPrecision);
 
             // ensure there is enough quote asset for it
-            if (total > balances.Quote.Free)
+            if (total > _balances.Quote.Free)
             {
                 _logger.LogWarning(
                     "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}",
-                    Type, _name, total, _options.Quote, balances.Quote.Free, _options.Quote);
+                    Type, _name, total, _options.Quote, _balances.Quote.Free, _options.Quote);
 
                 // there's no money for creating bands so let algo continue
                 return false;
@@ -329,18 +325,18 @@ namespace Trader.Core.Trading.Algorithms.Step
         /// <summary>
         /// Sets sell orders for open bands that do not have them yet.
         /// </summary>
-        private async Task<bool> TrySetBandSellOrdersAsync(Balances balances)
+        private async Task<bool> TrySetBandSellOrdersAsync()
         {
             foreach (var band in _bands.Where(x => x.Status == BandStatus.Open))
             {
                 if (band.CloseOrderId is 0)
                 {
                     // acount for leftovers
-                    if (band.Quantity > balances.Asset.Free)
+                    if (band.Quantity > _balances.Asset.Free)
                     {
                         _logger.LogError(
                             "{Type} {Name} cannot set band sell order of {Quantity} {Asset} for {Price} {Quote} because there are only {Balance} {Asset} free",
-                            Type, _name, band.Quantity, _options.Asset, band.ClosePrice, _options.Quote, balances.Asset.Free, _options.Asset);
+                            Type, _name, band.Quantity, _options.Asset, band.ClosePrice, _options.Quote, _balances.Asset.Free, _options.Asset);
 
                         return false;
                     }
@@ -385,7 +381,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             return fail;
         }
 
-        private async Task<bool> TrySetStartingTradeAsync(Symbol symbol, SymbolPriceTicker ticker, PriceSymbolFilter priceFilter, LotSizeSymbolFilter lotSizeFilter, Balances balances)
+        private async Task<bool> TrySetStartingTradeAsync(Symbol symbol, SymbolPriceTicker ticker, PriceSymbolFilter priceFilter, LotSizeSymbolFilter lotSizeFilter)
         {
             // only manage the opening if there are no bands or only a single order band to move around
             if (_bands.Count == 0 || (_bands.Count == 1 && _bands.Single().Status == BandStatus.Ordered))
@@ -423,14 +419,14 @@ namespace Trader.Core.Trading.Algorithms.Step
                 }
 
                 // calculate the amount to pay with
-                var total = Math.Round(Math.Max(balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand, _options.MinQuoteAssetQuantityPerOrder), symbol.QuoteAssetPrecision);
+                var total = Math.Round(Math.Max(_balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand, _options.MinQuoteAssetQuantityPerOrder), symbol.QuoteAssetPrecision);
 
                 // ensure there is enough quote asset for it
-                if (total > balances.Quote.Free)
+                if (total > _balances.Quote.Free)
                 {
                     _logger.LogWarning(
                         "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}",
-                        Type, _name, total, _options.Quote, balances.Quote.Free, _options.Quote);
+                        Type, _name, total, _options.Quote, _balances.Quote.Free, _options.Quote);
 
                     return false;
                 }
@@ -470,7 +466,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             }
         }
 
-        private bool TryIdentifySignificantOrders(Balances balances)
+        private bool TryIdentifySignificantOrders()
         {
             // todo: keep track of the last significant order start so we avoid slowing down when the orders grow and grow
             //_significant.Clear();
@@ -597,7 +593,7 @@ namespace Trader.Core.Trading.Algorithms.Step
 
             _logger.LogInformation(
                 "{Type} {Name} identified {Count} significant trades that make up the asset balance of {Total}",
-                Type, _name, _significant.Count, balances.Asset.Total);
+                Type, _name, _significant.Count, _balances.Asset.Total);
 
             return false;
         }

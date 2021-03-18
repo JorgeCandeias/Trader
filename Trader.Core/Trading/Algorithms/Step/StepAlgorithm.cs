@@ -113,8 +113,11 @@ namespace Trader.Core.Trading.Algorithms.Step
         {
             // pull all new orders page by page
             var newCount = 0;
-            for (ImmutableList<OrderQueryResult> orders; (orders = await _trader.GetAllOrdersAsync(new GetAllOrders(_options.Symbol, (_orders.Max?.OrderId + 1) ?? 0, null, null, 1000, null, _clock.UtcNow), cancellationToken)).Count > 0;)
+            ImmutableList<OrderQueryResult> orders;
+            do
             {
+                orders = await _trader.GetAllOrdersAsync(new GetAllOrders(_options.Symbol, (_orders.Max?.OrderId + 1) ?? 0, null, null, 1000, null, _clock.UtcNow), cancellationToken);
+
                 foreach (var order in orders)
                 {
                     // add the new pulled order
@@ -128,7 +131,8 @@ namespace Trader.Core.Trading.Algorithms.Step
 
                     ++newCount;
                 }
-            }
+
+            } while (orders.Count > 0);
 
             // ensure known transient orders not pulled in the prior step are also updated
             var updatedCount = 0;

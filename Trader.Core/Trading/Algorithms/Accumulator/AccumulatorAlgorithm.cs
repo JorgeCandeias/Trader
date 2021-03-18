@@ -42,7 +42,6 @@ namespace Trader.Core.Trading.Algorithms.Accumulator
             var symbol = exchangeInfo.Symbols.Single(x => x.Name == _options.Symbol);
             var priceFilter = symbol.Filters.OfType<PriceSymbolFilter>().Single();
             var lotSizeFilter = symbol.Filters.OfType<LotSizeSymbolFilter>().Single();
-            var minNotionalFilter = symbol.Filters.OfType<MinNotionalSymbolFilter>().Single();
 
             // get the account free quote balance
             var free = accountInfo.Balances.Single(x => x.Asset == _options.Quote).Free;

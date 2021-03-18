@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -36,19 +37,29 @@ namespace Trader.Core.Trading.Algorithms.Step
         private readonly CancellationTokenSource _cancellation = new();
 
         /// <summary>
-        /// Set of trades synced from the trading service.
+        /// Keeps track of all orders.
         /// </summary>
-        private readonly SortedSet<AccountTrade> _trades = new(new AccountTradeIdComparer());
+        private readonly SortedOrderSet _orders = new();
 
         /// <summary>
-        /// Set of trades that compose the current asset balance.
+        /// Set of orders that compose the current asset balance.
         /// </summary>
-        private readonly SortedSet<AccountTrade> _significant = new(new AccountTradeIdComparer());
+        private readonly SortedOrderSet _significant = new();
 
         /// <summary>
-        /// Descending set of open orders synced from the trading service.
+        /// Set of orders that are open now.
         /// </summary>
-        private readonly SortedSet<OrderQueryResult> _orders = new(new OrderQueryResultOrderIdComparer(false));
+        private readonly SortedOrderSet _transient = new();
+
+        /// <summary>
+        /// Keeps track of all trades.
+        /// </summary>
+        private readonly SortedTradeSet _trades = new();
+
+        /// <summary>
+        /// Keeps an index of trade groups by order id.
+        /// </summary>
+        private readonly Dictionary<long, SortedTradeSet> _tradesByOrderId = new();
 
         private readonly SortedSet<Band> _bands = new();
 
@@ -98,46 +109,72 @@ namespace Trader.Core.Trading.Algorithms.Step
             return balances;
         }
 
-        private async Task SyncAccountTradesAsync()
+        private async Task SyncAccountOrdersAsync(CancellationToken cancellationToken)
         {
-            var trades = await _trader.GetAccountTradesAsync(new GetAccountTrades(_options.Symbol, null, null, _trades.Max?.Id + 1, 1000, null, _clock.UtcNow), _cancellation.Token);
-
-            if (trades.Count > 0)
+            // pull all new orders page by page
+            var newCount = 0;
+            for (ImmutableList<OrderQueryResult> orders; (orders = await _trader.GetAllOrdersAsync(new GetAllOrders(_options.Symbol, (_orders.Max?.OrderId + 1) ?? 0, null, null, 1000, null, _clock.UtcNow), cancellationToken)).Count > 0;)
             {
-                _trades.UnionWith(trades);
-
-                _logger.LogInformation(
-                    "{Type} {Name} got {Count} new trades from the exchange for a local total of {Total}",
-                    Type, _name, trades.Count, _trades.Count);
-
-                // remove redundant orders - this can happen when orders execute between api calls to orders and trades
-                foreach (var trade in _trades)
+                foreach (var order in orders)
                 {
-                    var removed = _orders.RemoveWhere(x => x.OrderId == trade.OrderId);
-                    if (removed > 0)
+                    // add the new pulled order
+                    _orders.Set(order);
+
+                    // if the order is transient then index it
+                    if (order.Status.IsTransientStatus())
                     {
-                        _logger.LogWarning(
-                            "{Type} {Name} removed {Count} redundant orders",
-                            Type, _name, removed);
+                        _transient.Set(order);
                     }
+
+                    ++newCount;
                 }
             }
-        }
 
-        private async Task SyncAccountOpenOrdersAsync()
-        {
-            var orders = await _trader.GetOpenOrdersAsync(new GetOpenOrders(_options.Symbol, null, _clock.UtcNow));
-
-            _orders.Clear();
-
-            if (orders.Count > 0)
+            // ensure known transient orders not pulled in the prior step are also updated
+            var updatedCount = 0;
+            using var copy = ArrayPool<OrderQueryResult>.Shared.SegmentOwnerFrom(_transient);
+            foreach (var order in copy.Segment)
             {
-                _orders.UnionWith(orders);
+                // get the updated order
+                var updated = await _trader.GetOrderAsync(new OrderQuery(_options.Symbol, order.OrderId, null, null, _clock.UtcNow), cancellationToken);
 
-                _logger.LogInformation(
-                    "{Type} {Name} got {Count} open orders from the exchange",
-                    Type, _name, orders.Count);
+                // update the known order
+                _orders.Set(updated);
+
+                // update the transient index either way
+                if (updated.Status.IsTransientStatus())
+                {
+                    _transient.Set(updated);
+                }
+                else
+                {
+                    _transient.Remove(updated);
+                }
+
+                ++updatedCount;
             }
+
+            // pull all new trades
+            for (ImmutableList<AccountTrade> trades; (trades = await _trader.GetAccountTradesAsync(new GetAccountTrades(_options.Symbol, null, null, (_trades.Max?.Id + 1) ?? 0, 1000, null, _clock.UtcNow), cancellationToken)).Count > 0;)
+            {
+                foreach (var trade in trades)
+                {
+                    // add the trade to the main set
+                    _trades.Set(trade);
+
+                    // add the trade to the order index
+                    if (!_tradesByOrderId.TryGetValue(trade.OrderId, out var group))
+                    {
+                        _tradesByOrderId[trade.OrderId] = group = new SortedTradeSet();
+                    }
+                    group.Set(trade);
+                }
+            }
+
+            // log the activity only if necessary
+            _logger.LogInformation(
+                "{Type} {Name} pulled {NewCount} new and {UpdatedCount} updated open orders",
+                Type, _name, newCount, updatedCount, _orders.Count);
         }
 
         private async Task<SymbolPriceTicker> SyncAssetPriceAsync()
@@ -159,13 +196,12 @@ namespace Trader.Core.Trading.Algorithms.Step
             var minNotionalFilter = symbol.Filters.OfType<MinNotionalSymbolFilter>().Single();
 
             var balances = SyncAccountInfo(accountInfo);
-            await SyncAccountOpenOrdersAsync();
-            await SyncAccountTradesAsync();
+            await SyncAccountOrdersAsync(cancellationToken);
 
             // always update the latest price
             var ticker = await SyncAssetPriceAsync();
 
-            if (TryIdentifySignificantTrades(balances)) return;
+            if (TryIdentifySignificantOrders(balances)) return;
             if (TryCreateTradingBands(priceFilter, minNotionalFilter)) return;
             if (await TrySetStartingTradeAsync(symbol, ticker, priceFilter, lotSizeFilter, balances)) return;
             if (await TryCancelRogueSellOrdersAsync()) return;
@@ -176,28 +212,27 @@ namespace Trader.Core.Trading.Algorithms.Step
 
         private async Task<bool> TryCloseOutOfRangeBandsAsync(SymbolPriceTicker ticker, PriceSymbolFilter priceFilter)
         {
-            // take the lower two bands
-            var bands = _bands.OrderBy(x => x.OpenPrice).Take(2).ToList();
+            // take the lower band
+            var band = _bands.Min;
+            if (band is null) return false;
 
-            // if there are not at least two bands then skip this step
-            if (bands.Count < 2) return false;
+            // ensure the lower band is on ordered status
+            if (band.Status != BandStatus.Ordered) return false;
 
-            // if the ticker is above the upper band then close the lower band
-            if (ticker.Price > bands[1].OpenPrice && bands[0].Status == BandStatus.Ordered)
+            // ensure the lower band is covering the current price
+            if (band.OpenPrice < ticker.Price && band.ClosePrice > ticker.Price) return false;
+
+            // if the above checks fails then close the band
+            foreach (var orderId in band.OpenOrderIds)
             {
-                foreach (var orderId in bands[0].OpenOrderIds)
-                {
-                    var result = await _trader.CancelOrderAsync(new CancelStandardOrder(_options.Symbol, orderId, null, null, null, _clock.UtcNow));
+                var result = await _trader.CancelOrderAsync(new CancelStandardOrder(_options.Symbol, orderId, null, null, null, _clock.UtcNow));
 
-                    _logger.LogInformation(
-                        "{Type} {Name} closed out-of-range {OrderSide} {OrderType} for {Quantity} {Asset} at {Price} {Quote}",
-                        Type, _name, result.Side, result.Type, result.OriginalQuantity, _options.Asset, result.Price, _options.Quote);
-                }
-
-                return true;
+                _logger.LogInformation(
+                    "{Type} {Name} closed out-of-range {OrderSide} {OrderType} for {Quantity} {Asset} at {Price} {Quote}",
+                    Type, _name, result.Side, result.Type, result.OriginalQuantity, _options.Asset, result.Price, _options.Quote);
             }
 
-            return false;
+            return true;
         }
 
         private async Task<bool> TryCreateLowerBandOrderAsync(Symbol symbol, SymbolPriceTicker ticker, PriceSymbolFilter priceFilter, LotSizeSymbolFilter lotSizeFilter, Balances balances)
@@ -328,7 +363,7 @@ namespace Trader.Core.Trading.Algorithms.Step
         {
             var fail = false;
 
-            foreach (var order in _orders.Where(x => x.Side == OrderSide.Sell))
+            foreach (var order in _orders.Where(x => x.Side == OrderSide.Sell && x.Status.IsTransientStatus()))
             {
                 if (!_bands.Any(x => x.CloseOrderId == order.OrderId))
                 {
@@ -351,49 +386,65 @@ namespace Trader.Core.Trading.Algorithms.Step
             // only manage the opening if there are no bands or only a single order band to move around
             if (_bands.Count == 0 || (_bands.Count == 1 && _bands.Single().Status == BandStatus.Ordered))
             {
-                // cancel any rogue open sell orders - this should not be possible given balance is zero at this point
-                /*
-                foreach (var order in _orders)
+                // identify the target low price for the first buy
+                var lowBuyPrice = ticker.Price * (1m - _options.TargetPullbackRatio);
+
+                // under adjust the buy price to the tick size
+                lowBuyPrice = Math.Floor(lowBuyPrice / priceFilter.TickSize) * priceFilter.TickSize;
+
+                _logger.LogInformation(
+                    "{Type} {Name} identified first buy target price at {LowPrice} {LowQuote} with current price at {CurrentPrice} {CurrentQuote}",
+                    Type, _name, lowBuyPrice, _options.Quote, ticker.Price, _options.Quote);
+
+                // cancel the lowest open buy order with a open price lower than the lower band to the current price
+                foreach (var order in _orders.Where(x => x.Side == OrderSide.Buy && x.Status.IsTransientStatus()))
                 {
-                    if (order.Side is OrderSide.Sell)
+                    if (order.Price < lowBuyPrice)
                     {
-                        var cancelled = await _trader.CancelOrderAsync(new CancelStandardOrder(_options.Symbol, order.OrderId, null, null, null, _clock.UtcNow), _cancellation.Token);
+                        var cancelled = await _trader.CancelOrderAsync(new CancelStandardOrder(_options.Symbol, order.OrderId, null, null, null, _clock.UtcNow));
 
-                        _logger.LogWarning(
-                            "{Type} {Name} cancelled rogue sell order at price {Price} for {Quantity} units",
+                        _logger.LogInformation(
+                            "{Type} {Name} cancelled low starting open order with price {Price} for {Quantity} units",
                             Type, _name, cancelled.Price, cancelled.OriginalQuantity);
-
-                        // skip the rest of this tick to let the algo resync
-                        return true;
                     }
+                    else
+                    {
+                        _logger.LogInformation(
+                            "{Type} {Name} identified a closer opening order for {Quantity} {Asset} at {Price} {Quote} and will leave as-is",
+                            Type, _name, order.OriginalQuantity, _options.Asset, order.Price, _options.Quote);
+                    }
+
+                    // let the algo resync
+                    return true;
                 }
-                */
 
-                /*
                 // calculate the amount to pay with
-                var total = Math.Round(Math.Max(_balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand, _options.MinQuoteAssetQuantityPerOrder), _parameters.Symbol.QuoteAssetPrecision);
-
-                // adjust to price tick size
-                total = Math.Floor(total / _parameters.PriceFilter.TickSize) * _parameters.PriceFilter.TickSize;
+                var total = Math.Round(Math.Max(balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand, _options.MinQuoteAssetQuantityPerOrder), symbol.QuoteAssetPrecision);
 
                 // ensure there is enough quote asset for it
-                if (total > _balances.Quote.Free)
+                if (total > balances.Quote.Free)
                 {
                     _logger.LogWarning(
                         "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}",
-                        Type, _name, total, _options.Quote, _balances.Quote.Free, _options.Quote);
+                        Type, _name, total, _options.Quote, balances.Quote.Free, _options.Quote);
 
                     return false;
                 }
 
+                // calculate the appropriate quantity to buy
+                var quantity = total / lowBuyPrice;
+
+                // round it down to the lot size step
+                quantity = Math.Floor(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
+
                 var result = await _trader.CreateOrderAsync(new Order(
                     _options.Symbol,
                     OrderSide.Buy,
-                    OrderType.Market,
+                    OrderType.Limit,
+                    TimeInForce.GoodTillCanceled,
+                    quantity,
                     null,
-                    null,
-                    total,
-                    null,
+                    lowBuyPrice,
                     null,
                     null,
                     null,
@@ -406,95 +457,8 @@ namespace Trader.Core.Trading.Algorithms.Step
                     "{Type} {Name} created {OrderSide} {OrderType} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",
                     Type, _name, result.Side, result.Type, result.Symbol, result.OriginalQuantity, _options.Asset, result.Price, _options.Quote, result.OriginalQuantity * result.Price, _options.Quote);
 
+                // skip the rest of this tick to let the algo resync
                 return true;
-                */
-
-                // identify the target low price for the first buy
-                var lowBuyPrice = ticker.Price * (1m - _options.TargetPullbackRatio);
-
-                // under adjust the buy price to the tick size
-                lowBuyPrice = Math.Floor(lowBuyPrice / priceFilter.TickSize) * priceFilter.TickSize;
-
-                _logger.LogInformation(
-                    "{Type} {Name} identified first buy target price at {LowPrice} {LowQuote} with current price at {CurrentPrice} {CurrentQuote}",
-                    Type, _name, lowBuyPrice, _options.Quote, ticker.Price, _options.Quote);
-
-                // cancel all open buy orders with a open price lower than the lower band to the current price
-                foreach (var order in _orders.Where(x => x.Side == OrderSide.Buy))
-                {
-                    if (order.Price < lowBuyPrice)
-                    {
-                        var result = await _trader.CancelOrderAsync(new CancelStandardOrder(_options.Symbol, order.OrderId, null, null, null, _clock.UtcNow));
-
-                        _logger.LogInformation(
-                            "{Type} {Name} cancelled low starting open order with price {Price} for {Quantity} units",
-                            Type, _name, result.Price, result.OriginalQuantity);
-
-                        _orders.Remove(order);
-
-                        break;
-                    }
-                    else
-                    {
-                        _logger.LogInformation(
-                            "{Type} {Name} identified a closer opening order for {Quantity} {Asset} at {Price} {Quote} and will leave as-is",
-                            Type, _name, order.OriginalQuantity, _options.Asset, order.Price, _options.Quote);
-
-                        return true;
-                    }
-                }
-
-                // if there are still orders left then leave them be till the next tick
-                if (_orders.Count > 0)
-                {
-                    return true;
-                }
-                else
-                {
-                    // put the starting order through
-
-                    // calculate the amount to pay with
-                    var total = Math.Round(Math.Max(balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand, _options.MinQuoteAssetQuantityPerOrder), symbol.QuoteAssetPrecision);
-
-                    // ensure there is enough quote asset for it
-                    if (total > balances.Quote.Free)
-                    {
-                        _logger.LogWarning(
-                            "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}",
-                            Type, _name, total, _options.Quote, balances.Quote.Free, _options.Quote);
-
-                        return false;
-                    }
-
-                    // calculate the appropriate quantity to buy
-                    var quantity = total / lowBuyPrice;
-
-                    // round it down to the lot size step
-                    quantity = Math.Floor(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
-
-                    var order = await _trader.CreateOrderAsync(new Order(
-                        _options.Symbol,
-                        OrderSide.Buy,
-                        OrderType.Limit,
-                        TimeInForce.GoodTillCanceled,
-                        quantity,
-                        null,
-                        lowBuyPrice,
-                        null,
-                        null,
-                        null,
-                        NewOrderResponseType.Full,
-                        null,
-                        _clock.UtcNow),
-                        _cancellation.Token);
-
-                    _logger.LogInformation(
-                        "{Type} {Name} created {OrderSide} {OrderType} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",
-                        Type, _name, order.Side, order.Type, order.Symbol, order.OriginalQuantity, _options.Asset, order.Price, _options.Quote, order.OriginalQuantity * order.Price, _options.Quote);
-
-                    // skip the rest of this tick to let the algo resync
-                    return true;
-                }
             }
             else
             {
@@ -502,35 +466,53 @@ namespace Trader.Core.Trading.Algorithms.Step
             }
         }
 
-        private bool TryIdentifySignificantTrades(Balances balances)
+        private bool TryIdentifySignificantOrders(Balances balances)
         {
-            _significant.Clear();
+            // todo: keep track of the last significant order start so we avoid slowing down when the orders grow and grow
+            //_significant.Clear();
 
-            // go through all trades in lifo order
+            // todo - remove the first step and go straight to lifo processing over the entire order set
+            // todo - persist all this stuff into sqlite so each tick can operate over the last data only
+
+            // match significant orders to trades so we can sort significant orders by execution date
+            var map = new SortedOrderTradeMapSet();
+            foreach (var order in _orders)
+            {
+                if (order.ExecutedQuantity > 0m)
+                {
+                    map.Add(new OrderTradeMap(order, _tradesByOrderId.TryGetValue(order.OrderId, out var trades) ? trades.ToImmutableList() : ImmutableList<AccountTrade>.Empty));
+                }
+            }
+
+            /*
+            // keep track of stuff
             var balance = balances.Asset.Total;
             var remaining = new Dictionary<long, decimal>();
-            foreach (var trade in _trades.OrderByDescending(x => x.Time).ThenByDescending(x => x.Id))
+
+            // go through all orders in lifo order
+            foreach (var item in map.Reverse())
             {
-                // affect the balance
-                if (trade.IsBuyer)
+                if (item.Order.ExecutedQuantity > 0m)
                 {
-                    // remove the buy trade from the balance to bring it close to zero
-                    balance -= trade.Quantity;
+                    // affect the balance
+                    if (item.Order.Side == OrderSide.Buy)
+                    {
+                        balance -= item.Order.ExecutedQuantity;
+                    }
+                    else
+                    {
+                        balance += item.Order.ExecutedQuantity;
+                    }
+
+                    // keep as significant order for now
+                    _significant.Set(item.Order);
+
+                    // keep track of the remaining quantity
+                    remaining[item.Order.OrderId] = item.Order.ExecutedQuantity;
+
+                    // see if the balance zeroed out now
+                    if (balance is 0m) break;
                 }
-                else
-                {
-                    // add the sale trade to the balance to move it away from zero
-                    balance += trade.Quantity;
-                }
-
-                // keep as a significant trade
-                _significant.Add(trade);
-
-                // keep track of the remaining quantity
-                remaining[trade.Id] = trade.Quantity;
-
-                // see if the balance zeroed out now
-                if (balance is 0m) break;
             }
 
             if (balance is not 0)
@@ -539,39 +521,73 @@ namespace Trader.Core.Trading.Algorithms.Step
                     "{Type} {Name} has found {Balance} {Asset} unaccounted for when identifying significant trades",
                     Type, _name, balance, _options.Asset);
             }
+            */
 
             // now prune the significant trades to account interim sales
-            var subjects = _significant.OrderBy(x => x.Time).ThenBy(x => x.Id).ToList();
+            //var subjects = _significant.ToList();
 
-            for (var i = 0; i < subjects.Count; ++i)
+            using var subjects = ArrayPool<OrderTradeMap>.Shared.SegmentOwnerFrom(map);
+
+            for (var i = 0; i < subjects.Segment.Count; ++i)
             {
                 // loop through sales forward
-                var sell = subjects[i];
-                if (!sell.IsBuyer)
+                var sell = subjects.Segment[i];
+                if (sell.Order.Side == OrderSide.Sell)
                 {
                     // loop through buys in lifo order to find the matching buy
                     for (var j = i - 1; j >= 0; --j)
                     {
-                        var buy = subjects[j];
-                        if (buy.IsBuyer)
+                        var buy = subjects.Segment[j];
+                        if (buy.Order.Side == OrderSide.Buy)
                         {
                             // remove as much as possible from the buy to satisfy the sell
-                            var take = Math.Min(remaining[buy.Id], remaining[sell.Id]);
-                            remaining[buy.Id] -= take;
-                            remaining[sell.Id] -= take;
+                            var take = Math.Min(buy.RemainingExecutedQuantity, sell.RemainingExecutedQuantity);
+                            buy.RemainingExecutedQuantity -= take;
+                            sell.RemainingExecutedQuantity -= take;
+
+                            // if the sale is filled then we can break early
+                            if (sell.RemainingExecutedQuantity == 0) break;
                         }
+                    }
+
+                    // if the sell was not filled then we're missing some data
+                    if (sell.RemainingExecutedQuantity != 0)
+                    {
+                        // something went very wrong if we got here
+                        _logger.LogError(
+                            "{Type} {Name} could not fill significant {Side} order {OrderId} with for {Quantity} {Asset} at {Price} {Quote}",
+                            Type, _name, sell.Order.Side, sell.Order.OrderId, sell.Order.ExecutedQuantity, _options.Asset, sell.Order.Price, _options.Quote);
+
+                        return true;
                     }
                 }
             }
 
-            // keep only buys with some quantity left
+            // keep only buys with some quantity left to sell
             _significant.Clear();
-            foreach (var subject in subjects)
+            foreach (var subject in subjects.Segment)
             {
-                var quantity = remaining[subject.Id];
-                if (subject.IsBuyer && quantity > 0)
+                if (subject.Order.Side == OrderSide.Buy && subject.RemainingExecutedQuantity > 0)
                 {
-                    _significant.Add(new AccountTrade(subject.Symbol, subject.Id, subject.OrderId, subject.OrderListId, subject.Price, quantity, subject.QuoteQuantity, subject.Commission, subject.CommissionAsset, subject.Time, subject.IsBuyer, subject.IsMaker, subject.IsBestMatch));
+                    _significant.Add(new OrderQueryResult(
+                        subject.Order.Symbol,
+                        subject.Order.OrderId,
+                        subject.Order.OrderListId,
+                        subject.Order.ClientOrderId,
+                        subject.Order.Price,
+                        subject.Order.OriginalQuantity,
+                        subject.RemainingExecutedQuantity,
+                        subject.Order.CummulativeQuoteQuantity,
+                        subject.Order.Status,
+                        subject.Order.TimeInForce,
+                        subject.Order.Type,
+                        subject.Order.Side,
+                        subject.Order.StopPrice,
+                        subject.Order.IcebergQuantity,
+                        subject.Order.Time,
+                        subject.Order.UpdateTime,
+                        subject.Order.IsWorking,
+                        subject.Order.OriginalQuoteOrderQuantity));
                 }
             }
 
@@ -586,37 +602,44 @@ namespace Trader.Core.Trading.Algorithms.Step
         {
             _bands.Clear();
 
-            // apply the significant buy trades to the bands
-            foreach (var group in _significant.Where(x => x.IsBuyer).GroupBy(x => x.OrderId))
-            {
-                var band = new Band
-                {
-                    Quantity = group.Sum(x => x.Quantity),
-                    OpenPrice = group.Sum(x => x.Price * x.Quantity) / group.Sum(x => x.Quantity),
-                    Status = BandStatus.Open
-                };
-
-                band.OpenOrderIds.Add(group.Key);
-
-                _bands.Add(band);
-            }
-
             // apply the significant buy orders to the bands
-            foreach (var order in _orders.Where(x => x.Side == OrderSide.Buy))
+            foreach (var order in _significant.Where(x => x.Side == OrderSide.Buy))
             {
-                if (!_bands.Any(x => x.OpenOrderIds.Contains(order.OrderId)))
+                if (order.Status.IsTransientStatus())
                 {
-                    var band = new Band
+                    // add transient orders with original quantity
+                    _bands.Add(new Band
                     {
                         Quantity = order.OriginalQuantity,
                         OpenPrice = order.Price,
+                        OpenOrderIds = { order.OrderId },
                         Status = BandStatus.Ordered
-                    };
-
-                    band.OpenOrderIds.Add(order.OrderId);
-
-                    _bands.Add(band);
+                    });
                 }
+                else
+                {
+                    // add completed orders with executed quantity
+                    _bands.Add(new Band
+                    {
+                        Quantity = order.ExecutedQuantity,
+                        OpenPrice = order.Price,
+                        OpenOrderIds = { order.OrderId },
+                        Status = BandStatus.Open
+                    });
+                }
+            }
+
+            // apply the non-significant open buy orders to the bands
+            foreach (var order in _transient.Where(x => x.Side == OrderSide.Buy && x.ExecutedQuantity == 0m))
+            {
+                // add transient orders with original quantity
+                _bands.Add(new Band
+                {
+                    Quantity = order.OriginalQuantity,
+                    OpenPrice = order.Price,
+                    OpenOrderIds = { order.OrderId },
+                    Status = BandStatus.Ordered
+                });
             }
 
             // skip if no bands were created
@@ -633,10 +656,11 @@ namespace Trader.Core.Trading.Algorithms.Step
             }
 
             // apply open sell orders to the bands
+            // todo: optimize this enumeration on all the orders - we will only need a few
             var used = new HashSet<Band>();
-            foreach (var order in _orders.Where(x => x.Side == OrderSide.Sell))
+            foreach (var order in _orders.Where(x => x.Side == OrderSide.Sell && x.Status.IsTransientStatus()))
             {
-                var band = _bands.Except(used).FirstOrDefault(x => x.Quantity == order.OriginalQuantity && x.ClosePrice == order.Price);
+                var band = _bands.Except(used).FirstOrDefault(x => x.Status == BandStatus.Open && x.Quantity == order.OriginalQuantity && x.ClosePrice == order.Price);
                 if (band is not null)
                 {
                     band.CloseOrderId = order.OrderId;
@@ -647,6 +671,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             // identify bands where the target sell is somehow below the notional filter
             foreach (var band in _bands.Where(x => x.Status == BandStatus.Open && x.Quantity * x.ClosePrice < minNotionalFilter.MinNotional).ToList())
             {
+                // todo: group these bands and sell them together
                 _logger.LogWarning(
                     "{Type} {Name} ignoring under notional band of {Quantity} {Asset} opening at {OpenPrice} {Quote} and closing at {ClosePrice} {Quote}",
                     Type, _name, band.Quantity, _options.Asset, band.OpenPrice, _options.Quote, band.ClosePrice, _options.Quote);
@@ -662,9 +687,9 @@ namespace Trader.Core.Trading.Algorithms.Step
             return false;
         }
 
-        public IEnumerable<AccountTrade> GetTrades()
+        public Task<ImmutableList<AccountTrade>> GetTradesAsync()
         {
-            return _trades.ToImmutableList();
+            return Task.FromResult(_trades.ToImmutableList());
         }
 
         #region Classes
@@ -717,6 +742,108 @@ namespace Trader.Core.Trading.Algorithms.Step
         {
             public Balance Asset { get; } = new();
             public Balance Quote { get; } = new();
+        }
+
+        private class SortedOrderSet : SortedSet<OrderQueryResult>
+        {
+            public SortedOrderSet() : base(OrderIdComparer.Instance)
+            {
+            }
+
+            private class OrderIdComparer : IComparer<OrderQueryResult>
+            {
+                private OrderIdComparer()
+                {
+                }
+
+                public int Compare(OrderQueryResult? x, OrderQueryResult? y)
+                {
+                    if (x is null) throw new ArgumentNullException(nameof(x));
+                    if (y is null) throw new ArgumentNullException(nameof(y));
+
+                    return x.OrderId.CompareTo(y.OrderId);
+                }
+
+                public static OrderIdComparer Instance { get; } = new OrderIdComparer();
+            }
+        }
+
+        private class SortedTradeSet : SortedSet<AccountTrade>
+        {
+            public SortedTradeSet() : base(TradeIdComparer.Instance)
+            {
+            }
+
+            private class TradeIdComparer : IComparer<AccountTrade>
+            {
+                private TradeIdComparer()
+                {
+                }
+
+                public int Compare(AccountTrade? x, AccountTrade? y)
+                {
+                    if (x is null) throw new ArgumentNullException(nameof(x));
+                    if (y is null) throw new ArgumentNullException(nameof(y));
+
+                    return x.Id.CompareTo(y.Id);
+                }
+
+                public static TradeIdComparer Instance { get; } = new TradeIdComparer();
+            }
+        }
+
+        /// <summary>
+        /// Maps an order to any resulting trades.
+        /// </summary>
+        private class OrderTradeMap
+        {
+            public OrderTradeMap(OrderQueryResult order, ImmutableList<AccountTrade> trades)
+            {
+                Order = order ?? throw new ArgumentNullException(nameof(order));
+                Trades = trades ?? throw new ArgumentNullException(nameof(trades));
+
+                MaxTradeTime = Trades.Count > 0 ? Trades.Max(x => x.Time) : null;
+                MaxEventTime = MaxTradeTime ?? Order.Time;
+
+                RemainingExecutedQuantity = Order.ExecutedQuantity;
+            }
+
+            public OrderQueryResult Order { get; }
+            public ImmutableList<AccountTrade> Trades { get; }
+
+            public DateTime? MaxTradeTime { get; }
+            public DateTime MaxEventTime { get; }
+
+            public decimal RemainingExecutedQuantity { get; set; }
+        }
+
+        private class SortedOrderTradeMapSet : SortedSet<OrderTradeMap>
+        {
+            public SortedOrderTradeMapSet() : base(OrderTradeMapComparer.Instance)
+            {
+            }
+
+            private class OrderTradeMapComparer : IComparer<OrderTradeMap>
+            {
+                private OrderTradeMapComparer()
+                {
+                }
+
+                public int Compare(OrderTradeMap? x, OrderTradeMap? y)
+                {
+                    if (x is null) throw new ArgumentNullException(nameof(x));
+                    if (y is null) throw new ArgumentNullException(nameof(y));
+
+                    // keep the set sorted by max event time
+                    var byEventTime = x.MaxEventTime.CompareTo(y.MaxEventTime);
+                    if (byEventTime is not 0) return byEventTime;
+
+                    // resort to order id if needed
+                    return x.Order.OrderId.CompareTo(y.Order.OrderId);
+                }
+
+                public static OrderTradeMapComparer Instance { get; } = new OrderTradeMapComparer();
+            }
         }
 
         #endregion Classes

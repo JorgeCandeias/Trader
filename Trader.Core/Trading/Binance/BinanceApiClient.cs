@@ -169,15 +169,12 @@ namespace Trader.Core.Trading.Binance
         /// <summary>
         /// Gets the status of the specified order.
         /// </summary>
-        public Task<OrderQueryResult> GetOrderAsync(OrderQuery query, CancellationToken cancellationToken = default)
+        public async Task<GetOrderResponseModel> GetOrderAsync(GetOrderRequestModel model, CancellationToken cancellationToken = default)
         {
-            _ = query ?? throw new ArgumentNullException(nameof(query));
-            _ = query.Symbol ?? throw new ArgumentException($"{nameof(OrderQuery.Symbol)} is required");
+            _ = model ?? throw new ArgumentNullException(nameof(model));
+            _ = model.Symbol ?? throw new ArgumentException($"{nameof(OrderQuery.Symbol)} is required");
 
-            return GetAsync<GetOrderRequestModel, GetOrderResponseModel, OrderQueryResult>(
-                "/api/v3/order",
-                query,
-                cancellationToken);
+            return await _client.GetFromJsonAsync<GetOrderResponseModel>(Combine("/api/v3/order", model), _jsonOptions, cancellationToken) ?? throw new BinanceUnknownResponseException();
         }
 
         /// <summary>

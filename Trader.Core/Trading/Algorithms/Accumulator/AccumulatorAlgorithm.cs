@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
@@ -120,9 +119,9 @@ namespace Trader.Core.Trading.Algorithms.Accumulator
                 Type, _name, order.Side, order.Type, order.Symbol, order.OriginalQuantity, _options.Asset, order.Price, _options.Quote, order.OriginalQuantity * order.Price, _options.Quote);
         }
 
-        public IEnumerable<AccountTrade> GetTrades()
+        public Task<ImmutableList<AccountTrade>> GetTradesAsync()
         {
-            return ImmutableList<AccountTrade>.Empty;
+            return Task.FromResult(ImmutableList<AccountTrade>.Empty);
         }
     }
 }

@@ -93,6 +93,22 @@ namespace Trader.Core.Trading.Binance
             return result;
         }
 
+        public async Task<OrderQueryResult> GetOrderAsync(OrderQuery model, CancellationToken cancellationToken = default)
+        {
+            _ = model ?? throw new ArgumentNullException(nameof(model));
+
+            BinanceApiContext.CaptureUsage = true;
+
+            var input = _mapper.Map<GetOrderRequestModel>(model);
+            var output = await _client.GetOrderAsync(input, cancellationToken);
+            var result = _mapper.Map<OrderQueryResult>(output);
+            var used = _mapper.Map<ImmutableList<Usage>>(BinanceApiContext.Usage);
+
+            UpdateUsage(used);
+
+            return result;
+        }
+
         public async Task<ImmutableList<OrderQueryResult>> GetAllOrdersAsync(GetAllOrders model, CancellationToken cancellationToken = default)
         {
             _ = model ?? throw new ArgumentNullException(nameof(model));

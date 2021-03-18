@@ -14,6 +14,8 @@ namespace Trader.Core.Trading
 
         Task<ImmutableList<OrderQueryResult>> GetOpenOrdersAsync(GetOpenOrders model, CancellationToken cancellationToken = default);
 
+        Task<OrderQueryResult> GetOrderAsync(OrderQuery model, CancellationToken cancellationToken = default);
+
         Task<ImmutableList<OrderQueryResult>> GetAllOrdersAsync(GetAllOrders model, CancellationToken cancellationToken = default);
 
         Task<CancelStandardOrderResult> CancelOrderAsync(CancelStandardOrder model, CancellationToken cancellationToken = default);

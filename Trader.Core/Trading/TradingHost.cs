@@ -72,7 +72,7 @@ namespace Trader.Core.Trading
             var profits = new List<Profit>();
             foreach (var algo in _algos)
             {
-                var trades = algo.GetTrades();
+                var trades = await algo.GetTradesAsync();
                 var profit = _calculator.Calculate(trades);
 
                 _logger.LogInformation(

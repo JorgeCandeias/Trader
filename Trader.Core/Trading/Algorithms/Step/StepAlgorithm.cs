@@ -66,7 +66,37 @@ namespace Trader.Core.Trading.Algorithms.Step
         /// </summary>
         private readonly Dictionary<long, SortedTradeSet> _tradesByOrderId = new();
 
+        /// <summary>
+        /// Keeps track of the bands managed by the algorithm.
+        /// </summary>
         private readonly SortedSet<Band> _bands = new();
+
+        /// <summary>
+        /// The price symbol filter rules from the exchange.
+        /// </summary>
+        private PriceSymbolFilter _priceFilter;
+
+        public async Task GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default)
+        {
+            var symbol = exchangeInfo.Symbols.Single(x => x.Name == _options.Symbol);
+            _priceFilter = symbol.Filters.OfType<PriceSymbolFilter>().Single();
+            var lotSizeFilter = symbol.Filters.OfType<LotSizeSymbolFilter>().Single();
+            var minNotionalFilter = symbol.Filters.OfType<MinNotionalSymbolFilter>().Single();
+
+            SyncAccountInfo(accountInfo);
+            await SyncAccountOrdersAsync(cancellationToken);
+
+            // always update the latest price
+            var ticker = await SyncAssetPriceAsync();
+
+            if (TryIdentifySignificantOrders()) return;
+            if (TryCreateTradingBands(minNotionalFilter)) return;
+            if (await TrySetStartingTradeAsync(symbol, ticker, lotSizeFilter)) return;
+            if (await TryCancelRogueSellOrdersAsync()) return;
+            if (await TrySetBandSellOrdersAsync()) return;
+            if (await TryCreateLowerBandOrderAsync(symbol, ticker, lotSizeFilter)) return;
+            if (await TryCloseOutOfRangeBandsAsync(ticker)) return;
+        }
 
         private void SyncAccountInfo(AccountInfo accountInfo)
         {
@@ -190,29 +220,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             return ticker;
         }
 
-        public async Task GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default)
-        {
-            var symbol = exchangeInfo.Symbols.Single(x => x.Name == _options.Symbol);
-            var priceFilter = symbol.Filters.OfType<PriceSymbolFilter>().Single();
-            var lotSizeFilter = symbol.Filters.OfType<LotSizeSymbolFilter>().Single();
-            var minNotionalFilter = symbol.Filters.OfType<MinNotionalSymbolFilter>().Single();
-
-            SyncAccountInfo(accountInfo);
-            await SyncAccountOrdersAsync(cancellationToken);
-
-            // always update the latest price
-            var ticker = await SyncAssetPriceAsync();
-
-            if (TryIdentifySignificantOrders()) return;
-            if (TryCreateTradingBands(priceFilter, minNotionalFilter)) return;
-            if (await TrySetStartingTradeAsync(symbol, ticker, priceFilter, lotSizeFilter)) return;
-            if (await TryCancelRogueSellOrdersAsync()) return;
-            if (await TrySetBandSellOrdersAsync()) return;
-            if (await TryCreateLowerBandOrderAsync(symbol, ticker, priceFilter, lotSizeFilter)) return;
-            if (await TryCloseOutOfRangeBandsAsync(ticker, priceFilter)) return;
-        }
-
-        private async Task<bool> TryCloseOutOfRangeBandsAsync(SymbolPriceTicker ticker, PriceSymbolFilter priceFilter)
+        private async Task<bool> TryCloseOutOfRangeBandsAsync(SymbolPriceTicker ticker)
         {
             // take the lower band
             var band = _bands.Min;
@@ -237,7 +245,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             return true;
         }
 
-        private async Task<bool> TryCreateLowerBandOrderAsync(Symbol symbol, SymbolPriceTicker ticker, PriceSymbolFilter priceFilter, LotSizeSymbolFilter lotSizeFilter)
+        private async Task<bool> TryCreateLowerBandOrderAsync(Symbol symbol, SymbolPriceTicker ticker, LotSizeSymbolFilter lotSizeFilter)
         {
             // identify the highest and lowest bands
             var highBand = _bands.Max;
@@ -290,7 +298,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             }
 
             // under adjust the buy price to the tick size
-            lowerPrice = Math.Floor(lowerPrice / priceFilter.TickSize) * priceFilter.TickSize;
+            lowerPrice = Math.Floor(lowerPrice / _priceFilter.TickSize) * _priceFilter.TickSize;
 
             // calculate the amount to pay with
             var total = Math.Round(Math.Max(_balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand, _options.MinQuoteAssetQuantityPerOrder), symbol.QuoteAssetPrecision);
@@ -381,7 +389,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             return fail;
         }
 
-        private async Task<bool> TrySetStartingTradeAsync(Symbol symbol, SymbolPriceTicker ticker, PriceSymbolFilter priceFilter, LotSizeSymbolFilter lotSizeFilter)
+        private async Task<bool> TrySetStartingTradeAsync(Symbol symbol, SymbolPriceTicker ticker, LotSizeSymbolFilter lotSizeFilter)
         {
             // only manage the opening if there are no bands or only a single order band to move around
             if (_bands.Count == 0 || (_bands.Count == 1 && _bands.Single().Status == BandStatus.Ordered))
@@ -390,7 +398,7 @@ namespace Trader.Core.Trading.Algorithms.Step
                 var lowBuyPrice = ticker.Price * (1m - _options.TargetPullbackRatio);
 
                 // under adjust the buy price to the tick size
-                lowBuyPrice = Math.Floor(lowBuyPrice / priceFilter.TickSize) * priceFilter.TickSize;
+                lowBuyPrice = Math.Floor(lowBuyPrice / _priceFilter.TickSize) * _priceFilter.TickSize;
 
                 _logger.LogInformation(
                     "{Type} {Name} identified first buy target price at {LowPrice} {LowQuote} with current price at {CurrentPrice} {CurrentQuote}",
@@ -555,7 +563,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             return false;
         }
 
-        private bool TryCreateTradingBands(PriceSymbolFilter priceFilter, MinNotionalSymbolFilter minNotionalFilter)
+        private bool TryCreateTradingBands(MinNotionalSymbolFilter minNotionalFilter)
         {
             _bands.Clear();
 
@@ -609,7 +617,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             foreach (var band in _bands)
             {
                 band.ClosePrice = band.OpenPrice + stepSize;
-                band.ClosePrice = Math.Floor(band.ClosePrice / priceFilter.TickSize) * priceFilter.TickSize;
+                band.ClosePrice = Math.Floor(band.ClosePrice / _priceFilter.TickSize) * _priceFilter.TickSize;
             }
 
             // apply open sell orders to the bands

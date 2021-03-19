@@ -20,14 +20,16 @@ namespace Trader.Core.Trading.Algorithms.Step
 
         private readonly ISystemClock _clock;
         private readonly ITradingService _trader;
+        private readonly ISignificantOrderResolver _significantOrderResolver;
 
-        public StepAlgorithm(string name, ILogger<StepAlgorithm> logger, IOptionsSnapshot<StepAlgorithmOptions> options, ISystemClock clock, ITradingService trader)
+        public StepAlgorithm(string name, ILogger<StepAlgorithm> logger, IOptionsSnapshot<StepAlgorithmOptions> options, ISystemClock clock, ITradingService trader, ISignificantOrderResolver significantOrderResolver)
         {
             _name = name ?? throw new ArgumentNullException(nameof(name));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _options = options.Get(_name) ?? throw new ArgumentNullException(nameof(options));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
+            _significantOrderResolver = significantOrderResolver ?? throw new ArgumentNullException(nameof(significantOrderResolver));
         }
 
         private static string Type => nameof(StepAlgorithm);
@@ -49,7 +51,7 @@ namespace Trader.Core.Trading.Algorithms.Step
         /// <summary>
         /// Set of orders that compose the current asset balance.
         /// </summary>
-        private readonly SortedOrderSet _significant = new();
+        private SortedOrderSet _significant;
 
         /// <summary>
         /// Set of orders that are open now.
@@ -89,7 +91,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             // always update the latest price
             var ticker = await SyncAssetPriceAsync();
 
-            if (TryIdentifySignificantOrders()) return;
+            ResolveSignificantOrders();
             if (TryCreateTradingBands(minNotionalFilter)) return;
             if (await TrySetStartingTradeAsync(symbol, ticker, lotSizeFilter)) return;
             if (await TryCancelRogueSellOrdersAsync()) return;
@@ -395,7 +397,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             if (_bands.Count == 0 || (_bands.Count == 1 && _bands.Single().Status == BandStatus.Ordered))
             {
                 // identify the target low price for the first buy
-                var lowBuyPrice = ticker.Price * (1m - _options.TargetPullbackRatio);
+                var lowBuyPrice = ticker.Price * (1m - _options.PullbackRatio);
 
                 // under adjust the buy price to the tick size
                 lowBuyPrice = Math.Floor(lowBuyPrice / _priceFilter.TickSize) * _priceFilter.TickSize;
@@ -474,93 +476,13 @@ namespace Trader.Core.Trading.Algorithms.Step
             }
         }
 
-        private bool TryIdentifySignificantOrders()
+        private void ResolveSignificantOrders()
         {
-            // todo: keep track of the last significant order start so we avoid slowing down when the orders grow and grow
-            // todo: remove the first step and go straight to lifo processing over the entire order set
-            // todo: persist all this stuff into sqlite so each tick can operate over the last data only
-
-            // match significant orders to trades so we can sort significant orders by execution date
-            var map = new SortedOrderTradeMapSet();
-            foreach (var order in _orders)
-            {
-                if (order.ExecutedQuantity > 0m)
-                {
-                    map.Add(new OrderTradeMap(order, _tradesByOrderId.TryGetValue(order.OrderId, out var trades) ? trades.ToImmutableList() : ImmutableList<AccountTrade>.Empty));
-                }
-            }
-
-            // now prune the significant trades to account interim sales
-            using var subjects = ArrayPool<OrderTradeMap>.Shared.SegmentOwnerFrom(map);
-
-            for (var i = 0; i < subjects.Segment.Count; ++i)
-            {
-                // loop through sales forward
-                var sell = subjects.Segment[i];
-                if (sell.Order.Side == OrderSide.Sell)
-                {
-                    // loop through buys in lifo order to find the matching buy
-                    for (var j = i - 1; j >= 0; --j)
-                    {
-                        var buy = subjects.Segment[j];
-                        if (buy.Order.Side == OrderSide.Buy)
-                        {
-                            // remove as much as possible from the buy to satisfy the sell
-                            var take = Math.Min(buy.RemainingExecutedQuantity, sell.RemainingExecutedQuantity);
-                            buy.RemainingExecutedQuantity -= take;
-                            sell.RemainingExecutedQuantity -= take;
-
-                            // if the sale is filled then we can break early
-                            if (sell.RemainingExecutedQuantity == 0) break;
-                        }
-                    }
-
-                    // if the sell was not filled then we're missing some data
-                    if (sell.RemainingExecutedQuantity != 0)
-                    {
-                        // something went very wrong if we got here
-                        _logger.LogError(
-                            "{Type} {Name} could not fill significant {Side} order {OrderId} with for {Quantity} {Asset} at {Price} {Quote}",
-                            Type, _name, sell.Order.Side, sell.Order.OrderId, sell.Order.ExecutedQuantity, _options.Asset, sell.Order.Price, _options.Quote);
-
-                        return true;
-                    }
-                }
-            }
-
-            // keep only buys with some quantity left to sell
-            _significant.Clear();
-            foreach (var subject in subjects.Segment)
-            {
-                if (subject.Order.Side == OrderSide.Buy && subject.RemainingExecutedQuantity > 0)
-                {
-                    _significant.Add(new OrderQueryResult(
-                        subject.Order.Symbol,
-                        subject.Order.OrderId,
-                        subject.Order.OrderListId,
-                        subject.Order.ClientOrderId,
-                        subject.Order.Price,
-                        subject.Order.OriginalQuantity,
-                        subject.RemainingExecutedQuantity,
-                        subject.Order.CummulativeQuoteQuantity,
-                        subject.Order.Status,
-                        subject.Order.TimeInForce,
-                        subject.Order.Type,
-                        subject.Order.Side,
-                        subject.Order.StopPrice,
-                        subject.Order.IcebergQuantity,
-                        subject.Order.Time,
-                        subject.Order.UpdateTime,
-                        subject.Order.IsWorking,
-                        subject.Order.OriginalQuoteOrderQuantity));
-                }
-            }
+            _significant = _significantOrderResolver.Resolve(_orders, _trades);
 
             _logger.LogInformation(
-                "{Type} {Name} identified {Count} significant trades that make up the asset balance of {Total}",
+                "{Type} {Name} identified {Count} significant orders that make up the asset balance of {Total}",
                 Type, _name, _significant.Count, _balances.Asset.Total);
-
-            return false;
         }
 
         private bool TryCreateTradingBands(MinNotionalSymbolFilter minNotionalFilter)
@@ -611,7 +533,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             if (_bands.Count == 0) return false;
 
             // figure out the constant step size
-            var stepSize = _bands.Max!.OpenPrice * _options.TargetPullbackRatio;
+            var stepSize = _bands.Max!.OpenPrice * _options.PullbackRatio;
 
             // adjust close prices on the bands
             foreach (var band in _bands)
@@ -652,9 +574,9 @@ namespace Trader.Core.Trading.Algorithms.Step
             return false;
         }
 
-        public Task<ImmutableList<AccountTrade>> GetTradesAsync()
+        public ValueTask<ImmutableList<AccountTrade>> GetTradesAsync()
         {
-            return Task.FromResult(_trades.ToImmutableList());
+            return new ValueTask<ImmutableList<AccountTrade>>(_trades.ToImmutableList());
         }
 
         #region Classes
@@ -707,108 +629,6 @@ namespace Trader.Core.Trading.Algorithms.Step
         {
             public Balance Asset { get; } = new();
             public Balance Quote { get; } = new();
-        }
-
-        private class SortedOrderSet : SortedSet<OrderQueryResult>
-        {
-            public SortedOrderSet() : base(OrderIdComparer.Instance)
-            {
-            }
-
-            private class OrderIdComparer : IComparer<OrderQueryResult>
-            {
-                private OrderIdComparer()
-                {
-                }
-
-                public int Compare(OrderQueryResult? x, OrderQueryResult? y)
-                {
-                    if (x is null) throw new ArgumentNullException(nameof(x));
-                    if (y is null) throw new ArgumentNullException(nameof(y));
-
-                    return x.OrderId.CompareTo(y.OrderId);
-                }
-
-                public static OrderIdComparer Instance { get; } = new OrderIdComparer();
-            }
-        }
-
-        private class SortedTradeSet : SortedSet<AccountTrade>
-        {
-            public SortedTradeSet() : base(TradeIdComparer.Instance)
-            {
-            }
-
-            private class TradeIdComparer : IComparer<AccountTrade>
-            {
-                private TradeIdComparer()
-                {
-                }
-
-                public int Compare(AccountTrade? x, AccountTrade? y)
-                {
-                    if (x is null) throw new ArgumentNullException(nameof(x));
-                    if (y is null) throw new ArgumentNullException(nameof(y));
-
-                    return x.Id.CompareTo(y.Id);
-                }
-
-                public static TradeIdComparer Instance { get; } = new TradeIdComparer();
-            }
-        }
-
-        /// <summary>
-        /// Maps an order to any resulting trades.
-        /// </summary>
-        private class OrderTradeMap
-        {
-            public OrderTradeMap(OrderQueryResult order, ImmutableList<AccountTrade> trades)
-            {
-                Order = order ?? throw new ArgumentNullException(nameof(order));
-                Trades = trades ?? throw new ArgumentNullException(nameof(trades));
-
-                MaxTradeTime = Trades.Count > 0 ? Trades.Max(x => x.Time) : null;
-                MaxEventTime = MaxTradeTime ?? Order.Time;
-
-                RemainingExecutedQuantity = Order.ExecutedQuantity;
-            }
-
-            public OrderQueryResult Order { get; }
-            public ImmutableList<AccountTrade> Trades { get; }
-
-            public DateTime? MaxTradeTime { get; }
-            public DateTime MaxEventTime { get; }
-
-            public decimal RemainingExecutedQuantity { get; set; }
-        }
-
-        private class SortedOrderTradeMapSet : SortedSet<OrderTradeMap>
-        {
-            public SortedOrderTradeMapSet() : base(OrderTradeMapComparer.Instance)
-            {
-            }
-
-            private class OrderTradeMapComparer : IComparer<OrderTradeMap>
-            {
-                private OrderTradeMapComparer()
-                {
-                }
-
-                public int Compare(OrderTradeMap? x, OrderTradeMap? y)
-                {
-                    if (x is null) throw new ArgumentNullException(nameof(x));
-                    if (y is null) throw new ArgumentNullException(nameof(y));
-
-                    // keep the set sorted by max event time
-                    var byEventTime = x.MaxEventTime.CompareTo(y.MaxEventTime);
-                    if (byEventTime is not 0) return byEventTime;
-
-                    // resort to order id if needed
-                    return x.Order.OrderId.CompareTo(y.Order.OrderId);
-                }
-
-                public static OrderTradeMapComparer Instance { get; } = new OrderTradeMapComparer();
-            }
         }
 
         #endregion Classes

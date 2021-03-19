@@ -69,6 +69,7 @@ namespace Trader.Core.Trading
             }
 
             // calculate all pnl
+            // todo: the algos themselves can do this for free while resolving significant orders
             var profits = new List<Profit>();
             foreach (var algo in _algos)
             {

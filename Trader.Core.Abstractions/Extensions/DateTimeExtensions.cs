@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Trader.Core
+﻿namespace System
 {
     public static class DateTimeExtensions
     {

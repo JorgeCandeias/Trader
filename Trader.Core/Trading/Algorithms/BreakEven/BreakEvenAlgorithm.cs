@@ -19,7 +19,7 @@ namespace Trader.Core.Trading.Algorithms.BreakEven
 
         public string Symbol => _options.Symbol;
 
-        public ValueTask<ImmutableList<AccountTrade>> GetTradesAsync()
+        public ValueTask<ImmutableList<AccountTrade>> GetTradesAsync(CancellationToken cancellationToken = default)
         {
             return new ValueTask<ImmutableList<AccountTrade>>(ImmutableList<AccountTrade>.Empty);
         }
@@ -33,7 +33,6 @@ namespace Trader.Core.Trading.Algorithms.BreakEven
             // todo: cancel all sell orders that are not desired
 
             // todo: create all desired sell orders not created yet
-
 
             return Task.CompletedTask;
         }

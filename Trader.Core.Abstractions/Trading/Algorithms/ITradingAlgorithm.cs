@@ -8,7 +8,7 @@ namespace Trader.Core.Trading.Algorithms
     {
         string Symbol { get; }
 
-        ValueTask<ImmutableList<AccountTrade>> GetTradesAsync();
+        ValueTask<ImmutableList<AccountTrade>> GetTradesAsync(CancellationToken cancellationToken = default);
 
         Task GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default);
     }

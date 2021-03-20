@@ -65,7 +65,7 @@ namespace Trader.Core.Trading
             // execute all algos in sequence for ease of troubleshooting
             foreach (var algo in _algos)
             {
-                await algo.GoAsync(exchangeInfo, accountInfo);
+                await algo.GoAsync(exchangeInfo, accountInfo, _cancellation.Token);
             }
 
             // calculate all pnl
@@ -73,7 +73,7 @@ namespace Trader.Core.Trading
             var profits = new List<Profit>();
             foreach (var algo in _algos)
             {
-                var trades = await algo.GetTradesAsync();
+                var trades = await algo.GetTradesAsync(_cancellation.Token);
                 var profit = _calculator.Calculate(trades);
 
                 _logger.LogInformation(

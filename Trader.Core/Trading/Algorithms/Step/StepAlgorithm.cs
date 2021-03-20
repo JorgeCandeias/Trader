@@ -574,7 +574,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             return false;
         }
 
-        public ValueTask<ImmutableList<AccountTrade>> GetTradesAsync()
+        public ValueTask<ImmutableList<AccountTrade>> GetTradesAsync(CancellationToken cancellationToken = default)
         {
             return new ValueTask<ImmutableList<AccountTrade>>(_trades.ToImmutableList());
         }

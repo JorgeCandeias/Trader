@@ -118,7 +118,7 @@ namespace Trader.Core.Trading.Algorithms.Accumulator
                 Type, _name, order.Side, order.Type, order.Symbol, order.OriginalQuantity, _options.Asset, order.Price, _options.Quote, order.OriginalQuantity * order.Price, _options.Quote);
         }
 
-        public ValueTask<ImmutableList<AccountTrade>> GetTradesAsync()
+        public ValueTask<ImmutableList<AccountTrade>> GetTradesAsync(CancellationToken cancellationToken = default)
         {
             return new ValueTask<ImmutableList<AccountTrade>>(ImmutableList<AccountTrade>.Empty);
         }

@@ -13,6 +13,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Trading.Abstractions
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Trading", "Trader.Trading\Trader.Trading.csproj", "{BEB63F0E-15FA-40B1-9F58-E493102BE4FB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Data", "Trader.Data\Trader.Data.csproj", "{4D0FCDF9-806F-4B87-B35F-B55CAD9505A4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Data.Abstractions", "Trader.Data.Abstractions\Trader.Data.Abstractions.csproj", "{7A57C8A2-75CA-4B96-AA14-93C957EC0595}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +43,14 @@ Global
 		{BEB63F0E-15FA-40B1-9F58-E493102BE4FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BEB63F0E-15FA-40B1-9F58-E493102BE4FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BEB63F0E-15FA-40B1-9F58-E493102BE4FB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4D0FCDF9-806F-4B87-B35F-B55CAD9505A4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D0FCDF9-806F-4B87-B35F-B55CAD9505A4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D0FCDF9-806F-4B87-B35F-B55CAD9505A4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D0FCDF9-806F-4B87-B35F-B55CAD9505A4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7A57C8A2-75CA-4B96-AA14-93C957EC0595}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7A57C8A2-75CA-4B96-AA14-93C957EC0595}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7A57C8A2-75CA-4B96-AA14-93C957EC0595}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7A57C8A2-75CA-4B96-AA14-93C957EC0595}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

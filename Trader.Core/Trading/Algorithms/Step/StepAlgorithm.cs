@@ -36,8 +36,6 @@ namespace Trader.Core.Trading.Algorithms.Step
 
         public string Symbol => _options.Symbol;
 
-        private readonly CancellationTokenSource _cancellation = new();
-
         /// <summary>
         /// Keeps track of the relevant account balances.
         /// </summary>
@@ -89,15 +87,15 @@ namespace Trader.Core.Trading.Algorithms.Step
             await SyncAccountOrdersAsync(cancellationToken);
 
             // always update the latest price
-            var ticker = await SyncAssetPriceAsync();
+            var ticker = await SyncAssetPriceAsync(cancellationToken);
 
             ResolveSignificantOrders();
             if (TryCreateTradingBands(minNotionalFilter)) return;
-            if (await TrySetStartingTradeAsync(symbol, ticker, lotSizeFilter)) return;
-            if (await TryCancelRogueSellOrdersAsync()) return;
-            if (await TrySetBandSellOrdersAsync()) return;
-            if (await TryCreateLowerBandOrderAsync(symbol, ticker, lotSizeFilter)) return;
-            if (await TryCloseOutOfRangeBandsAsync(ticker)) return;
+            if (await TrySetStartingTradeAsync(symbol, ticker, lotSizeFilter, cancellationToken)) return;
+            if (await TryCancelRogueSellOrdersAsync(cancellationToken)) return;
+            if (await TrySetBandSellOrdersAsync(cancellationToken)) return;
+            if (await TryCreateLowerBandOrderAsync(symbol, ticker, lotSizeFilter, cancellationToken)) return;
+            if (await TryCloseOutOfRangeBandsAsync(ticker, cancellationToken)) return;
         }
 
         private void SyncAccountInfo(AccountInfo accountInfo)
@@ -211,9 +209,9 @@ namespace Trader.Core.Trading.Algorithms.Step
                 Type, _name, newCount, updatedCount, _orders.Count);
         }
 
-        private async Task<SymbolPriceTicker> SyncAssetPriceAsync()
+        private async Task<SymbolPriceTicker> SyncAssetPriceAsync(CancellationToken cancellationToken = default)
         {
-            var ticker = await _trader.GetSymbolPriceTickerAsync(_options.Symbol, _cancellation.Token);
+            var ticker = await _trader.GetSymbolPriceTickerAsync(_options.Symbol, cancellationToken);
 
             _logger.LogInformation(
                 "{Type} {Name} reports latest asset price is {Price} {QuoteAsset}",
@@ -222,7 +220,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             return ticker;
         }
 
-        private async Task<bool> TryCloseOutOfRangeBandsAsync(SymbolPriceTicker ticker)
+        private async Task<bool> TryCloseOutOfRangeBandsAsync(SymbolPriceTicker ticker, CancellationToken cancellationToken = default)
         {
             // take the lower band
             var band = _bands.Min;
@@ -237,7 +235,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             // if the above checks fails then close the band
             foreach (var orderId in band.OpenOrderIds)
             {
-                var result = await _trader.CancelOrderAsync(new CancelStandardOrder(_options.Symbol, orderId, null, null, null, _clock.UtcNow));
+                var result = await _trader.CancelOrderAsync(new CancelStandardOrder(_options.Symbol, orderId, null, null, null, _clock.UtcNow), cancellationToken);
 
                 _logger.LogInformation(
                     "{Type} {Name} closed out-of-range {OrderSide} {OrderType} for {Quantity} {Asset} at {Price} {Quote}",
@@ -247,7 +245,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             return true;
         }
 
-        private async Task<bool> TryCreateLowerBandOrderAsync(Symbol symbol, SymbolPriceTicker ticker, LotSizeSymbolFilter lotSizeFilter)
+        private async Task<bool> TryCreateLowerBandOrderAsync(Symbol symbol, SymbolPriceTicker ticker, LotSizeSymbolFilter lotSizeFilter, CancellationToken cancellationToken = default)
         {
             // identify the highest and lowest bands
             var highBand = _bands.Max;
@@ -323,7 +321,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             quantity = Math.Floor(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
 
             // place the buy order
-            var result = await _trader.CreateOrderAsync(new Order(_options.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, lowerPrice, null, null, null, NewOrderResponseType.Full, null, _clock.UtcNow), _cancellation.Token);
+            var result = await _trader.CreateOrderAsync(new Order(_options.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, lowerPrice, null, null, null, NewOrderResponseType.Full, null, _clock.UtcNow), cancellationToken);
 
             _logger.LogInformation(
                 "{Type} {Name} placed {OrderType} {OrderSide} for {Quantity} {Asset} at {Price} {Quote}",
@@ -335,7 +333,7 @@ namespace Trader.Core.Trading.Algorithms.Step
         /// <summary>
         /// Sets sell orders for open bands that do not have them yet.
         /// </summary>
-        private async Task<bool> TrySetBandSellOrdersAsync()
+        private async Task<bool> TrySetBandSellOrdersAsync(CancellationToken cancellationToken = default)
         {
             foreach (var band in _bands.Where(x => x.Status == BandStatus.Open))
             {
@@ -351,7 +349,7 @@ namespace Trader.Core.Trading.Algorithms.Step
                         return false;
                     }
 
-                    var result = await _trader.CreateOrderAsync(new Order(_options.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, band.Quantity, null, band.ClosePrice, null, null, null, NewOrderResponseType.Full, null, _clock.UtcNow));
+                    var result = await _trader.CreateOrderAsync(new Order(_options.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, band.Quantity, null, band.ClosePrice, null, null, null, NewOrderResponseType.Full, null, _clock.UtcNow), cancellationToken);
 
                     band.CloseOrderId = result.OrderId;
 
@@ -369,7 +367,7 @@ namespace Trader.Core.Trading.Algorithms.Step
         /// <summary>
         /// Identify and cancel rogue sell orders that do not belong to a trading band.
         /// </summary>
-        private async Task<bool> TryCancelRogueSellOrdersAsync()
+        private async Task<bool> TryCancelRogueSellOrdersAsync(CancellationToken cancellationToken = default)
         {
             var fail = false;
 
@@ -378,7 +376,7 @@ namespace Trader.Core.Trading.Algorithms.Step
                 if (!_bands.Any(x => x.CloseOrderId == order.OrderId))
                 {
                     // close the rogue sell order
-                    var result = await _trader.CancelOrderAsync(new CancelStandardOrder(_options.Symbol, order.OrderId, null, null, null, _clock.UtcNow));
+                    var result = await _trader.CancelOrderAsync(new CancelStandardOrder(_options.Symbol, order.OrderId, null, null, null, _clock.UtcNow), cancellationToken);
 
                     _logger.LogWarning(
                         "{Type} {Name} cancelled sell order not associated with a band for {Quantity} {Asset} at {Price} {Quote}",
@@ -391,7 +389,7 @@ namespace Trader.Core.Trading.Algorithms.Step
             return fail;
         }
 
-        private async Task<bool> TrySetStartingTradeAsync(Symbol symbol, SymbolPriceTicker ticker, LotSizeSymbolFilter lotSizeFilter)
+        private async Task<bool> TrySetStartingTradeAsync(Symbol symbol, SymbolPriceTicker ticker, LotSizeSymbolFilter lotSizeFilter, CancellationToken cancellationToken = default)
         {
             // only manage the opening if there are no bands or only a single order band to move around
             if (_bands.Count == 0 || (_bands.Count == 1 && _bands.Single().Status == BandStatus.Ordered))
@@ -411,7 +409,7 @@ namespace Trader.Core.Trading.Algorithms.Step
                 {
                     if (order.Price < lowBuyPrice)
                     {
-                        var cancelled = await _trader.CancelOrderAsync(new CancelStandardOrder(_options.Symbol, order.OrderId, null, null, null, _clock.UtcNow));
+                        var cancelled = await _trader.CancelOrderAsync(new CancelStandardOrder(_options.Symbol, order.OrderId, null, null, null, _clock.UtcNow), cancellationToken);
 
                         _logger.LogInformation(
                             "{Type} {Name} cancelled low starting open order with price {Price} for {Quantity} units",
@@ -461,7 +459,7 @@ namespace Trader.Core.Trading.Algorithms.Step
                     NewOrderResponseType.Full,
                     null,
                     _clock.UtcNow),
-                    _cancellation.Token);
+                    cancellationToken);
 
                 _logger.LogInformation(
                     "{Type} {Name} created {OrderSide} {OrderType} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",

@@ -3,11 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31025.194
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.App", "Trader.App\Trader.App.csproj", "{FFDD16E1-EC64-436D-ACDE-2DD9FD8818BC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.App", "Trader.App\Trader.App.csproj", "{FFDD16E1-EC64-436D-ACDE-2DD9FD8818BC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Core", "Trader.Core\Trader.Core.csproj", "{74177DDE-E852-4BB7-B926-2989C21AA1C2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Core", "Trader.Core\Trader.Core.csproj", "{74177DDE-E852-4BB7-B926-2989C21AA1C2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Core.Abstractions", "Trader.Core.Abstractions\Trader.Core.Abstractions.csproj", "{13B91BA8-3AB2-4389-89EE-6E1F4D39F288}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Core.Abstractions", "Trader.Core.Abstractions\Trader.Core.Abstractions.csproj", "{13B91BA8-3AB2-4389-89EE-6E1F4D39F288}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Trading.Abstractions", "Trader.Trading.Abstractions\Trader.Trading.Abstractions.csproj", "{02D339DF-5598-463C-8117-E41998A4732D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Trading", "Trader.Trading\Trader.Trading.csproj", "{BEB63F0E-15FA-40B1-9F58-E493102BE4FB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +31,14 @@ Global
 		{13B91BA8-3AB2-4389-89EE-6E1F4D39F288}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{13B91BA8-3AB2-4389-89EE-6E1F4D39F288}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{13B91BA8-3AB2-4389-89EE-6E1F4D39F288}.Release|Any CPU.Build.0 = Release|Any CPU
+		{02D339DF-5598-463C-8117-E41998A4732D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{02D339DF-5598-463C-8117-E41998A4732D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{02D339DF-5598-463C-8117-E41998A4732D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{02D339DF-5598-463C-8117-E41998A4732D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BEB63F0E-15FA-40B1-9F58-E493102BE4FB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BEB63F0E-15FA-40B1-9F58-E493102BE4FB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BEB63F0E-15FA-40B1-9F58-E493102BE4FB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BEB63F0E-15FA-40B1-9F58-E493102BE4FB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

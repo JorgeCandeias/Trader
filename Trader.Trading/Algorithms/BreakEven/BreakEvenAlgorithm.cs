@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Immutable;
 using System.Threading;
@@ -11,13 +12,16 @@ namespace Trader.Trading.Algorithms.BreakEven
     {
         private readonly string _name;
         private readonly BreakEvenAlgorithmOptions _options;
+        private readonly ILogger _logger;
 
-        public BreakEvenAlgorithm(string name, IOptionsSnapshot<BreakEvenAlgorithmOptions> options)
+        public BreakEvenAlgorithm(string name, IOptionsSnapshot<BreakEvenAlgorithmOptions> options, ILogger<BreakEvenAlgorithm> logger)
         {
             _name = name ?? throw new ArgumentNullException(nameof(name));
-            _options = options.Get(name);
+            _options = options.Get(name) ?? throw new ArgumentNullException(nameof(logger));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
+        public string Type => nameof(BreakEvenAlgorithm);
         public string Symbol => _options.Symbol;
 
         public ValueTask<ImmutableList<AccountTrade>> GetTradesAsync(CancellationToken cancellationToken = default)
@@ -27,6 +31,8 @@ namespace Trader.Trading.Algorithms.BreakEven
 
         public Task GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default)
         {
+            _logger.LogInformation("{Type} {Name} starting...", Type, _name);
+
             // todo: resolve all significant buy orders
 
             // todo: resolve desired sell orders

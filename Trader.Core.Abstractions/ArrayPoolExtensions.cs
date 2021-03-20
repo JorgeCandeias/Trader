@@ -6,7 +6,7 @@ namespace System.Buffers
 {
     public static class ArrayPoolExtensions
     {
-        public static IArraySegmentOwner<T> SegmentOwnerFrom<T>(this ArrayPool<T> pool, ICollection<T> items)
+        public static IArraySegmentOwner<T> RentSegmentFrom<T>(this ArrayPool<T> pool, ICollection<T> items)
         {
             _ = pool ?? throw new ArgumentNullException(nameof(pool));
             _ = items ?? throw new ArgumentNullException(nameof(items));

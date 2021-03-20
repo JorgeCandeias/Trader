@@ -163,7 +163,7 @@ namespace Trader.Core.Trading.Algorithms.Step
 
             // ensure known transient orders not pulled in the prior step are also updated
             var updatedCount = 0;
-            using var copy = ArrayPool<OrderQueryResult>.Shared.SegmentOwnerFrom(_transient);
+            using var copy = ArrayPool<OrderQueryResult>.Shared.RentSegmentFrom(_transient);
             foreach (var order in copy.Segment)
             {
                 // get the updated order

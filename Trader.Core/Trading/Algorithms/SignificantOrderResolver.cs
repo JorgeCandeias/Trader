@@ -26,7 +26,7 @@ namespace Trader.Core.Trading.Algorithms
             }
 
             // now prune the significant trades to account interim sales
-            using var subjects = ArrayPool<OrderTradeMap>.Shared.SegmentOwnerFrom(map);
+            using var subjects = ArrayPool<OrderTradeMap>.Shared.RentSegmentFrom(map);
 
             for (var i = 0; i < subjects.Segment.Count; ++i)
             {

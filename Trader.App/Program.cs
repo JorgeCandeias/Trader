@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Events;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace Trader.App
@@ -12,6 +13,9 @@ namespace Trader.App
     {
         private static Task Main()
         {
+            var temp = Path.GetTempPath();
+            var db = Path.Combine(temp, "trader.db");
+
             return Host.CreateDefaultBuilder()
                 .ConfigureAppConfiguration(config =>
                 {
@@ -34,7 +38,11 @@ namespace Trader.App
                         .AddTradingHost()
                         .AddSystemClock()
                         .AddSafeTimerFactory()
-                        .AddProfitCalculator();
+                        .AddProfitCalculator()
+                        .AddSqliteRepository(options =>
+                        {
+                            options.ConnectionString = db;
+                        });
 
                     services
                         .AddAlgorithmResolvers()

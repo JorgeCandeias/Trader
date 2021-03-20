@@ -25,14 +25,14 @@ namespace Trader.Data
 
     public enum OrderType
     {
-        None,
-        Limit,
-        LimitMaker,
-        Market,
-        StopLoss,
-        StopLossLimit,
-        TakeProfit,
-        TakeProfitLimit
+        None = 0,
+        Limit = 1,
+        LimitMaker = 2,
+        Market = 3,
+        StopLoss = 4,
+        StopLossLimit = 5,
+        TakeProfit = 6,
+        TakeProfitLimit = 7
     }
 
     public enum Permission
@@ -65,17 +65,17 @@ namespace Trader.Data
 
     public enum OrderSide
     {
-        None,
-        Buy,
-        Sell
+        None = 0,
+        Buy = 1,
+        Sell = 2
     }
 
     public enum TimeInForce
     {
-        None,
-        GoodTillCanceled,
-        ImmediateOrCancel,
-        FillOrKill
+        None = 0,
+        GoodTillCanceled = 1,
+        ImmediateOrCancel = 2,
+        FillOrKill = 3
     }
 
     public enum NewOrderResponseType
@@ -88,14 +88,14 @@ namespace Trader.Data
 
     public enum OrderStatus
     {
-        None,
-        New,
-        PartiallyFilled,
-        Filled,
-        Canceled,
-        PendingCancel,
-        Rejected,
-        Expired
+        None = 0,
+        New = 1,
+        PartiallyFilled = 2,
+        Filled = 3,
+        Canceled = 4,
+        PendingCancel = 5,
+        Rejected = 6,
+        Expired = 7
     }
 
     public static class OrderStatusExtensions

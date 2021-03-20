@@ -10,6 +10,14 @@ namespace Trader.Data
         }
 
         public DbSet<OrderEntity> Orders { get; set; } = null!;
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<OrderEntity>().HasKey(x => x.OrderId);
+            modelBuilder.Entity<OrderEntity>().HasIndex(x => new { x.Symbol, x.OrderId });
+        }
     }
 
     internal record OrderEntity(

@@ -2,15 +2,17 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Trader.Data;
 
 namespace Trader.Data.Migrations
 {
     [DbContext(typeof(TraderContext))]
-    partial class TraderContextModelSnapshot : ModelSnapshot
+    [Migration("20210321031529_TradeEntity")]
+    partial class TradeEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

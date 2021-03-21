@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Trader.Data
@@ -8,6 +9,8 @@ namespace Trader.Data
         Task<SortedOrderSet> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default);
 
         Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default);
+
+        Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders, CancellationToken cancellationToken = default);
 
         Task<long> GetMaxOrderIdAsync(string symbol, CancellationToken cancellationToken = default);
 

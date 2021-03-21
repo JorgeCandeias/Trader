@@ -149,10 +149,7 @@ namespace Trader.Trading.Algorithms.Step
                 if (orders.Count > 0)
                 {
                     // persist all new and updated orders
-                    foreach (var order in orders)
-                    {
-                        await _repository.SetOrderAsync(order, cancellationToken);
-                    }
+                    await _repository.SetOrdersAsync(orders, cancellationToken);
 
                     // set the start of the next page
                     orderId = orders[^1].OrderId + 1;

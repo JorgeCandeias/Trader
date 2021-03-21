@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -78,6 +79,27 @@ namespace Trader.Data
             {
                 context.Add(entity);
             }
+            await context.SaveChangesAsync(cancellationToken);
+        }
+
+        public async Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders, CancellationToken cancellationToken = default)
+        {
+            using var context = _factory.CreateDbContext();
+
+            foreach (var order in orders)
+            {
+                var entity = _mapper.Map<OrderEntity>(order);
+                var exists = await context.Orders.AnyAsync(x => x.OrderId == entity.OrderId, cancellationToken);
+                if (exists)
+                {
+                    context.Update(entity);
+                }
+                else
+                {
+                    context.Add(entity);
+                }
+            }
+
             await context.SaveChangesAsync(cancellationToken);
         }
 

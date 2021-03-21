@@ -1,0 +1,126 @@
+﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Trader.Data
+{
+    internal class SqliteTraderRepository : ITraderRepository, IHostedService
+    {
+        public readonly IDbContextFactory<TraderContext> _factory;
+        public readonly IMapper _mapper;
+
+        public SqliteTraderRepository(IDbContextFactory<TraderContext> factory, IMapper mapper)
+        {
+            _factory = factory ?? throw new ArgumentNullException(nameof(factory));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+
+            _transientStatuses = Enum.GetValues<OrderStatus>().Where(x => x.IsTransientStatus()).Select(x => _mapper.Map<int>(x)).ToArray();
+        }
+
+        #region Orders
+
+        private readonly int[] _transientStatuses;
+
+        public async Task<long> GetMinTransientOrderIdAsync(string symbol, CancellationToken cancellationToken = default)
+        {
+            using var context = _factory.CreateDbContext();
+
+            return await context.Orders
+                .Where(x => x.Symbol == symbol)
+                .Where(x => _transientStatuses.Contains(x.Status))
+                .Select(x => x.OrderId)
+                .DefaultIfEmpty()
+                .MinAsync(cancellationToken);
+        }
+
+        public async Task<long> GetMaxOrderIdAsync(string symbol, CancellationToken cancellationToken = default)
+        {
+            using var context = _factory.CreateDbContext();
+
+            return await context.Orders
+                .Where(x => x.Symbol == symbol)
+                .Select(x => x.OrderId)
+                .DefaultIfEmpty()
+                .MaxAsync(cancellationToken);
+        }
+
+        public async Task<SortedOrderSet> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default)
+        {
+            using var context = _factory.CreateDbContext();
+
+            var entities = await context.Orders
+                .Where(x => x.Symbol == symbol)
+                .ToListAsync(cancellationToken);
+
+            return _mapper.Map<SortedOrderSet>(entities);
+        }
+
+        public async Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default)
+        {
+            using var context = _factory.CreateDbContext();
+
+            var entity = _mapper.Map<OrderEntity>(order);
+
+            var exists = await context.Orders.AnyAsync(x => x.OrderId == entity.OrderId, cancellationToken);
+            if (exists)
+            {
+                context.Update(entity);
+            }
+            else
+            {
+                context.Add(entity);
+            }
+            await context.SaveChangesAsync(cancellationToken);
+        }
+
+        public async Task<SortedOrderSet> GetTransientOrdersAsync(string symbol, OrderSide? orderSide = default, bool? significant = default, CancellationToken cancellationToken = default)
+        {
+            using var context = _factory.CreateDbContext();
+
+            var query = context.Orders
+                .Where(x => x.Symbol == symbol)
+                .Where(x => _transientStatuses.Contains(x.Status));
+
+            if (orderSide.HasValue)
+            {
+                var orderSideId = _mapper.Map<int>(orderSide.Value);
+                query = query.Where(x => x.Side == orderSideId);
+            }
+
+            if (significant.HasValue)
+            {
+                if (significant.Value)
+                {
+                    query = query.Where(x => x.ExecutedQuantity > 0m);
+                }
+                else
+                {
+                    query = query.Where(x => x.ExecutedQuantity == 0m);
+                }
+            }
+
+            var result = await query.ToListAsync(cancellationToken);
+
+            return _mapper.Map<SortedOrderSet>(result);
+        }
+
+        #endregion Orders
+
+        #region IHostedService
+
+        public async Task StartAsync(CancellationToken cancellationToken)
+        {
+            using var context = _factory.CreateDbContext();
+
+            await context.Database.MigrateAsync(cancellationToken);
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+        #endregion IHostedService
+    }
+}

@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
@@ -22,8 +21,9 @@ namespace Trader.Trading.Algorithms.Step
         private readonly ISystemClock _clock;
         private readonly ITradingService _trader;
         private readonly ISignificantOrderResolver _significantOrderResolver;
+        private readonly ITraderRepository _repository;
 
-        public StepAlgorithm(string name, ILogger<StepAlgorithm> logger, IOptionsSnapshot<StepAlgorithmOptions> options, ISystemClock clock, ITradingService trader, ISignificantOrderResolver significantOrderResolver)
+        public StepAlgorithm(string name, ILogger<StepAlgorithm> logger, IOptionsSnapshot<StepAlgorithmOptions> options, ISystemClock clock, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ITraderRepository repository)
         {
             _name = name ?? throw new ArgumentNullException(nameof(name));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -31,6 +31,7 @@ namespace Trader.Trading.Algorithms.Step
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
             _significantOrderResolver = significantOrderResolver ?? throw new ArgumentNullException(nameof(significantOrderResolver));
+            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         }
 
         private static string Type => nameof(StepAlgorithm);
@@ -43,19 +44,9 @@ namespace Trader.Trading.Algorithms.Step
         private readonly Balances _balances = new();
 
         /// <summary>
-        /// Keeps track of all orders.
-        /// </summary>
-        private readonly SortedOrderSet _orders = new();
-
-        /// <summary>
         /// Set of orders that compose the current asset balance.
         /// </summary>
         private SortedOrderSet _significant;
-
-        /// <summary>
-        /// Set of orders that are open now.
-        /// </summary>
-        private readonly SortedOrderSet _transient = new();
 
         /// <summary>
         /// Keeps track of all trades.
@@ -90,8 +81,8 @@ namespace Trader.Trading.Algorithms.Step
             // always update the latest price
             var ticker = await SyncAssetPriceAsync(cancellationToken);
 
-            ResolveSignificantOrders();
-            if (TryCreateTradingBands(minNotionalFilter)) return;
+            await ResolveSignificantOrdersAsync(cancellationToken);
+            if (await TryCreateTradingBandsAsync(minNotionalFilter, cancellationToken)) return;
             if (await TrySetStartingTradeAsync(symbol, ticker, lotSizeFilter, cancellationToken)) return;
             if (await TryCancelRogueSellOrdersAsync(cancellationToken)) return;
             if (await TrySetBandSellOrdersAsync(cancellationToken)) return;
@@ -138,50 +129,43 @@ namespace Trader.Trading.Algorithms.Step
 
         private async Task SyncAccountOrdersAsync(CancellationToken cancellationToken)
         {
-            // pull all new orders page by page
-            var newCount = 0;
+            // start with the minimum transient order if there is any
+            var orderId = await _repository.GetMinTransientOrderIdAsync(_options.Symbol, cancellationToken);
+
+            // otherwise start after the last order
+            if (orderId == 0)
+            {
+                orderId = await _repository.GetMaxOrderIdAsync(_options.Symbol, cancellationToken) + 1;
+            }
+
+            // pull all new or updated orders page by page
+            var orderCount = 0;
             ImmutableList<OrderQueryResult> orders;
             do
             {
-                orders = await _trader.GetAllOrdersAsync(new GetAllOrders(_options.Symbol, _orders.Max?.OrderId + 1 ?? 0, null, null, 1000, null, _clock.UtcNow), cancellationToken);
+                orders = await _trader.GetAllOrdersAsync(new GetAllOrders(_options.Symbol, orderId, null, null, 1000, null, _clock.UtcNow), cancellationToken);
 
-                foreach (var order in orders)
+                if (orders.Count > 0)
                 {
-                    // add the new pulled order
-                    _orders.Set(order);
-
-                    // if the order is transient then index it
-                    if (order.Status.IsTransientStatus())
+                    // persist all new and updated orders
+                    foreach (var order in orders)
                     {
-                        _transient.Set(order);
+                        await _repository.SetOrderAsync(order, cancellationToken);
                     }
 
-                    ++newCount;
-                }
-            } while (orders.Count > 0);
+                    // set the start of the next page
+                    orderId = orders[^1].OrderId + 1;
 
-            // ensure known transient orders not pulled in the prior step are also updated
-            var updatedCount = 0;
-            using var copy = ArrayPool<OrderQueryResult>.Shared.RentSegmentFrom(_transient);
-            foreach (var order in copy.Segment)
+                    orderCount += orders.Count;
+                }
+            } while (orders.Count >= 1000);
+
+            // log the activity only if necessary
+            if (orderCount > 0)
             {
-                // get the updated order
-                var updated = await _trader.GetOrderAsync(new OrderQuery(_options.Symbol, order.OrderId, null, null, _clock.UtcNow), cancellationToken);
-
-                // update the known order
-                _orders.Set(updated);
-
-                // update the transient index either way
-                if (updated.Status.IsTransientStatus())
-                {
-                    _transient.Set(updated);
-                }
-                else
-                {
-                    _transient.Remove(updated);
-                }
-
-                ++updatedCount;
+                _logger.LogInformation(
+                    "{Type} {Name} pulled {Count} new or updated open orders",
+                    Type, _name, orderCount);
             }
 
             // pull all new trades
@@ -203,11 +187,6 @@ namespace Trader.Trading.Algorithms.Step
                     group.Set(trade);
                 }
             } while (trades.Count > 0);
-
-            // log the activity only if necessary
-            _logger.LogInformation(
-                "{Type} {Name} pulled {NewCount} new and {UpdatedCount} updated open orders",
-                Type, _name, newCount, updatedCount, _orders.Count);
         }
 
         private async Task<SymbolPriceTicker> SyncAssetPriceAsync(CancellationToken cancellationToken = default)
@@ -370,9 +349,12 @@ namespace Trader.Trading.Algorithms.Step
         /// </summary>
         private async Task<bool> TryCancelRogueSellOrdersAsync(CancellationToken cancellationToken = default)
         {
+            // get all transient sell orders
+            var orders = await _repository.GetTransientOrdersAsync(_options.Symbol, OrderSide.Sell, null, cancellationToken);
+
             var fail = false;
 
-            foreach (var order in _orders.Where(x => x.Side == OrderSide.Sell && x.Status.IsTransientStatus()))
+            foreach (var order in orders)
             {
                 if (!_bands.Any(x => x.CloseOrderId == order.OrderId))
                 {
@@ -406,7 +388,8 @@ namespace Trader.Trading.Algorithms.Step
                     Type, _name, lowBuyPrice, _options.Quote, ticker.Price, _options.Quote);
 
                 // cancel the lowest open buy order with a open price lower than the lower band to the current price
-                foreach (var order in _orders.Where(x => x.Side == OrderSide.Buy && x.Status.IsTransientStatus()))
+                var orders = await _repository.GetTransientOrdersAsync(_options.Symbol, OrderSide.Buy, null, cancellationToken);
+                foreach (var order in orders.Where(x => x.Side == OrderSide.Buy && x.Status.IsTransientStatus()))
                 {
                     if (order.Price < lowBuyPrice)
                     {
@@ -475,16 +458,18 @@ namespace Trader.Trading.Algorithms.Step
             }
         }
 
-        private void ResolveSignificantOrders()
+        private async Task ResolveSignificantOrdersAsync(CancellationToken cancellationToken = default)
         {
-            _significant = _significantOrderResolver.Resolve(_orders, _trades);
+            var orders = await _repository.GetOrdersAsync(_options.Symbol, cancellationToken);
+
+            _significant = _significantOrderResolver.Resolve(orders, _trades);
 
             _logger.LogInformation(
                 "{Type} {Name} identified {Count} significant orders that make up the asset balance of {Total}",
                 Type, _name, _significant.Count, _balances.Asset.Total);
         }
 
-        private bool TryCreateTradingBands(MinNotionalSymbolFilter minNotionalFilter)
+        private async Task<bool> TryCreateTradingBandsAsync(MinNotionalSymbolFilter minNotionalFilter, CancellationToken cancellationToken = default)
         {
             _bands.Clear();
 
@@ -516,7 +501,8 @@ namespace Trader.Trading.Algorithms.Step
             }
 
             // apply the non-significant open buy orders to the bands
-            foreach (var order in _transient.Where(x => x.Side == OrderSide.Buy && x.ExecutedQuantity == 0m))
+            var orders = await _repository.GetTransientOrdersAsync(_options.Symbol, OrderSide.Buy, false, cancellationToken);
+            foreach (var order in orders)
             {
                 // add transient orders with original quantity
                 _bands.Add(new Band
@@ -542,9 +528,9 @@ namespace Trader.Trading.Algorithms.Step
             }
 
             // apply open sell orders to the bands
-            // todo: optimize this enumeration on all the orders - we will only need a few
             var used = new HashSet<Band>();
-            foreach (var order in _orders.Where(x => x.Side == OrderSide.Sell && x.Status.IsTransientStatus()))
+            orders = await _repository.GetTransientOrdersAsync(_options.Symbol, OrderSide.Sell, null, cancellationToken);
+            foreach (var order in orders)
             {
                 var band = _bands.Except(used).FirstOrDefault(x => x.Status == BandStatus.Open && x.Quantity == order.OriginalQuantity && x.ClosePrice == order.Price);
                 if (band is not null)

@@ -36,7 +36,7 @@ namespace Trader.Trading.Binance
             var response = await base.SendAsync(request, cancellationToken);
 
             await HandleBinanceErrorAsync(response, cancellationToken);
-            await PostProcessAsync(response, cancellationToken);
+            PostProcess(response);
 
             return response;
         }
@@ -89,9 +89,9 @@ namespace Trader.Trading.Binance
             response.EnsureSuccessStatusCode();
         }
 
-        private static Task PostProcessAsync(HttpResponseMessage response, CancellationToken cancellationToken)
+        private static void PostProcess(HttpResponseMessage response)
         {
-            if (!BinanceApiContext.CaptureUsage) return Task.CompletedTask;
+            if (!BinanceApiContext.CaptureUsage) return;
 
             foreach (var header in response.Headers)
             {
@@ -141,7 +141,7 @@ namespace Trader.Trading.Binance
                 }
             }
 
-            return Task.CompletedTask;
+            return;
         }
     }
 }

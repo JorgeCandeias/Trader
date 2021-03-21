@@ -41,7 +41,7 @@ namespace Trader.App
                         .AddProfitCalculator()
                         .AddSqliteRepository(options =>
                         {
-                            options.ConnectionString = db;
+                            options.ConnectionString = $"Data Source={db}";
                         });
 
                     services

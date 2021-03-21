@@ -1,4 +1,6 @@
-﻿namespace Trader.Trading.Algorithms
+﻿using Trader.Data;
+
+namespace Trader.Trading.Algorithms
 {
     public interface ISignificantOrderResolver
     {

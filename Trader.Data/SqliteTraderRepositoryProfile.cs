@@ -2,9 +2,9 @@
 
 namespace Trader.Data
 {
-    internal class SqliteRepositoryProfile : Profile
+    internal class SqliteTraderRepositoryProfile : Profile
     {
-        public SqliteRepositoryProfile()
+        public SqliteTraderRepositoryProfile()
         {
             CreateMap<OrderQueryResult, OrderEntity>()
                 .ReverseMap();

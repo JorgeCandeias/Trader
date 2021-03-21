@@ -144,7 +144,7 @@ namespace Trader.Data
 
             return await context.Trades
                 .Where(x => x.Symbol == symbol)
-                .Select(x => x.OrderId)
+                .Select(x => x.Id)
                 .DefaultIfEmpty()
                 .MaxAsync(cancellationToken);
         }

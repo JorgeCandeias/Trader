@@ -131,10 +131,7 @@ namespace Trader.Trading.Algorithms.Step
                 if (trades.Count > 0)
                 {
                     // persist all new trades
-                    foreach (var trade in trades)
-                    {
-                        await _repository.SetTradeAsync(trade, cancellationToken);
-                    }
+                    await _repository.SetTradesAsync(trades, cancellationToken);
 
                     // set the start of the next page
                     tradeId = trades.Max!.Id + 1;

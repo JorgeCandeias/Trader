@@ -167,6 +167,27 @@ namespace Trader.Data
             await context.SaveChangesAsync(cancellationToken);
         }
 
+        public async Task SetTradesAsync(IEnumerable<AccountTrade> trades, CancellationToken cancellationToken = default)
+        {
+            using var context = _factory.CreateDbContext();
+
+            foreach (var trade in trades)
+            {
+                var entity = _mapper.Map<TradeEntity>(trade);
+                var exists = await context.Trades.AnyAsync(x => x.Id == entity.Id, cancellationToken);
+                if (exists)
+                {
+                    context.Update(entity);
+                }
+                else
+                {
+                    context.Add(entity);
+                }
+            }
+
+            await context.SaveChangesAsync(cancellationToken);
+        }
+
         public async Task<SortedTradeSet> GetTradesAsync(string symbol, CancellationToken cancellationToken = default)
         {
             using var context = _factory.CreateDbContext();

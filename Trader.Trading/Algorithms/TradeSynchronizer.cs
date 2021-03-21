@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Trader.Core.Time;
@@ -8,12 +9,14 @@ namespace Trader.Trading.Algorithms
 {
     internal class TradeSynchronizer : ITradeSynchronizer
     {
+        private readonly ILogger _logger;
         private readonly ITraderRepository _repository;
         private readonly ITradingService _trader;
         private readonly ISystemClock _clock;
 
-        public TradeSynchronizer(ITraderRepository repository, ITradingService trader, ISystemClock clock)
+        public TradeSynchronizer(ILogger<TradeSynchronizer> logger, ITraderRepository repository, ITradingService trader, ISystemClock clock)
         {
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
@@ -41,7 +44,15 @@ namespace Trader.Trading.Algorithms
                     // keep track for logging
                     count += trades.Count;
                 }
-            } while (trades.Count > 0);
+            } while (trades.Count > 1000);
+
+            // log the activity only if necessary
+            if (count > 0)
+            {
+                _logger.LogInformation(
+                    "{Name} {Symbol} pulled {Count} trades",
+                    nameof(TradeSynchronizer), symbol, count);
+            }
         }
     }
 }

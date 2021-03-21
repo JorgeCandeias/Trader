@@ -57,7 +57,7 @@ namespace Trader.Trading.Algorithms
             if (count > 0)
             {
                 _logger.LogInformation(
-                    "{Name} {Symbol} pulled {Count} new or updated open orders",
+                    "{Name} {Symbol} pulled {Count} orders",
                     nameof(OrderSynchronizer), symbol, count);
             }
         }

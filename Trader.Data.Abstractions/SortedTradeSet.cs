@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using Trader.Data;
 
-namespace Trader.Trading.Algorithms
+namespace Trader.Data
 {
     public class SortedTradeSet : SortedSet<AccountTrade>
     {

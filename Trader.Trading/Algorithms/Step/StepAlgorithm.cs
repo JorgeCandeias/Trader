@@ -93,8 +93,6 @@ namespace Trader.Trading.Algorithms.Step
 
         private void SyncAccountInfo(AccountInfo accountInfo)
         {
-            _logger.LogInformation("{Type} {Name} querying account information...", Type, _name);
-
             var gotAsset = false;
             var gotQuote = false;
 

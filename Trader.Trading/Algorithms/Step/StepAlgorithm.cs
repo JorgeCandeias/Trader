@@ -70,7 +70,7 @@ namespace Trader.Trading.Algorithms.Step
 
             ApplyAccountInfo(accountInfo);
             await _orderSynchronizer.SynchronizeOrdersAsync(_options.Symbol, cancellationToken);
-            await SyncAccountTradesAsync(cancellationToken);
+            await _tradeSynchronizer.SynchronizeTradesAsync(_options.Symbol, cancellationToken);
 
             // always update the latest price
             var ticker = await SyncAssetPriceAsync(cancellationToken);
@@ -117,11 +117,6 @@ namespace Trader.Trading.Algorithms.Step
 
             if (!gotAsset) throw new AlgorithmException($"Could not get balance for base asset {_options.Asset}");
             if (!gotQuote) throw new AlgorithmException($"Could not get balance for quote asset {_options.Quote}");
-        }
-
-        private async Task SyncAccountTradesAsync(CancellationToken cancellationToken = default)
-        {
-            await _tradeSynchronizer.SynchronizeTradesAsync(_options.Symbol, cancellationToken);
         }
 
         private async Task<SymbolPriceTicker> SyncAssetPriceAsync(CancellationToken cancellationToken = default)

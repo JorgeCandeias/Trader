@@ -11,13 +11,16 @@ namespace Trader.Trading
 
         Task<SymbolPriceTicker> GetSymbolPriceTickerAsync(string symbol, CancellationToken cancellationToken = default);
 
+        // todo: refactor this to return sorted trade set
         Task<ImmutableList<AccountTrade>> GetAccountTradesAsync(GetAccountTrades model, CancellationToken cancellationToken = default);
 
+        // todo: refactor this to return sorted order set
         Task<ImmutableList<OrderQueryResult>> GetOpenOrdersAsync(GetOpenOrders model, CancellationToken cancellationToken = default);
 
+        // todo: refactor this to return sorted order set
         Task<OrderQueryResult> GetOrderAsync(OrderQuery model, CancellationToken cancellationToken = default);
 
-        Task<ImmutableList<OrderQueryResult>> GetAllOrdersAsync(GetAllOrders model, CancellationToken cancellationToken = default);
+        Task<SortedOrderSet> GetAllOrdersAsync(GetAllOrders model, CancellationToken cancellationToken = default);
 
         Task<CancelStandardOrderResult> CancelOrderAsync(CancelStandardOrder model, CancellationToken cancellationToken = default);
 

@@ -110,7 +110,7 @@ namespace Trader.Trading.Binance
             return result;
         }
 
-        public async Task<ImmutableList<OrderQueryResult>> GetAllOrdersAsync(GetAllOrders model, CancellationToken cancellationToken = default)
+        public async Task<SortedOrderSet> GetAllOrdersAsync(GetAllOrders model, CancellationToken cancellationToken = default)
         {
             _ = model ?? throw new ArgumentNullException(nameof(model));
 
@@ -118,7 +118,7 @@ namespace Trader.Trading.Binance
 
             var input = _mapper.Map<GetAllOrdersRequestModel>(model);
             var output = await _client.GetAllOrdersAsync(input, cancellationToken);
-            var result = _mapper.Map<ImmutableList<OrderQueryResult>>(output);
+            var result = _mapper.Map<SortedOrderSet>(output);
             var used = _mapper.Map<ImmutableList<Usage>>(BinanceApiContext.Usage);
 
             UpdateUsage(used);

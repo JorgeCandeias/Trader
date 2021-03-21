@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
 using Trader.Core.Time;
@@ -36,7 +35,7 @@ namespace Trader.Trading.Algorithms
 
             // pull all new or updated orders page by page
             var count = 0;
-            ImmutableList<OrderQueryResult> orders;
+            SortedOrderSet orders;
             do
             {
                 // todo: refactor this to return a SortedOrderSet
@@ -48,7 +47,7 @@ namespace Trader.Trading.Algorithms
                     await _repository.SetOrdersAsync(orders, cancellationToken);
 
                     // set the start of the next page
-                    orderId = orders[^1].OrderId + 1;
+                    orderId = orders.Max!.OrderId + 1;
 
                     // keep track for logging
                     count += orders.Count;

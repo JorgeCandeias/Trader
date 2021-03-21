@@ -22,8 +22,9 @@ namespace Trader.Trading.Algorithms.Step
         private readonly ITradingService _trader;
         private readonly ISignificantOrderResolver _significantOrderResolver;
         private readonly ITraderRepository _repository;
+        private readonly IOrderSynchronizer _orderSynchronizer;
 
-        public StepAlgorithm(string name, ILogger<StepAlgorithm> logger, IOptionsSnapshot<StepAlgorithmOptions> options, ISystemClock clock, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ITraderRepository repository)
+        public StepAlgorithm(string name, ILogger<StepAlgorithm> logger, IOptionsSnapshot<StepAlgorithmOptions> options, ISystemClock clock, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ITraderRepository repository, IOrderSynchronizer orderSynchronizer)
         {
             _name = name ?? throw new ArgumentNullException(nameof(name));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -32,6 +33,7 @@ namespace Trader.Trading.Algorithms.Step
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
             _significantOrderResolver = significantOrderResolver ?? throw new ArgumentNullException(nameof(significantOrderResolver));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _orderSynchronizer = orderSynchronizer ?? throw new ArgumentNullException(nameof(orderSynchronizer));
         }
 
         private static string Type => nameof(StepAlgorithm);
@@ -118,42 +120,7 @@ namespace Trader.Trading.Algorithms.Step
 
         private async Task SyncAccountOrdersAsync(CancellationToken cancellationToken)
         {
-            // start with the minimum transient order if there is any
-            var orderId = await _repository.GetMinTransientOrderIdAsync(_options.Symbol, cancellationToken);
-
-            // otherwise start after the last order
-            if (orderId == 0)
-            {
-                orderId = await _repository.GetMaxOrderIdAsync(_options.Symbol, cancellationToken) + 1;
-            }
-
-            // pull all new or updated orders page by page
-            var count = 0;
-            ImmutableList<OrderQueryResult> orders;
-            do
-            {
-                orders = await _trader.GetAllOrdersAsync(new GetAllOrders(_options.Symbol, orderId, null, null, 1000, null, _clock.UtcNow), cancellationToken);
-
-                if (orders.Count > 0)
-                {
-                    // persist all new and updated orders
-                    await _repository.SetOrdersAsync(orders, cancellationToken);
-
-                    // set the start of the next page
-                    orderId = orders[^1].OrderId + 1;
-
-                    // keep track for logging
-                    count += orders.Count;
-                }
-            } while (orders.Count >= 1000);
-
-            // log the activity only if necessary
-            if (count > 0)
-            {
-                _logger.LogInformation(
-                    "{Type} {Name} pulled {Count} new or updated open orders",
-                    Type, _name, count);
-            }
+            await _orderSynchronizer.SynchronizeOrdersAsync(_options.Symbol, cancellationToken);
         }
 
         private async Task SyncAccountTradesAsync(CancellationToken cancellationToken = default)

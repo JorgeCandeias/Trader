@@ -7,7 +7,8 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddAlgorithmResolvers(this IServiceCollection services)
         {
             return services
-                .AddSingleton<ISignificantOrderResolver, SignificantOrderResolver>();
+                .AddSingleton<ISignificantOrderResolver, SignificantOrderResolver>()
+                .AddSingleton<IOrderSynchronizer, OrderSynchronizer>();
         }
     }
 }

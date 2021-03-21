@@ -64,13 +64,13 @@ namespace Trader.Trading.Binance
             return result;
         }
 
-        public async Task<ImmutableList<AccountTrade>> GetAccountTradesAsync(GetAccountTrades model, CancellationToken cancellationToken = default)
+        public async Task<SortedTradeSet> GetAccountTradesAsync(GetAccountTrades model, CancellationToken cancellationToken = default)
         {
             BinanceApiContext.CaptureUsage = true;
 
             var input = _mapper.Map<AccountTradesRequestModel>(model);
             var output = await _client.GetAccountTradesAsync(input, cancellationToken);
-            var result = _mapper.Map<ImmutableList<AccountTrade>>(output);
+            var result = _mapper.Map<SortedTradeSet>(output);
             var used = _mapper.Map<ImmutableList<Usage>>(BinanceApiContext.Usage);
 
             UpdateUsage(used);

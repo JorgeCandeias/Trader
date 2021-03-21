@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -124,7 +123,7 @@ namespace Trader.Trading.Algorithms.Step
 
             // pull all new trades
             var count = 0;
-            ImmutableList<AccountTrade> trades;
+            SortedTradeSet trades;
             do
             {
                 trades = await _trader.GetAccountTradesAsync(new GetAccountTrades(_options.Symbol, null, null, tradeId, 1000, null, _clock.UtcNow), cancellationToken);
@@ -138,7 +137,7 @@ namespace Trader.Trading.Algorithms.Step
                     }
 
                     // set the start of the next page
-                    tradeId = trades[^1].Id + 1;
+                    tradeId = trades.Max!.Id + 1;
 
                     // keep track for logging
                     count += trades.Count;

@@ -76,7 +76,7 @@ namespace Trader.Trading
             var profits = new List<Profit>();
             foreach (var algo in _algos)
             {
-                var trades = await _repository.GetTradesAsync(algo.Symbol, _cancellation.Token);
+                var trades = await _repository.GetTradesAsync(algo.Symbol, default, _cancellation.Token);
                 var profit = _calculator.Calculate(trades);
 
                 _logger.LogInformation(

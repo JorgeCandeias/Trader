@@ -188,13 +188,19 @@ namespace Trader.Data
             await context.SaveChangesAsync(cancellationToken);
         }
 
-        public async Task<SortedTradeSet> GetTradesAsync(string symbol, CancellationToken cancellationToken = default)
+        public async Task<SortedTradeSet> GetTradesAsync(string symbol, long? orderId = default, CancellationToken cancellationToken = default)
         {
             using var context = _factory.CreateDbContext();
 
-            var result = await context.Trades
-                .Where(x => x.Symbol == symbol)
-                .ToListAsync(cancellationToken);
+            var query = context.Trades
+                .Where(x => x.Symbol == symbol);
+
+            if (orderId.HasValue)
+            {
+                query = query.Where(x => x.OrderId == orderId.Value);
+            }
+
+            var result = await query.ToListAsync(cancellationToken);
 
             return _mapper.Map<SortedTradeSet>(result);
         }

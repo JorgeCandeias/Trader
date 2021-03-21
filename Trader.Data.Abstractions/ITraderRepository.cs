@@ -24,6 +24,6 @@ namespace Trader.Data
 
         Task SetTradesAsync(IEnumerable<AccountTrade> trades, CancellationToken cancellationToken = default);
 
-        Task<SortedTradeSet> GetTradesAsync(string symbol, CancellationToken cancellationToken = default);
+        Task<SortedTradeSet> GetTradesAsync(string symbol, long? orderId = default, CancellationToken cancellationToken = default);
     }
 }

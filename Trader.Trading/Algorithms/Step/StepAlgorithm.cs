@@ -68,7 +68,7 @@ namespace Trader.Trading.Algorithms.Step
             var minNotionalFilter = symbol.Filters.OfType<MinNotionalSymbolFilter>().Single();
 
             ApplyAccountInfo(accountInfo);
-            await SyncAccountOrdersAsync(cancellationToken);
+            await _orderSynchronizer.SynchronizeOrdersAsync(_options.Symbol, cancellationToken);
             await SyncAccountTradesAsync(cancellationToken);
 
             // always update the latest price
@@ -116,11 +116,6 @@ namespace Trader.Trading.Algorithms.Step
 
             if (!gotAsset) throw new AlgorithmException($"Could not get balance for base asset {_options.Asset}");
             if (!gotQuote) throw new AlgorithmException($"Could not get balance for quote asset {_options.Quote}");
-        }
-
-        private async Task SyncAccountOrdersAsync(CancellationToken cancellationToken)
-        {
-            await _orderSynchronizer.SynchronizeOrdersAsync(_options.Symbol, cancellationToken);
         }
 
         private async Task SyncAccountTradesAsync(CancellationToken cancellationToken = default)

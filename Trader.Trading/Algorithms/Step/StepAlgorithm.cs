@@ -65,7 +65,7 @@ namespace Trader.Trading.Algorithms.Step
             var lotSizeFilter = symbol.Filters.OfType<LotSizeSymbolFilter>().Single();
             var minNotionalFilter = symbol.Filters.OfType<MinNotionalSymbolFilter>().Single();
 
-            SyncAccountInfo(accountInfo);
+            ApplyAccountInfo(accountInfo);
             await SyncAccountOrdersAsync(cancellationToken);
             await SyncAccountTradesAsync(cancellationToken);
 
@@ -81,7 +81,7 @@ namespace Trader.Trading.Algorithms.Step
             if (await TryCloseOutOfRangeBandsAsync(ticker, cancellationToken)) return;
         }
 
-        private void SyncAccountInfo(AccountInfo accountInfo)
+        private void ApplyAccountInfo(AccountInfo accountInfo)
         {
             var gotAsset = false;
             var gotQuote = false;

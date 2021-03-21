@@ -22,8 +22,9 @@ namespace Trader.Trading.Algorithms.Step
         private readonly ISignificantOrderResolver _significantOrderResolver;
         private readonly ITraderRepository _repository;
         private readonly IOrderSynchronizer _orderSynchronizer;
+        private readonly ITradeSynchronizer _tradeSynchronizer;
 
-        public StepAlgorithm(string name, ILogger<StepAlgorithm> logger, IOptionsSnapshot<StepAlgorithmOptions> options, ISystemClock clock, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ITraderRepository repository, IOrderSynchronizer orderSynchronizer)
+        public StepAlgorithm(string name, ILogger<StepAlgorithm> logger, IOptionsSnapshot<StepAlgorithmOptions> options, ISystemClock clock, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ITraderRepository repository, IOrderSynchronizer orderSynchronizer, ITradeSynchronizer tradeSynchronizer)
         {
             _name = name ?? throw new ArgumentNullException(nameof(name));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -33,6 +34,7 @@ namespace Trader.Trading.Algorithms.Step
             _significantOrderResolver = significantOrderResolver ?? throw new ArgumentNullException(nameof(significantOrderResolver));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _orderSynchronizer = orderSynchronizer ?? throw new ArgumentNullException(nameof(orderSynchronizer));
+            _tradeSynchronizer = tradeSynchronizer ?? throw new ArgumentNullException(nameof(tradeSynchronizer));
         }
 
         private static string Type => nameof(StepAlgorithm);
@@ -119,27 +121,7 @@ namespace Trader.Trading.Algorithms.Step
 
         private async Task SyncAccountTradesAsync(CancellationToken cancellationToken = default)
         {
-            var tradeId = await _repository.GetMaxTradeIdAsync(_options.Symbol, cancellationToken) + 1;
-
-            // pull all new trades
-            var count = 0;
-            SortedTradeSet trades;
-            do
-            {
-                trades = await _trader.GetAccountTradesAsync(new GetAccountTrades(_options.Symbol, null, null, tradeId, 1000, null, _clock.UtcNow), cancellationToken);
-
-                if (trades.Count > 0)
-                {
-                    // persist all new trades
-                    await _repository.SetTradesAsync(trades, cancellationToken);
-
-                    // set the start of the next page
-                    tradeId = trades.Max!.Id + 1;
-
-                    // keep track for logging
-                    count += trades.Count;
-                }
-            } while (trades.Count > 0);
+            await _tradeSynchronizer.SynchronizeTradesAsync(_options.Symbol, cancellationToken);
         }
 
         private async Task<SymbolPriceTicker> SyncAssetPriceAsync(CancellationToken cancellationToken = default)

@@ -8,7 +8,8 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             return services
                 .AddSingleton<ISignificantOrderResolver, SignificantOrderResolver>()
-                .AddSingleton<IOrderSynchronizer, OrderSynchronizer>();
+                .AddSingleton<IOrderSynchronizer, OrderSynchronizer>()
+                .AddSingleton<ITradeSynchronizer, TradeSynchronizer>();
         }
     }
 }

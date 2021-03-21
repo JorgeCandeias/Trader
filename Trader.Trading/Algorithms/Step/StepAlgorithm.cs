@@ -47,11 +47,6 @@ namespace Trader.Trading.Algorithms.Step
         private readonly Balances _balances = new();
 
         /// <summary>
-        /// Set of orders that compose the current asset balance.
-        /// </summary>
-        private SortedOrderSet _significant;
-
-        /// <summary>
         /// Keeps track of the bands managed by the algorithm.
         /// </summary>
         private readonly SortedSet<Band> _bands = new();
@@ -73,12 +68,12 @@ namespace Trader.Trading.Algorithms.Step
             // synchronize the repository
             await _orderSynchronizer.SynchronizeOrdersAsync(_options.Symbol, cancellationToken);
             await _tradeSynchronizer.SynchronizeTradesAsync(_options.Symbol, cancellationToken);
+            var significant = await _significantOrderResolver.ResolveAsync(_options.Symbol, cancellationToken);
 
             // always update the latest price
             var ticker = await SyncAssetPriceAsync(cancellationToken);
 
-            await ResolveSignificantOrdersAsync(cancellationToken);
-            if (await TryCreateTradingBandsAsync(minNotionalFilter, cancellationToken)) return;
+            if (await TryCreateTradingBandsAsync(significant, minNotionalFilter, cancellationToken)) return;
             if (await TrySetStartingTradeAsync(symbol, ticker, lotSizeFilter, cancellationToken)) return;
             if (await TryCancelRogueSellOrdersAsync(cancellationToken)) return;
             if (await TrySetBandSellOrdersAsync(cancellationToken)) return;
@@ -390,21 +385,12 @@ namespace Trader.Trading.Algorithms.Step
             }
         }
 
-        private async Task ResolveSignificantOrdersAsync(CancellationToken cancellationToken = default)
-        {
-            _significant = await _significantOrderResolver.ResolveAsync(_options.Symbol, cancellationToken);
-
-            _logger.LogInformation(
-                "{Type} {Name} identified {Count} significant orders that make up the asset balance of {Total}",
-                Type, _name, _significant.Count, _balances.Asset.Total);
-        }
-
-        private async Task<bool> TryCreateTradingBandsAsync(MinNotionalSymbolFilter minNotionalFilter, CancellationToken cancellationToken = default)
+        private async Task<bool> TryCreateTradingBandsAsync(SortedOrderSet significant, MinNotionalSymbolFilter minNotionalFilter, CancellationToken cancellationToken = default)
         {
             _bands.Clear();
 
             // apply the significant buy orders to the bands
-            foreach (var order in _significant.Where(x => x.Side == OrderSide.Buy))
+            foreach (var order in significant.Where(x => x.Side == OrderSide.Buy))
             {
                 if (order.Status.IsTransientStatus())
                 {

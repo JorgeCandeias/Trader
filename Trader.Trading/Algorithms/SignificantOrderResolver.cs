@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Buffers;
 using System.Linq;
 using System.Threading;
@@ -9,10 +10,12 @@ namespace Trader.Trading.Algorithms
 {
     internal class SignificantOrderResolver : ISignificantOrderResolver
     {
+        private readonly ILogger _logger;
         private readonly ITraderRepository _repository;
 
-        public SignificantOrderResolver(ITraderRepository repository)
+        public SignificantOrderResolver(ILogger<SignificantOrderResolver> logger, ITraderRepository repository)
         {
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         }
 
@@ -99,6 +102,10 @@ namespace Trader.Trading.Algorithms
                         subject.Order.OriginalQuoteOrderQuantity));
                 }
             }
+
+            _logger.LogInformation(
+                "{Name} {Symbol} identified {Count} significant orders",
+                nameof(SignificantOrderResolver), symbol, significant.Count);
 
             return significant;
         }

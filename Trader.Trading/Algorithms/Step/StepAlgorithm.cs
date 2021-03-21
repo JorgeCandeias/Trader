@@ -49,16 +49,6 @@ namespace Trader.Trading.Algorithms.Step
         private SortedOrderSet _significant;
 
         /// <summary>
-        /// Keeps track of all trades.
-        /// </summary>
-        //private readonly SortedTradeSet _trades = new();
-
-        /// <summary>
-        /// Keeps an index of trade groups by order id.
-        /// </summary>
-        private readonly Dictionary<long, SortedTradeSet> _tradesByOrderId = new();
-
-        /// <summary>
         /// Keeps track of the bands managed by the algorithm.
         /// </summary>
         private readonly SortedSet<Band> _bands = new();

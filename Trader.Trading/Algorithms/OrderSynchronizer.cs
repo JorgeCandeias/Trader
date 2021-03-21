@@ -38,7 +38,6 @@ namespace Trader.Trading.Algorithms
             SortedOrderSet orders;
             do
             {
-                // todo: refactor this to return a SortedOrderSet
                 orders = await _trader.GetAllOrdersAsync(new GetAllOrders(symbol, orderId, null, null, 1000, null, _clock.UtcNow), cancellationToken);
 
                 if (orders.Count > 0)

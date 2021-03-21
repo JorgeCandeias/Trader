@@ -1,14 +1,26 @@
 ﻿using System;
 using System.Buffers;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Trader.Data;
 
 namespace Trader.Trading.Algorithms
 {
     internal class SignificantOrderResolver : ISignificantOrderResolver
     {
-        public SortedOrderSet Resolve(SortedOrderSet orders, SortedTradeSet trades)
+        private readonly ITraderRepository _repository;
+
+        public SignificantOrderResolver(ITraderRepository repository)
         {
+            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        }
+
+        public async Task<SortedOrderSet> ResolveAsync(string symbol, CancellationToken cancellationToken = default)
+        {
+            var orders = await _repository.GetOrdersAsync(symbol, cancellationToken);
+            var trades = await _repository.GetTradesAsync(symbol, cancellationToken);
+
             // todo: keep track of the last significant order start so we avoid slowing down when the orders grow and grow
             // todo: remove the first step and go straight to lifo processing over the entire order set
             // todo: persist all this stuff into sqlite so each tick can operate over the last data only

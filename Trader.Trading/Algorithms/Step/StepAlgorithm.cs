@@ -69,6 +69,8 @@ namespace Trader.Trading.Algorithms.Step
             var minNotionalFilter = symbol.Filters.OfType<MinNotionalSymbolFilter>().Single();
 
             ApplyAccountInfo(accountInfo);
+
+            // synchronize the repository
             await _orderSynchronizer.SynchronizeOrdersAsync(_options.Symbol, cancellationToken);
             await _tradeSynchronizer.SynchronizeTradesAsync(_options.Symbol, cancellationToken);
 
@@ -390,10 +392,7 @@ namespace Trader.Trading.Algorithms.Step
 
         private async Task ResolveSignificantOrdersAsync(CancellationToken cancellationToken = default)
         {
-            var orders = await _repository.GetOrdersAsync(_options.Symbol, cancellationToken);
-            var trades = await _repository.GetTradesAsync(_options.Symbol, cancellationToken);
-
-            _significant = _significantOrderResolver.Resolve(orders, trades);
+            _significant = await _significantOrderResolver.ResolveAsync(_options.Symbol, cancellationToken);
 
             _logger.LogInformation(
                 "{Type} {Name} identified {Count} significant orders that make up the asset balance of {Total}",

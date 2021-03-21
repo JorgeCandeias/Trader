@@ -1,9 +1,11 @@
-﻿using Trader.Data;
+﻿using System.Threading;
+using System.Threading.Tasks;
+using Trader.Data;
 
 namespace Trader.Trading.Algorithms
 {
     public interface ISignificantOrderResolver
     {
-        SortedOrderSet Resolve(SortedOrderSet orders, SortedTradeSet trades);
+        Task<SortedOrderSet> ResolveAsync(string symbol, CancellationToken cancellationToken = default);
     }
 }

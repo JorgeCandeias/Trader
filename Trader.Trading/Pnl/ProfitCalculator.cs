@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using Trader.Core.Time;
 using Trader.Data;
@@ -15,7 +14,7 @@ namespace Trader.Trading.Pnl
             _clock = clock;
         }
 
-        public Profit Calculate(IEnumerable<AccountTrade> trades)
+        public Profit Calculate(SortedTradeSet trades)
         {
             _ = trades ?? throw new ArgumentNullException(nameof(trades));
 
@@ -23,7 +22,7 @@ namespace Trader.Trading.Pnl
             var today = _clock.UtcNow.Date;
 
             // prepare for indexing
-            var ordered = trades.OrderBy(x => x.Id).ToList();
+            var ordered = trades.ToList();
 
             // keep track of fullfilment
             var quantities = ordered.ToDictionary(x => x.Id, x => x.Quantity);

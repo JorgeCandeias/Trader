@@ -51,7 +51,7 @@ namespace Trader.Trading.Algorithms.Step
         /// <summary>
         /// Keeps track of all trades.
         /// </summary>
-        private readonly SortedTradeSet _trades = new();
+        //private readonly SortedTradeSet _trades = new();
 
         /// <summary>
         /// Keeps an index of trade groups by order id.
@@ -77,6 +77,7 @@ namespace Trader.Trading.Algorithms.Step
 
             SyncAccountInfo(accountInfo);
             await SyncAccountOrdersAsync(cancellationToken);
+            await SyncAccountTradesAsync(cancellationToken);
 
             // always update the latest price
             var ticker = await SyncAssetPriceAsync(cancellationToken);
@@ -139,7 +140,7 @@ namespace Trader.Trading.Algorithms.Step
             }
 
             // pull all new or updated orders page by page
-            var orderCount = 0;
+            var count = 0;
             ImmutableList<OrderQueryResult> orders;
             do
             {
@@ -156,35 +157,44 @@ namespace Trader.Trading.Algorithms.Step
                     // set the start of the next page
                     orderId = orders[^1].OrderId + 1;
 
-                    orderCount += orders.Count;
+                    // keep track for logging
+                    count += orders.Count;
                 }
             } while (orders.Count >= 1000);
 
             // log the activity only if necessary
-            if (orderCount > 0)
+            if (count > 0)
             {
                 _logger.LogInformation(
                     "{Type} {Name} pulled {Count} new or updated open orders",
-                    Type, _name, orderCount);
+                    Type, _name, count);
             }
+        }
+
+        private async Task SyncAccountTradesAsync(CancellationToken cancellationToken = default)
+        {
+            var tradeId = await _repository.GetMaxTradeIdAsync(_options.Symbol, cancellationToken) + 1;
 
             // pull all new trades
+            var count = 0;
             ImmutableList<AccountTrade> trades;
             do
             {
-                trades = await _trader.GetAccountTradesAsync(new GetAccountTrades(_options.Symbol, null, null, _trades.Max?.Id + 1 ?? 0, 1000, null, _clock.UtcNow), cancellationToken);
+                trades = await _trader.GetAccountTradesAsync(new GetAccountTrades(_options.Symbol, null, null, tradeId, 1000, null, _clock.UtcNow), cancellationToken);
 
-                foreach (var trade in trades)
+                if (trades.Count > 0)
                 {
-                    // add the trade to the main set
-                    _trades.Set(trade);
-
-                    // add the trade to the order index
-                    if (!_tradesByOrderId.TryGetValue(trade.OrderId, out var group))
+                    // persist all new trades
+                    foreach (var trade in trades)
                     {
-                        _tradesByOrderId[trade.OrderId] = group = new SortedTradeSet();
+                        await _repository.SetTradeAsync(trade, cancellationToken);
                     }
-                    group.Set(trade);
+
+                    // set the start of the next page
+                    tradeId = trades[^1].Id + 1;
+
+                    // keep track for logging
+                    count += trades.Count;
                 }
             } while (trades.Count > 0);
         }
@@ -461,8 +471,9 @@ namespace Trader.Trading.Algorithms.Step
         private async Task ResolveSignificantOrdersAsync(CancellationToken cancellationToken = default)
         {
             var orders = await _repository.GetOrdersAsync(_options.Symbol, cancellationToken);
+            var trades = await _repository.GetTradesAsync(_options.Symbol, cancellationToken);
 
-            _significant = _significantOrderResolver.Resolve(orders, _trades);
+            _significant = _significantOrderResolver.Resolve(orders, trades);
 
             _logger.LogInformation(
                 "{Type} {Name} identified {Count} significant orders that make up the asset balance of {Total}",
@@ -557,11 +568,6 @@ namespace Trader.Trading.Algorithms.Step
 
             // always let the algo continue
             return false;
-        }
-
-        public ValueTask<ImmutableList<AccountTrade>> GetTradesAsync(CancellationToken cancellationToken = default)
-        {
-            return new ValueTask<ImmutableList<AccountTrade>>(_trades.ToImmutableList());
         }
 
         #region Classes

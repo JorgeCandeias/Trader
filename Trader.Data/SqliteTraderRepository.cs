@@ -21,9 +21,13 @@ namespace Trader.Data
             _transientStatuses = Enum.GetValues<OrderStatus>().Where(x => x.IsTransientStatus()).Select(x => _mapper.Map<int>(x)).ToArray();
         }
 
-        #region Orders
+        #region Helpers
 
         private readonly int[] _transientStatuses;
+
+        #endregion Helpers
+
+        #region Orders
 
         public async Task<long> GetMinTransientOrderIdAsync(string symbol, CancellationToken cancellationToken = default)
         {
@@ -109,6 +113,50 @@ namespace Trader.Data
         }
 
         #endregion Orders
+
+        #region Trades
+
+        public async Task<long> GetMaxTradeIdAsync(string symbol, CancellationToken cancellationToken = default)
+        {
+            using var context = _factory.CreateDbContext();
+
+            return await context.Trades
+                .Where(x => x.Symbol == symbol)
+                .Select(x => x.OrderId)
+                .DefaultIfEmpty()
+                .MaxAsync(cancellationToken);
+        }
+
+        public async Task SetTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default)
+        {
+            using var context = _factory.CreateDbContext();
+
+            var entity = _mapper.Map<TradeEntity>(trade);
+
+            var exists = await context.Trades.AnyAsync(x => x.Id == entity.Id, cancellationToken);
+            if (exists)
+            {
+                context.Update(entity);
+            }
+            else
+            {
+                context.Add(entity);
+            }
+            await context.SaveChangesAsync(cancellationToken);
+        }
+
+        public async Task<SortedTradeSet> GetTradesAsync(string symbol, CancellationToken cancellationToken = default)
+        {
+            using var context = _factory.CreateDbContext();
+
+            var result = await context.Trades
+                .Where(x => x.Symbol == symbol)
+                .ToListAsync(cancellationToken);
+
+            return _mapper.Map<SortedTradeSet>(result);
+        }
+
+        #endregion Trades
 
         #region IHostedService
 

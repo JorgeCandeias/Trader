@@ -8,6 +8,9 @@ namespace Trader.Data
         {
             CreateMap<OrderQueryResult, OrderEntity>()
                 .ReverseMap();
+
+            CreateMap<AccountTrade, TradeEntity>()
+                .ReverseMap();
         }
     }
 }

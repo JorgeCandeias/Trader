@@ -21,14 +21,16 @@ namespace Trader.Trading
         private readonly ITradingService _trader;
         private readonly ISystemClock _clock;
         private readonly IProfitCalculator _calculator;
+        private readonly ITraderRepository _repository;
 
-        public TradingHost(ILogger<TradingHost> logger, IEnumerable<ITradingAlgorithm> algos, ISafeTimerFactory timerFactory, ITradingService trader, ISystemClock clock, IProfitCalculator calculator)
+        public TradingHost(ILogger<TradingHost> logger, IEnumerable<ITradingAlgorithm> algos, ISafeTimerFactory timerFactory, ITradingService trader, ISystemClock clock, IProfitCalculator calculator, ITraderRepository repository)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _algos = algos ?? throw new ArgumentNullException(nameof(algos));
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _calculator = calculator ?? throw new ArgumentNullException(nameof(calculator));
+            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
 
             _timer = timerFactory.Create(_ => TickAsync(), TimeSpan.Zero, TimeSpan.FromSeconds(10));
         }
@@ -74,7 +76,7 @@ namespace Trader.Trading
             var profits = new List<Profit>();
             foreach (var algo in _algos)
             {
-                var trades = await algo.GetTradesAsync(_cancellation.Token);
+                var trades = await _repository.GetTradesAsync(algo.Symbol, _cancellation.Token);
                 var profit = _calculator.Calculate(trades);
 
                 _logger.LogInformation(

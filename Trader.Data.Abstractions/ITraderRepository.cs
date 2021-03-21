@@ -14,5 +14,11 @@ namespace Trader.Data
         Task<long> GetMinTransientOrderIdAsync(string symbol, CancellationToken cancellationToken = default);
 
         Task<SortedOrderSet> GetTransientOrdersAsync(string symbol, OrderSide? orderSide = default, bool? significant = default, CancellationToken cancellationToken = default);
+
+        Task<long> GetMaxTradeIdAsync(string symbol, CancellationToken cancellationToken = default);
+
+        Task SetTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default);
+
+        Task<SortedTradeSet> GetTradesAsync(string symbol, CancellationToken cancellationToken = default);
     }
 }

@@ -10,6 +10,7 @@ namespace Trader.Data
         }
 
         public DbSet<OrderEntity> Orders { get; set; } = null!;
+        public DbSet<TradeEntity> Trades { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -81,59 +81,6 @@ namespace Trader.Data.Migrations
 
                     b.ToTable("Orders");
                 });
-
-            modelBuilder.Entity("Trader.Data.TradeEntity", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<decimal>("Commission")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("CommissionAsset")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsBestMatch")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsBuyer")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsMaker")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<long>("OrderId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<long>("OrderListId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("Quantity")
-                        .HasColumnType("TEXT");
-
-                    b.Property<decimal>("QuoteQuantity")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Symbol")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("Time")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Symbol", "Id");
-
-                    b.HasIndex("Symbol", "OrderId");
-
-                    b.ToTable("TradeEntity");
-                });
 #pragma warning restore 612, 618
         }
     }

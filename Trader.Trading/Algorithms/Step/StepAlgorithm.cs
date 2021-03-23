@@ -438,6 +438,46 @@ namespace Trader.Trading.Algorithms.Step
                 band.ClosePrice = Math.Floor(band.ClosePrice / priceFilter.TickSize) * priceFilter.TickSize;
             }
 
+            // identify bands where the target sell is somehow below the notional filter
+            var leftovers = _bands.Where(x => x.Status == BandStatus.Open && x.Quantity * x.ClosePrice < minNotionalFilter.MinNotional).ToHashSet();
+            if (leftovers.Count > 0)
+            {
+                // remove all leftovers
+                foreach (var band in leftovers)
+                {
+                    _bands.Remove(band);
+                }
+
+                // create a new group band
+                var group = new Band
+                {
+                    Quantity = leftovers.Sum(x => x.Quantity),
+                    OpenPrice = leftovers.Sum(x => x.OpenPrice * x.Quantity) / leftovers.Sum(x => x.Quantity),
+                    Status = BandStatus.Open
+                };
+                group.OpenOrderIds.UnionWith(leftovers.SelectMany(x => x.OpenOrderIds));
+
+                // adjust the open price to tick size
+                group.OpenPrice = Math.Ceiling(group.OpenPrice / priceFilter.TickSize) * priceFilter.TickSize;
+
+                // calculate the close price and adjust to tick size
+                group.ClosePrice = group.OpenPrice + stepSize;
+                group.ClosePrice = Math.Ceiling(group.ClosePrice / priceFilter.TickSize) * priceFilter.TickSize;
+
+                // see if the group band can now be sold
+                if (group.Quantity * group.ClosePrice >= minNotionalFilter.MinNotional)
+                {
+                    // if it can now be sold then we can keep the grouped band
+                    _bands.Add(group);
+                }
+                else
+                {
+                    _logger.LogWarning(
+                        "{Type} {Name} ignoring {Count} under notional bands with total {Quantity} {Asset}, avg opening at {OpenPrice} {Quote}, closing at {ClosePrice} {Quote}",
+                        Type, _name, leftovers.Count, group.Quantity, _options.Asset, group.OpenPrice, _options.Quote, group.ClosePrice, _options.Quote);
+                }
+            }
+
             // apply open sell orders to the bands
             var used = new HashSet<Band>();
             orders = await _repository.GetTransientOrdersAsync(_options.Symbol, OrderSide.Sell, null, cancellationToken);
@@ -449,17 +489,6 @@ namespace Trader.Trading.Algorithms.Step
                     band.CloseOrderId = order.OrderId;
                     used.Add(band);
                 }
-            }
-
-            // identify bands where the target sell is somehow below the notional filter
-            foreach (var band in _bands.Where(x => x.Status == BandStatus.Open && x.Quantity * x.ClosePrice < minNotionalFilter.MinNotional).ToList())
-            {
-                // todo: group these bands and sell them together
-                _logger.LogWarning(
-                    "{Type} {Name} ignoring under notional band of {Quantity} {Asset} opening at {OpenPrice} {Quote} and closing at {ClosePrice} {Quote}",
-                    Type, _name, band.Quantity, _options.Asset, band.OpenPrice, _options.Quote, band.ClosePrice, _options.Quote);
-
-                _bands.Remove(band);
             }
 
             _logger.LogInformation(
@@ -486,7 +515,7 @@ namespace Trader.Trading.Algorithms.Step
         private class Band : IComparable<Band>
         {
             public Guid Id { get; } = Guid.NewGuid();
-            public HashSet<long> OpenOrderIds { get; } = new HashSet<long>();
+            public ISet<long> OpenOrderIds { get; } = new HashSet<long>();
             public decimal Quantity { get; set; }
             public decimal OpenPrice { get; set; }
             public BandStatus Status { get; set; }

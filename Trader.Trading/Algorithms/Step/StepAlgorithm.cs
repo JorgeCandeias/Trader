@@ -188,7 +188,7 @@ namespace Trader.Trading.Algorithms.Step
             // find the lower price under the current price and low band
             var lowerPrice = highBand.OpenPrice;
             var stepPrice = highBand.ClosePrice - highBand.OpenPrice;
-            while (lowerPrice >= ticker.Price && lowerPrice >= lowBand.OpenPrice)
+            while (lowerPrice >= ticker.Price || lowerPrice >= lowBand.OpenPrice)
             {
                 lowerPrice -= stepPrice;
             }

@@ -17,7 +17,7 @@ namespace Trader.Trading.Algorithms.Step
 
         [Required]
         [Range(0.01, 1)]
-        public decimal PullbackRatio { get; set; } = 0.01m;
+        public decimal PullbackRatio { get; set; } = 0.05m;
 
         [Required]
         [Range(0.001, 1)]

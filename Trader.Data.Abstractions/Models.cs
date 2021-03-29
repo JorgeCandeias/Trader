@@ -467,8 +467,4 @@ namespace Trader.Data
         RateLimitType Type,
         TimeSpan Window,
         int Count);
-
-    public record OrderGroup(
-        long Id,
-        SortedOrderSet Orders);
 }

@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using Trader.Data.Converters;
 
 namespace Trader.Data
 {
@@ -12,8 +11,6 @@ namespace Trader.Data
 
             CreateMap<AccountTrade, TradeEntity>()
                 .ReverseMap();
-
-            CreateMap<OrderGroupEntity, OrderGroup>().ConvertUsing<OrderGroupConverter>();
         }
     }
 }

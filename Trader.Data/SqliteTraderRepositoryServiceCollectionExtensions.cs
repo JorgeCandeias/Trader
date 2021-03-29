@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using Trader.Data;
-using Trader.Data.Converters;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -26,7 +25,6 @@ namespace Microsoft.Extensions.DependencyInjection
 
                     options.UseSqlite(connectionString);
                 })
-                .AddSingleton<OrderGroupConverter>()
                 .AddSingleton<SqliteTraderRepository>()
                 .AddSingleton<ITraderRepository>(sp => sp.GetRequiredService<SqliteTraderRepository>())
                 .AddSingleton<IHostedService>(sp => sp.GetRequiredService<SqliteTraderRepository>())

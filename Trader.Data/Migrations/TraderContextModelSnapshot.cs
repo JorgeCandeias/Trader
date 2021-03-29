@@ -82,44 +82,6 @@ namespace Trader.Data.Migrations
                     b.ToTable("Orders");
                 });
 
-            modelBuilder.Entity("Trader.Data.OrderGroupDetailEntity", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedTime")
-                        .HasColumnType("TEXT");
-
-                    b.Property<long>("GroupId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<long>("OrderId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasAlternateKey("GroupId", "OrderId");
-
-                    b.HasIndex("OrderId");
-
-                    b.ToTable("OrderGroupDetails");
-                });
-
-            modelBuilder.Entity("Trader.Data.OrderGroupEntity", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedTime")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("OrderGroups");
-                });
-
             modelBuilder.Entity("Trader.Data.TradeEntity", b =>
                 {
                     b.Property<long>("Id")
@@ -171,30 +133,6 @@ namespace Trader.Data.Migrations
                     b.HasIndex("Symbol", "OrderId");
 
                     b.ToTable("Trades");
-                });
-
-            modelBuilder.Entity("Trader.Data.OrderGroupDetailEntity", b =>
-                {
-                    b.HasOne("Trader.Data.OrderGroupEntity", "Group")
-                        .WithMany("Details")
-                        .HasForeignKey("GroupId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Trader.Data.OrderEntity", "Order")
-                        .WithMany()
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Group");
-
-                    b.Navigation("Order");
-                });
-
-            modelBuilder.Entity("Trader.Data.OrderGroupEntity", b =>
-                {
-                    b.Navigation("Details");
                 });
 #pragma warning restore 612, 618
         }

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -525,22 +526,17 @@ namespace Trader.Trading.Algorithms.Step
 
         private static string GetSellClientOrderId(IEnumerable<long> buyOrderIds)
         {
-            var builder = new StringBuilder("SELL");
+            var sum = new BigInteger();
 
-            foreach (var item in buyOrderIds.OrderBy(x => x))
+            foreach (var id in buyOrderIds)
             {
-                builder.Append('-').Append(item);
+                sum += id;
             }
 
-            return builder.ToString();
+            return sum.ToString();
         }
 
         #region Classes
-
-        private class SignificantTracker
-        {
-            public decimal RemainingQuantity { get; set; }
-        }
 
         private enum BandStatus
         {

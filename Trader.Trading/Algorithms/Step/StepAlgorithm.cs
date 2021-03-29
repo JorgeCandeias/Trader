@@ -526,14 +526,8 @@ namespace Trader.Trading.Algorithms.Step
 
         private static string GetSellClientOrderId(IEnumerable<long> buyOrderIds)
         {
-            var sum = new BigInteger();
-
-            foreach (var id in buyOrderIds)
-            {
-                sum += id;
-            }
-
-            return sum.ToString();
+            // for now keep the earliest order id
+            return buyOrderIds.Min().ToString();
         }
 
         #region Classes

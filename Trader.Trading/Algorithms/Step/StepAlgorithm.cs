@@ -2,7 +2,9 @@
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Trader.Core.Time;
@@ -251,7 +253,22 @@ namespace Trader.Trading.Algorithms.Step
                         return false;
                     }
 
-                    var result = await _trader.CreateOrderAsync(new Order(_options.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, band.Quantity, null, band.ClosePrice, null, null, null, NewOrderResponseType.Full, null, _clock.UtcNow), cancellationToken);
+                    var result = await _trader.CreateOrderAsync(
+                        new Order(
+                            _options.Symbol,
+                            OrderSide.Sell,
+                            OrderType.Limit,
+                            TimeInForce.GoodTillCanceled,
+                            band.Quantity,
+                            null,
+                            band.ClosePrice,
+                            GetSellClientOrderId(band.OpenOrderIds),
+                            null,
+                            null,
+                            NewOrderResponseType.Full,
+                            null,
+                            _clock.UtcNow),
+                        cancellationToken);
 
                     band.CloseOrderId = result.OrderId;
 
@@ -395,6 +412,7 @@ namespace Trader.Trading.Algorithms.Step
                         Quantity = order.OriginalQuantity,
                         OpenPrice = order.Price,
                         OpenOrderIds = { order.OrderId },
+                        CloseOrderClientId = GetSellClientOrderId(order.OrderId),
                         Status = BandStatus.Ordered
                     });
                 }
@@ -406,6 +424,7 @@ namespace Trader.Trading.Algorithms.Step
                         Quantity = order.ExecutedQuantity,
                         OpenPrice = order.Price,
                         OpenOrderIds = { order.OrderId },
+                        CloseOrderClientId = GetSellClientOrderId(order.OrderId),
                         Status = BandStatus.Open
                     });
                 }
@@ -421,6 +440,7 @@ namespace Trader.Trading.Algorithms.Step
                     Quantity = order.OriginalQuantity,
                     OpenPrice = order.Price,
                     OpenOrderIds = { order.OrderId },
+                    CloseOrderClientId = GetSellClientOrderId(order.OrderId),
                     Status = BandStatus.Ordered
                 });
             }
@@ -453,6 +473,7 @@ namespace Trader.Trading.Algorithms.Step
                 {
                     Quantity = leftovers.Sum(x => x.Quantity),
                     OpenPrice = leftovers.Sum(x => x.OpenPrice * x.Quantity) / leftovers.Sum(x => x.Quantity),
+                    CloseOrderClientId = GetSellClientOrderId(leftovers.SelectMany(x => x.OpenOrderIds)),
                     Status = BandStatus.Open
                 };
                 group.OpenOrderIds.UnionWith(leftovers.SelectMany(x => x.OpenOrderIds));
@@ -483,7 +504,8 @@ namespace Trader.Trading.Algorithms.Step
             orders = await _repository.GetTransientOrdersAsync(_options.Symbol, OrderSide.Sell, null, cancellationToken);
             foreach (var order in orders)
             {
-                var band = _bands.Except(used).FirstOrDefault(x => x.Status == BandStatus.Open && x.Quantity == order.OriginalQuantity && x.ClosePrice == order.Price);
+                //var band = _bands.Except(used).FirstOrDefault(x => x.Status == BandStatus.Open && x.Quantity == order.OriginalQuantity && x.ClosePrice == order.Price);
+                var band = _bands.Except(used).SingleOrDefault(x => x.CloseOrderClientId == order.ClientOrderId);
                 if (band is not null)
                 {
                     band.CloseOrderId = order.OrderId;
@@ -497,6 +519,20 @@ namespace Trader.Trading.Algorithms.Step
 
             // always let the algo continue
             return false;
+        }
+
+        private static string GetSellClientOrderId(long buyOrderId) => GetSellClientOrderId(Enumerable.Repeat(buyOrderId, 1));
+
+        private static string GetSellClientOrderId(IEnumerable<long> buyOrderIds)
+        {
+            var builder = new StringBuilder("SELL");
+
+            foreach (var item in buyOrderIds.OrderBy(x => x))
+            {
+                builder.Append('-').Append(item);
+            }
+
+            return builder.ToString();
         }
 
         #region Classes
@@ -519,10 +555,9 @@ namespace Trader.Trading.Algorithms.Step
             public decimal Quantity { get; set; }
             public decimal OpenPrice { get; set; }
             public BandStatus Status { get; set; }
-
             public long CloseOrderId { get; set; }
-
             public decimal ClosePrice { get; set; }
+            public string CloseOrderClientId { get; set; }
 
             public int CompareTo(Band? other)
             {

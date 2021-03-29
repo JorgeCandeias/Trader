@@ -18,6 +18,18 @@ namespace Trader.Data
 
         Task<SortedOrderSet> GetTransientOrdersAsync(string symbol, OrderSide? orderSide = default, bool? significant = default, CancellationToken cancellationToken = default);
 
+        Task<OrderGroup> CreateOrderGroupAsync(IEnumerable<long> orderIds, CancellationToken cancellationToken = default);
+
+        Task<OrderGroup?> GetOrderGroupAsync(long id, CancellationToken cancellationToken = default);
+
+        Task<OrderGroup?> GetLatestOrderGroupForOrdersAsync(IEnumerable<long> orderIds, CancellationToken cancellationToken = default);
+
+        Task<OrderGroup?> GetLatestOrderGroupForOrderAsync(long orderId, CancellationToken cancellationToken = default);
+
+        Task<OrderGroup> GetLatestOrCreateOrderGroupForOrdersAsync(IEnumerable<long> orderIds, CancellationToken cancellationToken = default);
+
+        Task<OrderGroup> GetLatestOrCreateOrderGroupForOrderAsync(long orderId, CancellationToken cancellationToken = default);
+
         Task<long> GetMaxTradeIdAsync(string symbol, CancellationToken cancellationToken = default);
 
         Task SetTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default);

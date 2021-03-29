@@ -2,10 +2,7 @@
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Numerics;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Trader.Core.Time;
@@ -254,6 +251,12 @@ namespace Trader.Trading.Algorithms.Step
                         return false;
                     }
 
+                    var group = await _repository.GetLatestOrderGroupForOrdersAsync(band.OpenOrderIds, cancellationToken);
+                    if (group is null)
+                    {
+                        throw new AlgorithmException($"No Group Order Id defined!");
+                    }
+
                     var result = await _trader.CreateOrderAsync(
                         new Order(
                             _options.Symbol,
@@ -263,7 +266,7 @@ namespace Trader.Trading.Algorithms.Step
                             band.Quantity,
                             null,
                             band.ClosePrice,
-                            GetSellClientOrderId(band.OpenOrderIds),
+                            group.Id.ToString(),
                             null,
                             null,
                             NewOrderResponseType.Full,
@@ -405,6 +408,8 @@ namespace Trader.Trading.Algorithms.Step
             // apply the significant buy orders to the bands
             foreach (var order in significant.Where(x => x.Side == OrderSide.Buy))
             {
+                var group = await _repository.GetLatestOrCreateOrderGroupForOrderAsync(order.OrderId, cancellationToken);
+
                 if (order.Status.IsTransientStatus())
                 {
                     // add transient orders with original quantity
@@ -413,7 +418,7 @@ namespace Trader.Trading.Algorithms.Step
                         Quantity = order.OriginalQuantity,
                         OpenPrice = order.Price,
                         OpenOrderIds = { order.OrderId },
-                        CloseOrderClientId = GetSellClientOrderId(order.OrderId),
+                        CloseOrderClientId = group.Id.ToString(),
                         Status = BandStatus.Ordered
                     });
                 }
@@ -425,7 +430,7 @@ namespace Trader.Trading.Algorithms.Step
                         Quantity = order.ExecutedQuantity,
                         OpenPrice = order.Price,
                         OpenOrderIds = { order.OrderId },
-                        CloseOrderClientId = GetSellClientOrderId(order.OrderId),
+                        CloseOrderClientId = group.Id.ToString(),
                         Status = BandStatus.Open
                     });
                 }
@@ -435,13 +440,15 @@ namespace Trader.Trading.Algorithms.Step
             var orders = await _repository.GetTransientOrdersAsync(_options.Symbol, OrderSide.Buy, false, cancellationToken);
             foreach (var order in orders)
             {
+                var group = await _repository.GetLatestOrCreateOrderGroupForOrderAsync(order.OrderId, cancellationToken);
+
                 // add transient orders with original quantity
                 _bands.Add(new Band
                 {
                     Quantity = order.OriginalQuantity,
                     OpenPrice = order.Price,
                     OpenOrderIds = { order.OrderId },
-                    CloseOrderClientId = GetSellClientOrderId(order.OrderId),
+                    CloseOrderClientId = group.Id.ToString(),
                     Status = BandStatus.Ordered
                 });
             }
@@ -474,7 +481,7 @@ namespace Trader.Trading.Algorithms.Step
                 {
                     Quantity = leftovers.Sum(x => x.Quantity),
                     OpenPrice = leftovers.Sum(x => x.OpenPrice * x.Quantity) / leftovers.Sum(x => x.Quantity),
-                    CloseOrderClientId = GetSellClientOrderId(leftovers.SelectMany(x => x.OpenOrderIds)),
+                    CloseOrderClientId = (await _repository.GetLatestOrCreateOrderGroupForOrdersAsync(leftovers.SelectMany(x => x.OpenOrderIds), cancellationToken)).Id.ToString(),
                     Status = BandStatus.Open
                 };
                 group.OpenOrderIds.UnionWith(leftovers.SelectMany(x => x.OpenOrderIds));
@@ -505,7 +512,6 @@ namespace Trader.Trading.Algorithms.Step
             orders = await _repository.GetTransientOrdersAsync(_options.Symbol, OrderSide.Sell, null, cancellationToken);
             foreach (var order in orders)
             {
-                //var band = _bands.Except(used).FirstOrDefault(x => x.Status == BandStatus.Open && x.Quantity == order.OriginalQuantity && x.ClosePrice == order.Price);
                 var band = _bands.Except(used).SingleOrDefault(x => x.CloseOrderClientId == order.ClientOrderId);
                 if (band is not null)
                 {
@@ -520,20 +526,6 @@ namespace Trader.Trading.Algorithms.Step
 
             // always let the algo continue
             return false;
-        }
-
-        private static string GetSellClientOrderId(long buyOrderId) => GetSellClientOrderId(Enumerable.Repeat(buyOrderId, 1));
-
-        private static string GetSellClientOrderId(IEnumerable<long> buyOrderIds)
-        {
-            var sum = new BigInteger();
-
-            foreach (var id in buyOrderIds)
-            {
-                sum += id;
-            }
-
-            return sum.ToString();
         }
 
         #region Classes

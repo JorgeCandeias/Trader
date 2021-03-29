@@ -23,6 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Trader.Core.Abstractions\Trader.Core.Abstractions.csproj" />
     <ProjectReference Include="..\Trader.Data.Abstractions\Trader.Data.Abstractions.csproj" />
   </ItemGroup>
 

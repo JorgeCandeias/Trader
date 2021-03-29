@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace Trader.Data
 {
@@ -11,17 +13,14 @@ namespace Trader.Data
 
         public DbSet<OrderEntity> Orders { get; set; } = null!;
         public DbSet<TradeEntity> Trades { get; set; } = null!;
+        public DbSet<OrderGroupEntity> OrderGroups { get; set; } = null!;
+        public DbSet<OrderGroupDetailEntity> OrderGroupDetails { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<OrderEntity>().HasKey(x => x.OrderId);
-            modelBuilder.Entity<OrderEntity>().HasIndex(x => new { x.Symbol, x.OrderId });
-
-            modelBuilder.Entity<TradeEntity>().HasKey(x => x.Id);
-            modelBuilder.Entity<TradeEntity>().HasIndex(x => new { x.Symbol, x.Id });
-            modelBuilder.Entity<TradeEntity>().HasIndex(x => new { x.Symbol, x.OrderId });
+            modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         }
     }
 
@@ -59,4 +58,23 @@ namespace Trader.Data
         bool IsBuyer,
         bool IsMaker,
         bool IsBestMatch);
+
+    internal record OrderGroupEntity
+    {
+        public long Id { get; set; }
+        public DateTime CreatedTime { get; set; }
+
+        public List<OrderGroupDetailEntity> Details { get; set; } = null!;
+    }
+
+    internal class OrderGroupDetailEntity
+    {
+        public long Id { get; set; }
+        public long GroupId { get; set; }
+        public long OrderId { get; set; }
+        public DateTime CreatedTime { get; set; }
+
+        public OrderGroupEntity Group { get; set; } = null!;
+        public OrderEntity Order { get; set; } = null!;
+    }
 }

@@ -410,6 +410,7 @@ namespace Trader.Trading.Algorithms.Step
                     _bands.Add(new Band
                     {
                         Quantity = order.OriginalQuantity,
+                        ExecutedQuantity = order.ExecutedQuantity,
                         OpenPrice = order.Price,
                         OpenOrderIds = { order.OrderId },
                         CloseOrderClientId = _orderCodeGenerator.GetSellClientOrderId(order.OrderId),
@@ -422,6 +423,7 @@ namespace Trader.Trading.Algorithms.Step
                     _bands.Add(new Band
                     {
                         Quantity = order.ExecutedQuantity,
+                        ExecutedQuantity = order.ExecutedQuantity,
                         OpenPrice = order.Price,
                         OpenOrderIds = { order.OrderId },
                         CloseOrderClientId = _orderCodeGenerator.GetSellClientOrderId(order.OrderId),
@@ -438,6 +440,7 @@ namespace Trader.Trading.Algorithms.Step
                 _bands.Add(new Band
                 {
                     Quantity = order.OriginalQuantity,
+                    ExecutedQuantity = order.ExecutedQuantity,
                     OpenPrice = order.Price,
                     OpenOrderIds = { order.OrderId },
                     CloseOrderClientId = _orderCodeGenerator.GetSellClientOrderId(order.OrderId),
@@ -472,6 +475,7 @@ namespace Trader.Trading.Algorithms.Step
                 var group = new Band
                 {
                     Quantity = leftovers.Sum(x => x.Quantity),
+                    ExecutedQuantity = leftovers.Sum(x => x.ExecutedQuantity),
                     OpenPrice = leftovers.Sum(x => x.OpenPrice * x.Quantity) / leftovers.Sum(x => x.Quantity),
                     CloseOrderClientId = _orderCodeGenerator.GetSellClientOrderId(leftovers.SelectMany(x => x.OpenOrderIds)),
                     Status = BandStatus.Open
@@ -533,6 +537,7 @@ namespace Trader.Trading.Algorithms.Step
             public Guid Id { get; } = Guid.NewGuid();
             public ISet<long> OpenOrderIds { get; } = new HashSet<long>();
             public decimal Quantity { get; set; }
+            public decimal ExecutedQuantity { get; set; }
             public decimal OpenPrice { get; set; }
             public BandStatus Status { get; set; }
             public long CloseOrderId { get; set; }

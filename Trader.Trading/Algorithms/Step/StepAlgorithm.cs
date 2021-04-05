@@ -2,10 +2,7 @@
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
-using System.Numerics;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Trader.Core.Time;
@@ -26,8 +23,9 @@ namespace Trader.Trading.Algorithms.Step
         private readonly ITraderRepository _repository;
         private readonly IOrderSynchronizer _orderSynchronizer;
         private readonly ITradeSynchronizer _tradeSynchronizer;
+        private readonly IOrderCodeGenerator _orderCodeGenerator;
 
-        public StepAlgorithm(string name, ILogger<StepAlgorithm> logger, IOptionsSnapshot<StepAlgorithmOptions> options, ISystemClock clock, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ITraderRepository repository, IOrderSynchronizer orderSynchronizer, ITradeSynchronizer tradeSynchronizer)
+        public StepAlgorithm(string name, ILogger<StepAlgorithm> logger, IOptionsSnapshot<StepAlgorithmOptions> options, ISystemClock clock, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ITraderRepository repository, IOrderSynchronizer orderSynchronizer, ITradeSynchronizer tradeSynchronizer, IOrderCodeGenerator orderCodeGenerator)
         {
             _name = name ?? throw new ArgumentNullException(nameof(name));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -38,6 +36,7 @@ namespace Trader.Trading.Algorithms.Step
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _orderSynchronizer = orderSynchronizer ?? throw new ArgumentNullException(nameof(orderSynchronizer));
             _tradeSynchronizer = tradeSynchronizer ?? throw new ArgumentNullException(nameof(tradeSynchronizer));
+            _orderCodeGenerator = orderCodeGenerator ?? throw new ArgumentNullException(nameof(orderCodeGenerator));
         }
 
         private static string Type => nameof(StepAlgorithm);
@@ -263,7 +262,7 @@ namespace Trader.Trading.Algorithms.Step
                             band.Quantity,
                             null,
                             band.ClosePrice,
-                            GetSellClientOrderId(band.OpenOrderIds),
+                            _orderCodeGenerator.GetSellClientOrderId(band.OpenOrderIds),
                             null,
                             null,
                             NewOrderResponseType.Full,
@@ -413,7 +412,7 @@ namespace Trader.Trading.Algorithms.Step
                         Quantity = order.OriginalQuantity,
                         OpenPrice = order.Price,
                         OpenOrderIds = { order.OrderId },
-                        CloseOrderClientId = GetSellClientOrderId(order.OrderId),
+                        CloseOrderClientId = _orderCodeGenerator.GetSellClientOrderId(order.OrderId),
                         Status = BandStatus.Ordered
                     });
                 }
@@ -425,7 +424,7 @@ namespace Trader.Trading.Algorithms.Step
                         Quantity = order.ExecutedQuantity,
                         OpenPrice = order.Price,
                         OpenOrderIds = { order.OrderId },
-                        CloseOrderClientId = GetSellClientOrderId(order.OrderId),
+                        CloseOrderClientId = _orderCodeGenerator.GetSellClientOrderId(order.OrderId),
                         Status = BandStatus.Open
                     });
                 }
@@ -441,7 +440,7 @@ namespace Trader.Trading.Algorithms.Step
                     Quantity = order.OriginalQuantity,
                     OpenPrice = order.Price,
                     OpenOrderIds = { order.OrderId },
-                    CloseOrderClientId = GetSellClientOrderId(order.OrderId),
+                    CloseOrderClientId = _orderCodeGenerator.GetSellClientOrderId(order.OrderId),
                     Status = BandStatus.Ordered
                 });
             }
@@ -474,7 +473,7 @@ namespace Trader.Trading.Algorithms.Step
                 {
                     Quantity = leftovers.Sum(x => x.Quantity),
                     OpenPrice = leftovers.Sum(x => x.OpenPrice * x.Quantity) / leftovers.Sum(x => x.Quantity),
-                    CloseOrderClientId = GetSellClientOrderId(leftovers.SelectMany(x => x.OpenOrderIds)),
+                    CloseOrderClientId = _orderCodeGenerator.GetSellClientOrderId(leftovers.SelectMany(x => x.OpenOrderIds)),
                     Status = BandStatus.Open
                 };
                 group.OpenOrderIds.UnionWith(leftovers.SelectMany(x => x.OpenOrderIds));
@@ -505,7 +504,6 @@ namespace Trader.Trading.Algorithms.Step
             orders = await _repository.GetTransientOrdersAsync(_options.Symbol, OrderSide.Sell, null, cancellationToken);
             foreach (var order in orders)
             {
-                //var band = _bands.Except(used).FirstOrDefault(x => x.Status == BandStatus.Open && x.Quantity == order.OriginalQuantity && x.ClosePrice == order.Price);
                 var band = _bands.Except(used).SingleOrDefault(x => x.CloseOrderClientId == order.ClientOrderId);
                 if (band is not null)
                 {
@@ -520,14 +518,6 @@ namespace Trader.Trading.Algorithms.Step
 
             // always let the algo continue
             return false;
-        }
-
-        private static string GetSellClientOrderId(long buyOrderId) => GetSellClientOrderId(Enumerable.Repeat(buyOrderId, 1));
-
-        private static string GetSellClientOrderId(IEnumerable<long> buyOrderIds)
-        {
-            // for now keep the earliest order id
-            return buyOrderIds.Min().ToString();
         }
 
         #region Classes

@@ -9,7 +9,8 @@ namespace Microsoft.Extensions.DependencyInjection
             return services
                 .AddSingleton<ISignificantOrderResolver, SignificantOrderResolver>()
                 .AddSingleton<IOrderSynchronizer, OrderSynchronizer>()
-                .AddSingleton<ITradeSynchronizer, TradeSynchronizer>();
+                .AddSingleton<ITradeSynchronizer, TradeSynchronizer>()
+                .AddSingleton<IOrderCodeGenerator, OrderCodeGenerator>();
         }
     }
 }

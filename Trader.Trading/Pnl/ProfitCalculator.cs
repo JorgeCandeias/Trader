@@ -2,16 +2,19 @@
 using System.Linq;
 using Trader.Core.Time;
 using Trader.Data;
+using Trader.Trading.Algorithms;
 
 namespace Trader.Trading.Pnl
 {
     internal class ProfitCalculator : IProfitCalculator
     {
         private readonly ISystemClock _clock;
+        private readonly IOrderCodeGenerator _orderCodeGenerator;
 
-        public ProfitCalculator(ISystemClock clock)
+        public ProfitCalculator(ISystemClock clock, IOrderCodeGenerator orderCodeGenerator)
         {
-            _clock = clock;
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _orderCodeGenerator = orderCodeGenerator ?? throw new ArgumentNullException(nameof(orderCodeGenerator));
         }
 
         public Profit Calculate(SortedTradeSet trades)
@@ -39,6 +42,9 @@ namespace Trader.Trading.Pnl
                 var sell = ordered[i];
                 if (!sell.IsBuyer)
                 {
+                    // attempt to find the paired buys
+                    // todo: this requires the client order ids to be stored on the database
+
                     // enumerate the buys in descending order from the sale
                     for (var j = i - 1; j >= 0; --j)
                     {

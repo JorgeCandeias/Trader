@@ -58,12 +58,12 @@ namespace Trader.Trading.Algorithms
             {
                 // loop through sales forward
                 var sell = subjects.Segment[i];
-                if (sell.Order.Side == OrderSide.Sell && long.TryParse(sell.Order.ClientOrderId, out var matchOpenOrderId) && matchOpenOrderId > 0)
+                if (sell.Order.Side == OrderSide.Sell && sell.RemainingExecutedQuantity > 0 && long.TryParse(sell.Order.ClientOrderId, out var matchOpenOrderId) && matchOpenOrderId > 0)
                 {
                     for (var j = i - 1; j >= 0; --j)
                     {
                         var buy = subjects.Segment[j];
-                        if (buy.Order.Side == OrderSide.Buy && buy.Order.OrderId == matchOpenOrderId)
+                        if (buy.Order.Side == OrderSide.Buy && buy.RemainingExecutedQuantity > 0 && buy.Order.OriginalQuantity == sell.Order.OriginalQuantity && buy.Order.OrderId == matchOpenOrderId)
                         {
                             // remove as much as possible from the buy to satisfy the sell
                             var take = Math.Min(buy.RemainingExecutedQuantity, sell.RemainingExecutedQuantity);

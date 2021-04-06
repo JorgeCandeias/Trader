@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Buffers;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using Trader.Data;
@@ -39,17 +40,42 @@ namespace Trader.Trading.Algorithms
             // now prune the significant trades to account interim sales
             using var subjects = ArrayPool<OrderTradeMap>.Shared.RentSegmentFrom(map);
 
+            // first map formal sells to formal buys
             for (var i = 0; i < subjects.Segment.Count; ++i)
             {
                 // loop through sales forward
                 var sell = subjects.Segment[i];
-                if (sell.Order.Side == OrderSide.Sell)
+                if (sell.Order.Side == OrderSide.Sell && long.TryParse(sell.Order.ClientOrderId, out var matchOpenOrderId) && matchOpenOrderId > 0)
                 {
-                    // loop through buys in lifo order to find the matching buy
                     for (var j = i - 1; j >= 0; --j)
                     {
                         var buy = subjects.Segment[j];
-                        if (buy.Order.Side == OrderSide.Buy)
+                        if (buy.Order.Side == OrderSide.Buy && buy.Order.OrderId == matchOpenOrderId)
+                        {
+                            // remove as much as possible from the buy to satisfy the sell
+                            var take = Math.Min(buy.RemainingExecutedQuantity, sell.RemainingExecutedQuantity);
+                            buy.RemainingExecutedQuantity -= take;
+                            sell.RemainingExecutedQuantity -= take;
+
+                            // leave the sale as-is regardless of fill
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // now match leftovers using lifo
+            for (var i = 0; i < subjects.Segment.Count; ++i)
+            {
+                // loop through sales forward
+                var sell = subjects.Segment[i];
+                if (sell.Order.Side == OrderSide.Sell && sell.RemainingExecutedQuantity > 0m)
+                {
+                    // loop through buys in lifo order to find matching buys
+                    for (var j = i - 1; j >= 0; --j)
+                    {
+                        var buy = subjects.Segment[j];
+                        if (buy.Order.Side == OrderSide.Buy && buy.RemainingExecutedQuantity > 0m)
                         {
                             // remove as much as possible from the buy to satisfy the sell
                             var take = Math.Min(buy.RemainingExecutedQuantity, sell.RemainingExecutedQuantity);
@@ -65,7 +91,9 @@ namespace Trader.Trading.Algorithms
                     if (sell.RemainingExecutedQuantity != 0)
                     {
                         // something went very wrong if we got here
-                        throw new AlgorithmException($"{GetType().Name} could not fill {sell.Order.Symbol} {sell.Order.Side} order {sell.Order.OrderId} with quantity {sell.Order.ExecutedQuantity} at price {sell.Order.Price}");
+                        _logger.LogError(
+                            "{Name} {Symbol} could not fill {Symbol} {Side} order {OrderId} with quantity {ExecutedQuantity} at price {Price}",
+                            nameof(SignificantOrderResolver), symbol, sell.Order.Symbol, sell.Order.Side, sell.Order.OrderId, sell.Order.ExecutedQuantity, sell.Order.Price);
                     }
                 }
             }

@@ -137,9 +137,9 @@ namespace Trader.Trading.Algorithms.Step
             if (band.OpenPrice < ticker.Price && band.ClosePrice > ticker.Price) return false;
 
             // if the above checks fails then close the band
-            foreach (var orderId in band.OpenOrderIds)
+            if (band.OpenOrderId is not 0)
             {
-                var result = await _trader.CancelOrderAsync(new CancelStandardOrder(_options.Symbol, orderId, null, null, null, _clock.UtcNow), cancellationToken);
+                var result = await _trader.CancelOrderAsync(new CancelStandardOrder(_options.Symbol, band.OpenOrderId, null, null, null, _clock.UtcNow), cancellationToken);
 
                 _logger.LogInformation(
                     "{Type} {Name} closed out-of-range {OrderSide} {OrderType} for {Quantity} {Asset} at {Price} {Quote}",
@@ -262,7 +262,7 @@ namespace Trader.Trading.Algorithms.Step
                             band.Quantity,
                             null,
                             band.ClosePrice,
-                            _orderCodeGenerator.GetSellClientOrderId(band.OpenOrderIds),
+                            _orderCodeGenerator.GetSellClientOrderId(band.OpenOrderId),
                             null,
                             null,
                             NewOrderResponseType.Full,
@@ -412,7 +412,7 @@ namespace Trader.Trading.Algorithms.Step
                         Quantity = order.OriginalQuantity,
                         ExecutedQuantity = order.ExecutedQuantity,
                         OpenPrice = order.Price,
-                        OpenOrderIds = { order.OrderId },
+                        OpenOrderId = order.OrderId,
                         CloseOrderClientId = _orderCodeGenerator.GetSellClientOrderId(order.OrderId),
                         Status = BandStatus.Ordered
                     });
@@ -425,7 +425,7 @@ namespace Trader.Trading.Algorithms.Step
                         Quantity = order.ExecutedQuantity,
                         ExecutedQuantity = order.ExecutedQuantity,
                         OpenPrice = order.Price,
-                        OpenOrderIds = { order.OrderId },
+                        OpenOrderId = order.OrderId,
                         CloseOrderClientId = _orderCodeGenerator.GetSellClientOrderId(order.OrderId),
                         Status = BandStatus.Open
                     });
@@ -442,7 +442,7 @@ namespace Trader.Trading.Algorithms.Step
                     Quantity = order.OriginalQuantity,
                     ExecutedQuantity = order.ExecutedQuantity,
                     OpenPrice = order.Price,
-                    OpenOrderIds = { order.OrderId },
+                    OpenOrderId = order.OrderId,
                     CloseOrderClientId = _orderCodeGenerator.GetSellClientOrderId(order.OrderId),
                     Status = BandStatus.Ordered
                 });
@@ -471,7 +471,23 @@ namespace Trader.Trading.Algorithms.Step
                     _bands.Remove(band);
                 }
 
+                var openPrice = leftovers.Sum(x => x.OpenPrice * x.Quantity) / leftovers.Sum(x => x.Quantity);
+                var closePrice = openPrice + stepSize;
+                closePrice = Math.Ceiling(closePrice / priceFilter.TickSize) * priceFilter.TickSize;
+
+                _logger.LogWarning(
+                    "{Type} {Name} ignoring {Count} under notional bands with total {Quantity} {Asset}, avg opening at {OpenPrice} {Quote}, target closing at {ClosePrice} {Quote}",
+                    Type, _name,
+                    leftovers.Count,
+                    leftovers.Sum(x => x.Quantity),
+                    _options.Asset,
+                    openPrice,
+                    _options.Quote,
+                    closePrice,
+                    _options.Quote);
+
                 // create a new group band
+                /*
                 var group = new Band
                 {
                     Quantity = leftovers.Sum(x => x.Quantity),
@@ -501,6 +517,7 @@ namespace Trader.Trading.Algorithms.Step
                         "{Type} {Name} ignoring {Count} under notional bands with total {Quantity} {Asset}, avg opening at {OpenPrice} {Quote}, closing at {ClosePrice} {Quote}",
                         Type, _name, leftovers.Count, group.Quantity, _options.Asset, group.OpenPrice, _options.Quote, group.ClosePrice, _options.Quote);
                 }
+                */
             }
 
             // apply open sell orders to the bands
@@ -535,7 +552,8 @@ namespace Trader.Trading.Algorithms.Step
         private class Band : IComparable<Band>
         {
             public Guid Id { get; } = Guid.NewGuid();
-            public ISet<long> OpenOrderIds { get; } = new HashSet<long>();
+            //public ISet<long> OpenOrderIds { get; } = new HashSet<long>();
+            public long OpenOrderId { get; set; }
             public decimal Quantity { get; set; }
             public decimal ExecutedQuantity { get; set; }
             public decimal OpenPrice { get; set; }

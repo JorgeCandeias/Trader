@@ -53,7 +53,7 @@ namespace Trader.Trading.Algorithms.Step
         /// </summary>
         private readonly SortedSet<Band> _bands = new();
 
-        public async Task GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default)
+        public async Task<Profit> GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default)
         {
             var symbol = exchangeInfo.Symbols.Single(x => x.Name == _options.Symbol);
             var priceFilter = symbol.Filters.OfType<PriceSymbolFilter>().Single();
@@ -70,12 +70,13 @@ namespace Trader.Trading.Algorithms.Step
             // always update the latest price
             var ticker = await SyncAssetPriceAsync(cancellationToken);
 
-            if (await TryCreateTradingBandsAsync(significant, minNotionalFilter, priceFilter, cancellationToken)) return;
-            if (await TrySetStartingTradeAsync(symbol, ticker, lotSizeFilter, priceFilter, cancellationToken)) return;
-            if (await TryCancelRogueSellOrdersAsync(cancellationToken)) return;
-            if (await TrySetBandSellOrdersAsync(cancellationToken)) return;
-            if (await TryCreateLowerBandOrderAsync(symbol, ticker, lotSizeFilter, priceFilter, cancellationToken)) return;
-            if (await TryCloseOutOfRangeBandsAsync(ticker, cancellationToken)) return;
+            if (await TryCreateTradingBandsAsync(significant.Orders, minNotionalFilter, priceFilter, cancellationToken)) return significant.Profit;
+            if (await TrySetStartingTradeAsync(symbol, ticker, lotSizeFilter, priceFilter, cancellationToken)) return significant.Profit;
+            if (await TryCancelRogueSellOrdersAsync(cancellationToken)) return significant.Profit;
+            if (await TrySetBandSellOrdersAsync(cancellationToken)) return significant.Profit;
+            if (await TryCreateLowerBandOrderAsync(symbol, ticker, lotSizeFilter, priceFilter, cancellationToken)) return significant.Profit;
+            if (await TryCloseOutOfRangeBandsAsync(ticker, cancellationToken)) return significant.Profit;
+            return significant.Profit;
         }
 
         private void ApplyAccountInfo(AccountInfo accountInfo)
@@ -552,8 +553,10 @@ namespace Trader.Trading.Algorithms.Step
         private class Band : IComparable<Band>
         {
             public Guid Id { get; } = Guid.NewGuid();
+
             //public ISet<long> OpenOrderIds { get; } = new HashSet<long>();
             public long OpenOrderId { get; set; }
+
             public decimal Quantity { get; set; }
             public decimal ExecutedQuantity { get; set; }
             public decimal OpenPrice { get; set; }

@@ -8,6 +8,6 @@ namespace Trader.Trading.Algorithms
     {
         string Symbol { get; }
 
-        Task GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default);
+        Task<Profit> GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default);
     }
 }

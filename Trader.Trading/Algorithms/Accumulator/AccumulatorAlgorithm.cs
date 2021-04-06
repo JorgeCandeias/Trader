@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -31,7 +30,7 @@ namespace Trader.Trading.Algorithms.Accumulator
 
         public string Symbol => _options.Symbol;
 
-        public async Task GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default)
+        public async Task<Profit> GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default)
         {
             // get the orders for this symbol
             var orders = await _trader.GetOpenOrdersAsync(new GetOpenOrders(_options.Symbol, null, _clock.UtcNow), cancellationToken);
@@ -67,13 +66,13 @@ namespace Trader.Trading.Algorithms.Accumulator
                     "{Type} {Name} cancelled low starting open order with price {Price} for {Quantity} units",
                     Type, _name, result.Price, result.OriginalQuantity);
 
-                return;
+                return new Profit(0, 0, 0, 0, 0);
             }
 
             // if there are still open orders then leave them be
             if (orders.Any(x => x.Side == OrderSide.Buy))
             {
-                return;
+                return new Profit(0, 0, 0, 0, 0);
             }
 
             // put the starting order through
@@ -88,7 +87,7 @@ namespace Trader.Trading.Algorithms.Accumulator
                     "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}",
                     Type, _name, total, _options.Quote, free, _options.Quote);
 
-                return;
+                return new Profit(0, 0, 0, 0, 0);
             }
 
             // calculate the appropriate quantity to buy
@@ -117,11 +116,8 @@ namespace Trader.Trading.Algorithms.Accumulator
             _logger.LogInformation(
                 "{Type} {Name} created {OrderSide} {OrderType} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",
                 Type, _name, order.Side, order.Type, order.Symbol, order.OriginalQuantity, _options.Asset, order.Price, _options.Quote, order.OriginalQuantity * order.Price, _options.Quote);
-        }
 
-        public ValueTask<ImmutableList<AccountTrade>> GetTradesAsync(CancellationToken cancellationToken = default)
-        {
-            return new ValueTask<ImmutableList<AccountTrade>>(ImmutableList<AccountTrade>.Empty);
+            return new Profit(0, 0, 0, 0, 0);
         }
     }
 }

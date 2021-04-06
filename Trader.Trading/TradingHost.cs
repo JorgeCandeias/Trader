@@ -10,6 +10,7 @@ using Trader.Core.Timers;
 using Trader.Data;
 using Trader.Trading.Algorithms;
 using Trader.Trading.Pnl;
+using Profit = Trader.Trading.Algorithms.Profit;
 
 namespace Trader.Trading
 {
@@ -66,34 +67,28 @@ namespace Trader.Trading
             var accountInfo = await _trader.GetAccountInfoAsync(new GetAccountInfo(null, _clock.UtcNow));
 
             // execute all algos in sequence for ease of troubleshooting
+            var profits = new List<(string Symbol, Profit Profit)>();
             foreach (var algo in _algos)
             {
-                await algo.GoAsync(exchangeInfo, accountInfo, _cancellation.Token);
+                var profit = await algo.GoAsync(exchangeInfo, accountInfo, _cancellation.Token);
+                profits.Add((algo.Symbol, profit));
             }
 
-            // calculate all pnl
-            // todo: the algos themselves can do this for free while resolving significant orders
-            var profits = new List<Profit>();
-            foreach (var algo in _algos)
+            foreach (var item in profits)
             {
-                var trades = await _repository.GetTradesAsync(algo.Symbol, default, _cancellation.Token);
-                var profit = _calculator.Calculate(trades);
-
                 _logger.LogInformation(
                     "{Name} reports {Symbol} profit as {@Profit}",
-                    Name, algo.Symbol, profit);
-
-                profits.Add(profit);
+                    Name, item.Symbol, item.Profit);
             }
 
             _logger.LogInformation(
                 "{Name} reports total profit as {@Profit}",
                 Name, new Profit(
-                    profits.Sum(x => x.Today),
-                    profits.Sum(x => x.Yesterday),
-                    profits.Sum(x => x.ThisWeek),
-                    profits.Sum(x => x.ThisMonth),
-                    profits.Sum(x => x.ThisYear)));
+                    profits.Sum(x => x.Profit.Today),
+                    profits.Sum(x => x.Profit.Yesterday),
+                    profits.Sum(x => x.Profit.ThisWeek),
+                    profits.Sum(x => x.Profit.ThisMonth),
+                    profits.Sum(x => x.Profit.ThisYear)));
         }
     }
 }

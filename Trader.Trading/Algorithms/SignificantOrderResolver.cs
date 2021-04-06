@@ -4,6 +4,7 @@ using System.Buffers;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
+using Trader.Core.Time;
 using Trader.Data;
 
 namespace Trader.Trading.Algorithms
@@ -12,14 +13,16 @@ namespace Trader.Trading.Algorithms
     {
         private readonly ILogger _logger;
         private readonly ITraderRepository _repository;
+        private readonly ISystemClock _clock;
 
-        public SignificantOrderResolver(ILogger<SignificantOrderResolver> logger, ITraderRepository repository)
+        public SignificantOrderResolver(ILogger<SignificantOrderResolver> logger, ITraderRepository repository, ISystemClock clock)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
-        public async Task<SortedOrderSet> ResolveAsync(string symbol, CancellationToken cancellationToken = default)
+        public async Task<SignificantResult> ResolveAsync(string symbol, CancellationToken cancellationToken = default)
         {
             var orders = await _repository.GetOrdersAsync(symbol, cancellationToken);
 
@@ -40,6 +43,16 @@ namespace Trader.Trading.Algorithms
             // now prune the significant trades to account interim sales
             using var subjects = ArrayPool<OrderTradeMap>.Shared.RentSegmentFrom(map);
 
+            // keep track of profit
+            var todayProfit = 0m;
+            var yesterdayProfit = 0m;
+            var thisWeekProfit = 0m;
+            var thisMonthProfit = 0m;
+            var thisYearProfit = 0m;
+
+            // hold the current time so profit assignments are consistent
+            var today = _clock.UtcNow.Date;
+
             // first map formal sells to formal buys
             for (var i = 0; i < subjects.Segment.Count; ++i)
             {
@@ -56,6 +69,16 @@ namespace Trader.Trading.Algorithms
                             var take = Math.Min(buy.RemainingExecutedQuantity, sell.RemainingExecutedQuantity);
                             buy.RemainingExecutedQuantity -= take;
                             sell.RemainingExecutedQuantity -= take;
+
+                            // calculate profit for this
+                            var profit = take * (sell.Order.Price - buy.Order.Price);
+
+                            // assign to the appropriate counters
+                            if (sell.Order.Time.Date == today) todayProfit += profit;
+                            if (sell.Order.Time.Date == today.AddDays(-1)) yesterdayProfit += profit;
+                            if (sell.Order.Time.Date >= today.Previous(DayOfWeek.Sunday)) thisWeekProfit += profit;
+                            if (sell.Order.Time.Date >= today.AddDays(-today.Day + 1)) thisMonthProfit += profit;
+                            if (sell.Order.Time.Date >= new DateTime(today.Year, 1, 1)) thisYearProfit += profit;
 
                             // leave the sale as-is regardless of fill
                             break;
@@ -81,6 +104,16 @@ namespace Trader.Trading.Algorithms
                             var take = Math.Min(buy.RemainingExecutedQuantity, sell.RemainingExecutedQuantity);
                             buy.RemainingExecutedQuantity -= take;
                             sell.RemainingExecutedQuantity -= take;
+
+                            // calculate profit for this
+                            var profit = take * (sell.Order.Price - buy.Order.Price);
+
+                            // assign to the appropriate counters
+                            if (sell.Order.Time.Date == today) todayProfit += profit;
+                            if (sell.Order.Time.Date == today.AddDays(-1)) yesterdayProfit += profit;
+                            if (sell.Order.Time.Date >= today.Previous(DayOfWeek.Sunday)) thisWeekProfit += profit;
+                            if (sell.Order.Time.Date >= today.AddDays(-today.Day + 1)) thisMonthProfit += profit;
+                            if (sell.Order.Time.Date >= new DateTime(today.Year, 1, 1)) thisYearProfit += profit;
 
                             // if the sale is filled then we can break early
                             if (sell.RemainingExecutedQuantity == 0) break;
@@ -130,7 +163,7 @@ namespace Trader.Trading.Algorithms
                 "{Name} {Symbol} identified {Count} significant orders",
                 nameof(SignificantOrderResolver), symbol, significant.Count);
 
-            return significant;
+            return new SignificantResult(significant, new Profit(todayProfit, yesterdayProfit, thisWeekProfit, thisMonthProfit, thisYearProfit));
         }
     }
 }

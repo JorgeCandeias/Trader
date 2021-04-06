@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
-using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
 using Trader.Data;
@@ -24,12 +23,7 @@ namespace Trader.Trading.Algorithms.BreakEven
         public string Type => nameof(BreakEvenAlgorithm);
         public string Symbol => _options.Symbol;
 
-        public ValueTask<ImmutableList<AccountTrade>> GetTradesAsync(CancellationToken cancellationToken = default)
-        {
-            return new ValueTask<ImmutableList<AccountTrade>>(ImmutableList<AccountTrade>.Empty);
-        }
-
-        public Task GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default)
+        public Task<Profit> GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("{Type} {Name} starting...", Type, _name);
 
@@ -41,7 +35,7 @@ namespace Trader.Trading.Algorithms.BreakEven
 
             // todo: create all desired sell orders not created yet
 
-            return Task.CompletedTask;
+            return Task.FromResult(new Profit(0, 0, 0, 0, 0));
         }
     }
 }

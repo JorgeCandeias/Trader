@@ -39,7 +39,6 @@ namespace Trader.App
                         .AddTradingHost()
                         .AddSystemClock()
                         .AddSafeTimerFactory()
-                        .AddProfitCalculator()
                         .AddSqliteRepository(options =>
                         {
                             options.ConnectionString = $"Data Source={db}";

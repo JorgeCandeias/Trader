@@ -74,11 +74,11 @@ namespace Trader.Trading.Algorithms
                             var profit = take * (sell.Order.Price - buy.Order.Price);
 
                             // assign to the appropriate counters
-                            if (sell.Order.Time.Date == today) todayProfit += profit;
-                            if (sell.Order.Time.Date == today.AddDays(-1)) yesterdayProfit += profit;
-                            if (sell.Order.Time.Date >= today.Previous(DayOfWeek.Sunday)) thisWeekProfit += profit;
-                            if (sell.Order.Time.Date >= today.AddDays(-today.Day + 1)) thisMonthProfit += profit;
-                            if (sell.Order.Time.Date >= new DateTime(today.Year, 1, 1)) thisYearProfit += profit;
+                            if (sell.MaxEventTime.Date == today) todayProfit += profit;
+                            if (sell.MaxEventTime.Date == today.AddDays(-1)) yesterdayProfit += profit;
+                            if (sell.MaxEventTime.Date >= today.Previous(DayOfWeek.Sunday)) thisWeekProfit += profit;
+                            if (sell.MaxEventTime.Date >= today.AddDays(-today.Day + 1)) thisMonthProfit += profit;
+                            if (sell.MaxEventTime.Date >= new DateTime(today.Year, 1, 1)) thisYearProfit += profit;
 
                             // leave the sale as-is regardless of fill
                             break;
@@ -109,11 +109,11 @@ namespace Trader.Trading.Algorithms
                             var profit = take * (sell.Order.Price - buy.Order.Price);
 
                             // assign to the appropriate counters
-                            if (sell.Order.Time.Date == today) todayProfit += profit;
-                            if (sell.Order.Time.Date == today.AddDays(-1)) yesterdayProfit += profit;
-                            if (sell.Order.Time.Date >= today.Previous(DayOfWeek.Sunday)) thisWeekProfit += profit;
-                            if (sell.Order.Time.Date >= today.AddDays(-today.Day + 1)) thisMonthProfit += profit;
-                            if (sell.Order.Time.Date >= new DateTime(today.Year, 1, 1)) thisYearProfit += profit;
+                            if (sell.MaxEventTime.Date == today) todayProfit += profit;
+                            if (sell.MaxEventTime.Date == today.AddDays(-1)) yesterdayProfit += profit;
+                            if (sell.MaxEventTime.Date >= today.Previous(DayOfWeek.Sunday)) thisWeekProfit += profit;
+                            if (sell.MaxEventTime.Date >= today.AddDays(-today.Day + 1)) thisMonthProfit += profit;
+                            if (sell.MaxEventTime.Date >= new DateTime(today.Year, 1, 1)) thisYearProfit += profit;
 
                             // if the sale is filled then we can break early
                             if (sell.RemainingExecutedQuantity == 0) break;

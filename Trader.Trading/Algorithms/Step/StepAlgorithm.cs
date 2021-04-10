@@ -329,11 +329,12 @@ namespace Trader.Trading.Algorithms.Step
 
                 // cancel the lowest open buy order with a open price lower than the lower band to the current price
                 var orders = await _repository.GetTransientOrdersAsync(_options.Symbol, OrderSide.Buy, null, cancellationToken);
-                foreach (var order in orders.Where(x => x.Side == OrderSide.Buy && x.Status.IsTransientStatus()))
+                var lowest = orders.FirstOrDefault(x => x.Side == OrderSide.Buy && x.Status.IsTransientStatus());
+                if (lowest is not null)
                 {
-                    if (order.Price < lowBuyPrice)
+                    if (lowest.Price < lowBuyPrice)
                     {
-                        var cancelled = await _trader.CancelOrderAsync(new CancelStandardOrder(_options.Symbol, order.OrderId, null, null, null, _clock.UtcNow), cancellationToken);
+                        var cancelled = await _trader.CancelOrderAsync(new CancelStandardOrder(_options.Symbol, lowest.OrderId, null, null, null, _clock.UtcNow), cancellationToken);
 
                         _logger.LogInformation(
                             "{Type} {Name} cancelled low starting open order with price {Price} for {Quantity} units",
@@ -343,7 +344,7 @@ namespace Trader.Trading.Algorithms.Step
                     {
                         _logger.LogInformation(
                             "{Type} {Name} identified a closer opening order for {Quantity} {Asset} at {Price} {Quote} and will leave as-is",
-                            Type, _name, order.OriginalQuantity, _options.Asset, order.Price, _options.Quote);
+                            Type, _name, lowest.OriginalQuantity, _options.Asset, lowest.Price, _options.Quote);
                     }
 
                     // let the algo resync
@@ -364,11 +365,12 @@ namespace Trader.Trading.Algorithms.Step
                 }
 
                 // calculate the appropriate quantity to buy
-                var quantity = total / lowBuyPrice;
+                var quantity = total / ticker.Price;
 
                 // round it down to the lot size step
                 quantity = Math.Floor(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
 
+                // place a limit order at the current price
                 var result = await _trader.CreateOrderAsync(new Order(
                     _options.Symbol,
                     OrderSide.Buy,
@@ -376,7 +378,7 @@ namespace Trader.Trading.Algorithms.Step
                     TimeInForce.GoodTillCanceled,
                     quantity,
                     null,
-                    lowBuyPrice,
+                    ticker.Price,
                     null,
                     null,
                     null,

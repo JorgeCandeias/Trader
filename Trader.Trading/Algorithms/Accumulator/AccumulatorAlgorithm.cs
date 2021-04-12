@@ -66,13 +66,13 @@ namespace Trader.Trading.Algorithms.Accumulator
                     "{Type} {Name} cancelled low starting open order with price {Price} for {Quantity} units",
                     Type, _name, result.Price, result.OriginalQuantity);
 
-                return new Profit(0, 0, 0, 0, 0);
+                return new Profit(0, 0, 0, 0, 0, 0);
             }
 
             // if there are still open orders then leave them be
             if (orders.Any(x => x.Side == OrderSide.Buy))
             {
-                return new Profit(0, 0, 0, 0, 0);
+                return new Profit(0, 0, 0, 0, 0, 0);
             }
 
             // put the starting order through
@@ -87,7 +87,7 @@ namespace Trader.Trading.Algorithms.Accumulator
                     "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}",
                     Type, _name, total, _options.Quote, free, _options.Quote);
 
-                return new Profit(0, 0, 0, 0, 0);
+                return new Profit(0, 0, 0, 0, 0, 0);
             }
 
             // calculate the appropriate quantity to buy
@@ -117,7 +117,7 @@ namespace Trader.Trading.Algorithms.Accumulator
                 "{Type} {Name} created {OrderSide} {OrderType} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",
                 Type, _name, order.Side, order.Type, order.Symbol, order.OriginalQuantity, _options.Asset, order.Price, _options.Quote, order.OriginalQuantity * order.Price, _options.Quote);
 
-            return new Profit(0, 0, 0, 0, 0);
+            return new Profit(0, 0, 0, 0, 0, 0);
         }
     }
 }

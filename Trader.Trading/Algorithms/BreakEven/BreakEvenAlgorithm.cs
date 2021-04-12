@@ -35,7 +35,7 @@ namespace Trader.Trading.Algorithms.BreakEven
 
             // todo: create all desired sell orders not created yet
 
-            return Task.FromResult(new Profit(0, 0, 0, 0, 0));
+            return Task.FromResult(new Profit(0, 0, 0, 0, 0, 0));
         }
     }
 }

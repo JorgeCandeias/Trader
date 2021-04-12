@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Buffers;
-using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using Trader.Core.Time;
@@ -47,6 +46,7 @@ namespace Trader.Trading.Algorithms
             var todayProfit = 0m;
             var yesterdayProfit = 0m;
             var thisWeekProfit = 0m;
+            var prevWeekProfit = 0m;
             var thisMonthProfit = 0m;
             var thisYearProfit = 0m;
 
@@ -77,6 +77,7 @@ namespace Trader.Trading.Algorithms
                             if (sell.MaxEventTime.Date == today) todayProfit += profit;
                             if (sell.MaxEventTime.Date == today.AddDays(-1)) yesterdayProfit += profit;
                             if (sell.MaxEventTime.Date >= today.Previous(DayOfWeek.Sunday)) thisWeekProfit += profit;
+                            if (sell.MaxEventTime.Date >= today.Previous(DayOfWeek.Sunday, 2) && sell.MaxEventTime.Date < today.Previous(DayOfWeek.Sunday)) prevWeekProfit += profit;
                             if (sell.MaxEventTime.Date >= today.AddDays(-today.Day + 1)) thisMonthProfit += profit;
                             if (sell.MaxEventTime.Date >= new DateTime(today.Year, 1, 1)) thisYearProfit += profit;
 
@@ -112,6 +113,7 @@ namespace Trader.Trading.Algorithms
                             if (sell.MaxEventTime.Date == today) todayProfit += profit;
                             if (sell.MaxEventTime.Date == today.AddDays(-1)) yesterdayProfit += profit;
                             if (sell.MaxEventTime.Date >= today.Previous(DayOfWeek.Sunday)) thisWeekProfit += profit;
+                            if (sell.MaxEventTime.Date >= today.Previous(DayOfWeek.Sunday, 2) && sell.MaxEventTime.Date < today.Previous(DayOfWeek.Sunday)) prevWeekProfit += profit;
                             if (sell.MaxEventTime.Date >= today.AddDays(-today.Day + 1)) thisMonthProfit += profit;
                             if (sell.MaxEventTime.Date >= new DateTime(today.Year, 1, 1)) thisYearProfit += profit;
 
@@ -163,7 +165,7 @@ namespace Trader.Trading.Algorithms
                 "{Name} {Symbol} identified {Count} significant orders",
                 nameof(SignificantOrderResolver), symbol, significant.Count);
 
-            return new SignificantResult(significant, new Profit(todayProfit, yesterdayProfit, thisWeekProfit, thisMonthProfit, thisYearProfit));
+            return new SignificantResult(significant, new Profit(todayProfit, yesterdayProfit, thisWeekProfit, prevWeekProfit, thisMonthProfit, thisYearProfit));
         }
     }
 }

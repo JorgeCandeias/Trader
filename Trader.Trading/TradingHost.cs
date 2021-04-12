@@ -83,6 +83,7 @@ namespace Trader.Trading
                     profits.Sum(x => x.Profit.Today),
                     profits.Sum(x => x.Profit.Yesterday),
                     profits.Sum(x => x.Profit.ThisWeek),
+                    profits.Sum(x => x.Profit.PrevWeek),
                     profits.Sum(x => x.Profit.ThisMonth),
                     profits.Sum(x => x.Profit.ThisYear)));
         }

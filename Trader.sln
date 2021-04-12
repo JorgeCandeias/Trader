@@ -9,13 +9,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Core", "Trader.Core\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Core.Abstractions", "Trader.Core.Abstractions\Trader.Core.Abstractions.csproj", "{13B91BA8-3AB2-4389-89EE-6E1F4D39F288}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Trading.Abstractions", "Trader.Trading.Abstractions\Trader.Trading.Abstractions.csproj", "{02D339DF-5598-463C-8117-E41998A4732D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Trading.Abstractions", "Trader.Trading.Abstractions\Trader.Trading.Abstractions.csproj", "{02D339DF-5598-463C-8117-E41998A4732D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Trading", "Trader.Trading\Trader.Trading.csproj", "{BEB63F0E-15FA-40B1-9F58-E493102BE4FB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Trading", "Trader.Trading\Trader.Trading.csproj", "{BEB63F0E-15FA-40B1-9F58-E493102BE4FB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Data", "Trader.Data\Trader.Data.csproj", "{4D0FCDF9-806F-4B87-B35F-B55CAD9505A4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Data", "Trader.Data\Trader.Data.csproj", "{4D0FCDF9-806F-4B87-B35F-B55CAD9505A4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Data.Abstractions", "Trader.Data.Abstractions\Trader.Data.Abstractions.csproj", "{7A57C8A2-75CA-4B96-AA14-93C957EC0595}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Data.Abstractions", "Trader.Data.Abstractions\Trader.Data.Abstractions.csproj", "{7A57C8A2-75CA-4B96-AA14-93C957EC0595}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{724871D8-46E7-4280-B828-D6A28360E820}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

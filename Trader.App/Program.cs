@@ -46,7 +46,7 @@ namespace Trader.App
 
                     services
                         .AddAlgorithmResolvers()
-                        .AddStepAlgorithm("BNBGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:BNBGBP", options))
+                        .AddAccumulatorAlgorithm("BNBGBP", options => context.Configuration.Bind("Trading:Algorithms:Accumulator:BNBGBP", options))
                         .AddStepAlgorithm("BTCGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:BTCGBP", options))
                         .AddStepAlgorithm("ETHGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:ETHGBP", options))
                         .AddStepAlgorithm("ADAGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:ADAGBP", options))

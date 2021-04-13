@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
 using System.Buffers;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Trader.Core.Time;
@@ -23,10 +24,8 @@ namespace Trader.Trading.Algorithms
 
         public async Task<SignificantResult> ResolveAsync(string symbol, CancellationToken cancellationToken = default)
         {
+            var watch = Stopwatch.StartNew();
             var orders = await _repository.GetOrdersAsync(symbol, cancellationToken);
-
-            // todo: keep track of the last significant order start so we avoid slowing down when the orders grow and grow
-            // todo: persist all this stuff into sqlite so each tick can operate over the last data only
 
             // match significant orders to trades so we can sort significant orders by execution date
             var map = new SortedOrderTradeMapSet();
@@ -162,8 +161,8 @@ namespace Trader.Trading.Algorithms
             }
 
             _logger.LogInformation(
-                "{Name} {Symbol} identified {Count} significant orders",
-                nameof(SignificantOrderResolver), symbol, significant.Count);
+                "{Name} {Symbol} identified {Count} significant orders in {ElapsedMs}ms",
+                nameof(SignificantOrderResolver), symbol, significant.Count, watch.ElapsedMilliseconds);
 
             return new SignificantResult(significant, new Profit(todayProfit, yesterdayProfit, thisWeekProfit, prevWeekProfit, thisMonthProfit, thisYearProfit));
         }

@@ -479,7 +479,7 @@ namespace Trader.Trading.Algorithms.Step
                 closePrice = Math.Ceiling(closePrice / priceFilter.TickSize) * priceFilter.TickSize;
 
                 _logger.LogWarning(
-                    "{Type} {Name} ignoring {Count} under notional bands with total {Quantity} {Asset}, avg opening at {OpenPrice} {Quote}, target closing at {ClosePrice} {Quote}",
+                    "{Type} {Name} ignoring {Count} under notional bands with total {Quantity} {Asset}, avg opening at {OpenPrice:N2} {Quote}, target closing at {ClosePrice:N2} {Quote}",
                     Type, _name,
                     leftovers.Count,
                     leftovers.Sum(x => x.Quantity),
@@ -488,39 +488,6 @@ namespace Trader.Trading.Algorithms.Step
                     _options.Quote,
                     closePrice,
                     _options.Quote);
-
-                // create a new group band
-                /*
-                var group = new Band
-                {
-                    Quantity = leftovers.Sum(x => x.Quantity),
-                    ExecutedQuantity = leftovers.Sum(x => x.ExecutedQuantity),
-                    OpenPrice = leftovers.Sum(x => x.OpenPrice * x.Quantity) / leftovers.Sum(x => x.Quantity),
-                    CloseOrderClientId = _orderCodeGenerator.GetSellClientOrderId(leftovers.SelectMany(x => x.OpenOrderIds)),
-                    Status = BandStatus.Open
-                };
-                group.OpenOrderIds.UnionWith(leftovers.SelectMany(x => x.OpenOrderIds));
-
-                // adjust the open price to tick size
-                group.OpenPrice = Math.Ceiling(group.OpenPrice / priceFilter.TickSize) * priceFilter.TickSize;
-
-                // calculate the close price and adjust to tick size
-                group.ClosePrice = group.OpenPrice + stepSize;
-                group.ClosePrice = Math.Ceiling(group.ClosePrice / priceFilter.TickSize) * priceFilter.TickSize;
-
-                // see if the group band can now be sold
-                if (group.Quantity * group.ClosePrice >= minNotionalFilter.MinNotional)
-                {
-                    // if it can now be sold then we can keep the grouped band
-                    _bands.Add(group);
-                }
-                else
-                {
-                    _logger.LogWarning(
-                        "{Type} {Name} ignoring {Count} under notional bands with total {Quantity} {Asset}, avg opening at {OpenPrice} {Quote}, closing at {ClosePrice} {Quote}",
-                        Type, _name, leftovers.Count, group.Quantity, _options.Asset, group.OpenPrice, _options.Quote, group.ClosePrice, _options.Quote);
-                }
-                */
             }
 
             // apply open sell orders to the bands

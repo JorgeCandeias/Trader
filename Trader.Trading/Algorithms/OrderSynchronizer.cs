@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Trader.Core.Time;
@@ -24,6 +25,8 @@ namespace Trader.Trading.Algorithms
 
         public async Task SynchronizeOrdersAsync(string symbol, CancellationToken cancellationToken = default)
         {
+            var watch = Stopwatch.StartNew();
+
             // start with the minimum transient order if there is any
             var orderId = await _repository.GetMinTransientOrderIdAsync(symbol, cancellationToken);
 
@@ -57,8 +60,8 @@ namespace Trader.Trading.Algorithms
             if (count > 0)
             {
                 _logger.LogInformation(
-                    "{Name} {Symbol} pulled {Count} orders",
-                    nameof(OrderSynchronizer), symbol, count);
+                    "{Name} {Symbol} pulled {Count} orders in {ElapsedMs}ms",
+                    nameof(OrderSynchronizer), symbol, count, watch.ElapsedMilliseconds);
             }
         }
     }

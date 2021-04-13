@@ -11,6 +11,10 @@ namespace Trader.App
 {
     internal class Program
     {
+        protected Program()
+        {
+        }
+
         private static Task Main()
         {
             var temp = Path.GetTempPath();

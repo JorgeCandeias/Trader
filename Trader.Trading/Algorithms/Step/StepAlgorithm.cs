@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Trader.Core.Time;
 using Trader.Data;
+using static System.String;
 
 namespace Trader.Trading.Algorithms.Step
 {
@@ -531,7 +532,7 @@ namespace Trader.Trading.Algorithms.Step
             public BandStatus Status { get; set; }
             public long CloseOrderId { get; set; }
             public decimal ClosePrice { get; set; }
-            public string CloseOrderClientId { get; set; }
+            public string CloseOrderClientId { get; set; } = Empty;
 
             public int CompareTo(Band? other)
             {
@@ -551,7 +552,6 @@ namespace Trader.Trading.Algorithms.Step
         {
             public decimal Free { get; set; }
             public decimal Locked { get; set; }
-            public decimal Total => Free + Locked;
         }
 
         private class Balances

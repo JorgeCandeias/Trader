@@ -20,20 +20,20 @@ namespace Trader.Trading.Algorithms.BreakEven
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public string Type => nameof(BreakEvenAlgorithm);
+        public static string Type => nameof(BreakEvenAlgorithm);
         public string Symbol => _options.Symbol;
 
         public Task<Profit> GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("{Type} {Name} starting...", Type, _name);
 
-            // todo: resolve all significant buy orders
+            // resolve all significant buy orders
 
-            // todo: resolve desired sell orders
+            // resolve desired sell orders
 
-            // todo: cancel all sell orders that are not desired
+            // cancel all sell orders that are not desired
 
-            // todo: create all desired sell orders not created yet
+            // create all desired sell orders not created yet
 
             return Task.FromResult(new Profit(0, 0, 0, 0, 0, 0));
         }

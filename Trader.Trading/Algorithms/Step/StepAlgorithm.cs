@@ -371,7 +371,24 @@ namespace Trader.Trading.Algorithms.Step
                 // round it down to the lot size step
                 quantity = Math.Floor(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
 
+                // place a market order to account for weird price floats
+                var result = await _trader.CreateOrderAsync(new Order(
+                    _options.Symbol,
+                    OrderSide.Buy,
+                    OrderType.Market,
+                    TimeInForce.GoodTillCanceled,
+                    quantity,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    NewOrderResponseType.Full,
+                    null,
+                    _clock.UtcNow));
+
                 // place a limit order at the current price
+                /*
                 var result = await _trader.CreateOrderAsync(new Order(
                     _options.Symbol,
                     OrderSide.Buy,
@@ -387,6 +404,7 @@ namespace Trader.Trading.Algorithms.Step
                     null,
                     _clock.UtcNow),
                     cancellationToken);
+                */
 
                 _logger.LogInformation(
                     "{Type} {Name} created {OrderSide} {OrderType} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",

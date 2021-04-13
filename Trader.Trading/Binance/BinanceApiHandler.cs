@@ -2,7 +2,6 @@
 using System;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Trader.Data;
@@ -14,15 +13,11 @@ namespace Trader.Trading.Binance
     {
         private readonly BinanceOptions _options;
         private readonly ISigner _signer;
-        private readonly byte[] _key;
 
         public BinanceApiHandler(IOptions<BinanceOptions> options, ISigner signer)
         {
             _options = options.Value;
             _signer = signer;
-
-            // cache the secret key bytes for hmac
-            _key = Encoding.UTF8.GetBytes(_options.SecretKey);
         }
 
         private const string ApiKeyHeader = "X-MBX-APIKEY";
@@ -140,8 +135,6 @@ namespace Trader.Trading.Binance
                     }
                 }
             }
-
-            return;
         }
     }
 }

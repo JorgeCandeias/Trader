@@ -536,7 +536,7 @@ namespace Trader.Trading.Algorithms.Step
 
             public int CompareTo(Band? other)
             {
-                _ = other ?? throw new ArgumentNullException(nameof(other));
+                if (other is null) return 1;
 
                 var byOpenPrice = OpenPrice.CompareTo(other.OpenPrice);
                 if (byOpenPrice is not 0) return byOpenPrice;
@@ -545,6 +545,56 @@ namespace Trader.Trading.Algorithms.Step
                 if (byId is not 0) return byId;
 
                 return 0;
+            }
+
+            public override bool Equals(object? obj) => obj is Band band && CompareTo(band) is 0;
+
+            public override int GetHashCode() => HashCode.Combine(OpenPrice, Id);
+
+            public static bool operator ==(Band first, Band second)
+            {
+                if (first is null) return second is null;
+
+                return first.CompareTo(second) is 0;
+            }
+
+            public static bool operator !=(Band first, Band second)
+            {
+                if (first is null) return second is not null;
+
+                return first.CompareTo(second) is 0;
+            }
+
+            public static bool operator <(Band first, Band second)
+            {
+                _ = first ?? throw new ArgumentNullException(nameof(first));
+                _ = second ?? throw new ArgumentNullException(nameof(second));
+
+                return first.CompareTo(second) < 0;
+            }
+
+            public static bool operator >(Band first, Band second)
+            {
+                _ = first ?? throw new ArgumentNullException(nameof(first));
+                _ = second ?? throw new ArgumentNullException(nameof(second));
+
+                return first.CompareTo(second) > 0;
+            }
+
+            public static bool operator <=(Band first, Band second)
+            {
+                _ = first ?? throw new ArgumentNullException(nameof(first));
+                _ = second ?? throw new ArgumentNullException(nameof(second));
+
+                return first.CompareTo(second) <= 0;
+            }
+
+            public static bool operator >=(Band first, Band second)
+            {
+                _ = first ?? throw new ArgumentNullException(nameof(first));
+                _ = second ?? throw new ArgumentNullException(nameof(second));
+
+                return first.CompareTo(second) >= 0;
             }
         }
 

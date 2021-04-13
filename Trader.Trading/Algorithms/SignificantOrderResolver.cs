@@ -70,7 +70,7 @@ namespace Trader.Trading.Algorithms
                             sell.RemainingExecutedQuantity -= take;
 
                             // calculate profit for this
-                            var profit = take * (sell.Order.Price - buy.Order.Price);
+                            var profit = take * (sell.AvgTradePrice - buy.AvgTradePrice);
 
                             // assign to the appropriate counters
                             if (sell.MaxEventTime.Date == today) todayProfit += profit;
@@ -106,7 +106,7 @@ namespace Trader.Trading.Algorithms
                             sell.RemainingExecutedQuantity -= take;
 
                             // calculate profit for this
-                            var profit = take * (sell.Order.Price - buy.Order.Price);
+                            var profit = take * (sell.AvgTradePrice - buy.AvgTradePrice);
 
                             // assign to the appropriate counters
                             if (sell.MaxEventTime.Date == today) todayProfit += profit;
@@ -143,7 +143,7 @@ namespace Trader.Trading.Algorithms
                         subject.Order.OrderId,
                         subject.Order.OrderListId,
                         subject.Order.ClientOrderId,
-                        subject.Order.Price,
+                        subject.AvgTradePrice,
                         subject.Order.OriginalQuantity,
                         subject.RemainingExecutedQuantity,
                         subject.Order.CummulativeQuoteQuantity,

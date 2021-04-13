@@ -44,7 +44,7 @@ namespace Trader.Trading.Algorithms
                     // keep track for logging
                     count += trades.Count;
                 }
-            } while (trades.Count > 1000);
+            } while (trades.Count >= 1000);
 
             // log the activity only if necessary
             if (count > 0)

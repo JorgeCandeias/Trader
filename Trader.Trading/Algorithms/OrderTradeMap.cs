@@ -17,6 +17,7 @@ namespace Trader.Trading.Algorithms
 
             MaxTradeTime = Trades.Any() ? Trades.Max(x => x.Time) : null;
             MaxEventTime = MaxTradeTime ?? Order.Time;
+            AvgTradePrice = Trades.Any() ? Trades.Sum(x => x.Price * x.Quantity) / Trades.Sum(x => x.Quantity) : 0;
 
             RemainingExecutedQuantity = Order.ExecutedQuantity;
         }
@@ -26,7 +27,7 @@ namespace Trader.Trading.Algorithms
 
         public DateTime? MaxTradeTime { get; }
         public DateTime MaxEventTime { get; }
-
+        public decimal AvgTradePrice { get; }
         public decimal RemainingExecutedQuantity { get; set; }
     }
 }

@@ -376,7 +376,7 @@ namespace Trader.Trading.Algorithms.Step
                     _options.Symbol,
                     OrderSide.Buy,
                     OrderType.Market,
-                    TimeInForce.GoodTillCanceled,
+                    null,
                     quantity,
                     null,
                     null,
@@ -426,6 +426,15 @@ namespace Trader.Trading.Algorithms.Step
             // apply the significant buy orders to the bands
             foreach (var order in significant.Where(x => x.Side == OrderSide.Buy))
             {
+                if (order.Price is 0)
+                {
+                    _logger.LogError(
+                        "{Type} {Name} identified a significant {OrderSide} {OrderType} order for {Quantity} {Asset} on {Time} with zero price and will let the algo refresh to pick up missing trades",
+                        Type, _name, order.Side, order.Type, order.ExecutedQuantity, _options.Asset, order.Time);
+
+                    return true;
+                }
+
                 if (order.Status.IsTransientStatus())
                 {
                     // add transient orders with original quantity
@@ -458,6 +467,15 @@ namespace Trader.Trading.Algorithms.Step
             var orders = await _repository.GetTransientOrdersAsync(_options.Symbol, OrderSide.Buy, false, cancellationToken);
             foreach (var order in orders)
             {
+                if (order.Price is 0)
+                {
+                    _logger.LogError(
+                        "{Type} {Name} identified a significant {OrderSide} {OrderType} order for {Quantity} {Asset} on {Time} with zero price and will let the algo refresh to pick up missing trades",
+                        Type, _name, order.Side, order.Type, order.ExecutedQuantity, _options.Asset, order.Time);
+
+                    return true;
+                }
+
                 // add transient orders with original quantity
                 _bands.Add(new Band
                 {

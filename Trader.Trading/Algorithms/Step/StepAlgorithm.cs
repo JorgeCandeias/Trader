@@ -523,7 +523,6 @@ namespace Trader.Trading.Algorithms.Step
         {
             public Guid Id { get; } = Guid.NewGuid();
 
-            //public ISet<long> OpenOrderIds { get; } = new HashSet<long>();
             public long OpenOrderId { get; set; }
 
             public decimal Quantity { get; set; }

@@ -12,7 +12,6 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
-using Trader.Core.Time;
 using Trader.Data;
 
 namespace Trader.Trading.Binance
@@ -21,14 +20,12 @@ namespace Trader.Trading.Binance
     {
         private readonly HttpClient _client;
         private readonly IMapper _mapper;
-        private readonly ISystemClock _clock;
         private readonly ObjectPool<StringBuilder> _pool;
 
-        public BinanceApiClient(HttpClient client, IMapper mapper, ISystemClock clock, ObjectPool<StringBuilder> pool)
+        public BinanceApiClient(HttpClient client, IMapper mapper, ObjectPool<StringBuilder> pool)
         {
             _client = client;
             _mapper = mapper;
-            _clock = clock;
             _pool = pool;
         }
 

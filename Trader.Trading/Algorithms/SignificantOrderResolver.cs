@@ -48,9 +48,15 @@ namespace Trader.Trading.Algorithms
             var prevWeekProfit = 0m;
             var thisMonthProfit = 0m;
             var thisYearProfit = 0m;
+            var d1 = 0m;
+            var d7 = 0m;
+            var d30 = 0m;
 
             // hold the current time so profit assignments are consistent
             var now = _clock.UtcNow;
+            var window1d = now.AddDays(-1);
+            var window7d = now.AddDays(-7);
+            var window30d = now.AddDays(-30);
             var today = now.Date;
 
             // first map formal sells to formal buys
@@ -80,6 +86,11 @@ namespace Trader.Trading.Algorithms
                             if (sell.MaxEventTime.Date >= today.Previous(DayOfWeek.Sunday, 2) && sell.MaxEventTime.Date < today.Previous(DayOfWeek.Sunday)) prevWeekProfit += profit;
                             if (sell.MaxEventTime.Date >= today.AddDays(-today.Day + 1)) thisMonthProfit += profit;
                             if (sell.MaxEventTime.Date >= new DateTime(today.Year, 1, 1)) thisYearProfit += profit;
+
+                            // assign to the window counters
+                            if (sell.MaxEventTime >= window1d) d1 += profit;
+                            if (sell.MaxEventTime >= window7d) d7 += profit;
+                            if (sell.MaxEventTime >= window30d) d30 += profit;
 
                             // leave the sale as-is regardless of fill
                             break;
@@ -116,6 +127,11 @@ namespace Trader.Trading.Algorithms
                             if (sell.MaxEventTime.Date >= today.Previous(DayOfWeek.Sunday, 2) && sell.MaxEventTime.Date < today.Previous(DayOfWeek.Sunday)) prevWeekProfit += profit;
                             if (sell.MaxEventTime.Date >= today.AddDays(-today.Day + 1)) thisMonthProfit += profit;
                             if (sell.MaxEventTime.Date >= new DateTime(today.Year, 1, 1)) thisYearProfit += profit;
+
+                            // assign to the window counters
+                            if (sell.MaxEventTime >= window1d) d1 += profit;
+                            if (sell.MaxEventTime >= window7d) d7 += profit;
+                            if (sell.MaxEventTime >= window30d) d30 += profit;
 
                             // if the sale is filled then we can break early
                             if (sell.RemainingExecutedQuantity == 0) break;
@@ -171,12 +187,12 @@ namespace Trader.Trading.Algorithms
                 thisWeekProfit,
                 prevWeekProfit,
                 thisMonthProfit,
-                thisYearProfit);
+                thisYearProfit,
+                d1,
+                d7,
+                d30);
 
-            var stats = new Statistics(
-                todayProfit.SafeDivideBy((decimal)now.TimeOfDay.TotalHours));
-
-            return new SignificantResult(significant, summary, stats);
+            return new SignificantResult(significant, summary);
         }
     }
 }

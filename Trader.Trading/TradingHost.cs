@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Trader.Core.Time;
@@ -75,21 +74,27 @@ namespace Trader.Trading
                 var stats = await algo.GetStatisticsAsync(_cancellation.Token);
 
                 _logger.LogInformation(
-                    "{Name} reports {Symbol,7} profit as (T: {@Today,6:N2}, T-1: {@Yesterday,6:N2}, W: {@ThisWeek,6:N2}, W-1: {@PrevWeek,6:N2}, M: {@ThisMonth,6:N2}, Y: {@ThisYear,6:N2}) (APHT: {@AveragePerHourToday,6:N2})",
-                    Name, algo.Symbol, profit.Today, profit.Yesterday, profit.ThisWeek, profit.PrevWeek, profit.ThisMonth, profit.ThisYear, stats.AvgPerHourToday);
+                    "{Name} reports {Symbol,7} profit as (T: {@Today,6:N2}, T-1: {@Yesterday,6:N2}, W: {@ThisWeek,6:N2}, W-1: {@PrevWeek,6:N2}, M: {@ThisMonth,6:N2}, Y: {@ThisYear,6:N2}) (APH1: {@AveragePerHourDay1,5:N2}, APH7: {@AveragePerHourDay7,5:N2}, APH30: {@AveragePerHourDay30,5:N2})",
+                    Name, algo.Symbol, profit.Today, profit.Yesterday, profit.ThisWeek, profit.PrevWeek, profit.ThisMonth, profit.ThisYear, stats.AvgPerHourDay1, stats.AvgPerHourDay7, stats.AvgPerHourDay30);
 
                 profits.Add(profit);
             }
 
+            var totalProfit = Profit.Aggregate(profits);
+            var totalStats = Statistics.FromProfit(totalProfit);
+
             _logger.LogInformation(
-                "{Name} reports   total profit as (T: {@Today,6:N2}, T-1: {@Yesterday,6:N2}, W: {@ThisWeek,6:N2}, W-1: {@PrevWeek,6:N2}, M: {@ThisMonth,6:N2}, Y: {@ThisYear,6:N2})",
+                "{Name} reports   total profit as (T: {@Today,6:N2}, T-1: {@Yesterday,6:N2}, W: {@ThisWeek,6:N2}, W-1: {@PrevWeek,6:N2}, M: {@ThisMonth,6:N2}, Y: {@ThisYear,6:N2}) (APH1: {@AveragePerHourDay1,5:N2}, APH7: {@AveragePerHourDay7,5:N2}, APH30: {@AveragePerHourDay30,5:N2})",
                 Name,
-                profits.Sum(x => x.Today),
-                profits.Sum(x => x.Yesterday),
-                profits.Sum(x => x.ThisWeek),
-                profits.Sum(x => x.PrevWeek),
-                profits.Sum(x => x.ThisMonth),
-                profits.Sum(x => x.ThisYear));
+                totalProfit.Today,
+                totalProfit.Yesterday,
+                totalProfit.ThisWeek,
+                totalProfit.PrevWeek,
+                totalProfit.ThisMonth,
+                totalProfit.ThisYear,
+                totalStats.AvgPerHourDay1,
+                totalStats.AvgPerHourDay7,
+                totalStats.AvgPerHourDay30);
         }
     }
 }

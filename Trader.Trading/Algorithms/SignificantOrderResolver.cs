@@ -50,7 +50,8 @@ namespace Trader.Trading.Algorithms
             var thisYearProfit = 0m;
 
             // hold the current time so profit assignments are consistent
-            var today = _clock.UtcNow.Date;
+            var now = _clock.UtcNow;
+            var today = now.Date;
 
             // first map formal sells to formal buys
             for (var i = 0; i < subjects.Segment.Count; ++i)
@@ -164,7 +165,18 @@ namespace Trader.Trading.Algorithms
                 "{Name} {Symbol} identified {Count} significant orders in {ElapsedMs}ms",
                 nameof(SignificantOrderResolver), symbol, significant.Count, watch.ElapsedMilliseconds);
 
-            return new SignificantResult(significant, new Profit(todayProfit, yesterdayProfit, thisWeekProfit, prevWeekProfit, thisMonthProfit, thisYearProfit));
+            var summary = new Profit(
+                todayProfit,
+                yesterdayProfit,
+                thisWeekProfit,
+                prevWeekProfit,
+                thisMonthProfit,
+                thisYearProfit);
+
+            var stats = new Statistics(
+                todayProfit.SafeDivideBy((decimal)now.TimeOfDay.TotalHours));
+
+            return new SignificantResult(significant, summary, stats);
         }
     }
 }

@@ -63,29 +63,32 @@ namespace Trader.Trading
             var accountInfo = await _trader.GetAccountInfoAsync(new GetAccountInfo(null, _clock.UtcNow));
 
             // execute all algos in sequence for ease of troubleshooting
-            var profits = new List<(string Symbol, Profit Profit)>();
             foreach (var algo in _algos)
             {
-                var profit = await algo.GoAsync(exchangeInfo, accountInfo, _cancellation.Token);
-                profits.Add((algo.Symbol, profit));
+                await algo.GoAsync(exchangeInfo, accountInfo, _cancellation.Token);
             }
 
-            foreach (var item in profits)
+            var profits = new List<Profit>();
+            foreach (var algo in _algos)
             {
+                var profit = await algo.GetProfitAsync(_cancellation.Token);
+
                 _logger.LogInformation(
                     "{Name} reports {Symbol,7} profit as (T: {@Today,6:N2}, T-1: {@Yesterday,6:N2}, W: {@ThisWeek,6:N2}, W-1: {@PrevWeek,6:N2}, M: {@ThisMonth,6:N2}, Y: {@ThisYear,6:N2})",
-                    Name, item.Symbol, item.Profit.Today, item.Profit.Yesterday, item.Profit.ThisWeek, item.Profit.PrevWeek, item.Profit.ThisMonth, item.Profit.ThisYear);
+                    Name, algo.Symbol, profit.Today, profit.Yesterday, profit.ThisWeek, profit.PrevWeek, profit.ThisMonth, profit.ThisYear);
+
+                profits.Add(profit);
             }
 
             _logger.LogInformation(
                 "{Name} reports   total profit as (T: {@Today,6:N2}, T-1: {@Yesterday,6:N2}, W: {@ThisWeek,6:N2}, W-1: {@PrevWeek,6:N2}, M: {@ThisMonth,6:N2}, Y: {@ThisYear,6:N2})",
                 Name,
-                profits.Sum(x => x.Profit.Today),
-                profits.Sum(x => x.Profit.Yesterday),
-                profits.Sum(x => x.Profit.ThisWeek),
-                profits.Sum(x => x.Profit.PrevWeek),
-                profits.Sum(x => x.Profit.ThisMonth),
-                profits.Sum(x => x.Profit.ThisYear));
+                profits.Sum(x => x.Today),
+                profits.Sum(x => x.Yesterday),
+                profits.Sum(x => x.ThisWeek),
+                profits.Sum(x => x.PrevWeek),
+                profits.Sum(x => x.ThisMonth),
+                profits.Sum(x => x.ThisYear));
         }
     }
 }

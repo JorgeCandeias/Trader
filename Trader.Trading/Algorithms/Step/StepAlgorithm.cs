@@ -54,7 +54,9 @@ namespace Trader.Trading.Algorithms.Step
         /// </summary>
         private readonly SortedSet<Band> _bands = new();
 
-        public async Task<Profit> GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default)
+        private Profit? _profit;
+
+        public async Task GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default)
         {
             var symbol = exchangeInfo.Symbols.Single(x => x.Name == _options.Symbol);
             var priceFilter = symbol.Filters.OfType<PriceSymbolFilter>().Single();
@@ -67,17 +69,22 @@ namespace Trader.Trading.Algorithms.Step
             await _orderSynchronizer.SynchronizeOrdersAsync(_options.Symbol, cancellationToken);
             await _tradeSynchronizer.SynchronizeTradesAsync(_options.Symbol, cancellationToken);
             var significant = await _significantOrderResolver.ResolveAsync(_options.Symbol, cancellationToken);
+            _profit = significant.Profit;
 
             // always update the latest price
             var ticker = await SyncAssetPriceAsync(cancellationToken);
 
-            if (await TryCreateTradingBandsAsync(significant.Orders, minNotionalFilter, priceFilter, cancellationToken)) return significant.Profit;
-            if (await TrySetStartingTradeAsync(symbol, ticker, lotSizeFilter, priceFilter, cancellationToken)) return significant.Profit;
-            if (await TryCancelRogueSellOrdersAsync(cancellationToken)) return significant.Profit;
-            if (await TrySetBandSellOrdersAsync(cancellationToken)) return significant.Profit;
-            if (await TryCreateLowerBandOrderAsync(symbol, ticker, lotSizeFilter, priceFilter, cancellationToken)) return significant.Profit;
-            if (await TryCloseOutOfRangeBandsAsync(ticker, cancellationToken)) return significant.Profit;
-            return significant.Profit;
+            if (await TryCreateTradingBandsAsync(significant.Orders, minNotionalFilter, priceFilter, cancellationToken)) return;
+            if (await TrySetStartingTradeAsync(symbol, ticker, lotSizeFilter, priceFilter, cancellationToken)) return;
+            if (await TryCancelRogueSellOrdersAsync(cancellationToken)) return;
+            if (await TrySetBandSellOrdersAsync(cancellationToken)) return;
+            if (await TryCreateLowerBandOrderAsync(symbol, ticker, lotSizeFilter, priceFilter, cancellationToken)) return;
+            await TryCloseOutOfRangeBandsAsync(ticker, cancellationToken);
+        }
+
+        public Task<Profit> GetProfitAsync(CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(_profit ?? Profit.Zero);
         }
 
         private void ApplyAccountInfo(AccountInfo accountInfo)

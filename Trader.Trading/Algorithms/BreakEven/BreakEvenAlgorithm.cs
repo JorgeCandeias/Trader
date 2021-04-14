@@ -23,7 +23,7 @@ namespace Trader.Trading.Algorithms.BreakEven
         public static string Type => nameof(BreakEvenAlgorithm);
         public string Symbol => _options.Symbol;
 
-        public Task<Profit> GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default)
+        public Task GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("{Type} {Name} starting...", Type, _name);
 
@@ -35,7 +35,12 @@ namespace Trader.Trading.Algorithms.BreakEven
 
             // create all desired sell orders not created yet
 
-            return Task.FromResult(new Profit(0, 0, 0, 0, 0, 0));
+            return Task.CompletedTask;
+        }
+
+        public Task<Profit> GetProfitAsync(CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(Profit.Zero);
         }
     }
 }

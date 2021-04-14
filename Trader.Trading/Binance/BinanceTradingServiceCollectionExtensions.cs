@@ -35,6 +35,7 @@ namespace Microsoft.Extensions.DependencyInjection
                     var options = p.GetRequiredService<IOptions<BinanceOptions>>().Value;
 
                     x.BaseAddress = options.BaseAddress;
+                    x.Timeout = options.Timeout;
                 })
                 .AddHttpMessageHandler<BinanceApiHandler>()
                 .Services

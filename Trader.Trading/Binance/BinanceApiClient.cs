@@ -37,16 +37,16 @@ namespace Trader.Trading.Binance
 
         #region General Endpoints
 
-        public async Task<bool> PingAsync()
+        public async Task<bool> PingAsync(CancellationToken cancellationToken = default)
         {
-            var response = await _client.GetAsync("/api/v3/ping");
+            var response = await _client.GetAsync("/api/v3/ping", cancellationToken);
 
             return response.IsSuccessStatusCode;
         }
 
-        public async Task<DateTime> GetTimeAsync()
+        public async Task<DateTime> GetTimeAsync(CancellationToken cancellationToken = default)
         {
-            var result = await _client.GetFromJsonAsync<ServerTimeModel>("/api/v3/time");
+            var result = await _client.GetFromJsonAsync<ServerTimeModel>("/api/v3/time", cancellationToken);
 
             return _mapper.Map<DateTime>(result);
         }

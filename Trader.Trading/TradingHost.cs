@@ -73,19 +73,19 @@ namespace Trader.Trading
             foreach (var item in profits)
             {
                 _logger.LogInformation(
-                    "{Name} reports {Symbol} profit as {@Profit}",
-                    Name, item.Symbol, item.Profit);
+                    "{Name} reports {Symbol,7} profit as (T: {@Today,6:N2}, T-1: {@Yesterday,6:N2}, W: {@ThisWeek,6:N2}, W-1: {@PrevWeek,6:N2}, M: {@ThisMonth,6:N2}, Y: {@ThisYear,6:N2})",
+                    Name, item.Symbol, item.Profit.Today, item.Profit.Yesterday, item.Profit.ThisWeek, item.Profit.PrevWeek, item.Profit.ThisMonth, item.Profit.ThisYear);
             }
 
             _logger.LogInformation(
-                "{Name} reports total profit as {@Profit}",
-                Name, new Profit(
-                    profits.Sum(x => x.Profit.Today),
-                    profits.Sum(x => x.Profit.Yesterday),
-                    profits.Sum(x => x.Profit.ThisWeek),
-                    profits.Sum(x => x.Profit.PrevWeek),
-                    profits.Sum(x => x.Profit.ThisMonth),
-                    profits.Sum(x => x.Profit.ThisYear)));
+                "{Name} reports   total profit as (T: {@Today,6:N2}, T-1: {@Yesterday,6:N2}, W: {@ThisWeek,6:N2}, W-1: {@PrevWeek,6:N2}, M: {@ThisMonth,6:N2}, Y: {@ThisYear,6:N2})",
+                Name,
+                profits.Sum(x => x.Profit.Today),
+                profits.Sum(x => x.Profit.Yesterday),
+                profits.Sum(x => x.Profit.ThisWeek),
+                profits.Sum(x => x.Profit.PrevWeek),
+                profits.Sum(x => x.Profit.ThisMonth),
+                profits.Sum(x => x.Profit.ThisYear));
         }
     }
 }

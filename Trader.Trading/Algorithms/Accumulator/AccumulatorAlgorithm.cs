@@ -124,5 +124,10 @@ namespace Trader.Trading.Algorithms.Accumulator
         {
             return Task.FromResult(Profit.Zero);
         }
+
+        public Task<Statistics> GetStatisticsAsync(CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(Statistics.Zero);
+        }
     }
 }

@@ -11,5 +11,7 @@ namespace Trader.Trading.Algorithms
         Task GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default);
 
         Task<Profit> GetProfitAsync(CancellationToken cancellationToken = default);
+
+        Task<Statistics> GetStatisticsAsync(CancellationToken cancellationToken = default);
     }
 }

@@ -56,6 +56,8 @@ namespace Trader.Trading.Algorithms.Step
 
         private Profit? _profit;
 
+        private Statistics? _statistics;
+
         public async Task GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default)
         {
             var symbol = exchangeInfo.Symbols.Single(x => x.Name == _options.Symbol);
@@ -70,6 +72,7 @@ namespace Trader.Trading.Algorithms.Step
             await _tradeSynchronizer.SynchronizeTradesAsync(_options.Symbol, cancellationToken);
             var significant = await _significantOrderResolver.ResolveAsync(_options.Symbol, cancellationToken);
             _profit = significant.Profit;
+            _statistics = significant.Statistics;
 
             // always update the latest price
             var ticker = await SyncAssetPriceAsync(cancellationToken);
@@ -85,6 +88,11 @@ namespace Trader.Trading.Algorithms.Step
         public Task<Profit> GetProfitAsync(CancellationToken cancellationToken = default)
         {
             return Task.FromResult(_profit ?? Profit.Zero);
+        }
+
+        public Task<Statistics> GetStatisticsAsync(CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(_statistics ?? Statistics.Zero);
         }
 
         private void ApplyAccountInfo(AccountInfo accountInfo)

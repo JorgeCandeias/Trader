@@ -72,10 +72,11 @@ namespace Trader.Trading
             foreach (var algo in _algos)
             {
                 var profit = await algo.GetProfitAsync(_cancellation.Token);
+                var stats = await algo.GetStatisticsAsync(_cancellation.Token);
 
                 _logger.LogInformation(
-                    "{Name} reports {Symbol,7} profit as (T: {@Today,6:N2}, T-1: {@Yesterday,6:N2}, W: {@ThisWeek,6:N2}, W-1: {@PrevWeek,6:N2}, M: {@ThisMonth,6:N2}, Y: {@ThisYear,6:N2})",
-                    Name, algo.Symbol, profit.Today, profit.Yesterday, profit.ThisWeek, profit.PrevWeek, profit.ThisMonth, profit.ThisYear);
+                    "{Name} reports {Symbol,7} profit as (T: {@Today,6:N2}, T-1: {@Yesterday,6:N2}, W: {@ThisWeek,6:N2}, W-1: {@PrevWeek,6:N2}, M: {@ThisMonth,6:N2}, Y: {@ThisYear,6:N2}) (APHT: {@AveragePerHourToday,6:N2})",
+                    Name, algo.Symbol, profit.Today, profit.Yesterday, profit.ThisWeek, profit.PrevWeek, profit.ThisMonth, profit.ThisYear, stats.AvgPerHourToday);
 
                 profits.Add(profit);
             }

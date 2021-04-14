@@ -16,5 +16,8 @@ namespace Trader.Trading.Algorithms
         public static Profit Zero { get; } = new Profit(0, 0, 0, 0, 0, 0);
     }
 
-    public record Statistics(decimal AvgPerHourToday);
+    public record Statistics(decimal AvgPerHourToday)
+    {
+        public static Statistics Zero { get; } = new Statistics(0);
+    }
 }

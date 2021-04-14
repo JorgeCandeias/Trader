@@ -60,56 +60,68 @@ namespace Trader.Trading.Binance
 
         #region Market Data Endpoints
 
-        public async Task<OrderBook> GetOrderBookAsync(string symbol)
+        public async Task<OrderBook> GetOrderBookAsync(string symbol, CancellationToken cancellationToken = default)
         {
-            var result = await _client.GetFromJsonAsync<OrderBookModel>($"/api/v3/depth?symbol={HttpUtility.UrlEncode(symbol)}");
+            var result = await _client.GetFromJsonAsync<OrderBookModel>(
+                $"/api/v3/depth?symbol={HttpUtility.UrlEncode(symbol)}",
+                cancellationToken);
 
             return _mapper.Map<OrderBook>(result);
         }
 
-        public async Task<IEnumerable<Trade>> GetRecentTradesAsync(string symbol)
+        public async Task<IEnumerable<Trade>> GetRecentTradesAsync(string symbol, CancellationToken cancellationToken = default)
         {
-            var result = await _client.GetFromJsonAsync<TradeModel[]>($"/api/v3/trades?symbol={HttpUtility.UrlEncode(symbol)}");
+            var result = await _client.GetFromJsonAsync<TradeModel[]>(
+                $"/api/v3/trades?symbol={HttpUtility.UrlEncode(symbol)}",
+                cancellationToken);
 
             return _mapper.Map<IEnumerable<Trade>>(result);
         }
 
-        public async Task<IEnumerable<Trade>> GetHistoricalTradesAsync(string symbol)
+        public async Task<IEnumerable<Trade>> GetHistoricalTradesAsync(string symbol, CancellationToken cancellationToken = default)
         {
-            var result = await _client.GetFromJsonAsync<TradeModel[]>($"/api/v3/historicalTrades?symbol={HttpUtility.UrlEncode(symbol)}");
+            var result = await _client.GetFromJsonAsync<TradeModel[]>(
+                $"/api/v3/historicalTrades?symbol={HttpUtility.UrlEncode(symbol)}",
+                cancellationToken);
 
             return _mapper.Map<IEnumerable<Trade>>(result);
         }
 
-        public async Task<IEnumerable<AggTrade>> GetAggTradesAsync(string symbol)
+        public async Task<IEnumerable<AggTrade>> GetAggTradesAsync(string symbol, CancellationToken cancellationToken = default)
         {
-            var result = await _client.GetFromJsonAsync<IDictionary<string, JsonElement>[]>($"/api/v3/aggTrades?symbol={HttpUtility.UrlEncode(symbol)}", _jsonOptions);
+            var result = await _client.GetFromJsonAsync<IDictionary<string, JsonElement>[]>(
+                $"/api/v3/aggTrades?symbol={HttpUtility.UrlEncode(symbol)}",
+                _jsonOptions,
+                cancellationToken);
 
             return _mapper.Map<IEnumerable<AggTrade>>(result);
         }
 
-        public async Task<IEnumerable<Kline>> GetKlinesAsync(string symbol, KlineInterval interval)
+        public async Task<IEnumerable<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, CancellationToken cancellationToken = default)
         {
             var intervalModel = _mapper.Map<string>(interval);
 
             var result = await _client.GetFromJsonAsync<JsonElement[][]>(
-                $"/api/v3/klines?symbol={HttpUtility.UrlEncode(symbol)}&interval={HttpUtility.UrlEncode(intervalModel)}");
+                $"/api/v3/klines?symbol={HttpUtility.UrlEncode(symbol)}&interval={HttpUtility.UrlEncode(intervalModel)}",
+                cancellationToken);
 
             return _mapper.Map<IEnumerable<Kline>>(result);
         }
 
-        public async Task<AvgPrice> GetAvgPriceAsync(string symbol)
+        public async Task<AvgPrice> GetAvgPriceAsync(string symbol, CancellationToken cancellationToken = default)
         {
             var result = await _client.GetFromJsonAsync<AvgPriceModel>(
-                $"/api/v3/avgPrice?symbol={HttpUtility.UrlEncode(symbol)}");
+                $"/api/v3/avgPrice?symbol={HttpUtility.UrlEncode(symbol)}",
+                cancellationToken);
 
             return _mapper.Map<AvgPrice>(result);
         }
 
-        public async Task<Ticker> Get24hTickerPriceChangeStatisticsAsync(string symbol)
+        public async Task<Ticker> Get24hTickerPriceChangeStatisticsAsync(string symbol, CancellationToken cancellationToken = default)
         {
             var result = await _client.GetFromJsonAsync<TickerModel>(
-                $"/api/v3/ticker/24hr?symbol={HttpUtility.UrlEncode(symbol)}");
+                $"/api/v3/ticker/24hr?symbol={HttpUtility.UrlEncode(symbol)}",
+                cancellationToken);
 
             return _mapper.Map<Ticker>(result);
         }
@@ -120,29 +132,34 @@ namespace Trader.Trading.Binance
 
             BinanceApiContext.SkipSigning = true;
 
-            return await _client.GetFromJsonAsync<SymbolPriceTickerModel>($"/api/v3/ticker/price?symbol={HttpUtility.UrlEncode(symbol)}", cancellationToken) ?? throw new BinanceUnknownResponseException();
+            return await _client.GetFromJsonAsync<SymbolPriceTickerModel>(
+                $"/api/v3/ticker/price?symbol={HttpUtility.UrlEncode(symbol)}", cancellationToken)
+                ?? throw new BinanceUnknownResponseException();
         }
 
-        public async Task<ImmutableList<SymbolPriceTicker>> GetSymbolPriceTickersAsync()
+        public async Task<ImmutableList<SymbolPriceTicker>> GetSymbolPriceTickersAsync(CancellationToken cancellationToken = default)
         {
             var result = await _client.GetFromJsonAsync<IEnumerable<SymbolPriceTickerModel>>(
-                $"/api/v3/ticker/price");
+                $"/api/v3/ticker/price",
+                cancellationToken);
 
             return _mapper.Map<ImmutableList<SymbolPriceTicker>>(result);
         }
 
-        public async Task<SymbolOrderBookTicker> GetSymbolOrderBookTickerAsync(string symbol)
+        public async Task<SymbolOrderBookTicker> GetSymbolOrderBookTickerAsync(string symbol, CancellationToken cancellationToken = default)
         {
             var result = await _client.GetFromJsonAsync<SymbolOrderBookTickerModel>(
-                $"/api/v3/ticker/bookTicker?symbol={HttpUtility.UrlEncode(symbol)}");
+                $"/api/v3/ticker/bookTicker?symbol={HttpUtility.UrlEncode(symbol)}",
+                cancellationToken);
 
             return _mapper.Map<SymbolOrderBookTicker>(result);
         }
 
-        public async Task<IEnumerable<SymbolOrderBookTicker>> GetSymbolOrderBookTickersAsync()
+        public async Task<IEnumerable<SymbolOrderBookTicker>> GetSymbolOrderBookTickersAsync(CancellationToken cancellationToken = default)
         {
             var result = await _client.GetFromJsonAsync<IEnumerable<SymbolOrderBookTickerModel>>(
-                $"/api/v3/ticker/bookTicker");
+                $"/api/v3/ticker/bookTicker",
+                cancellationToken);
 
             return _mapper.Map<IEnumerable<SymbolOrderBookTicker>>(result);
         }
@@ -295,26 +312,6 @@ namespace Trader.Trading.Binance
             {
                 _pool.Return(builder);
             }
-        }
-
-        private async Task<TResult> GetAsync<TRequest, TResponse, TResult>(string requestUri, object data, CancellationToken cancellationToken = default)
-        {
-            var request = _mapper.Map<TRequest>(data);
-
-            var response = await _client.GetFromJsonAsync<TResponse>(Combine(requestUri, request), _jsonOptions, cancellationToken);
-
-            return _mapper.Map<TResult>(response);
-        }
-
-        private async Task<TResult> PostAsync<TRequest, TResponse, TResult>(string requestUri, object data, CancellationToken cancellationToken = default)
-        {
-            var request = _mapper.Map<TRequest>(data);
-
-            var response = await _client.PostAsync(Combine(requestUri, request), EmptyHttpContent.Instance, cancellationToken);
-
-            var typed = await response.Content.ReadFromJsonAsync<TResponse>(_jsonOptions, cancellationToken);
-
-            return _mapper.Map<TResult>(typed);
         }
 
         private async Task<TResult> DeleteAsync<TRequest, TResponse, TResult>(string requestUri, object data, CancellationToken cancellationToken = default)

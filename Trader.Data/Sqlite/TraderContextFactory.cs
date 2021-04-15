@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
-namespace Trader.Data
+namespace Trader.Data.Sqlite
 {
     internal class TraderContextFactory : IDesignTimeDbContextFactory<TraderContext>
     {

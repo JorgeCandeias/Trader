@@ -7,7 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Trader.Data
+namespace Trader.Data.Sqlite
 {
     internal class SqliteTraderRepository : ITraderRepository, IHostedService
     {

@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
 
-namespace Trader.Data
+namespace Trader.Data.Sqlite
 {
     internal class SqliteTraderRepositoryProfile : Profile
     {

@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
 
-namespace Trader.Data
+namespace Trader.Data.Sqlite
 {
     internal class TraderContext : DbContext
     {

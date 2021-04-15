@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using Trader.Data;
+using Trader.Data.Sqlite;
 
 namespace Microsoft.Extensions.DependencyInjection
 {

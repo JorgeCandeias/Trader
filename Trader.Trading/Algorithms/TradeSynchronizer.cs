@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Trader.Core.Time;
@@ -24,6 +25,7 @@ namespace Trader.Trading.Algorithms
 
         public async Task SynchronizeTradesAsync(string symbol, CancellationToken cancellationToken = default)
         {
+            var watch = Stopwatch.StartNew();
             var tradeId = await _repository.GetMaxTradeIdAsync(symbol, cancellationToken) + 1;
 
             // pull all new trades
@@ -50,8 +52,8 @@ namespace Trader.Trading.Algorithms
             if (count > 0)
             {
                 _logger.LogInformation(
-                    "{Name} {Symbol} pulled {Count} trades",
-                    nameof(TradeSynchronizer), symbol, count);
+                    "{Name} {Symbol} pulled {Count} trades up to TradeId {MaxTradeId} in {ElapsedMs}ms",
+                    nameof(TradeSynchronizer), symbol, count, tradeId, watch.ElapsedMilliseconds);
             }
         }
     }

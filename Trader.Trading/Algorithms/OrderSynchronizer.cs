@@ -57,12 +57,9 @@ namespace Trader.Trading.Algorithms
             } while (orders.Count >= 1000);
 
             // log the activity only if necessary
-            if (count > 0)
-            {
-                _logger.LogInformation(
-                    "{Name} {Symbol} pulled {Count} orders in {ElapsedMs}ms",
-                    nameof(OrderSynchronizer), symbol, count, watch.ElapsedMilliseconds);
-            }
+            _logger.LogInformation(
+                "{Name} {Symbol} pulled {Count} orders up to OrderId {MaxOrderId} in {ElapsedMs}ms",
+                nameof(OrderSynchronizer), symbol, count, orderId, watch.ElapsedMilliseconds);
         }
     }
 }

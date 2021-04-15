@@ -24,6 +24,7 @@ namespace Microsoft.Extensions.DependencyInjection
                     logger.LogInformation("{Name} using connection string {ConnectionString}", nameof(SqliteTraderRepository), connectionString);
 
                     options.UseSqlite(connectionString);
+                    options.EnableSensitiveDataLogging();
                 })
                 .AddSingleton<SqliteTraderRepository>()
                 .AddSingleton<ITraderRepository>(sp => sp.GetRequiredService<SqliteTraderRepository>())

@@ -64,24 +64,6 @@ namespace Trader.Data
             return _mapper.Map<SortedOrderSet>(entities);
         }
 
-        public async Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default)
-        {
-            using var context = _factory.CreateDbContext();
-
-            var entity = _mapper.Map<OrderEntity>(order);
-
-            var exists = await context.Orders.AnyAsync(x => x.OrderId == entity.OrderId, cancellationToken);
-            if (exists)
-            {
-                context.Update(entity);
-            }
-            else
-            {
-                context.Add(entity);
-            }
-            await context.SaveChangesAsync(cancellationToken);
-        }
-
         public async Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders, CancellationToken cancellationToken = default)
         {
             using var context = _factory.CreateDbContext();
@@ -89,14 +71,14 @@ namespace Trader.Data
             foreach (var order in orders)
             {
                 var entity = _mapper.Map<OrderEntity>(order);
-                var exists = await context.Orders.AnyAsync(x => x.OrderId == entity.OrderId, cancellationToken);
+                var exists = await context.Orders.AnyAsync(x => x.Symbol == entity.Symbol && x.OrderId == entity.OrderId, cancellationToken);
                 if (exists)
                 {
-                    context.Update(entity);
+                    context.Orders.Update(entity);
                 }
                 else
                 {
-                    context.Add(entity);
+                    context.Orders.Add(entity);
                 }
             }
 
@@ -149,24 +131,6 @@ namespace Trader.Data
                 .MaxAsync(cancellationToken);
         }
 
-        public async Task SetTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default)
-        {
-            using var context = _factory.CreateDbContext();
-
-            var entity = _mapper.Map<TradeEntity>(trade);
-
-            var exists = await context.Trades.AnyAsync(x => x.Id == entity.Id, cancellationToken);
-            if (exists)
-            {
-                context.Update(entity);
-            }
-            else
-            {
-                context.Add(entity);
-            }
-            await context.SaveChangesAsync(cancellationToken);
-        }
-
         public async Task SetTradesAsync(IEnumerable<AccountTrade> trades, CancellationToken cancellationToken = default)
         {
             using var context = _factory.CreateDbContext();
@@ -174,7 +138,7 @@ namespace Trader.Data
             foreach (var trade in trades)
             {
                 var entity = _mapper.Map<TradeEntity>(trade);
-                var exists = await context.Trades.AnyAsync(x => x.Id == entity.Id, cancellationToken);
+                var exists = await context.Trades.AnyAsync(x => x.Symbol == entity.Symbol && x.Id == entity.Id, cancellationToken);
                 if (exists)
                 {
                     context.Update(entity);

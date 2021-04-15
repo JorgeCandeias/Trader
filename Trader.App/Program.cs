@@ -43,10 +43,13 @@ namespace Trader.App
                         .AddTradingHost()
                         .AddSystemClock()
                         .AddSafeTimerFactory()
-                        .AddSqliteRepository(options =>
-                        {
-                            options.ConnectionString = $"Data Source={db}";
-                        });
+                        .AddMemoryRepository();
+                    /*
+                    .AddSqliteRepository(options =>
+                    {
+                        options.ConnectionString = $"Data Source={db}";
+                    });
+                    */
 
                     services
                         .AddAlgorithmResolvers()

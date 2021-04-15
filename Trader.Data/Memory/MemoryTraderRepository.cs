@@ -11,57 +11,44 @@ namespace Trader.Data.Memory
     internal class MemoryTraderRepository : ITraderRepository, IHostedService
     {
         private readonly ConcurrentDictionary<string, ConcurrentDictionary<long, OrderQueryResult>> _orders = new();
+        private readonly ConcurrentDictionary<string, long> _maxOrderIds = new();
+        private readonly ConcurrentDictionary<string, ConcurrentDictionary<long, OrderQueryResult>> _transientOrders = new();
+
         private readonly ConcurrentDictionary<string, ConcurrentDictionary<long, AccountTrade>> _trades = new();
+        private readonly ConcurrentDictionary<string, long> _maxTradeIds = new();
+        private readonly ConcurrentDictionary<string, ConcurrentDictionary<long, ConcurrentDictionary<long, AccountTrade>>> _tradesByOrder = new();
 
         #region Trader Repository
 
         public Task<long> GetMaxOrderIdAsync(string symbol, CancellationToken cancellationToken = default)
         {
-            var result = 0L;
-
-            // todo: optimize this loop using an index
-            if (_orders.TryGetValue(symbol, out var lookup))
+            if (_maxOrderIds.TryGetValue(symbol, out var value))
             {
-                foreach (var item in lookup)
-                {
-                    if (item.Key > result)
-                    {
-                        result = item.Key;
-                    }
-                }
+                return Task.FromResult(value);
             }
 
-            return Task.FromResult(result);
+            return Task.FromResult(0L);
         }
 
         public Task<long> GetMaxTradeIdAsync(string symbol, CancellationToken cancellationToken = default)
         {
-            var result = 0L;
-
-            // todo: optimize this loop using an index
-            if (_trades.TryGetValue(symbol, out var lookup))
+            if (_maxTradeIds.TryGetValue(symbol, out var value))
             {
-                foreach (var item in lookup)
-                {
-                    if (item.Key > result)
-                    {
-                        result = item.Key;
-                    }
-                }
+                return Task.FromResult(value);
             }
 
-            return Task.FromResult(result);
+            return Task.FromResult(0L);
         }
 
         public Task<long> GetMinTransientOrderIdAsync(string symbol, CancellationToken cancellationToken = default)
         {
             var result = long.MaxValue;
 
-            if (_orders.TryGetValue(symbol, out var lookup))
+            if (_transientOrders.TryGetValue(symbol, out var lookup))
             {
                 foreach (var item in lookup)
                 {
-                    if (item.Value.Status.IsTransientStatus() && item.Key < result)
+                    if (item.Key < result)
                     {
                         result = item.Key;
                     }
@@ -90,14 +77,24 @@ namespace Trader.Data.Memory
         {
             var result = new SortedTradeSet();
 
-            // todo: optimize this loop using an index
-            if (_trades.TryGetValue(symbol, out var lookup))
+            if (orderId.HasValue)
             {
-                foreach (var item in lookup)
+                if (_tradesByOrder.TryGetValue(symbol, out var lookup1) && lookup1.TryGetValue(orderId.Value, out var lookup2))
                 {
-                    if (orderId.HasValue && item.Value.OrderId != orderId.Value) continue;
-
-                    result.Add(item.Value);
+                    foreach (var item in lookup2)
+                    {
+                        result.Add(item.Value);
+                    }
+                }
+            }
+            else
+            {
+                if (_trades.TryGetValue(symbol, out var lookup))
+                {
+                    foreach (var item in lookup)
+                    {
+                        result.Add(item.Value);
+                    }
                 }
             }
 
@@ -108,10 +105,9 @@ namespace Trader.Data.Memory
         {
             var result = new SortedOrderSet();
 
-            // todo: optimize this loop using an index
-            if (_orders.TryGetValue(symbol, out var lookup))
+            if (_transientOrders.TryGetValue(symbol, out var lookup))
             {
-                var query = lookup.Where(x => x.Value.Status.IsTransientStatus());
+                var query = lookup.AsEnumerable();
 
                 if (orderSide.HasValue)
                 {
@@ -145,10 +141,26 @@ namespace Trader.Data.Memory
 
             foreach (var order in orders)
             {
-                var lookup = _orders.GetOrAdd(order.Symbol, _ => new ConcurrentDictionary<long, OrderQueryResult>());
+                _orders
+                    .GetOrAdd(order.Symbol, _ => new ConcurrentDictionary<long, OrderQueryResult>())
+                    .AddOrUpdate(order.OrderId, order, (key, current) => order);
 
-                // todo: optimize this to cache the factory delegates
-                lookup.AddOrUpdate(order.OrderId, order, (k, e) => order);
+                // update the max order id index
+                _maxOrderIds.AddOrUpdate(order.Symbol, order.OrderId, (key, current) => order.OrderId > current ? order.OrderId : current);
+
+                // update the transient order index
+                if (order.Status.IsTransientStatus())
+                {
+                    _transientOrders
+                        .GetOrAdd(order.Symbol, _ => new ConcurrentDictionary<long, OrderQueryResult>())
+                        .AddOrUpdate(order.OrderId, order, (key, current) => order);
+                }
+                else
+                {
+                    _transientOrders
+                        .GetOrAdd(order.Symbol, _ => new ConcurrentDictionary<long, OrderQueryResult>())
+                        .TryRemove(order.OrderId, out _);
+                }
             }
 
             return Task.CompletedTask;
@@ -160,10 +172,18 @@ namespace Trader.Data.Memory
 
             foreach (var trade in trades)
             {
-                var lookup = _trades.GetOrAdd(trade.Symbol, _ => new ConcurrentDictionary<long, AccountTrade>());
+                _trades
+                    .GetOrAdd(trade.Symbol, _ => new ConcurrentDictionary<long, AccountTrade>())
+                    .AddOrUpdate(trade.Id, trade, (k, e) => trade);
 
-                // todo: optimize this to cache the factory delegates
-                lookup.AddOrUpdate(trade.Id, trade, (k, e) => trade);
+                // update the max trade id index
+                _maxTradeIds.AddOrUpdate(trade.Symbol, trade.Id, (key, current) => trade.Id > current ? trade.Id : current);
+
+                // update the trades by order index
+                _tradesByOrder
+                    .GetOrAdd(trade.Symbol, _ => new ConcurrentDictionary<long, ConcurrentDictionary<long, AccountTrade>>())
+                    .GetOrAdd(trade.OrderId, _ => new ConcurrentDictionary<long, AccountTrade>())
+                    .AddOrUpdate(trade.Id, trade, (key, current) => trade);
             }
 
             return Task.CompletedTask;

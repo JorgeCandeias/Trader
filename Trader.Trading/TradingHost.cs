@@ -64,7 +64,20 @@ namespace Trader.Trading
             // execute all algos in sequence for ease of troubleshooting
             foreach (var algo in _algos)
             {
-                await algo.GoAsync(exchangeInfo, accountInfo, _cancellation.Token);
+                try
+                {
+                    await algo.GoAsync(exchangeInfo, accountInfo, _cancellation.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex,
+                        "{Name} reports {Symbol} algorithm has faulted",
+                        Name, algo.Symbol);
+                }
             }
 
             var profits = new List<Profit>();

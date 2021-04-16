@@ -74,7 +74,7 @@ namespace Trader.Trading
                 var stats = await algo.GetStatisticsAsync(_cancellation.Token);
 
                 _logger.LogInformation(
-                    "{Name} reports {Symbol,7} profit as (T: {@Today,6:N2}, T-1: {@Yesterday,6:N2}, W: {@ThisWeek,6:N2}, W-1: {@PrevWeek,6:N2}, M: {@ThisMonth,6:N2}, Y: {@ThisYear,8:N2}) (APH1: {@AveragePerHourDay1,5:N2}, APH7: {@AveragePerHourDay7,5:N2}, APH30: {@AveragePerHourDay30,5:N2}, APD1: {@AveragePerDay1,5:N2}, APD7: {@AveragePerDay7,5:N2}, APD30: {@AveragePerDay30,5:N2})",
+                    "{Name} reports {Symbol,7} profit as (T: {@Today,6:N2}, T-1: {@Yesterday,6:N2}, W: {@ThisWeek,6:N2}, W-1: {@PrevWeek,6:N2}, M: {@ThisMonth,6:N2}, Y: {@ThisYear,8:N2}) (APH1: {@AveragePerHourDay1,6:N2}, APH7: {@AveragePerHourDay7,6:N2}, APH30: {@AveragePerHourDay30,6:N2}, APD1: {@AveragePerDay1,6:N2}, APD7: {@AveragePerDay7,6:N2}, APD30: {@AveragePerDay30,6:N2})",
                     Name, algo.Symbol, profit.Today, profit.Yesterday, profit.ThisWeek, profit.PrevWeek, profit.ThisMonth, profit.ThisYear, stats.AvgPerHourDay1, stats.AvgPerHourDay7, stats.AvgPerHourDay30, stats.AvgPerDay1, stats.AvgPerDay7, stats.AvgPerDay30);
 
                 profits.Add(profit);
@@ -84,7 +84,7 @@ namespace Trader.Trading
             var totalStats = Statistics.FromProfit(totalProfit);
 
             _logger.LogInformation(
-                "{Name} reports   total profit as (T: {@Today,6:N2}, T-1: {@Yesterday,6:N2}, W: {@ThisWeek,6:N2}, W-1: {@PrevWeek,6:N2}, M: {@ThisMonth,6:N2}, Y: {@ThisYear,8:N2}) (APH1: {@AveragePerHourDay1,5:N2}, APH7: {@AveragePerHourDay7,5:N2}, APH30: {@AveragePerHourDay30,5:N2}, APD1: {@AveragePerDay1,5:N2}, APD7: {@AveragePerDay7,5:N2}, APD30: {@AveragePerDay30,5:N2})",
+                "{Name} reports   total profit as (T: {@Today,6:N2}, T-1: {@Yesterday,6:N2}, W: {@ThisWeek,6:N2}, W-1: {@PrevWeek,6:N2}, M: {@ThisMonth,6:N2}, Y: {@ThisYear,8:N2}) (APH1: {@AveragePerHourDay1,6:N2}, APH7: {@AveragePerHourDay7,6:N2}, APH30: {@AveragePerHourDay30,6:N2}, APD1: {@AveragePerDay1,6:N2}, APD7: {@AveragePerDay7,6:N2}, APD30: {@AveragePerDay30,6:N2})",
                 Name,
                 totalProfit.Today,
                 totalProfit.Yesterday,

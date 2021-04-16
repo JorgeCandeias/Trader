@@ -60,6 +60,7 @@ namespace Trader.Trading.Algorithms.Step
         {
             var symbol = exchangeInfo.Symbols.Single(x => x.Name == _options.Symbol);
             var priceFilter = symbol.Filters.OfType<PriceSymbolFilter>().Single();
+            var percentFilter = symbol.Filters.OfType<PercentPriceSymbolFilter>().Single();
             var lotSizeFilter = symbol.Filters.OfType<LotSizeSymbolFilter>().Single();
             var minNotionalFilter = symbol.Filters.OfType<MinNotionalSymbolFilter>().Single();
 
@@ -74,7 +75,7 @@ namespace Trader.Trading.Algorithms.Step
             // always update the latest price
             var ticker = await SyncAssetPriceAsync(cancellationToken);
 
-            if (await TryCreateTradingBandsAsync(significant.Orders, minNotionalFilter, priceFilter, cancellationToken)) return;
+            if (await TryCreateTradingBandsAsync(significant.Orders, minNotionalFilter, ticker, priceFilter, percentFilter, cancellationToken)) return;
             if (await TrySetStartingTradeAsync(symbol, ticker, lotSizeFilter, priceFilter, cancellationToken)) return;
             if (await TryCancelRogueSellOrdersAsync(cancellationToken)) return;
             if (await TrySetBandSellOrdersAsync(cancellationToken)) return;
@@ -431,7 +432,7 @@ namespace Trader.Trading.Algorithms.Step
             }
         }
 
-        private async Task<bool> TryCreateTradingBandsAsync(SortedOrderSet significant, MinNotionalSymbolFilter minNotionalFilter, PriceSymbolFilter priceFilter, CancellationToken cancellationToken = default)
+        private async Task<bool> TryCreateTradingBandsAsync(SortedOrderSet significant, MinNotionalSymbolFilter minNotionalFilter, SymbolPriceTicker ticker, PriceSymbolFilter priceFilter, PercentPriceSymbolFilter percentFilter, CancellationToken cancellationToken = default)
         {
             _bands.Clear();
 
@@ -510,7 +511,41 @@ namespace Trader.Trading.Algorithms.Step
             foreach (var band in _bands)
             {
                 band.ClosePrice = band.OpenPrice + stepSize;
-                band.ClosePrice = Math.Floor(band.ClosePrice / priceFilter.TickSize) * priceFilter.TickSize;
+
+                // ensure the close price is below the max percent filter
+                var maxPrice = ticker.Price * percentFilter.MultiplierUp;
+                if (band.ClosePrice > maxPrice)
+                {
+                    _logger.LogError(
+                        "{Type} {Name} detected band sell price for {Quantity} {Asset} of {Price} {Quote} is above the percent price filter of {MaxPrice} {Quote}",
+                        Type, _name, band.Quantity, _options.Asset, band.ClosePrice, _options.Quote, maxPrice, _options.Quote);
+
+                    // todo: this will raise an error later on so we need to handle this better
+                }
+
+                // ensure the close price is above the min percent filter
+                var minPrice = ticker.Price * percentFilter.MultiplierDown;
+                if (band.ClosePrice < minPrice)
+                {
+                    _logger.LogWarning(
+                        "{Type} {Name} adjusted sell of {Quantity} {Asset} for {ClosePrice} {Quote} to {MinPrice} {Quote} because it is below the percent price filter of {MinPrice} {Quote}",
+                        Type, _name, band.Quantity, _options.Asset, band.ClosePrice, _options.Quote, minPrice, _options.Quote, minPrice, _options.Quote);
+
+                    band.ClosePrice = minPrice;
+                }
+
+                // ensure the close price is not below the current price
+                if (band.ClosePrice < ticker.Price)
+                {
+                    _logger.LogWarning(
+                        "{Type} {Name} adjusted sell of {Quantity} {Asset} for {ClosePrice} {Quote} to {TickerPrice} {Quote} because it is below the ticker price of {TickerPrice} {Quote}",
+                        Type, _name, band.Quantity, _options.Asset, band.ClosePrice, _options.Quote, ticker.Price, _options.Quote, ticker.Price, _options.Quote);
+
+                    band.ClosePrice = ticker.Price;
+                }
+
+                // adjust the sell price up to the tick size
+                band.ClosePrice = Math.Ceiling(band.ClosePrice / priceFilter.TickSize) * priceFilter.TickSize;
             }
 
             // identify bands where the target sell is somehow below the notional filter

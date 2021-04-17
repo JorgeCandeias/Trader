@@ -513,6 +513,7 @@ namespace Trader.Trading.Algorithms.Step
                 band.ClosePrice = band.OpenPrice + stepSize;
 
                 // ensure the close price is below the max percent filter
+                // this can happen due to an asset crashing down several multiples
                 var maxPrice = ticker.Price * percentFilter.MultiplierUp;
                 if (band.ClosePrice > maxPrice)
                 {
@@ -524,6 +525,7 @@ namespace Trader.Trading.Algorithms.Step
                 }
 
                 // ensure the close price is above the min percent filter
+                // this can happen to old leftovers that were bought very cheap
                 var minPrice = ticker.Price * percentFilter.MultiplierDown;
                 if (band.ClosePrice < minPrice)
                 {
@@ -535,6 +537,7 @@ namespace Trader.Trading.Algorithms.Step
                 }
 
                 // ensure the close price is not below the current price
+                // this helps sell leftovers that have reached the minimum notional filter
                 if (band.ClosePrice < ticker.Price)
                 {
                     _logger.LogWarning(
@@ -557,6 +560,17 @@ namespace Trader.Trading.Algorithms.Step
                 {
                     _bands.Remove(band);
                 }
+
+                // attempt to bundle up all the leftovers into one band
+                /*
+                _bands.Add(new Band
+                {
+                    Quantity = leftovers.Sum(x => x.Quantity),
+                    ExecutedQuantity = leftovers.Sum(x => x.ExecutedQuantity),
+                    OpenPrice = leftovers.Sum(x => x.OpenPrice * x.Quantity) / leftovers.Sum(x => x.Quantity),
+                    OpenOrderId = 
+                })
+                */
 
                 var openPrice = leftovers.Sum(x => x.OpenPrice * x.Quantity) / leftovers.Sum(x => x.Quantity);
                 var closePrice = openPrice + stepSize;

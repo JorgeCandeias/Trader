@@ -19,7 +19,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Data.Abstractions", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{724871D8-46E7-4280-B828-D6A28360E820}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Core.Abstractions.Tests", "Trader.Core.Abstractions.Tests\Trader.Core.Abstractions.Tests.csproj", "{729AB0D1-29A1-439E-A678-E11CC89C0633}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Core.Abstractions.Tests", "Trader.Core.Abstractions.Tests\Trader.Core.Abstractions.Tests.csproj", "{729AB0D1-29A1-439E-A678-E11CC89C0633}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Core.Tests", "Trader.Core.Tests\Trader.Core.Tests.csproj", "{1BEBBA8C-6E13-4F57-89DC-4C466E422BB3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -59,12 +61,17 @@ Global
 		{729AB0D1-29A1-439E-A678-E11CC89C0633}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{729AB0D1-29A1-439E-A678-E11CC89C0633}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{729AB0D1-29A1-439E-A678-E11CC89C0633}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1BEBBA8C-6E13-4F57-89DC-4C466E422BB3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1BEBBA8C-6E13-4F57-89DC-4C466E422BB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1BEBBA8C-6E13-4F57-89DC-4C466E422BB3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1BEBBA8C-6E13-4F57-89DC-4C466E422BB3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{729AB0D1-29A1-439E-A678-E11CC89C0633} = {724871D8-46E7-4280-B828-D6A28360E820}
+		{1BEBBA8C-6E13-4F57-89DC-4C466E422BB3} = {724871D8-46E7-4280-B828-D6A28360E820}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7716D8A4-6E15-41AB-90E0-DE40D69C82EE}

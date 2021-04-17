@@ -43,7 +43,8 @@ namespace Trader.App
                         .AddTradingHost()
                         .AddSystemClock()
                         .AddSafeTimerFactory()
-                        .AddMemoryRepository();
+                        .AddMemoryRepository()
+                        .AddBase62NumberSerializer();
                     /*
                     .AddSqliteRepository(options =>
                     {
@@ -64,7 +65,8 @@ namespace Trader.App
                         .AddStepAlgorithm("DOTGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:DOTGBP", options))
                         .AddStepAlgorithm("CHZGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:CHZGBP", options))
                         .AddStepAlgorithm("LTCGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:LTCGBP", options))
-                        .AddStepAlgorithm("ENJGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:ENJGBP", options));
+                        .AddStepAlgorithm("ENJGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:ENJGBP", options))
+                        .AddStepAlgorithm("VETGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:VETGBP", options));
                 })
                 .RunConsoleAsync();
         }

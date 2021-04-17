@@ -60,6 +60,7 @@ namespace Trader.Trading.Algorithms
             var today = now.Date;
 
             // first map formal sells to formal buys
+            // the sells may not fill completely due to past algo bugs
             for (var i = 0; i < subjects.Segment.Count; ++i)
             {
                 // loop through sales forward
@@ -69,7 +70,7 @@ namespace Trader.Trading.Algorithms
                     for (var j = i - 1; j >= 0; --j)
                     {
                         var buy = subjects.Segment[j];
-                        if (buy.Order.Side == OrderSide.Buy && buy.RemainingExecutedQuantity > 0 && buy.Order.OriginalQuantity == sell.Order.OriginalQuantity && buy.Order.OrderId == matchOpenOrderId)
+                        if (buy.Order.Side == OrderSide.Buy && buy.RemainingExecutedQuantity > 0 && buy.Order.ExecutedQuantity == sell.Order.OriginalQuantity && buy.Order.OrderId == matchOpenOrderId)
                         {
                             // remove as much as possible from the buy to satisfy the sell
                             var take = Math.Min(buy.RemainingExecutedQuantity, sell.RemainingExecutedQuantity);

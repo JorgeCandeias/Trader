@@ -454,7 +454,6 @@ namespace Trader.Trading.Algorithms.Step
                     _bands.Add(new Band
                     {
                         Quantity = order.OriginalQuantity,
-                        ExecutedQuantity = order.ExecutedQuantity,
                         OpenPrice = order.Price,
                         OpenOrderId = order.OrderId,
                         CloseOrderClientId = _orderCodeGenerator.GetSellClientOrderId(order.OrderId),
@@ -467,7 +466,6 @@ namespace Trader.Trading.Algorithms.Step
                     _bands.Add(new Band
                     {
                         Quantity = order.ExecutedQuantity,
-                        ExecutedQuantity = order.ExecutedQuantity,
                         OpenPrice = order.Price,
                         OpenOrderId = order.OrderId,
                         CloseOrderClientId = _orderCodeGenerator.GetSellClientOrderId(order.OrderId),
@@ -493,7 +491,6 @@ namespace Trader.Trading.Algorithms.Step
                 _bands.Add(new Band
                 {
                     Quantity = order.OriginalQuantity,
-                    ExecutedQuantity = order.ExecutedQuantity,
                     OpenPrice = order.Price,
                     OpenOrderId = order.OrderId,
                     CloseOrderClientId = _orderCodeGenerator.GetSellClientOrderId(order.OrderId),
@@ -536,17 +533,6 @@ namespace Trader.Trading.Algorithms.Step
                     band.ClosePrice = minPrice;
                 }
 
-                // ensure the close price is not below the current price
-                // this helps sell leftovers that have reached the minimum notional filter
-                if (band.ClosePrice < ticker.Price)
-                {
-                    _logger.LogWarning(
-                        "{Type} {Name} adjusted sell of {Quantity} {Asset} for {ClosePrice} {Quote} to {TickerPrice} {Quote} because it is below the ticker price of {TickerPrice} {Quote}",
-                        Type, _name, band.Quantity, _options.Asset, band.ClosePrice, _options.Quote, ticker.Price, _options.Quote, ticker.Price, _options.Quote);
-
-                    band.ClosePrice = ticker.Price;
-                }
-
                 // adjust the sell price up to the tick size
                 band.ClosePrice = Math.Ceiling(band.ClosePrice / priceFilter.TickSize) * priceFilter.TickSize;
             }
@@ -568,23 +554,25 @@ namespace Trader.Trading.Algorithms.Step
                     Quantity = leftovers.Sum(x => x.Quantity),
                     ExecutedQuantity = leftovers.Sum(x => x.ExecutedQuantity),
                     OpenPrice = leftovers.Sum(x => x.OpenPrice * x.Quantity) / leftovers.Sum(x => x.Quantity),
-                    OpenOrderId = 
+                    OpenOrderId =
                 })
                 */
 
+                var quantity = leftovers.Sum(x => x.Quantity);
                 var openPrice = leftovers.Sum(x => x.OpenPrice * x.Quantity) / leftovers.Sum(x => x.Quantity);
-                var closePrice = openPrice + stepSize;
-                closePrice = Math.Ceiling(closePrice / priceFilter.TickSize) * priceFilter.TickSize;
+                var buyNotional = quantity * openPrice;
+                var nowNotional = quantity * ticker.Price;
 
                 _logger.LogWarning(
-                    "{Type} {Name} ignoring {Count} under notional bands with total {Quantity} {Asset}, avg opening at {OpenPrice:N2} {Quote}, target closing at {ClosePrice:N2} {Quote}",
-                    Type, _name,
+                    "{Type} {Name} ignoring {Count} under notional bands of {Quantity} {Asset} bought at {BuyNotional} {Quote} now worth {NowNotional} {Quote}",
+                    Type,
+                    _name,
                     leftovers.Count,
                     leftovers.Sum(x => x.Quantity),
                     _options.Asset,
-                    openPrice,
+                    buyNotional,
                     _options.Quote,
-                    closePrice,
+                    nowNotional,
                     _options.Quote);
             }
 
@@ -593,7 +581,7 @@ namespace Trader.Trading.Algorithms.Step
             orders = await _repository.GetTransientOrdersAsync(_options.Symbol, OrderSide.Sell, null, cancellationToken);
             foreach (var order in orders)
             {
-                var band = _bands.Except(used).SingleOrDefault(x => x.CloseOrderClientId == order.ClientOrderId);
+                var band = _bands.Except(used).SingleOrDefault(x => x.CloseOrderClientId == order.ClientOrderId && x.ClosePrice == order.Price);
                 if (band is not null)
                 {
                     band.CloseOrderId = order.OrderId;
@@ -624,7 +612,6 @@ namespace Trader.Trading.Algorithms.Step
             public long OpenOrderId { get; set; }
 
             public decimal Quantity { get; set; }
-            public decimal ExecutedQuantity { get; set; }
             public decimal OpenPrice { get; set; }
             public BandStatus Status { get; set; }
             public long CloseOrderId { get; set; }

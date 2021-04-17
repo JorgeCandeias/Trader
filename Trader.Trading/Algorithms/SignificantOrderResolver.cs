@@ -56,7 +56,7 @@ namespace Trader.Trading.Algorithms
             var lookup = trades.ToLookup(x => x.OrderId);
 
             var details = new SortedSet<Map>(MapComparer.Instance);
-            foreach (var order in orders.Where(x => x.ExecutedQuantity > 0m)) // todo: push this filter down to the repository
+            foreach (var order in orders.Where(x => x.Status.IsCompletedStatus() && x.ExecutedQuantity > 0m)) // todo: push this filter down to the repository
             {
                 var quantity = 0m;
 
@@ -74,8 +74,8 @@ namespace Trader.Trading.Algorithms
                 {
                     // we have missing trades if this happened
                     _logger.LogError(
-                        "{Name} {Symbol} could not match {OrderSide} {OrderType} order {OrderId} with quantity {ExecutedQuantity} to total trade quantity of {TradeQuantity}",
-                        Name, symbol, order.Side, order.Type, order.OrderId, order.ExecutedQuantity, quantity);
+                        "{Name} {Symbol} could not match {OrderSide} {OrderType} {OrderId} at {Time} for {ExecutedQuantity} units with total trade quantity of {TradeQuantity}",
+                        Name, symbol, order.Side, order.Type, order.OrderId, order.Time, order.ExecutedQuantity, quantity);
                 }
             }
 
@@ -180,14 +180,56 @@ namespace Trader.Trading.Algorithms
                             if (sell.RemainingExecutedQuantity == 0) break;
                         }
                     }
+                }
+            }
+
+            // as a last resort match leftovers using forward search from the sale
+            // this allows manual purchases for correcting past algo bugs
+            for (var i = 0; i < subjects.Segment.Count; ++i)
+            {
+                // loop through sales forward
+                var sell = subjects.Segment[i];
+                if (sell.Order.Side == OrderSide.Sell && sell.RemainingExecutedQuantity > 0m)
+                {
+                    // loop through buys in lifo order to find matching buys
+                    for (var j = i + 1; j < subjects.Segment.Count; ++j)
+                    {
+                        var buy = subjects.Segment[j];
+                        if (buy.Order.Side == OrderSide.Buy && buy.RemainingExecutedQuantity > 0m)
+                        {
+                            // remove as much as possible from the buy to satisfy the sell
+                            var take = Math.Min(buy.RemainingExecutedQuantity, sell.RemainingExecutedQuantity);
+                            buy.RemainingExecutedQuantity -= take;
+                            sell.RemainingExecutedQuantity -= take;
+
+                            // calculate profit for this
+                            var profit = take * (sell.Trade.Price - buy.Trade.Price);
+
+                            // assign to the appropriate counters
+                            if (sell.Trade.Time.Date == today) todayProfit += profit;
+                            if (sell.Trade.Time.Date == today.AddDays(-1)) yesterdayProfit += profit;
+                            if (sell.Trade.Time.Date >= today.Previous(DayOfWeek.Sunday)) thisWeekProfit += profit;
+                            if (sell.Trade.Time.Date >= today.Previous(DayOfWeek.Sunday, 2) && sell.Trade.Time.Date < today.Previous(DayOfWeek.Sunday)) prevWeekProfit += profit;
+                            if (sell.Trade.Time.Date >= today.AddDays(-today.Day + 1)) thisMonthProfit += profit;
+                            if (sell.Trade.Time.Date >= new DateTime(today.Year, 1, 1)) thisYearProfit += profit;
+
+                            // assign to the window counters
+                            if (sell.Trade.Time >= window1d) d1 += profit;
+                            if (sell.Trade.Time >= window7d) d7 += profit;
+                            if (sell.Trade.Time >= window30d) d30 += profit;
+
+                            // if the sale is filled then we can break early
+                            if (sell.RemainingExecutedQuantity == 0) break;
+                        }
+                    }
 
                     // if the sell was still not filled then we're missing some data
                     if (sell.RemainingExecutedQuantity != 0)
                     {
                         // something went very wrong if we got here
                         _logger.LogError(
-                            "{Name} {Symbol} could not fill {Symbol} {Side} order {OrderId} with quantity {ExecutedQuantity} at price {Price}",
-                            nameof(SignificantOrderResolver), symbol, sell.Order.Symbol, sell.Order.Side, sell.Order.OrderId, sell.Order.ExecutedQuantity, sell.Order.Price);
+                            "{Name} {Symbol} could not fill {Symbol} {Side} order {OrderId} with quantity {ExecutedQuantity} at price {Price} because there are {RemainingExecutedQuantity} units missing",
+                            nameof(SignificantOrderResolver), symbol, sell.Order.Symbol, sell.Order.Side, sell.Order.OrderId, sell.Order.ExecutedQuantity, sell.Order.Price, sell.RemainingExecutedQuantity);
                     }
                 }
             }

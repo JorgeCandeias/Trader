@@ -20,7 +20,10 @@ namespace Trader.Data
                 if (x is null) throw new ArgumentNullException(nameof(x));
                 if (y is null) throw new ArgumentNullException(nameof(y));
 
-                return x.Id.CompareTo(y.Id);
+                var bySymbol = Comparer<string>.Default.Compare(x.Symbol, y.Symbol);
+                if (bySymbol is not 0) return bySymbol;
+
+                return Comparer<long>.Default.Compare(x.Id, y.Id);
             }
 
             public static TradeIdComparer Instance { get; } = new TradeIdComparer();

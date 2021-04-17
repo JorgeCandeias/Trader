@@ -28,25 +28,24 @@ namespace Trader.Trading.Algorithms
             var watch = Stopwatch.StartNew();
             var tradeId = await _repository.GetMaxTradeIdAsync(symbol, cancellationToken) + 1;
 
-            // pull all new trades
+            // pull all trades
             var count = 0;
-            SortedTradeSet trades;
-            do
+            while (!cancellationToken.IsCancellationRequested)
             {
-                trades = await _trader.GetAccountTradesAsync(new GetAccountTrades(symbol, null, null, tradeId, 1000, null, _clock.UtcNow), cancellationToken);
+                var trades = await _trader.GetAccountTradesAsync(new GetAccountTrades(symbol, null, null, tradeId, 1000, null, _clock.UtcNow), cancellationToken);
 
-                if (trades.Count > 0)
-                {
-                    // persist all new trades
-                    await _repository.SetTradesAsync(trades, cancellationToken);
+                // stop if we got all trades
+                if (trades.Count is 0) break;
 
-                    // set the start of the next page
-                    tradeId = trades.Max!.Id + 1;
+                // persist all new trades in this page
+                await _repository.SetTradesAsync(trades, cancellationToken);
 
-                    // keep track for logging
-                    count += trades.Count;
-                }
-            } while (trades.Count > 0);
+                // set the start of the next page
+                tradeId = trades.Max!.Id + 1;
+
+                // keep track for logging
+                count += trades.Count;
+            }
 
             // log the activity only if necessary
             if (count > 0)

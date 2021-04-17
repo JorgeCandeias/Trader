@@ -141,6 +141,13 @@ namespace Trader.Trading.Algorithms.Step
 
         private async Task<bool> TryCloseOutOfRangeBandsAsync(SymbolPriceTicker ticker, CancellationToken cancellationToken = default)
         {
+            // take the upper band
+            var upper = _bands.Max;
+            if (upper is null) return false;
+
+            // calculate the step size
+            var step = upper.OpenPrice * _options.PullbackRatio;
+
             // take the lower band
             var band = _bands.Min;
             if (band is null) return false;
@@ -149,7 +156,8 @@ namespace Trader.Trading.Algorithms.Step
             if (band.Status != BandStatus.Ordered) return false;
 
             // ensure the lower band is covering the current price
-            if (band.OpenPrice < ticker.Price && band.ClosePrice > ticker.Price) return false;
+            // we adjust the close price down by a step to avoid closing prematurely during high volatility
+            if (band.OpenPrice < ticker.Price && band.ClosePrice > ticker.Price - step) return false;
 
             // if the above checks fails then close the band
             if (band.OpenOrderId is not 0)

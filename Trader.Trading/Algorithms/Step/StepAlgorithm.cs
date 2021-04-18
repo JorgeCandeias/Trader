@@ -155,9 +155,8 @@ namespace Trader.Trading.Algorithms.Step
             // ensure the lower band is on ordered status
             if (band.Status != BandStatus.Ordered) return false;
 
-            // ensure the lower band is covering the current price
-            // we adjust the close price down by a step to avoid closing prematurely during high volatility
-            if (band.OpenPrice < ticker.Price && band.ClosePrice > ticker.Price - step) return false;
+            // ensure the lower band is opening within reasonable range of the current price
+            if (band.OpenPrice > ticker.Price - step) return false;
 
             // if the above checks fails then close the band
             if (band.OpenOrderId is not 0)

@@ -431,25 +431,6 @@ namespace Trader.Trading.Algorithms.Step
                     null,
                     _clock.UtcNow));
 
-                // place a limit order at the current price
-                /*
-                var result = await _trader.CreateOrderAsync(new Order(
-                    _options.Symbol,
-                    OrderSide.Buy,
-                    OrderType.Limit,
-                    TimeInForce.GoodTillCanceled,
-                    quantity,
-                    null,
-                    ticker.Price,
-                    null,
-                    null,
-                    null,
-                    NewOrderResponseType.Full,
-                    null,
-                    _clock.UtcNow),
-                    cancellationToken);
-                */
-
                 _logger.LogInformation(
                     "{Type} {Name} created {OrderSide} {OrderType} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",
                     Type, _name, result.Side, result.Type, result.Symbol, result.OriginalQuantity, _options.Asset, result.Price, _options.Quote, result.OriginalQuantity * result.Price, _options.Quote);

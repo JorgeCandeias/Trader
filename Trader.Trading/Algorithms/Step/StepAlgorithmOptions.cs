@@ -16,19 +16,23 @@ namespace Trader.Trading.Algorithms.Step
         public string Quote { get; set; } = Empty;
 
         [Required]
+        [Range(1, 99)]
+        public int MaxBands { get; set; } = 99;
+
+        [Required]
         [Range(0.01, 1)]
-        public decimal PullbackRatio { get; set; } = 0.05m;
+        public decimal PullbackRatio { get; set; } = 0.01m;
 
         [Required]
         [Range(0.001, 1)]
-        public decimal TargetQuoteBalanceFractionPerBand { get; set; } = 0.01m;
+        public decimal TargetQuoteBalanceFractionPerBand { get; set; } = 0.005m;
 
         [Required]
         [Range(0, 100)]
-        public decimal MinQuoteAssetQuantityPerOrder { get; set; } = 11m;
+        public decimal MinQuoteAssetQuantityPerOrder { get; set; } = 0m;
 
         [Required]
-        [Range(1, 99)]
-        public int MaxBands { get; set; } = 99;
+        [Range(0, 10)]
+        public decimal ExtraAmountPerBandMultiplier { get; set; } = 1.01m;
     }
 }

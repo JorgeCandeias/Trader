@@ -79,7 +79,7 @@ namespace Trader.Trading.Algorithms.Step
             if (await TrySetStartingTradeAsync(symbol, ticker, lotSizeFilter, priceFilter, cancellationToken)) return;
             if (await TryCancelRogueSellOrdersAsync(cancellationToken)) return;
             if (await TrySetBandSellOrdersAsync(cancellationToken)) return;
-            if (await TryCreateLowerBandOrderAsync(symbol, ticker, lotSizeFilter, priceFilter, cancellationToken)) return;
+            if (await TryCreateLowerBandOrderAsync(ticker, lotSizeFilter, priceFilter, cancellationToken)) return;
             await TryCloseOutOfRangeBandsAsync(ticker, cancellationToken);
         }
 
@@ -171,7 +171,7 @@ namespace Trader.Trading.Algorithms.Step
             return true;
         }
 
-        private async Task<bool> TryCreateLowerBandOrderAsync(Symbol symbol, SymbolPriceTicker ticker, LotSizeSymbolFilter lotSizeFilter, PriceSymbolFilter priceFilter, CancellationToken cancellationToken = default)
+        private async Task<bool> TryCreateLowerBandOrderAsync(SymbolPriceTicker ticker, LotSizeSymbolFilter lotSizeFilter, PriceSymbolFilter priceFilter, CancellationToken cancellationToken = default)
         {
             // identify the highest and lowest bands
             var highBand = _bands.Max;
@@ -217,7 +217,7 @@ namespace Trader.Trading.Algorithms.Step
                 lowerPrice -= stepPrice;
             }
 
-            // protect some weird stuff
+            // protect from weird stuff
             if (lowerPrice <= 0)
             {
                 throw new AlgorithmException($"Somehow we got to a negative lower price of {lowerPrice}!");
@@ -226,8 +226,20 @@ namespace Trader.Trading.Algorithms.Step
             // under adjust the buy price to the tick size
             lowerPrice = Math.Floor(lowerPrice / priceFilter.TickSize) * priceFilter.TickSize;
 
-            // calculate the amount to pay with
-            var total = Math.Round(Math.Max(_balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand, _options.MinQuoteAssetQuantityPerOrder), symbol.QuoteAssetPrecision);
+            // calculate the quote amount to pay with
+            var total = _balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand;
+
+            // calculate the exponential bump up by the number of bands already allocated
+            var multiplier = (decimal)Math.Pow((double)_options.ExtraAmountPerBandMultiplier, _bands.Count);
+
+            // bump up the amount
+            total *= multiplier;
+
+            // bump up the amount to minimum order amount if it us too low
+            total = Math.Max(total, _options.MinQuoteAssetQuantityPerOrder);
+
+            // adjust the amount to the closest asset precision
+            //total = Math.Round(total, symbol.QuoteAssetPrecision);
 
             // ensure there is enough quote asset for it
             if (total > _balances.Quote.Free)
@@ -247,7 +259,22 @@ namespace Trader.Trading.Algorithms.Step
             quantity = Math.Floor(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
 
             // place the buy order
-            var result = await _trader.CreateOrderAsync(new Order(_options.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, lowerPrice, null, null, null, NewOrderResponseType.Full, null, _clock.UtcNow), cancellationToken);
+            var result = await _trader.CreateOrderAsync(
+                new Order(
+                    _options.Symbol,
+                    OrderSide.Buy,
+                    OrderType.Limit,
+                    TimeInForce.GoodTillCanceled,
+                    quantity,
+                    null,
+                    lowerPrice,
+                    null,
+                    null,
+                    null,
+                    NewOrderResponseType.Full,
+                    null,
+                    _clock.UtcNow),
+                cancellationToken);
 
             _logger.LogInformation(
                 "{Type} {Name} placed {OrderType} {OrderSide} for {Quantity} {Asset} at {Price} {Quote}",

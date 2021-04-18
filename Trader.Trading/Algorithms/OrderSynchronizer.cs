@@ -38,28 +38,30 @@ namespace Trader.Trading.Algorithms
 
             // pull all new or updated orders page by page
             var count = 0;
-            SortedOrderSet orders;
-            do
+            while (!cancellationToken.IsCancellationRequested)
             {
-                orders = await _trader.GetAllOrdersAsync(new GetAllOrders(symbol, orderId, null, null, 1000, null, _clock.UtcNow), cancellationToken);
+                var orders = await _trader.GetAllOrdersAsync(new GetAllOrders(symbol, orderId, null, null, 1000, null, _clock.UtcNow), cancellationToken);
 
-                if (orders.Count > 0)
-                {
-                    // persist all new and updated orders
-                    await _repository.SetOrdersAsync(orders, cancellationToken);
+                // stop if we got all orders
+                if (orders.Count is 0) break;
 
-                    // set the start of the next page
-                    orderId = orders.Max!.OrderId + 1;
+                // persist all new and updated orders
+                await _repository.SetOrdersAsync(orders, cancellationToken);
 
-                    // keep track for logging
-                    count += orders.Count;
-                }
-            } while (orders.Count > 0);
+                // set the start of the next page
+                orderId = orders.Max!.OrderId + 1;
+
+                // keep track for logging
+                count += orders.Count;
+            }
 
             // log the activity only if necessary
-            _logger.LogInformation(
-                "{Name} {Symbol} pulled {Count} orders up to OrderId {MaxOrderId} in {ElapsedMs}ms",
-                nameof(OrderSynchronizer), symbol, count, orderId, watch.ElapsedMilliseconds);
+            if (count > 0)
+            {
+                _logger.LogInformation(
+                    "{Name} {Symbol} pulled {Count} orders up to OrderId {MaxOrderId} in {ElapsedMs}ms",
+                    nameof(OrderSynchronizer), symbol, count, orderId, watch.ElapsedMilliseconds);
+            }
         }
     }
 }

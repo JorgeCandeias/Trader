@@ -32,7 +32,7 @@ namespace Trader.Trading.Algorithms.Step
         public decimal MinQuoteAssetQuantityPerOrder { get; set; } = 0m;
 
         [Required]
-        [Range(0, 10)]
+        [Range(1, 10)]
         public decimal ExtraAmountPerBandMultiplier { get; set; } = 1.01m;
     }
 }

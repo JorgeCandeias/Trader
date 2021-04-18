@@ -235,11 +235,8 @@ namespace Trader.Trading.Algorithms.Step
             // bump up the amount
             total *= multiplier;
 
-            // bump up the amount to minimum order amount if it us too low
+            // bump up the amount to minimum order amount if it is too low
             total = Math.Max(total, _options.MinQuoteAssetQuantityPerOrder);
-
-            // adjust the amount to the closest asset precision
-            //total = Math.Round(total, symbol.QuoteAssetPrecision);
 
             // ensure there is enough quote asset for it
             if (total > _balances.Quote.Free)

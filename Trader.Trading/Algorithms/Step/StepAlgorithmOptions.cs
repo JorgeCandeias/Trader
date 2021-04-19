@@ -25,7 +25,7 @@ namespace Trader.Trading.Algorithms.Step
 
         [Required]
         [Range(0.001, 1)]
-        public decimal TargetQuoteBalanceFractionPerBand { get; set; } = 0.005m;
+        public decimal TargetQuoteBalanceFractionPerBand { get; set; } = 0.01m;
 
         [Required]
         [Range(0, 100)]
@@ -33,6 +33,6 @@ namespace Trader.Trading.Algorithms.Step
 
         [Required]
         [Range(1, 10)]
-        public decimal ExtraAmountPerBandMultiplier { get; set; } = 1.01m;
+        public decimal ExtraAmountPerBandMultiplier { get; set; } = 1.00m;
     }
 }

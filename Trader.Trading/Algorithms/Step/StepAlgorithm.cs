@@ -156,7 +156,7 @@ namespace Trader.Trading.Algorithms.Step
             if (band.Status != BandStatus.Ordered) return false;
 
             // ensure the lower band is opening within reasonable range of the current price
-            if (band.OpenPrice > ticker.Price - step) return false;
+            if (band.OpenPrice >= ticker.Price - step) return false;
 
             // if the above checks fails then close the band
             if (band.OpenOrderId is not 0)

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -27,13 +28,13 @@ namespace Trader.Trading.Algorithms.Accumulator
         }
 
         private static string Type => nameof(AccumulatorAlgorithm);
-
         public string Symbol => _options.Symbol;
+
+        private ImmutableList<OrderQueryResult> _orders = ImmutableList<OrderQueryResult>.Empty;
 
         public async Task GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default)
         {
-            // get the orders for this symbol
-            var orders = await _trader.GetOpenOrdersAsync(new GetOpenOrders(_options.Symbol, null, _clock.UtcNow), cancellationToken);
+            await GetOpenOrdersAsync(cancellationToken);
 
             // get the current price
             var ticker = await _trader.GetSymbolPriceTickerAsync(_options.Symbol, cancellationToken);
@@ -56,26 +57,14 @@ namespace Trader.Trading.Algorithms.Accumulator
                 "{Type} {Name} identified first buy target price at {LowPrice} {LowQuote} with current price at {CurrentPrice} {CurrentQuote}",
                 Type, _name, lowBuyPrice, _options.Quote, ticker.Price, _options.Quote);
 
-            // cancel all open buy orders with an open price lower than the lower band to the current price
-            var lower = orders.FirstOrDefault(x => x.Side == OrderSide.Buy && x.Price < lowBuyPrice);
-            if (lower is not null)
-            {
-                var result = await _trader.CancelOrderAsync(new CancelStandardOrder(_options.Symbol, lower.OrderId, null, null, null, _clock.UtcNow), cancellationToken);
-
-                _logger.LogInformation(
-                    "{Type} {Name} cancelled low starting open order with price {Price} for {Quantity} units",
-                    Type, _name, result.Price, result.OriginalQuantity);
-
-                return;
-            }
+            if (await TryCloseLowBuysAsync(lowBuyPrice, cancellationToken)) return;
+            if (await TryCloseHighBuysAsync(cancellationToken)) return;
 
             // if there are still open orders then leave them be
-            if (orders.Any(x => x.Side == OrderSide.Buy))
+            if (_orders.Any(x => x.Side == OrderSide.Buy))
             {
                 return;
             }
-
-            // put the starting order through
 
             // calculate the amount to pay with
             var total = Math.Round(Math.Max(free * _options.TargetQuoteBalanceFractionPerBuy, _options.MinQuoteAssetQuantityPerOrder), symbol.QuoteAssetPrecision);
@@ -118,6 +107,55 @@ namespace Trader.Trading.Algorithms.Accumulator
                 Type, _name, order.Side, order.Type, order.Symbol, order.OriginalQuantity, _options.Asset, order.Price, _options.Quote, order.OriginalQuantity * order.Price, _options.Quote);
 
             return;
+        }
+
+        private async Task GetOpenOrdersAsync(CancellationToken cancellationToken)
+        {
+            _orders = await _trader.GetOpenOrdersAsync(new GetOpenOrders(_options.Symbol, null, _clock.UtcNow), cancellationToken);
+
+            foreach (var order in _orders)
+            {
+                _logger.LogInformation(
+                    "{Type} {Name} identified open {OrderSide} {OrderType} order for {Quantity} {Asset} at {Price} {Quote} totalling {Notional:N8} {Quote}",
+                    Type, _name, order.Side, order.Type, order.OriginalQuantity, _options.Asset, order.Price, _options.Quote, order.OriginalQuantity * order.Price, _options.Quote);
+            }
+        }
+
+        private async Task<bool> TryCloseLowBuysAsync(decimal lowBuyPrice, CancellationToken cancellationToken)
+        {
+            // cancel all open buy orders with an open price lower than the lower band to the current price
+            var closed = false;
+            foreach (var order in _orders.Where(x => x.Side == OrderSide.Buy && x.Price < lowBuyPrice))
+            {
+                var result = await _trader.CancelOrderAsync(new CancelStandardOrder(_options.Symbol, order.OrderId, null, null, null, _clock.UtcNow), cancellationToken);
+
+                _logger.LogInformation(
+                    "{Type} {Name} cancelled low starting open order with price {Price} for {Quantity} units",
+                    Type, _name, result.Price, result.OriginalQuantity);
+
+                closed = true;
+            }
+
+            // let the algo resync if any orders where closed
+            return closed;
+        }
+
+        private async Task<bool> TryCloseHighBuysAsync(CancellationToken cancellationToken)
+        {
+            var closed = false;
+            foreach (var order in _orders.Where(x => x.Side == OrderSide.Buy).OrderBy(x => x.Price).Skip(1))
+            {
+                var result = await _trader.CancelOrderAsync(new CancelStandardOrder(_options.Symbol, order.OrderId, null, null, null, _clock.UtcNow), cancellationToken);
+
+                _logger.LogInformation(
+                    "{Type} {Name} cancelled low starting open order with price {Price} for {Quantity} units",
+                    Type, _name, result.Price, result.OriginalQuantity);
+
+                closed = true;
+            }
+
+            // let the algo resync if any orders where closed
+            return closed;
         }
 
         public Task<Profit> GetProfitAsync(CancellationToken cancellationToken = default)

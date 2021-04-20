@@ -105,8 +105,6 @@ namespace Trader.Trading.Algorithms.Accumulator
             _logger.LogInformation(
                 "{Type} {Name} created {OrderSide} {OrderType} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",
                 Type, _name, order.Side, order.Type, order.Symbol, order.OriginalQuantity, _options.Asset, order.Price, _options.Quote, order.OriginalQuantity * order.Price, _options.Quote);
-
-            return;
         }
 
         private async Task GetOpenOrdersAsync(CancellationToken cancellationToken)

@@ -12,13 +12,15 @@ namespace Trader.Core.Timers
         private readonly Func<CancellationToken, Task> _callback;
         private readonly TimeSpan _dueTime;
         private readonly TimeSpan _period;
+        private readonly TimeSpan _timeout;
         private readonly ILogger _logger;
 
-        public SafeTimer(Func<CancellationToken, Task> callback, TimeSpan dueTime, TimeSpan period, ILogger<SafeTimer> logger)
+        public SafeTimer(Func<CancellationToken, Task> callback, TimeSpan dueTime, TimeSpan period, TimeSpan timeout, ILogger<SafeTimer> logger)
         {
             _callback = callback;
             _dueTime = dueTime;
             _period = period;
+            _timeout = timeout;
             _logger = logger;
         }
 
@@ -33,7 +35,11 @@ namespace Trader.Core.Timers
             // execute the current tick
             try
             {
-                _task = _callback(_cancellation.Token);
+                using var timeoutCancellation = new CancellationTokenSource(_timeout);
+                using var combinedCancellation = CancellationTokenSource.CreateLinkedTokenSource(_cancellation.Token, timeoutCancellation.Token);
+
+                _task = _callback(combinedCancellation.Token);
+
                 await _task;
             }
             catch (OperationCanceledException)
@@ -89,6 +95,15 @@ namespace Trader.Core.Timers
                     catch (OperationCanceledException)
                     {
                         // noop
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "{ServiceName} caught exception {Message}", nameof(SafeTimer), ex.Message);
+
+                        if (Debugger.IsAttached)
+                        {
+                            throw;
+                        }
                     }
                 }
             }

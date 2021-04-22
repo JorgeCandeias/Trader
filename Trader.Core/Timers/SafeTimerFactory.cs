@@ -14,9 +14,9 @@ namespace Trader.Core.Timers
             _provider = provider;
         }
 
-        public ISafeTimer Create(Func<CancellationToken, Task> callback, TimeSpan dueTime, TimeSpan period)
+        public ISafeTimer Create(Func<CancellationToken, Task> callback, TimeSpan dueTime, TimeSpan period, TimeSpan timeout)
         {
-            return ActivatorUtilities.CreateInstance<SafeTimer>(_provider, callback, dueTime, period);
+            return ActivatorUtilities.CreateInstance<SafeTimer>(_provider, callback, dueTime, period, timeout);
         }
     }
 }

@@ -18,21 +18,18 @@ namespace Trader.Trading
         private readonly ISafeTimer _timer;
         private readonly ITradingService _trader;
         private readonly ISystemClock _clock;
-        private readonly ITraderRepository _repository;
 
-        public TradingHost(ILogger<TradingHost> logger, IEnumerable<ITradingAlgorithm> algos, ISafeTimerFactory timerFactory, ITradingService trader, ISystemClock clock, ITraderRepository repository)
+        public TradingHost(ILogger<TradingHost> logger, IEnumerable<ITradingAlgorithm> algos, ISafeTimerFactory timerFactory, ITradingService trader, ISystemClock clock)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _algos = algos ?? throw new ArgumentNullException(nameof(algos));
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
 
-            _timer = timerFactory.Create(_ => TickAsync(), TimeSpan.Zero, TimeSpan.FromSeconds(10));
+            _timer = timerFactory.Create(_ => TickAsync(), TimeSpan.Zero, TimeSpan.FromSeconds(10), TimeSpan.FromMinutes(1));
         }
 
         private readonly CancellationTokenSource _cancellation = new();
-        private readonly List<Task> _tasks = new();
 
         private static string Name => nameof(TradingHost);
 

@@ -27,7 +27,7 @@ namespace Trader.Core.Timers
         private readonly CancellationTokenSource _cancellation = new();
 
         private Timer? _timer;
-        private Task? _task;
+        private Task _task = Task.CompletedTask;
 
         [SuppressMessage("Major Bug", "S3168:\"async\" methods should not return \"void\"", Justification = "Timer Event Handler")]
         private async void Handler(object? _)
@@ -41,10 +41,6 @@ namespace Trader.Core.Timers
                 _task = _callback(combinedCancellation.Token);
 
                 await _task;
-            }
-            catch (OperationCanceledException)
-            {
-                // noop
             }
             catch (Exception ex)
             {
@@ -85,26 +81,18 @@ namespace Trader.Core.Timers
                 _timer.Dispose();
                 _timer = null;
 
-                var task = Interlocked.Exchange(ref _task, null);
-                if (task is not null)
+                var task = Interlocked.Exchange(ref _task, Task.CompletedTask);
+                try
                 {
-                    try
-                    {
-                        await task;
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        // noop
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "{ServiceName} caught exception {Message}", nameof(SafeTimer), ex.Message);
-
-                        if (Debugger.IsAttached)
-                        {
-                            throw;
-                        }
-                    }
+                    await task;
+                }
+                catch (OperationCanceledException)
+                {
+                    // noop
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "{ServiceName} caught exception {Message}", nameof(SafeTimer), ex.Message);
                 }
             }
         }

@@ -26,7 +26,7 @@ namespace Trader.Trading
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
 
-            _timer = timerFactory.Create(_ => TickAsync(), TimeSpan.Zero, TimeSpan.FromSeconds(10), TimeSpan.FromMinutes(1));
+            _timer = timerFactory.Create(TickAsync, TimeSpan.Zero, TimeSpan.FromSeconds(10), TimeSpan.FromMinutes(3));
         }
 
         private readonly CancellationTokenSource _cancellation = new();
@@ -52,7 +52,7 @@ namespace Trader.Trading
             }
         }
 
-        private async Task TickAsync()
+        private async Task TickAsync(CancellationToken cancellationToken)
         {
             // grab the exchange information once to share between all algo instances
             var exchangeInfo = await _trader.GetExchangeInfoAsync();
@@ -63,7 +63,7 @@ namespace Trader.Trading
             {
                 try
                 {
-                    await algo.GoAsync(exchangeInfo, accountInfo, _cancellation.Token);
+                    await algo.GoAsync(exchangeInfo, accountInfo, cancellationToken);
                 }
                 catch (OperationCanceledException)
                 {
@@ -80,8 +80,8 @@ namespace Trader.Trading
             var profits = new List<Profit>();
             foreach (var algo in _algos)
             {
-                var profit = await algo.GetProfitAsync(_cancellation.Token);
-                var stats = await algo.GetStatisticsAsync(_cancellation.Token);
+                var profit = await algo.GetProfitAsync(cancellationToken);
+                var stats = await algo.GetStatisticsAsync(cancellationToken);
 
                 _logger.LogInformation(
                     "{Name} reports {Symbol,7} profit as (T: {@Today,6:N2}, T-1: {@Yesterday,6:N2}, W: {@ThisWeek,6:N2}, W-1: {@PrevWeek,6:N2}, M: {@ThisMonth,8:N2}, Y: {@ThisYear,8:N2}) (APH1: {@AveragePerHourDay1,6:N2}, APH7: {@AveragePerHourDay7,6:N2}, APH30: {@AveragePerHourDay30,6:N2}, APD1: {@AveragePerDay1,6:N2}, APD7: {@AveragePerDay7,6:N2}, APD30: {@AveragePerDay30,6:N2})",

@@ -416,20 +416,22 @@ namespace Trader.Trading.Algorithms.Step
                 quantity = Math.Floor(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
 
                 // place a market order to account for weird price floats
-                var result = await _trader.CreateOrderAsync(new Order(
-                    _options.Symbol,
-                    OrderSide.Buy,
-                    OrderType.Market,
-                    null,
-                    quantity,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    NewOrderResponseType.Full,
-                    null,
-                    _clock.UtcNow));
+                var result = await _trader.CreateOrderAsync(
+                    new Order(
+                        _options.Symbol,
+                        OrderSide.Buy,
+                        OrderType.Market,
+                        null,
+                        quantity,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        NewOrderResponseType.Full,
+                        null,
+                        _clock.UtcNow),
+                    cancellationToken);
 
                 _logger.LogInformation(
                     "{Type} {Name} created {OrderSide} {OrderType} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",
@@ -558,17 +560,6 @@ namespace Trader.Trading.Algorithms.Step
                 {
                     _bands.Remove(band);
                 }
-
-                // attempt to bundle up all the leftovers into one band
-                /*
-                _bands.Add(new Band
-                {
-                    Quantity = leftovers.Sum(x => x.Quantity),
-                    ExecutedQuantity = leftovers.Sum(x => x.ExecutedQuantity),
-                    OpenPrice = leftovers.Sum(x => x.OpenPrice * x.Quantity) / leftovers.Sum(x => x.Quantity),
-                    OpenOrderId =
-                })
-                */
 
                 var quantity = leftovers.Sum(x => x.Quantity);
                 var openPrice = leftovers.Sum(x => x.OpenPrice * x.Quantity) / leftovers.Sum(x => x.Quantity);

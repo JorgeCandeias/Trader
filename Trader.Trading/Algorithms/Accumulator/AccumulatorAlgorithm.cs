@@ -86,20 +86,21 @@ namespace Trader.Trading.Algorithms.Accumulator
             quantity = Math.Floor(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
 
             // place the order now
-            var order = await _trader.CreateOrderAsync(new Order(
-                _options.Symbol,
-                OrderSide.Buy,
-                OrderType.Limit,
-                TimeInForce.GoodTillCanceled,
-                quantity,
-                null,
-                lowBuyPrice,
-                null,
-                null,
-                null,
-                NewOrderResponseType.Full,
-                null,
-                _clock.UtcNow),
+            var order = await _trader.CreateOrderAsync(
+                new Order(
+                    _options.Symbol,
+                    OrderSide.Buy,
+                    OrderType.Limit,
+                    TimeInForce.GoodTillCanceled,
+                    quantity,
+                    null,
+                    lowBuyPrice,
+                    null,
+                    null,
+                    null,
+                    NewOrderResponseType.Full,
+                    null,
+                    _clock.UtcNow),
                 cancellationToken);
 
             _logger.LogInformation(
@@ -109,7 +110,12 @@ namespace Trader.Trading.Algorithms.Accumulator
 
         private async Task GetOpenOrdersAsync(CancellationToken cancellationToken)
         {
-            _orders = await _trader.GetOpenOrdersAsync(new GetOpenOrders(_options.Symbol, null, _clock.UtcNow), cancellationToken);
+            _orders = await _trader.GetOpenOrdersAsync(
+                new GetOpenOrders(
+                    _options.Symbol,
+                    null,
+                    _clock.UtcNow),
+                cancellationToken);
 
             foreach (var order in _orders)
             {
@@ -125,7 +131,15 @@ namespace Trader.Trading.Algorithms.Accumulator
             var closed = false;
             foreach (var order in _orders.Where(x => x.Side == OrderSide.Buy && x.Price < lowBuyPrice))
             {
-                var result = await _trader.CancelOrderAsync(new CancelStandardOrder(_options.Symbol, order.OrderId, null, null, null, _clock.UtcNow), cancellationToken);
+                var result = await _trader.CancelOrderAsync(
+                    new CancelStandardOrder(
+                        _options.Symbol,
+                        order.OrderId,
+                        null,
+                        null,
+                        null,
+                        _clock.UtcNow),
+                    cancellationToken);
 
                 _logger.LogInformation(
                     "{Type} {Name} cancelled low starting open order with price {Price} for {Quantity} units",
@@ -143,7 +157,15 @@ namespace Trader.Trading.Algorithms.Accumulator
             var closed = false;
             foreach (var order in _orders.Where(x => x.Side == OrderSide.Buy).OrderBy(x => x.Price).Skip(1))
             {
-                var result = await _trader.CancelOrderAsync(new CancelStandardOrder(_options.Symbol, order.OrderId, null, null, null, _clock.UtcNow), cancellationToken);
+                var result = await _trader.CancelOrderAsync(
+                    new CancelStandardOrder(
+                        _options.Symbol,
+                        order.OrderId,
+                        null,
+                        null,
+                        null,
+                        _clock.UtcNow),
+                    cancellationToken);
 
                 _logger.LogInformation(
                     "{Type} {Name} cancelled low starting open order with price {Price} for {Quantity} units",

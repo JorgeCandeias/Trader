@@ -15,41 +15,35 @@ namespace Trader.Trading
     {
         private readonly ILogger _logger;
         private readonly IEnumerable<ITradingAlgorithm> _algos;
-        private readonly ISafeTimer _timer;
+        private readonly ISafeTimerFactory _timers;
         private readonly ITradingService _trader;
         private readonly ISystemClock _clock;
 
-        public TradingHost(ILogger<TradingHost> logger, IEnumerable<ITradingAlgorithm> algos, ISafeTimerFactory timerFactory, ITradingService trader, ISystemClock clock)
+        public TradingHost(ILogger<TradingHost> logger, IEnumerable<ITradingAlgorithm> algos, ISafeTimerFactory timers, ITradingService trader, ISystemClock clock)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _algos = algos ?? throw new ArgumentNullException(nameof(algos));
+            _timers = timers ?? throw new ArgumentNullException(nameof(timers));
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-
-            _timer = timerFactory.Create(TickAsync, TimeSpan.Zero, TimeSpan.FromSeconds(10), TimeSpan.FromMinutes(3));
         }
-
-        private readonly CancellationTokenSource _cancellation = new();
 
         private static string Name => nameof(TradingHost);
 
-        public async Task StartAsync(CancellationToken cancellationToken)
+        private ISafeTimer? _timer;
+
+        public Task StartAsync(CancellationToken cancellationToken)
         {
-            await _timer.StartAsync(cancellationToken);
+            _timer = _timers.Create(TickAsync, TimeSpan.Zero, TimeSpan.FromSeconds(10), TimeSpan.FromMinutes(3));
+
+            return Task.CompletedTask;
         }
 
-        public async Task StopAsync(CancellationToken cancellationToken)
+        public Task StopAsync(CancellationToken cancellationToken)
         {
-            _cancellation.Cancel();
+            _timer?.Dispose();
 
-            try
-            {
-                await _timer.StopAsync(cancellationToken);
-            }
-            catch (OperationCanceledException)
-            {
-                // noop
-            }
+            return Task.CompletedTask;
         }
 
         private async Task TickAsync(CancellationToken cancellationToken)

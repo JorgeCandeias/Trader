@@ -185,27 +185,35 @@ namespace Trader.Data.Memory
             return Task.CompletedTask;
         }
 
-        public Task SetTradesAsync(IEnumerable<AccountTrade> trades, CancellationToken cancellationToken = default)
+        public Task SetTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default)
         {
-            if (trades is null) throw new ArgumentNullException(nameof(trades));
+            _ = trade ?? throw new ArgumentNullException(nameof(trade));
+
+            _trades
+                .GetOrAdd(trade.Symbol, _ => new ConcurrentDictionary<long, AccountTrade>())
+                .AddOrUpdate(trade.Id, trade, (k, e) => trade);
+
+            // update the max trade id index
+            _maxTradeIds
+                .AddOrUpdate(trade.Symbol, trade.Id, (key, current) => trade.Id > current ? trade.Id : current);
+
+            // update the trades by order index
+            _tradesByOrder
+                .GetOrAdd(trade.Symbol, _ => new ConcurrentDictionary<long, ConcurrentDictionary<long, AccountTrade>>())
+                .GetOrAdd(trade.OrderId, _ => new ConcurrentDictionary<long, AccountTrade>())
+                .AddOrUpdate(trade.Id, trade, (key, current) => trade);
+
+            return Task.CompletedTask;
+        }
+
+        public async Task SetTradesAsync(IEnumerable<AccountTrade> trades, CancellationToken cancellationToken = default)
+        {
+            _ = trades ?? throw new ArgumentNullException(nameof(trades));
 
             foreach (var trade in trades)
             {
-                _trades
-                    .GetOrAdd(trade.Symbol, _ => new ConcurrentDictionary<long, AccountTrade>())
-                    .AddOrUpdate(trade.Id, trade, (k, e) => trade);
-
-                // update the max trade id index
-                _maxTradeIds.AddOrUpdate(trade.Symbol, trade.Id, (key, current) => trade.Id > current ? trade.Id : current);
-
-                // update the trades by order index
-                _tradesByOrder
-                    .GetOrAdd(trade.Symbol, _ => new ConcurrentDictionary<long, ConcurrentDictionary<long, AccountTrade>>())
-                    .GetOrAdd(trade.OrderId, _ => new ConcurrentDictionary<long, AccountTrade>())
-                    .AddOrUpdate(trade.Id, trade, (key, current) => trade);
+                await SetTradeAsync(trade, cancellationToken).ConfigureAwait(false);
             }
-
-            return Task.CompletedTask;
         }
 
         public Task ApplyAsync(CancelStandardOrderResult result, CancellationToken cancellationToken = default)

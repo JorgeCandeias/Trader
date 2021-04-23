@@ -90,8 +90,6 @@ WHEN NOT MATCHED BY TARGET THEN
     )
 WHEN MATCHED THEN
 UPDATE SET
-    [Symbol] = [S].[Symbol],
-    [OrderId] = [S].[OrderId],
     [OrderListId] = [S].[OrderListId],
     [ClientOrderId] = [S].[ClientOrderId],
     [Price] = [S].[Price],

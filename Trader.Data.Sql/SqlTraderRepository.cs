@@ -89,13 +89,14 @@ namespace Trader.Data.Sql
 
             var entity = _mapper.Map<OrderEntity>(order);
 
-            await connection.ExecuteAsync(new CommandDefinition(
+            await connection
+                .ExecuteAsync(new CommandDefinition(
                     "[dbo].[SetOrder]",
                     entity,
                     null,
                     _options.CommandTimeoutAsInteger,
                     CommandType.StoredProcedure,
-                    CommandFlags.None,
+                    CommandFlags.Buffered,
                     cancellationToken))
                 .ConfigureAwait(false);
         }
@@ -115,9 +116,44 @@ namespace Trader.Data.Sql
             }
         }
 
+        public Task SetTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default)
+        {
+            _ = trade ?? throw new ArgumentNullException(nameof(trade));
+
+            return InnerSetTradeAsync(trade, cancellationToken);
+        }
+
+        private async Task InnerSetTradeAsync(AccountTrade trade, CancellationToken cancellationToken)
+        {
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            var entity = _mapper.Map<TradeEntity>(trade);
+
+            await connection
+                .ExecuteAsync(new CommandDefinition(
+                    "[dbo].[SetTrade]",
+                    entity,
+                    null,
+                    _options.CommandTimeoutAsInteger,
+                    CommandType.StoredProcedure,
+                    CommandFlags.Buffered,
+                    cancellationToken))
+                .ConfigureAwait(false);
+        }
+
         public Task SetTradesAsync(IEnumerable<AccountTrade> trades, CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            _ = trades ?? throw new ArgumentNullException(nameof(trades));
+
+            return InnerSetTradesAsync(trades, cancellationToken);
+        }
+
+        private async Task InnerSetTradesAsync(IEnumerable<AccountTrade> trades, CancellationToken cancellationToken)
+        {
+            foreach (var trade in trades)
+            {
+                await SetTradeAsync(trade, cancellationToken).ConfigureAwait(false);
+            }
         }
     }
 }

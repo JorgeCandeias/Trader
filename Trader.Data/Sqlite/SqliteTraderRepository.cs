@@ -213,6 +213,11 @@ namespace Trader.Data.Sqlite
             throw new NotImplementedException();
         }
 
+        public Task SetTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
         #endregion IHostedService
     }
 }

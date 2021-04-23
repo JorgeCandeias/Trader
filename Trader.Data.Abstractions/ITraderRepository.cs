@@ -30,6 +30,8 @@ namespace Trader.Data
 
         Task<long> GetMaxTradeIdAsync(string symbol, CancellationToken cancellationToken = default);
 
+        Task SetTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default);
+
         Task SetTradesAsync(IEnumerable<AccountTrade> trades, CancellationToken cancellationToken = default);
 
         Task<SortedTradeSet> GetTradesAsync(string symbol, long? orderId = default, CancellationToken cancellationToken = default);

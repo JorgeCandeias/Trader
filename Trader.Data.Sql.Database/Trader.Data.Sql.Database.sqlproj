@@ -66,5 +66,6 @@
     <Build Include="Tables\Order.sql" />
     <Build Include="Tables\Trade.sql" />
     <Build Include="Procedures\SetOrder.sql" />
+    <Build Include="Procedures\SetTrade.sql" />
   </ItemGroup>
 </Project>

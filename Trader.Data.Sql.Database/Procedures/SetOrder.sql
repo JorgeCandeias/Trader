@@ -19,6 +19,8 @@
     @IsWorking BIT NOT NULL
 AS
 
+SET NOCOUNT ON;
+
 WITH [Source] AS
 (
     SELECT

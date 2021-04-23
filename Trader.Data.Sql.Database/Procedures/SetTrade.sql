@@ -14,6 +14,8 @@
     @IsBestMatch BIT NOT NULL
 AS
 
+SET NOCOUNT ON;
+
 WITH Source AS
 (
     SELECT
@@ -34,7 +36,7 @@ WITH Source AS
 MERGE INTO [dbo].[Trade] AS [T]
 USING [Source] AS [S]
 ON [S].[Symbol] = [T].[Symbol]
-AND [S.].[Id] = [T].[Id]
+AND [S].[Id] = [T].[Id]
 WHEN NOT MATCHED BY TARGET THEN
 INSERT
 (

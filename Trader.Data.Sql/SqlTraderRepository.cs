@@ -53,12 +53,59 @@ namespace Trader.Data.Sql
 
         public Task<OrderQueryResult> GetOrderAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
+
+            return GetOrderInnerAsync(symbol, orderId, cancellationToken);
+        }
+
+        private async Task<OrderQueryResult> GetOrderInnerAsync(string symbol, long orderId, CancellationToken cancellationToken)
+        {
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            var entity = await connection
+                .QuerySingleOrDefaultAsync<OrderEntity>(new CommandDefinition(
+                    "[dbo].[GetOrder]",
+                    new
+                    {
+                        symbol,
+                        orderId
+                    },
+                    null,
+                    _options.CommandTimeoutAsInteger,
+                    CommandType.StoredProcedure,
+                    CommandFlags.Buffered,
+                    cancellationToken))
+                .ConfigureAwait(false);
+
+            return _mapper.Map<OrderQueryResult>(entity);
         }
 
         public Task<SortedOrderSet> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
+
+            return GetOrdersInnerAsync(symbol, cancellationToken);
+        }
+
+        private async Task<SortedOrderSet> GetOrdersInnerAsync(string symbol, CancellationToken cancellationToken)
+        {
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            var entities = await connection
+                .QueryAsync<OrderEntity>(new CommandDefinition(
+                    "[dbo].[GetOrders]",
+                    new
+                    {
+                        symbol
+                    },
+                    null,
+                    _options.CommandTimeoutAsInteger,
+                    CommandType.StoredProcedure,
+                    CommandFlags.Buffered,
+                    cancellationToken))
+                .ConfigureAwait(false);
+
+            return _mapper.Map<SortedOrderSet>(entities);
         }
 
         public Task<SortedTradeSet> GetTradesAsync(string symbol, long? orderId = null, CancellationToken cancellationToken = default)
@@ -80,10 +127,10 @@ namespace Trader.Data.Sql
         {
             _ = order ?? throw new ArgumentNullException(nameof(order));
 
-            return InnerSetOrderAsync(order, cancellationToken);
+            return SetOrderInnerAsync(order, cancellationToken);
         }
 
-        private async Task InnerSetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken)
+        private async Task SetOrderInnerAsync(OrderQueryResult order, CancellationToken cancellationToken)
         {
             using var connection = new SqlConnection(_options.ConnectionString);
 
@@ -105,10 +152,10 @@ namespace Trader.Data.Sql
         {
             _ = orders ?? throw new ArgumentNullException(nameof(orders));
 
-            return InnerSetOrdersAsync(orders, cancellationToken);
+            return SetOrdersInnerAsync(orders, cancellationToken);
         }
 
-        private async Task InnerSetOrdersAsync(IEnumerable<OrderQueryResult> orders, CancellationToken cancellationToken)
+        private async Task SetOrdersInnerAsync(IEnumerable<OrderQueryResult> orders, CancellationToken cancellationToken)
         {
             foreach (var order in orders)
             {
@@ -120,10 +167,10 @@ namespace Trader.Data.Sql
         {
             _ = trade ?? throw new ArgumentNullException(nameof(trade));
 
-            return InnerSetTradeAsync(trade, cancellationToken);
+            return SetTradeInnerAsync(trade, cancellationToken);
         }
 
-        private async Task InnerSetTradeAsync(AccountTrade trade, CancellationToken cancellationToken)
+        private async Task SetTradeInnerAsync(AccountTrade trade, CancellationToken cancellationToken)
         {
             using var connection = new SqlConnection(_options.ConnectionString);
 
@@ -145,10 +192,10 @@ namespace Trader.Data.Sql
         {
             _ = trades ?? throw new ArgumentNullException(nameof(trades));
 
-            return InnerSetTradesAsync(trades, cancellationToken);
+            return SetTradesInnerAsync(trades, cancellationToken);
         }
 
-        private async Task InnerSetTradesAsync(IEnumerable<AccountTrade> trades, CancellationToken cancellationToken)
+        private async Task SetTradesInnerAsync(IEnumerable<AccountTrade> trades, CancellationToken cancellationToken)
         {
             foreach (var trade in trades)
             {

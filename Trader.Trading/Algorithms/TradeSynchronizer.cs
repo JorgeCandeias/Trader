@@ -26,22 +26,25 @@ namespace Trader.Trading.Algorithms
         public async Task SynchronizeTradesAsync(string symbol, CancellationToken cancellationToken = default)
         {
             var watch = Stopwatch.StartNew();
-            var tradeId = await _repository.GetMaxTradeIdAsync(symbol, cancellationToken) + 1;
+
+            // get the last trade id available
+            var tradeId = await _repository.GetMaxTradeIdAsync(symbol, cancellationToken);
 
             // pull all trades
             var count = 0;
             while (!cancellationToken.IsCancellationRequested)
             {
-                var trades = await _trader.GetAccountTradesAsync(new GetAccountTrades(symbol, null, null, tradeId, 1000, null, _clock.UtcNow), cancellationToken);
+                // query for the next trades
+                var trades = await _trader.GetAccountTradesAsync(new GetAccountTrades(symbol, null, null, tradeId + 1, 1000, null, _clock.UtcNow), cancellationToken);
 
-                // stop if we got all trades
+                // break if we got all trades
                 if (trades.Count is 0) break;
 
                 // persist all new trades in this page
                 await _repository.SetTradesAsync(trades, cancellationToken);
 
-                // set the start of the next page
-                tradeId = trades.Max!.Id + 1;
+                // keep the last trade
+                tradeId = trades.Max!.Id;
 
                 // keep track for logging
                 count += trades.Count;

@@ -8,6 +8,8 @@ namespace Trader.Data
     {
         Task<SortedOrderSet> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default);
 
+        Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default);
+
         Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders, CancellationToken cancellationToken = default);
 
         Task ApplyAsync(CancelStandardOrderResult result, CancellationToken cancellationToken = default);

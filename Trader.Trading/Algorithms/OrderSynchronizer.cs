@@ -26,30 +26,42 @@ namespace Trader.Trading.Algorithms
         public async Task SynchronizeOrdersAsync(string symbol, CancellationToken cancellationToken = default)
         {
             var watch = Stopwatch.StartNew();
+            var count = 0;
 
-            // start with the minimum transient order if there is any
-            var orderId = await _repository.GetMinTransientOrderIdAsync(symbol, cancellationToken);
-
-            // otherwise start after the last order
-            if (orderId == 0)
+            // first update all known transient orders
+            var transient = await _repository.GetTransientOrdersAsync(symbol, default, default, cancellationToken);
+            foreach (var order in transient)
             {
-                orderId = await _repository.GetMaxOrderIdAsync(symbol, cancellationToken) + 1;
+                var updated = await _trader.GetOrderAsync(
+                    new OrderQuery(
+                        symbol,
+                        order.OrderId,
+                        default,
+                        default,
+                        _clock.UtcNow),
+                    cancellationToken);
+
+                await _repository.SetOrderAsync(updated, cancellationToken);
+
+                count++;
             }
 
+            // start after the last order
+            var orderId = await _repository.GetMaxOrderIdAsync(symbol, cancellationToken);
+
             // pull all new or updated orders page by page
-            var count = 0;
             while (!cancellationToken.IsCancellationRequested)
             {
-                var orders = await _trader.GetAllOrdersAsync(new GetAllOrders(symbol, orderId, null, null, 1000, null, _clock.UtcNow), cancellationToken);
+                var orders = await _trader.GetAllOrdersAsync(new GetAllOrders(symbol, orderId + 1, null, null, 1000, null, _clock.UtcNow), cancellationToken);
 
-                // stop if we got all orders
+                // break if we got all orders
                 if (orders.Count is 0) break;
 
                 // persist all new and updated orders
                 await _repository.SetOrdersAsync(orders, cancellationToken);
 
-                // set the start of the next page
-                orderId = orders.Max!.OrderId + 1;
+                // keep the last order id
+                orderId = orders.Max!.OrderId;
 
                 // keep track for logging
                 count += orders.Count;

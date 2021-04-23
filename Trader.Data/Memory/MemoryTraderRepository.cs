@@ -135,6 +135,15 @@ namespace Trader.Data.Memory
             return Task.FromResult(result);
         }
 
+        public Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default)
+        {
+            if (order is null) throw new ArgumentNullException(nameof(order));
+
+            AddOrUpdateOrder(order);
+
+            return Task.CompletedTask;
+        }
+
         public Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders, CancellationToken cancellationToken = default)
         {
             if (orders is null) throw new ArgumentNullException(nameof(orders));

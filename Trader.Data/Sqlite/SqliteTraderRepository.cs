@@ -193,6 +193,11 @@ namespace Trader.Data.Sqlite
             throw new NotImplementedException();
         }
 
+        public Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
         #endregion IHostedService
     }
 }

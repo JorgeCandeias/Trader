@@ -49,8 +49,8 @@ namespace Trader.Trading
         private async Task TickAsync(CancellationToken cancellationToken)
         {
             // grab the exchange information once to share between all algo instances
-            var exchangeInfo = await _trader.GetExchangeInfoAsync();
-            var accountInfo = await _trader.GetAccountInfoAsync(new GetAccountInfo(null, _clock.UtcNow));
+            var exchangeInfo = await _trader.GetExchangeInfoAsync(cancellationToken);
+            var accountInfo = await _trader.GetAccountInfoAsync(new GetAccountInfo(null, _clock.UtcNow), cancellationToken);
 
             // execute all algos in sequence for ease of troubleshooting
             foreach (var algo in _algos)

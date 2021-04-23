@@ -57,6 +57,7 @@
   <ItemGroup>
     <Folder Include="Properties" />
     <Folder Include="Tables" />
+    <Folder Include="Procedures" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Trader.Data.Sql.Database.publish.xml" />
@@ -64,5 +65,6 @@
   <ItemGroup>
     <Build Include="Tables\Order.sql" />
     <Build Include="Tables\Trade.sql" />
+    <Build Include="Procedures\SetOrder.sql" />
   </ItemGroup>
 </Project>

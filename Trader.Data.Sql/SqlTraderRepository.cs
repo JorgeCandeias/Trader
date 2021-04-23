@@ -1,6 +1,10 @@
-﻿using Microsoft.Extensions.Options;
+﻿using AutoMapper;
+using Dapper;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -9,10 +13,12 @@ namespace Trader.Data.Sql
     internal class SqlTraderRepository : ITraderRepository
     {
         private readonly SqlTraderRepositoryOptions _options;
+        private readonly IMapper _mapper;
 
-        public SqlTraderRepository(IOptions<SqlTraderRepositoryOptions> options)
+        public SqlTraderRepository(IOptions<SqlTraderRepositoryOptions> options, IMapper mapper)
         {
             _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
         public Task ApplyAsync(CancelStandardOrderResult result, CancellationToken cancellationToken = default)
@@ -72,12 +78,41 @@ namespace Trader.Data.Sql
 
         public Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            _ = order ?? throw new ArgumentNullException(nameof(order));
+
+            return InnerSetOrderAsync(order, cancellationToken);
+        }
+
+        private async Task InnerSetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken)
+        {
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            var entity = _mapper.Map<OrderEntity>(order);
+
+            await connection.ExecuteAsync(new CommandDefinition(
+                    "[dbo].[SetOrder]",
+                    entity,
+                    null,
+                    _options.CommandTimeoutAsInteger,
+                    CommandType.StoredProcedure,
+                    CommandFlags.None,
+                    cancellationToken))
+                .ConfigureAwait(false);
         }
 
         public Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders, CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            _ = orders ?? throw new ArgumentNullException(nameof(orders));
+
+            return InnerSetOrdersAsync(orders, cancellationToken);
+        }
+
+        private async Task InnerSetOrdersAsync(IEnumerable<OrderQueryResult> orders, CancellationToken cancellationToken)
+        {
+            foreach (var order in orders)
+            {
+                await SetOrderAsync(order, cancellationToken).ConfigureAwait(false);
+            }
         }
 
         public Task SetTradesAsync(IEnumerable<AccountTrade> trades, CancellationToken cancellationToken = default)

@@ -146,7 +146,7 @@ namespace Trader.Trading.Algorithms.Step
             if (upper is null) return false;
 
             // calculate the step size
-            var step = upper.OpenPrice * _options.PullbackRatio * 2;
+            var step = upper.OpenPrice * _options.PullbackRatio;
 
             // take the lower band
             var band = _bands.Min;

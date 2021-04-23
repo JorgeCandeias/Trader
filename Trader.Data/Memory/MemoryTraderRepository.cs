@@ -141,26 +141,7 @@ namespace Trader.Data.Memory
 
             foreach (var order in orders)
             {
-                _orders
-                    .GetOrAdd(order.Symbol, _ => new ConcurrentDictionary<long, OrderQueryResult>())
-                    .AddOrUpdate(order.OrderId, order, (key, current) => order);
-
-                // update the max order id index
-                _maxOrderIds.AddOrUpdate(order.Symbol, order.OrderId, (key, current) => order.OrderId > current ? order.OrderId : current);
-
-                // update the transient order index
-                if (order.Status.IsTransientStatus())
-                {
-                    _transientOrders
-                        .GetOrAdd(order.Symbol, _ => new ConcurrentDictionary<long, OrderQueryResult>())
-                        .AddOrUpdate(order.OrderId, order, (key, current) => order);
-                }
-                else
-                {
-                    _transientOrders
-                        .GetOrAdd(order.Symbol, _ => new ConcurrentDictionary<long, OrderQueryResult>())
-                        .TryRemove(order.OrderId, out _);
-                }
+                AddOrUpdateOrder(order);
             }
 
             return Task.CompletedTask;
@@ -187,6 +168,89 @@ namespace Trader.Data.Memory
             }
 
             return Task.CompletedTask;
+        }
+
+        public Task ApplyAsync(CancelStandardOrderResult result, CancellationToken cancellationToken = default)
+        {
+            if (result is null) throw new ArgumentNullException(nameof(result));
+
+            if (_orders.TryGetValue(result.Symbol, out var lookup) && lookup.TryGetValue(result.OrderId, out var item))
+            {
+                // mutate from the existing item
+                var updated = item with
+                {
+                    ClientOrderId = result.ClientOrderId,
+                    CummulativeQuoteQuantity = result.CummulativeQuoteQuantity,
+                    ExecutedQuantity = result.ExecutedQuantity,
+                    OrderListId = result.OrderListId,
+                    OriginalQuantity = result.OriginalQuantity,
+                    Price = result.Price,
+                    Side = result.Side,
+                    Status = result.Status,
+                    TimeInForce = result.TimeInForce,
+                    Type = result.Type
+                };
+
+                // update the store and the indexes
+                AddOrUpdateOrder(updated);
+            }
+
+            return Task.CompletedTask;
+        }
+
+        public Task ApplyAsync(OrderResult result, CancellationToken cancellationToken = default)
+        {
+            if (result is null) throw new ArgumentNullException(nameof(result));
+
+            // todo: move this conversion to auto-mapper
+            var order = new OrderQueryResult(
+                result.Symbol,
+                result.OrderId,
+                result.OrderListId,
+                result.ClientOrderId,
+                result.Price,
+                result.OriginalQuantity,
+                result.ExecutedQuantity,
+                result.CummulativeQuoteQuantity,
+                result.Status,
+                result.TimeInForce,
+                result.Type,
+                result.Side,
+                0,
+                0,
+                result.TransactionTime,
+                result.TransactionTime,
+                true,
+                0);
+
+            AddOrUpdateOrder(order);
+
+            return Task.CompletedTask;
+        }
+
+        private void AddOrUpdateOrder(OrderQueryResult order)
+        {
+            // add or update the main store
+            _orders
+                .GetOrAdd(order.Symbol, _ => new ConcurrentDictionary<long, OrderQueryResult>())
+                .AddOrUpdate(order.OrderId, order, (key, current) => order);
+
+            // update the max order id index
+            _maxOrderIds.AddOrUpdate(order.Symbol, order.OrderId, (key, current) => order.OrderId > current ? order.OrderId : current);
+
+            // update the transient order index
+            if (order.Status.IsTransientStatus())
+            {
+                _transientOrders
+                    .GetOrAdd(order.Symbol, _ => new ConcurrentDictionary<long, OrderQueryResult>())
+                    .AddOrUpdate(order.OrderId, order, (key, current) => order);
+            }
+            else
+            {
+                _transientOrders
+                    .GetOrAdd(order.Symbol, _ => new ConcurrentDictionary<long, OrderQueryResult>())
+                    .TryRemove(order.OrderId, out _);
+            }
         }
 
         #endregion Trader Repository

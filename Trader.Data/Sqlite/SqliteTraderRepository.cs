@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace Trader.Data.Sqlite
 {
+    [Obsolete("To remove")]
     internal class SqliteTraderRepository : ITraderRepository, IHostedService
     {
         public readonly IDbContextFactory<TraderContext> _factory;
@@ -181,6 +182,16 @@ namespace Trader.Data.Sqlite
         }
 
         public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public Task ApplyAsync(CancelStandardOrderResult result, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task ApplyAsync(OrderResult result, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
 
         #endregion IHostedService
     }

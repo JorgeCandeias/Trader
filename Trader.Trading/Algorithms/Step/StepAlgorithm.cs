@@ -146,7 +146,7 @@ namespace Trader.Trading.Algorithms.Step
             if (upper is null) return false;
 
             // calculate the step size
-            var step = upper.OpenPrice * _options.PullbackRatio;
+            var step = upper.OpenPrice * _options.PullbackRatio * 2;
 
             // take the lower band
             var band = _bands.Min;
@@ -161,7 +161,18 @@ namespace Trader.Trading.Algorithms.Step
             // if the above checks fails then close the band
             if (band.OpenOrderId is not 0)
             {
-                var result = await _trader.CancelOrderAsync(new CancelStandardOrder(_options.Symbol, band.OpenOrderId, null, null, null, _clock.UtcNow), cancellationToken);
+                var result = await _trader.CancelOrderAsync(
+                    new CancelStandardOrder(
+                        _options.Symbol,
+                        band.OpenOrderId,
+                        null,
+                        null,
+                        null,
+                        _clock.UtcNow),
+                    cancellationToken);
+
+                // save this order to the repository now to tolerate slow binance api updates
+                await _repository.ApplyAsync(result, cancellationToken);
 
                 _logger.LogInformation(
                     "{Type} {Name} closed out-of-range {OrderSide} {OrderType} for {Quantity} {Asset} at {Price} {Quote}",
@@ -265,13 +276,16 @@ namespace Trader.Trading.Algorithms.Step
                     quantity,
                     null,
                     lowerPrice,
-                    null,
+                    $"{lowerPrice:N8}".Replace(".", "").Replace(",", ""),
                     null,
                     null,
                     NewOrderResponseType.Full,
                     null,
                     _clock.UtcNow),
                 cancellationToken);
+
+            // save this order to the repository now to tolerate slow binance api updates
+            await _repository.ApplyAsync(result, cancellationToken);
 
             _logger.LogInformation(
                 "{Type} {Name} placed {OrderType} {OrderSide} for {Quantity} {Asset} at {Price} {Quote}",
@@ -316,6 +330,9 @@ namespace Trader.Trading.Algorithms.Step
                             _clock.UtcNow),
                         cancellationToken);
 
+                    // save this order to the repository now to tolerate slow binance api updates
+                    await _repository.ApplyAsync(result, cancellationToken);
+
                     band.CloseOrderId = result.OrderId;
 
                     _logger.LogInformation(
@@ -344,7 +361,18 @@ namespace Trader.Trading.Algorithms.Step
                 if (!_bands.Any(x => x.CloseOrderId == order.OrderId))
                 {
                     // close the rogue sell order
-                    var result = await _trader.CancelOrderAsync(new CancelStandardOrder(_options.Symbol, order.OrderId, null, null, null, _clock.UtcNow), cancellationToken);
+                    var result = await _trader.CancelOrderAsync(
+                        new CancelStandardOrder(
+                            _options.Symbol,
+                            order.OrderId,
+                            null,
+                            null,
+                            null,
+                            _clock.UtcNow),
+                        cancellationToken);
+
+                    // save this order to the repository now to tolerate slow binance api updates
+                    await _repository.ApplyAsync(result, cancellationToken);
 
                     _logger.LogWarning(
                         "{Type} {Name} cancelled sell order not associated with a band for {Quantity} {Asset} at {Price} {Quote}",
@@ -379,7 +407,18 @@ namespace Trader.Trading.Algorithms.Step
                 {
                     if (lowest.Price < lowBuyPrice)
                     {
-                        var cancelled = await _trader.CancelOrderAsync(new CancelStandardOrder(_options.Symbol, lowest.OrderId, null, null, null, _clock.UtcNow), cancellationToken);
+                        var cancelled = await _trader.CancelOrderAsync(
+                            new CancelStandardOrder(
+                                _options.Symbol,
+                                lowest.OrderId,
+                                null,
+                                null,
+                                null,
+                                _clock.UtcNow),
+                            cancellationToken);
+
+                        // save this order to the repository now to tolerate slow binance api updates
+                        await _repository.ApplyAsync(cancelled, cancellationToken);
 
                         _logger.LogInformation(
                             "{Type} {Name} cancelled low starting open order with price {Price} for {Quantity} units",
@@ -432,6 +471,9 @@ namespace Trader.Trading.Algorithms.Step
                         null,
                         _clock.UtcNow),
                     cancellationToken);
+
+                // save this order to the repository now to tolerate slow binance api updates
+                await _repository.ApplyAsync(result, cancellationToken);
 
                 _logger.LogInformation(
                     "{Type} {Name} created {OrderSide} {OrderType} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",
@@ -584,7 +626,7 @@ namespace Trader.Trading.Algorithms.Step
             orders = await _repository.GetTransientOrdersAsync(_options.Symbol, OrderSide.Sell, null, cancellationToken);
             foreach (var order in orders)
             {
-                var band = _bands.Except(used).SingleOrDefault(x => x.CloseOrderClientId == order.ClientOrderId && x.ClosePrice == order.Price);
+                var band = _bands.Except(used).SingleOrDefault(x => x.CloseOrderClientId == order.ClientOrderId);
                 if (band is not null)
                 {
                     band.CloseOrderId = order.OrderId;

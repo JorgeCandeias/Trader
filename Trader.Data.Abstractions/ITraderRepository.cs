@@ -10,6 +10,10 @@ namespace Trader.Data
 
         Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders, CancellationToken cancellationToken = default);
 
+        Task ApplyAsync(CancelStandardOrderResult result, CancellationToken cancellationToken = default);
+
+        Task ApplyAsync(OrderResult result, CancellationToken cancellationToken = default);
+
         Task<long> GetMaxOrderIdAsync(string symbol, CancellationToken cancellationToken = default);
 
         Task<long> GetMinTransientOrderIdAsync(string symbol, CancellationToken cancellationToken = default);

@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,23 +16,29 @@ namespace Trader.Trading.Algorithms.Accumulator
         private readonly ILogger _logger;
         private readonly ITradingService _trader;
         private readonly ISystemClock _clock;
+        private readonly IOrderSynchronizer _orderSynchronizer;
+        private readonly ITraderRepository _repository;
 
-        public AccumulatorAlgorithm(string name, IOptionsSnapshot<AccumulatorAlgorithmOptions> options, ILogger<AccumulatorAlgorithm> logger, ITradingService trader, ISystemClock clock)
+        public AccumulatorAlgorithm(string name, IOptionsSnapshot<AccumulatorAlgorithmOptions> options, ILogger<AccumulatorAlgorithm> logger, ITradingService trader, ISystemClock clock, IOrderSynchronizer orderSynchronizer, ITraderRepository repository)
         {
             _name = name ?? throw new ArgumentNullException(nameof(name));
             _options = options.Get(name) ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _orderSynchronizer = orderSynchronizer ?? throw new ArgumentNullException(nameof(orderSynchronizer));
+            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         }
 
         private static string Type => nameof(AccumulatorAlgorithm);
         public string Symbol => _options.Symbol;
 
-        private ImmutableList<OrderQueryResult> _orders = ImmutableList<OrderQueryResult>.Empty;
+        private SortedOrderSet _orders;
 
         public async Task GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default)
         {
+            await _orderSynchronizer.SynchronizeOrdersAsync(_options.Symbol, cancellationToken);
+
             await GetOpenOrdersAsync(cancellationToken);
 
             // get the current price
@@ -95,13 +100,15 @@ namespace Trader.Trading.Algorithms.Accumulator
                     quantity,
                     null,
                     lowBuyPrice,
-                    null,
+                    $"{lowBuyPrice:N8}".Replace(".", "").Replace(",", ""),
                     null,
                     null,
                     NewOrderResponseType.Full,
                     null,
                     _clock.UtcNow),
                 cancellationToken);
+
+            await _repository.ApplyAsync(order, cancellationToken);
 
             _logger.LogInformation(
                 "{Type} {Name} created {OrderSide} {OrderType} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",
@@ -110,12 +117,7 @@ namespace Trader.Trading.Algorithms.Accumulator
 
         private async Task GetOpenOrdersAsync(CancellationToken cancellationToken)
         {
-            _orders = await _trader.GetOpenOrdersAsync(
-                new GetOpenOrders(
-                    _options.Symbol,
-                    null,
-                    _clock.UtcNow),
-                cancellationToken);
+            _orders = await _repository.GetTransientOrdersAsync(_options.Symbol, OrderSide.Buy, default, cancellationToken);
 
             foreach (var order in _orders)
             {
@@ -140,6 +142,8 @@ namespace Trader.Trading.Algorithms.Accumulator
                         null,
                         _clock.UtcNow),
                     cancellationToken);
+
+                await _repository.ApplyAsync(result, cancellationToken);
 
                 _logger.LogInformation(
                     "{Type} {Name} cancelled low starting open order with price {Price} for {Quantity} units",
@@ -166,6 +170,8 @@ namespace Trader.Trading.Algorithms.Accumulator
                         null,
                         _clock.UtcNow),
                     cancellationToken);
+
+                await _repository.ApplyAsync(result, cancellationToken);
 
                 _logger.LogInformation(
                     "{Type} {Name} cancelled low starting open order with price {Price} for {Quantity} units",

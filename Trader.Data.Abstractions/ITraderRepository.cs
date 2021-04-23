@@ -6,6 +6,12 @@ namespace Trader.Data
 {
     public interface ITraderRepository
     {
+        Task<long> GetLastPagedOrderIdAsync(string symbol, CancellationToken cancellationToken = default);
+
+        Task SetLastPagedOrderIdAsync(string symbol, long orderId, CancellationToken cancellationToken = default);
+
+        Task<OrderQueryResult?> GetOrderAsync(string symbol, long orderId, CancellationToken cancellationToken = default);
+
         Task<SortedOrderSet> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default);
 
         Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default);

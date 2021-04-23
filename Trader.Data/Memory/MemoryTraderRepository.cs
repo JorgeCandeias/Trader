@@ -14,11 +14,30 @@ namespace Trader.Data.Memory
         private readonly ConcurrentDictionary<string, long> _maxOrderIds = new();
         private readonly ConcurrentDictionary<string, ConcurrentDictionary<long, OrderQueryResult>> _transientOrders = new();
 
+        private readonly ConcurrentDictionary<string, long> _lastPagedOrderId = new();
+
         private readonly ConcurrentDictionary<string, ConcurrentDictionary<long, AccountTrade>> _trades = new();
         private readonly ConcurrentDictionary<string, long> _maxTradeIds = new();
         private readonly ConcurrentDictionary<string, ConcurrentDictionary<long, ConcurrentDictionary<long, AccountTrade>>> _tradesByOrder = new();
 
         #region Trader Repository
+
+        public Task<long> GetLastPagedOrderIdAsync(string symbol, CancellationToken cancellationToken = default)
+        {
+            if (_lastPagedOrderId.TryGetValue(symbol, out var orderId))
+            {
+                return Task.FromResult(orderId);
+            }
+
+            return Task.FromResult(0L);
+        }
+
+        public Task SetLastPagedOrderIdAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
+        {
+            _lastPagedOrderId[symbol] = orderId;
+
+            return Task.CompletedTask;
+        }
 
         public Task<long> GetMaxOrderIdAsync(string symbol, CancellationToken cancellationToken = default)
         {
@@ -56,6 +75,16 @@ namespace Trader.Data.Memory
             }
 
             return Task.FromResult(result is long.MaxValue ? 0 : result);
+        }
+
+        public Task<OrderQueryResult?> GetOrderAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
+        {
+            if (_orders.TryGetValue(symbol, out var lookup) && lookup.TryGetValue(orderId, out var order))
+            {
+                return Task.FromResult<OrderQueryResult?>(order);
+            }
+
+            return Task.FromResult<OrderQueryResult?>(null);
         }
 
         public Task<SortedOrderSet> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default)

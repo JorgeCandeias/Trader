@@ -28,26 +28,14 @@ namespace Trader.Trading.Algorithms
             var watch = Stopwatch.StartNew();
             var count = 0;
 
-            // first update all known transient orders
-            var transient = await _repository.GetTransientOrdersAsync(symbol, default, default, cancellationToken);
-            foreach (var order in transient)
+            // start from the first known transient order if possible
+            var orderId = await _repository.GetMinTransientOrderIdAsync(symbol, cancellationToken);
+
+            // otherwise start from the max paged order
+            if (orderId is 0)
             {
-                var updated = await _trader.GetOrderAsync(
-                    new OrderQuery(
-                        symbol,
-                        order.OrderId,
-                        default,
-                        default,
-                        _clock.UtcNow),
-                    cancellationToken);
-
-                await _repository.SetOrderAsync(updated, cancellationToken);
-
-                count++;
+                orderId = await _repository.GetLastPagedOrderIdAsync(symbol, cancellationToken);
             }
-
-            // start after the last order
-            var orderId = await _repository.GetMaxOrderIdAsync(symbol, cancellationToken);
 
             // pull all new or updated orders page by page
             while (!cancellationToken.IsCancellationRequested)
@@ -57,8 +45,16 @@ namespace Trader.Trading.Algorithms
                 // break if we got all orders
                 if (orders.Count is 0) break;
 
-                // persist all new and updated orders
-                await _repository.SetOrdersAsync(orders, cancellationToken);
+                // persist only orders that have progressed
+                // this is to tolerate the buggy refresh delay on the binance api
+                foreach (var order in orders)
+                {
+                    var current = await _repository.GetOrderAsync(symbol, order.OrderId, cancellationToken);
+                    if (current is null || order.UpdateTime > current.UpdateTime)
+                    {
+                        await _repository.SetOrderAsync(order, cancellationToken);
+                    }
+                }
 
                 // keep the last order id
                 orderId = orders.Max!.OrderId;
@@ -67,9 +63,12 @@ namespace Trader.Trading.Algorithms
                 count += orders.Count;
             }
 
-            // log the activity only if necessary
             if (count > 0)
             {
+                // save the last paged order to continue from there next time
+                await _repository.SetLastPagedOrderIdAsync(symbol, orderId);
+
+                // log the activity only if necessary
                 _logger.LogInformation(
                     "{Name} {Symbol} pulled {Count} orders up to OrderId {MaxOrderId} in {ElapsedMs}ms",
                     nameof(OrderSynchronizer), symbol, count, orderId, watch.ElapsedMilliseconds);

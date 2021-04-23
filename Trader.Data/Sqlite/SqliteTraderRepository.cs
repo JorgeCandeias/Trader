@@ -198,6 +198,21 @@ namespace Trader.Data.Sqlite
             throw new NotImplementedException();
         }
 
+        public Task<long> GetLastPagedOrderIdAsync(string symbol, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task SetLastPagedOrderIdAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<OrderQueryResult?> GetOrderAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
         #endregion IHostedService
     }
 }

@@ -100,7 +100,7 @@ namespace Trader.Trading.Algorithms.Accumulator
                     quantity,
                     null,
                     lowBuyPrice,
-                    $"{lowBuyPrice:N8}".Replace(".", "").Replace(",", ""),
+                    $"{_options.Symbol}{lowBuyPrice:N8}".Replace(".", "").Replace(",", ""),
                     null,
                     null,
                     NewOrderResponseType.Full,

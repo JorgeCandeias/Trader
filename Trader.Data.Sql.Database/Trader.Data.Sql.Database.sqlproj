@@ -69,5 +69,8 @@
     <Build Include="Procedures\SetTrade.sql" />
     <Build Include="Procedures\GetOrder.sql" />
     <Build Include="Procedures\GetOrders.sql" />
+    <Build Include="Tables\PagedOrder.sql" />
+    <Build Include="Procedures\GetPagedOrder.sql" />
+    <Build Include="Procedures\SetPagedOrder.sql" />
   </ItemGroup>
 </Project>

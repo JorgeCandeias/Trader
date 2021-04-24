@@ -31,11 +31,6 @@ namespace Trader.Data.Sql
             throw new System.NotImplementedException();
         }
 
-        public Task<long> GetLastPagedOrderIdAsync(string symbol, CancellationToken cancellationToken = default)
-        {
-            throw new System.NotImplementedException();
-        }
-
         public Task<long> GetMaxTradeIdAsync(string symbol, CancellationToken cancellationToken = default)
         {
             throw new System.NotImplementedException();
@@ -103,19 +98,62 @@ namespace Trader.Data.Sql
             return _mapper.Map<SortedOrderSet>(entities);
         }
 
-        public Task<SortedTradeSet> GetTradesAsync(string symbol, long? orderId = null, CancellationToken cancellationToken = default)
-        {
-            throw new System.NotImplementedException();
-        }
-
         public Task<SortedOrderSet> GetTransientOrdersAsync(string symbol, OrderSide? orderSide = null, bool? significant = null, CancellationToken cancellationToken = default)
         {
             throw new System.NotImplementedException();
         }
 
+        public Task<long> GetLastPagedOrderIdAsync(string symbol, CancellationToken cancellationToken = default)
+        {
+            _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
+
+            return GetLastPagedOrderIdInnerAsync(symbol, cancellationToken);
+        }
+
+        private async Task<long> GetLastPagedOrderIdInnerAsync(string symbol, CancellationToken cancellationToken)
+        {
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            return await connection
+                .ExecuteScalarAsync<long>(new CommandDefinition(
+                    "[dbo].[GetPagedOrder]",
+                    new
+                    {
+                        symbol
+                    },
+                    null,
+                    _options.CommandTimeoutAsInteger,
+                    CommandType.StoredProcedure,
+                    CommandFlags.Buffered,
+                    cancellationToken))
+                .ConfigureAwait(false);
+        }
+
         public Task SetLastPagedOrderIdAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
+
+            return SetLastPagedOrderIdInnerAsync(symbol, orderId, cancellationToken);
+        }
+
+        private async Task SetLastPagedOrderIdInnerAsync(string symbol, long orderId, CancellationToken cancellationToken)
+        {
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            await connection
+                .ExecuteAsync(new CommandDefinition(
+                    "[dbo].[SetPagedOrder]",
+                    new
+                    {
+                        symbol,
+                        orderId
+                    },
+                    null,
+                    _options.CommandTimeoutAsInteger,
+                    CommandType.Text,
+                    CommandFlags.Buffered,
+                    cancellationToken))
+                .ConfigureAwait(false);
         }
 
         public Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default)
@@ -196,6 +234,11 @@ namespace Trader.Data.Sql
             {
                 await SetTradeAsync(trade, cancellationToken).ConfigureAwait(false);
             }
+        }
+
+        public Task<SortedTradeSet> GetTradesAsync(string symbol, long? orderId = null, CancellationToken cancellationToken = default)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

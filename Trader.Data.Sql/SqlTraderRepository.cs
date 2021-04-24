@@ -36,11 +36,6 @@ namespace Trader.Data.Sql
             throw new System.NotImplementedException();
         }
 
-        public Task<long> GetMaxOrderIdAsync(string symbol, CancellationToken cancellationToken = default)
-        {
-            throw new System.NotImplementedException();
-        }
-
         public Task<long> GetMaxTradeIdAsync(string symbol, CancellationToken cancellationToken = default)
         {
             throw new System.NotImplementedException();

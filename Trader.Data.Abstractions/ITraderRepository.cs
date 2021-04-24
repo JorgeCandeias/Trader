@@ -22,8 +22,6 @@ namespace Trader.Data
 
         Task ApplyAsync(OrderResult result, CancellationToken cancellationToken = default);
 
-        Task<long> GetMaxOrderIdAsync(string symbol, CancellationToken cancellationToken = default);
-
         Task<long> GetMinTransientOrderIdAsync(string symbol, CancellationToken cancellationToken = default);
 
         Task<SortedOrderSet> GetTransientOrdersAsync(string symbol, OrderSide? orderSide = default, bool? significant = default, CancellationToken cancellationToken = default);

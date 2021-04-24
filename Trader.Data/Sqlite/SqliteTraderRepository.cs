@@ -43,17 +43,6 @@ namespace Trader.Data.Sqlite
                 .MinAsync(cancellationToken);
         }
 
-        public async Task<long> GetMaxOrderIdAsync(string symbol, CancellationToken cancellationToken = default)
-        {
-            using var context = _factory.CreateDbContext();
-
-            return await context.Orders
-                .Where(x => x.Symbol == symbol)
-                .Select(x => x.OrderId)
-                .DefaultIfEmpty()
-                .MaxAsync(cancellationToken);
-        }
-
         public async Task<SortedOrderSet> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default)
         {
             using var context = _factory.CreateDbContext();

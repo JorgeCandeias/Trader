@@ -39,16 +39,6 @@ namespace Trader.Data.Memory
             return Task.CompletedTask;
         }
 
-        public Task<long> GetMaxOrderIdAsync(string symbol, CancellationToken cancellationToken = default)
-        {
-            if (_maxOrderIds.TryGetValue(symbol, out var value))
-            {
-                return Task.FromResult(value);
-            }
-
-            return Task.FromResult(0L);
-        }
-
         public Task<long> GetMaxTradeIdAsync(string symbol, CancellationToken cancellationToken = default)
         {
             if (_maxTradeIds.TryGetValue(symbol, out var value))

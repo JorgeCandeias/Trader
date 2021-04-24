@@ -11,6 +11,8 @@ namespace Trader.Data.Sql
 
             CreateMap<AccountTrade, TradeEntity>()
                 .ReverseMap();
+
+            CreateMap<CancelStandardOrderResult, OrderQueryResult>();
         }
     }
 }

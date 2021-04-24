@@ -23,22 +23,82 @@ namespace Trader.Data.Sql
 
         public Task ApplyAsync(CancelStandardOrderResult result, CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            _ = result ?? throw new ArgumentNullException(nameof(result));
+
+            return ApplyInnerAsync(result, cancellationToken);
+        }
+
+        private async Task ApplyInnerAsync(CancelStandardOrderResult result, CancellationToken cancellationToken)
+        {
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            var order = _mapper.Map<OrderQueryResult>(result);
+
+            await SetOrderAsync(order, cancellationToken);
         }
 
         public Task ApplyAsync(OrderResult result, CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            _ = result ?? throw new ArgumentNullException(nameof(result));
+
+            return ApplyInnerAsync(result, cancellationToken);
+        }
+
+        private async Task ApplyInnerAsync(OrderResult result, CancellationToken cancellationToken)
+        {
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            var order = _mapper.Map<OrderQueryResult>(result);
+
+            await SetOrderAsync(order, cancellationToken);
         }
 
         public Task<long> GetMaxTradeIdAsync(string symbol, CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
+
+            return GetMaxTradeIdInnerAsync(symbol, cancellationToken);
+        }
+
+        private async Task<long> GetMaxTradeIdInnerAsync(string symbol, CancellationToken cancellationToken)
+        {
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            return await connection
+                .ExecuteScalarAsync<long>(
+                    new CommandDefinition(
+                        "[dbo].[GetMaxTradeId]",
+                        new { symbol },
+                        null,
+                        _options.CommandTimeoutAsInteger,
+                        CommandType.StoredProcedure,
+                        CommandFlags.Buffered,
+                        cancellationToken))
+                .ConfigureAwait(false);
         }
 
         public Task<long> GetMinTransientOrderIdAsync(string symbol, CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
+
+            return GetMinTransientOrderIdInnerAsync(symbol, cancellationToken);
+        }
+
+        private async Task<long> GetMinTransientOrderIdInnerAsync(string symbol, CancellationToken cancellationToken)
+        {
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            return await connection
+                .ExecuteScalarAsync<long>(
+                    new CommandDefinition(
+                        "[dbo].[GetMinTransientOrderId]",
+                        new { symbol },
+                        null,
+                        _options.CommandTimeoutAsInteger,
+                        CommandType.StoredProcedure,
+                        CommandFlags.Buffered,
+                        cancellationToken))
+                .ConfigureAwait(false);
         }
 
         public Task<OrderQueryResult> GetOrderAsync(string symbol, long orderId, CancellationToken cancellationToken = default)

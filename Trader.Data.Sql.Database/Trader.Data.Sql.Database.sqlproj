@@ -72,5 +72,7 @@
     <Build Include="Tables\PagedOrder.sql" />
     <Build Include="Procedures\GetPagedOrder.sql" />
     <Build Include="Procedures\SetPagedOrder.sql" />
+    <Build Include="Procedures\GetMaxTradeId.sql" />
+    <Build Include="Procedures\GetMinTransientOrderId.sql" />
   </ItemGroup>
 </Project>

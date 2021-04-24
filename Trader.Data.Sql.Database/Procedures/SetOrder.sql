@@ -90,7 +90,7 @@ WHEN NOT MATCHED BY TARGET THEN
         [UpdateTime],
         [IsWorking]
     )
-WHEN MATCHED THEN
+WHEN MATCHED AND [S].[Time] > [T].[Time] THEN
 UPDATE SET
     [OrderListId] = [S].[OrderListId],
     [ClientOrderId] = [S].[ClientOrderId],

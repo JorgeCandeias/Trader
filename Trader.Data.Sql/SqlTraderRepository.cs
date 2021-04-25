@@ -286,15 +286,10 @@ namespace Trader.Data.Sql
                 cancellationToken));
         }
 
-        public Task SetTradesAsync(IEnumerable<AccountTrade> trades, CancellationToken cancellationToken = default)
+        public async Task SetTradesAsync(IEnumerable<AccountTrade> trades, CancellationToken cancellationToken = default)
         {
             _ = trades ?? throw new ArgumentNullException(nameof(trades));
 
-            return SetTradesInnerAsync(trades, cancellationToken);
-        }
-
-        private async Task SetTradesInnerAsync(IEnumerable<AccountTrade> trades, CancellationToken cancellationToken)
-        {
             foreach (var trade in trades)
             {
                 await SetTradeAsync(trade, cancellationToken);

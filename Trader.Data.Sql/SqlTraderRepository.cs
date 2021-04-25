@@ -185,11 +185,22 @@ namespace Trader.Data.Sql
                 cancellationToken));
         }
 
-        public Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default)
+        public async Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default)
         {
             _ = order ?? throw new ArgumentNullException(nameof(order));
 
-            return SetOrderInnerAsync(order, cancellationToken);
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            var entity = _mapper.Map<OrderEntity>(order);
+
+            await connection.ExecuteAsync(new CommandDefinition(
+                "[dbo].[SetOrder]",
+                entity,
+                null,
+                _options.CommandTimeoutAsInteger,
+                CommandType.StoredProcedure,
+                CommandFlags.Buffered,
+                cancellationToken));
         }
 
         public Task SetOrderAsync(CancelStandardOrderResult result, CancellationToken cancellationToken = default)
@@ -204,22 +215,6 @@ namespace Trader.Data.Sql
             _ = result ?? throw new ArgumentNullException(nameof(result));
 
             return SetOrderInnerAsync(result, cancellationToken);
-        }
-
-        private async Task SetOrderInnerAsync(OrderQueryResult order, CancellationToken cancellationToken)
-        {
-            using var connection = new SqlConnection(_options.ConnectionString);
-
-            var entity = _mapper.Map<OrderEntity>(order);
-
-            await connection.ExecuteAsync(new CommandDefinition(
-                "[dbo].[SetOrder]",
-                entity,
-                null,
-                _options.CommandTimeoutAsInteger,
-                CommandType.StoredProcedure,
-                CommandFlags.Buffered,
-                cancellationToken));
         }
 
         private async Task SetOrderInnerAsync(CancelStandardOrderResult result, CancellationToken cancellationToken)

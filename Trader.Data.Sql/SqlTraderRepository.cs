@@ -21,15 +21,10 @@ namespace Trader.Data.Sql
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        public Task<long> GetMaxTradeIdAsync(string symbol, CancellationToken cancellationToken = default)
+        public async Task<long> GetMaxTradeIdAsync(string symbol, CancellationToken cancellationToken = default)
         {
             _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
 
-            return GetMaxTradeIdInnerAsync(symbol, cancellationToken);
-        }
-
-        private async Task<long> GetMaxTradeIdInnerAsync(string symbol, CancellationToken cancellationToken)
-        {
             using var connection = new SqlConnection(_options.ConnectionString);
 
             return await connection.ExecuteScalarAsync<long>(new CommandDefinition(

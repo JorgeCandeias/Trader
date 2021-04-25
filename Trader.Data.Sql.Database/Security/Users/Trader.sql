@@ -1,0 +1,10 @@
+﻿CREATE USER [Trader]
+FOR LOGIN [Trader]
+WITH DEFAULT_SCHEMA = [dbo]
+GO
+
+GRANT CONNECT TO [Trader];
+GO
+
+GRANT EXECUTE TO [Trader];
+GO

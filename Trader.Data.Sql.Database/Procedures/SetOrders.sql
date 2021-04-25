@@ -1,50 +1,11 @@
-﻿CREATE PROCEDURE [dbo].[SetOrder]
-	@Symbol NVARCHAR(100),
-    @OrderId BIGINT,
-    @OrderListId BIGINT,
-    @ClientOrderId NVARCHAR(100),
-    @Price DECIMAL (18,8),
-    @OriginalQuantity DECIMAL (18,8),
-    @ExecutedQuantity DECIMAL (18,8),
-    @CummulativeQuoteQuantity DECIMAL (18,8),
-    @OriginalQuoteOrderQuantity DECIMAL (18,8),
-    @Status INT,
-    @TimeInForce INT,
-    @Type INT,
-    @Side INT,
-    @StopPrice DECIMAL (18,8),
-    @IcebergQuantity DECIMAL (18,8),
-    @Time DATETIME2(7),
-    @UpdateTime DATETIME2(7),
-    @IsWorking BIT
+﻿CREATE PROCEDURE [dbo].[SetOrders]
+    @Orders [dbo].[OrderTableParameter] READONLY
 AS
 
 SET NOCOUNT ON;
 
-WITH [Source] AS
-(
-    SELECT
-        @Symbol AS [Symbol],
-        @OrderId AS [OrderId],
-        @OrderListId AS [OrderListId],
-        @ClientOrderId AS [ClientOrderId],
-        @Price AS [Price],
-        @OriginalQuantity AS [OriginalQuantity],
-        @ExecutedQuantity AS [ExecutedQuantity],
-        @CummulativeQuoteQuantity AS [CummulativeQuoteQuantity],
-        @OriginalQuoteOrderQuantity AS [OriginalQuoteOrderQuantity],
-        @Status AS [Status],
-        @TimeInForce AS [TimeInForce],
-        @Type AS [Type],
-        @Side AS [Side],
-        @StopPrice AS [StopPrice],
-        @IcebergQuantity AS [IcebergQuantity],
-        @Time AS [Time],
-        @UpdateTime AS [UpdateTime],
-        @IsWorking AS [IsWorking]
-)
 MERGE INTO [dbo].[Order] AS [T]
-USING [Source] AS [S]
+USING @Orders AS [S]
     ON [S].[Symbol] = [T].[Symbol]
     AND [S].[OrderId] = [T].[OrderId]
 WHEN NOT MATCHED BY TARGET THEN

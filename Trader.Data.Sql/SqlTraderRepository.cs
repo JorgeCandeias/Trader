@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace Trader.Data.Sql
 {
@@ -235,7 +236,7 @@ namespace Trader.Data.Sql
                     },
                     null,
                     _options.CommandTimeoutAsInteger,
-                    CommandType.Text,
+                    CommandType.StoredProcedure,
                     CommandFlags.Buffered,
                     cancellationToken))
                 .ConfigureAwait(false);
@@ -284,9 +285,31 @@ namespace Trader.Data.Sql
         {
             using var connection = new SqlConnection(_options.ConnectionString);
 
-            var order = _mapper.Map<OrderQueryResult>(result);
+            // todo: push this down to sql server to avoid the round trip
+            // find the order to cancel - the repository should already have it if the algos are behaving well
+            var order = await GetOrderAsync(result.Symbol, result.OrderId).ConfigureAwait(false);
 
-            await SetOrderAsync(order, cancellationToken);
+            // this will happen if the algos are misbehaving
+            if (order is null) throw new InvalidOperationException();
+
+            // mutate the order using the cancelled details
+            var updated = order with
+            {
+                ClientOrderId = result.ClientOrderId,
+                CummulativeQuoteQuantity = result.CummulativeQuoteQuantity,
+                ExecutedQuantity = result.ExecutedQuantity,
+                OrderListId = result.OrderListId,
+                OriginalQuantity = result.OriginalQuantity,
+                Price = result.Price,
+                Side = result.Side,
+                Status = result.Status,
+                TimeInForce = result.TimeInForce,
+                Type = result.Type,
+                UpdateTime = order.UpdateTime.AddMilliseconds(1)
+            };
+
+            // update the order in the repository now
+            await SetOrderAsync(updated, cancellationToken).ConfigureAwait(false);
         }
 
         private async Task SetOrderInnerAsync(OrderResult result, CancellationToken cancellationToken)
@@ -307,10 +330,23 @@ namespace Trader.Data.Sql
 
         private async Task SetOrdersInnerAsync(IEnumerable<OrderQueryResult> orders, CancellationToken cancellationToken)
         {
-            foreach (var order in orders)
-            {
-                await SetOrderAsync(order, cancellationToken).ConfigureAwait(false);
-            }
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            var entities = _mapper.Map<IEnumerable<OrderTableParameterEntity>>(orders);
+
+            await connection
+                .ExecuteAsync(new CommandDefinition(
+                    "[dbo].[SetOrders]",
+                    new
+                    {
+                        Orders = entities.AsSqlDataRecords().AsTableValuedParameter("[dbo].[OrderTableParameter]")
+                    },
+                    null,
+                    _options.CommandTimeoutAsInteger,
+                    CommandType.StoredProcedure,
+                    CommandFlags.Buffered,
+                    cancellationToken))
+                .ConfigureAwait(false);
         }
 
         public Task SetTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default)

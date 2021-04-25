@@ -45,16 +45,8 @@ namespace Trader.Trading.Algorithms
                 // break if we got all orders
                 if (orders.Count is 0) break;
 
-                // persist only orders that have progressed
-                // this is to tolerate the buggy refresh delay on the binance api
-                foreach (var order in orders)
-                {
-                    var current = await _repository.GetOrderAsync(symbol, order.OrderId, cancellationToken);
-                    if (current is null || order.UpdateTime > current.UpdateTime)
-                    {
-                        await _repository.SetOrderAsync(order, cancellationToken);
-                    }
-                }
+                // persist only orders that have progressed - the repository will detect which ones have updated or not
+                await _repository.SetOrdersAsync(orders, cancellationToken);
 
                 // keep the last order id
                 orderId = orders.Max!.OrderId;
@@ -66,7 +58,7 @@ namespace Trader.Trading.Algorithms
             if (count > 0)
             {
                 // save the last paged order to continue from there next time
-                await _repository.SetLastPagedOrderIdAsync(symbol, orderId);
+                await _repository.SetLastPagedOrderIdAsync(symbol, orderId, cancellationToken);
 
                 // log the activity only if necessary
                 _logger.LogInformation(

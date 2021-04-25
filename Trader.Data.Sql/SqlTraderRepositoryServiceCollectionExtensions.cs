@@ -1,7 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System;
+﻿using System;
+using Trader.Data;
+using Trader.Data.Sql;
 
-namespace Trader.Data.Sql
+namespace Microsoft.Extensions.DependencyInjection
 {
     public static class SqlTraderRepositoryServiceCollectionExtensions
     {
@@ -12,7 +13,7 @@ namespace Trader.Data.Sql
                 {
                     options.AddProfile<SqlTraderRepositoryProfile>();
                 })
-                .AddSingleton<SqlTraderRepository>()
+                .AddSingleton<ITraderRepository, SqlTraderRepository>()
                 .AddOptions<SqlTraderRepositoryOptions>()
                 .Configure(configure)
                 .ValidateDataAnnotations()

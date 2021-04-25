@@ -39,7 +39,10 @@ namespace Trader.App
                         .AddTradingHost()
                         .AddSystemClock()
                         .AddSafeTimerFactory()
-                        .AddMemoryRepository()
+                        .AddSqlTraderRepository(options =>
+                        {
+                            options.ConnectionString = context.Configuration.GetConnectionString("Trader");
+                        })
                         .AddBase62NumberSerializer();
 
                     services

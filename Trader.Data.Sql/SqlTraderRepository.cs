@@ -268,15 +268,10 @@ namespace Trader.Data.Sql
                 cancellationToken));
         }
 
-        public Task SetTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default)
+        public async Task SetTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default)
         {
             _ = trade ?? throw new ArgumentNullException(nameof(trade));
 
-            return SetTradeInnerAsync(trade, cancellationToken);
-        }
-
-        private async Task SetTradeInnerAsync(AccountTrade trade, CancellationToken cancellationToken)
-        {
             using var connection = new SqlConnection(_options.ConnectionString);
 
             var entity = _mapper.Map<TradeEntity>(trade);

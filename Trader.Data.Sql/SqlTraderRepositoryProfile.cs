@@ -13,6 +13,8 @@ namespace Trader.Data.Sql
                 .ReverseMap();
 
             CreateMap<CancelStandardOrderResult, OrderQueryResult>();
+
+            CreateMap<OrderResult, OrderQueryResult>();
         }
     }
 }

@@ -92,28 +92,30 @@ namespace Trader.Data.Memory
             return Task.FromResult(result);
         }
 
-        public Task<SortedTradeSet> GetTradesAsync(string symbol, long? orderId = null, CancellationToken cancellationToken = default)
+        public Task<SortedTradeSet> GetTradesAsync(string symbol, CancellationToken cancellationToken = default)
         {
             var result = new SortedTradeSet();
 
-            if (orderId.HasValue)
+            if (_trades.TryGetValue(symbol, out var lookup))
             {
-                if (_tradesByOrder.TryGetValue(symbol, out var lookup1) && lookup1.TryGetValue(orderId.Value, out var lookup2))
+                foreach (var item in lookup)
                 {
-                    foreach (var item in lookup2)
-                    {
-                        result.Add(item.Value);
-                    }
+                    result.Add(item.Value);
                 }
             }
-            else
+
+            return Task.FromResult(result);
+        }
+
+        public Task<SortedTradeSet> GetTradesByOrderIdAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
+        {
+            var result = new SortedTradeSet();
+
+            if (_tradesByOrder.TryGetValue(symbol, out var lookup1) && lookup1.TryGetValue(orderId, out var lookup2))
             {
-                if (_trades.TryGetValue(symbol, out var lookup))
+                foreach (var item in lookup2)
                 {
-                    foreach (var item in lookup)
-                    {
-                        result.Add(item.Value);
-                    }
+                    result.Add(item.Value);
                 }
             }
 

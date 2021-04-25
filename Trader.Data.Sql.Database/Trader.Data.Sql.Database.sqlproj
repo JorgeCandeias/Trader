@@ -9,8 +9,7 @@
     <ProjectGuid>{08ef872d-10fb-4998-8383-ae99f4c17192}</ProjectGuid>
     <DSP>Microsoft.Data.Tools.Schema.Sql.Sql150DatabaseSchemaProvider</DSP>
     <OutputType>Database</OutputType>
-    <RootPath>
-    </RootPath>
+    <RootPath />
     <RootNamespace>Trader.Data.Sql.Database</RootNamespace>
     <AssemblyName>Trader.Data.Sql.Database</AssemblyName>
     <ModelCollation>1033, CI</ModelCollation>
@@ -48,7 +47,6 @@
   </PropertyGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">11.0</VisualStudioVersion>
-    <!-- Default to the v11.0 targets path if the targets file for the current VS version is not found -->
     <SSDTExists Condition="Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets')">True</SSDTExists>
     <VisualStudioVersion Condition="'$(SSDTExists)' == ''">11.0</VisualStudioVersion>
   </PropertyGroup>
@@ -74,5 +72,7 @@
     <Build Include="Procedures\SetPagedOrder.sql" />
     <Build Include="Procedures\GetMaxTradeId.sql" />
     <Build Include="Procedures\GetMinTransientOrderId.sql" />
+    <Build Include="Procedures\GetTrades.sql" />
+    <Build Include="Procedures\GetTradesByOrderId.sql" />
   </ItemGroup>
 </Project>

@@ -158,9 +158,36 @@ namespace Trader.Data.Sql
             return _mapper.Map<SortedOrderSet>(entities);
         }
 
+        // todo: unwrap the calls into specialized queries so we don't need to recompile them all the time
         public Task<SortedOrderSet> GetTransientOrdersAsync(string symbol, OrderSide? orderSide = null, bool? significant = null, CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
+
+            return GetTransientOrdersInnerAsync(symbol, orderSide, significant, cancellationToken);
+        }
+
+        private async Task<SortedOrderSet> GetTransientOrdersInnerAsync(string symbol, OrderSide? orderSide, bool? significant, CancellationToken cancellationToken)
+        {
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            var entities = await connection
+                .QueryAsync<OrderEntity>(new CommandDefinition(
+                    "[dbo].[GetOrders]",
+                    new
+                    {
+                        Symbol = symbol,
+                        Side = orderSide,
+                        Significant = significant,
+                        Transient = true
+                    },
+                    null,
+                    _options.CommandTimeoutAsInteger,
+                    CommandType.StoredProcedure,
+                    CommandFlags.Buffered,
+                    cancellationToken))
+                .ConfigureAwait(false);
+
+            return _mapper.Map<SortedOrderSet>(entities);
         }
 
         public Task<long> GetLastPagedOrderIdAsync(string symbol, CancellationToken cancellationToken = default)
@@ -296,9 +323,46 @@ namespace Trader.Data.Sql
             }
         }
 
-        public Task<SortedTradeSet> GetTradesAsync(string symbol, long? orderId = null, CancellationToken cancellationToken = default)
+        public Task<SortedTradeSet> GetTradesAsync(string symbol, CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
+
+            return GetTradesInnerAsync(symbol, cancellationToken);
+        }
+
+        private async Task<SortedTradeSet> GetTradesInnerAsync(string symbol, CancellationToken cancellationToken)
+        {
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            var result = await connection.QueryAsync<TradeEntity>(
+                new CommandDefinition(
+                    "[dbo].[GetTrades]",
+                    new { symbol },
+                    commandType: CommandType.StoredProcedure,
+                    cancellationToken: cancellationToken));
+
+            return _mapper.Map<SortedTradeSet>(result);
+        }
+
+        public Task<SortedTradeSet> GetTradesByOrderIdAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
+        {
+            _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
+
+            return GetTradesByOrderIdInnerAsync(symbol, orderId, cancellationToken);
+        }
+
+        private async Task<SortedTradeSet> GetTradesByOrderIdInnerAsync(string symbol, long orderId, CancellationToken cancellationToken)
+        {
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            var result = await connection.QueryAsync<TradeEntity>(
+                new CommandDefinition(
+                    "[dbo].[GetTradesByOrderId]",
+                    new { symbol, orderId },
+                    commandType: CommandType.StoredProcedure,
+                    cancellationToken: cancellationToken));
+
+            return _mapper.Map<SortedTradeSet>(result);
         }
     }
 }

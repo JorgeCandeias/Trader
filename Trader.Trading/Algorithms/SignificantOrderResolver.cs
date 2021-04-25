@@ -52,7 +52,7 @@ namespace Trader.Trading.Algorithms
         {
             var watch = Stopwatch.StartNew();
             var orders = await _repository.GetOrdersAsync(symbol, cancellationToken);
-            var trades = await _repository.GetTradesAsync(symbol, null, cancellationToken);
+            var trades = await _repository.GetTradesAsync(symbol, cancellationToken);
             var lookup = trades.ToLookup(x => x.OrderId);
 
             var details = new SortedSet<Map>(MapComparer.Instance);

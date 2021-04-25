@@ -25,3 +25,12 @@
         [OrderId]
     )
 )
+GO
+
+CREATE NONCLUSTERED INDEX [NCI_Order_Symbol_Status]
+ON [dbo].[Order]
+(
+    [Symbol],
+    [Status]
+)
+GO

@@ -172,7 +172,7 @@ namespace Trader.Trading.Algorithms.Step
                     cancellationToken);
 
                 // save this order to the repository now to tolerate slow binance api updates
-                await _repository.ApplyAsync(result, cancellationToken);
+                await _repository.SetOrderAsync(result, cancellationToken);
 
                 _logger.LogInformation(
                     "{Type} {Name} closed out-of-range {OrderSide} {OrderType} for {Quantity} {Asset} at {Price} {Quote}",
@@ -285,7 +285,7 @@ namespace Trader.Trading.Algorithms.Step
                 cancellationToken);
 
             // save this order to the repository now to tolerate slow binance api updates
-            await _repository.ApplyAsync(result, cancellationToken);
+            await _repository.SetOrderAsync(result, cancellationToken);
 
             _logger.LogInformation(
                 "{Type} {Name} placed {OrderType} {OrderSide} for {Quantity} {Asset} at {Price} {Quote}",
@@ -331,7 +331,7 @@ namespace Trader.Trading.Algorithms.Step
                         cancellationToken);
 
                     // save this order to the repository now to tolerate slow binance api updates
-                    await _repository.ApplyAsync(result, cancellationToken);
+                    await _repository.SetOrderAsync(result, cancellationToken);
 
                     band.CloseOrderId = result.OrderId;
 
@@ -372,7 +372,7 @@ namespace Trader.Trading.Algorithms.Step
                         cancellationToken);
 
                     // save this order to the repository now to tolerate slow binance api updates
-                    await _repository.ApplyAsync(result, cancellationToken);
+                    await _repository.SetOrderAsync(result, cancellationToken);
 
                     _logger.LogWarning(
                         "{Type} {Name} cancelled sell order not associated with a band for {Quantity} {Asset} at {Price} {Quote}",
@@ -418,7 +418,7 @@ namespace Trader.Trading.Algorithms.Step
                             cancellationToken);
 
                         // save this order to the repository now to tolerate slow binance api updates
-                        await _repository.ApplyAsync(cancelled, cancellationToken);
+                        await _repository.SetOrderAsync(cancelled, cancellationToken);
 
                         _logger.LogInformation(
                             "{Type} {Name} cancelled low starting open order with price {Price} for {Quantity} units",
@@ -473,7 +473,7 @@ namespace Trader.Trading.Algorithms.Step
                     cancellationToken);
 
                 // save this order to the repository now to tolerate slow binance api updates
-                await _repository.ApplyAsync(result, cancellationToken);
+                await _repository.SetOrderAsync(result, cancellationToken);
 
                 _logger.LogInformation(
                     "{Type} {Name} created {OrderSide} {OrderType} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",

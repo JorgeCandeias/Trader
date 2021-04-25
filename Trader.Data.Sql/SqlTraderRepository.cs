@@ -21,38 +21,6 @@ namespace Trader.Data.Sql
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        public Task ApplyAsync(CancelStandardOrderResult result, CancellationToken cancellationToken = default)
-        {
-            _ = result ?? throw new ArgumentNullException(nameof(result));
-
-            return ApplyInnerAsync(result, cancellationToken);
-        }
-
-        private async Task ApplyInnerAsync(CancelStandardOrderResult result, CancellationToken cancellationToken)
-        {
-            using var connection = new SqlConnection(_options.ConnectionString);
-
-            var order = _mapper.Map<OrderQueryResult>(result);
-
-            await SetOrderAsync(order, cancellationToken);
-        }
-
-        public Task ApplyAsync(OrderResult result, CancellationToken cancellationToken = default)
-        {
-            _ = result ?? throw new ArgumentNullException(nameof(result));
-
-            return ApplyInnerAsync(result, cancellationToken);
-        }
-
-        private async Task ApplyInnerAsync(OrderResult result, CancellationToken cancellationToken)
-        {
-            using var connection = new SqlConnection(_options.ConnectionString);
-
-            var order = _mapper.Map<OrderQueryResult>(result);
-
-            await SetOrderAsync(order, cancellationToken);
-        }
-
         public Task<long> GetMaxTradeIdAsync(string symbol, CancellationToken cancellationToken = default)
         {
             _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
@@ -250,6 +218,20 @@ namespace Trader.Data.Sql
             return SetOrderInnerAsync(order, cancellationToken);
         }
 
+        public Task SetOrderAsync(CancelStandardOrderResult result, CancellationToken cancellationToken = default)
+        {
+            _ = result ?? throw new ArgumentNullException(nameof(result));
+
+            return SetOrderInnerAsync(result, cancellationToken);
+        }
+
+        public Task SetOrderAsync(OrderResult result, CancellationToken cancellationToken = default)
+        {
+            _ = result ?? throw new ArgumentNullException(nameof(result));
+
+            return SetOrderInnerAsync(result, cancellationToken);
+        }
+
         private async Task SetOrderInnerAsync(OrderQueryResult order, CancellationToken cancellationToken)
         {
             using var connection = new SqlConnection(_options.ConnectionString);
@@ -266,6 +248,24 @@ namespace Trader.Data.Sql
                     CommandFlags.Buffered,
                     cancellationToken))
                 .ConfigureAwait(false);
+        }
+
+        private async Task SetOrderInnerAsync(CancelStandardOrderResult result, CancellationToken cancellationToken)
+        {
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            var order = _mapper.Map<OrderQueryResult>(result);
+
+            await SetOrderAsync(order, cancellationToken);
+        }
+
+        private async Task SetOrderInnerAsync(OrderResult result, CancellationToken cancellationToken)
+        {
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            var order = _mapper.Map<OrderQueryResult>(result);
+
+            await SetOrderAsync(order, cancellationToken);
         }
 
         public Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders, CancellationToken cancellationToken = default)

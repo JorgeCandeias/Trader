@@ -108,7 +108,7 @@ namespace Trader.Trading.Algorithms.Accumulator
                     _clock.UtcNow),
                 cancellationToken);
 
-            await _repository.ApplyAsync(order, cancellationToken);
+            await _repository.SetOrderAsync(order, cancellationToken);
 
             _logger.LogInformation(
                 "{Type} {Name} created {OrderSide} {OrderType} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",
@@ -143,7 +143,7 @@ namespace Trader.Trading.Algorithms.Accumulator
                         _clock.UtcNow),
                     cancellationToken);
 
-                await _repository.ApplyAsync(result, cancellationToken);
+                await _repository.SetOrderAsync(result, cancellationToken);
 
                 _logger.LogInformation(
                     "{Type} {Name} cancelled low starting open order with price {Price} for {Quantity} units",
@@ -171,7 +171,7 @@ namespace Trader.Trading.Algorithms.Accumulator
                         _clock.UtcNow),
                     cancellationToken);
 
-                await _repository.ApplyAsync(result, cancellationToken);
+                await _repository.SetOrderAsync(result, cancellationToken);
 
                 _logger.LogInformation(
                     "{Type} {Name} cancelled low starting open order with price {Price} for {Quantity} units",

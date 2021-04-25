@@ -186,7 +186,7 @@ namespace Trader.Data.Memory
             }
         }
 
-        public Task ApplyAsync(CancelStandardOrderResult result, CancellationToken cancellationToken = default)
+        public Task SetOrderAsync(CancelStandardOrderResult result, CancellationToken cancellationToken = default)
         {
             if (result is null) throw new ArgumentNullException(nameof(result));
 
@@ -214,7 +214,7 @@ namespace Trader.Data.Memory
             return Task.CompletedTask;
         }
 
-        public Task ApplyAsync(OrderResult result, CancellationToken cancellationToken = default)
+        public Task SetOrderAsync(OrderResult result, CancellationToken cancellationToken = default)
         {
             if (result is null) throw new ArgumentNullException(nameof(result));
 

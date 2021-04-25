@@ -623,7 +623,7 @@ namespace Trader.Trading.Algorithms.Step
 
             // apply open sell orders to the bands
             var used = new HashSet<Band>();
-            orders = await _repository.GetTransientOrdersAsync(_options.Symbol, OrderSide.Sell, null, cancellationToken);
+            orders = await _repository.GetTransientOrdersBySideAsync(_options.Symbol, OrderSide.Sell, cancellationToken);
             foreach (var order in orders)
             {
                 var band = _bands.Except(used).SingleOrDefault(x => x.CloseOrderClientId == order.ClientOrderId);

@@ -401,7 +401,7 @@ namespace Trader.Trading.Algorithms.Step
                     Type, _name, lowBuyPrice, _options.Quote, ticker.Price, _options.Quote);
 
                 // cancel the lowest open buy order with a open price lower than the lower band to the current price
-                var orders = await _repository.GetTransientOrdersAsync(_options.Symbol, OrderSide.Buy, null, cancellationToken);
+                var orders = await _repository.GetTransientOrdersBySideAsync(_options.Symbol, OrderSide.Buy, cancellationToken);
                 var lowest = orders.FirstOrDefault(x => x.Side == OrderSide.Buy && x.Status.IsTransientStatus());
                 if (lowest is not null)
                 {

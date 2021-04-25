@@ -1,17 +1,17 @@
 ﻿CREATE PROCEDURE [dbo].[SetTrade]
-	@Symbol NVARCHAR(100) NOT NULL,
-    @Id BIGINT NOT NULL,
-    @OrderId BIGINT NOT NULL,
-    @OrderListId BIGINT NOT NULL,
-    @Price DECIMAL (18,8) NOT NULL,
-    @Quantity DECIMAL (18,8) NOT NULL,
-    @QuoteQuantity DECIMAL (18,8) NOT NULL,
-    @Commission DECIMAL (18,8) NOT NULL,
-    @CommissionAsset NVARCHAR(100) NOT NULL,
-    @Time DATETIME2(7) NOT NULL,
-    @IsBuyer BIT NOT NULL,
-    @IsMaker BIT NOT NULL,
-    @IsBestMatch BIT NOT NULL
+	@Symbol NVARCHAR(100),
+    @Id BIGINT,
+    @OrderId BIGINT,
+    @OrderListId BIGINT,
+    @Price DECIMAL (18,8),
+    @Quantity DECIMAL (18,8),
+    @QuoteQuantity DECIMAL (18,8),
+    @Commission DECIMAL (18,8),
+    @CommissionAsset NVARCHAR(100),
+    @Time DATETIME2(7),
+    @IsBuyer BIT,
+    @IsMaker BIT,
+    @IsBestMatch BIT
 AS
 
 SET NOCOUNT ON;

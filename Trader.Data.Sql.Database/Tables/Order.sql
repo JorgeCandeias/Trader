@@ -20,7 +20,7 @@
     [IsWorking] BIT NOT NULL,
 
     /* helpers */
-    [IsTransient] AS CAST(CASE WHEN [Status] IN (1, 2, 5) THEN 1 ELSE 0 END AS BIT) PERSISTED,
+    [IsTransient] AS CAST(CASE WHEN [Status] IN (1, 2, 5) THEN 1 ELSE 0 END AS BIT) PERSISTED NOT NULL,
 
     CONSTRAINT [PK_Order] PRIMARY KEY CLUSTERED
     (

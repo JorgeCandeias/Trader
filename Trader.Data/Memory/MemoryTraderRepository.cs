@@ -158,6 +158,24 @@ namespace Trader.Data.Memory
             return Task.FromResult(result);
         }
 
+        public Task<SortedOrderSet> GetNonSignificantTransientOrdersBySideAsync(string symbol, OrderSide orderSide, CancellationToken cancellationToken = default)
+        {
+            var result = new SortedOrderSet();
+
+            if (_transientOrders.TryGetValue(symbol, out var lookup))
+            {
+                foreach (var item in lookup)
+                {
+                    if (item.Value.Side == orderSide && item.Value.ExecutedQuantity <= 0)
+                    {
+                        result.Add(item.Value);
+                    }
+                }
+            }
+
+            return Task.FromResult(result);
+        }
+
         public Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default)
         {
             if (order is null) throw new ArgumentNullException(nameof(order));

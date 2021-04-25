@@ -531,7 +531,7 @@ namespace Trader.Trading.Algorithms.Step
             }
 
             // apply the non-significant open buy orders to the bands
-            var orders = await _repository.GetTransientOrdersAsync(_options.Symbol, OrderSide.Buy, false, cancellationToken);
+            var orders = await _repository.GetNonSignificantTransientOrdersBySideAsync(_options.Symbol, OrderSide.Buy, cancellationToken);
             foreach (var order in orders)
             {
                 if (order.Price is 0)

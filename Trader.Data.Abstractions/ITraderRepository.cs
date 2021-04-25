@@ -28,6 +28,8 @@ namespace Trader.Data
 
         Task<SortedOrderSet> GetTransientOrdersBySideAsync(string symbol, OrderSide orderSide, CancellationToken cancellationToken = default);
 
+        Task<SortedOrderSet> GetNonSignificantTransientOrdersBySideAsync(string symbol, OrderSide orderSide, CancellationToken cancellationToken = default);
+
         Task<long> GetMaxTradeIdAsync(string symbol, CancellationToken cancellationToken = default);
 
         Task SetTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default);

@@ -74,5 +74,6 @@
     <Build Include="Procedures\GetMinTransientOrderId.sql" />
     <Build Include="Procedures\GetTrades.sql" />
     <Build Include="Procedures\GetTransientOrdersBySide.sql" />
+    <Build Include="Procedures\GetNonSignificantTransientOrdersBySide.sql" />
   </ItemGroup>
 </Project>

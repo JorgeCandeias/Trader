@@ -296,15 +296,10 @@ namespace Trader.Data.Sql
             }
         }
 
-        public Task<SortedTradeSet> GetTradesAsync(string symbol, CancellationToken cancellationToken = default)
+        public async Task<SortedTradeSet> GetTradesAsync(string symbol, CancellationToken cancellationToken = default)
         {
             _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
 
-            return GetTradesInnerAsync(symbol, cancellationToken);
-        }
-
-        private async Task<SortedTradeSet> GetTradesInnerAsync(string symbol, CancellationToken cancellationToken)
-        {
             using var connection = new SqlConnection(_options.ConnectionString);
 
             var result = await connection.QueryAsync<TradeEntity>(new CommandDefinition(

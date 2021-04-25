@@ -146,15 +146,10 @@ namespace Trader.Data.Sql
             return _mapper.Map<SortedOrderSet>(entities);
         }
 
-        public Task<long> GetLastPagedOrderIdAsync(string symbol, CancellationToken cancellationToken = default)
+        public async Task<long> GetLastPagedOrderIdAsync(string symbol, CancellationToken cancellationToken = default)
         {
             _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
 
-            return GetLastPagedOrderIdInnerAsync(symbol, cancellationToken);
-        }
-
-        private async Task<long> GetLastPagedOrderIdInnerAsync(string symbol, CancellationToken cancellationToken)
-        {
             using var connection = new SqlConnection(_options.ConnectionString);
 
             return await connection.ExecuteScalarAsync<long>(new CommandDefinition(

@@ -236,15 +236,10 @@ namespace Trader.Data.Sql
             await SetOrderAsync(updated, cancellationToken);
         }
 
-        public Task SetOrderAsync(OrderResult result, CancellationToken cancellationToken = default)
+        public async Task SetOrderAsync(OrderResult result, CancellationToken cancellationToken = default)
         {
             _ = result ?? throw new ArgumentNullException(nameof(result));
 
-            return SetOrderInnerAsync(result, cancellationToken);
-        }
-
-        private async Task SetOrderInnerAsync(OrderResult result, CancellationToken cancellationToken)
-        {
             using var connection = new SqlConnection(_options.ConnectionString);
 
             var order = _mapper.Map<OrderQueryResult>(result);

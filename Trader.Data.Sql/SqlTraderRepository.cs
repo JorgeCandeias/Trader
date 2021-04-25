@@ -81,15 +81,10 @@ namespace Trader.Data.Sql
             return _mapper.Map<OrderQueryResult>(entity);
         }
 
-        public Task<SortedOrderSet> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default)
+        public async Task<SortedOrderSet> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default)
         {
             _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
 
-            return GetOrdersInnerAsync(symbol, cancellationToken);
-        }
-
-        private async Task<SortedOrderSet> GetOrdersInnerAsync(string symbol, CancellationToken cancellationToken)
-        {
             using var connection = new SqlConnection(_options.ConnectionString);
 
             var entities = await connection.QueryAsync<OrderEntity>(new CommandDefinition(

@@ -59,15 +59,10 @@ namespace Trader.Data.Sql
                 cancellationToken));
         }
 
-        public Task<OrderQueryResult> GetOrderAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
+        public async Task<OrderQueryResult> GetOrderAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
         {
             _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
 
-            return GetOrderInnerAsync(symbol, orderId, cancellationToken);
-        }
-
-        private async Task<OrderQueryResult> GetOrderInnerAsync(string symbol, long orderId, CancellationToken cancellationToken)
-        {
             using var connection = new SqlConnection(_options.ConnectionString);
 
             var entity = await connection.QuerySingleOrDefaultAsync<OrderEntity>(new CommandDefinition(

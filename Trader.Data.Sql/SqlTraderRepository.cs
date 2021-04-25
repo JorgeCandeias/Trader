@@ -126,38 +126,6 @@ namespace Trader.Data.Sql
             return _mapper.Map<SortedOrderSet>(entities);
         }
 
-        // todo: unwrap the calls into specialized queries so we don't need to recompile them all the time
-        public Task<SortedOrderSet> GetTransientOrdersAsync(string symbol, OrderSide? orderSide = null, bool? significant = null, CancellationToken cancellationToken = default)
-        {
-            _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
-
-            return GetTransientOrdersInnerAsync(symbol, orderSide, significant, cancellationToken);
-        }
-
-        private async Task<SortedOrderSet> GetTransientOrdersInnerAsync(string symbol, OrderSide? orderSide, bool? significant, CancellationToken cancellationToken)
-        {
-            using var connection = new SqlConnection(_options.ConnectionString);
-
-            var entities = await connection
-                .QueryAsync<OrderEntity>(new CommandDefinition(
-                    "[dbo].[GetOrders]",
-                    new
-                    {
-                        Symbol = symbol,
-                        Side = orderSide,
-                        Significant = significant,
-                        Transient = true
-                    },
-                    null,
-                    _options.CommandTimeoutAsInteger,
-                    CommandType.StoredProcedure,
-                    CommandFlags.Buffered,
-                    cancellationToken))
-                .ConfigureAwait(false);
-
-            return _mapper.Map<SortedOrderSet>(entities);
-        }
-
         public Task<SortedOrderSet> GetTransientOrdersBySideAsync(string symbol, OrderSide orderSide, CancellationToken cancellationToken = default)
         {
             _ = symbol ?? throw new ArgumentNullException(nameof(symbol));

@@ -247,15 +247,10 @@ namespace Trader.Data.Sql
             await SetOrderAsync(order, cancellationToken);
         }
 
-        public Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders, CancellationToken cancellationToken = default)
+        public async Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders, CancellationToken cancellationToken = default)
         {
             _ = orders ?? throw new ArgumentNullException(nameof(orders));
 
-            return SetOrdersInnerAsync(orders, cancellationToken);
-        }
-
-        private async Task SetOrdersInnerAsync(IEnumerable<OrderQueryResult> orders, CancellationToken cancellationToken)
-        {
             using var connection = new SqlConnection(_options.ConnectionString);
 
             var entities = _mapper.Map<IEnumerable<OrderTableParameterEntity>>(orders);

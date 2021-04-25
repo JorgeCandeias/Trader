@@ -203,22 +203,10 @@ namespace Trader.Data.Sql
                 cancellationToken));
         }
 
-        public Task SetOrderAsync(CancelStandardOrderResult result, CancellationToken cancellationToken = default)
+        public async Task SetOrderAsync(CancelStandardOrderResult result, CancellationToken cancellationToken = default)
         {
             _ = result ?? throw new ArgumentNullException(nameof(result));
 
-            return SetOrderInnerAsync(result, cancellationToken);
-        }
-
-        public Task SetOrderAsync(OrderResult result, CancellationToken cancellationToken = default)
-        {
-            _ = result ?? throw new ArgumentNullException(nameof(result));
-
-            return SetOrderInnerAsync(result, cancellationToken);
-        }
-
-        private async Task SetOrderInnerAsync(CancelStandardOrderResult result, CancellationToken cancellationToken)
-        {
             using var connection = new SqlConnection(_options.ConnectionString);
 
             // todo: push this down to sql server to avoid the round trip
@@ -246,6 +234,13 @@ namespace Trader.Data.Sql
 
             // update the order in the repository now
             await SetOrderAsync(updated, cancellationToken);
+        }
+
+        public Task SetOrderAsync(OrderResult result, CancellationToken cancellationToken = default)
+        {
+            _ = result ?? throw new ArgumentNullException(nameof(result));
+
+            return SetOrderInnerAsync(result, cancellationToken);
         }
 
         private async Task SetOrderInnerAsync(OrderResult result, CancellationToken cancellationToken)

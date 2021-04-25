@@ -165,15 +165,10 @@ namespace Trader.Data.Sql
                 cancellationToken));
         }
 
-        public Task SetLastPagedOrderIdAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
+        public async Task SetLastPagedOrderIdAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
         {
             _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
 
-            return SetLastPagedOrderIdInnerAsync(symbol, orderId, cancellationToken);
-        }
-
-        private async Task SetLastPagedOrderIdInnerAsync(string symbol, long orderId, CancellationToken cancellationToken)
-        {
             using var connection = new SqlConnection(_options.ConnectionString);
 
             await connection.ExecuteAsync(new CommandDefinition(

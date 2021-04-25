@@ -33,15 +33,17 @@ namespace Trader.Data.Sql
             using var connection = new SqlConnection(_options.ConnectionString);
 
             return await connection
-                .ExecuteScalarAsync<long>(
-                    new CommandDefinition(
-                        "[dbo].[GetMaxTradeId]",
-                        new { symbol },
-                        null,
-                        _options.CommandTimeoutAsInteger,
-                        CommandType.StoredProcedure,
-                        CommandFlags.Buffered,
-                        cancellationToken))
+                .ExecuteScalarAsync<long>(new CommandDefinition(
+                    "[dbo].[GetMaxTradeId]",
+                    new
+                    {
+                        Symbol = symbol
+                    },
+                    null,
+                    _options.CommandTimeoutAsInteger,
+                    CommandType.StoredProcedure,
+                    CommandFlags.Buffered,
+                    cancellationToken))
                 .ConfigureAwait(false);
         }
 
@@ -57,15 +59,17 @@ namespace Trader.Data.Sql
             using var connection = new SqlConnection(_options.ConnectionString);
 
             return await connection
-                .ExecuteScalarAsync<long>(
-                    new CommandDefinition(
-                        "[dbo].[GetMinTransientOrderId]",
-                        new { symbol },
-                        null,
-                        _options.CommandTimeoutAsInteger,
-                        CommandType.StoredProcedure,
-                        CommandFlags.Buffered,
-                        cancellationToken))
+                .ExecuteScalarAsync<long>(new CommandDefinition(
+                    "[dbo].[GetMinTransientOrderId]",
+                    new
+                    {
+                        Symbol = symbol
+                    },
+                    null,
+                    _options.CommandTimeoutAsInteger,
+                    CommandType.StoredProcedure,
+                    CommandFlags.Buffered,
+                    cancellationToken))
                 .ConfigureAwait(false);
         }
 
@@ -85,8 +89,8 @@ namespace Trader.Data.Sql
                     "[dbo].[GetOrder]",
                     new
                     {
-                        symbol,
-                        orderId
+                        Symbol = symbol,
+                        OrderId = orderId
                     },
                     null,
                     _options.CommandTimeoutAsInteger,
@@ -114,7 +118,7 @@ namespace Trader.Data.Sql
                     "[dbo].[GetOrders]",
                     new
                     {
-                        symbol
+                        Symbol = symbol
                     },
                     null,
                     _options.CommandTimeoutAsInteger,
@@ -137,16 +141,20 @@ namespace Trader.Data.Sql
         {
             using var connection = new SqlConnection(_options.ConnectionString);
 
-            var entities = await connection.QueryAsync<OrderEntity>(
-                new CommandDefinition(
+            var entities = await connection
+                .QueryAsync<OrderEntity>(new CommandDefinition(
                     "[dbo].[GetTransientOrdersBySide]",
                     new
                     {
                         Symbol = symbol,
                         Side = orderSide
                     },
-                    commandType: CommandType.StoredProcedure,
-                    cancellationToken: cancellationToken));
+                    null,
+                    _options.CommandTimeoutAsInteger,
+                    CommandType.StoredProcedure,
+                    CommandFlags.Buffered,
+                    cancellationToken))
+                .ConfigureAwait(false);
 
             return _mapper.Map<SortedOrderSet>(entities);
         }
@@ -162,16 +170,20 @@ namespace Trader.Data.Sql
         {
             using var connection = new SqlConnection(_options.ConnectionString);
 
-            var entities = await connection.QueryAsync<OrderEntity>(
-                new CommandDefinition(
+            var entities = await connection
+                .QueryAsync<OrderEntity>(new CommandDefinition(
                     "[dbo].[GetNonSignificantTransientOrdersBySide]",
                     new
                     {
                         Symbol = symbol,
                         Side = orderSide
                     },
-                    commandType: CommandType.StoredProcedure,
-                    cancellationToken: cancellationToken));
+                    null,
+                    _options.CommandTimeoutAsInteger,
+                    CommandType.StoredProcedure,
+                    CommandFlags.Buffered,
+                    cancellationToken))
+                .ConfigureAwait(false);
 
             return _mapper.Map<SortedOrderSet>(entities);
         }
@@ -192,7 +204,7 @@ namespace Trader.Data.Sql
                     "[dbo].[GetPagedOrder]",
                     new
                     {
-                        symbol
+                        Symbol = symbol
                     },
                     null,
                     _options.CommandTimeoutAsInteger,
@@ -218,8 +230,8 @@ namespace Trader.Data.Sql
                     "[dbo].[SetPagedOrder]",
                     new
                     {
-                        symbol,
-                        orderId
+                        Symbol = symbol,
+                        OrderId = orderId
                     },
                     null,
                     _options.CommandTimeoutAsInteger,
@@ -352,12 +364,19 @@ namespace Trader.Data.Sql
         {
             using var connection = new SqlConnection(_options.ConnectionString);
 
-            var result = await connection.QueryAsync<TradeEntity>(
-                new CommandDefinition(
+            var result = await connection
+                .QueryAsync<TradeEntity>(new CommandDefinition(
                     "[dbo].[GetTrades]",
-                    new { symbol },
-                    commandType: CommandType.StoredProcedure,
-                    cancellationToken: cancellationToken));
+                    new
+                    {
+                        Symbol = symbol
+                    },
+                    null,
+                    _options.CommandTimeoutAsInteger,
+                    CommandType.StoredProcedure,
+                    CommandFlags.Buffered,
+                    cancellationToken))
+                .ConfigureAwait(false);
 
             return _mapper.Map<SortedTradeSet>(result);
         }

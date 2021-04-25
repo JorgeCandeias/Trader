@@ -352,7 +352,7 @@ namespace Trader.Trading.Algorithms.Step
         private async Task<bool> TryCancelRogueSellOrdersAsync(CancellationToken cancellationToken = default)
         {
             // get all transient sell orders
-            var orders = await _repository.GetTransientOrdersAsync(_options.Symbol, OrderSide.Sell, null, cancellationToken);
+            var orders = await _repository.GetTransientOrdersBySideAsync(_options.Symbol, OrderSide.Sell, cancellationToken);
 
             var fail = false;
 

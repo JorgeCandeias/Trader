@@ -73,6 +73,5 @@
     <Build Include="Procedures\GetMaxTradeId.sql" />
     <Build Include="Procedures\GetMinTransientOrderId.sql" />
     <Build Include="Procedures\GetTrades.sql" />
-    <Build Include="Procedures\GetTradesByOrderId.sql" />
   </ItemGroup>
 </Project>

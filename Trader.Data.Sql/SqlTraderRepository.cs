@@ -343,26 +343,5 @@ namespace Trader.Data.Sql
 
             return _mapper.Map<SortedTradeSet>(result);
         }
-
-        public Task<SortedTradeSet> GetTradesByOrderIdAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
-        {
-            _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
-
-            return GetTradesByOrderIdInnerAsync(symbol, orderId, cancellationToken);
-        }
-
-        private async Task<SortedTradeSet> GetTradesByOrderIdInnerAsync(string symbol, long orderId, CancellationToken cancellationToken)
-        {
-            using var connection = new SqlConnection(_options.ConnectionString);
-
-            var result = await connection.QueryAsync<TradeEntity>(
-                new CommandDefinition(
-                    "[dbo].[GetTradesByOrderId]",
-                    new { symbol, orderId },
-                    commandType: CommandType.StoredProcedure,
-                    cancellationToken: cancellationToken));
-
-            return _mapper.Map<SortedTradeSet>(result);
-        }
     }
 }

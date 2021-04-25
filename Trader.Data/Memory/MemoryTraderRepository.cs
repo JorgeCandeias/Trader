@@ -18,7 +18,6 @@ namespace Trader.Data.Memory
 
         private readonly ConcurrentDictionary<string, ConcurrentDictionary<long, AccountTrade>> _trades = new();
         private readonly ConcurrentDictionary<string, long> _maxTradeIds = new();
-        private readonly ConcurrentDictionary<string, ConcurrentDictionary<long, ConcurrentDictionary<long, AccountTrade>>> _tradesByOrder = new();
 
         #region Trader Repository
 
@@ -107,21 +106,6 @@ namespace Trader.Data.Memory
             return Task.FromResult(result);
         }
 
-        public Task<SortedTradeSet> GetTradesByOrderIdAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
-        {
-            var result = new SortedTradeSet();
-
-            if (_tradesByOrder.TryGetValue(symbol, out var lookup1) && lookup1.TryGetValue(orderId, out var lookup2))
-            {
-                foreach (var item in lookup2)
-                {
-                    result.Add(item.Value);
-                }
-            }
-
-            return Task.FromResult(result);
-        }
-
         public Task<SortedOrderSet> GetTransientOrdersAsync(string symbol, OrderSide? orderSide = null, bool? significant = null, CancellationToken cancellationToken = default)
         {
             var result = new SortedOrderSet();
@@ -188,12 +172,6 @@ namespace Trader.Data.Memory
             // update the max trade id index
             _maxTradeIds
                 .AddOrUpdate(trade.Symbol, trade.Id, (key, current) => trade.Id > current ? trade.Id : current);
-
-            // update the trades by order index
-            _tradesByOrder
-                .GetOrAdd(trade.Symbol, _ => new ConcurrentDictionary<long, ConcurrentDictionary<long, AccountTrade>>())
-                .GetOrAdd(trade.OrderId, _ => new ConcurrentDictionary<long, AccountTrade>())
-                .AddOrUpdate(trade.Id, trade, (key, current) => trade);
 
             return Task.CompletedTask;
         }

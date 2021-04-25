@@ -50,6 +50,7 @@ namespace Trader.Trading.Algorithms
 
         public async Task<SignificantResult> ResolveAsync(string symbol, CancellationToken cancellationToken = default)
         {
+            // todo: push this mapping effort to the repository so less data needs to move about
             var watch = Stopwatch.StartNew();
             var orders = await _repository.GetOrdersAsync(symbol, cancellationToken);
             var trades = await _repository.GetTradesAsync(symbol, cancellationToken);

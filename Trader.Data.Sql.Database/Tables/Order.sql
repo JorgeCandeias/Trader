@@ -19,6 +19,9 @@
     [UpdateTime] DATETIME2(7) NOT NULL,
     [IsWorking] BIT NOT NULL,
 
+    /* helpers */
+    [IsTransient] AS CAST(CASE WHEN [Status] IN (1, 2, 5) THEN 1 ELSE 0 END AS BIT) PERSISTED,
+
     CONSTRAINT [PK_Order] PRIMARY KEY CLUSTERED
     (
         [Symbol],
@@ -27,10 +30,11 @@
 )
 GO
 
-CREATE NONCLUSTERED INDEX [NCI_Order_Symbol_Status]
+/* this index helps to quickly identify all transient orders for a symbol */
+CREATE NONCLUSTERED INDEX [NCI_Order_Symbol_IsTransient]
 ON [dbo].[Order]
 (
     [Symbol],
-    [Status]
+    [IsTransient]
 )
 GO

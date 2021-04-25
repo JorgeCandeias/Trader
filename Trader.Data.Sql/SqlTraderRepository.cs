@@ -40,15 +40,10 @@ namespace Trader.Data.Sql
                 cancellationToken));
         }
 
-        public Task<long> GetMinTransientOrderIdAsync(string symbol, CancellationToken cancellationToken = default)
+        public async Task<long> GetMinTransientOrderIdAsync(string symbol, CancellationToken cancellationToken = default)
         {
             _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
 
-            return GetMinTransientOrderIdInnerAsync(symbol, cancellationToken);
-        }
-
-        private async Task<long> GetMinTransientOrderIdInnerAsync(string symbol, CancellationToken cancellationToken)
-        {
             using var connection = new SqlConnection(_options.ConnectionString);
 
             return await connection.ExecuteScalarAsync<long>(new CommandDefinition(

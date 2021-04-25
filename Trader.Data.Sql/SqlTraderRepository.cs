@@ -124,15 +124,10 @@ namespace Trader.Data.Sql
             return _mapper.Map<SortedOrderSet>(entities);
         }
 
-        public Task<SortedOrderSet> GetNonSignificantTransientOrdersBySideAsync(string symbol, OrderSide orderSide, CancellationToken cancellationToken = default)
+        public async Task<SortedOrderSet> GetNonSignificantTransientOrdersBySideAsync(string symbol, OrderSide orderSide, CancellationToken cancellationToken = default)
         {
             _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
 
-            return GetNonSignificantTransientOrdersBySideInnerAsync(symbol, orderSide, cancellationToken);
-        }
-
-        private async Task<SortedOrderSet> GetNonSignificantTransientOrdersBySideInnerAsync(string symbol, OrderSide orderSide, CancellationToken cancellationToken)
-        {
             using var connection = new SqlConnection(_options.ConnectionString);
 
             var entities = await connection.QueryAsync<OrderEntity>(new CommandDefinition(

@@ -117,7 +117,7 @@ namespace Trader.Trading.Algorithms.Accumulator
 
         private async Task GetOpenOrdersAsync(CancellationToken cancellationToken)
         {
-            _orders = await _repository.GetTransientOrdersAsync(_options.Symbol, OrderSide.Buy, default, cancellationToken);
+            _orders = await _repository.GetTransientOrdersAsync(_options.Symbol, OrderSide.Buy, null, cancellationToken);
 
             foreach (var order in _orders)
             {

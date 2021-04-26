@@ -53,8 +53,14 @@ namespace Trader.Trading.Algorithms
         {
             // todo: push this mapping effort to the repository so less data needs to move about
             var watch = Stopwatch.StartNew();
-            var orders = await _repository.GetOrdersAsync(symbol, cancellationToken);
-            var trades = await _repository.GetTradesAsync(symbol, cancellationToken);
+            var orders = await _repository
+                .GetOrdersAsync(symbol, cancellationToken)
+                .ConfigureAwait(false);
+
+            var trades = await _repository
+                .GetTradesAsync(symbol, cancellationToken)
+                .ConfigureAwait(false);
+
             var lookup = trades.ToLookup(x => x.OrderId);
 
             var details = new SortedSet<Map>(MapComparer.Instance);

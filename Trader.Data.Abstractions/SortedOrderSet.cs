@@ -4,6 +4,7 @@ using Trader.Models;
 
 namespace Trader.Data
 {
+    // todo: make this class immutable
     public class SortedOrderSet : SortedSet<OrderQueryResult>
     {
         public SortedOrderSet() : base(OrderIdComparer.Instance)

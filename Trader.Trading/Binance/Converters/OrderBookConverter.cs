@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using System.Collections.Immutable;
 using System.Linq;
-using Trader.Data;
+using Trader.Models;
 
 namespace Trader.Trading.Binance.Converters
 {

@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Trader.Data;
+using Trader.Models;
 
 namespace Trader.Trading.Algorithms.BreakEven
 {

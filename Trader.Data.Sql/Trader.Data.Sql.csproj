@@ -6,6 +6,7 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

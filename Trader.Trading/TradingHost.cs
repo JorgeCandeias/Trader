@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Trader.Core.Time;
 using Trader.Core.Timers;
-using Trader.Data;
+using Trader.Models;
 using Trader.Trading.Algorithms;
 
 namespace Trader.Trading

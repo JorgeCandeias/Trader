@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Trader.Data;
+using Trader.Models;
 
 namespace Trader.Trading.Algorithms
 {

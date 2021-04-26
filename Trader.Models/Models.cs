@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Collections.Immutable;
 
-// todo: move all these models to the core project
-namespace Trader.Data
+namespace Trader.Models
 {
     public enum RateLimitType
     {

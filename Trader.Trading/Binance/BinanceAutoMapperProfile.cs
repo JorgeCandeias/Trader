@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text.Json;
-using Trader.Data;
+using Trader.Models;
 using Trader.Trading.Binance.Converters;
 
 namespace Trader.Trading.Binance

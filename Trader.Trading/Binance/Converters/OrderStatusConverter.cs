@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using Trader.Data;
+using Trader.Models;
 
 namespace Trader.Trading.Binance.Converters
 {

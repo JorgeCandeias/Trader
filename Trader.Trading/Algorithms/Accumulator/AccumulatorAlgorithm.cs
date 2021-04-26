@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Trader.Core.Time;
 using Trader.Data;
+using Trader.Models;
 
 namespace Trader.Trading.Algorithms.Accumulator
 {

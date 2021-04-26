@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
-using Trader.Data;
+using Trader.Models;
 
 namespace Trader.Trading.Binance
 {

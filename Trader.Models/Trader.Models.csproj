@@ -2,12 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-    <RootNamespace>Trader.Data</RootNamespace>
-    <Nullable>enable</Nullable>
     <NeutralLanguage>en-GB</NeutralLanguage>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -20,9 +19,4 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Trader.Models\Trader.Models.csproj" />
-  </ItemGroup>
-
 </Project>

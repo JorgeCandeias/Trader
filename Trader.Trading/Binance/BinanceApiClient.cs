@@ -12,7 +12,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
-using Trader.Data;
+using Trader.Models;
 
 namespace Trader.Trading.Binance
 {

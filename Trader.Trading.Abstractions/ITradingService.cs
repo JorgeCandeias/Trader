@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Trader.Data;
+using Trader.Models;
 
 namespace Trader.Trading
 {

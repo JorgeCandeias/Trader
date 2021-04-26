@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Trader.Core.Time;
 using Trader.Data;
+using Trader.Models;
 using static System.String;
 
 namespace Trader.Trading.Algorithms.Step

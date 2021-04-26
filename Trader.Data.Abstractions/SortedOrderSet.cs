@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Trader.Models;
 
 namespace Trader.Data
 {

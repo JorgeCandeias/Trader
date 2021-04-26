@@ -44,7 +44,10 @@ namespace Trader.Trading.Binance
         {
             BinanceApiContext.CaptureUsage = true;
 
-            var output = await _client.GetExchangeInfoAsync(cancellationToken);
+            var output = await _client
+                .GetExchangeInfoAsync(cancellationToken)
+                .ConfigureAwait(false);
+
             var result = _mapper.Map<ExchangeInfo>(output);
             var usage = _mapper.Map<ImmutableList<Usage>>(BinanceApiContext.Usage);
 
@@ -57,7 +60,10 @@ namespace Trader.Trading.Binance
         {
             BinanceApiContext.CaptureUsage = true;
 
-            var output = await _client.GetSymbolPriceTickerAsync(symbol, cancellationToken);
+            var output = await _client
+                .GetSymbolPriceTickerAsync(symbol, cancellationToken)
+                .ConfigureAwait(false);
+
             var result = _mapper.Map<SymbolPriceTicker>(output);
 
             UpdateUsage(BinanceApiContext.Usage);
@@ -70,7 +76,11 @@ namespace Trader.Trading.Binance
             BinanceApiContext.CaptureUsage = true;
 
             var input = _mapper.Map<AccountTradesRequestModel>(model);
-            var output = await _client.GetAccountTradesAsync(input, cancellationToken);
+
+            var output = await _client
+                .GetAccountTradesAsync(input, cancellationToken)
+                .ConfigureAwait(false);
+
             var result = _mapper.Map<SortedTradeSet>(output);
             var used = _mapper.Map<ImmutableList<Usage>>(BinanceApiContext.Usage);
 
@@ -86,7 +96,11 @@ namespace Trader.Trading.Binance
             BinanceApiContext.CaptureUsage = true;
 
             var input = _mapper.Map<GetOpenOrdersRequestModel>(model);
-            var output = await _client.GetOpenOrdersAsync(input, cancellationToken);
+
+            var output = await _client
+                .GetOpenOrdersAsync(input, cancellationToken)
+                .ConfigureAwait(false);
+
             var result = _mapper.Map<ImmutableList<OrderQueryResult>>(output);
             var used = _mapper.Map<ImmutableList<Usage>>(BinanceApiContext.Usage);
 
@@ -102,7 +116,11 @@ namespace Trader.Trading.Binance
             BinanceApiContext.CaptureUsage = true;
 
             var input = _mapper.Map<GetOrderRequestModel>(model);
-            var output = await _client.GetOrderAsync(input, cancellationToken);
+
+            var output = await _client
+                .GetOrderAsync(input, cancellationToken)
+                .ConfigureAwait(false);
+
             var result = _mapper.Map<OrderQueryResult>(output);
             var used = _mapper.Map<ImmutableList<Usage>>(BinanceApiContext.Usage);
 
@@ -118,7 +136,11 @@ namespace Trader.Trading.Binance
             BinanceApiContext.CaptureUsage = true;
 
             var input = _mapper.Map<GetAllOrdersRequestModel>(model);
-            var output = await _client.GetAllOrdersAsync(input, cancellationToken);
+
+            var output = await _client
+                .GetAllOrdersAsync(input, cancellationToken)
+                .ConfigureAwait(false);
+
             var result = _mapper.Map<SortedOrderSet>(output);
             var used = _mapper.Map<ImmutableList<Usage>>(BinanceApiContext.Usage);
 
@@ -134,7 +156,11 @@ namespace Trader.Trading.Binance
             BinanceApiContext.CaptureUsage = true;
 
             var input = _mapper.Map<NewOrderRequestModel>(model);
-            var output = await _client.CreateOrderAsync(input, cancellationToken);
+
+            var output = await _client
+                .CreateOrderAsync(input, cancellationToken)
+                .ConfigureAwait(false);
+
             var result = _mapper.Map<OrderResult>(output);
 
             UpdateUsage(BinanceApiContext.Usage);
@@ -149,7 +175,11 @@ namespace Trader.Trading.Binance
             BinanceApiContext.CaptureUsage = true;
 
             var input = _mapper.Map<CancelOrderRequestModel>(model);
-            var output = await _client.CancelOrderAsync(input, cancellationToken);
+
+            var output = await _client
+                .CancelOrderAsync(input, cancellationToken)
+                .ConfigureAwait(false);
+
             var result = _mapper.Map<CancelStandardOrderResult>(output);
 
             UpdateUsage(BinanceApiContext.Usage);
@@ -164,7 +194,11 @@ namespace Trader.Trading.Binance
             BinanceApiContext.CaptureUsage = true;
 
             var input = _mapper.Map<AccountRequestModel>(model);
-            var output = await _client.GetAccountInfoAsync(input, cancellationToken);
+
+            var output = await _client
+                .GetAccountInfoAsync(input, cancellationToken)
+                .ConfigureAwait(false);
+
             var result = _mapper.Map<AccountInfo>(output);
             var used = _mapper.Map<ImmutableList<Usage>>(BinanceApiContext.Usage);
 
@@ -173,9 +207,9 @@ namespace Trader.Trading.Binance
             return result;
         }
 
-        public async Task StartAsync(CancellationToken cancellationToken)
+        public Task StartAsync(CancellationToken cancellationToken)
         {
-            await SyncLimitsAsync(cancellationToken);
+            return SyncLimitsAsync(cancellationToken);
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
@@ -190,7 +224,11 @@ namespace Trader.Trading.Binance
             _logger.LogInformation("{Name} querying exchange rate limits...", Name);
 
             // get the exchange request limits
-            var info = _mapper.Map<ExchangeInfo>(await _client.GetExchangeInfoAsync(cancellationToken));
+            var result = await _client
+                .GetExchangeInfoAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            var info = _mapper.Map<ExchangeInfo>(result);
 
             // keep the request weight limits
             foreach (var limit in info.RateLimits)

@@ -209,31 +209,16 @@ namespace Trader.Data.Sql
 
             using var connection = new SqlConnection(_options.ConnectionString);
 
-            // todo: push this down to sql server to avoid the round trip
-            // find the order to cancel - the repository should already have it if the algos are behaving well
-            var order = await GetOrderAsync(result.Symbol, result.OrderId);
+            var entity = _mapper.Map<CancelOrderEntity>(result);
 
-            // this will happen if the algos are misbehaving
-            if (order is null) throw new InvalidOperationException();
-
-            // mutate the order using the cancelled details
-            var updated = order with
-            {
-                ClientOrderId = result.ClientOrderId,
-                CummulativeQuoteQuantity = result.CummulativeQuoteQuantity,
-                ExecutedQuantity = result.ExecutedQuantity,
-                OrderListId = result.OrderListId,
-                OriginalQuantity = result.OriginalQuantity,
-                Price = result.Price,
-                Side = result.Side,
-                Status = result.Status,
-                TimeInForce = result.TimeInForce,
-                Type = result.Type,
-                UpdateTime = order.UpdateTime.AddMilliseconds(1)
-            };
-
-            // update the order in the repository now
-            await SetOrderAsync(updated, cancellationToken);
+            await connection.ExecuteAsync(new CommandDefinition(
+                "[dbo].[CancelOrder]",
+                entity,
+                null,
+                _options.CommandTimeoutAsInteger,
+                CommandType.StoredProcedure,
+                CommandFlags.Buffered,
+                cancellationToken));
         }
 
         public async Task SetOrderAsync(OrderResult result, CancellationToken cancellationToken = default)

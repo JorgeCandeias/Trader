@@ -140,7 +140,9 @@ namespace Trader.Trading.Algorithms.Step
 
         private async Task<SymbolPriceTicker> SyncAssetPriceAsync(CancellationToken cancellationToken = default)
         {
-            var ticker = await _trader.GetSymbolPriceTickerAsync(_options.Symbol, cancellationToken);
+            var ticker = await _trader
+                .GetSymbolPriceTickerAsync(_options.Symbol, cancellationToken)
+                .ConfigureAwait(false);
 
             _logger.LogInformation(
                 "{Type} {Name} reports latest asset price is {Price} {QuoteAsset}",

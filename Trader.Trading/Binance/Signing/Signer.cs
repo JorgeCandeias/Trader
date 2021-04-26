@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -24,11 +25,12 @@ namespace Trader.Trading.Binance.Signing
         /// <summary>
         /// Creates a signature for the specified payload.
         /// </summary>
+        [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "API")]
         public string Sign(string value)
         {
             var hmac = GetOrCreateHmac(_key);
             var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(value));
-            var signature = BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
+            var signature = BitConverter.ToString(hash).Replace("-", "", StringComparison.Ordinal).ToLowerInvariant();
 
             return signature;
         }

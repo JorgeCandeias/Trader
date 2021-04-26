@@ -43,7 +43,7 @@ namespace Trader.Trading.Algorithms.Accumulator
             await _orderSynchronizer.SynchronizeOrdersAsync(_options.Symbol, cancellationToken);
             await _tradeSynchronizer.SynchronizeTradesAsync(_options.Symbol, cancellationToken);
 
-            await GetOpenOrdersAsync(cancellationToken);
+            var orders = await GetOpenOrdersAsync(cancellationToken);
 
             // get the current price
             var ticker = await _trader.GetSymbolPriceTickerAsync(_options.Symbol, cancellationToken);
@@ -119,16 +119,18 @@ namespace Trader.Trading.Algorithms.Accumulator
                 Type, _name, order.Side, order.Type, order.Symbol, order.OriginalQuantity, _options.Asset, order.Price, _options.Quote, order.OriginalQuantity * order.Price, _options.Quote);
         }
 
-        private async Task GetOpenOrdersAsync(CancellationToken cancellationToken)
+        private async Task<SortedOrderSet> GetOpenOrdersAsync(CancellationToken cancellationToken)
         {
-            _orders = await _repository.GetTransientOrdersBySideAsync(_options.Symbol, OrderSide.Buy, cancellationToken);
+            var orders = await _repository.GetTransientOrdersBySideAsync(_options.Symbol, OrderSide.Buy, cancellationToken);
 
-            foreach (var order in _orders)
+            foreach (var order in orders)
             {
                 _logger.LogInformation(
                     "{Type} {Name} identified open {OrderSide} {OrderType} order for {Quantity} {Asset} at {Price} {Quote} totalling {Notional:N8} {Quote}",
                     Type, _name, order.Side, order.Type, order.OriginalQuantity, _options.Asset, order.Price, _options.Quote, order.OriginalQuantity * order.Price, _options.Quote);
             }
+
+            return orders;
         }
 
         private async Task<bool> TryCloseLowBuysAsync(decimal lowBuyPrice, CancellationToken cancellationToken)

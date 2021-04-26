@@ -7,6 +7,7 @@
     <NeutralLanguage>en-GB</NeutralLanguage>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,5 +25,4 @@
     <ProjectReference Include="..\Trader.Core.Abstractions\Trader.Core.Abstractions.csproj" />
     <ProjectReference Include="..\Trader.Data.Abstractions\Trader.Data.Abstractions.csproj" />
   </ItemGroup>
-
 </Project>

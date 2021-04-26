@@ -173,18 +173,22 @@ namespace Trader.Trading.Algorithms.Step
             // if the above checks fails then close the band
             if (band.OpenOrderId is not 0)
             {
-                var result = await _trader.CancelOrderAsync(
-                    new CancelStandardOrder(
-                        _options.Symbol,
-                        band.OpenOrderId,
-                        null,
-                        null,
-                        null,
-                        _clock.UtcNow),
-                    cancellationToken);
+                var result = await _trader
+                    .CancelOrderAsync(
+                        new CancelStandardOrder(
+                            _options.Symbol,
+                            band.OpenOrderId,
+                            null,
+                            null,
+                            null,
+                            _clock.UtcNow),
+                        cancellationToken)
+                    .ConfigureAwait(false);
 
                 // save this order to the repository now to tolerate slow binance api updates
-                await _repository.SetOrderAsync(result, cancellationToken);
+                await _repository
+                    .SetOrderAsync(result, cancellationToken)
+                    .ConfigureAwait(false);
 
                 _logger.LogInformation(
                     "{Type} {Name} closed out-of-range {OrderSide} {OrderType} for {Quantity} {Asset} at {Price} {Quote}",
@@ -279,25 +283,29 @@ namespace Trader.Trading.Algorithms.Step
             quantity = Math.Floor(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
 
             // place the buy order
-            var result = await _trader.CreateOrderAsync(
-                new Order(
-                    _options.Symbol,
-                    OrderSide.Buy,
-                    OrderType.Limit,
-                    TimeInForce.GoodTillCanceled,
-                    quantity,
-                    null,
-                    lowerPrice,
-                    $"{_options.Symbol}{lowerPrice:N8}".Replace(".", "").Replace(",", ""),
-                    null,
-                    null,
-                    NewOrderResponseType.Full,
-                    null,
-                    _clock.UtcNow),
-                cancellationToken);
+            var result = await _trader
+                .CreateOrderAsync(
+                    new Order(
+                        _options.Symbol,
+                        OrderSide.Buy,
+                        OrderType.Limit,
+                        TimeInForce.GoodTillCanceled,
+                        quantity,
+                        null,
+                        lowerPrice,
+                        $"{_options.Symbol}{lowerPrice:N8}".Replace(".", "").Replace(",", ""),
+                        null,
+                        null,
+                        NewOrderResponseType.Full,
+                        null,
+                        _clock.UtcNow),
+                    cancellationToken)
+                .ConfigureAwait(false);
 
             // save this order to the repository now to tolerate slow binance api updates
-            await _repository.SetOrderAsync(result, 0m, 0m, 0m, cancellationToken);
+            await _repository
+                .SetOrderAsync(result, 0m, 0m, 0m, cancellationToken)
+                .ConfigureAwait(false);
 
             _logger.LogInformation(
                 "{Type} {Name} placed {OrderType} {OrderSide} for {Quantity} {Asset} at {Price} {Quote}",
@@ -325,25 +333,29 @@ namespace Trader.Trading.Algorithms.Step
                         return false;
                     }
 
-                    var result = await _trader.CreateOrderAsync(
-                        new Order(
-                            _options.Symbol,
-                            OrderSide.Sell,
-                            OrderType.Limit,
-                            TimeInForce.GoodTillCanceled,
-                            band.Quantity,
-                            null,
-                            band.ClosePrice,
-                            _orderCodeGenerator.GetSellClientOrderId(band.OpenOrderId),
-                            null,
-                            null,
-                            NewOrderResponseType.Full,
-                            null,
-                            _clock.UtcNow),
-                        cancellationToken);
+                    var result = await _trader
+                        .CreateOrderAsync(
+                            new Order(
+                                _options.Symbol,
+                                OrderSide.Sell,
+                                OrderType.Limit,
+                                TimeInForce.GoodTillCanceled,
+                                band.Quantity,
+                                null,
+                                band.ClosePrice,
+                                _orderCodeGenerator.GetSellClientOrderId(band.OpenOrderId),
+                                null,
+                                null,
+                                NewOrderResponseType.Full,
+                                null,
+                                _clock.UtcNow),
+                            cancellationToken)
+                        .ConfigureAwait(false);
 
                     // save this order to the repository now to tolerate slow binance api updates
-                    await _repository.SetOrderAsync(result, 0m, 0m, 0m, cancellationToken);
+                    await _repository
+                        .SetOrderAsync(result, 0m, 0m, 0m, cancellationToken)
+                        .ConfigureAwait(false);
 
                     band.CloseOrderId = result.OrderId;
 
@@ -364,7 +376,9 @@ namespace Trader.Trading.Algorithms.Step
         private async Task<bool> TryCancelRogueSellOrdersAsync(CancellationToken cancellationToken = default)
         {
             // get all transient sell orders
-            var orders = await _repository.GetTransientOrdersBySideAsync(_options.Symbol, OrderSide.Sell, cancellationToken);
+            var orders = await _repository
+                .GetTransientOrdersBySideAsync(_options.Symbol, OrderSide.Sell, cancellationToken)
+                .ConfigureAwait(false);
 
             var fail = false;
 
@@ -373,18 +387,22 @@ namespace Trader.Trading.Algorithms.Step
                 if (!_bands.Any(x => x.CloseOrderId == order.OrderId))
                 {
                     // close the rogue sell order
-                    var result = await _trader.CancelOrderAsync(
-                        new CancelStandardOrder(
-                            _options.Symbol,
-                            order.OrderId,
-                            null,
-                            null,
-                            null,
-                            _clock.UtcNow),
-                        cancellationToken);
+                    var result = await _trader
+                        .CancelOrderAsync(
+                            new CancelStandardOrder(
+                                _options.Symbol,
+                                order.OrderId,
+                                null,
+                                null,
+                                null,
+                                _clock.UtcNow),
+                            cancellationToken)
+                        .ConfigureAwait(false);
 
                     // save this order to the repository now to tolerate slow binance api updates
-                    await _repository.SetOrderAsync(result, cancellationToken);
+                    await _repository
+                        .SetOrderAsync(result, cancellationToken)
+                        .ConfigureAwait(false);
 
                     _logger.LogWarning(
                         "{Type} {Name} cancelled sell order not associated with a band for {Quantity} {Asset} at {Price} {Quote}",
@@ -413,24 +431,31 @@ namespace Trader.Trading.Algorithms.Step
                     Type, _name, lowBuyPrice, _options.Quote, ticker.Price, _options.Quote);
 
                 // cancel the lowest open buy order with a open price lower than the lower band to the current price
-                var orders = await _repository.GetTransientOrdersBySideAsync(_options.Symbol, OrderSide.Buy, cancellationToken);
+                var orders = await _repository
+                    .GetTransientOrdersBySideAsync(_options.Symbol, OrderSide.Buy, cancellationToken)
+                    .ConfigureAwait(false);
+
                 var lowest = orders.FirstOrDefault(x => x.Side == OrderSide.Buy && x.Status.IsTransientStatus());
                 if (lowest is not null)
                 {
                     if (lowest.Price < lowBuyPrice)
                     {
-                        var cancelled = await _trader.CancelOrderAsync(
-                            new CancelStandardOrder(
-                                _options.Symbol,
-                                lowest.OrderId,
-                                null,
-                                null,
-                                null,
-                                _clock.UtcNow),
-                            cancellationToken);
+                        var cancelled = await _trader
+                            .CancelOrderAsync(
+                                new CancelStandardOrder(
+                                    _options.Symbol,
+                                    lowest.OrderId,
+                                    null,
+                                    null,
+                                    null,
+                                    _clock.UtcNow),
+                                cancellationToken)
+                            .ConfigureAwait(false);
 
                         // save this order to the repository now to tolerate slow binance api updates
-                        await _repository.SetOrderAsync(cancelled, cancellationToken);
+                        await _repository
+                            .SetOrderAsync(cancelled, cancellationToken)
+                            .ConfigureAwait(false);
 
                         _logger.LogInformation(
                             "{Type} {Name} cancelled low starting open order with price {Price} for {Quantity} units",
@@ -467,25 +492,29 @@ namespace Trader.Trading.Algorithms.Step
                 quantity = Math.Floor(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
 
                 // place a market order to account for weird price floats
-                var result = await _trader.CreateOrderAsync(
-                    new Order(
-                        _options.Symbol,
-                        OrderSide.Buy,
-                        OrderType.Market,
-                        null,
-                        quantity,
-                        null,
-                        null,
-                        null,
-                        null,
-                        null,
-                        NewOrderResponseType.Full,
-                        null,
-                        _clock.UtcNow),
-                    cancellationToken);
+                var result = await _trader
+                    .CreateOrderAsync(
+                        new Order(
+                            _options.Symbol,
+                            OrderSide.Buy,
+                            OrderType.Market,
+                            null,
+                            quantity,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            NewOrderResponseType.Full,
+                            null,
+                            _clock.UtcNow),
+                        cancellationToken)
+                    .ConfigureAwait(false);
 
                 // save this order to the repository now to tolerate slow binance api updates
-                await _repository.SetOrderAsync(result, 0m, 0m, 0m, cancellationToken);
+                await _repository
+                    .SetOrderAsync(result, 0m, 0m, 0m, cancellationToken)
+                    .ConfigureAwait(false);
 
                 _logger.LogInformation(
                     "{Type} {Name} created {OrderSide} {OrderType} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",
@@ -544,7 +573,10 @@ namespace Trader.Trading.Algorithms.Step
 
             // apply the non-significant open buy orders to the bands
             // todo: this looks like a bug - we can also have significant transient orders (live partial buys) that are not part of the significant set above
-            var orders = await _repository.GetNonSignificantTransientOrdersBySideAsync(_options.Symbol, OrderSide.Buy, cancellationToken);
+            var orders = await _repository
+                .GetNonSignificantTransientOrdersBySideAsync(_options.Symbol, OrderSide.Buy, cancellationToken)
+                .ConfigureAwait(false);
+
             foreach (var order in orders)
             {
                 if (order.Price is 0)
@@ -636,7 +668,11 @@ namespace Trader.Trading.Algorithms.Step
 
             // apply open sell orders to the bands
             var used = new HashSet<Band>();
-            orders = await _repository.GetTransientOrdersBySideAsync(_options.Symbol, OrderSide.Sell, cancellationToken);
+
+            orders = await _repository
+                .GetTransientOrdersBySideAsync(_options.Symbol, OrderSide.Sell, cancellationToken)
+                .ConfigureAwait(false);
+
             foreach (var order in orders)
             {
                 var band = _bands.Except(used).SingleOrDefault(x => x.CloseOrderClientId == order.ClientOrderId);

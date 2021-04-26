@@ -68,7 +68,6 @@
   <ItemGroup>
     <Build Include="Tables\Order.sql" />
     <Build Include="Tables\Trade.sql" />
-    <Build Include="Procedures\GetOrder.sql" />
     <Build Include="Procedures\GetOrders.sql" />
     <Build Include="Tables\PagedOrder.sql" />
     <Build Include="Procedures\GetPagedOrder.sql" />

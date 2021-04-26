@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -185,22 +186,11 @@ namespace Trader.Data.Sql
                 cancellationToken));
         }
 
-        public async Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default)
+        public Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default)
         {
             _ = order ?? throw new ArgumentNullException(nameof(order));
 
-            using var connection = new SqlConnection(_options.ConnectionString);
-
-            var entity = _mapper.Map<OrderEntity>(order);
-
-            await connection.ExecuteAsync(new CommandDefinition(
-                "[dbo].[SetOrder]",
-                entity,
-                null,
-                _options.CommandTimeoutAsInteger,
-                CommandType.StoredProcedure,
-                CommandFlags.Buffered,
-                cancellationToken));
+            return SetOrdersAsync(Enumerable.Repeat(order, 1), cancellationToken);
         }
 
         public async Task SetOrderAsync(CancelStandardOrderResult result, CancellationToken cancellationToken = default)

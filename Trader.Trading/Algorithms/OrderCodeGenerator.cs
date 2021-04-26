@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace Trader.Trading.Algorithms
@@ -16,7 +17,7 @@ namespace Trader.Trading.Algorithms
             _ = buyOrderIds ?? throw new ArgumentNullException(nameof(buyOrderIds));
 
             // for now keep the earliest order id
-            return buyOrderIds.Min().ToString();
+            return buyOrderIds.Min().ToString(CultureInfo.InvariantCulture);
         }
     }
 }

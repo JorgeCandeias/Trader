@@ -56,7 +56,7 @@ namespace Trader.Trading.Binance
             CreateMap<ExchangeFilterModel, ExchangeFilter>().ConvertUsing<ExchangeFilterConverter>();
             CreateMap<SymbolFilterModel, SymbolFilter>().ConvertUsing<SymbolFilterConverter>();
             CreateMap<OrderBookModel, OrderBook>().ConvertUsing<OrderBookConverter>();
-            CreateMap<CancelAllOrdersResponseModel, CancelOrderResultBase>().ConvertUsing<CancelAllOrdersResponseModelConverter>();
+            CreateMap<CancelAllOrdersResponseModel, CancelOrderResult>().ConvertUsing<CancelAllOrdersResponseModelConverter>();
 
             // renaming model mappings
             CreateMap<SymbolModel, Symbol>()

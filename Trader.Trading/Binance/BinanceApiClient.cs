@@ -208,12 +208,12 @@ namespace Trader.Trading.Binance
         /// <summary>
         /// Cancels all open orders.
         /// </summary>
-        public Task<ImmutableList<CancelOrderResultBase>> CancelAllOrdersAsync(CancelAllOrders cancellation, CancellationToken cancellationToken = default)
+        public Task<ImmutableList<CancelOrderResult>> CancelAllOrdersAsync(CancelAllOrders cancellation, CancellationToken cancellationToken = default)
         {
             _ = cancellation ?? throw new ArgumentNullException(nameof(cancellation));
             _ = cancellation.Symbol ?? throw new ArgumentException($"{nameof(OrderQuery.Symbol)} is required");
 
-            return DeleteAsync<CancelAllOrdersRequestModel, IEnumerable<CancelAllOrdersResponseModel>, ImmutableList<CancelOrderResultBase>>(
+            return DeleteAsync<CancelAllOrdersRequestModel, IEnumerable<CancelAllOrdersResponseModel>, ImmutableList<CancelOrderResult>>(
                 "/api/v3/openOrders",
                 cancellation,
                 cancellationToken);

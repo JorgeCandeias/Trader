@@ -3,9 +3,9 @@ using Trader.Models;
 
 namespace Trader.Trading.Binance.Converters
 {
-    internal class CancelAllOrdersResponseModelConverter : ITypeConverter<CancelAllOrdersResponseModel, CancelOrderResultBase>
+    internal class CancelAllOrdersResponseModelConverter : ITypeConverter<CancelAllOrdersResponseModel, CancelOrderResult>
     {
-        public CancelOrderResultBase Convert(CancelAllOrdersResponseModel source, CancelOrderResultBase destination, ResolutionContext context)
+        public CancelOrderResult Convert(CancelAllOrdersResponseModel source, CancelOrderResult destination, ResolutionContext context)
         {
             if (source is null) return null!;
 

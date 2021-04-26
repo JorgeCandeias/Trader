@@ -39,21 +39,27 @@ namespace Trader.Trading.Binance
 
         public async Task<bool> PingAsync(CancellationToken cancellationToken = default)
         {
-            var response = await _client.GetAsync("/api/v3/ping", cancellationToken);
+            var response = await _client
+                .GetAsync("/api/v3/ping", cancellationToken)
+                .ConfigureAwait(false);
 
             return response.IsSuccessStatusCode;
         }
 
         public async Task<DateTime> GetTimeAsync(CancellationToken cancellationToken = default)
         {
-            var result = await _client.GetFromJsonAsync<ServerTimeModel>("/api/v3/time", cancellationToken);
+            var result = await _client
+                .GetFromJsonAsync<ServerTimeModel>("/api/v3/time", cancellationToken)
+                .ConfigureAwait(false);
 
             return _mapper.Map<DateTime>(result);
         }
 
         public async Task<ExchangeInfoModel> GetExchangeInfoAsync(CancellationToken cancellationToken = default)
         {
-            return await _client.GetFromJsonAsync<ExchangeInfoModel>("/api/v3/exchangeInfo", cancellationToken) ?? throw new BinanceUnknownResponseException();
+            return await _client
+                .GetFromJsonAsync<ExchangeInfoModel>("/api/v3/exchangeInfo", cancellationToken)
+                .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
 
         #endregion General Endpoints

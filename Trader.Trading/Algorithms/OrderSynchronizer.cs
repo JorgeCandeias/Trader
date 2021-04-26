@@ -29,10 +29,10 @@ namespace Trader.Trading.Algorithms
             var count = 0;
 
             // start from the first known transient order if possible
-            var orderId = await _repository.GetMinTransientOrderIdAsync(symbol, cancellationToken);
+            var orderId = await _repository.GetMinTransientOrderIdAsync(symbol, cancellationToken) - 1;
 
             // otherwise start from the max paged order
-            if (orderId is 0)
+            if (orderId <= 0)
             {
                 orderId = await _repository.GetLastPagedOrderIdAsync(symbol, cancellationToken);
             }

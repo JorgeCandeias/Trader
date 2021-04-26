@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using Trader.Core.Time;
@@ -34,7 +35,7 @@ namespace Trader.Trading
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            _timer = _timers.Create(TickAsync, TimeSpan.Zero, TimeSpan.FromSeconds(10), TimeSpan.FromMinutes(3));
+            _timer = _timers.Create(TickAsync, TimeSpan.Zero, TimeSpan.FromSeconds(10), Debugger.IsAttached ? TimeSpan.FromHours(1) : TimeSpan.FromMinutes(3));
 
             return Task.CompletedTask;
         }

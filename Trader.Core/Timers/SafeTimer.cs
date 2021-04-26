@@ -29,6 +29,7 @@ namespace Trader.Core.Timers
         private readonly Timer _timer;
 
         [SuppressMessage("Major Bug", "S3168:\"async\" methods should not return \"void\"", Justification = "Timer Event Handler")]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Timer Event Handler")]
         private async void Handler(object? _)
         {
             // execute the current tick
@@ -47,7 +48,7 @@ namespace Trader.Core.Timers
             // schedule the next tick
             try
             {
-                _timer?.Change(_period, Timeout.InfiniteTimeSpan);
+                _timer.Change(_period, Timeout.InfiniteTimeSpan);
             }
             catch (ObjectDisposedException)
             {
@@ -57,7 +58,7 @@ namespace Trader.Core.Timers
 
         #region Disposable
 
-        private bool _disposed = false;
+        private bool _disposed;
 
         private void Dispose(bool disposing)
         {
@@ -66,6 +67,7 @@ namespace Trader.Core.Timers
             if (disposing)
             {
                 _timer.Dispose();
+                _cancellation.Dispose();
             }
 
             _disposed = true;

@@ -67,20 +67,29 @@ namespace Trader.Trading.Algorithms.Step
             ApplyAccountInfo(accountInfo);
 
             // synchronize the repository
-            await _orderSynchronizer.SynchronizeOrdersAsync(_options.Symbol, cancellationToken);
-            await _tradeSynchronizer.SynchronizeTradesAsync(_options.Symbol, cancellationToken);
-            var significant = await _significantOrderResolver.ResolveAsync(_options.Symbol, cancellationToken);
+            await _orderSynchronizer
+                .SynchronizeOrdersAsync(_options.Symbol, cancellationToken)
+                .ConfigureAwait(false);
+
+            await _tradeSynchronizer
+                .SynchronizeTradesAsync(_options.Symbol, cancellationToken)
+                .ConfigureAwait(false);
+
+            var significant = await _significantOrderResolver
+                .ResolveAsync(_options.Symbol, cancellationToken)
+                .ConfigureAwait(false);
+
             _profit = significant.Profit;
 
             // always update the latest price
-            var ticker = await SyncAssetPriceAsync(cancellationToken);
+            var ticker = await SyncAssetPriceAsync(cancellationToken).ConfigureAwait(false);
 
-            if (await TryCreateTradingBandsAsync(significant.Orders, minNotionalFilter, ticker, priceFilter, percentFilter, cancellationToken)) return;
-            if (await TrySetStartingTradeAsync(symbol, ticker, lotSizeFilter, priceFilter, cancellationToken)) return;
-            if (await TryCancelRogueSellOrdersAsync(cancellationToken)) return;
-            if (await TrySetBandSellOrdersAsync(cancellationToken)) return;
-            if (await TryCreateLowerBandOrderAsync(ticker, lotSizeFilter, priceFilter, cancellationToken)) return;
-            await TryCloseOutOfRangeBandsAsync(ticker, cancellationToken);
+            if (await TryCreateTradingBandsAsync(significant.Orders, minNotionalFilter, ticker, priceFilter, percentFilter, cancellationToken).ConfigureAwait(false)) return;
+            if (await TrySetStartingTradeAsync(symbol, ticker, lotSizeFilter, priceFilter, cancellationToken).ConfigureAwait(false)) return;
+            if (await TryCancelRogueSellOrdersAsync(cancellationToken).ConfigureAwait(false)) return;
+            if (await TrySetBandSellOrdersAsync(cancellationToken).ConfigureAwait(false)) return;
+            if (await TryCreateLowerBandOrderAsync(ticker, lotSizeFilter, priceFilter, cancellationToken).ConfigureAwait(false)) return;
+            await TryCloseOutOfRangeBandsAsync(ticker, cancellationToken).ConfigureAwait(false);
         }
 
         public Task<Profit> GetProfitAsync(CancellationToken cancellationToken = default)

@@ -29,8 +29,4 @@
     <ProjectReference Include="..\Trader.Data.Abstractions\Trader.Data.Abstractions.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Converters\" />
-  </ItemGroup>
-
 </Project>

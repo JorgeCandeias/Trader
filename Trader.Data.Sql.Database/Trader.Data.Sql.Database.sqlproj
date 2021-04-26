@@ -85,5 +85,7 @@
     <Build Include="Procedures\SetOrders.sql" />
     <Build Include="Types\OrderTableParameter.sql" />
     <Build Include="Procedures\CancelOrder.sql" />
+    <Build Include="Types\TradeTableParameter.sql" />
+    <Build Include="Procedures\SetTrades.sql" />
   </ItemGroup>
 </Project>

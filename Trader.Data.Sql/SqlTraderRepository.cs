@@ -280,10 +280,21 @@ namespace Trader.Data.Sql
         {
             _ = trades ?? throw new ArgumentNullException(nameof(trades));
 
-            foreach (var trade in trades)
-            {
-                await SetTradeAsync(trade, cancellationToken);
-            }
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            var entities = _mapper.Map<IEnumerable<TradeTableParameterEntity>>(trades);
+
+            await connection.ExecuteAsync(new CommandDefinition(
+                "[dbo].[SetTrades]",
+                new
+                {
+                    Trades = entities.AsSqlDataRecords().AsTableValuedParameter("[dbo].[TradeTableParameter]")
+                },
+                null,
+                _options.CommandTimeoutAsInteger,
+                CommandType.StoredProcedure,
+                CommandFlags.Buffered,
+                cancellationToken));
         }
 
         public async Task<SortedTradeSet> GetTradesAsync(string symbol, CancellationToken cancellationToken = default)

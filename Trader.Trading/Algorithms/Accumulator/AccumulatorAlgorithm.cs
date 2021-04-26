@@ -17,9 +17,10 @@ namespace Trader.Trading.Algorithms.Accumulator
         private readonly ITradingService _trader;
         private readonly ISystemClock _clock;
         private readonly IOrderSynchronizer _orderSynchronizer;
+        private readonly ITradeSynchronizer _tradeSynchronizer;
         private readonly ITraderRepository _repository;
 
-        public AccumulatorAlgorithm(string name, IOptionsSnapshot<AccumulatorAlgorithmOptions> options, ILogger<AccumulatorAlgorithm> logger, ITradingService trader, ISystemClock clock, IOrderSynchronizer orderSynchronizer, ITraderRepository repository)
+        public AccumulatorAlgorithm(string name, IOptionsSnapshot<AccumulatorAlgorithmOptions> options, ILogger<AccumulatorAlgorithm> logger, ITradingService trader, ISystemClock clock, IOrderSynchronizer orderSynchronizer, ITradeSynchronizer tradeSynchronizer, ITraderRepository repository)
         {
             _name = name ?? throw new ArgumentNullException(nameof(name));
             _options = options.Get(name) ?? throw new ArgumentNullException(nameof(options));
@@ -27,6 +28,7 @@ namespace Trader.Trading.Algorithms.Accumulator
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _orderSynchronizer = orderSynchronizer ?? throw new ArgumentNullException(nameof(orderSynchronizer));
+            _tradeSynchronizer = tradeSynchronizer ?? throw new ArgumentNullException(nameof(tradeSynchronizer));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         }
 
@@ -37,7 +39,9 @@ namespace Trader.Trading.Algorithms.Accumulator
 
         public async Task GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default)
         {
+            // sync data from the exchange
             await _orderSynchronizer.SynchronizeOrdersAsync(_options.Symbol, cancellationToken);
+            await _tradeSynchronizer.SynchronizeTradesAsync(_options.Symbol, cancellationToken);
 
             await GetOpenOrdersAsync(cancellationToken);
 

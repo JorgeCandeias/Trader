@@ -20,7 +20,7 @@ namespace Trader.Data
 
         Task SetOrderAsync(CancelStandardOrderResult result, CancellationToken cancellationToken = default);
 
-        Task SetOrderAsync(OrderResult result, decimal stopPrice = 0m, decimal icebergQuantity = 0m, CancellationToken cancellationToken = default);
+        Task SetOrderAsync(OrderResult result, decimal stopPrice = 0m, decimal icebergQuantity = 0m, decimal originalQuoteOrderQuantity = 0m, CancellationToken cancellationToken = default);
 
         Task<long> GetMinTransientOrderIdAsync(string symbol, CancellationToken cancellationToken = default);
 

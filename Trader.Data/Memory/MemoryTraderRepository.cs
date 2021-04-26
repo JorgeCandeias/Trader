@@ -215,7 +215,7 @@ namespace Trader.Data.Memory
             return Task.CompletedTask;
         }
 
-        public Task SetOrderAsync(OrderResult result, decimal stopPrice = 0m, decimal icebergQuantity = 0m, CancellationToken cancellationToken = default)
+        public Task SetOrderAsync(OrderResult result, decimal stopPrice = 0m, decimal icebergQuantity = 0m, decimal originalQuoteOrderQuantity = 0m, CancellationToken cancellationToken = default)
         {
             if (result is null) throw new ArgumentNullException(nameof(result));
 
@@ -238,7 +238,7 @@ namespace Trader.Data.Memory
                 result.TransactionTime,
                 result.TransactionTime,
                 true,
-                0);
+                originalQuoteOrderQuantity);
 
             AddOrUpdateOrder(order);
 

@@ -221,7 +221,7 @@ namespace Trader.Data.Sql
                 cancellationToken));
         }
 
-        public async Task SetOrderAsync(OrderResult result, decimal stopPrice = 0m, decimal icebergQuantity = 0m, CancellationToken cancellationToken = default)
+        public async Task SetOrderAsync(OrderResult result, decimal stopPrice = 0m, decimal icebergQuantity = 0m, decimal originalQuoteOrderQuantity = 0m, CancellationToken cancellationToken = default)
         {
             _ = result ?? throw new ArgumentNullException(nameof(result));
 
@@ -231,6 +231,7 @@ namespace Trader.Data.Sql
             {
                 options.Items[nameof(OrderQueryResult.StopPrice)] = stopPrice;
                 options.Items[nameof(OrderQueryResult.IcebergQuantity)] = icebergQuantity;
+                options.Items[nameof(OrderQueryResult.OriginalQuoteOrderQuantity)] = originalQuoteOrderQuantity;
             });
 
             await SetOrderAsync(order, cancellationToken);

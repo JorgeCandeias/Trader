@@ -108,7 +108,7 @@ namespace Trader.Trading.Algorithms.Accumulator
                     _clock.UtcNow),
                 cancellationToken);
 
-            await _repository.SetOrderAsync(order, cancellationToken);
+            await _repository.SetOrderAsync(order, 0m, 0m, cancellationToken);
 
             _logger.LogInformation(
                 "{Type} {Name} created {OrderSide} {OrderType} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",

@@ -285,7 +285,7 @@ namespace Trader.Trading.Algorithms.Step
                 cancellationToken);
 
             // save this order to the repository now to tolerate slow binance api updates
-            await _repository.SetOrderAsync(result, cancellationToken);
+            await _repository.SetOrderAsync(result, 0m, 0m, cancellationToken);
 
             _logger.LogInformation(
                 "{Type} {Name} placed {OrderType} {OrderSide} for {Quantity} {Asset} at {Price} {Quote}",
@@ -331,7 +331,7 @@ namespace Trader.Trading.Algorithms.Step
                         cancellationToken);
 
                     // save this order to the repository now to tolerate slow binance api updates
-                    await _repository.SetOrderAsync(result, cancellationToken);
+                    await _repository.SetOrderAsync(result, 0m, 0m, cancellationToken);
 
                     band.CloseOrderId = result.OrderId;
 
@@ -473,7 +473,7 @@ namespace Trader.Trading.Algorithms.Step
                     cancellationToken);
 
                 // save this order to the repository now to tolerate slow binance api updates
-                await _repository.SetOrderAsync(result, cancellationToken);
+                await _repository.SetOrderAsync(result, 0m, 0m, cancellationToken);
 
                 _logger.LogInformation(
                     "{Type} {Name} created {OrderSide} {OrderType} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",

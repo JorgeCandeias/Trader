@@ -221,13 +221,17 @@ namespace Trader.Data.Sql
                 cancellationToken));
         }
 
-        public async Task SetOrderAsync(OrderResult result, CancellationToken cancellationToken = default)
+        public async Task SetOrderAsync(OrderResult result, decimal stopPrice = 0m, decimal icebergQuantity = 0m, CancellationToken cancellationToken = default)
         {
             _ = result ?? throw new ArgumentNullException(nameof(result));
 
             using var connection = new SqlConnection(_options.ConnectionString);
 
-            var order = _mapper.Map<OrderQueryResult>(result);
+            var order = _mapper.Map<OrderQueryResult>(result, options =>
+            {
+                options.Items[nameof(OrderQueryResult.StopPrice)] = stopPrice;
+                options.Items[nameof(OrderQueryResult.IcebergQuantity)] = icebergQuantity;
+            });
 
             await SetOrderAsync(order, cancellationToken);
         }

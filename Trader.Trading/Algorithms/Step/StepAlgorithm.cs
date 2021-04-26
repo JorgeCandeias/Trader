@@ -293,7 +293,7 @@ namespace Trader.Trading.Algorithms.Step
                         quantity,
                         null,
                         lowerPrice,
-                        $"{_options.Symbol}{lowerPrice:N8}".Replace(".", "").Replace(",", ""),
+                        $"{_options.Symbol}{lowerPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal),
                         null,
                         null,
                         NewOrderResponseType.Full,

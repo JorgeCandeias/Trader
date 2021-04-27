@@ -1,4 +1,4 @@
-﻿namespace Trader.Trading.Algorithms.Step
+﻿namespace Trader.Trading.Algorithms
 {
     public interface IStepAlgorithm : ITradingAlgorithm
     {

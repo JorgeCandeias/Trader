@@ -26,11 +26,12 @@ namespace Trader.Trading.Binance
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            await PreProcessAsync(request, cancellationToken);
+            await PreProcessAsync(request, cancellationToken).ConfigureAwait(false);
 
-            var response = await base.SendAsync(request, cancellationToken);
+            var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
-            await HandleBinanceErrorAsync(response, cancellationToken);
+            await HandleBinanceErrorAsync(response, cancellationToken).ConfigureAwait(false);
+
             PostProcess(response);
 
             return response;
@@ -59,7 +60,7 @@ namespace Trader.Trading.Binance
                 // sign form content
                 else if (request.Content is FormUrlEncodedContent content)
                 {
-                    var text = await content.ReadAsStringAsync(cancellationToken);
+                    var text = await content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
                     var hash = _signer.Sign(text);
                     var result = text + "&signature=" + hash;
 
@@ -74,7 +75,7 @@ namespace Trader.Trading.Binance
             if (response.IsSuccessStatusCode) return;
 
             // attempt graceful handling of a binance api error
-            var error = await response.Content.ReadFromJsonAsync<ErrorModel>(null, cancellationToken);
+            var error = await response.Content.ReadFromJsonAsync<ErrorModel>(null, cancellationToken).ConfigureAwait(false);
             if (error is not null && error.Code != 0)
             {
                 throw new BinanceCodeException(error.Code, error.Msg, response.StatusCode);

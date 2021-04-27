@@ -7,7 +7,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectVersion>4.1</ProjectVersion>
     <ProjectGuid>{08ef872d-10fb-4998-8383-ae99f4c17192}</ProjectGuid>
-    <DSP>Microsoft.Data.Tools.Schema.Sql.Sql150DatabaseSchemaProvider</DSP>
+    <DSP>Microsoft.Data.Tools.Schema.Sql.Sql130DatabaseSchemaProvider</DSP>
     <OutputType>Database</OutputType>
     <RootPath />
     <RootNamespace>Trader.Data.Sql.Database</RootNamespace>
@@ -63,7 +63,8 @@
     <Folder Include="Types" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Trader.Data.Sql.Database.publish.xml" />
+    <None Include="Trader.Data.Sql.Database.Production.publish.xml" />
+    <None Include="Trader.Data.Sql.Database.LocalDB.publish.xml" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="Tables\Order.sql" />

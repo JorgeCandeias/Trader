@@ -165,6 +165,8 @@ namespace Trader.Models.Collections
 
         #region Helpers
 
+        public static readonly ImmutableSortedOrderSet Empty = new(ImmutableSortedSet<OrderQueryResult>.Empty);
+
         public static ImmutableSortedOrderSet Create(IEnumerable<OrderQueryResult> items)
         {
             _ = items ?? throw new ArgumentNullException(nameof(items));

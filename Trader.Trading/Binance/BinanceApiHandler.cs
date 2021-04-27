@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using System;
+using System.Globalization;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
@@ -95,7 +96,7 @@ namespace Trader.Trading.Binance
                 {
                     var key = header.Key[UsedRequestWeightHeaderPrefix.Length..];
                     var unit = key[^1..].ToUpperInvariant();
-                    var value = int.Parse(key[..^1]);
+                    var value = int.Parse(key[..^1], CultureInfo.InvariantCulture);
 
                     var window = unit switch
                     {
@@ -108,7 +109,7 @@ namespace Trader.Trading.Binance
 
                     foreach (var item in header.Value)
                     {
-                        var weight = int.Parse(item);
+                        var weight = int.Parse(item, CultureInfo.InvariantCulture);
 
                         BinanceApiContext.Usage?.Add(new Usage(RateLimitType.RequestWeight, window, weight));
                     }
@@ -117,7 +118,7 @@ namespace Trader.Trading.Binance
                 {
                     var key = header.Key[UsedOrderCountHeaderPrefix.Length..];
                     var unit = key[^1..].ToUpperInvariant();
-                    var value = int.Parse(key[..^1]);
+                    var value = int.Parse(key[..^1], CultureInfo.InvariantCulture);
 
                     var window = unit switch
                     {
@@ -130,7 +131,7 @@ namespace Trader.Trading.Binance
 
                     foreach (var item in header.Value)
                     {
-                        var count = int.Parse(item);
+                        var count = int.Parse(item, CultureInfo.InvariantCulture);
 
                         BinanceApiContext.Usage?.Add(new Usage(RateLimitType.Orders, window, count));
                     }

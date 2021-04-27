@@ -30,7 +30,7 @@ WHERE
 	[Symbol] = @Symbol
     AND [Side] = @Side
     AND [IsTransient] = 1
-    AND [ExecutedQuantity] <= 0
+    AND [ExecutedQuantity] <= 0.0
 
 RETURN 0
 GO

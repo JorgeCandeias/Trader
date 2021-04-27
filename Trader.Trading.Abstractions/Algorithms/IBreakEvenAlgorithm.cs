@@ -1,4 +1,4 @@
-﻿namespace Trader.Trading.Algorithms.BreakEven
+﻿namespace Trader.Trading.Algorithms
 {
     public interface IBreakEvenAlgorithm : ITradingAlgorithm
     {

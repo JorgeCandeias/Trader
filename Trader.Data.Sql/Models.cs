@@ -1,3 +1,0 @@
-﻿namespace Trader.Data.Sql
-{
-}

@@ -63,7 +63,7 @@
     <Folder Include="Types" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Trader.Data.Sql.Database.publish.xml" />
+    <None Include="Trader.Data.Sql.Database.Production.publish.xml" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="Tables\Order.sql" />

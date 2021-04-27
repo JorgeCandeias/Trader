@@ -211,7 +211,7 @@ namespace Trader.Trading.Binance
 
             var response = await _client
                 .PostAsync(
-                    new Uri(Combine("/api/v3/order", model), UriKind.Relative),
+                    Combine(new Uri("/api/v3/order", UriKind.Relative), model),
                     EmptyHttpContent.Instance,
                     cancellationToken)
                 .ConfigureAwait(false);
@@ -231,7 +231,7 @@ namespace Trader.Trading.Binance
 
             return await _client
                 .GetFromJsonAsync<GetOrderResponseModel>(
-                    new Uri(Combine("/api/v3/order", model), UriKind.Relative),
+                    Combine(new Uri("/api/v3/order", UriKind.Relative), model),
                     _jsonOptions,
                     cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
@@ -247,7 +247,7 @@ namespace Trader.Trading.Binance
 
             var output = await _client
                 .DeleteAsync(
-                    new Uri(Combine("/api/v3/order", model), UriKind.Relative),
+                    Combine(new Uri("/api/v3/order", UriKind.Relative), model),
                     cancellationToken)
                 .ConfigureAwait(false);
 
@@ -265,7 +265,7 @@ namespace Trader.Trading.Binance
             _ = cancellation.Symbol ?? throw new ArgumentException($"{nameof(OrderQuery.Symbol)} is required");
 
             return DeleteAsync<CancelAllOrdersRequestModel, IEnumerable<CancelAllOrdersResponseModel>, ImmutableList<CancelOrderResult>>(
-                "/api/v3/openOrders",
+                new Uri("/api/v3/openOrders", UriKind.Relative),
                 cancellation,
                 cancellationToken);
         }
@@ -280,7 +280,7 @@ namespace Trader.Trading.Binance
 
             return await _client
                 .GetFromJsonAsync<IEnumerable<GetOrderResponseModel>>(
-                    new Uri(Combine("/api/v3/openOrders", model), UriKind.Relative),
+                    Combine(new Uri("/api/v3/openOrders", UriKind.Relative), model),
                     _jsonOptions,
                     cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
@@ -296,7 +296,7 @@ namespace Trader.Trading.Binance
 
             return await _client
                 .GetFromJsonAsync<IEnumerable<GetOrderResponseModel>>(
-                    new Uri(Combine("/api/v3/allOrders", model), UriKind.Relative),
+                    Combine(new Uri("/api/v3/allOrders", UriKind.Relative), model),
                     _jsonOptions,
                     cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
@@ -311,7 +311,7 @@ namespace Trader.Trading.Binance
 
             return await _client
                 .GetFromJsonAsync<AccountResponseModel>(
-                    new Uri(Combine("/api/v3/account", model), UriKind.Relative),
+                    Combine(new Uri("/api/v3/account", UriKind.Relative), model),
                     _jsonOptions,
                     cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
@@ -327,7 +327,7 @@ namespace Trader.Trading.Binance
 
             return await _client
                 .GetFromJsonAsync<IEnumerable<AccountTradesResponseModel>>(
-                    new Uri(Combine("/api/v3/myTrades", model), UriKind.Relative),
+                    Combine(new Uri("/api/v3/myTrades", UriKind.Relative), model),
                     cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
@@ -349,14 +349,14 @@ namespace Trader.Trading.Binance
                 .ToImmutableArray();
         }
 
-        private string Combine<T>(string requestUri, T data)
+        private Uri Combine<T>(Uri requestUri, T data)
         {
             var builder = _pool.Get();
 
+            builder.Append('?');
+
             try
             {
-                builder.Append(requestUri).Append('?');
-
                 var next = false;
 
                 foreach (var (name, lowerName) in TypeCache<T>.Names)
@@ -376,7 +376,7 @@ namespace Trader.Trading.Binance
                     }
                 }
 
-                return builder.ToString();
+                return new Uri(requestUri.ToString() + builder.ToString(), requestUri.IsAbsoluteUri ? UriKind.Absolute : UriKind.Relative);
             }
             finally
             {
@@ -384,7 +384,7 @@ namespace Trader.Trading.Binance
             }
         }
 
-        private async Task<TResult> DeleteAsync<TRequest, TResponse, TResult>(string requestUri, object data, CancellationToken cancellationToken = default)
+        private async Task<TResult> DeleteAsync<TRequest, TResponse, TResult>(Uri requestUri, object data, CancellationToken cancellationToken = default)
         {
             var request = _mapper.Map<TRequest>(data);
 

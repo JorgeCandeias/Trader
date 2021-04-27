@@ -108,13 +108,13 @@ namespace Trader.Trading.Algorithms
             var window30d = now.AddDays(-30);
             var today = now.Date;
 
-            // first map formal sells to formal buys
-            // the sells may not fill completely due to past algo bugs
+            // first map formal limit sells to formal buys
+            // the sells may not fill completely due to past algo bugs and missing trades
             for (var i = 0; i < subjects.Segment.Count; ++i)
             {
                 // loop through sales forward
                 var sell = subjects.Segment[i];
-                if (sell.Order.Side == OrderSide.Sell && sell.RemainingExecutedQuantity > 0 && long.TryParse(sell.Order.ClientOrderId, out var matchOpenOrderId) && matchOpenOrderId > 0)
+                if (sell.Order.Side == OrderSide.Sell && sell.Order.Type == OrderType.Limit && sell.RemainingExecutedQuantity > 0 && long.TryParse(sell.Order.ClientOrderId, out var matchOpenOrderId) && matchOpenOrderId > 0)
                 {
                     // look through buys backwards from the sale
                     for (var j = i - 1; j >= 0; --j)
@@ -150,15 +150,66 @@ namespace Trader.Trading.Algorithms
                 }
             }
 
-            // now match leftovers using lifo
+            // now match limit sell leftovers using lifo
             for (var i = 0; i < subjects.Segment.Count; ++i)
             {
                 // loop through sales forward
                 var sell = subjects.Segment[i];
-                if (sell.Order.Side == OrderSide.Sell && sell.RemainingExecutedQuantity > 0m)
+                if (sell.Order.Side == OrderSide.Sell && sell.Order.Type == OrderType.Limit && sell.RemainingExecutedQuantity > 0m)
                 {
                     // loop through buys in lifo order to find matching buys
                     for (var j = i - 1; j >= 0; --j)
+                    {
+                        var buy = subjects.Segment[j];
+                        if (buy.Order.Side == OrderSide.Buy && buy.RemainingExecutedQuantity > 0m)
+                        {
+                            // remove as much as possible from the buy to satisfy the sell
+                            var take = Math.Min(buy.RemainingExecutedQuantity, sell.RemainingExecutedQuantity);
+                            buy.RemainingExecutedQuantity -= take;
+                            sell.RemainingExecutedQuantity -= take;
+
+                            // calculate profit for this
+                            var profit = take * (sell.Trade.Price - buy.Trade.Price);
+
+                            // assign to the appropriate counters
+                            if (sell.Trade.Time.Date == today) todayProfit += profit;
+                            if (sell.Trade.Time.Date == today.AddDays(-1)) yesterdayProfit += profit;
+                            if (sell.Trade.Time.Date >= today.Previous(DayOfWeek.Sunday)) thisWeekProfit += profit;
+                            if (sell.Trade.Time.Date >= today.Previous(DayOfWeek.Sunday, 2) && sell.Trade.Time.Date < today.Previous(DayOfWeek.Sunday)) prevWeekProfit += profit;
+                            if (sell.Trade.Time.Date >= today.AddDays(-today.Day + 1)) thisMonthProfit += profit;
+                            if (sell.Trade.Time.Date >= new DateTime(today.Year, 1, 1)) thisYearProfit += profit;
+
+                            // assign to the window counters
+                            if (sell.Trade.Time >= window1d) d1 += profit;
+                            if (sell.Trade.Time >= window7d) d7 += profit;
+                            if (sell.Trade.Time >= window30d) d30 += profit;
+
+                            // if the sale is filled then we can break early
+                            if (sell.RemainingExecutedQuantity == 0) break;
+                        }
+                    }
+
+                    // if the sell was still not filled then we're missing some data
+                    if (sell.RemainingExecutedQuantity != 0)
+                    {
+                        // something went very wrong if we got here
+                        _logger.LogError(
+                            "{Name} {Symbol} could not fill {Symbol} {Side} order {OrderId} with quantity {ExecutedQuantity} at price {Price} because there are {RemainingExecutedQuantity} units missing",
+                            nameof(SignificantOrderResolver), symbol, sell.Order.Symbol, sell.Order.Side, sell.Order.OrderId, sell.Order.ExecutedQuantity, sell.Order.Price, sell.RemainingExecutedQuantity);
+                    }
+                }
+            }
+
+            // now match market sell leftovers using fifo
+            // we use market sell orders to get rid of old leftovers manually when the asset is peaking in price
+            for (var i = 0; i < subjects.Segment.Count; ++i)
+            {
+                // loop through sales forward
+                var sell = subjects.Segment[i];
+                if (sell.Order.Side == OrderSide.Sell && sell.Order.Type == OrderType.Market && sell.RemainingExecutedQuantity > 0m)
+                {
+                    // loop through buys in lifo order to find matching buys
+                    for (var j = 0; j < i; j++)
                     {
                         var buy = subjects.Segment[j];
                         if (buy.Order.Side == OrderSide.Buy && buy.RemainingExecutedQuantity > 0m)

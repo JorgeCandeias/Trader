@@ -1,5 +1,4 @@
-﻿using System.Collections.Immutable;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using Trader.Models;
 using Trader.Models.Collections;
@@ -14,10 +13,8 @@ namespace Trader.Trading
 
         Task<ImmutableSortedTradeSet> GetAccountTradesAsync(GetAccountTrades model, CancellationToken cancellationToken = default);
 
-        // todo: refactor this to return sorted order set
-        Task<ImmutableList<OrderQueryResult>> GetOpenOrdersAsync(GetOpenOrders model, CancellationToken cancellationToken = default);
+        Task<ImmutableSortedOrderSet> GetOpenOrdersAsync(GetOpenOrders model, CancellationToken cancellationToken = default);
 
-        // todo: refactor this to return sorted order set
         Task<OrderQueryResult> GetOrderAsync(OrderQuery model, CancellationToken cancellationToken = default);
 
         Task<ImmutableSortedOrderSet> GetAllOrdersAsync(GetAllOrders model, CancellationToken cancellationToken = default);

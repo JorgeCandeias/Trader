@@ -89,7 +89,7 @@ namespace Trader.Trading.Binance
             return result;
         }
 
-        public async Task<ImmutableList<OrderQueryResult>> GetOpenOrdersAsync(GetOpenOrders model, CancellationToken cancellationToken = default)
+        public async Task<ImmutableSortedOrderSet> GetOpenOrdersAsync(GetOpenOrders model, CancellationToken cancellationToken = default)
         {
             _ = model ?? throw new ArgumentNullException(nameof(model));
 
@@ -101,7 +101,7 @@ namespace Trader.Trading.Binance
                 .GetOpenOrdersAsync(input, cancellationToken)
                 .ConfigureAwait(false);
 
-            var result = _mapper.Map<ImmutableList<OrderQueryResult>>(output);
+            var result = _mapper.Map<ImmutableSortedOrderSet>(output);
             var used = _mapper.Map<ImmutableList<Usage>>(BinanceApiContext.Usage);
 
             UpdateUsage(used);

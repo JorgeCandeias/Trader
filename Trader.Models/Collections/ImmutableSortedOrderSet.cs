@@ -11,6 +11,9 @@ namespace Trader.Models.Collections
 
         internal ImmutableSortedOrderSet(ImmutableSortedSet<OrderQueryResult> set)
         {
+            if (set is null) throw new ArgumentNullException(nameof(set));
+            if (set.KeyComparer is not Comparer) throw new ArgumentOutOfRangeException(nameof(set));
+
             _set = set;
         }
 
@@ -165,7 +168,7 @@ namespace Trader.Models.Collections
 
         #region Helpers
 
-        public static readonly ImmutableSortedOrderSet Empty = new(ImmutableSortedSet<OrderQueryResult>.Empty);
+        public static readonly ImmutableSortedOrderSet Empty = new(ImmutableSortedSet.Create<OrderQueryResult>(Comparer.Default));
 
         public static ImmutableSortedOrderSet Create(IEnumerable<OrderQueryResult> items)
         {

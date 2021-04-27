@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Trader.Core.Time;
 using Trader.Data;
 using Trader.Models;
+using Trader.Models.Collections;
 
 namespace Trader.Trading.Algorithms.Accumulator
 {
@@ -122,7 +123,7 @@ namespace Trader.Trading.Algorithms.Accumulator
                 Type, _name, order.Side, order.Type, order.Symbol, order.OriginalQuantity, _options.Asset, order.Price, _options.Quote, order.OriginalQuantity * order.Price, _options.Quote);
         }
 
-        private async Task<SortedOrderSet> GetOpenOrdersAsync(CancellationToken cancellationToken)
+        private async Task<ImmutableSortedOrderSet> GetOpenOrdersAsync(CancellationToken cancellationToken)
         {
             var orders = await _repository
                 .GetTransientOrdersBySideAsync(_options.Symbol, OrderSide.Buy, cancellationToken)
@@ -138,7 +139,7 @@ namespace Trader.Trading.Algorithms.Accumulator
             return orders;
         }
 
-        private async Task<bool> TryCloseLowBuysAsync(SortedOrderSet orders, decimal lowBuyPrice, CancellationToken cancellationToken)
+        private async Task<bool> TryCloseLowBuysAsync(ImmutableSortedOrderSet orders, decimal lowBuyPrice, CancellationToken cancellationToken)
         {
             // cancel all open buy orders with an open price lower than the lower band to the current price
             var closed = false;
@@ -171,7 +172,7 @@ namespace Trader.Trading.Algorithms.Accumulator
             return closed;
         }
 
-        private async Task<bool> TryCloseHighBuysAsync(SortedOrderSet orders, CancellationToken cancellationToken)
+        private async Task<bool> TryCloseHighBuysAsync(ImmutableSortedOrderSet orders, CancellationToken cancellationToken)
         {
             var closed = false;
             foreach (var order in orders.Where(x => x.Side == OrderSide.Buy).OrderBy(x => x.Price).Skip(1))

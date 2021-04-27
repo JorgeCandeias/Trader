@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Trader.Core.Time;
 using Trader.Data;
 using Trader.Models;
+using Trader.Models.Collections;
 using static System.String;
 
 namespace Trader.Trading.Algorithms.Step
@@ -529,7 +530,7 @@ namespace Trader.Trading.Algorithms.Step
             }
         }
 
-        private async Task<bool> TryCreateTradingBandsAsync(SortedOrderSet significant, MinNotionalSymbolFilter minNotionalFilter, SymbolPriceTicker ticker, PriceSymbolFilter priceFilter, PercentPriceSymbolFilter percentFilter, CancellationToken cancellationToken = default)
+        private async Task<bool> TryCreateTradingBandsAsync(ImmutableSortedOrderSet significant, MinNotionalSymbolFilter minNotionalFilter, SymbolPriceTicker ticker, PriceSymbolFilter priceFilter, PercentPriceSymbolFilter percentFilter, CancellationToken cancellationToken = default)
         {
             _bands.Clear();
 

@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Trader.Models;
+using Trader.Models.Collections;
 
 namespace Trader.Data
 {
@@ -11,7 +12,7 @@ namespace Trader.Data
 
         Task SetLastPagedOrderIdAsync(string symbol, long orderId, CancellationToken cancellationToken = default);
 
-        Task<SortedOrderSet> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default);
+        Task<ImmutableSortedOrderSet> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default);
 
         Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders, CancellationToken cancellationToken = default);
 
@@ -23,9 +24,9 @@ namespace Trader.Data
 
         Task<long> GetMinTransientOrderIdAsync(string symbol, CancellationToken cancellationToken = default);
 
-        Task<SortedOrderSet> GetTransientOrdersBySideAsync(string symbol, OrderSide orderSide, CancellationToken cancellationToken = default);
+        Task<ImmutableSortedOrderSet> GetTransientOrdersBySideAsync(string symbol, OrderSide orderSide, CancellationToken cancellationToken = default);
 
-        Task<SortedOrderSet> GetNonSignificantTransientOrdersBySideAsync(string symbol, OrderSide orderSide, CancellationToken cancellationToken = default);
+        Task<ImmutableSortedOrderSet> GetNonSignificantTransientOrdersBySideAsync(string symbol, OrderSide orderSide, CancellationToken cancellationToken = default);
 
         Task<long> GetMaxTradeIdAsync(string symbol, CancellationToken cancellationToken = default);
 

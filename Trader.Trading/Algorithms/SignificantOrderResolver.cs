@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Trader.Core.Time;
 using Trader.Data;
 using Trader.Models;
+using Trader.Models.Collections;
 
 namespace Trader.Trading.Algorithms
 {
@@ -252,7 +253,8 @@ namespace Trader.Trading.Algorithms
             }
 
             // keep only buy orders with some quantity left to sell
-            var significant = new SortedOrderSet();
+            var significant = ImmutableSortedOrderSet.CreateBuilder();
+
             foreach (var survivor in subjects.Segment
                 .Where(x => x.Order.Side == OrderSide.Buy && x.RemainingExecutedQuantity > 0m)
                 .GroupBy(x => x.Order)
@@ -297,7 +299,7 @@ namespace Trader.Trading.Algorithms
                 d7,
                 d30);
 
-            return new SignificantResult(significant, summary);
+            return new SignificantResult(significant.ToImmutable(), summary);
         }
     }
 }

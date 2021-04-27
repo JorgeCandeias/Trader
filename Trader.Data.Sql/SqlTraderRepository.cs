@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Trader.Models;
+using Trader.Models.Collections;
 
 namespace Trader.Data.Sql
 {
@@ -61,7 +62,7 @@ namespace Trader.Data.Sql
                 cancellationToken));
         }
 
-        public async Task<SortedOrderSet> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default)
+        public async Task<ImmutableSortedOrderSet> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default)
         {
             _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
 
@@ -79,10 +80,10 @@ namespace Trader.Data.Sql
                 CommandFlags.Buffered,
                 cancellationToken));
 
-            return _mapper.Map<SortedOrderSet>(entities);
+            return _mapper.Map<ImmutableSortedOrderSet>(entities);
         }
 
-        public async Task<SortedOrderSet> GetTransientOrdersBySideAsync(string symbol, OrderSide orderSide, CancellationToken cancellationToken = default)
+        public async Task<ImmutableSortedOrderSet> GetTransientOrdersBySideAsync(string symbol, OrderSide orderSide, CancellationToken cancellationToken = default)
         {
             _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
 
@@ -101,10 +102,10 @@ namespace Trader.Data.Sql
                 CommandFlags.Buffered,
                 cancellationToken));
 
-            return _mapper.Map<SortedOrderSet>(entities);
+            return _mapper.Map<ImmutableSortedOrderSet>(entities);
         }
 
-        public async Task<SortedOrderSet> GetNonSignificantTransientOrdersBySideAsync(string symbol, OrderSide orderSide, CancellationToken cancellationToken = default)
+        public async Task<ImmutableSortedOrderSet> GetNonSignificantTransientOrdersBySideAsync(string symbol, OrderSide orderSide, CancellationToken cancellationToken = default)
         {
             _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
 
@@ -123,7 +124,7 @@ namespace Trader.Data.Sql
                 CommandFlags.Buffered,
                 cancellationToken));
 
-            return _mapper.Map<SortedOrderSet>(entities);
+            return _mapper.Map<ImmutableSortedOrderSet>(entities);
         }
 
         public async Task<long> GetLastPagedOrderIdAsync(string symbol, CancellationToken cancellationToken = default)

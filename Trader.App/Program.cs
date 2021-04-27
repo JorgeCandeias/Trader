@@ -35,6 +35,7 @@ namespace Trader.App
                 .ConfigureServices((context, services) =>
                 {
                     services
+                        .AddModelConverters()
                         .AddBinanceTradingService(options => context.Configuration.Bind("Api", options))
                         .AddTradingHost()
                         .AddSystemClock()

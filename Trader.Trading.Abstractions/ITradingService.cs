@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Trader.Data;
 using Trader.Models;
+using Trader.Models.Collections;
 
 namespace Trader.Trading
 {
@@ -20,7 +21,7 @@ namespace Trader.Trading
         // todo: refactor this to return sorted order set
         Task<OrderQueryResult> GetOrderAsync(OrderQuery model, CancellationToken cancellationToken = default);
 
-        Task<SortedOrderSet> GetAllOrdersAsync(GetAllOrders model, CancellationToken cancellationToken = default);
+        Task<ImmutableSortedOrderSet> GetAllOrdersAsync(GetAllOrders model, CancellationToken cancellationToken = default);
 
         Task<CancelStandardOrderResult> CancelOrderAsync(CancelStandardOrder model, CancellationToken cancellationToken = default);
 

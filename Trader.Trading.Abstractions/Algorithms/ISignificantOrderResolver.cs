@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Trader.Data;
+using Trader.Models.Collections;
 
 namespace Trader.Trading.Algorithms
 {
@@ -10,7 +10,7 @@ namespace Trader.Trading.Algorithms
         Task<SignificantResult> ResolveAsync(string symbol, CancellationToken cancellationToken = default);
     }
 
-    public record SignificantResult(SortedOrderSet Orders, Profit Profit);
+    public record SignificantResult(ImmutableSortedOrderSet Orders, Profit Profit);
 
     public record Profit(
 

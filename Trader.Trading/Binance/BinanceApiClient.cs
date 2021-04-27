@@ -40,7 +40,9 @@ namespace Trader.Trading.Binance
         public async Task<bool> PingAsync(CancellationToken cancellationToken = default)
         {
             var response = await _client
-                .GetAsync("/api/v3/ping", cancellationToken)
+                .GetAsync(
+                    new Uri("/api/v3/ping", UriKind.Relative),
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             return response.IsSuccessStatusCode;
@@ -49,7 +51,9 @@ namespace Trader.Trading.Binance
         public async Task<DateTime> GetTimeAsync(CancellationToken cancellationToken = default)
         {
             var result = await _client
-                .GetFromJsonAsync<ServerTimeModel>("/api/v3/time", cancellationToken)
+                .GetFromJsonAsync<ServerTimeModel>(
+                    new Uri("/api/v3/time", UriKind.Relative),
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             return _mapper.Map<DateTime>(result);
@@ -58,7 +62,9 @@ namespace Trader.Trading.Binance
         public async Task<ExchangeInfoModel> GetExchangeInfoAsync(CancellationToken cancellationToken = default)
         {
             return await _client
-                .GetFromJsonAsync<ExchangeInfoModel>("/api/v3/exchangeInfo", cancellationToken)
+                .GetFromJsonAsync<ExchangeInfoModel>(
+                    new Uri("/api/v3/exchangeInfo", UriKind.Relative),
+                    cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
 
@@ -69,7 +75,9 @@ namespace Trader.Trading.Binance
         public async Task<OrderBook> GetOrderBookAsync(string symbol, CancellationToken cancellationToken = default)
         {
             var result = await _client
-                .GetFromJsonAsync<OrderBookModel>($"/api/v3/depth?symbol={HttpUtility.UrlEncode(symbol)}", cancellationToken)
+                .GetFromJsonAsync<OrderBookModel>(
+                    new Uri($"/api/v3/depth?symbol={HttpUtility.UrlEncode(symbol)}", UriKind.Relative),
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             return _mapper.Map<OrderBook>(result);
@@ -78,7 +86,9 @@ namespace Trader.Trading.Binance
         public async Task<IEnumerable<Trade>> GetRecentTradesAsync(string symbol, CancellationToken cancellationToken = default)
         {
             var result = await _client
-                .GetFromJsonAsync<TradeModel[]>($"/api/v3/trades?symbol={HttpUtility.UrlEncode(symbol)}", cancellationToken)
+                .GetFromJsonAsync<TradeModel[]>(
+                    new Uri($"/api/v3/trades?symbol={HttpUtility.UrlEncode(symbol)}", UriKind.Relative),
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             return _mapper.Map<IEnumerable<Trade>>(result);
@@ -87,7 +97,9 @@ namespace Trader.Trading.Binance
         public async Task<IEnumerable<Trade>> GetHistoricalTradesAsync(string symbol, CancellationToken cancellationToken = default)
         {
             var result = await _client
-                .GetFromJsonAsync<TradeModel[]>($"/api/v3/historicalTrades?symbol={HttpUtility.UrlEncode(symbol)}", cancellationToken)
+                .GetFromJsonAsync<TradeModel[]>(
+                    new Uri($"/api/v3/historicalTrades?symbol={HttpUtility.UrlEncode(symbol)}", UriKind.Relative),
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             return _mapper.Map<IEnumerable<Trade>>(result);
@@ -96,7 +108,9 @@ namespace Trader.Trading.Binance
         public async Task<IEnumerable<AggTrade>> GetAggTradesAsync(string symbol, CancellationToken cancellationToken = default)
         {
             var result = await _client
-                .GetFromJsonAsync<IDictionary<string, JsonElement>[]>($"/api/v3/aggTrades?symbol={HttpUtility.UrlEncode(symbol)}", _jsonOptions, cancellationToken)
+                .GetFromJsonAsync<IDictionary<string, JsonElement>[]>(
+                    new Uri($"/api/v3/aggTrades?symbol={HttpUtility.UrlEncode(symbol)}", UriKind.Relative), _jsonOptions,
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             return _mapper.Map<IEnumerable<AggTrade>>(result);
@@ -107,7 +121,9 @@ namespace Trader.Trading.Binance
             var intervalModel = _mapper.Map<string>(interval);
 
             var result = await _client
-                .GetFromJsonAsync<JsonElement[][]>($"/api/v3/klines?symbol={HttpUtility.UrlEncode(symbol)}&interval={HttpUtility.UrlEncode(intervalModel)}", cancellationToken)
+                .GetFromJsonAsync<JsonElement[][]>(
+                    new Uri($"/api/v3/klines?symbol={HttpUtility.UrlEncode(symbol)}&interval={HttpUtility.UrlEncode(intervalModel)}", UriKind.Relative),
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             return _mapper.Map<IEnumerable<Kline>>(result);
@@ -116,7 +132,9 @@ namespace Trader.Trading.Binance
         public async Task<AvgPrice> GetAvgPriceAsync(string symbol, CancellationToken cancellationToken = default)
         {
             var result = await _client
-                .GetFromJsonAsync<AvgPriceModel>($"/api/v3/avgPrice?symbol={HttpUtility.UrlEncode(symbol)}", cancellationToken)
+                .GetFromJsonAsync<AvgPriceModel>(
+                    new Uri($"/api/v3/avgPrice?symbol={HttpUtility.UrlEncode(symbol)}", UriKind.Relative),
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             return _mapper.Map<AvgPrice>(result);
@@ -125,7 +143,9 @@ namespace Trader.Trading.Binance
         public async Task<Ticker> Get24hTickerPriceChangeStatisticsAsync(string symbol, CancellationToken cancellationToken = default)
         {
             var result = await _client
-                .GetFromJsonAsync<TickerModel>($"/api/v3/ticker/24hr?symbol={HttpUtility.UrlEncode(symbol)}", cancellationToken)
+                .GetFromJsonAsync<TickerModel>(
+                    new Uri($"/api/v3/ticker/24hr?symbol={HttpUtility.UrlEncode(symbol)}", UriKind.Relative),
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             return _mapper.Map<Ticker>(result);
@@ -138,14 +158,18 @@ namespace Trader.Trading.Binance
             BinanceApiContext.SkipSigning = true;
 
             return await _client
-                .GetFromJsonAsync<SymbolPriceTickerModel>($"/api/v3/ticker/price?symbol={HttpUtility.UrlEncode(symbol)}", cancellationToken)
+                .GetFromJsonAsync<SymbolPriceTickerModel>(
+                    new Uri($"/api/v3/ticker/price?symbol={HttpUtility.UrlEncode(symbol)}", UriKind.Relative),
+                    cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
 
         public async Task<ImmutableList<SymbolPriceTicker>> GetSymbolPriceTickersAsync(CancellationToken cancellationToken = default)
         {
             var result = await _client
-                .GetFromJsonAsync<IEnumerable<SymbolPriceTickerModel>>($"/api/v3/ticker/price", cancellationToken)
+                .GetFromJsonAsync<IEnumerable<SymbolPriceTickerModel>>(
+                    new Uri($"/api/v3/ticker/price", UriKind.Relative),
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             return _mapper.Map<ImmutableList<SymbolPriceTicker>>(result);
@@ -154,7 +178,9 @@ namespace Trader.Trading.Binance
         public async Task<SymbolOrderBookTicker> GetSymbolOrderBookTickerAsync(string symbol, CancellationToken cancellationToken = default)
         {
             var result = await _client
-                .GetFromJsonAsync<SymbolOrderBookTickerModel>($"/api/v3/ticker/bookTicker?symbol={HttpUtility.UrlEncode(symbol)}", cancellationToken)
+                .GetFromJsonAsync<SymbolOrderBookTickerModel>(
+                    new Uri($"/api/v3/ticker/bookTicker?symbol={HttpUtility.UrlEncode(symbol)}", UriKind.Relative),
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             return _mapper.Map<SymbolOrderBookTicker>(result);
@@ -163,7 +189,9 @@ namespace Trader.Trading.Binance
         public async Task<IEnumerable<SymbolOrderBookTicker>> GetSymbolOrderBookTickersAsync(CancellationToken cancellationToken = default)
         {
             var result = await _client
-                .GetFromJsonAsync<IEnumerable<SymbolOrderBookTickerModel>>($"/api/v3/ticker/bookTicker", cancellationToken)
+                .GetFromJsonAsync<IEnumerable<SymbolOrderBookTickerModel>>(
+                    new Uri($"/api/v3/ticker/bookTicker", UriKind.Relative),
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             return _mapper.Map<IEnumerable<SymbolOrderBookTicker>>(result);
@@ -182,7 +210,10 @@ namespace Trader.Trading.Binance
             _ = model.Symbol ?? throw new ArgumentException($"{nameof(OrderQuery.Symbol)} is required");
 
             var response = await _client
-                .PostAsync(Combine("/api/v3/order", model), EmptyHttpContent.Instance, cancellationToken)
+                .PostAsync(
+                    new Uri(Combine("/api/v3/order", model), UriKind.Relative),
+                    EmptyHttpContent.Instance,
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             return await response.Content
@@ -199,7 +230,10 @@ namespace Trader.Trading.Binance
             _ = model.Symbol ?? throw new ArgumentException($"{nameof(OrderQuery.Symbol)} is required");
 
             return await _client
-                .GetFromJsonAsync<GetOrderResponseModel>(Combine("/api/v3/order", model), _jsonOptions, cancellationToken)
+                .GetFromJsonAsync<GetOrderResponseModel>(
+                    new Uri(Combine("/api/v3/order", model), UriKind.Relative),
+                    _jsonOptions,
+                    cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
 
@@ -212,7 +246,9 @@ namespace Trader.Trading.Binance
             _ = model.Symbol ?? throw new ArgumentException($"{nameof(OrderQuery.Symbol)} is required");
 
             var output = await _client
-                .DeleteAsync(Combine("/api/v3/order", model), cancellationToken)
+                .DeleteAsync(
+                    new Uri(Combine("/api/v3/order", model), UriKind.Relative),
+                    cancellationToken)
                 .ConfigureAwait(false);
 
             return await output.Content
@@ -243,7 +279,10 @@ namespace Trader.Trading.Binance
             _ = model.Symbol ?? throw new ArgumentException($"{nameof(GetOpenOrders.Symbol)} is required");
 
             return await _client
-                .GetFromJsonAsync<IEnumerable<GetOrderResponseModel>>(Combine("/api/v3/openOrders", model), _jsonOptions, cancellationToken)
+                .GetFromJsonAsync<IEnumerable<GetOrderResponseModel>>(
+                    new Uri(Combine("/api/v3/openOrders", model), UriKind.Relative),
+                    _jsonOptions,
+                    cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
 
@@ -256,7 +295,10 @@ namespace Trader.Trading.Binance
             _ = model.Symbol ?? throw new ArgumentException($"{nameof(GetOpenOrders.Symbol)} is required");
 
             return await _client
-                .GetFromJsonAsync<IEnumerable<GetOrderResponseModel>>(Combine("/api/v3/allOrders", model), _jsonOptions, cancellationToken)
+                .GetFromJsonAsync<IEnumerable<GetOrderResponseModel>>(
+                    new Uri(Combine("/api/v3/allOrders", model), UriKind.Relative),
+                    _jsonOptions,
+                    cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
 
@@ -268,7 +310,10 @@ namespace Trader.Trading.Binance
             _ = model ?? throw new ArgumentNullException(nameof(model));
 
             return await _client
-                .GetFromJsonAsync<AccountResponseModel>(Combine("/api/v3/account", model), _jsonOptions, cancellationToken)
+                .GetFromJsonAsync<AccountResponseModel>(
+                    new Uri(Combine("/api/v3/account", model), UriKind.Relative),
+                    _jsonOptions,
+                    cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
 
@@ -281,7 +326,9 @@ namespace Trader.Trading.Binance
             _ = model.Symbol ?? throw new ArgumentException($"{nameof(GetOpenOrders.Symbol)} is required");
 
             return await _client
-                .GetFromJsonAsync<IEnumerable<AccountTradesResponseModel>>(Combine("/api/v3/myTrades", model), cancellationToken)
+                .GetFromJsonAsync<IEnumerable<AccountTradesResponseModel>>(
+                    new Uri(Combine("/api/v3/myTrades", model), UriKind.Relative),
+                    cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
 

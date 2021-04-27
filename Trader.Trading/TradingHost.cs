@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using Trader.Core.Time;
@@ -47,6 +48,7 @@ namespace Trader.Trading
             return Task.CompletedTask;
         }
 
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Timer")]
         private async Task TickAsync(CancellationToken cancellationToken)
         {
             // grab the exchange information once to share between all algo instances

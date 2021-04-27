@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
-using Trader.Core.Time;
 using Trader.Models;
 using Trader.Models.Collections;
 
@@ -19,17 +18,13 @@ namespace Trader.Trading.Binance
         private readonly ILogger _logger;
         private readonly BinanceOptions _options;
         private readonly BinanceApiClient _client;
-        private readonly IHostApplicationLifetime _lifetime;
-        private readonly ISystemClock _clock;
         private readonly IMapper _mapper;
 
-        public BinanceTradingService(ILogger<BinanceTradingService> logger, IOptions<BinanceOptions> options, BinanceApiClient client, IHostApplicationLifetime lifetime, ISystemClock clock, IMapper mapper)
+        public BinanceTradingService(ILogger<BinanceTradingService> logger, IOptions<BinanceOptions> options, BinanceApiClient client, IMapper mapper)
         {
             _logger = logger;
             _options = options.Value;
             _client = client;
-            _lifetime = lifetime;
-            _clock = clock;
             _mapper = mapper;
         }
 

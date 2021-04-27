@@ -5,21 +5,6 @@ using System.Data;
 
 namespace Trader.Data.Sql
 {
-    internal record TradeEntity(
-        string Symbol,
-        long Id,
-        long OrderId,
-        long OrderListId,
-        decimal Price,
-        decimal Quantity,
-        decimal QuoteQuantity,
-        decimal Commission,
-        string CommissionAsset,
-        DateTime Time,
-        bool IsBuyer,
-        bool IsMaker,
-        bool IsBestMatch);
-
     internal record CancelOrderEntity(
         string Symbol,
         long OrderId,

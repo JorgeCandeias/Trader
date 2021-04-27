@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Trader.Data.Sql.Models;
 using Trader.Models;
 
 namespace Trader.Data.Sql

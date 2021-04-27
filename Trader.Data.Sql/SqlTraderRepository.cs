@@ -8,6 +8,7 @@ using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Trader.Data.Sql.Models;
 using Trader.Models;
 using Trader.Models.Collections;
 

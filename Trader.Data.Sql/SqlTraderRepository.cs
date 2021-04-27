@@ -249,7 +249,7 @@ namespace Trader.Data.Sql
                 cancellationToken));
         }
 
-        public async Task<SortedTradeSet> GetTradesAsync(string symbol, CancellationToken cancellationToken = default)
+        public async Task<ImmutableSortedTradeSet> GetTradesAsync(string symbol, CancellationToken cancellationToken = default)
         {
             _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
 
@@ -267,7 +267,7 @@ namespace Trader.Data.Sql
                 CommandFlags.Buffered,
                 cancellationToken));
 
-            return _mapper.Map<SortedTradeSet>(result);
+            return _mapper.Map<ImmutableSortedTradeSet>(result);
         }
     }
 }

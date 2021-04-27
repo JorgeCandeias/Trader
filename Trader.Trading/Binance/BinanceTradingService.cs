@@ -9,7 +9,6 @@ using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
 using Trader.Core.Time;
-using Trader.Data;
 using Trader.Models;
 using Trader.Models.Collections;
 
@@ -72,7 +71,7 @@ namespace Trader.Trading.Binance
             return result;
         }
 
-        public async Task<SortedTradeSet> GetAccountTradesAsync(GetAccountTrades model, CancellationToken cancellationToken = default)
+        public async Task<ImmutableSortedTradeSet> GetAccountTradesAsync(GetAccountTrades model, CancellationToken cancellationToken = default)
         {
             BinanceApiContext.CaptureUsage = true;
 
@@ -82,7 +81,7 @@ namespace Trader.Trading.Binance
                 .GetAccountTradesAsync(input, cancellationToken)
                 .ConfigureAwait(false);
 
-            var result = _mapper.Map<SortedTradeSet>(output);
+            var result = _mapper.Map<ImmutableSortedTradeSet>(output);
             var used = _mapper.Map<ImmutableList<Usage>>(BinanceApiContext.Usage);
 
             UpdateUsage(used);

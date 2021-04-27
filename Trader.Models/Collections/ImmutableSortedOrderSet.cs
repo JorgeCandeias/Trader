@@ -84,7 +84,7 @@ namespace Trader.Models.Collections
 
         #region Builder
 
-        public static Builder CreateBuilder() => new Builder();
+        public static Builder CreateBuilder() => new();
 
         public sealed class Builder : ISet<OrderQueryResult>
         {
@@ -162,5 +162,23 @@ namespace Trader.Models.Collections
         }
 
         #endregion Comparer
+
+        #region Helpers
+
+        public static ImmutableSortedOrderSet Create(IEnumerable<OrderQueryResult> items)
+        {
+            _ = items ?? throw new ArgumentNullException(nameof(items));
+
+            var builder = new Builder();
+
+            foreach (var item in items)
+            {
+                builder.Add(item);
+            }
+
+            return builder.ToImmutable();
+        }
+
+        #endregion Helpers
     }
 }

@@ -12,21 +12,24 @@ namespace Trader.Data.Sql.Tests
     {
         private const string ConnectionString = @"server=(localdb)\mssqllocaldb;database=TraderTest";
 
+        private static readonly IMapper _mapper = new MapperConfiguration(options =>
+        {
+            options.AddProfile<SqlTraderRepositoryProfile>();
+        }).CreateMapper();
+
+        private static SqlTraderRepository CreateRepository()
+        {
+            return new SqlTraderRepository(
+                Options.Create(new SqlTraderRepositoryOptions { ConnectionString = ConnectionString }),
+                _mapper);
+        }
+
         [Fact]
         public async Task GetMaxTradeIdReturnsZeroIfNoTradesExist()
         {
             // arrange
             using var transaction = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-
-            var mapper = new MapperConfiguration(options =>
-            {
-                options.AddProfile<SqlTraderRepositoryProfile>();
-            }).CreateMapper();
-
-            var repository = new SqlTraderRepository(Options.Create(new SqlTraderRepositoryOptions
-            {
-                ConnectionString = ConnectionString
-            }), mapper);
+            var repository = CreateRepository();
 
             // act
             var result = await repository.GetMaxTradeIdAsync("ZZZ").ConfigureAwait(false);
@@ -54,15 +57,7 @@ namespace Trader.Data.Sql.Tests
                         ('ZZZ', 3, 2, 0, 0, 0, 0, 0, 'AAA', '2021-01-01', 0, 0, 0)")
                 .ConfigureAwait(false);
 
-            var mapper = new MapperConfiguration(options =>
-            {
-                options.AddProfile<SqlTraderRepositoryProfile>();
-            }).CreateMapper();
-
-            var repository = new SqlTraderRepository(Options.Create(new SqlTraderRepositoryOptions
-            {
-                ConnectionString = ConnectionString
-            }), mapper);
+            var repository = CreateRepository();
 
             // act
             var result = await repository.GetMaxTradeIdAsync("ZZZ").ConfigureAwait(false);

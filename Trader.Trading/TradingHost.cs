@@ -12,7 +12,7 @@ using Trader.Trading.Algorithms;
 
 namespace Trader.Trading
 {
-    internal class TradingHost : ITradingHost, IHostedService
+    internal class TradingHost : IHostedService
     {
         private readonly ILogger _logger;
         private readonly IEnumerable<ITradingAlgorithm> _algos;

@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Hosting;
-using Trader.Trading;
+﻿using Trader.Trading;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -8,9 +7,7 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddTradingHost(this IServiceCollection services)
         {
             return services
-                .AddSingleton<TradingHost>()
-                .AddSingleton<ITradingHost>(sp => sp.GetRequiredService<TradingHost>())
-                .AddSingleton<IHostedService>(sp => sp.GetRequiredService<TradingHost>());
+                .AddHostedService<TradingHost>();
         }
     }
 }

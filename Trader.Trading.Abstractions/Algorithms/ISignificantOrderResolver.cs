@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Trader.Models.Collections;
@@ -24,6 +25,8 @@ namespace Trader.Trading.Algorithms
 
         public static Profit Aggregate(IEnumerable<Profit> items)
         {
+            if (items is null) throw new ArgumentNullException(nameof(items));
+
             var today = 0m;
             var yesterday = 0m;
             var thisWeek = 0m;
@@ -52,6 +55,8 @@ namespace Trader.Trading.Algorithms
 
         public Profit Add(Profit item)
         {
+            if (item is null) throw new ArgumentNullException(nameof(item));
+
             return new Profit(
                 Today + item.Today,
                 Yesterday + item.Yesterday,
@@ -71,6 +76,8 @@ namespace Trader.Trading.Algorithms
 
         public static Statistics FromProfit(Profit profit)
         {
+            if (profit is null) throw new ArgumentNullException(nameof(profit));
+
             return new Statistics(
                 profit.D1 / 24m,
                 profit.D7 / (24m * 7m),

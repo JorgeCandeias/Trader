@@ -47,6 +47,12 @@ namespace Trader.App
                         .AddBase62NumberSerializer();
 
                     services
+                        .AddOrderBookService("BTCGBP", options =>
+                        {
+                            options.Symbol = "BTCGBP";
+                        });
+
+                    services
                         .AddAlgorithmResolvers()
                         .AddAccumulatorAlgorithm("BNBGBP", options => context.Configuration.Bind("Trading:Algorithms:Accumulator:BNBGBP", options))
                         .AddStepAlgorithm("BTCGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:BTCGBP", options))

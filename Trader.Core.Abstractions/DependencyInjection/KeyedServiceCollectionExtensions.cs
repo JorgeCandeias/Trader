@@ -5,6 +5,8 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class KeyedServiceCollectionExtensions
     {
+        #region Keyed
+
         public static TService? GetKeyedService<TKey, TService>(this IServiceProvider services, TKey key)
             where TKey : IEquatable<TKey>
             where TService : class
@@ -43,5 +45,34 @@ namespace Microsoft.Extensions.DependencyInjection
                 if (instance is not null) yield return instance;
             }
         }
+
+        #endregion Keyed
+
+        #region Named
+
+        public static TService? GetNamedService<TService>(this IServiceProvider services, string name)
+            where TService : class
+        {
+            return GetKeyedService<string, TService>(services, name);
+        }
+
+        public static TService GetRequiredNamedService<TService>(this IServiceProvider services, string name)
+            where TService : class
+        {
+            return GetRequiredKeyedService<string, TService>(services, name);
+        }
+
+        public static IEnumerable<TService> GetNamedServices<TService>(this IServiceProvider services)
+            where TService : class
+        {
+            foreach (var service in services.GetServices<IKeyedService<string, TService>>())
+            {
+                var instance = service.GetService();
+
+                if (instance is not null) yield return instance;
+            }
+        }
+
+        #endregion Named
     }
 }

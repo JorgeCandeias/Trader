@@ -19,7 +19,7 @@ namespace Trader.Trading.Algorithms.Accumulator
         public decimal PullbackRatio { get; set; } = 0.90m;
 
         [Required]
-        [Range(0.01, 1)]
+        [Range(0.001, 1)]
         public decimal TargetQuoteBalanceFractionPerBuy { get; set; } = 0.01m;
 
         [Required]

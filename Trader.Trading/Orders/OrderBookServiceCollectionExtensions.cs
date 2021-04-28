@@ -8,7 +8,13 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddOrderBookService(this IServiceCollection services, string name, Action<OrderBookServiceOptions> configure)
         {
             return services
-                .AddNamedSingleton<IOrderBookService, OrderBookService>(name);
+                .AddNamedSingleton(name, (sp, k) => ActivatorUtilities.CreateInstance<OrderBookService>(sp, k))
+                .AddNamedSingleton<IOrderBookService>(name, (sp, k) => sp.GetRequiredNamedService<OrderBookService>(k))
+                .AddHostedService(sp => sp.GetNamedService<OrderBookService>(name))
+                .AddOptions<OrderBookServiceOptions>(name)
+                .Configure(configure)
+                .ValidateDataAnnotations()
+                .Services;
         }
     }
 }

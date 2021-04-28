@@ -55,6 +55,9 @@ namespace Trader.Trading.Algorithms
 
                 // keep track for logging
                 count += trades.Count;
+
+                // break if we got the last page (the binance api is unreliable and doesn't always fill up to exactly 1000)
+                if (trades.Count <= 100) break;
             }
 
             // log the activity only if necessary

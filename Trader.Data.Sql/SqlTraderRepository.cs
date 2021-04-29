@@ -188,6 +188,51 @@ namespace Trader.Data.Sql
                 .ConfigureAwait(false);
         }
 
+        public async Task<long> GetLastPagedTradeIdAsync(string symbol, CancellationToken cancellationToken = default)
+        {
+            _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
+
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            return await connection
+                .ExecuteScalarAsync<long>(
+                    new CommandDefinition(
+                        "[dbo].[GetPagedTrade]",
+                        new
+                        {
+                            Symbol = symbol
+                        },
+                        null,
+                        _options.CommandTimeoutAsInteger,
+                        CommandType.StoredProcedure,
+                        CommandFlags.Buffered,
+                    cancellationToken))
+                .ConfigureAwait(false);
+        }
+
+        public async Task SetLastPagedTradeIdAsync(string symbol, long tradeId, CancellationToken cancellationToken = default)
+        {
+            _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
+
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            await connection
+                .ExecuteAsync(
+                    new CommandDefinition(
+                        "[dbo].[SetPagedTrade]",
+                        new
+                        {
+                            Symbol = symbol,
+                            TradeId = tradeId
+                        },
+                        null,
+                        _options.CommandTimeoutAsInteger,
+                        CommandType.StoredProcedure,
+                        CommandFlags.Buffered,
+                    cancellationToken))
+                .ConfigureAwait(false);
+        }
+
         public Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default)
         {
             _ = order ?? throw new ArgumentNullException(nameof(order));
@@ -254,6 +299,13 @@ namespace Trader.Data.Sql
                         CommandFlags.Buffered,
                     cancellationToken))
                 .ConfigureAwait(false);
+        }
+
+        public Task SetTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default)
+        {
+            _ = trade ?? throw new ArgumentNullException(nameof(trade));
+
+            return SetTradesAsync(Enumerable.Repeat(trade, 1), cancellationToken);
         }
 
         public async Task SetTradesAsync(IEnumerable<AccountTrade> trades, CancellationToken cancellationToken = default)

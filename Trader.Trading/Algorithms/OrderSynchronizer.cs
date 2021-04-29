@@ -62,9 +62,6 @@ namespace Trader.Trading.Algorithms
 
                 // keep track for logging
                 count += orders.Count;
-
-                // break if we got the last page (the binance api is unreliable and doesn't always fill up to exactly 1000)
-                if (orders.Count < 1000) break;
             }
 
             if (count > 0)
@@ -73,12 +70,12 @@ namespace Trader.Trading.Algorithms
                 await _repository
                     .SetLastPagedOrderIdAsync(symbol, orderId, cancellationToken)
                     .ConfigureAwait(false);
-
-                // log the activity only if necessary
-                _logger.LogInformation(
-                    "{Name} {Symbol} pulled {Count} orders up to OrderId {MaxOrderId} in {ElapsedMs}ms",
-                    nameof(OrderSynchronizer), symbol, count, orderId, watch.ElapsedMilliseconds);
             }
+
+            // log the activity only if necessary
+            _logger.LogInformation(
+                "{Name} {Symbol} pulled {Count} orders up to OrderId {MaxOrderId} in {ElapsedMs}ms",
+                nameof(OrderSynchronizer), symbol, count, orderId, watch.ElapsedMilliseconds);
         }
     }
 }

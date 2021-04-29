@@ -28,9 +28,9 @@ namespace Trader.Trading.Algorithms
         {
             var watch = Stopwatch.StartNew();
 
-            // get the last trade id available
+            // start from the max paged trade
             var tradeId = await _repository
-                .GetMaxTradeIdAsync(symbol, cancellationToken)
+                .GetLastPagedTradeIdAsync(symbol, cancellationToken)
                 .ConfigureAwait(false);
 
             // pull all trades
@@ -55,18 +55,20 @@ namespace Trader.Trading.Algorithms
 
                 // keep track for logging
                 count += trades.Count;
-
-                // break if we got the last page (the binance api is unreliable and doesn't always fill up to exactly 1000)
-                if (trades.Count < 1000) break;
             }
 
             // log the activity only if necessary
             if (count > 0)
             {
-                _logger.LogInformation(
-                    "{Name} {Symbol} pulled {Count} trades up to TradeId {MaxTradeId} in {ElapsedMs}ms",
-                    nameof(TradeSynchronizer), symbol, count, tradeId, watch.ElapsedMilliseconds);
+                // save the last paged trade to continue from there next time
+                await _repository
+                    .SetLastPagedTradeIdAsync(symbol, tradeId, cancellationToken)
+                    .ConfigureAwait(false);
             }
+
+            _logger.LogInformation(
+                "{Name} {Symbol} pulled {Count} trades up to TradeId {MaxTradeId} in {ElapsedMs}ms",
+                nameof(TradeSynchronizer), symbol, count, tradeId, watch.ElapsedMilliseconds);
         }
     }
 }

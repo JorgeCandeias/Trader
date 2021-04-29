@@ -26,11 +26,11 @@ SET
     [Status] = @Status,
     [TimeInForce] = @TimeInForce,
     [Type] = @Type,
-    [Side] = @Side,
-    [UpdateTime] = DATEADD(MILLISECOND, 1, [UpdateTime])
+    [Side] = @Side
 WHERE
     [Symbol] = @Symbol
     AND [OrderId] = @OrderId
+    AND IsTransient = 1
 
 RETURN 0
 GO

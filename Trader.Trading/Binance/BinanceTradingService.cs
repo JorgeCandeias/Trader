@@ -202,6 +202,47 @@ namespace Trader.Trading.Binance
             return result;
         }
 
+        public async Task<string> CreateUserDataStreamAsync(CancellationToken cancellationToken = default)
+        {
+            BinanceApiContext.CaptureUsage = true;
+
+            var output = await _client
+                .CreateUserDataStreamAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            UpdateUsage(_mapper.Map<ImmutableList<Usage>>(BinanceApiContext.Usage));
+
+            return output.ListenKey;
+        }
+
+        public async Task PingUserDataStreamAsync(string listenKey, CancellationToken cancellationToken = default)
+        {
+            _ = listenKey ?? throw new ArgumentNullException(nameof(listenKey));
+
+            BinanceApiContext.CaptureUsage = true;
+            BinanceApiContext.SkipSigning = true;
+
+            await _client
+                .PingUserDataStreamAsync(new ListenKeyRequestModel(listenKey), cancellationToken)
+                .ConfigureAwait(false);
+
+            UpdateUsage(_mapper.Map<ImmutableList<Usage>>(BinanceApiContext.Usage));
+        }
+
+        public async Task CloseUserDataStreamAsync(string listenKey, CancellationToken cancellationToken = default)
+        {
+            _ = listenKey ?? throw new ArgumentNullException(nameof(listenKey));
+
+            BinanceApiContext.CaptureUsage = true;
+            BinanceApiContext.SkipSigning = true;
+
+            await _client
+                .CloseUserDataStreamAsync(new ListenKeyRequestModel(listenKey), cancellationToken)
+                .ConfigureAwait(false);
+
+            UpdateUsage(_mapper.Map<ImmutableList<Usage>>(BinanceApiContext.Usage));
+        }
+
         public Task StartAsync(CancellationToken cancellationToken)
         {
             return SyncLimitsAsync(cancellationToken);

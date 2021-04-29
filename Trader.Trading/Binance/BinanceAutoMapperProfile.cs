@@ -27,6 +27,7 @@ namespace Trader.Trading.Binance
             CreateMap<string, OcoStatus>().ConvertUsing<OcoStatusConverter>();
             CreateMap<string, OcoOrderStatus>().ConvertUsing<OcoOrderStatusConverter>();
             CreateMap<string, AccountType>().ConvertUsing<AccountTypeConverter>();
+            CreateMap<string, ExecutionType>().ConvertUsing<ExecutionTypeConverter>();
             CreateMap<string, TimeZoneInfo>().ConvertUsing<TimeZoneInfoConverter>();
             CreateMap<long, TimeSpan>().ConvertUsing<TimeSpanConverter>();
             CreateMap<decimal[], Bid>().ConvertUsing(x => new Bid(x[0], x[1]));
@@ -44,6 +45,7 @@ namespace Trader.Trading.Binance
             CreateMap<OcoStatus, string>().ConvertUsing<OcoStatusConverter>();
             CreateMap<OcoOrderStatus, string>().ConvertUsing<OcoOrderStatusConverter>();
             CreateMap<AccountType, string>().ConvertUsing<AccountTypeConverter>();
+            CreateMap<ExecutionType, string>().ConvertUsing<ExecutionTypeConverter>();
 
             // simple model mappings
             CreateMap<ExchangeInfoModel, ExchangeInfo>();
@@ -174,7 +176,11 @@ namespace Trader.Trading.Binance
                 .ForCtorParam(nameof(GetAllOrdersRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
 
             // open converters
+            // todo: move this to the shared model converters
             CreateMap(typeof(IEnumerable<>), typeof(ImmutableList<>)).ConvertUsing(typeof(ImmutableListConverter<,>));
+
+            // convert payloads from the user data stream
+            CreateMap<Memory<byte>, UserDataStreamMessage>().ConvertUsing<UserDataStreamMessageConverter>();
         }
     }
 }

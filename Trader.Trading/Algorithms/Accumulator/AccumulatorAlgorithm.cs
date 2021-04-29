@@ -40,8 +40,8 @@ namespace Trader.Trading.Algorithms.Accumulator
         public async Task GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default)
         {
             // sync data from the exchange
-            await _orderSynchronizer.SynchronizeOrdersAsync(_options.Symbol, cancellationToken).ConfigureAwait(false);
-            await _tradeSynchronizer.SynchronizeTradesAsync(_options.Symbol, cancellationToken).ConfigureAwait(false);
+            //await _orderSynchronizer.SynchronizeOrdersAsync(_options.Symbol, cancellationToken).ConfigureAwait(false);
+            //await _tradeSynchronizer.SynchronizeTradesAsync(_options.Symbol, cancellationToken).ConfigureAwait(false);
 
             var orders = await GetOpenOrdersAsync(cancellationToken).ConfigureAwait(false);
 

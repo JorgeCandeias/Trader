@@ -24,5 +24,11 @@ namespace Trader.Trading
         Task<OrderResult> CreateOrderAsync(Order model, CancellationToken cancellationToken = default);
 
         Task<AccountInfo> GetAccountInfoAsync(GetAccountInfo model, CancellationToken cancellationToken = default);
+
+        Task<string> CreateUserDataStreamAsync(CancellationToken cancellationToken = default);
+
+        Task PingUserDataStreamAsync(string listenKey, CancellationToken cancellationToken = default);
+
+        Task CloseUserDataStreamAsync(string listenKey, CancellationToken cancellationToken = default);
     }
 }

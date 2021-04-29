@@ -332,6 +332,48 @@ namespace Trader.Trading.Binance
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
 
+        /// <summary>
+        /// Starts a new user data stream and returns the listen key for it.
+        /// </summary>
+        public async Task<ListenKeyResponseModel> CreateUserDataStreamAsync(CancellationToken cancellationToken = default)
+        {
+            var response = await _client
+                .PostAsync(
+                    new Uri("/api/v3/userDataStream", UriKind.Relative),
+                    EmptyHttpContent.Instance,
+                    cancellationToken)
+                .ConfigureAwait(false);
+
+            response.EnsureSuccessStatusCode();
+
+            return await response.Content
+                .ReadFromJsonAsync<ListenKeyResponseModel>(_jsonOptions, cancellationToken)
+                .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
+        }
+
+        public async Task PingUserDataStreamAsync(ListenKeyRequestModel model, CancellationToken cancellationToken = default)
+        {
+            _ = model ?? throw new ArgumentNullException(nameof(model));
+
+            await _client
+                .PutAsync(
+                    Combine(new Uri("/api/v3/userDataStream", UriKind.Relative), model),
+                    EmptyHttpContent.Instance,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        public async Task CloseUserDataStreamAsync(ListenKeyRequestModel model, CancellationToken cancellationToken = default)
+        {
+            _ = model ?? throw new ArgumentNullException(nameof(model));
+
+            await _client
+                .DeleteAsync(
+                    Combine(new Uri("/api/v3/userDataStream", UriKind.Relative), model),
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+
         #endregion Account Endpoints
 
         #region Helpers

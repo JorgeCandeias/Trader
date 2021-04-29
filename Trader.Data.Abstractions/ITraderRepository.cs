@@ -12,6 +12,10 @@ namespace Trader.Data
 
         Task SetLastPagedOrderIdAsync(string symbol, long orderId, CancellationToken cancellationToken = default);
 
+        Task<long> GetLastPagedTradeIdAsync(string symbol, CancellationToken cancellationToken = default);
+
+        Task SetLastPagedTradeIdAsync(string symbol, long tradeId, CancellationToken cancellationToken = default);
+
         Task<ImmutableSortedOrderSet> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default);
 
         Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders, CancellationToken cancellationToken = default);
@@ -29,6 +33,8 @@ namespace Trader.Data
         Task<ImmutableSortedOrderSet> GetNonSignificantTransientOrdersBySideAsync(string symbol, OrderSide orderSide, CancellationToken cancellationToken = default);
 
         Task<long> GetMaxTradeIdAsync(string symbol, CancellationToken cancellationToken = default);
+
+        Task SetTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default);
 
         Task SetTradesAsync(IEnumerable<AccountTrade> trades, CancellationToken cancellationToken = default);
 

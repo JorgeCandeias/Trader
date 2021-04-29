@@ -310,4 +310,10 @@
         bool IsBuyer,
         bool IsMaker,
         bool IsBestMatch);
+
+    internal record ListenKeyResponseModel(
+        string ListenKey);
+
+    internal record ListenKeyRequestModel(
+        string ListenKey);
 }

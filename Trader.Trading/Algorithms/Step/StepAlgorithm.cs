@@ -69,13 +69,17 @@ namespace Trader.Trading.Algorithms.Step
             ApplyAccountInfo(accountInfo);
 
             // synchronize the repository
+            /*
             await _orderSynchronizer
                 .SynchronizeOrdersAsync(_options.Symbol, cancellationToken)
                 .ConfigureAwait(false);
+            */
 
+            /*
             await _tradeSynchronizer
                 .SynchronizeTradesAsync(_options.Symbol, cancellationToken)
                 .ConfigureAwait(false);
+            */
 
             var significant = await _significantOrderResolver
                 .ResolveAsync(_options.Symbol, cancellationToken)

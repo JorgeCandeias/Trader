@@ -6,7 +6,10 @@ namespace Trader.Trading.Binance
     public class BinanceOptions
     {
         [Required]
-        public Uri BaseAddress { get; set; } = null!;
+        public Uri BaseApiAddress { get; set; } = null!;
+
+        [Required]
+        public Uri BaseWssAddress { get; set; } = null!;
 
         [Required]
         public string ApiKey { get; set; } = null!;

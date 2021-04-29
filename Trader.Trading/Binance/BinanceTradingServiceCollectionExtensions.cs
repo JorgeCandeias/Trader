@@ -22,6 +22,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<IHostedService, BinanceTradingService>(sp => sp.GetRequiredService<BinanceTradingService>())
                 .AddSingleton<BinanceApiHandler>()
                 .AddSingleton<ISigner, Signer>()
+                .AddSingleton<IUserDataStreamClient, BinanceUserDataStreamWssClient>()
 
                 // add options
                 .AddOptions<BinanceOptions>()
@@ -34,7 +35,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 {
                     var options = p.GetRequiredService<IOptions<BinanceOptions>>().Value;
 
-                    x.BaseAddress = options.BaseAddress;
+                    x.BaseAddress = options.BaseApiAddress;
                     x.Timeout = options.Timeout;
                 })
                 .AddHttpMessageHandler<BinanceApiHandler>()
@@ -62,7 +63,9 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<OcoOrderStatusConverter>()
                 .AddSingleton<CancelAllOrdersResponseModelConverter>()
                 .AddSingleton<AccountTypeConverter>()
-                .AddSingleton(typeof(ImmutableListConverter<,>));
+                .AddSingleton<UserDataStreamMessageConverter>()
+                .AddSingleton<ExecutionTypeConverter>()
+                .AddSingleton(typeof(ImmutableListConverter<,>)); // todo: move this to the shared model converters
 
             // add object pool
             services.TryAddSingleton<ObjectPoolProvider, DefaultObjectPoolProvider>();

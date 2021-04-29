@@ -26,7 +26,8 @@ namespace Trader.Data.Sql
 
             CreateMap<OrderQueryResult, OrderTableParameterEntity>();
 
-            CreateMap<CancelStandardOrderResult, CancelOrderEntity>();
+            CreateMap<CancelStandardOrderResult, CancelOrderEntity>()
+                .ForCtorParam(nameof(CancelOrderEntity.ClientOrderId), x => x.MapFrom(y => y.OriginalClientOrderId));
         }
     }
 }

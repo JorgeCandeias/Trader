@@ -36,7 +36,25 @@ namespace Trader.App
                 {
                     services
                         .AddModelServices()
+                        .AddAlgorithmResolvers()
                         .AddBinanceTradingService(options => context.Configuration.Bind("Api", options))
+                        .AddUserDataStreamHost(options =>
+                        {
+                            options.Symbols.Add("BNBGBP");
+                            options.Symbols.Add("BTCGBP");
+                            options.Symbols.Add("ETHGBP");
+                            options.Symbols.Add("ADAGBP");
+                            options.Symbols.Add("XRPGBP");
+                            options.Symbols.Add("LINKGBP");
+                            options.Symbols.Add("DOGEGBP");
+                            options.Symbols.Add("SXPGBP");
+                            options.Symbols.Add("DOTGBP");
+                            options.Symbols.Add("CHZGBP");
+                            options.Symbols.Add("LTCGBP");
+                            options.Symbols.Add("ENJGBP");
+                            options.Symbols.Add("VETGBP");
+                            options.Symbols.Add("CAKEGBP");
+                        })
                         .AddTradingHost()
                         .AddSystemClock()
                         .AddSafeTimerFactory()
@@ -47,13 +65,6 @@ namespace Trader.App
                         .AddBase62NumberSerializer();
 
                     services
-                        .AddOrderBookService("BTCGBP", options =>
-                        {
-                            options.Symbol = "BTCGBP";
-                        });
-
-                    services
-                        .AddAlgorithmResolvers()
                         .AddAccumulatorAlgorithm("BNBGBP", options => context.Configuration.Bind("Trading:Algorithms:Accumulator:BNBGBP", options))
                         .AddStepAlgorithm("BTCGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:BTCGBP", options))
                         .AddStepAlgorithm("ETHGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:ETHGBP", options))

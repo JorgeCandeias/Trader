@@ -482,7 +482,7 @@ namespace Trader.Trading.Algorithms.Step
                 }
 
                 // calculate the appropriate quantity to buy
-                var quantity = total / ticker.Price;
+                var quantity = total / lowBuyPrice;
 
                 // round it up to the lot size step
                 quantity = Math.Ceiling(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
@@ -497,8 +497,8 @@ namespace Trader.Trading.Algorithms.Step
                             TimeInForce.GoodTillCanceled,
                             quantity,
                             null,
-                            ticker.Price,
-                            $"{_options.Symbol}{ticker.Price:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal),
+                            lowBuyPrice,
+                            $"{_options.Symbol}{lowBuyPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal),
                             null,
                             null,
                             NewOrderResponseType.Full,

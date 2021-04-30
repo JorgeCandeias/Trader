@@ -37,7 +37,7 @@ namespace Trader.Trading
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            _timer = _timers.Create(TickAsync, TimeSpan.Zero, TimeSpan.FromSeconds(5), Debugger.IsAttached ? TimeSpan.FromHours(1) : TimeSpan.FromMinutes(3));
+            _timer = _timers.Create(TickAsync, TimeSpan.Zero, TimeSpan.FromSeconds(30), Debugger.IsAttached ? TimeSpan.FromHours(1) : TimeSpan.FromMinutes(3));
 
             return Task.CompletedTask;
         }

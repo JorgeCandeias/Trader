@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Polly;
 using System;
 using System.Linq;
 using System.Threading;
@@ -10,6 +11,7 @@ using Trader.Core.Timers;
 using Trader.Data;
 using Trader.Models;
 using Trader.Trading.Algorithms;
+using Trader.Trading.Binance;
 using static System.String;
 
 namespace Trader.Trading
@@ -196,16 +198,20 @@ namespace Trader.Trading
             // sync orders for all symbols
             foreach (var symbol in _options.Symbols)
             {
-                await _orders
-                    .SynchronizeOrdersAsync(symbol, cancellationToken)
+                await Policy
+                    .Handle<BinanceBackoffException>()
+                    .WaitAndRetryForeverAsync(x => TimeSpan.FromSeconds(10))
+                    .ExecuteAsync(ct => _orders.SynchronizeOrdersAsync(symbol, ct), cancellationToken, false)
                     .ConfigureAwait(false);
             }
 
             // sync trades for all symbols
             foreach (var symbol in _options.Symbols)
             {
-                await _trades
-                    .SynchronizeTradesAsync(symbol, cancellationToken)
+                await Policy
+                    .Handle<BinanceBackoffException>()
+                    .WaitAndRetryForeverAsync(x => TimeSpan.FromSeconds(10))
+                    .ExecuteAsync(ct => _trades.SynchronizeTradesAsync(symbol, cancellationToken), cancellationToken, false)
                     .ConfigureAwait(false);
             }
 

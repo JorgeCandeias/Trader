@@ -146,7 +146,7 @@ namespace Trader.Trading
                                 report.Symbol,
                                 report.OrderId,
                                 report.OrderListId,
-                                report.OriginalClientOrderId ?? report.ClientOrderId,
+                                IsNullOrWhiteSpace(report.OriginalClientOrderId) ? report.ClientOrderId : report.OriginalClientOrderId,
                                 report.OrderPrice,
                                 report.OrderQuantity,
                                 report.CummulativeFilledQuantity,

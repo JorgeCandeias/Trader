@@ -65,7 +65,7 @@ namespace Trader.Trading.Algorithms.Step
             await ApplyAccountInfoAsync(cancellationToken).ConfigureAwait(false);
 
             var significant = await _significantOrderResolver
-                .ResolveAsync(_options.Symbol, cancellationToken)
+                .ResolveAsync(_options.Symbol, _options.Quote, cancellationToken)
                 .ConfigureAwait(false);
 
             _profit = significant.Profit;
@@ -83,7 +83,7 @@ namespace Trader.Trading.Algorithms.Step
 
         public Task<Profit> GetProfitAsync(CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(_profit ?? Profit.Zero);
+            return Task.FromResult(_profit ?? Profit.Zero(_options.Quote));
         }
 
         public Task<Statistics> GetStatisticsAsync(CancellationToken cancellationToken = default)

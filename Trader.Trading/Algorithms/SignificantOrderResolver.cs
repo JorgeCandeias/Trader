@@ -50,7 +50,7 @@ namespace Trader.Trading.Algorithms
             public static MapComparer Instance { get; } = new MapComparer();
         }
 
-        public async Task<SignificantResult> ResolveAsync(string symbol, CancellationToken cancellationToken = default)
+        public async Task<SignificantResult> ResolveAsync(string symbol, string quote, CancellationToken cancellationToken = default)
         {
             // todo: push this mapping effort to the repository so less data needs to move about
             var watch = Stopwatch.StartNew();
@@ -289,6 +289,7 @@ namespace Trader.Trading.Algorithms
                 nameof(SignificantOrderResolver), symbol, significant.Count, watch.ElapsedMilliseconds);
 
             var summary = new Profit(
+                quote,
                 todayProfit,
                 yesterdayProfit,
                 thisWeekProfit,

@@ -3,17 +3,21 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Trader.Models.Collections;
+using static System.String;
 
 namespace Trader.Trading.Algorithms
 {
     public interface ISignificantOrderResolver
     {
-        Task<SignificantResult> ResolveAsync(string symbol, CancellationToken cancellationToken = default);
+        Task<SignificantResult> ResolveAsync(string symbol, string quote, CancellationToken cancellationToken = default);
     }
 
     public record SignificantResult(ImmutableSortedOrderSet Orders, Profit Profit);
 
     public record Profit(
+
+        // identifiers
+        string Quote,
 
         // fixed windows
         decimal Today, decimal Yesterday, decimal ThisWeek, decimal PrevWeek, decimal ThisMonth, decimal ThisYear,
@@ -21,7 +25,10 @@ namespace Trader.Trading.Algorithms
         // rolling windows
         decimal D1, decimal D7, decimal D30)
     {
-        public static Profit Zero { get; } = new Profit(0, 0, 0, 0, 0, 0, 0, 0, 0);
+        public static Profit Zero(string quote)
+        {
+            return new Profit(quote, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        }
 
         public static Profit Aggregate(IEnumerable<Profit> items)
         {
@@ -37,8 +44,21 @@ namespace Trader.Trading.Algorithms
             var d7 = 0m;
             var d30 = 0m;
 
+            string? quote = null;
+            var first = true;
+
             foreach (var item in items)
             {
+                if (first)
+                {
+                    quote = item.Quote;
+                    first = false;
+                }
+                else
+                {
+                    if (item.Quote != quote) throw new InvalidOperationException($"Cannot aggregate profit from different quotes '{quote}' and '{item.Quote}'");
+                }
+
                 today += item.Today;
                 yesterday += item.Yesterday;
                 thisWeek += item.ThisWeek;
@@ -50,14 +70,16 @@ namespace Trader.Trading.Algorithms
                 d30 += item.D30;
             }
 
-            return new Profit(today, yesterday, thisWeek, prevWeek, thisMonth, thisYear, d1, d7, d30);
+            return new Profit(quote ?? Empty, today, yesterday, thisWeek, prevWeek, thisMonth, thisYear, d1, d7, d30);
         }
 
         public Profit Add(Profit item)
         {
             if (item is null) throw new ArgumentNullException(nameof(item));
+            if (item.Quote != Quote) throw new InvalidOperationException($"Cannot aggregate profit from different quotes '{Quote}' and '{item.Quote}'");
 
             return new Profit(
+                Quote,
                 Today + item.Today,
                 Yesterday + item.Yesterday,
                 ThisWeek + item.ThisWeek,

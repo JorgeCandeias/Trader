@@ -40,9 +40,6 @@ namespace Trader.Trading.Algorithms.Accumulator
         public async Task GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default)
         {
             // sync data from the exchange
-            //await _orderSynchronizer.SynchronizeOrdersAsync(_options.Symbol, cancellationToken).ConfigureAwait(false);
-            //await _tradeSynchronizer.SynchronizeTradesAsync(_options.Symbol, cancellationToken).ConfigureAwait(false);
-
             var orders = await GetOpenOrdersAsync(cancellationToken).ConfigureAwait(false);
 
             // get the current price
@@ -208,7 +205,7 @@ namespace Trader.Trading.Algorithms.Accumulator
 
         public Task<Profit> GetProfitAsync(CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(Profit.Zero);
+            return Task.FromResult(Profit.Zero(_options.Quote));
         }
 
         public Task<Statistics> GetStatisticsAsync(CancellationToken cancellationToken = default)

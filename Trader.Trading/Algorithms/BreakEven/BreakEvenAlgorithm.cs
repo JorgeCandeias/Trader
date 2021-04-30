@@ -40,7 +40,7 @@ namespace Trader.Trading.Algorithms.BreakEven
 
         public Task<Profit> GetProfitAsync(CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(Profit.Zero);
+            return Task.FromResult(Profit.Zero(_options.Quote));
         }
 
         public Task<Statistics> GetStatisticsAsync(CancellationToken cancellationToken = default)

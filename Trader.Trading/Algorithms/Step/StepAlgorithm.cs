@@ -77,7 +77,7 @@ namespace Trader.Trading.Algorithms.Step
             if (await TrySetStartingTradeAsync(symbol, ticker, lotSizeFilter, priceFilter, minNotionalFilter, cancellationToken).ConfigureAwait(false)) return;
             if (await TryCancelRogueSellOrdersAsync(cancellationToken).ConfigureAwait(false)) return;
             if (await TrySetBandSellOrdersAsync(cancellationToken).ConfigureAwait(false)) return;
-            if (await TryCreateLowerBandOrderAsync(ticker, lotSizeFilter, priceFilter, minNotionalFilter, cancellationToken).ConfigureAwait(false)) return;
+            if (await TryCreateLowerBandOrderAsync(symbol, ticker, lotSizeFilter, priceFilter, minNotionalFilter, cancellationToken).ConfigureAwait(false)) return;
             await TryCloseOutOfRangeBandsAsync(ticker, cancellationToken).ConfigureAwait(false);
         }
 
@@ -178,7 +178,7 @@ namespace Trader.Trading.Algorithms.Step
             return true;
         }
 
-        private async Task<bool> TryCreateLowerBandOrderAsync(SymbolPriceTicker ticker, LotSizeSymbolFilter lotSizeFilter, PriceSymbolFilter priceFilter, MinNotionalSymbolFilter minNotionalFilter, CancellationToken cancellationToken = default)
+        private async Task<bool> TryCreateLowerBandOrderAsync(Symbol symbol, SymbolPriceTicker ticker, LotSizeSymbolFilter lotSizeFilter, PriceSymbolFilter priceFilter, MinNotionalSymbolFilter minNotionalFilter, CancellationToken cancellationToken = default)
         {
             // identify the highest and lowest bands
             var highBand = _bands.Max;
@@ -246,14 +246,11 @@ namespace Trader.Trading.Algorithms.Step
             // calculate the quote amount to pay with
             var total = _balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand;
 
-            // calculate the exponential bump up by the number of bands already allocated
-            var multiplier = (decimal)Math.Pow((double)_options.ExtraAmountPerBandMultiplier, _bands.Count);
-
-            // bump up the amount
-            total *= multiplier;
-
             // raise to the minimum notional if needed
             total = Math.Max(total, minNotionalFilter.MinNotional);
+
+            // raise the total by a small percent to prevent issues where the market order doesn't fill completely resulting in under notional close prices
+            total = Math.Round(total * 1.1m, symbol.QuoteAssetPrecision);
 
             // ensure there is enough quote asset for it
             if (total > _balances.Quote.Free)
@@ -479,6 +476,9 @@ namespace Trader.Trading.Algorithms.Step
                 {
                     total = Math.Max(total, minNotionalFilter.MinNotional);
                 }
+
+                // raise the total by a small percent to prevent issues where the market order doesn't fill completely resulting in under notional close prices
+                total = Math.Round(total * 1.1m, symbol.QuoteAssetPrecision);
 
                 // ensure there is enough quote asset for it
                 if (total > _balances.Quote.Free)

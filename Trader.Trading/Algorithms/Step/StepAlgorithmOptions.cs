@@ -27,10 +27,6 @@ namespace Trader.Trading.Algorithms.Step
         [Range(0.001, 1)]
         public decimal TargetQuoteBalanceFractionPerBand { get; set; } = 0.005m;
 
-        [Required]
-        [Range(1, 10)]
-        public decimal ExtraAmountPerBandMultiplier { get; set; } = 1.00m;
-
         /// <summary>
         /// If <see cref="true"/> the algo will create the opening band automatically.
         /// If <see cref="false"/> the algo will keep working until the top band is closed and then not open again on its own.

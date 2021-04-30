@@ -65,7 +65,6 @@ namespace Trader.Trading
                 {
                     // todo: ping the stream every ten minutes
 
-
                     var message = await _client
                         .ReceiveAsync(cancellationToken)
                         .ConfigureAwait(false);
@@ -190,7 +189,7 @@ namespace Trader.Trading
             }
 
             // signal the start method that everything is ready
-            _ready.SetResult();
+            _ready.TrySetResult();
 
             // keep streaming now
             await streamTask.ConfigureAwait(false);

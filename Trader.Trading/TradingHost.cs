@@ -105,7 +105,7 @@ namespace Trader.Trading
                 foreach (var item in group)
                 {
                     _logger.LogInformation(
-                        "{Name} reports {Symbol,7} profit as (T: {@Today,6:N2}, T-1: {@Yesterday,6:N2}, W: {@ThisWeek,6:N2}, W-1: {@PrevWeek,6:N2}, M: {@ThisMonth,8:N2}, Y: {@ThisYear,8:N2}) (APH1: {@AveragePerHourDay1,6:N2}, APH7: {@AveragePerHourDay7,6:N2}, APH30: {@AveragePerHourDay30,6:N2}, APD1: {@AveragePerDay1,6:N2}, APD7: {@AveragePerDay7,6:N2}, APD30: {@AveragePerDay30,6:N2})",
+                        "{Name} reports {Symbol,8} profit as (T: {@Today,6:N2}, T-1: {@Yesterday,6:N2}, W: {@ThisWeek,6:N2}, W-1: {@PrevWeek,6:N2}, M: {@ThisMonth,8:N2}, Y: {@ThisYear,8:N2}) (APH1: {@AveragePerHourDay1,6:N2}, APH7: {@AveragePerHourDay7,6:N2}, APH30: {@AveragePerHourDay30,6:N2}, APD1: {@AveragePerDay1,6:N2}, APD7: {@AveragePerDay7,6:N2}, APD30: {@AveragePerDay30,6:N2})",
                         Name, item.Symbol, item.Profit.Today, item.Profit.Yesterday, item.Profit.ThisWeek, item.Profit.PrevWeek, item.Profit.ThisMonth, item.Profit.ThisYear, item.Stats.AvgPerHourDay1, item.Stats.AvgPerHourDay7, item.Stats.AvgPerHourDay30, item.Stats.AvgPerDay1, item.Stats.AvgPerDay7, item.Stats.AvgPerDay30);
                 }
 
@@ -113,7 +113,7 @@ namespace Trader.Trading
                 var totalStats = Statistics.FromProfit(totalProfit);
 
                 _logger.LogInformation(
-                    "{Name} reports {Quote,7} profit as (T: {@Today,6:N2}, T-1: {@Yesterday,6:N2}, W: {@ThisWeek,6:N2}, W-1: {@PrevWeek,6:N2}, M: {@ThisMonth,8:N2}, Y: {@ThisYear,8:N2}) (APH1: {@AveragePerHourDay1,6:N2}, APH7: {@AveragePerHourDay7,6:N2}, APH30: {@AveragePerHourDay30,6:N2}, APD1: {@AveragePerDay1,6:N2}, APD7: {@AveragePerDay7,6:N2}, APD30: {@AveragePerDay30,6:N2})",
+                    "{Name} reports {Quote,8} profit as (T: {@Today,6:N2}, T-1: {@Yesterday,6:N2}, W: {@ThisWeek,6:N2}, W-1: {@PrevWeek,6:N2}, M: {@ThisMonth,8:N2}, Y: {@ThisYear,8:N2}) (APH1: {@AveragePerHourDay1,6:N2}, APH7: {@AveragePerHourDay7,6:N2}, APH30: {@AveragePerHourDay30,6:N2}, APD1: {@AveragePerDay1,6:N2}, APD7: {@AveragePerDay7,6:N2}, APD30: {@AveragePerDay30,6:N2})",
                     Name,
                     group.Key,
                     totalProfit.Today,

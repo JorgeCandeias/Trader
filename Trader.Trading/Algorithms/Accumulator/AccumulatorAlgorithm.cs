@@ -54,7 +54,9 @@ namespace Trader.Trading.Algorithms.Accumulator
             var lotSizeFilter = symbol.Filters.OfType<LotSizeSymbolFilter>().Single();
 
             // get the account free quote balance
-            var free = accountInfo.Balances.Single(x => x.Asset == _options.Quote).Free;
+            var balance = await _repository
+                .GetBalanceAsync(_options.Quote, cancellationToken)
+                .ConfigureAwait(false);
 
             // identify the target low price for the first buy
             var lowBuyPrice = ticker.Price * _options.PullbackRatio;
@@ -76,14 +78,14 @@ namespace Trader.Trading.Algorithms.Accumulator
             }
 
             // calculate the amount to pay with
-            var total = Math.Round(Math.Max(free * _options.TargetQuoteBalanceFractionPerBuy, _options.MinQuoteAssetQuantityPerOrder), symbol.QuoteAssetPrecision);
+            var total = Math.Round(Math.Max(balance.Free * _options.TargetQuoteBalanceFractionPerBuy, _options.MinQuoteAssetQuantityPerOrder), symbol.QuoteAssetPrecision);
 
             // ensure there is enough quote asset for it
-            if (total > free)
+            if (total > balance.Free)
             {
                 _logger.LogWarning(
                     "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}",
-                    Type, _name, total, _options.Quote, free, _options.Quote);
+                    Type, _name, total, _options.Quote, balance.Free, _options.Quote);
 
                 return;
             }

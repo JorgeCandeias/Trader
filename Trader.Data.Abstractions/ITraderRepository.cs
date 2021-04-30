@@ -39,5 +39,11 @@ namespace Trader.Data
         Task SetTradesAsync(IEnumerable<AccountTrade> trades, CancellationToken cancellationToken = default);
 
         Task<ImmutableSortedTradeSet> GetTradesAsync(string symbol, CancellationToken cancellationToken = default);
+
+        Task SetBalancesAsync(AccountInfo accountInfo, CancellationToken cancellationToken = default);
+
+        Task SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default);
+
+        Task<Balance> GetBalanceAsync(string asset, CancellationToken cancellationToken = default);
     }
 }

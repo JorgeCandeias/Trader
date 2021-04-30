@@ -2,8 +2,10 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Trader.Core.Time;
 using Trader.Core.Timers;
 using Trader.Data;
 using Trader.Models;
@@ -22,8 +24,9 @@ namespace Trader.Trading
         private readonly IOrderSynchronizer _orders;
         private readonly ITradeSynchronizer _trades;
         private readonly ITraderRepository _repository;
+        private readonly ISystemClock _clock;
 
-        public UserDataStreamHost(IOptions<UserDataStreamHostOptions> options, ILogger<UserDataStreamHost> logger, ITradingService trader, IUserDataStreamClient client, ISafeTimerFactory timers, IOrderSynchronizer orders, ITradeSynchronizer trades, ITraderRepository repository)
+        public UserDataStreamHost(IOptions<UserDataStreamHostOptions> options, ILogger<UserDataStreamHost> logger, ITradingService trader, IUserDataStreamClient client, ISafeTimerFactory timers, IOrderSynchronizer orders, ITradeSynchronizer trades, ITraderRepository repository, ISystemClock clock)
         {
             _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -33,6 +36,7 @@ namespace Trader.Trading
             _orders = orders ?? throw new ArgumentNullException(nameof(orders));
             _trades = trades ?? throw new ArgumentNullException(nameof(trades));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
         private static string Name => nameof(UserDataStreamHost);
@@ -59,6 +63,9 @@ namespace Trader.Trading
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
+                    // todo: ping the stream every ten minutes
+
+
                     var message = await _client
                         .ReceiveAsync(cancellationToken)
                         .ConfigureAwait(false);
@@ -68,7 +75,14 @@ namespace Trader.Trading
                     switch (message)
                     {
                         case OutboundAccountPositionUserDataStreamMessage balance:
-                            // todo: this needs the repository to hold balances
+
+                            var balances = balance.Balances
+                                .Select(x => new Balance(x.Asset, x.Free, x.Locked, balance.LastAccountUpdateTime));
+
+                            await _repository
+                                .SetBalancesAsync(balances, cancellationToken)
+                                .ConfigureAwait(false);
+
                             break;
 
                         case BalanceUpdateUserDataStreamMessage update:
@@ -149,6 +163,15 @@ namespace Trader.Trading
                     }
                 }
             }, cancellationToken);
+
+            // sync asset balances
+            var accountInfo = await _trader
+                .GetAccountInfoAsync(new GetAccountInfo(null, _clock.UtcNow), cancellationToken)
+                .ConfigureAwait(false);
+
+            await _repository
+                .SetBalancesAsync(accountInfo, cancellationToken)
+                .ConfigureAwait(false);
 
             // sync orders for all symbols
             foreach (var symbol in _options.Symbols)

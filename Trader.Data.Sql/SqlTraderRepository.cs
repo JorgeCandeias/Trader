@@ -355,5 +355,62 @@ namespace Trader.Data.Sql
 
             return _mapper.Map<ImmutableSortedTradeSet>(result);
         }
+
+        public Task SetBalancesAsync(AccountInfo accountInfo, CancellationToken cancellationToken = default)
+        {
+            _ = accountInfo ?? throw new ArgumentNullException(nameof(accountInfo));
+
+            var balances = _mapper.Map<IEnumerable<Balance>>(accountInfo);
+
+            return SetBalancesAsync(balances, cancellationToken);
+        }
+
+        public async Task SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default)
+        {
+            _ = balances ?? throw new ArgumentNullException(nameof(balances));
+
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            var entities = _mapper.Map<IEnumerable<BalanceTableParameterEntity>>(balances);
+
+            await connection
+                .ExecuteAsync(
+                    new CommandDefinition(
+                        "[dbo].[SetBalances]",
+                        new
+                        {
+                            Balances = entities.AsSqlDataRecords().AsTableValuedParameter("[dbo].[BalanceTableParameter]")
+                        },
+                        null,
+                        _options.CommandTimeoutAsInteger,
+                        CommandType.StoredProcedure,
+                        CommandFlags.Buffered,
+                    cancellationToken))
+                .ConfigureAwait(false);
+        }
+
+        public async Task<Balance> GetBalanceAsync(string asset, CancellationToken cancellationToken = default)
+        {
+            _ = asset ?? throw new ArgumentNullException(nameof(asset));
+
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            var entity = await connection
+                .QuerySingleOrDefaultAsync<BalanceEntity>(
+                    new CommandDefinition(
+                        "[dbo].[GetBalance]",
+                        new
+                        {
+                            Asset = asset
+                        },
+                        null,
+                        _options.CommandTimeoutAsInteger,
+                        CommandType.StoredProcedure,
+                        CommandFlags.Buffered,
+                        cancellationToken))
+                .ConfigureAwait(false);
+
+            return _mapper.Map<Balance>(entity);
+        }
     }
 }

@@ -26,11 +26,15 @@ namespace Trader.Trading.Binance
 
         public async Task ConnectAsync(string listenKey, CancellationToken cancellationToken = default)
         {
+            if (IsConnected) return;
+
             await _client.ConnectAsync(new Uri(_options.BaseWssAddress, $"/ws/{listenKey}"), cancellationToken).ConfigureAwait(false);
         }
 
         public async Task CloseAsync(CancellationToken cancellationToken = default)
         {
+            if (!IsConnected) return;
+
             await _client.CloseAsync(WebSocketCloseStatus.NormalClosure, null, cancellationToken).ConfigureAwait(false);
         }
 

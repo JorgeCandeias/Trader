@@ -66,20 +66,7 @@ namespace Trader.Trading.Algorithms.Step
             var lotSizeFilter = symbol.Filters.OfType<LotSizeSymbolFilter>().Single();
             var minNotionalFilter = symbol.Filters.OfType<MinNotionalSymbolFilter>().Single();
 
-            ApplyAccountInfo(accountInfo);
-
-            // synchronize the repository
-            /*
-            await _orderSynchronizer
-                .SynchronizeOrdersAsync(_options.Symbol, cancellationToken)
-                .ConfigureAwait(false);
-            */
-
-            /*
-            await _tradeSynchronizer
-                .SynchronizeTradesAsync(_options.Symbol, cancellationToken)
-                .ConfigureAwait(false);
-            */
+            await ApplyAccountInfoAsync(cancellationToken).ConfigureAwait(false);
 
             var significant = await _significantOrderResolver
                 .ResolveAsync(_options.Symbol, cancellationToken)
@@ -108,39 +95,31 @@ namespace Trader.Trading.Algorithms.Step
             return Task.FromResult(_profit is null ? Statistics.Zero : Statistics.FromProfit(_profit));
         }
 
-        private void ApplyAccountInfo(AccountInfo accountInfo)
+        private async Task ApplyAccountInfoAsync(CancellationToken cancellationToken)
         {
-            var gotAsset = false;
-            var gotQuote = false;
+            var assetBalance = await _repository
+                .GetBalanceAsync(_options.Asset, cancellationToken)
+                .ConfigureAwait(false) ??
+                throw new AlgorithmException($"Could not get balance for base asset {_options.Asset}");
 
-            foreach (var balance in accountInfo.Balances)
-            {
-                if (balance.Asset == _options.Asset)
-                {
-                    _balances.Asset.Free = balance.Free;
-                    _balances.Asset.Locked = balance.Locked;
+            _balances.Asset.Free = assetBalance.Free;
+            _balances.Asset.Locked = assetBalance.Locked;
 
-                    _logger.LogInformation(
-                        "{Type} {Name} reports balance for base asset {Asset} is (Free = {Free}, Locked = {Locked}, Total = {Total})",
-                        Type, _name, _options.Asset, balance.Free, balance.Locked, balance.Free + balance.Locked);
+            _logger.LogInformation(
+                "{Type} {Name} reports balance for base asset {Asset} is (Free = {Free}, Locked = {Locked}, Total = {Total})",
+                Type, _name, _options.Asset, _balances.Asset.Free, _balances.Asset.Locked, _balances.Asset.Total);
 
-                    gotAsset = true;
-                }
-                else if (balance.Asset == _options.Quote)
-                {
-                    _balances.Quote.Free = balance.Free;
-                    _balances.Quote.Locked = balance.Locked;
+            var quoteBalance = await _repository
+                .GetBalanceAsync(_options.Quote, cancellationToken)
+                .ConfigureAwait(false) ??
+                throw new AlgorithmException($"Could not get balance for quote asset {_options.Quote}");
 
-                    _logger.LogInformation(
-                        "{Type} {Name} reports balance for quote asset {Asset} is (Free = {Free}, Locked = {Locked}, Total = {Total})",
-                        Type, _name, _options.Quote, balance.Free, balance.Locked, balance.Free + balance.Locked);
+            _balances.Quote.Free = quoteBalance.Free;
+            _balances.Quote.Locked = quoteBalance.Locked;
 
-                    gotQuote = true;
-                }
-            }
-
-            if (!gotAsset) throw new AlgorithmException($"Could not get balance for base asset {_options.Asset}");
-            if (!gotQuote) throw new AlgorithmException($"Could not get balance for quote asset {_options.Quote}");
+            _logger.LogInformation(
+                "{Type} {Name} reports balance for quote asset {Asset} is (Free = {Free}, Locked = {Locked}, Total = {Total})",
+                Type, _name, _options.Quote, _balances.Quote.Free, _balances.Quote.Locked, _balances.Quote.Total);
         }
 
         private async Task<SymbolPriceTicker> SyncAssetPriceAsync(CancellationToken cancellationToken = default)
@@ -785,6 +764,7 @@ namespace Trader.Trading.Algorithms.Step
         {
             public decimal Free { get; set; }
             public decimal Locked { get; set; }
+            public decimal Total => Free + Locked;
         }
 
         private class Balances

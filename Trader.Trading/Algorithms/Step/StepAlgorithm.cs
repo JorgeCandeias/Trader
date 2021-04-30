@@ -24,11 +24,9 @@ namespace Trader.Trading.Algorithms.Step
         private readonly ITradingService _trader;
         private readonly ISignificantOrderResolver _significantOrderResolver;
         private readonly ITraderRepository _repository;
-        private readonly IOrderSynchronizer _orderSynchronizer;
-        private readonly ITradeSynchronizer _tradeSynchronizer;
         private readonly IOrderCodeGenerator _orderCodeGenerator;
 
-        public StepAlgorithm(string name, ILogger<StepAlgorithm> logger, IOptionsSnapshot<StepAlgorithmOptions> options, ISystemClock clock, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ITraderRepository repository, IOrderSynchronizer orderSynchronizer, ITradeSynchronizer tradeSynchronizer, IOrderCodeGenerator orderCodeGenerator)
+        public StepAlgorithm(string name, ILogger<StepAlgorithm> logger, IOptionsSnapshot<StepAlgorithmOptions> options, ISystemClock clock, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ITraderRepository repository, IOrderCodeGenerator orderCodeGenerator)
         {
             _name = name ?? throw new ArgumentNullException(nameof(name));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -37,8 +35,6 @@ namespace Trader.Trading.Algorithms.Step
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
             _significantOrderResolver = significantOrderResolver ?? throw new ArgumentNullException(nameof(significantOrderResolver));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-            _orderSynchronizer = orderSynchronizer ?? throw new ArgumentNullException(nameof(orderSynchronizer));
-            _tradeSynchronizer = tradeSynchronizer ?? throw new ArgumentNullException(nameof(tradeSynchronizer));
             _orderCodeGenerator = orderCodeGenerator ?? throw new ArgumentNullException(nameof(orderCodeGenerator));
         }
 

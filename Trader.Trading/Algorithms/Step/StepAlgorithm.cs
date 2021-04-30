@@ -263,7 +263,7 @@ namespace Trader.Trading.Algorithms.Step
             var quantity = total / lowerPrice;
 
             // round it down to the lot size step
-            quantity = Math.Floor(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
+            quantity = Math.Ceiling(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
 
             // place the buy order
             var result = await _trader
@@ -477,8 +477,8 @@ namespace Trader.Trading.Algorithms.Step
                 // calculate the appropriate quantity to buy
                 var quantity = total / ticker.Price;
 
-                // round it down to the lot size step
-                quantity = Math.Floor(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
+                // round it up to the lot size step
+                quantity = Math.Ceiling(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
 
                 // place a market order to account for weird price floats
                 var result = await _trader

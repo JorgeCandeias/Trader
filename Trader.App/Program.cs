@@ -41,6 +41,7 @@ namespace Trader.App
                         .AddUserDataStreamHost(options =>
                         {
                             options.Symbols.Add("BNBGBP");
+                            options.Symbols.Add("XMRBNB");
                             options.Symbols.Add("BTCGBP");
                             options.Symbols.Add("ETHGBP");
                             options.Symbols.Add("ADAGBP");
@@ -66,6 +67,7 @@ namespace Trader.App
 
                     services
                         .AddAccumulatorAlgorithm("BNBGBP", options => context.Configuration.Bind("Trading:Algorithms:Accumulator:BNBGBP", options))
+                        .AddStepAlgorithm("XMRBNB", options => context.Configuration.Bind("Trading:Algorithms:Step:XMRBNB", options))
                         .AddStepAlgorithm("BTCGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:BTCGBP", options))
                         .AddStepAlgorithm("ETHGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:ETHGBP", options))
                         .AddStepAlgorithm("ADAGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:ADAGBP", options))

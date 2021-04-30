@@ -74,10 +74,10 @@ namespace Trader.Trading.Algorithms.Step
             var ticker = await SyncAssetPriceAsync(cancellationToken).ConfigureAwait(false);
 
             if (await TryCreateTradingBandsAsync(significant.Orders, minNotionalFilter, ticker, priceFilter, percentFilter, cancellationToken).ConfigureAwait(false)) return;
-            if (await TrySetStartingTradeAsync(symbol, ticker, lotSizeFilter, priceFilter, cancellationToken).ConfigureAwait(false)) return;
+            if (await TrySetStartingTradeAsync(symbol, ticker, lotSizeFilter, priceFilter, minNotionalFilter, cancellationToken).ConfigureAwait(false)) return;
             if (await TryCancelRogueSellOrdersAsync(cancellationToken).ConfigureAwait(false)) return;
             if (await TrySetBandSellOrdersAsync(cancellationToken).ConfigureAwait(false)) return;
-            if (await TryCreateLowerBandOrderAsync(ticker, lotSizeFilter, priceFilter, cancellationToken).ConfigureAwait(false)) return;
+            if (await TryCreateLowerBandOrderAsync(ticker, lotSizeFilter, priceFilter, minNotionalFilter, cancellationToken).ConfigureAwait(false)) return;
             await TryCloseOutOfRangeBandsAsync(ticker, cancellationToken).ConfigureAwait(false);
         }
 
@@ -178,7 +178,7 @@ namespace Trader.Trading.Algorithms.Step
             return true;
         }
 
-        private async Task<bool> TryCreateLowerBandOrderAsync(SymbolPriceTicker ticker, LotSizeSymbolFilter lotSizeFilter, PriceSymbolFilter priceFilter, CancellationToken cancellationToken = default)
+        private async Task<bool> TryCreateLowerBandOrderAsync(SymbolPriceTicker ticker, LotSizeSymbolFilter lotSizeFilter, PriceSymbolFilter priceFilter, MinNotionalSymbolFilter minNotionalFilter, CancellationToken cancellationToken = default)
         {
             // identify the highest and lowest bands
             var highBand = _bands.Max;
@@ -242,8 +242,11 @@ namespace Trader.Trading.Algorithms.Step
             // bump up the amount
             total *= multiplier;
 
-            // bump up the amount to minimum order amount if it is too low
-            total = Math.Max(total, _options.MinQuoteAssetQuantityPerOrder);
+            // raise to the minimum notional if needed
+            if (minNotionalFilter.ApplyToMarket)
+            {
+                total = Math.Max(total, minNotionalFilter.MinNotional);
+            }
 
             // ensure there is enough quote asset for it
             if (total > _balances.Quote.Free)
@@ -395,7 +398,7 @@ namespace Trader.Trading.Algorithms.Step
             return fail;
         }
 
-        private async Task<bool> TrySetStartingTradeAsync(Symbol symbol, SymbolPriceTicker ticker, LotSizeSymbolFilter lotSizeFilter, PriceSymbolFilter priceFilter, CancellationToken cancellationToken = default)
+        private async Task<bool> TrySetStartingTradeAsync(Symbol symbol, SymbolPriceTicker ticker, LotSizeSymbolFilter lotSizeFilter, PriceSymbolFilter priceFilter, MinNotionalSymbolFilter minNotionalFilter, CancellationToken cancellationToken = default)
         {
             // only manage the opening if there are no bands or only a single order band to move around
             if (_bands.Count == 0 || _bands.Count == 1 && _bands.Single().Status == BandStatus.Ordered)
@@ -453,7 +456,13 @@ namespace Trader.Trading.Algorithms.Step
                 }
 
                 // calculate the amount to pay with
-                var total = Math.Round(Math.Max(_balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand, _options.MinQuoteAssetQuantityPerOrder), symbol.QuoteAssetPrecision);
+                var total = Math.Round(_balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand, symbol.QuoteAssetPrecision);
+
+                // raise to the minimum notional if needed
+                if (minNotionalFilter.ApplyToMarket)
+                {
+                    total = Math.Max(total, minNotionalFilter.MinNotional);
+                }
 
                 // ensure there is enough quote asset for it
                 if (total > _balances.Quote.Free)

@@ -52,6 +52,12 @@ namespace Trader.Trading
 
         private async Task TickWorkerAsync(CancellationToken cancellationToken)
         {
+            // if startup is cancelled then cancel the ready flag as well so the service fails
+            using var registration = cancellationToken.Register(() =>
+            {
+                _ready.TrySetCanceled(cancellationToken);
+            });
+
             _listenKey = await _trader
                 .CreateUserDataStreamAsync(cancellationToken)
                 .ConfigureAwait(false);
@@ -215,9 +221,13 @@ namespace Trader.Trading
             _logger.LogInformation("{Name} starting...", Name);
 
             // spin up the worker timer
-            _workerTimer = _timers.Create(TickWorkerAsync, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1), Timeout.InfiniteTimeSpan);
+            _workerTimer = _timers.Create(TickWorkerAsync, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(10), Timeout.InfiniteTimeSpan);
 
             // wait for everything to sync
+            using var registration = cancellationToken.Register(() =>
+            {
+                _workerTimer.Dispose();
+            });
             await _ready.Task.ConfigureAwait(false);
 
             _logger.LogInformation("{Name} started", Name);

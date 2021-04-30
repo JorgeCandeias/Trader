@@ -36,7 +36,7 @@ namespace Trader.Core.Timers
             try
             {
                 using var timeoutCancellation = new CancellationTokenSource(_timeout);
-                using var combinedCancellation = CancellationTokenSource.CreateLinkedTokenSource(_cancellation?.Token ?? default, timeoutCancellation.Token);
+                using var combinedCancellation = CancellationTokenSource.CreateLinkedTokenSource(_cancellation.Token, timeoutCancellation.Token);
 
                 await _callback(combinedCancellation.Token).ConfigureAwait(false);
             }
@@ -67,6 +67,8 @@ namespace Trader.Core.Timers
             if (disposing)
             {
                 _timer.Dispose();
+
+                _cancellation.Cancel();
                 _cancellation.Dispose();
             }
 

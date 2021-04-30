@@ -249,9 +249,6 @@ namespace Trader.Trading.Algorithms.Step
             // raise to the minimum notional if needed
             total = Math.Max(total, minNotionalFilter.MinNotional);
 
-            // raise the total by a small percent to prevent issues where the market order doesn't fill completely resulting in under notional close prices
-            total = Math.Round(total * 1.1m, symbol.QuoteAssetPrecision);
-
             // ensure there is enough quote asset for it
             if (total > _balances.Quote.Free)
             {
@@ -472,13 +469,7 @@ namespace Trader.Trading.Algorithms.Step
                 var total = Math.Round(_balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand, symbol.QuoteAssetPrecision);
 
                 // raise to the minimum notional if needed
-                if (minNotionalFilter.ApplyToMarket)
-                {
-                    total = Math.Max(total, minNotionalFilter.MinNotional);
-                }
-
-                // raise the total by a small percent to prevent issues where the market order doesn't fill completely resulting in under notional close prices
-                total = Math.Round(total * 1.1m, symbol.QuoteAssetPrecision);
+                total = Math.Max(total, minNotionalFilter.MinNotional);
 
                 // ensure there is enough quote asset for it
                 if (total > _balances.Quote.Free)
@@ -491,25 +482,23 @@ namespace Trader.Trading.Algorithms.Step
                 }
 
                 // calculate the appropriate quantity to buy
-                /*
                 var quantity = total / ticker.Price;
 
                 // round it up to the lot size step
                 quantity = Math.Ceiling(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
-                */
 
-                // place a market order to account for weird price floats
+                // place a limit order at the current price
                 var result = await _trader
                     .CreateOrderAsync(
                         new Order(
                             _options.Symbol,
                             OrderSide.Buy,
-                            OrderType.Market,
+                            OrderType.Limit,
+                            TimeInForce.GoodTillCanceled,
+                            quantity,
                             null,
-                            null, //quantity,
-                            total,
-                            null,
-                            null,
+                            ticker.Price,
+                            $"{_options.Symbol}{ticker.Price:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal),
                             null,
                             null,
                             NewOrderResponseType.Full,

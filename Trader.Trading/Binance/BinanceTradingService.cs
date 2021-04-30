@@ -305,11 +305,16 @@ namespace Trader.Trading.Binance
             {
                 var ratio = item.Value.Used / (double)item.Value.Limit;
 
-                if (ratio > _options.UsageWarningRatio)
+                if (ratio >= _options.UsageWarningRatio)
                 {
                     _logger.LogWarning(
                         "{Name} detected rate limit usage for {RateLimitType} {Window} is at {Usage:P2}",
                         Name, item.Key.Type, item.Key.Window, ratio);
+
+                    if (ratio >= _options.UsageBackoffRatio)
+                    {
+                        throw new BinanceBackoffException(item.Key.Type, item.Key.Window, ratio);
+                    }
                 }
             }
 

@@ -22,6 +22,10 @@ namespace Trader.Trading.Binance
         public double UsageWarningRatio { get; set; } = 0.5;
 
         [Required]
+        [Range(0, 1)]
+        public double UsageBackoffRatio { get; set; } = 0.9;
+
+        [Required]
         public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(10);
     }
 }

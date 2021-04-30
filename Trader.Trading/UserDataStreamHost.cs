@@ -7,7 +7,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Trader.Core.Time;
-using Trader.Core.Timers;
 using Trader.Data;
 using Trader.Models;
 using Trader.Trading.Algorithms;
@@ -22,19 +21,17 @@ namespace Trader.Trading
         private readonly ILogger _logger;
         private readonly ITradingService _trader;
         private readonly IUserDataStreamClientFactory _streams;
-        private readonly ISafeTimerFactory _timers;
         private readonly IOrderSynchronizer _orders;
         private readonly ITradeSynchronizer _trades;
         private readonly ITraderRepository _repository;
         private readonly ISystemClock _clock;
 
-        public UserDataStreamHost(IOptions<UserDataStreamHostOptions> options, ILogger<UserDataStreamHost> logger, ITradingService trader, IUserDataStreamClientFactory streams, ISafeTimerFactory timers, IOrderSynchronizer orders, ITradeSynchronizer trades, ITraderRepository repository, ISystemClock clock)
+        public UserDataStreamHost(IOptions<UserDataStreamHostOptions> options, ILogger<UserDataStreamHost> logger, ITradingService trader, IUserDataStreamClientFactory streams, IOrderSynchronizer orders, ITradeSynchronizer trades, ITraderRepository repository, ISystemClock clock)
         {
             _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
             _streams = streams ?? throw new ArgumentNullException(nameof(streams));
-            _timers = timers ?? throw new ArgumentNullException(nameof(timers));
             _orders = orders ?? throw new ArgumentNullException(nameof(orders));
             _trades = trades ?? throw new ArgumentNullException(nameof(trades));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -42,9 +39,12 @@ namespace Trader.Trading
         }
 
         private static string Name => nameof(UserDataStreamHost);
-        private readonly TaskCompletionSource _ready = new TaskCompletionSource();
-        private string _listenKey = Empty;
-        private ISafeTimer? _workerTimer;
+
+        private readonly CancellationTokenSource _cancellation = new();
+        private CancellationTokenSource? _linkedStartupCancellation;
+        private readonly TaskCompletionSource _ready = new();
+        private string? _listenKey;
+        private Task? _workerTask;
         private DateTime _nextPingTime;
 
         private void BumpPingTime()
@@ -228,14 +228,20 @@ namespace Trader.Trading
         {
             _logger.LogInformation("{Name} starting...", Name);
 
-            // spin up the worker timer
-            _workerTimer = _timers.Create(TickWorkerAsync, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(10), Timeout.InfiniteTimeSpan);
+            // combine the startup cancellation so we can handle early process start cancellations properly
+            _linkedStartupCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _cancellation.Token);
 
-            // wait for everything to sync
-            using var registration = cancellationToken.Register(() =>
-            {
-                _workerTimer.Dispose();
-            });
+            // now start the worker policy
+            _workerTask = Policy
+                .Handle<Exception>(ex =>
+                {
+                    _logger.LogError(ex, "{Name} handled work exception {Message}", Name, ex.Message);
+                    return true;
+                })
+                .WaitAndRetryForeverAsync(_ => TimeSpan.FromSeconds(10))
+                .ExecuteAsync(TickWorkerAsync, _linkedStartupCancellation.Token, false);
+
+            // wait for everything to sync before letting other services start
             await _ready.Task.ConfigureAwait(false);
 
             _logger.LogInformation("{Name} started", Name);
@@ -245,13 +251,29 @@ namespace Trader.Trading
         {
             _logger.LogInformation("{Name} stopping...", Name);
 
-            // stop recovery from ticking again
-            _workerTimer?.Dispose();
+            // cancel any background work
+            _cancellation.Cancel();
+
+            // await for the worker task to complete
+            try
+            {
+                if (_workerTask is not null)
+                {
+                    await _workerTask.ConfigureAwait(false);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // noop
+            }
 
             // gracefully unregister the user stream
-            await _trader
-                .CloseUserDataStreamAsync(_listenKey, cancellationToken)
-                .ConfigureAwait(false);
+            if (_listenKey is not null)
+            {
+                await _trader
+                    .CloseUserDataStreamAsync(_listenKey, cancellationToken)
+                    .ConfigureAwait(false);
+            }
 
             _logger.LogInformation("{Name} stopped", Name);
         }
@@ -266,7 +288,8 @@ namespace Trader.Trading
 
             if (disposing)
             {
-                _workerTimer?.Dispose();
+                _cancellation.Dispose();
+                _linkedStartupCancellation?.Dispose();
             }
 
             _disposed = true;

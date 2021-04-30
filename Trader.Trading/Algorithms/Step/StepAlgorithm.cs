@@ -556,7 +556,6 @@ namespace Trader.Trading.Algorithms.Step
             }
 
             // apply the non-significant open buy orders to the bands
-            // todo: this looks like a bug - we can also have significant transient orders (live partial buys) that are not part of the significant set above
             var orders = await _repository
                 .GetNonSignificantTransientOrdersBySideAsync(_options.Symbol, OrderSide.Buy, cancellationToken)
                 .ConfigureAwait(false);

@@ -243,10 +243,7 @@ namespace Trader.Trading.Algorithms.Step
             total *= multiplier;
 
             // raise to the minimum notional if needed
-            if (minNotionalFilter.ApplyToMarket)
-            {
-                total = Math.Max(total, minNotionalFilter.MinNotional);
-            }
+            total = Math.Max(total, minNotionalFilter.MinNotional);
 
             // ensure there is enough quote asset for it
             if (total > _balances.Quote.Free)
@@ -475,10 +472,12 @@ namespace Trader.Trading.Algorithms.Step
                 }
 
                 // calculate the appropriate quantity to buy
+                /*
                 var quantity = total / ticker.Price;
 
                 // round it up to the lot size step
                 quantity = Math.Ceiling(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
+                */
 
                 // place a market order to account for weird price floats
                 var result = await _trader
@@ -488,8 +487,8 @@ namespace Trader.Trading.Algorithms.Step
                             OrderSide.Buy,
                             OrderType.Market,
                             null,
-                            quantity,
-                            null,
+                            null, //quantity,
+                            total,
                             null,
                             null,
                             null,

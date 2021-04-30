@@ -21,19 +21,19 @@ namespace Trader.Trading
         private readonly UserDataStreamHostOptions _options;
         private readonly ILogger _logger;
         private readonly ITradingService _trader;
-        private readonly IUserDataStreamClient _client;
+        private readonly IUserDataStreamClientFactory _streams;
         private readonly ISafeTimerFactory _timers;
         private readonly IOrderSynchronizer _orders;
         private readonly ITradeSynchronizer _trades;
         private readonly ITraderRepository _repository;
         private readonly ISystemClock _clock;
 
-        public UserDataStreamHost(IOptions<UserDataStreamHostOptions> options, ILogger<UserDataStreamHost> logger, ITradingService trader, IUserDataStreamClient client, ISafeTimerFactory timers, IOrderSynchronizer orders, ITradeSynchronizer trades, ITraderRepository repository, ISystemClock clock)
+        public UserDataStreamHost(IOptions<UserDataStreamHostOptions> options, ILogger<UserDataStreamHost> logger, ITradingService trader, IUserDataStreamClientFactory streams, ISafeTimerFactory timers, IOrderSynchronizer orders, ITradeSynchronizer trades, ITraderRepository repository, ISystemClock clock)
         {
             _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
-            _client = client ?? throw new ArgumentNullException(nameof(client));
+            _streams = streams ?? throw new ArgumentNullException(nameof(streams));
             _timers = timers ?? throw new ArgumentNullException(nameof(timers));
             _orders = orders ?? throw new ArgumentNullException(nameof(orders));
             _trades = trades ?? throw new ArgumentNullException(nameof(trades));
@@ -66,8 +66,10 @@ namespace Trader.Trading
 
             _logger.LogInformation("{Name} created user stream with key {ListenKey}", Name, _listenKey);
 
-            await _client
-                .ConnectAsync(_listenKey, cancellationToken)
+            using var client = _streams.Create(_listenKey);
+
+            await client
+                .ConnectAsync(cancellationToken)
                 .ConfigureAwait(false);
 
             BumpPingTime();
@@ -88,7 +90,7 @@ namespace Trader.Trading
                         BumpPingTime();
                     }
 
-                    var message = await _client
+                    var message = await client
                         .ReceiveAsync(cancellationToken)
                         .ConfigureAwait(false);
 
@@ -245,11 +247,6 @@ namespace Trader.Trading
 
             // stop recovery from ticking again
             _workerTimer?.Dispose();
-
-            // gracefully close the web socket
-            await _client
-                .CloseAsync(cancellationToken)
-                .ConfigureAwait(false);
 
             // gracefully unregister the user stream
             await _trader

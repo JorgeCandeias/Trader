@@ -1,14 +1,13 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Trader.Models;
 
 namespace Trader.Trading
 {
-    public interface IUserDataStreamClient
+    public interface IUserDataStreamClient : IDisposable
     {
-        bool IsConnected { get; }
-
-        Task ConnectAsync(string listenKey, CancellationToken cancellationToken = default);
+        Task ConnectAsync(CancellationToken cancellationToken = default);
 
         Task CloseAsync(CancellationToken cancellationToken = default);
 

@@ -9,32 +9,28 @@ using Trader.Models;
 
 namespace Trader.Trading.Binance
 {
-    internal sealed class BinanceUserDataStreamWssClient : IUserDataStreamClient, IDisposable
+    internal sealed class BinanceUserDataStreamWssClient : IUserDataStreamClient
     {
+        private readonly string _listenKey;
         private readonly BinanceOptions _options;
         private readonly IMapper _mapper;
 
-        public BinanceUserDataStreamWssClient(IOptions<BinanceOptions> options, IMapper mapper)
+        public BinanceUserDataStreamWssClient(string listenKey, IOptions<BinanceOptions> options, IMapper mapper)
         {
+            _listenKey = listenKey ?? throw new ArgumentNullException(nameof(listenKey));
             _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
         private readonly ClientWebSocket _client = new();
 
-        public bool IsConnected => _client.State is WebSocketState.Open || _client.State is WebSocketState.Connecting;
-
-        public async Task ConnectAsync(string listenKey, CancellationToken cancellationToken = default)
+        public async Task ConnectAsync(CancellationToken cancellationToken = default)
         {
-            if (IsConnected) return;
-
-            await _client.ConnectAsync(new Uri(_options.BaseWssAddress, $"/ws/{listenKey}"), cancellationToken).ConfigureAwait(false);
+            await _client.ConnectAsync(new Uri(_options.BaseWssAddress, $"/ws/{_listenKey}"), cancellationToken).ConfigureAwait(false);
         }
 
         public async Task CloseAsync(CancellationToken cancellationToken = default)
         {
-            if (!IsConnected) return;
-
             await _client.CloseAsync(WebSocketCloseStatus.NormalClosure, null, cancellationToken).ConfigureAwait(false);
         }
 

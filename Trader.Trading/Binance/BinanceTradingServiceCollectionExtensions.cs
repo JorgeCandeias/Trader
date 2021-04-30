@@ -22,7 +22,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<IHostedService, BinanceTradingService>(sp => sp.GetRequiredService<BinanceTradingService>())
                 .AddSingleton<BinanceApiHandler>()
                 .AddSingleton<ISigner, Signer>()
-                .AddSingleton<IUserDataStreamClient, BinanceUserDataStreamWssClient>()
+                .AddSingleton<IUserDataStreamClientFactory, BinanceUserDataStreamWssClientFactory>()
 
                 // add options
                 .AddOptions<BinanceOptions>()

@@ -94,7 +94,7 @@ namespace Trader.Trading.Algorithms.Accumulator
             var quantity = total / lowBuyPrice;
 
             // round it down to the lot size step
-            quantity = Math.Floor(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
+            quantity = Math.Ceiling(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
 
             // place the order now
             var order = await _trader

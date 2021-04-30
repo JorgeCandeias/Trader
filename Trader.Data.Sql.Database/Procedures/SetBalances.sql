@@ -10,7 +10,7 @@ ON [S].[Asset] = [T].[Asset]
 WHEN NOT MATCHED BY TARGET THEN
 INSERT ([Asset], [Free], [Locked], [UpdatedTime])
 VALUES ([Asset], [Free], [Locked], [UpdatedTime])
-WHEN MATCHED AND [S].[UpdatedTime] > [T].[UpdatedTime] THEN
+WHEN MATCHED AND [S].[UpdatedTime] >= [T].[UpdatedTime] THEN
 UPDATE SET
 	[Free] = [S].[Free],
 	[Locked] = [S].[Locked],

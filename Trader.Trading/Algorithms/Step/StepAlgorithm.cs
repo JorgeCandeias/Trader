@@ -523,8 +523,8 @@ namespace Trader.Trading.Algorithms.Step
                 if (order.Price is 0)
                 {
                     _logger.LogError(
-                        "{Type} {Name} identified a significant {OrderSide} {OrderType} order for {Quantity} {Asset} on {Time} with zero price and will let the algo refresh to pick up missing trades",
-                        Type, _name, order.Side, order.Type, order.ExecutedQuantity, _options.Asset, order.Time);
+                        "{Type} {Name} identified a significant {OrderSide} {OrderType} order {OrderId} for {Quantity} {Asset} on {Time} with zero price and will let the algo refresh to pick up missing trades",
+                        Type, _name, order.Side, order.Type, order.OrderId, order.ExecutedQuantity, _options.Asset, order.Time);
 
                     return true;
                 }
@@ -566,8 +566,8 @@ namespace Trader.Trading.Algorithms.Step
                 if (order.Price is 0)
                 {
                     _logger.LogError(
-                        "{Type} {Name} identified a significant {OrderSide} {OrderType} order for {Quantity} {Asset} on {Time} with zero price and will let the algo refresh to pick up missing trades",
-                        Type, _name, order.Side, order.Type, order.ExecutedQuantity, _options.Asset, order.Time);
+                        "{Type} {Name} identified a significant {OrderSide} {OrderType} order {OrderId} for {Quantity} {Asset} on {Time} with zero price and will let the algo refresh to pick up missing trades",
+                        Type, _name, order.Side, order.Type, order.OrderId, order.ExecutedQuantity, _options.Asset, order.Time);
 
                     return true;
                 }

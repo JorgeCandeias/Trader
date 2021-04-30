@@ -51,7 +51,7 @@ WHEN NOT MATCHED BY TARGET THEN
         [UpdateTime],
         [IsWorking]
     )
-WHEN MATCHED AND [T].[IsTransient] = 1 AND [S].[UpdateTime] > [T].[UpdateTime] THEN
+WHEN MATCHED AND [T].[IsTransient] = 1 AND [S].[UpdateTime] >= [T].[UpdateTime] THEN
 UPDATE SET
     [OrderListId] = [S].[OrderListId],
     [ClientOrderId] = [S].[ClientOrderId],

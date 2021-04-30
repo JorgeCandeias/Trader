@@ -49,6 +49,7 @@ namespace Trader.Trading.Algorithms.Accumulator
             var symbol = exchangeInfo.Symbols.Single(x => x.Name == _options.Symbol);
             var priceFilter = symbol.Filters.OfType<PriceSymbolFilter>().Single();
             var lotSizeFilter = symbol.Filters.OfType<LotSizeSymbolFilter>().Single();
+            var minNotionalFilter = symbol.Filters.OfType<MinNotionalSymbolFilter>().Single();
 
             // get the account free quote balance
             var balance = await _repository
@@ -75,7 +76,10 @@ namespace Trader.Trading.Algorithms.Accumulator
             }
 
             // calculate the amount to pay with
-            var total = Math.Round(Math.Max(balance.Free * _options.TargetQuoteBalanceFractionPerBuy, _options.MinQuoteAssetQuantityPerOrder), symbol.QuoteAssetPrecision);
+            var total = balance.Free * _options.TargetQuoteBalanceFractionPerBuy;
+
+            // bump it to the minimum notional if needed
+            total = Math.Max(total, minNotionalFilter.MinNotional);
 
             // ensure there is enough quote asset for it
             if (total > balance.Free)

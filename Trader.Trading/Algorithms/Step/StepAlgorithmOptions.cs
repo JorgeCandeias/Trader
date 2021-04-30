@@ -30,5 +30,21 @@ namespace Trader.Trading.Algorithms.Step
         [Required]
         [Range(1, 10)]
         public decimal ExtraAmountPerBandMultiplier { get; set; } = 1.00m;
+
+        /// <summary>
+        /// If <see cref="true"/> the algo will create the opening band automatically.
+        /// If <see cref="false"/> the algo will keep working until the top band is closed and then not open again on its own.
+        /// Use <see cref="false"/> to make the algo only keep working until the top band is closed.
+        /// The algo will still continue to open lower bands for as long as the top band is open.
+        /// </summary>
+        [Required]
+        public bool EnableOpening { get; set; } = true;
+
+        /// <summary>
+        /// If <see cref="true"/> the algo will keep creating lower bands below the top band as normal.
+        /// If <see cref="false"/> the algo will no longer create any new lower bands.
+        /// </summary>
+        [Required]
+        public bool EnableLowerBands { get; set; } = true;
     }
 }

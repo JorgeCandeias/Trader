@@ -216,6 +216,16 @@ namespace Trader.Trading.Algorithms.Step
                 return false;
             }
 
+            // skip if lower band creation is disabled
+            if (!_options.EnableLowerBands)
+            {
+                _logger.LogWarning(
+                    "{Type} {Name} cannot create lower band because the feature is disabled",
+                    Type, _name);
+
+                return false;
+            }
+
             // find the lower price under the current price and low band
             var lowerPrice = highBand.OpenPrice;
             var stepPrice = highBand.ClosePrice - highBand.OpenPrice;
@@ -449,6 +459,15 @@ namespace Trader.Trading.Algorithms.Step
                     }
 
                     // let the algo resync
+                    return true;
+                }
+
+                if (!_options.EnableOpening)
+                {
+                    _logger.LogWarning(
+                        "{Type} {Name} cannot create the opening band because it is disabled",
+                        Type, _name);
+
                     return true;
                 }
 

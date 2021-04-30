@@ -34,7 +34,7 @@ namespace Trader.Trading.Binance
         public async Task CloseAsync(CancellationToken cancellationToken = default)
         {
             if (!IsConnected) return;
-
+            
             await _client.CloseAsync(WebSocketCloseStatus.NormalClosure, null, cancellationToken).ConfigureAwait(false);
         }
 

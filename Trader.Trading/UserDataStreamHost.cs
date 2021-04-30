@@ -43,6 +43,12 @@ namespace Trader.Trading
         private readonly TaskCompletionSource _ready = new TaskCompletionSource();
         private string _listenKey = Empty;
         private ISafeTimer? _workerTimer;
+        private DateTime _nextPingTime;
+
+        private void BumpPingTime()
+        {
+            _nextPingTime = _clock.UtcNow.Add(_options.PingPeriod);
+        }
 
         private async Task TickWorkerAsync(CancellationToken cancellationToken)
         {
@@ -56,6 +62,8 @@ namespace Trader.Trading
                 .ConnectAsync(_listenKey, cancellationToken)
                 .ConfigureAwait(false);
 
+            BumpPingTime();
+
             _logger.LogInformation("{Name} connected user stream with key {ListenKey}", Name, _listenKey);
 
             // start streaming in the background while we sync from the api
@@ -63,7 +71,14 @@ namespace Trader.Trading
             {
                 while (!cancellationToken.IsCancellationRequested)
                 {
-                    // todo: ping the stream every ten minutes
+                    if (_clock.UtcNow >= _nextPingTime)
+                    {
+                        await _trader
+                            .PingUserDataStreamAsync(_listenKey, cancellationToken)
+                            .ConfigureAwait(false);
+
+                        BumpPingTime();
+                    }
 
                     var message = await _client
                         .ReceiveAsync(cancellationToken)

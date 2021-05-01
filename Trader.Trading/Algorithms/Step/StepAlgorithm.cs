@@ -405,7 +405,7 @@ namespace Trader.Trading.Algorithms.Step
             if (_bands.Count == 0 || _bands.Count == 1 && _bands.Single().Status == BandStatus.Ordered)
             {
                 // identify the target low price for the first buy
-                var lowBuyPrice = ticker.Price * (1m - _options.PullbackRatio);
+                var lowBuyPrice = ticker.Price; // * (1m - _options.PullbackRatio);
 
                 // under adjust the buy price to the tick size
                 lowBuyPrice = Math.Floor(lowBuyPrice / priceFilter.TickSize) * priceFilter.TickSize;

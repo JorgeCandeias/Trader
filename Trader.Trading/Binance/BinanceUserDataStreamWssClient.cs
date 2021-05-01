@@ -36,22 +36,38 @@ namespace Trader.Trading.Binance
 
         public async Task<UserDataStreamMessage> ReceiveAsync(CancellationToken cancellationToken = default)
         {
-            using var buffer = MemoryPool<byte>.Shared.Rent(1 << 10);
-
+            using var buffer = MemoryPool<byte>.Shared.Rent(1 << 20);
             var total = 0;
+
             while (!cancellationToken.IsCancellationRequested)
             {
                 var result = await _client
                     .ReceiveAsync(buffer.Memory[total..], cancellationToken)
                     .ConfigureAwait(false);
 
-                total += result.Count;
+                if (result.MessageType == WebSocketMessageType.Text)
+                {
+                    total += result.Count;
 
-                // break if we got the entire message
-                if (result.EndOfMessage) break;
+                    // break if we got the entire message
+                    if (result.EndOfMessage) break;
 
-                // throw if we ran out of buffer
-                if (total >= buffer.Memory.Length) throw new InvalidOperationException($"Could not load web socket message into a buffer of length '{buffer.Memory.Length}'.");
+                    // throw if we ran out of buffer
+                    if (total >= buffer.Memory.Length) throw new InvalidOperationException($"Could not load web socket message into a buffer of length '{buffer.Memory.Length}'.");
+                }
+                else if (result.MessageType == WebSocketMessageType.Binary)
+                {
+                    // noop for now
+                }
+                else if (result.MessageType == WebSocketMessageType.Close)
+                {
+                    // early break
+                    throw new InvalidOperationException("The server has closed the web socket");
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Unknown {nameof(WebSocketMessageType)} '{result.MessageType}'");
+                }
             }
 
             return _mapper.Map<UserDataStreamMessage>(buffer.Memory.Slice(0, total));

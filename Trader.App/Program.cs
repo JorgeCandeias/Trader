@@ -40,8 +40,8 @@ namespace Trader.App
                         .AddBinanceTradingService(options => context.Configuration.Bind("Api", options))
                         .AddUserDataStreamHost(options =>
                         {
-                            options.Symbols.Add("BNBGBP");
                             options.Symbols.Add("BTCGBP");
+                            options.Symbols.Add("BNBBTC");
                             options.Symbols.Add("XMRBNB");
                             options.Symbols.Add("XMRBTC");
                             options.Symbols.Add("COCOSBNB");
@@ -84,8 +84,8 @@ namespace Trader.App
                         .AddBase62NumberSerializer();
 
                     services
-                        .AddAccumulatorAlgorithm("BNBGBP", options => context.Configuration.Bind("Trading:Algorithms:Accumulator:BNBGBP", options))
                         .AddAccumulatorAlgorithm("BTCGBP", options => context.Configuration.Bind("Trading:Algorithms:Accumulator:BTCGBP", options))
+                        .AddAccumulatorAlgorithm("BNBBTC", options => context.Configuration.Bind("Trading:Algorithms:Accumulator:BNBBTC", options))
                         .AddStepAlgorithm("XMRBNB", options => context.Configuration.Bind("Trading:Algorithms:Step:XMRBNB", options))
                         .AddStepAlgorithm("XMRBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:XMRBTC", options))
                         .AddStepAlgorithm("COCOSBNB", options => context.Configuration.Bind("Trading:Algorithms:Step:COCOSBNB", options))

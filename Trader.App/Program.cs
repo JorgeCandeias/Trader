@@ -58,7 +58,6 @@ namespace Trader.App
                             options.Symbols.Add("LINKBTC");
                             options.Symbols.Add("DOGEGBP");
                             options.Symbols.Add("DOGEBTC");
-                            options.Symbols.Add("SXPGBP");
                             options.Symbols.Add("SXPBTC");
                             options.Symbols.Add("DOTGBP");
                             options.Symbols.Add("DOTBTC");
@@ -101,7 +100,6 @@ namespace Trader.App
                         .AddStepAlgorithm("LINKBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:LINKBTC", options))
                         .AddStepAlgorithm("DOGEGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:DOGEGBP", options))
                         .AddStepAlgorithm("DOGEBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:DOGEBTC", options))
-                        .AddStepAlgorithm("SXPGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:SXPGBP", options))
                         .AddStepAlgorithm("SXPBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:SXPBTC", options))
                         .AddStepAlgorithm("DOTGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:DOTGBP", options))
                         .AddStepAlgorithm("DOTBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:DOTBTC", options))

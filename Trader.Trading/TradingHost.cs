@@ -105,7 +105,7 @@ namespace Trader.Trading
                 foreach (var item in group)
                 {
                     _logger.LogInformation(
-                        "{Name} reports {Symbol,8} profit as (T: {@Today,12:N8}, T-1: {@Yesterday,12:N8}, W: {@ThisWeek,12:N8}, W-1: {@PrevWeek,12:N8}, M: {@ThisMonth,12:N8}, Y: {@ThisYear,12:N8}) (APD1: {@AveragePerDay1,12:N8}, APD7: {@AveragePerDay7,12:N8}, APD30: {@AveragePerDay30,12:N8})",
+                        "{Name} reports {Symbol,8} profit as (T: {@Today,12:F8}, T-1: {@Yesterday,12:F8}, W: {@ThisWeek,12:F8}, W-1: {@PrevWeek,12:F8}, M: {@ThisMonth,12:F8}, Y: {@ThisYear,13:F8}) (APD1: {@AveragePerDay1,12:F8}, APD7: {@AveragePerDay7,12:F8}, APD30: {@AveragePerDay30,12:F8})",
                         Name, item.Symbol, item.Profit.Today, item.Profit.Yesterday, item.Profit.ThisWeek, item.Profit.PrevWeek, item.Profit.ThisMonth, item.Profit.ThisYear, item.Stats.AvgPerDay1, item.Stats.AvgPerDay7, item.Stats.AvgPerDay30);
                 }
 
@@ -113,7 +113,7 @@ namespace Trader.Trading
                 var totalStats = Statistics.FromProfit(totalProfit);
 
                 _logger.LogInformation(
-                    "{Name} reports {Quote,8} profit as (T: {@Today,12:N8}, T-1: {@Yesterday,12:N8}, W: {@ThisWeek,12:N8}, W-1: {@PrevWeek,12:N8}, M: {@ThisMonth,12:N8}, Y: {@ThisYear,12:N8}) (APD1: {@AveragePerDay1,12:N8}, APD7: {@AveragePerDay7,12:N8}, APD30: {@AveragePerDay30,12:N8})",
+                    "{Name} reports {Quote,8} profit as (T: {@Today,12:F8}, T-1: {@Yesterday,12:F8}, W: {@ThisWeek,12:F8}, W-1: {@PrevWeek,12:F8}, M: {@ThisMonth,12:F8}, Y: {@ThisYear,13:F8}) (APD1: {@AveragePerDay1,12:F8}, APD7: {@AveragePerDay7,12:F8}, APD30: {@AveragePerDay30,12:F8})",
                     Name,
                     group.Key,
                     totalProfit.Today,

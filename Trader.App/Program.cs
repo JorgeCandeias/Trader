@@ -70,6 +70,7 @@ namespace Trader.App
                             options.Symbols.Add("VETBTC");
                             options.Symbols.Add("CAKEGBP");
                             options.Symbols.Add("CAKEBTC");
+                            options.Symbols.Add("RIFBTC");
                         })
                         .AddTradingHost()
                         .AddSystemClock()
@@ -110,7 +111,8 @@ namespace Trader.App
                         .AddStepAlgorithm("VETGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:VETGBP", options))
                         .AddStepAlgorithm("VETBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:VETBTC", options))
                         .AddStepAlgorithm("CAKEGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:CAKEGBP", options))
-                        .AddStepAlgorithm("CAKEBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:CAKEBTC", options));
+                        .AddStepAlgorithm("CAKEBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:CAKEBTC", options))
+                        .AddStepAlgorithm("RIFBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:RIFBTC", options));
                 })
                 .RunConsoleAsync();
         }

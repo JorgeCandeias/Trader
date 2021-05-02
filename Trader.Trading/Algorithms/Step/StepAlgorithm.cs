@@ -649,7 +649,7 @@ namespace Trader.Trading.Algorithms.Step
                 var nowNotional = quantity * ticker.Price;
 
                 _logger.LogWarning(
-                    "{Type} {Name} ignoring {Count} under notional bands of {Quantity:N8} {Asset} bought at {BuyNotional:N8} {Quote} now worth {NowNotional:N8} {Quote} ({Percent:N2}%)",
+                    "{Type} {Name} ignoring {Count} under notional bands of {Quantity:N8} {Asset} bought at {BuyNotional:N8} {Quote} now worth {NowNotional:N8} {Quote} ({Percent:P2})",
                     Type,
                     _name,
                     leftovers.Count,

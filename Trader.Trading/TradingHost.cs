@@ -61,24 +61,54 @@ namespace Trader.Trading
                 .GetAccountInfoAsync(new GetAccountInfo(null, _clock.UtcNow), cancellationToken)
                 .ConfigureAwait(false);
 
-            // execute all algos in sequence for ease of troubleshooting
-            foreach (var algo in _algos)
+            // if debugging execute all algos in sequence for ease of troubleshooting
+            if (Debugger.IsAttached)
             {
-                try
+                foreach (var algo in _algos)
                 {
-                    await algo
-                        .GoAsync(exchangeInfo, accountInfo, cancellationToken)
-                        .ConfigureAwait(false);
+                    try
+                    {
+                        await algo
+                            .GoAsync(exchangeInfo, accountInfo, cancellationToken)
+                            .ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex,
+                            "{Name} reports {Symbol} algorithm has faulted",
+                            Name, algo.Symbol);
+                    }
                 }
-                catch (OperationCanceledException)
+            }
+            // otherwise execute all algos in parallel for max performance
+            else
+            {
+                var tasks = new List<(string Symbol, Task Task)>();
+                foreach (var algo in _algos)
                 {
-                    throw;
+                    tasks.Add((algo.Symbol, algo.GoAsync(exchangeInfo, accountInfo, cancellationToken)));
                 }
-                catch (Exception ex)
+
+                foreach (var item in tasks)
                 {
-                    _logger.LogError(ex,
-                        "{Name} reports {Symbol} algorithm has faulted",
-                        Name, algo.Symbol);
+                    try
+                    {
+                        await item.Task.ConfigureAwait(false);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex,
+                            "{Name} reports {Symbol} algorithm has faulted",
+                            Name, item.Symbol);
+                    }
                 }
             }
 

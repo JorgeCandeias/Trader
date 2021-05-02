@@ -83,8 +83,8 @@ namespace Trader.App
                     services
                         .AddAccumulatorAlgorithm("BTCGBP", options => context.Configuration.Bind("Trading:Algorithms:Accumulator:BTCGBP", options))
                         .AddAccumulatorAlgorithm("BNBBTC", options => context.Configuration.Bind("Trading:Algorithms:Accumulator:BNBBTC", options))
+                        .AddAccumulatorAlgorithm("XMRBTC", options => context.Configuration.Bind("Trading:Algorithms:Accumulator:XMRBTC", options))
                         .AddStepAlgorithm("XMRBNB", options => context.Configuration.Bind("Trading:Algorithms:Step:XMRBNB", options))
-                        .AddStepAlgorithm("XMRBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:XMRBTC", options))
                         .AddStepAlgorithm("COCOSBNB", options => context.Configuration.Bind("Trading:Algorithms:Step:COCOSBNB", options))
                         .AddStepAlgorithm("ZECBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:ZECBTC", options))
                         .AddStepAlgorithm("DASHBNB", options => context.Configuration.Bind("Trading:Algorithms:Step:DASHBNB", options))

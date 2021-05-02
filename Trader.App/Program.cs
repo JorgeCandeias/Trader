@@ -45,7 +45,6 @@ namespace Trader.App
                             options.Symbols.Add("XMRBNB");
                             options.Symbols.Add("XMRBTC");
                             options.Symbols.Add("COCOSBNB");
-                            options.Symbols.Add("ZECBNB");
                             options.Symbols.Add("ZECBTC");
                             options.Symbols.Add("DASHBNB");
                             options.Symbols.Add("DASHBTC");
@@ -87,7 +86,6 @@ namespace Trader.App
                         .AddStepAlgorithm("XMRBNB", options => context.Configuration.Bind("Trading:Algorithms:Step:XMRBNB", options))
                         .AddStepAlgorithm("XMRBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:XMRBTC", options))
                         .AddStepAlgorithm("COCOSBNB", options => context.Configuration.Bind("Trading:Algorithms:Step:COCOSBNB", options))
-                        .AddStepAlgorithm("ZECBNB", options => context.Configuration.Bind("Trading:Algorithms:Step:ZECBNB", options))
                         .AddStepAlgorithm("ZECBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:ZECBTC", options))
                         .AddStepAlgorithm("DASHBNB", options => context.Configuration.Bind("Trading:Algorithms:Step:DASHBNB", options))
                         .AddStepAlgorithm("DASHBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:DASHBTC", options))

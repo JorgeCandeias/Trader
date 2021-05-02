@@ -4,6 +4,8 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Events;
+using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Trader.App
@@ -40,41 +42,12 @@ namespace Trader.App
                         .AddBinanceTradingService(options => context.Configuration.Bind("Api", options))
                         .AddUserDataStreamHost(options =>
                         {
-                            options.Symbols.UnionWith(new[]
-                            {
-                                "BTCGBP",
-                                "BNBBTC",
-                                "XMRBNB",
-                                "XMRBTC",
-                                "ZECBTC",
-                                "DASHBNB",
-                                "DASHBTC",
-                                "ETHBTC",
-                                "ADAGBP",
-                                "ADABTC",
-                                "XRPGBP",
-                                "XRPBTC",
-                                "LINKGBP",
-                                "LINKBTC",
-                                "DOGEGBP",
-                                "DOGEBTC",
-                                "SXPBTC",
-                                "DOTGBP",
-                                "DOTBTC",
-                                "CHZGBP",
-                                "CHZBTC",
-                                "LTCGBP",
-                                "LTCBTC",
-                                "ENJGBP",
-                                "ENJBTC",
-                                "VETGBP",
-                                "VETBTC",
-                                "CAKEGBP",
-                                "CAKEBTC",
-                                "RIFBTC",
-                                "BCHBTC",
-                                "XLMBTC"
-                            });
+                            options.Symbols.UnionWith(context
+                                .Configuration
+                                .GetSection("Trading:Algorithms")
+                                .GetChildren()
+                                .SelectMany(x => x.GetChildren())
+                                .Select(x => x["Symbol"]));
                         })
                         .AddTradingHost()
                         .AddSystemClock()
@@ -85,39 +58,29 @@ namespace Trader.App
                         })
                         .AddBase62NumberSerializer();
 
-                    services
-                        .AddAccumulatorAlgorithm("BTCGBP", options => context.Configuration.Bind("Trading:Algorithms:Accumulator:BTCGBP", options))
-                        .AddAccumulatorAlgorithm("BNBBTC", options => context.Configuration.Bind("Trading:Algorithms:Accumulator:BNBBTC", options))
-                        .AddAccumulatorAlgorithm("XMRBTC", options => context.Configuration.Bind("Trading:Algorithms:Accumulator:XMRBTC", options))
-                        .AddStepAlgorithm("XMRBNB", options => context.Configuration.Bind("Trading:Algorithms:Step:XMRBNB", options))
-                        .AddStepAlgorithm("ZECBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:ZECBTC", options))
-                        .AddStepAlgorithm("DASHBNB", options => context.Configuration.Bind("Trading:Algorithms:Step:DASHBNB", options))
-                        .AddStepAlgorithm("DASHBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:DASHBTC", options))
-                        .AddStepAlgorithm("ETHBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:ETHBTC", options))
-                        .AddStepAlgorithm("ADAGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:ADAGBP", options))
-                        .AddStepAlgorithm("ADABTC", options => context.Configuration.Bind("Trading:Algorithms:Step:ADABTC", options))
-                        .AddStepAlgorithm("XRPGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:XRPGBP", options))
-                        .AddStepAlgorithm("XRPBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:XRPBTC", options))
-                        .AddStepAlgorithm("LINKGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:LINKGBP", options))
-                        .AddStepAlgorithm("LINKBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:LINKBTC", options))
-                        .AddStepAlgorithm("DOGEGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:DOGEGBP", options))
-                        .AddStepAlgorithm("DOGEBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:DOGEBTC", options))
-                        .AddStepAlgorithm("SXPBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:SXPBTC", options))
-                        .AddStepAlgorithm("DOTGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:DOTGBP", options))
-                        .AddStepAlgorithm("DOTBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:DOTBTC", options))
-                        .AddStepAlgorithm("CHZGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:CHZGBP", options))
-                        .AddStepAlgorithm("CHZBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:CHZBTC", options))
-                        .AddStepAlgorithm("LTCGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:LTCGBP", options))
-                        .AddStepAlgorithm("LTCBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:LTCBTC", options))
-                        .AddStepAlgorithm("ENJGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:ENJGBP", options))
-                        .AddStepAlgorithm("ENJBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:ENJBTC", options))
-                        .AddStepAlgorithm("VETGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:VETGBP", options))
-                        .AddStepAlgorithm("VETBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:VETBTC", options))
-                        .AddStepAlgorithm("CAKEGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:CAKEGBP", options))
-                        .AddStepAlgorithm("CAKEBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:CAKEBTC", options))
-                        .AddStepAlgorithm("RIFBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:RIFBTC", options))
-                        .AddStepAlgorithm("BCHBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:BCHBTC", options))
-                        .AddStepAlgorithm("XLMBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:XLMBTC", options));
+                    // add all algorithms
+                    foreach (var type in context.Configuration.GetSection("Trading:Algorithms").GetChildren())
+                    {
+                        switch (type.Key)
+                        {
+                            case "Accumulator":
+                                foreach (var algo in type.GetChildren())
+                                {
+                                    services.AddAccumulatorAlgorithm(algo.Key, options => algo.Bind(options));
+                                }
+                                break;
+
+                            case "Step":
+                                foreach (var algo in type.GetChildren())
+                                {
+                                    services.AddStepAlgorithm(algo.Key, options => algo.Bind(options));
+                                }
+                                break;
+
+                            default:
+                                throw new InvalidOperationException($"Unknown algorithm type '{type.Key}'");
+                        }
+                    }
                 })
                 .RunConsoleAsync();
         }

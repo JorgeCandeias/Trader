@@ -117,7 +117,7 @@ namespace Trader.App
                         .AddStepAlgorithm("CAKEBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:CAKEBTC", options))
                         .AddStepAlgorithm("RIFBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:RIFBTC", options))
                         .AddStepAlgorithm("BCHBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:BCHBTC", options))
-                        .AddStepAlgorithm("XLMBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:BCHBTC", options));
+                        .AddStepAlgorithm("XLMBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:XLMBTC", options));
                 })
                 .RunConsoleAsync();
         }

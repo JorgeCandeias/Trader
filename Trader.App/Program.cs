@@ -40,36 +40,41 @@ namespace Trader.App
                         .AddBinanceTradingService(options => context.Configuration.Bind("Api", options))
                         .AddUserDataStreamHost(options =>
                         {
-                            options.Symbols.Add("BTCGBP");
-                            options.Symbols.Add("BNBBTC");
-                            options.Symbols.Add("XMRBNB");
-                            options.Symbols.Add("XMRBTC");
-                            options.Symbols.Add("ZECBTC");
-                            options.Symbols.Add("DASHBNB");
-                            options.Symbols.Add("DASHBTC");
-                            options.Symbols.Add("ETHBTC");
-                            options.Symbols.Add("ADAGBP");
-                            options.Symbols.Add("ADABTC");
-                            options.Symbols.Add("XRPGBP");
-                            options.Symbols.Add("XRPBTC");
-                            options.Symbols.Add("LINKGBP");
-                            options.Symbols.Add("LINKBTC");
-                            options.Symbols.Add("DOGEGBP");
-                            options.Symbols.Add("DOGEBTC");
-                            options.Symbols.Add("SXPBTC");
-                            options.Symbols.Add("DOTGBP");
-                            options.Symbols.Add("DOTBTC");
-                            options.Symbols.Add("CHZGBP");
-                            options.Symbols.Add("CHZBTC");
-                            options.Symbols.Add("LTCGBP");
-                            options.Symbols.Add("LTCBTC");
-                            options.Symbols.Add("ENJGBP");
-                            options.Symbols.Add("ENJBTC");
-                            options.Symbols.Add("VETGBP");
-                            options.Symbols.Add("VETBTC");
-                            options.Symbols.Add("CAKEGBP");
-                            options.Symbols.Add("CAKEBTC");
-                            options.Symbols.Add("RIFBTC");
+                            options.Symbols.UnionWith(new[]
+                            {
+                                "BTCGBP",
+                                "BNBBTC",
+                                "XMRBNB",
+                                "XMRBTC",
+                                "ZECBTC",
+                                "DASHBNB",
+                                "DASHBTC",
+                                "ETHBTC",
+                                "ADAGBP",
+                                "ADABTC",
+                                "XRPGBP",
+                                "XRPBTC",
+                                "LINKGBP",
+                                "LINKBTC",
+                                "DOGEGBP",
+                                "DOGEBTC",
+                                "SXPBTC",
+                                "DOTGBP",
+                                "DOTBTC",
+                                "CHZGBP",
+                                "CHZBTC",
+                                "LTCGBP",
+                                "LTCBTC",
+                                "ENJGBP",
+                                "ENJBTC",
+                                "VETGBP",
+                                "VETBTC",
+                                "CAKEGBP",
+                                "CAKEBTC",
+                                "RIFBTC",
+                                "BCHBTC",
+                                "XLMBTC"
+                            });
                         })
                         .AddTradingHost()
                         .AddSystemClock()
@@ -110,7 +115,9 @@ namespace Trader.App
                         .AddStepAlgorithm("VETBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:VETBTC", options))
                         .AddStepAlgorithm("CAKEGBP", options => context.Configuration.Bind("Trading:Algorithms:Step:CAKEGBP", options))
                         .AddStepAlgorithm("CAKEBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:CAKEBTC", options))
-                        .AddStepAlgorithm("RIFBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:RIFBTC", options));
+                        .AddStepAlgorithm("RIFBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:RIFBTC", options))
+                        .AddStepAlgorithm("BCHBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:BCHBTC", options))
+                        .AddStepAlgorithm("XLMBTC", options => context.Configuration.Bind("Trading:Algorithms:Step:BCHBTC", options));
                 })
                 .RunConsoleAsync();
         }

@@ -69,6 +69,31 @@ namespace Trader.Data.Sql
                 .ConfigureAwait(false);
         }
 
+        public async Task<OrderQueryResult> GetOrderAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
+        {
+            _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
+
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            var entity = await connection
+                .QuerySingleOrDefaultAsync<OrderEntity>(
+                    new CommandDefinition(
+                        "[dbo].[GetOrder]",
+                        new
+                        {
+                            Symbol = symbol,
+                            OrderId = orderId
+                        },
+                        null,
+                        _options.CommandTimeoutAsInteger,
+                        CommandType.StoredProcedure,
+                        CommandFlags.Buffered,
+                        cancellationToken))
+                .ConfigureAwait(false);
+
+            return _mapper.Map<OrderQueryResult>(entity);
+        }
+
         public async Task<ImmutableSortedOrderSet> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default)
         {
             _ = symbol ?? throw new ArgumentNullException(nameof(symbol));

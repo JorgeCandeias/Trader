@@ -126,13 +126,13 @@ namespace Trader.Trading
                 profits.Add((algo.Symbol, profit, stats));
             }
 
-            foreach (var group in profits.GroupBy(x => x.Profit.Quote))
+            foreach (var group in profits.GroupBy(x => x.Profit.Quote).OrderBy(x => x.Key))
             {
                 _logger.LogInformation(
                     "{Name} reporting profit for quote {Quote}...",
                     Name, group.Key);
 
-                foreach (var item in group)
+                foreach (var item in group.OrderBy(x => x.Symbol))
                 {
                     _logger.LogInformation(
                         "{Name} reports {Symbol,8} profit as (T: {@Today,12:F8}, T-1: {@Yesterday,12:F8}, W: {@ThisWeek,12:F8}, W-1: {@PrevWeek,12:F8}, M: {@ThisMonth,12:F8}, Y: {@ThisYear,13:F8}) (APD1: {@AveragePerDay1,12:F8}, APD7: {@AveragePerDay7,12:F8}, APD30: {@AveragePerDay30,12:F8})",

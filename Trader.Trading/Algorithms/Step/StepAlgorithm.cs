@@ -649,7 +649,7 @@ namespace Trader.Trading.Algorithms.Step
                 var nowNotional = quantity * ticker.Price;
 
                 _logger.LogWarning(
-                    "{Type} {Name} ignoring {Count} under notional bands of {Quantity} {Asset} bought at {BuyNotional} {Quote} now worth {NowNotional} {Quote}",
+                    "{Type} {Name} ignoring {Count} under notional bands of {Quantity:N8} {Asset} bought at {BuyNotional:N8} {Quote} now worth {NowNotional:N8} {Quote} ({Percent:N2}%)",
                     Type,
                     _name,
                     leftovers.Count,
@@ -658,7 +658,8 @@ namespace Trader.Trading.Algorithms.Step
                     buyNotional,
                     _options.Quote,
                     nowNotional,
-                    _options.Quote);
+                    _options.Quote,
+                    buyNotional > 0 ? nowNotional / buyNotional : 0);
             }
 
             // apply open sell orders to the bands

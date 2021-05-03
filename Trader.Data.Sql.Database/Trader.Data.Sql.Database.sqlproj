@@ -93,5 +93,6 @@
     <Build Include="Procedures\GetBalance.sql" />
     <Build Include="Types\BalanceTableParameter.sql" />
     <Build Include="Procedures\GetOrder.sql" />
+    <Build Include="Procedures\GetLatestOrderBySide.sql" />
   </ItemGroup>
 </Project>

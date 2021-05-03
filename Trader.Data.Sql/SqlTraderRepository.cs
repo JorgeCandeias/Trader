@@ -94,6 +94,31 @@ namespace Trader.Data.Sql
             return _mapper.Map<OrderQueryResult>(entity);
         }
 
+        public async Task<OrderQueryResult?> GetLatestOrderBySideAsync(string symbol, OrderSide side, CancellationToken cancellationToken = default)
+        {
+            _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
+
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            var entity = await connection
+                .QuerySingleOrDefaultAsync<OrderEntity>(
+                    new CommandDefinition(
+                        "[dbo].[GetLatestOrderBySide]",
+                        new
+                        {
+                            Symbol = symbol,
+                            Side = _mapper.Map<int>(side)
+                        },
+                        null,
+                        _options.CommandTimeoutAsInteger,
+                        CommandType.StoredProcedure,
+                        CommandFlags.Buffered,
+                        cancellationToken))
+                .ConfigureAwait(false);
+
+            return _mapper.Map<OrderQueryResult>(entity);
+        }
+
         public async Task<ImmutableSortedOrderSet> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default)
         {
             _ = symbol ?? throw new ArgumentNullException(nameof(symbol));

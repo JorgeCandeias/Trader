@@ -61,54 +61,23 @@ namespace Trader.Trading
                 .GetAccountInfoAsync(new GetAccountInfo(null, _clock.UtcNow), cancellationToken)
                 .ConfigureAwait(false);
 
-            // if debugging execute all algos in sequence for ease of troubleshooting
-            if (Debugger.IsAttached)
+            foreach (var algo in _algos)
             {
-                foreach (var algo in _algos)
+                try
                 {
-                    try
-                    {
-                        await algo
-                            .GoAsync(exchangeInfo, accountInfo, cancellationToken)
-                            .ConfigureAwait(false);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        throw;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex,
-                            "{Name} reports {Symbol} algorithm has faulted",
-                            Name, algo.Symbol);
-                    }
+                    await algo
+                        .GoAsync(exchangeInfo, accountInfo, cancellationToken)
+                        .ConfigureAwait(false);
                 }
-            }
-            // otherwise execute all algos in parallel for max performance
-            else
-            {
-                var tasks = new List<(string Symbol, Task Task)>();
-                foreach (var algo in _algos)
+                catch (OperationCanceledException)
                 {
-                    tasks.Add((algo.Symbol, algo.GoAsync(exchangeInfo, accountInfo, cancellationToken)));
+                    throw;
                 }
-
-                foreach (var item in tasks)
+                catch (Exception ex)
                 {
-                    try
-                    {
-                        await item.Task.ConfigureAwait(false);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        throw;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex,
-                            "{Name} reports {Symbol} algorithm has faulted",
-                            Name, item.Symbol);
-                    }
+                    _logger.LogError(ex,
+                        "{Name} reports {Symbol} algorithm has faulted",
+                        Name, algo.Symbol);
                 }
             }
 

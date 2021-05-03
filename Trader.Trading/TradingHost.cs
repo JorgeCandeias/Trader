@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -16,14 +17,16 @@ namespace Trader.Trading
 {
     internal class TradingHost : IHostedService
     {
+        private readonly TradingHostOptions _options;
         private readonly ILogger _logger;
         private readonly IEnumerable<ITradingAlgorithm> _algos;
         private readonly ISafeTimerFactory _timers;
         private readonly ITradingService _trader;
         private readonly ISystemClock _clock;
 
-        public TradingHost(ILogger<TradingHost> logger, IEnumerable<ITradingAlgorithm> algos, ISafeTimerFactory timers, ITradingService trader, ISystemClock clock)
+        public TradingHost(IOptions<TradingHostOptions> options, ILogger<TradingHost> logger, IEnumerable<ITradingAlgorithm> algos, ISafeTimerFactory timers, ITradingService trader, ISystemClock clock)
         {
+            _options = options.Value ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _algos = algos ?? throw new ArgumentNullException(nameof(algos));
             _timers = timers ?? throw new ArgumentNullException(nameof(timers));
@@ -37,7 +40,7 @@ namespace Trader.Trading
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            _timer = _timers.Create(TickAsync, TimeSpan.Zero, TimeSpan.FromSeconds(5), Debugger.IsAttached ? TimeSpan.FromHours(1) : TimeSpan.FromMinutes(3));
+            _timer = _timers.Create(TickAsync, TimeSpan.Zero, _options.TickPeriod, Debugger.IsAttached ? _options.TickTimeoutWithDebugger : _options.TickTimeout);
 
             return Task.CompletedTask;
         }

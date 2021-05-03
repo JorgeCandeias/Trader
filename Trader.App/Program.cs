@@ -49,7 +49,7 @@ namespace Trader.App
                                 .SelectMany(x => x.GetChildren())
                                 .Select(x => x["Symbol"]));
                         })
-                        .AddTradingHost()
+                        .AddTradingHost(options => context.Configuration.Bind("Trading:Host"))
                         .AddSystemClock()
                         .AddSafeTimerFactory()
                         .AddSqlTraderRepository(options =>

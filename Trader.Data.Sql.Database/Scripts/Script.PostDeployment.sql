@@ -10,3 +10,5 @@ Post-Deployment Script Template
 --------------------------------------------------------------------------------------
 */
 
+ALTER DATABASE [$(DatabaseName)] SET QUERY_STORE CLEAR
+GO

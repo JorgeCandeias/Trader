@@ -27,5 +27,17 @@ namespace Trader.Trading.Binance
 
         [Required]
         public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(10);
+
+        [Required]
+        public TimeSpan DefaultBackoffPeriod { get; set; } = TimeSpan.FromMinutes(1);
+
+        [Required]
+        public string ApiKeyHeader { get; set; } = "X-MBX-APIKEY";
+
+        [Required]
+        public string UsedRequestWeightHeaderPrefix { get; set; } = "X-MBX-USED-WEIGHT-";
+
+        [Required]
+        public string UsedOrderCountHeaderPrefix { get; set; } = "X-MBX-ORDER-COUNT-";
     }
 }

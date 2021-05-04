@@ -6,6 +6,7 @@ using System;
 using Trader.Trading;
 using Trader.Trading.Binance;
 using Trader.Trading.Binance.Converters;
+using Trader.Trading.Binance.Handlers;
 using Trader.Trading.Binance.Signing;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -20,7 +21,9 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<BinanceTradingService>()
                 .AddSingleton<ITradingService, BinanceTradingService>(sp => sp.GetRequiredService<BinanceTradingService>())
                 .AddSingleton<IHostedService, BinanceTradingService>(sp => sp.GetRequiredService<BinanceTradingService>())
+                .AddSingleton<BinanceApiSigningHandler>()
                 .AddSingleton<BinanceApiHandler>()
+                .AddSingleton<BinanceApiUsageHandler>()
                 .AddSingleton<ISigner, Signer>()
                 .AddSingleton<IUserDataStreamClientFactory, BinanceUserDataStreamWssClientFactory>()
 
@@ -38,7 +41,9 @@ namespace Microsoft.Extensions.DependencyInjection
                     x.BaseAddress = options.BaseApiAddress;
                     x.Timeout = options.Timeout;
                 })
+                .AddHttpMessageHandler<BinanceApiSigningHandler>()
                 .AddHttpMessageHandler<BinanceApiHandler>()
+                .AddHttpMessageHandler<BinanceApiUsageHandler>()
                 .Services
 
                 // add auto mapper

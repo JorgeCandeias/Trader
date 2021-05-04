@@ -1,79 +1,80 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
-using System.Globalization;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Trader.Models;
-using Trader.Trading.Binance.Signing;
+using Trader.Core.Time;
 
 namespace Trader.Trading.Binance
 {
     internal class BinanceApiHandler : DelegatingHandler
     {
         private readonly BinanceOptions _options;
-        private readonly ISigner _signer;
+        private readonly ILogger _logger;
+        private readonly ISystemClock _clock;
 
-        public BinanceApiHandler(IOptions<BinanceOptions> options, ISigner signer)
+        public BinanceApiHandler(IOptions<BinanceOptions> options, ILogger<BinanceApiHandler> logger, ISystemClock clock)
         {
-            _options = options.Value;
-            _signer = signer;
+            _options = options.Value ?? throw new ArgumentNullException(nameof(options));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
-        private const string ApiKeyHeader = "X-MBX-APIKEY";
-        private const string UsedRequestWeightHeaderPrefix = "X-MBX-USED-WEIGHT-";
-        private const string UsedOrderCountHeaderPrefix = "X-MBX-ORDER-COUNT-";
+        private static string Type => nameof(BinanceApiHandler);
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            await PreProcessAsync(request, cancellationToken).ConfigureAwait(false);
-
             var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
             await HandleBinanceErrorAsync(response, cancellationToken).ConfigureAwait(false);
 
-            PostProcess(response);
-
             return response;
         }
 
-        private async Task PreProcessAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-        {
-            // add the api key header
-            request.Headers.Add(ApiKeyHeader, _options.ApiKey);
-
-            if (!BinanceApiContext.SkipSigning)
-            {
-                // sign query content
-                if (request.RequestUri?.Query?.Length > 1)
-                {
-                    var hash = _signer.Sign(request.RequestUri.Query[1..]);
-
-                    var builder = new UriBuilder(request.RequestUri)
-                    {
-                        Query = request.RequestUri.Query + "&signature=" + hash
-                    };
-
-                    request.RequestUri = builder.Uri;
-                }
-
-                // sign form content
-                else if (request.Content is FormUrlEncodedContent content)
-                {
-                    var text = await content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-                    var hash = _signer.Sign(text);
-                    var result = text + "&signature=" + hash;
-
-                    request.Content = new StringContent(result);
-                }
-            }
-        }
-
-        private static async Task HandleBinanceErrorAsync(HttpResponseMessage response, CancellationToken cancellationToken)
+        private async Task HandleBinanceErrorAsync(HttpResponseMessage response, CancellationToken cancellationToken)
         {
             // skip handling for successful results
             if (response.IsSuccessStatusCode) return;
+
+            // handle ip ban and back-off
+            if (response.StatusCode is HttpStatusCode.TooManyRequests || response.StatusCode is (HttpStatusCode)418)
+            {
+                // discover the appropriate retry after time
+                DateTime? retryAfterUtc = null;
+                if (response.Headers.RetryAfter is not null)
+                {
+                    if (response.Headers.RetryAfter.Date.HasValue)
+                    {
+                        _logger.LogWarning(
+                            "{Type} received {HttpStatusCode} requesting to wait until {RetryAfterDateTimeOffset}",
+                            Type, response.StatusCode, response.Headers.RetryAfter.Date.Value);
+
+                        retryAfterUtc = response.Headers.RetryAfter.Date.Value.UtcDateTime.AddSeconds(1);
+                    }
+                    else if (response.Headers.RetryAfter.Delta.HasValue)
+                    {
+                        _logger.LogWarning(
+                            "{Type} received {HttpStatusCode} requesting to wait for {RetryAfterTimeSpan}",
+                            Type, response.StatusCode, response.Headers.RetryAfter.Delta.Value);
+
+                        retryAfterUtc = _clock.UtcNow.Add(response.Headers.RetryAfter.Delta.Value).AddSeconds(1);
+                    }
+                }
+
+                if (!retryAfterUtc.HasValue)
+                {
+                    _logger.LogWarning(
+                        "{Type} received http status code {HttpStatusCode} without a retry-after header and will use a default of {RetyrAfterTimeSpan}",
+                        Type, response.StatusCode, _options.DefaultBackoffPeriod);
+
+                    retryAfterUtc = _clock.UtcNow.Add(_options.DefaultBackoffPeriod).AddSeconds(1);
+                }
+
+                throw new BinanceTooManyRequestsException(retryAfterUtc.Value);
+            }
 
             // attempt graceful handling of a binance api error
             var error = await response.Content.ReadFromJsonAsync<ErrorModel>(null, cancellationToken).ConfigureAwait(false);
@@ -84,59 +85,6 @@ namespace Trader.Trading.Binance
 
             // otherwise default to the standard exception
             response.EnsureSuccessStatusCode();
-        }
-
-        private static void PostProcess(HttpResponseMessage response)
-        {
-            if (!BinanceApiContext.CaptureUsage) return;
-
-            foreach (var header in response.Headers)
-            {
-                if (header.Key.StartsWith(UsedRequestWeightHeaderPrefix, StringComparison.OrdinalIgnoreCase))
-                {
-                    var key = header.Key[UsedRequestWeightHeaderPrefix.Length..];
-                    var unit = key[^1..].ToUpperInvariant();
-                    var value = int.Parse(key[..^1], CultureInfo.InvariantCulture);
-
-                    var window = unit switch
-                    {
-                        "S" => TimeSpan.FromSeconds(value),
-                        "M" => TimeSpan.FromMinutes(value),
-                        "H" => TimeSpan.FromHours(value),
-                        "D" => TimeSpan.FromDays(value),
-                        _ => throw new InvalidOperationException()
-                    };
-
-                    foreach (var item in header.Value)
-                    {
-                        var weight = int.Parse(item, CultureInfo.InvariantCulture);
-
-                        BinanceApiContext.Usage?.Add(new Usage(RateLimitType.RequestWeight, window, weight));
-                    }
-                }
-                else if (header.Key.StartsWith(UsedOrderCountHeaderPrefix, StringComparison.OrdinalIgnoreCase))
-                {
-                    var key = header.Key[UsedOrderCountHeaderPrefix.Length..];
-                    var unit = key[^1..].ToUpperInvariant();
-                    var value = int.Parse(key[..^1], CultureInfo.InvariantCulture);
-
-                    var window = unit switch
-                    {
-                        "S" => TimeSpan.FromSeconds(value),
-                        "M" => TimeSpan.FromMinutes(value),
-                        "H" => TimeSpan.FromHours(value),
-                        "D" => TimeSpan.FromDays(value),
-                        _ => throw new InvalidOperationException()
-                    };
-
-                    foreach (var item in header.Value)
-                    {
-                        var count = int.Parse(item, CultureInfo.InvariantCulture);
-
-                        BinanceApiContext.Usage?.Add(new Usage(RateLimitType.Orders, window, count));
-                    }
-                }
-            }
         }
     }
 }

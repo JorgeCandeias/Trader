@@ -1,5 +1,5 @@
 ﻿CREATE PROCEDURE [dbo].[CancelOrder]
-	@Symbol NVARCHAR(100),
+	@SymbolId INT,
     @OrderId BIGINT,
     @OrderListId BIGINT,
     @ClientOrderId NVARCHAR(100),
@@ -28,7 +28,7 @@ SET
     [Type] = @Type,
     [Side] = @Side
 WHERE
-    [Symbol] = @Symbol
+    [SymbolId] = @SymbolId
     AND [OrderId] = @OrderId
     AND IsTransient = 1
 

@@ -1,7 +1,6 @@
 ﻿CREATE TYPE [dbo].[OrderTableParameter] AS TABLE
 (
     [SymbolId] INT NOT NULL,
-	[Symbol] NVARCHAR(100) NOT NULL,
     [OrderId] BIGINT NOT NULL,
     [OrderListId] BIGINT NOT NULL,
     [ClientOrderId] NVARCHAR(100) NOT NULL,

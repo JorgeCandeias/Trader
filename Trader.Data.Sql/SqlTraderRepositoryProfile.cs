@@ -30,6 +30,7 @@ namespace Trader.Data.Sql
                 .ForCtorParam(nameof(OrderTableParameterEntity.SymbolId), x => x.MapFrom((source, context) => ((IDictionary<string, int>)context.Items[nameof(OrderTableParameterEntity.SymbolId)])[source.Symbol]));
 
             CreateMap<CancelStandardOrderResult, CancelOrderEntity>()
+                .ForCtorParam(nameof(CancelOrderEntity.SymbolId), x => x.MapFrom((source, context) => context.Items[nameof(CancelOrderEntity.SymbolId)]))
                 .ForCtorParam(nameof(CancelOrderEntity.ClientOrderId), x => x.MapFrom(y => y.OriginalClientOrderId));
 
             CreateMap<AccountInfo, IEnumerable<Balance>>()

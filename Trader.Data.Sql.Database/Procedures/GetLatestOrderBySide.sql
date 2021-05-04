@@ -6,31 +6,33 @@ AS
 SET NOCOUNT ON;
 
 SELECT TOP (1)
-	[Symbol],
-    [OrderId],
-    [OrderListId],
-    [ClientOrderId],
-    [Price],
-    [OriginalQuantity],
-    [ExecutedQuantity],
-    [CummulativeQuoteQuantity],
-    [OriginalQuoteOrderQuantity],
-    [Status],
-    [TimeInForce],
-    [Type],
-    [Side],
-    [StopPrice],
-    [IcebergQuantity],
-    [Time],
-    [UpdateTime],
-    [IsWorking]
+	[S].[Name] AS [Symbol],
+    [O].[OrderId],
+    [O].[OrderListId],
+    [O].[ClientOrderId],
+    [O].[Price],
+    [O].[OriginalQuantity],
+    [O].[ExecutedQuantity],
+    [O].[CummulativeQuoteQuantity],
+    [O].[OriginalQuoteOrderQuantity],
+    [O].[Status],
+    [O].[TimeInForce],
+    [O].[Type],
+    [O].[Side],
+    [O].[StopPrice],
+    [O].[IcebergQuantity],
+    [O].[Time],
+    [O].[UpdateTime],
+    [O].[IsWorking]
 FROM
-	[dbo].[Order]
+	[dbo].[Order] AS [O]
+    INNER JOIN [dbo].[Symbol] AS [S]
+        ON [S].[Id] = [O].[SymbolId]
 WHERE
-	[Symbol] = @Symbol
-    AND [Side] = @Side
+	[S].[Name] = @Symbol
+    AND [O].[Side] = @Side
 ORDER BY
-    [OrderId] DESC
+    [O].[OrderId] DESC
 
 RETURN 0
 GO

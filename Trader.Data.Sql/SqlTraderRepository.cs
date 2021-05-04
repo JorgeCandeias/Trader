@@ -303,9 +303,14 @@ namespace Trader.Data.Sql
         {
             _ = result ?? throw new ArgumentNullException(nameof(result));
 
-            using var connection = new SqlConnection(_options.ConnectionString);
+            var symbolId = await GetOrAddSymbolAsync(result.Symbol, cancellationToken).ConfigureAwait(false);
 
-            var entity = _mapper.Map<CancelOrderEntity>(result);
+            var entity = _mapper.Map<CancelOrderEntity>(result, options =>
+            {
+                options.Items[nameof(CancelOrderEntity.SymbolId)] = symbolId;
+            });
+
+            using var connection = new SqlConnection(_options.ConnectionString);
 
             await connection
                 .ExecuteAsync(

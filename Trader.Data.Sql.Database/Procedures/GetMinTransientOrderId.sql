@@ -5,12 +5,14 @@ AS
 SET NOCOUNT ON;
 
 SELECT
-	MIN([OrderId])
+	MIN([O].[OrderId])
 FROM
-	[dbo].[Order]
+	[dbo].[Order] AS [O]
+	INNER JOIN [dbo].[Symbol] AS [S]
+		ON [S].[Id] = [O].[SymbolId]
 WHERE
-	[Symbol] = @Symbol
-	AND [IsTransient] = 1
+	[S].[Name] = @Symbol
+	AND [O].[IsTransient] = 1
 
 RETURN 0
 GO

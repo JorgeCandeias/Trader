@@ -3,7 +3,6 @@
     [RowId] INT NOT NULL DEFAULT NEXT VALUE FOR [dbo].[OrderSequence],
 
     [SymbolId] INT NOT NULL,
-	[Symbol] NVARCHAR(100) NOT NULL,
     [OrderId] BIGINT NOT NULL,
     [OrderListId] BIGINT NOT NULL,
     [ClientOrderId] NVARCHAR(100) NOT NULL,
@@ -30,19 +29,19 @@
         [RowId]
     ),
 
-    CONSTRAINT [UK_Order_Symbol_OrderId] UNIQUE
+    CONSTRAINT [UK_Order_SymbolId_OrderId] UNIQUE
     (
-        [Symbol],
+        [SymbolId],
         [OrderId]
     )
 )
 GO
 
 /* this index helps to quickly identify all transient orders for a symbol */
-CREATE NONCLUSTERED INDEX [NCI_Order_Symbol_IsTransient]
+CREATE NONCLUSTERED INDEX [NCI_Order_SymbolId_IsTransient]
 ON [dbo].[Order]
 (
-    [Symbol],
+    [SymbolId],
     [IsTransient]
 )
 GO

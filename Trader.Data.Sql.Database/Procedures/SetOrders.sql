@@ -12,7 +12,6 @@ WHEN NOT MATCHED BY TARGET THEN
     INSERT
     (
         [SymbolId],
-        [Symbol],
         [OrderId],
         [OrderListId],
         [ClientOrderId],
@@ -34,7 +33,6 @@ WHEN NOT MATCHED BY TARGET THEN
     VALUES
     (
         [SymbolId],
-        [Symbol],
         [OrderId],
         [OrderListId],
         [ClientOrderId],

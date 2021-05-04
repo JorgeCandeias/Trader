@@ -1,7 +1,7 @@
 ﻿namespace Trader.Data.Sql.Models
 {
     internal record CancelOrderEntity(
-        string Symbol,
+        int SymbolId,
         long OrderId,
         long OrderListId,
         string ClientOrderId,

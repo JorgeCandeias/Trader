@@ -7,7 +7,6 @@ namespace Trader.Data.Sql.Models
 {
     internal record OrderTableParameterEntity(
         int SymbolId,
-        string Symbol,
         long OrderId,
         long OrderListId,
         string ClientOrderId,
@@ -35,7 +34,6 @@ namespace Trader.Data.Sql.Models
         private static readonly SqlMetaData[] _metadata = new[]
         {
             new SqlMetaData(nameof(OrderTableParameterEntity.SymbolId), SqlDbType.Int),
-            new SqlMetaData(nameof(OrderTableParameterEntity.Symbol), SqlDbType.NVarChar, 100),
             new SqlMetaData(nameof(OrderTableParameterEntity.OrderId), SqlDbType.BigInt),
             new SqlMetaData(nameof(OrderTableParameterEntity.OrderListId), SqlDbType.BigInt),
             new SqlMetaData(nameof(OrderTableParameterEntity.ClientOrderId), SqlDbType.NVarChar, 100),
@@ -65,24 +63,23 @@ namespace Trader.Data.Sql.Models
             var record = new SqlDataRecord(_metadata);
 
             record.SetInt32(0, entity.SymbolId);
-            record.SetString(1, entity.Symbol);
-            record.SetInt64(2, entity.OrderId);
-            record.SetInt64(3, entity.OrderListId);
-            record.SetString(4, entity.ClientOrderId);
-            record.SetDecimal(5, entity.Price);
-            record.SetDecimal(6, entity.OriginalQuantity);
-            record.SetDecimal(7, entity.ExecutedQuantity);
-            record.SetDecimal(8, entity.CummulativeQuoteQuantity);
-            record.SetDecimal(9, entity.OriginalQuoteOrderQuantity);
-            record.SetInt32(10, entity.Status);
-            record.SetInt32(11, entity.TimeInForce);
-            record.SetInt32(12, entity.Type);
-            record.SetInt32(13, entity.Side);
-            record.SetDecimal(14, entity.StopPrice);
-            record.SetDecimal(15, entity.IcebergQuantity);
-            record.SetDateTime(16, entity.Time);
-            record.SetDateTime(17, entity.UpdateTime);
-            record.SetBoolean(18, entity.IsWorking);
+            record.SetInt64(1, entity.OrderId);
+            record.SetInt64(2, entity.OrderListId);
+            record.SetString(3, entity.ClientOrderId);
+            record.SetDecimal(4, entity.Price);
+            record.SetDecimal(5, entity.OriginalQuantity);
+            record.SetDecimal(6, entity.ExecutedQuantity);
+            record.SetDecimal(7, entity.CummulativeQuoteQuantity);
+            record.SetDecimal(8, entity.OriginalQuoteOrderQuantity);
+            record.SetInt32(9, entity.Status);
+            record.SetInt32(10, entity.TimeInForce);
+            record.SetInt32(11, entity.Type);
+            record.SetInt32(12, entity.Side);
+            record.SetDecimal(13, entity.StopPrice);
+            record.SetDecimal(14, entity.IcebergQuantity);
+            record.SetDateTime(15, entity.Time);
+            record.SetDateTime(16, entity.UpdateTime);
+            record.SetBoolean(17, entity.IsWorking);
 
             return record;
         }

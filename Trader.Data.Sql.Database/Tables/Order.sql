@@ -1,5 +1,7 @@
 ﻿CREATE TABLE [dbo].[Order]
 (
+    [RowId] INT NOT NULL DEFAULT NEXT VALUE FOR [dbo].[OrderSequence],
+
 	[Symbol] NVARCHAR(100) NOT NULL,
     [OrderId] BIGINT NOT NULL,
     [OrderListId] BIGINT NOT NULL,
@@ -23,6 +25,11 @@
     [IsTransient] AS (CONVERT (BIT, CASE WHEN [Status] = 1 OR [Status] = 2 OR [Status] = 5 THEN 1 ELSE 0 END)) PERSISTED NOT NULL,
 
     CONSTRAINT [PK_Order] PRIMARY KEY CLUSTERED
+    (
+        [RowId]
+    ),
+
+    CONSTRAINT [UK_Order_Symbol_OrderId] UNIQUE
     (
         [Symbol],
         [OrderId]

@@ -99,5 +99,6 @@
     <Build Include="Tables\Symbol.sql" />
     <Build Include="Procedures\GetOrAddSymbol.sql" />
     <Build Include="Sequences\SymbolSequence.sql" />
+    <Build Include="Sequences\OrderSequence.sql" />
   </ItemGroup>
 </Project>

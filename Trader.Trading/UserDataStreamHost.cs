@@ -201,8 +201,17 @@ namespace Trader.Trading
             foreach (var symbol in _options.Symbols)
             {
                 await Policy
-                    .Handle<BinanceBackoffException>()
-                    .WaitAndRetryForeverAsync(x => TimeSpan.FromSeconds(10))
+                    .Handle<BinanceTooManyRequestsException>()
+                    .WaitAndRetryForeverAsync(
+                        (n, ex, ctx) => ((BinanceTooManyRequestsException)ex).RetryAfter,
+                        (ex, ts, ctx) =>
+                        {
+                            _logger.LogWarning(ex,
+                                "{Name} backing off for {TimeSpan}...",
+                                Name, ts);
+
+                            return Task.CompletedTask;
+                        })
                     .ExecuteAsync(ct => _orders.SynchronizeOrdersAsync(symbol, ct), cancellationToken, false)
                     .ConfigureAwait(false);
             }
@@ -211,8 +220,17 @@ namespace Trader.Trading
             foreach (var symbol in _options.Symbols)
             {
                 await Policy
-                    .Handle<BinanceBackoffException>()
-                    .WaitAndRetryForeverAsync(x => TimeSpan.FromSeconds(10))
+                    .Handle<BinanceTooManyRequestsException>()
+                    .WaitAndRetryForeverAsync(
+                        (n, ex, ctx) => ((BinanceTooManyRequestsException)ex).RetryAfter,
+                        (ex, ts, ctx) =>
+                        {
+                            _logger.LogWarning(ex,
+                                "{Name} backing off for {TimeSpan}...",
+                                Name, ts);
+
+                            return Task.CompletedTask;
+                        })
                     .ExecuteAsync(ct => _trades.SynchronizeTradesAsync(symbol, cancellationToken), cancellationToken, false)
                     .ConfigureAwait(false);
             }

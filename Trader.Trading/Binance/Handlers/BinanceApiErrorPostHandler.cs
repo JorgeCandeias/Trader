@@ -38,37 +38,38 @@ namespace Trader.Trading.Binance.Handlers
             if (response.StatusCode is HttpStatusCode.TooManyRequests || response.StatusCode is (HttpStatusCode)418)
             {
                 // discover the appropriate retry after time
-                DateTime? retryAfterUtc = null;
+                var retryAfter = _options.DefaultBackoffPeriod;
+                var okay = false;
                 if (response.Headers.RetryAfter is not null)
                 {
-                    if (response.Headers.RetryAfter.Date.HasValue)
+                    if (response.Headers.RetryAfter.Date.HasValue && response.Headers.RetryAfter.Date.Value > _clock.UtcNow)
                     {
                         _logger.LogWarning(
                             "{Type} received {HttpStatusCode} requesting to wait until {RetryAfterDateTimeOffset}",
                             Type, response.StatusCode, response.Headers.RetryAfter.Date.Value);
 
-                        retryAfterUtc = response.Headers.RetryAfter.Date.Value.UtcDateTime.AddSeconds(1);
+                        retryAfter = response.Headers.RetryAfter.Date.Value.Subtract(_clock.UtcNow).Add(TimeSpan.FromSeconds(1));
+                        okay = true;
                     }
-                    else if (response.Headers.RetryAfter.Delta.HasValue)
+                    else if (response.Headers.RetryAfter.Delta.HasValue && response.Headers.RetryAfter.Delta.Value > TimeSpan.Zero)
                     {
                         _logger.LogWarning(
-                            "{Type} received {HttpStatusCode} requesting to wait for {RetryAfterTimeSpan}",
+                            "{Type} received {HttpStatusCode} requesting to wait for {RetryAfter}",
                             Type, response.StatusCode, response.Headers.RetryAfter.Delta.Value);
 
-                        retryAfterUtc = _clock.UtcNow.Add(response.Headers.RetryAfter.Delta.Value).AddSeconds(1);
+                        retryAfter = response.Headers.RetryAfter.Delta.Value.Add(TimeSpan.FromSeconds(1));
+                        okay = true;
                     }
                 }
 
-                if (!retryAfterUtc.HasValue)
+                if (!okay)
                 {
                     _logger.LogWarning(
-                        "{Type} received http status code {HttpStatusCode} without a retry-after header and will use a default of {RetyrAfterTimeSpan}",
-                        Type, response.StatusCode, _options.DefaultBackoffPeriod);
-
-                    retryAfterUtc = _clock.UtcNow.Add(_options.DefaultBackoffPeriod).AddSeconds(1);
+                        "{Type} received http status code {HttpStatusCode} without a retry-after header and will use a default of {RetryAfter}",
+                        Type, response.StatusCode, retryAfter);
                 }
 
-                throw new BinanceTooManyRequestsException(retryAfterUtc.Value);
+                throw new BinanceTooManyRequestsException(retryAfter);
             }
 
             // attempt graceful handling of a binance api error

@@ -18,9 +18,10 @@ namespace Trader.Trading.Binance.Handlers
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             // prevent the request from going through if the api is overloaded
-            if (_clock.UtcNow <= _retryAfterUtc)
+            var wait = _retryAfterUtc.Subtract(_clock.UtcNow);
+            if (wait > TimeSpan.Zero)
             {
-                throw new BinanceTooManyRequestsException(_retryAfterUtc);
+                throw new BinanceTooManyRequestsException(wait);
             }
 
             try
@@ -31,13 +32,10 @@ namespace Trader.Trading.Binance.Handlers
             }
             catch (BinanceTooManyRequestsException ex)
             {
-                // safely bump the opening window forward
-                lock (_lock)
+                var retryAfterUtc = _clock.UtcNow.Add(ex.RetryAfter);
+                if (retryAfterUtc > _retryAfterUtc)
                 {
-                    if (ex.RetryAfterUtc > _retryAfterUtc)
-                    {
-                        _retryAfterUtc = ex.RetryAfterUtc;
-                    }
+                    _retryAfterUtc = retryAfterUtc;
                 }
 
                 // escalate to the caller regardless
@@ -45,7 +43,6 @@ namespace Trader.Trading.Binance.Handlers
             }
         }
 
-        private readonly object _lock = new();
         private DateTime _retryAfterUtc = DateTime.MinValue;
     }
 }

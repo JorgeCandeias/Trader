@@ -39,5 +39,9 @@ namespace Trader.Trading.Binance
 
         [Required]
         public string UsedOrderCountHeaderPrefix { get; set; } = "X-MBX-ORDER-COUNT-";
+
+        [Required]
+        [Range(1, int.MaxValue)]
+        public int MaxConcurrentRequests { get; set; } = 1;
     }
 }

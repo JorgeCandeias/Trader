@@ -6,12 +6,12 @@ namespace Trader.Trading.Binance
     [Serializable]
     public class BinanceTooManyRequestsException : Exception
     {
-        public DateTime RetryAfterUtc { get; }
+        public TimeSpan RetryAfter { get; }
 
-        public BinanceTooManyRequestsException(DateTime retryAfterUtc)
-            : this($"Retry after '{retryAfterUtc}'")
+        public BinanceTooManyRequestsException(TimeSpan retryAfter)
+            : this($"Retry after '{retryAfter}'")
         {
-            RetryAfterUtc = retryAfterUtc;
+            RetryAfter = retryAfter;
         }
 
         public BinanceTooManyRequestsException()
@@ -28,14 +28,14 @@ namespace Trader.Trading.Binance
 
         protected BinanceTooManyRequestsException(SerializationInfo info, StreamingContext context) : base(info, context)
         {
-            RetryAfterUtc = info.GetDateTime(nameof(RetryAfterUtc));
+            RetryAfter = (TimeSpan)info.GetValue(nameof(RetryAfter), typeof(TimeSpan))!;
         }
 
         public override void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             base.GetObjectData(info, context);
 
-            info.AddValue(nameof(RetryAfterUtc), RetryAfterUtc);
+            info.AddValue(nameof(RetryAfter), RetryAfter, typeof(TimeSpan));
         }
     }
 }

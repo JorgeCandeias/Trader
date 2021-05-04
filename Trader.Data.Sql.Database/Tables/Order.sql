@@ -37,6 +37,14 @@
 )
 GO
 
+/* this index supports getting all orders by symbol id only */
+CREATE NONCLUSTERED INDEX [NCI_Order_SymbolId]
+ON [dbo].[Order]
+(
+    [SymbolId]
+)
+GO
+
 /* this index helps to quickly identify all transient orders for a symbol */
 CREATE NONCLUSTERED INDEX [NCI_Order_SymbolId_IsTransient]
 ON [dbo].[Order]

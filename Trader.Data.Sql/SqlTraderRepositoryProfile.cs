@@ -26,7 +26,8 @@ namespace Trader.Data.Sql
                 .ForCtorParam(nameof(OrderQueryResult.IsWorking), x => x.MapFrom(_ => true))
                 .ForCtorParam(nameof(OrderQueryResult.OriginalQuoteOrderQuantity), x => x.MapFrom((source, context) => context.Items[nameof(OrderQueryResult.OriginalQuoteOrderQuantity)]));
 
-            CreateMap<OrderQueryResult, OrderTableParameterEntity>();
+            CreateMap<OrderQueryResult, OrderTableParameterEntity>()
+                .ForCtorParam(nameof(OrderTableParameterEntity.SymbolId), x => x.MapFrom((source, context) => ((IDictionary<string, int>)context.Items[nameof(OrderTableParameterEntity.SymbolId)])[source.Symbol]));
 
             CreateMap<CancelStandardOrderResult, CancelOrderEntity>()
                 .ForCtorParam(nameof(CancelOrderEntity.ClientOrderId), x => x.MapFrom(y => y.OriginalClientOrderId));

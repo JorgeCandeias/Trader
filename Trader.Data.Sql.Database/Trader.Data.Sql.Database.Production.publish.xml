@@ -6,5 +6,8 @@
     <DeployScriptFileName>Trader.Data.Sql.Database.sql</DeployScriptFileName>
     <TargetConnectionString>Data Source=192.168.1.123;Persist Security Info=False;User ID=sa;Pooling=False;MultipleActiveResultSets=False;Connect Timeout=60;Encrypt=False;TrustServerCertificate=False</TargetConnectionString>
     <ProfileVersionNumber>1</ProfileVersionNumber>
+    <BlockOnPossibleDataLoss>True</BlockOnPossibleDataLoss>
+    <GenerateSmartDefaults>True</GenerateSmartDefaults>
+    <IncludeTransactionalScripts>True</IncludeTransactionalScripts>
   </PropertyGroup>
 </Project>

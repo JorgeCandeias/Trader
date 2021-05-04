@@ -63,6 +63,7 @@
     <Folder Include="Security\Users" />
     <Folder Include="Types" />
     <Folder Include="Sequences" />
+    <Folder Include="Scripts" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Trader.Data.Sql.Database.Production.publish.xml" />
@@ -100,5 +101,8 @@
     <Build Include="Procedures\GetOrAddSymbol.sql" />
     <Build Include="Sequences\SymbolSequence.sql" />
     <Build Include="Sequences\OrderSequence.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <PostDeploy Include="Scripts\Script.PostDeployment.sql" />
   </ItemGroup>
 </Project>

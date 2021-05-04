@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Polly;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -30,6 +31,8 @@ namespace Trader.Data.Sql
         }
 
         private static string Name => nameof(SqlTraderRepository);
+
+        private readonly ConcurrentDictionary<string, int> _symbolLookup = new ConcurrentDictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
         public async Task<long> GetMaxTradeIdAsync(string symbol, CancellationToken cancellationToken = default)
         {
@@ -337,9 +340,25 @@ namespace Trader.Data.Sql
         {
             _ = orders ?? throw new ArgumentNullException(nameof(orders));
 
-            using var connection = new SqlConnection(_options.ConnectionString);
+            // get the cached ids for the incoming symbols
+            var ids = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (var order in orders)
+            {
+                // check the local fast dictionary
+                if (!ids.ContainsKey(order.Symbol))
+                {
+                    // defer to the slower shared dictionary and database
+                    ids.Add(order.Symbol, await GetOrAddSymbolAsync(order.Symbol, cancellationToken).ConfigureAwait(false));
+                }
+            }
 
-            var entities = _mapper.Map<IEnumerable<OrderTableParameterEntity>>(orders);
+            // pass the fast lookup to mapper so it knows how to populate the symbol ids
+            var entities = _mapper.Map<IEnumerable<OrderTableParameterEntity>>(orders, options =>
+            {
+                options.Items[nameof(OrderTableParameterEntity.SymbolId)] = ids;
+            });
+
+            using var connection = new SqlConnection(_options.ConnectionString);
 
             await Policy
                 .Handle<SqlException>()
@@ -497,6 +516,37 @@ namespace Trader.Data.Sql
                 .ConfigureAwait(false);
 
             return _mapper.Map<Balance>(entity);
+        }
+
+        private async ValueTask<int> GetOrAddSymbolAsync(string symbol, CancellationToken cancellation)
+        {
+            _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
+
+            if (_symbolLookup.TryGetValue(symbol, out var id))
+            {
+                return id;
+            }
+
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            id = await connection
+                .ExecuteScalarAsync<int>(
+                    new CommandDefinition(
+                        "[dbo].[GetOrAddSymbol]",
+                        new
+                        {
+                            Name = symbol
+                        },
+                        null,
+                        _options.CommandTimeoutAsInteger,
+                        CommandType.StoredProcedure,
+                        CommandFlags.Buffered,
+                        cancellation))
+                .ConfigureAwait(false);
+
+            _symbolLookup.TryAdd(symbol, id);
+
+            return id;
         }
     }
 }

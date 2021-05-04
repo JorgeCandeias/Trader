@@ -6,11 +6,12 @@ SET NOCOUNT ON;
 
 MERGE INTO [dbo].[Order] AS [T]
 USING @Orders AS [S]
-    ON [S].[Symbol] = [T].[Symbol]
+    ON [S].[SymbolId] = [T].[SymbolId]
     AND [S].[OrderId] = [T].[OrderId]
 WHEN NOT MATCHED BY TARGET THEN
     INSERT
     (
+        [SymbolId],
         [Symbol],
         [OrderId],
         [OrderListId],
@@ -32,6 +33,7 @@ WHEN NOT MATCHED BY TARGET THEN
     )
     VALUES
     (
+        [SymbolId],
         [Symbol],
         [OrderId],
         [OrderListId],

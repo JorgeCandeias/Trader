@@ -2,6 +2,7 @@
 (
     [RowId] INT NOT NULL DEFAULT NEXT VALUE FOR [dbo].[OrderSequence],
 
+    [SymbolId] INT NOT NULL,
 	[Symbol] NVARCHAR(100) NOT NULL,
     [OrderId] BIGINT NOT NULL,
     [OrderListId] BIGINT NOT NULL,

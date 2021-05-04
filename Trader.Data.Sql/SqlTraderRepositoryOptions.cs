@@ -17,5 +17,9 @@ namespace Trader.Data.Sql
         /// Helper for the implementation.
         /// </summary>
         internal int CommandTimeoutAsInteger => (int)Math.Ceiling(CommandTimeout.TotalSeconds);
+
+        [Required]
+        [Range(0, int.MaxValue)]
+        public int RetryCount { get; set; } = 5;
     }
 }

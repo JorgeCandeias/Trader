@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
 using Dapper;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Polly;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -17,13 +19,17 @@ namespace Trader.Data.Sql
     internal class SqlTraderRepository : ITraderRepository
     {
         private readonly SqlTraderRepositoryOptions _options;
+        private readonly ILogger _logger;
         private readonly IMapper _mapper;
 
-        public SqlTraderRepository(IOptions<SqlTraderRepositoryOptions> options, IMapper mapper)
+        public SqlTraderRepository(IOptions<SqlTraderRepositoryOptions> options, ILogger<SqlTraderRepository> logger, IMapper mapper)
         {
             _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
+
+        private static string Name => nameof(SqlTraderRepository);
 
         public async Task<long> GetMaxTradeIdAsync(string symbol, CancellationToken cancellationToken = default)
         {
@@ -423,19 +429,29 @@ namespace Trader.Data.Sql
 
             var entities = _mapper.Map<IEnumerable<BalanceTableParameterEntity>>(balances);
 
-            await connection
-                .ExecuteAsync(
-                    new CommandDefinition(
-                        "[dbo].[SetBalances]",
-                        new
-                        {
-                            Balances = entities.AsSqlDataRecords().AsTableValuedParameter("[dbo].[BalanceTableParameter]")
-                        },
-                        null,
-                        _options.CommandTimeoutAsInteger,
-                        CommandType.StoredProcedure,
-                        CommandFlags.Buffered,
-                    cancellationToken))
+            await Policy
+                .Handle<SqlException>()
+                .RetryAsync(_options.RetryCount, (ex, retry) =>
+                {
+                    _logger.LogError(ex,
+                        "{Name} handled exception while calling [dbo].[SetBalances] and will retry ({Retry}/{Total})",
+                        Name, retry, _options.RetryCount);
+                })
+                .ExecuteAsync(ct => connection
+                    .ExecuteAsync(
+                        new CommandDefinition(
+                            "[dbo].[SetBalances]",
+                            new
+                            {
+                                Balances = entities.AsSqlDataRecords().AsTableValuedParameter("[dbo].[BalanceTableParameter]")
+                            },
+                            null,
+                            _options.CommandTimeoutAsInteger,
+                            CommandType.StoredProcedure,
+                            CommandFlags.Buffered,
+                        ct)),
+                        cancellationToken,
+                        false)
                 .ConfigureAwait(false);
         }
 

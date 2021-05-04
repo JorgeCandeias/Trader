@@ -8,22 +8,22 @@ using System.Threading;
 using System.Threading.Tasks;
 using Trader.Core.Time;
 
-namespace Trader.Trading.Binance
+namespace Trader.Trading.Binance.Handlers
 {
-    internal class BinanceApiHandler : DelegatingHandler
+    internal class BinanceApiErrorHandler : DelegatingHandler
     {
         private readonly BinanceOptions _options;
         private readonly ILogger _logger;
         private readonly ISystemClock _clock;
 
-        public BinanceApiHandler(IOptions<BinanceOptions> options, ILogger<BinanceApiHandler> logger, ISystemClock clock)
+        public BinanceApiErrorHandler(IOptions<BinanceOptions> options, ILogger<BinanceApiErrorHandler> logger, ISystemClock clock)
         {
             _options = options.Value ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
-        private static string Type => nameof(BinanceApiHandler);
+        private static string Type => nameof(BinanceApiErrorHandler);
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {

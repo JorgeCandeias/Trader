@@ -29,15 +29,8 @@ namespace Trader.Trading.Binance
         {
             var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
 
-            await HandleBinanceErrorAsync(response, cancellationToken).ConfigureAwait(false);
-
-            return response;
-        }
-
-        private async Task HandleBinanceErrorAsync(HttpResponseMessage response, CancellationToken cancellationToken)
-        {
             // skip handling for successful results
-            if (response.IsSuccessStatusCode) return;
+            if (response.IsSuccessStatusCode) return response;
 
             // handle ip ban and back-off
             if (response.StatusCode is HttpStatusCode.TooManyRequests || response.StatusCode is (HttpStatusCode)418)
@@ -85,6 +78,8 @@ namespace Trader.Trading.Binance
 
             // otherwise default to the standard exception
             response.EnsureSuccessStatusCode();
+
+            return response;
         }
     }
 }

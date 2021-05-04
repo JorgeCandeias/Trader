@@ -21,6 +21,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<BinanceTradingService>()
                 .AddSingleton<ITradingService, BinanceTradingService>(sp => sp.GetRequiredService<BinanceTradingService>())
                 .AddSingleton<IHostedService, BinanceTradingService>(sp => sp.GetRequiredService<BinanceTradingService>())
+                .AddSingleton<BinanceApiCircuitBreakerHandler>()
                 .AddSingleton<BinanceApiSigningPreHandler>()
                 .AddSingleton<BinanceApiErrorPostHandler>()
                 .AddSingleton<BinanceApiUsagePostHandler>()
@@ -41,6 +42,7 @@ namespace Microsoft.Extensions.DependencyInjection
                     x.BaseAddress = options.BaseApiAddress;
                     x.Timeout = options.Timeout;
                 })
+                .AddHttpMessageHandler<BinanceApiCircuitBreakerHandler>()
                 .AddHttpMessageHandler<BinanceApiSigningPreHandler>()
                 .AddHttpMessageHandler<BinanceApiErrorPostHandler>()
                 .AddHttpMessageHandler<BinanceApiUsagePostHandler>()

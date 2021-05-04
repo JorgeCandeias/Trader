@@ -110,7 +110,9 @@ namespace Trader.Trading
                             break;
 
                         case BalanceUpdateUserDataStreamMessage update:
-                            // todo: this needs the repository to support balances
+                            
+                            // noop
+
                             break;
 
                         case ExecutionReportUserDataStreamMessage report:

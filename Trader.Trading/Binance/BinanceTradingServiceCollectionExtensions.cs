@@ -18,6 +18,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services
 
                 // add implementation
+                .AddSingleton<BinanceUsageContext>()
                 .AddSingleton<BinanceTradingService>()
                 .AddSingleton<ITradingService, BinanceTradingService>(sp => sp.GetRequiredService<BinanceTradingService>())
                 .AddSingleton<IHostedService, BinanceTradingService>(sp => sp.GetRequiredService<BinanceTradingService>())

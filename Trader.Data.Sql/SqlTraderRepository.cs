@@ -341,19 +341,29 @@ namespace Trader.Data.Sql
 
             var entities = _mapper.Map<IEnumerable<OrderTableParameterEntity>>(orders);
 
-            await connection
-                .ExecuteAsync(
-                    new CommandDefinition(
-                        "[dbo].[SetOrders]",
-                        new
-                        {
-                            Orders = entities.AsSqlDataRecords().AsTableValuedParameter("[dbo].[OrderTableParameter]")
-                        },
-                        null,
-                        _options.CommandTimeoutAsInteger,
-                        CommandType.StoredProcedure,
-                        CommandFlags.Buffered,
-                    cancellationToken))
+            await Policy
+                .Handle<SqlException>()
+                .RetryAsync(_options.RetryCount, (ex, retry) =>
+                {
+                    _logger.LogError(ex,
+                        "{Name} handled exception while calling [dbo].[SetOrders] and will retry ({Retry}/{Total})",
+                        Name, retry, _options.RetryCount);
+                })
+                .ExecuteAsync(ct => connection
+                    .ExecuteAsync(
+                        new CommandDefinition(
+                            "[dbo].[SetOrders]",
+                            new
+                            {
+                                Orders = entities.AsSqlDataRecords().AsTableValuedParameter("[dbo].[OrderTableParameter]")
+                            },
+                            null,
+                            _options.CommandTimeoutAsInteger,
+                            CommandType.StoredProcedure,
+                            CommandFlags.Buffered,
+                        ct)),
+                        cancellationToken,
+                        false)
                 .ConfigureAwait(false);
         }
 
@@ -372,19 +382,29 @@ namespace Trader.Data.Sql
 
             var entities = _mapper.Map<IEnumerable<TradeTableParameterEntity>>(trades);
 
-            await connection
-                .ExecuteAsync(
-                    new CommandDefinition(
-                        "[dbo].[SetTrades]",
-                        new
-                        {
-                            Trades = entities.AsSqlDataRecords().AsTableValuedParameter("[dbo].[TradeTableParameter]")
-                        },
-                        null,
-                        _options.CommandTimeoutAsInteger,
-                        CommandType.StoredProcedure,
-                        CommandFlags.Buffered,
-                    cancellationToken))
+            await Policy
+                .Handle<SqlException>()
+                .RetryAsync(_options.RetryCount, (ex, retry) =>
+                {
+                    _logger.LogError(ex,
+                        "{Name} handled exception while calling [dbo].[SetTrades] and will retry ({Retry}/{Total})",
+                        Name, retry, _options.RetryCount);
+                })
+                .ExecuteAsync(ct => connection
+                    .ExecuteAsync(
+                        new CommandDefinition(
+                            "[dbo].[SetTrades]",
+                            new
+                            {
+                                Trades = entities.AsSqlDataRecords().AsTableValuedParameter("[dbo].[TradeTableParameter]")
+                            },
+                            null,
+                            _options.CommandTimeoutAsInteger,
+                            CommandType.StoredProcedure,
+                            CommandFlags.Buffered,
+                            ct)),
+                        cancellationToken,
+                        false)
                 .ConfigureAwait(false);
         }
 

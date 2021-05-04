@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Dapper;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using System.Threading.Tasks;
 using System.Transactions;
@@ -21,6 +22,7 @@ namespace Trader.Data.Sql.Tests
         {
             return new SqlTraderRepository(
                 Options.Create(new SqlTraderRepositoryOptions { ConnectionString = ConnectionString }),
+                NullLogger<SqlTraderRepository>.Instance,
                 _mapper);
         }
 

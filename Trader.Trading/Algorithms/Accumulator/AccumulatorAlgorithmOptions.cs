@@ -21,11 +21,5 @@ namespace Trader.Trading.Algorithms.Accumulator
         [Required]
         [Range(0.001, 1)]
         public decimal TargetQuoteBalanceFractionPerBuy { get; set; } = 0.01m;
-
-        /*
-        [Required]
-        [Range(0, (double)decimal.MaxValue)]
-        public decimal MinQuoteAssetQuantityPerOrder { get; set; } = 11m;
-        */
     }
 }

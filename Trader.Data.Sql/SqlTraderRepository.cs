@@ -529,20 +529,23 @@ namespace Trader.Data.Sql
 
             using var connection = new SqlConnection(_options.ConnectionString);
 
-            id = await connection
+            var parameters = new DynamicParameters();
+            parameters.Add("Name", symbol, DbType.String, ParameterDirection.Input);
+            parameters.Add("Id", null, DbType.Int32, ParameterDirection.Output);
+
+            await connection
                 .ExecuteScalarAsync<int>(
                     new CommandDefinition(
                         "[dbo].[GetOrAddSymbol]",
-                        new
-                        {
-                            Name = symbol
-                        },
+                        parameters,
                         null,
                         _options.CommandTimeoutAsInteger,
                         CommandType.StoredProcedure,
                         CommandFlags.Buffered,
                         cancellation))
                 .ConfigureAwait(false);
+
+            id = parameters.Get<int>("Id");
 
             _symbolLookup.TryAdd(symbol, id);
 

@@ -7,12 +7,12 @@ using Trader.Trading.Binance.Signing;
 
 namespace Trader.Trading.Binance.Handlers
 {
-    internal class BinanceApiSigningHandler : DelegatingHandler
+    internal class BinanceApiSigningPreHandler : DelegatingHandler
     {
         private readonly BinanceOptions _options;
         private readonly ISigner _signer;
 
-        public BinanceApiSigningHandler(IOptions<BinanceOptions> options, ISigner signer)
+        public BinanceApiSigningPreHandler(IOptions<BinanceOptions> options, ISigner signer)
         {
             _options = options.Value ?? throw new ArgumentNullException(nameof(options));
             _signer = signer ?? throw new ArgumentNullException(nameof(signer));

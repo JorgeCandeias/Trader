@@ -10,24 +10,26 @@ using Trader.Core.Time;
 
 namespace Trader.Trading.Binance.Handlers
 {
-    internal class BinanceApiErrorHandler : DelegatingHandler
+    internal class BinanceApiErrorPostHandler : DelegatingHandler
     {
         private readonly BinanceOptions _options;
         private readonly ILogger _logger;
         private readonly ISystemClock _clock;
 
-        public BinanceApiErrorHandler(IOptions<BinanceOptions> options, ILogger<BinanceApiErrorHandler> logger, ISystemClock clock)
+        public BinanceApiErrorPostHandler(IOptions<BinanceOptions> options, ILogger<BinanceApiErrorPostHandler> logger, ISystemClock clock)
         {
             _options = options.Value ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
-        private static string Type => nameof(BinanceApiErrorHandler);
+        private static string Type => nameof(BinanceApiErrorPostHandler);
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            var response = await base
+                .SendAsync(request, cancellationToken)
+                .ConfigureAwait(false);
 
             // skip handling for successful results
             if (response.IsSuccessStatusCode) return response;

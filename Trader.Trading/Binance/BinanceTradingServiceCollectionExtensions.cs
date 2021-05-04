@@ -21,9 +21,9 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<BinanceTradingService>()
                 .AddSingleton<ITradingService, BinanceTradingService>(sp => sp.GetRequiredService<BinanceTradingService>())
                 .AddSingleton<IHostedService, BinanceTradingService>(sp => sp.GetRequiredService<BinanceTradingService>())
-                .AddSingleton<BinanceApiSigningHandler>()
-                .AddSingleton<BinanceApiErrorHandler>()
-                .AddSingleton<BinanceApiUsageHandler>()
+                .AddSingleton<BinanceApiSigningPreHandler>()
+                .AddSingleton<BinanceApiErrorPostHandler>()
+                .AddSingleton<BinanceApiUsagePostHandler>()
                 .AddSingleton<ISigner, Signer>()
                 .AddSingleton<IUserDataStreamClientFactory, BinanceUserDataStreamWssClientFactory>()
 
@@ -41,9 +41,9 @@ namespace Microsoft.Extensions.DependencyInjection
                     x.BaseAddress = options.BaseApiAddress;
                     x.Timeout = options.Timeout;
                 })
-                .AddHttpMessageHandler<BinanceApiSigningHandler>()
-                .AddHttpMessageHandler<BinanceApiErrorHandler>()
-                .AddHttpMessageHandler<BinanceApiUsageHandler>()
+                .AddHttpMessageHandler<BinanceApiSigningPreHandler>()
+                .AddHttpMessageHandler<BinanceApiErrorPostHandler>()
+                .AddHttpMessageHandler<BinanceApiUsagePostHandler>()
                 .Services
 
                 // add auto mapper

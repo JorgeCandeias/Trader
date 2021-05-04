@@ -8,18 +8,20 @@ using Trader.Models;
 
 namespace Trader.Trading.Binance.Handlers
 {
-    internal class BinanceApiUsageHandler : DelegatingHandler
+    internal class BinanceApiUsagePostHandler : DelegatingHandler
     {
         private readonly BinanceOptions _options;
 
-        public BinanceApiUsageHandler(IOptions<BinanceOptions> options)
+        public BinanceApiUsagePostHandler(IOptions<BinanceOptions> options)
         {
             _options = options.Value ?? throw new ArgumentNullException(nameof(options));
         }
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            var response = await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            var response = await base
+                .SendAsync(request, cancellationToken)
+                .ConfigureAwait(false);
 
             if (BinanceApiContext.CaptureUsage)
             {

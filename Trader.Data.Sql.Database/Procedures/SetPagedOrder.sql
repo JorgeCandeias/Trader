@@ -5,9 +5,13 @@ AS
 
 SET NOCOUNT ON;
 
+DECLARE @SymbolId INT;
+EXECUTE [dbo].[GetOrAddSymbol] @Name = @Symbol, @Id = @SymbolId OUTPUT;
+
 WITH [Source] AS
 (
 	SELECT
+		@SymbolId AS [SymbolId],
 		@Symbol AS [Symbol],
 		@OrderId AS [OrderId]
 )
@@ -20,13 +24,16 @@ UPDATE SET
 WHEN NOT MATCHED BY TARGET THEN
 INSERT
 (
+	[SymbolId],
 	[Symbol],
 	[OrderId]
 )
 VALUES
 (
+	[SymbolId],
 	[Symbol],
 	[OrderId]
 );
 
 RETURN 0
+GO

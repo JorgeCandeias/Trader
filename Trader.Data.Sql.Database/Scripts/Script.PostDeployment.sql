@@ -10,5 +10,24 @@ Post-Deployment Script Template
 --------------------------------------------------------------------------------------
 */
 
+
+
+WITH [Source] AS
+(
+    SELECT
+        [Id],
+        [Name]
+    FROM
+        [dbo].[Symbol]
+)
+MERGE INTO [dbo].[PagedOrder] AS [T]
+USING [Source] AS [S]
+ON [S].[Name] = [T].[Symbol]
+WHEN MATCHED AND [SymbolId] = 0 THEN
+UPDATE SET
+    [SymbolId] = [S].[Id]
+;
+GO
+
 ALTER DATABASE [$(DatabaseName)] SET QUERY_STORE CLEAR
 GO

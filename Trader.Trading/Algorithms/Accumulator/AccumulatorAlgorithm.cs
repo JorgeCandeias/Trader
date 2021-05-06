@@ -47,8 +47,6 @@ namespace Trader.Trading.Algorithms.Accumulator
                 .GetTickerAsync(_options.Symbol, cancellationToken)
                 .ConfigureAwait(false);
 
-            //var ticker = await _trader.GetSymbolPriceTickerAsync(_options.Symbol, cancellationToken).ConfigureAwait(false);
-
             // get the symbol filters
             var symbol = exchangeInfo.Symbols.Single(x => x.Name == _options.Symbol);
             var priceFilter = symbol.Filters.OfType<PriceSymbolFilter>().Single();

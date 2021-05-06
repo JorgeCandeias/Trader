@@ -7,8 +7,11 @@ SET NOCOUNT ON;
 SELECT
 	[OrderId]
 FROM
-	[dbo].[PagedOrder]
+	[dbo].[PagedOrder] AS [PO]
+	INNER JOIN [dbo].[Symbol] AS [S]
+		ON [S].[Id] = [PO].[SymbolId]
 WHERE
-	[Symbol] = @Symbol
+	[S].[Name] = @Symbol
 
 RETURN 0
+GO

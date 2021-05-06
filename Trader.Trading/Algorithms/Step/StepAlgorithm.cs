@@ -124,12 +124,6 @@ namespace Trader.Trading.Algorithms.Step
                 .GetTickerAsync(_options.Symbol, cancellationToken)
                 .ConfigureAwait(false);
 
-            /*
-            var ticker = await _trader
-                .GetSymbolPriceTickerAsync(_options.Symbol, cancellationToken)
-                .ConfigureAwait(false);
-            */
-
             _logger.LogInformation(
                 "{Type} {Name} reports latest asset price is {Price} {QuoteAsset}",
                 Type, _name, ticker.ClosePrice, _options.Quote);

@@ -165,6 +165,30 @@ namespace Trader.Data.Sql
             return _mapper.Map<ImmutableSortedOrderSet>(entities);
         }
 
+        public async Task<ImmutableSortedOrderSet> GetSignificantCompletedOrdersAsync(string symbol, CancellationToken cancellationToken = default)
+        {
+            _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
+
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            var entities = await connection
+                .QueryAsync<OrderEntity>(
+                    new CommandDefinition(
+                        "[dbo].[GetSignificantCompletedOrders]",
+                        new
+                        {
+                            Symbol = symbol
+                        },
+                        null,
+                        _options.CommandTimeoutAsInteger,
+                        CommandType.StoredProcedure,
+                        CommandFlags.Buffered,
+                    cancellationToken))
+                .ConfigureAwait(false);
+
+            return _mapper.Map<ImmutableSortedOrderSet>(entities);
+        }
+
         public async Task<ImmutableSortedOrderSet> GetTransientOrdersBySideAsync(string symbol, OrderSide orderSide, CancellationToken cancellationToken = default)
         {
             _ = symbol ?? throw new ArgumentNullException(nameof(symbol));

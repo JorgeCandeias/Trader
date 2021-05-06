@@ -105,6 +105,7 @@
     <Build Include="Types\TickerTableParameter.sql" />
     <Build Include="Procedures\SetTickers.sql" />
     <Build Include="Procedures\GetTicker.sql" />
+    <Build Include="Procedures\GetSignificantCompletedOrders.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Scripts\Script.PostDeployment.sql" />

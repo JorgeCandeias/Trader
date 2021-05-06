@@ -22,6 +22,8 @@ namespace Trader.Data
 
         Task<ImmutableSortedOrderSet> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default);
 
+        Task<ImmutableSortedOrderSet> GetSignificantCompletedOrdersAsync(string symbol, CancellationToken cancellationToken = default);
+
         Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders, CancellationToken cancellationToken = default);
 
         Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default);

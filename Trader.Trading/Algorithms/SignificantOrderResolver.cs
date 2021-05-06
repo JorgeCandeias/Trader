@@ -55,7 +55,7 @@ namespace Trader.Trading.Algorithms
             // todo: push this mapping effort to the repository so less data needs to move about
             var watch = Stopwatch.StartNew();
             var orders = await _repository
-                .GetOrdersAsync(symbol, cancellationToken)
+                .GetSignificantCompletedOrdersAsync(symbol, cancellationToken)
                 .ConfigureAwait(false);
 
             var trades = await _repository
@@ -65,7 +65,7 @@ namespace Trader.Trading.Algorithms
             var lookup = trades.ToLookup(x => x.OrderId);
 
             var details = new SortedSet<Map>(MapComparer.Instance);
-            foreach (var order in orders.Where(x => x.Status.IsCompletedStatus() && x.ExecutedQuantity > 0m)) // todo: push this filter down to the repository
+            foreach (var order in orders)
             {
                 var quantity = 0m;
 

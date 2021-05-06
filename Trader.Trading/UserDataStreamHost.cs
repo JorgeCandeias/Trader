@@ -110,7 +110,7 @@ namespace Trader.Trading
                             break;
 
                         case BalanceUpdateUserDataStreamMessage update:
-                            
+
                             // noop
 
                             break;
@@ -189,6 +189,10 @@ namespace Trader.Trading
                     }
                 }
             }, cancellationToken);
+
+            // wait for a few seconds for the stream to stabilize so we don't miss any incoming data from binance
+            _logger.LogInformation("{Name} waiting {Period} for stream to stabilize...", Name, _options.StabilizationPeriod);
+            await Task.Delay(_options.StabilizationPeriod, cancellationToken).ConfigureAwait(false);
 
             // sync asset balances
             var accountInfo = await _trader

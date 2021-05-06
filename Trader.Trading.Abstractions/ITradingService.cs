@@ -25,6 +25,8 @@ namespace Trader.Trading
 
         Task<AccountInfo> GetAccountInfoAsync(GetAccountInfo model, CancellationToken cancellationToken = default);
 
+        Task<Ticker> Get24hTickerPriceChangeStatisticsAsync(string symbol, CancellationToken cancellationToken = default);
+
         Task<string> CreateUserDataStreamAsync(CancellationToken cancellationToken = default);
 
         Task PingUserDataStreamAsync(string listenKey, CancellationToken cancellationToken = default);

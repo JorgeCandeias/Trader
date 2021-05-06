@@ -11,9 +11,11 @@ namespace Trader.Trading.Binance.Converters
 {
     internal class UserDataStreamMessageConverter : ITypeConverter<Memory<byte>, UserDataStreamMessage>
     {
+        // todo: refactor this code to use the new json element extensions
+        // todo: refactor the elseifs out
         public UserDataStreamMessage Convert(Memory<byte> source, UserDataStreamMessage destination, ResolutionContext context)
         {
-            var document = JsonDocument.Parse(source);
+            using var document = JsonDocument.Parse(source);
 
             var eventTypeProperty = document.RootElement.GetProperty("e");
 

@@ -49,5 +49,9 @@ namespace Trader.Data
         Task SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default);
 
         Task<Balance> GetBalanceAsync(string asset, CancellationToken cancellationToken = default);
+
+        Task SetTickersAsync(IEnumerable<MiniTicker> tickers, CancellationToken cancellationToken = default);
+
+        Task<MiniTicker> GetTickerAsync(string symbol, CancellationToken cancellationToken = default);
     }
 }

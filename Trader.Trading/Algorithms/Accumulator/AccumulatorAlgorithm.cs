@@ -43,7 +43,11 @@ namespace Trader.Trading.Algorithms.Accumulator
             var orders = await GetOpenOrdersAsync(cancellationToken).ConfigureAwait(false);
 
             // get the current price
-            var ticker = await _trader.GetSymbolPriceTickerAsync(_options.Symbol, cancellationToken).ConfigureAwait(false);
+            var ticker = await _repository
+                .GetTickerAsync(_options.Symbol, cancellationToken)
+                .ConfigureAwait(false);
+
+            //var ticker = await _trader.GetSymbolPriceTickerAsync(_options.Symbol, cancellationToken).ConfigureAwait(false);
 
             // get the symbol filters
             var symbol = exchangeInfo.Symbols.Single(x => x.Name == _options.Symbol);
@@ -57,14 +61,14 @@ namespace Trader.Trading.Algorithms.Accumulator
                 .ConfigureAwait(false);
 
             // identify the target low price for the first buy
-            var lowBuyPrice = ticker.Price * _options.PullbackRatio;
+            var lowBuyPrice = ticker.ClosePrice * _options.PullbackRatio;
 
             // under adjust the buy price to the tick size
             lowBuyPrice = Math.Floor(lowBuyPrice / priceFilter.TickSize) * priceFilter.TickSize;
 
             _logger.LogInformation(
                 "{Type} {Name} identified first buy target price at {LowPrice} {LowQuote} with current price at {CurrentPrice} {CurrentQuote}",
-                Type, _name, lowBuyPrice, _options.Quote, ticker.Price, _options.Quote);
+                Type, _name, lowBuyPrice, _options.Quote, ticker.ClosePrice, _options.Quote);
 
             orders = await TryCloseLowBuysAsync(orders, lowBuyPrice, cancellationToken)
                 .ConfigureAwait(false);

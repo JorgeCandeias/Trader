@@ -136,6 +136,19 @@ namespace Trader.Trading.Binance
             return _mapper.Map<AccountInfo>(output);
         }
 
+        public async Task<Ticker> Get24hTickerPriceChangeStatisticsAsync(string symbol, CancellationToken cancellationToken = default)
+        {
+            _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
+
+            BinanceApiContext.SkipSigning = true;
+
+            var output = await _client
+                .Get24hTickerPriceChangeStatisticsAsync(symbol, cancellationToken)
+                .ConfigureAwait(false);
+
+            return _mapper.Map<Ticker>(output);
+        }
+
         public async Task<string> CreateUserDataStreamAsync(CancellationToken cancellationToken = default)
         {
             var output = await _client

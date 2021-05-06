@@ -29,6 +29,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<BinanceApiUsagePostHandler>()
                 .AddSingleton<ISigner, Signer>()
                 .AddSingleton<IUserDataStreamClientFactory, BinanceUserDataStreamWssClientFactory>()
+                .AddSingleton<IMarketDataStreamClientFactory, BinanceMarketDataStreamWssClientFactory>()
 
                 // add options
                 .AddOptions<BinanceOptions>()
@@ -75,6 +76,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<AccountTypeConverter>()
                 .AddSingleton<UserDataStreamMessageConverter>()
                 .AddSingleton<ExecutionTypeConverter>()
+                .AddSingleton<MarketDataStreamMessageConverter>()
                 .AddSingleton(typeof(ImmutableListConverter<,>)); // todo: move this to the shared model converters
 
             // add object pool

@@ -9,7 +9,7 @@ namespace Trader.Trading.Binance.Handlers
     {
         public BinanceApiConcurrencyHandler(IOptions<BinanceOptions> options)
         {
-            _semaphore = new(options.Value.MaxConcurrentRequests);
+            _semaphore = new(options.Value.MaxConcurrentApiRequests);
         }
 
         private readonly SemaphoreSlim _semaphore;

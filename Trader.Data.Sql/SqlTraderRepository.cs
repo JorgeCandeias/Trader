@@ -4,6 +4,7 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Polly;
+using Polly.Retry;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -28,9 +29,21 @@ namespace Trader.Data.Sql
             _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+
+            // cache the retry policy to create less garbage
+            _retryPolicy = Policy
+                .Handle<SqlException>()
+                .RetryAsync(_options.RetryCount, (ex, retry) =>
+                {
+                    _logger.LogError(ex,
+                        "{Name} handled exception and will retry ({Retry}/{Total})",
+                        Name, retry, _options.RetryCount);
+                });
         }
 
         private static string Name => nameof(SqlTraderRepository);
+
+        private readonly AsyncRetryPolicy _retryPolicy;
 
         private readonly ConcurrentDictionary<string, int> _symbolLookup = new ConcurrentDictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
@@ -555,6 +568,72 @@ namespace Trader.Data.Sql
             _symbolLookup.TryAdd(symbol, id);
 
             return id;
+        }
+
+        public async Task SetTickersAsync(IEnumerable<MiniTicker> tickers, CancellationToken cancellationToken = default)
+        {
+            _ = tickers ?? throw new ArgumentNullException(nameof(tickers));
+
+            // get the cached ids for the incoming symbols
+            var symbolIds = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (var ticker in tickers)
+            {
+                // check the local fast dictionary
+                if (!symbolIds.ContainsKey(ticker.Symbol))
+                {
+                    // defer to the slower shared dictionary and database
+                    symbolIds.Add(ticker.Symbol, await GetOrAddSymbolAsync(ticker.Symbol, cancellationToken).ConfigureAwait(false));
+                }
+            }
+
+            var entities = _mapper.Map<IEnumerable<TickerTableParameterEntity>>(tickers, options =>
+            {
+                options.Items[nameof(TickerTableParameterEntity.SymbolId)] = symbolIds;
+            });
+
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            await _retryPolicy
+                .ExecuteAsync(ct => connection
+                    .ExecuteAsync(
+                        new CommandDefinition(
+                            "[dbo].[SetTickers]",
+                            new
+                            {
+                                Tickers = entities.AsSqlDataRecords().AsTableValuedParameter("[dbo].[TickerTableParameter]")
+                            },
+                            null,
+                            _options.CommandTimeoutAsInteger,
+                            CommandType.StoredProcedure,
+                            CommandFlags.Buffered,
+                        ct)),
+                        cancellationToken,
+                        false)
+                .ConfigureAwait(false);
+        }
+
+        public async Task<MiniTicker> GetTickerAsync(string symbol, CancellationToken cancellationToken = default)
+        {
+            _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
+
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            var entity = await connection
+                .QuerySingleOrDefaultAsync<TickerEntity>(
+                    new CommandDefinition(
+                        "[dbo].[GetTicker]",
+                        new
+                        {
+                            Symbol = symbol
+                        },
+                        null,
+                        _options.CommandTimeoutAsInteger,
+                        CommandType.StoredProcedure,
+                        CommandFlags.Buffered,
+                        cancellationToken))
+                .ConfigureAwait(false);
+
+            return _mapper.Map<MiniTicker>(entity);
         }
     }
 }

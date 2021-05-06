@@ -140,15 +140,15 @@ namespace Trader.Trading.Binance
             return _mapper.Map<AvgPrice>(result);
         }
 
-        public async Task<Ticker> Get24hTickerPriceChangeStatisticsAsync(string symbol, CancellationToken cancellationToken = default)
+        public async Task<TickerModel> Get24hTickerPriceChangeStatisticsAsync(string symbol, CancellationToken cancellationToken = default)
         {
-            var result = await _client
+            _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
+
+            return await _client
                 .GetFromJsonAsync<TickerModel>(
                     new Uri($"/api/v3/ticker/24hr?symbol={HttpUtility.UrlEncode(symbol)}", UriKind.Relative),
                     cancellationToken)
-                .ConfigureAwait(false);
-
-            return _mapper.Map<Ticker>(result);
+                .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
 
         public async Task<SymbolPriceTickerModel> GetSymbolPriceTickerAsync(string symbol, CancellationToken cancellationToken = default)

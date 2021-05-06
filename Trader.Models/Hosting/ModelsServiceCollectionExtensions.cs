@@ -1,4 +1,5 @@
-﻿using Trader.Models.Collections;
+﻿using Trader.Models;
+using Trader.Models.Collections;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -16,6 +17,11 @@ namespace Microsoft.Extensions.DependencyInjection
                 {
                     options.AddProfile<ImmutableSortedOrderSetProfile>();
                     options.AddProfile<ImmutableSortedTradeSetProfile>();
+
+                    options.CreateMap<Ticker, MiniTicker>()
+                        .ForCtorParam(nameof(MiniTicker.EventTime), x => x.MapFrom(y => y.CloseTime))
+                        .ForCtorParam(nameof(MiniTicker.ClosePrice), x => x.MapFrom(y => y.LastPrice))
+                        .ForCtorParam(nameof(MiniTicker.AssetVolume), x => x.MapFrom(y => y.Volume));
                 });
         }
     }

@@ -101,6 +101,10 @@
     <Build Include="Procedures\GetOrAddSymbol.sql" />
     <Build Include="Sequences\SymbolSequence.sql" />
     <Build Include="Sequences\OrderSequence.sql" />
+    <Build Include="Tables\Ticker.sql" />
+    <Build Include="Types\TickerTableParameter.sql" />
+    <Build Include="Procedures\SetTickers.sql" />
+    <Build Include="Procedures\GetTicker.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Scripts\Script.PostDeployment.sql" />

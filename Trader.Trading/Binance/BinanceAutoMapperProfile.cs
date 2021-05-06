@@ -181,6 +181,9 @@ namespace Trader.Trading.Binance
 
             // convert payloads from the user data stream
             CreateMap<Memory<byte>, UserDataStreamMessage>().ConvertUsing<UserDataStreamMessageConverter>();
+
+            // convert payloads from the market data stream
+            CreateMap<Memory<byte>, MarketDataStreamMessage>().ConvertUsing<MarketDataStreamMessageConverter>();
         }
     }
 }

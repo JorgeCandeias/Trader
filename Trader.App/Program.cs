@@ -40,6 +40,15 @@ namespace Trader.App
                         .AddModelServices()
                         .AddAlgorithmResolvers()
                         .AddBinanceTradingService(options => context.Configuration.Bind("Api", options))
+                        .AddMarketDataStreamHost(options =>
+                        {
+                            options.Symbols.UnionWith(context
+                                .Configuration
+                                .GetSection("Trading:Algorithms")
+                                .GetChildren()
+                                .SelectMany(x => x.GetChildren())
+                                .Select(x => x["Symbol"]));
+                        })
                         .AddUserDataStreamHost(options =>
                         {
                             options.Symbols.UnionWith(context

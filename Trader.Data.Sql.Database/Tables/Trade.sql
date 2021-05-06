@@ -21,3 +21,11 @@
     )
 )
 GO
+
+CREATE NONCLUSTERED INDEX [NCI_Trade_SymbolId_OrderId]
+ON [dbo].[Trade]
+(
+    [SymbolId],
+    [OrderId]
+)
+GO

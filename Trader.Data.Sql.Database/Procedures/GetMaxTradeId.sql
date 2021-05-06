@@ -5,10 +5,13 @@ AS
 SET NOCOUNT ON;
 
 SELECT
-	MAX([Id]) AS [Id]
+	MAX([T].[Id]) AS [Id]
 FROM
-	[dbo].[Trade]
+	[dbo].[Trade] AS [T]
+	INNER JOIN [dbo].[Symbol] AS [S]
+		ON [S].[Id] = [T].[SymbolId]
 WHERE
-	[Symbol] = @Symbol
+	[S].[Name] = @Symbol
 
 RETURN 0
+GO

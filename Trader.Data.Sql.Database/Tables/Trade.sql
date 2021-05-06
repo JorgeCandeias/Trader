@@ -1,6 +1,6 @@
 ﻿CREATE TABLE [dbo].[Trade]
 (
-	[Symbol] NVARCHAR(100) NOT NULL,
+    [SymbolId] INT NOT NULL,
     [Id] BIGINT NOT NULL,
     [OrderId] BIGINT NOT NULL,
     [OrderListId] BIGINT NOT NULL,
@@ -16,16 +16,8 @@
 
     CONSTRAINT [PK_Trade] PRIMARY KEY CLUSTERED
     (
-        [Symbol],
+        [SymbolId],
         [Id]
     )
-)
-GO
-
-CREATE NONCLUSTERED INDEX [NCI_Trade_Symbol_OrderId]
-ON [dbo].[Trade]
-(
-    [Symbol],
-    [OrderId]
 )
 GO

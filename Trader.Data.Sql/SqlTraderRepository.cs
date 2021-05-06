@@ -415,18 +415,27 @@ namespace Trader.Data.Sql
         {
             _ = trades ?? throw new ArgumentNullException(nameof(trades));
 
+            // get the cached ids for the incoming symbols
+            var ids = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (var trade in trades)
+            {
+                // check the local fast dictionary
+                if (!ids.ContainsKey(trade.Symbol))
+                {
+                    // defer to the slower shared dictionary and database
+                    ids.Add(trade.Symbol, await GetOrAddSymbolAsync(trade.Symbol, cancellationToken).ConfigureAwait(false));
+                }
+            }
+
+            // pass the fast lookup to mapper so it knows how to populate the symbol ids
+            var entities = _mapper.Map<IEnumerable<TradeTableParameterEntity>>(trades, options =>
+            {
+                options.Items[nameof(TradeTableParameterEntity.SymbolId)] = ids;
+            });
+
             using var connection = new SqlConnection(_options.ConnectionString);
 
-            var entities = _mapper.Map<IEnumerable<TradeTableParameterEntity>>(trades);
-
-            await Policy
-                .Handle<SqlException>()
-                .RetryAsync(_options.RetryCount, (ex, retry) =>
-                {
-                    _logger.LogError(ex,
-                        "{Name} handled exception while calling [dbo].[SetTrades] and will retry ({Retry}/{Total})",
-                        Name, retry, _options.RetryCount);
-                })
+            await _retryPolicy
                 .ExecuteAsync(ct => connection
                     .ExecuteAsync(
                         new CommandDefinition(

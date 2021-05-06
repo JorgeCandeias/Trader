@@ -16,7 +16,8 @@ namespace Trader.Data.Sql
             CreateMap<AccountTrade, TradeEntity>()
                 .ReverseMap();
 
-            CreateMap<AccountTrade, TradeTableParameterEntity>();
+            CreateMap<AccountTrade, TradeTableParameterEntity>()
+                .ForCtorParam(nameof(TradeTableParameterEntity.SymbolId), x => x.MapFrom((source, context) => ((IDictionary<string, int>)context.Items[nameof(TradeTableParameterEntity.SymbolId)])[source.Symbol]));
 
             CreateMap<OrderResult, OrderQueryResult>()
                 .ForCtorParam(nameof(OrderQueryResult.StopPrice), x => x.MapFrom((source, context) => context.Items[nameof(OrderQueryResult.StopPrice)]))

@@ -6,12 +6,12 @@ SET NOCOUNT ON;
 
 MERGE INTO [dbo].[Trade] AS [T]
 USING @Trades AS [S]
-ON [S].[Symbol] = [T].[Symbol]
+ON [S].[SymbolId] = [T].[SymbolId]
 AND [S].[Id] = [T].[Id]
 WHEN NOT MATCHED BY TARGET THEN
 INSERT
 (
-    [Symbol],
+    [SymbolId],
     [Id],
     [OrderId],
     [OrderListId],
@@ -27,7 +27,7 @@ INSERT
 )
 VALUES
 (
-    [Symbol],
+    [SymbolId],
     [Id],
     [OrderId],
     [OrderListId],

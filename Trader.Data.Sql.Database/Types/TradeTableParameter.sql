@@ -1,6 +1,6 @@
 ﻿CREATE TYPE [dbo].[TradeTableParameter] AS TABLE
 (
-	[Symbol] NVARCHAR(100) NOT NULL,
+    [SymbolId] INT NOT NULL,
     [Id] BIGINT NOT NULL,
     [OrderId] BIGINT NOT NULL,
     [OrderListId] BIGINT NOT NULL,

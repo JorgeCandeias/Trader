@@ -6,7 +6,7 @@ using System.Data;
 namespace Trader.Data.Sql.Models
 {
     internal record TradeTableParameterEntity(
-        string Symbol,
+        int SymbolId,
         long Id,
         long OrderId,
         long OrderListId,
@@ -28,7 +28,7 @@ namespace Trader.Data.Sql.Models
         /// </summary>
         private static readonly SqlMetaData[] _metadata = new[]
         {
-            new SqlMetaData(nameof(TradeTableParameterEntity.Symbol), SqlDbType.NVarChar, 100),
+            new SqlMetaData(nameof(TradeTableParameterEntity.SymbolId), SqlDbType.Int),
             new SqlMetaData(nameof(TradeTableParameterEntity.Id), SqlDbType.BigInt),
             new SqlMetaData(nameof(TradeTableParameterEntity.OrderId), SqlDbType.BigInt),
             new SqlMetaData(nameof(TradeTableParameterEntity.OrderListId), SqlDbType.BigInt),
@@ -52,7 +52,7 @@ namespace Trader.Data.Sql.Models
 
             var record = new SqlDataRecord(_metadata);
 
-            record.SetString(0, entity.Symbol);
+            record.SetInt32(0, entity.SymbolId);
             record.SetInt64(1, entity.Id);
             record.SetInt64(2, entity.OrderId);
             record.SetInt64(3, entity.OrderListId);

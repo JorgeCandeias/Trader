@@ -77,7 +77,7 @@ namespace Trader.Trading.Algorithms.Step
             if (await TrySetStartingTradeAsync(symbol, ticker, lotSizeFilter, priceFilter, minNotionalFilter, cancellationToken).ConfigureAwait(false)) return;
             if (await TryCancelRogueSellOrdersAsync(cancellationToken).ConfigureAwait(false)) return;
             if (await TrySetBandSellOrdersAsync(cancellationToken).ConfigureAwait(false)) return;
-            if (await TryCreateLowerBandOrderAsync(symbol, ticker, lotSizeFilter, priceFilter, minNotionalFilter, cancellationToken).ConfigureAwait(false)) return;
+            if (await TryCreateLowerBandOrderAsync(ticker, lotSizeFilter, priceFilter, minNotionalFilter, cancellationToken).ConfigureAwait(false)) return;
             await TryCloseOutOfRangeBandsAsync(ticker, cancellationToken).ConfigureAwait(false);
         }
 
@@ -178,7 +178,7 @@ namespace Trader.Trading.Algorithms.Step
             return true;
         }
 
-        private async Task<bool> TryCreateLowerBandOrderAsync(Symbol symbol, MiniTicker ticker, LotSizeSymbolFilter lotSizeFilter, PriceSymbolFilter priceFilter, MinNotionalSymbolFilter minNotionalFilter, CancellationToken cancellationToken = default)
+        private async Task<bool> TryCreateLowerBandOrderAsync(MiniTicker ticker, LotSizeSymbolFilter lotSizeFilter, PriceSymbolFilter priceFilter, MinNotionalSymbolFilter minNotionalFilter, CancellationToken cancellationToken = default)
         {
             // identify the highest and lowest bands
             var highBand = _bands.Max;

@@ -20,6 +20,6 @@ namespace Trader.Data.Sql
 
         [Required]
         [Range(0, int.MaxValue)]
-        public int RetryCount { get; set; } = 5;
+        public int RetryCount { get; set; } = 10;
     }
 }

@@ -519,14 +519,7 @@ namespace Trader.Data.Sql
 
             var entities = _mapper.Map<IEnumerable<BalanceTableParameterEntity>>(balances);
 
-            await Policy
-                .Handle<SqlException>()
-                .RetryAsync(_options.RetryCount, (ex, retry) =>
-                {
-                    _logger.LogError(ex,
-                        "{Name} handled exception while calling [dbo].[SetBalances] and will retry ({Retry}/{Total})",
-                        Name, retry, _options.RetryCount);
-                })
+            await _retryPolicy
                 .ExecuteAsync(ct => connection
                     .ExecuteAsync(
                         new CommandDefinition(

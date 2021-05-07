@@ -6,6 +6,7 @@ using Polly;
 using System;
 using System.Linq;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Trader.Core.Time;
 using Trader.Core.Timers;
@@ -48,7 +49,10 @@ namespace Trader.Trading
         private readonly TaskCompletionSource _ready = new();
         private string? _listenKey;
         private ISafeTimer? _workTimer;
+        private ISafeTimer? _saveBalancesTimer;
         private DateTime _nextPingTime;
+
+        private readonly Channel<OutboundAccountPositionUserDataStreamMessage> _balancesChannel = Channel.CreateUnbounded<OutboundAccountPositionUserDataStreamMessage>();
 
         private void BumpPingTime()
         {
@@ -103,11 +107,8 @@ namespace Trader.Trading
                     {
                         case OutboundAccountPositionUserDataStreamMessage balance:
 
-                            var balances = balance.Balances
-                                .Select(x => new Balance(x.Asset, x.Free, x.Locked, balance.LastAccountUpdateTime));
-
-                            await _repository
-                                .SetBalancesAsync(balances, cancellationToken)
+                            await _balancesChannel.Writer
+                                .WriteAsync(balance)
                                 .ConfigureAwait(false);
 
                             break;
@@ -219,15 +220,44 @@ namespace Trader.Trading
             await streamTask.ConfigureAwait(false);
         }
 
+        private async Task TickSaveBalancesAsync(CancellationToken cancellationToken)
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                if (!await _balancesChannel.Reader
+                    .WaitToReadAsync(cancellationToken)
+                    .ConfigureAwait(false))
+                {
+                    return;
+                }
+
+                while (_balancesChannel.Reader.TryRead(out var message))
+                {
+                    var balances = message.Balances
+                        .Select(x => new Balance(x.Asset, x.Free, x.Locked, message.LastAccountUpdateTime));
+
+                    await _repository
+                        .SetBalancesAsync(balances, cancellationToken)
+                        .ConfigureAwait(false);
+
+                    _logger.LogInformation(
+                        "{Name} saved balances for {Assets}",
+                        Name, message.Balances.Select(x => x.Asset));
+                }
+            }
+        }
+
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("{Name} starting...", Name);
 
-            // now start the work timer
-            _workTimer = _timers.Create(TickWorkerAsync, TimeSpan.Zero, TimeSpan.FromSeconds(10), Timeout.InfiniteTimeSpan);
+            // start the background work timers
+            _workTimer = _timers.Create(TickWorkerAsync, TimeSpan.Zero, TimeSpan.FromSeconds(1), Timeout.InfiniteTimeSpan);
+            _saveBalancesTimer = _timers.Create(TickSaveBalancesAsync, TimeSpan.Zero, TimeSpan.FromSeconds(1), Timeout.InfiniteTimeSpan);
 
             // cancel the background work early on startup cancellation
             using var workCancellation = cancellationToken.Register(() => _workTimer.Dispose());
+            using var saveBalancesCancellation = cancellationToken.Register(() => _saveBalancesTimer.Dispose());
             using var readyCancellation = cancellationToken.Register(() => _ready.TrySetCanceled(cancellationToken));
 
             // wait for everything to sync before letting other services start
@@ -265,6 +295,7 @@ namespace Trader.Trading
             if (disposing)
             {
                 _workTimer?.Dispose();
+                _saveBalancesTimer?.Dispose();
             }
 
             _disposed = true;

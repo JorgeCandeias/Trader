@@ -45,7 +45,7 @@ namespace Trader.Data.Sql
 
         private readonly AsyncRetryPolicy _retryPolicy;
 
-        private readonly ConcurrentDictionary<string, int> _symbolLookup = new ConcurrentDictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        private readonly ConcurrentDictionary<string, int> _symbolLookup = new(StringComparer.OrdinalIgnoreCase);
 
         public async Task<long> GetMaxTradeIdAsync(string symbol, CancellationToken cancellationToken = default)
         {

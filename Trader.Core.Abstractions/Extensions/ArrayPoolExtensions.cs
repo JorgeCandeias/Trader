@@ -6,17 +6,37 @@ namespace System.Buffers
 {
     public static class ArrayPoolExtensions
     {
-        public static IArraySegmentOwner<T> RentSegmentFrom<T>(this ArrayPool<T> pool, ICollection<T> items)
+        public static IArraySegmentOwner<T> RentSegment<T>(this ArrayPool<T> pool, int count)
+        {
+            _ = pool ?? throw new ArgumentNullException(nameof(pool));
+
+            var buffer = pool.Rent(count);
+            var owner = Typed<T>.ArrayOwnerPool.Get();
+            owner.Assign(pool, buffer, 0, count, Typed<T>.ArrayOwnerPool);
+            return owner;
+        }
+
+        public static IArraySegmentOwner<T> RentSegmentWith<T>(this ArrayPool<T> pool, IReadOnlyCollection<T> items)
+        {
+            return RentSegmentWith(pool, items, x => x);
+        }
+
+        public static IArraySegmentOwner<TValue> RentSegmentWith<TItem, TValue>(this ArrayPool<TValue> pool, IReadOnlyCollection<TItem> items, Func<TItem, TValue> selector)
         {
             _ = pool ?? throw new ArgumentNullException(nameof(pool));
             _ = items ?? throw new ArgumentNullException(nameof(items));
+            _ = selector ?? throw new ArgumentNullException(nameof(selector));
 
             var buffer = pool.Rent(items.Count);
+            var count = 0;
 
-            items.CopyTo(buffer, 0);
+            foreach (var item in items)
+            {
+                buffer[count++] = selector(item);
+            }
 
-            var owner = Typed<T>.ArrayOwnerPool.Get();
-            owner.Assign(pool, buffer, 0, items.Count, Typed<T>.ArrayOwnerPool);
+            var owner = Typed<TValue>.ArrayOwnerPool.Get();
+            owner.Assign(pool, buffer, 0, items.Count, Typed<TValue>.ArrayOwnerPool);
             return owner;
         }
 

@@ -89,7 +89,7 @@ namespace Trader.Trading.Algorithms
             }
 
             // now prune the significant trades to account interim sales
-            using var subjects = ArrayPool<Map>.Shared.RentSegmentFrom(details);
+            using var subjects = ArrayPool<Map>.Shared.RentSegmentWith(details);
 
             // keep track of profit
             var todayProfit = 0m;

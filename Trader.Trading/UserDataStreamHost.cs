@@ -50,9 +50,11 @@ namespace Trader.Trading
         private string? _listenKey;
         private ISafeTimer? _workTimer;
         private ISafeTimer? _saveBalancesTimer;
+        private ISafeTimer? _saveExecutionsTimer;
         private DateTime _nextPingTime;
 
         private readonly Channel<OutboundAccountPositionUserDataStreamMessage> _balancesChannel = Channel.CreateUnbounded<OutboundAccountPositionUserDataStreamMessage>();
+        private readonly Channel<ExecutionReportUserDataStreamMessage> _executionChannel = Channel.CreateUnbounded<ExecutionReportUserDataStreamMessage>();
 
         private void BumpPingTime()
         {
@@ -101,14 +103,12 @@ namespace Trader.Trading
                         .ReceiveAsync(cancellationToken)
                         .ConfigureAwait(false);
 
-                    _logger.LogInformation("{Name} received message {Message}", Name, message);
-
                     switch (message)
                     {
                         case OutboundAccountPositionUserDataStreamMessage balance:
 
                             await _balancesChannel.Writer
-                                .WriteAsync(balance)
+                                .WriteAsync(balance, cancellationToken)
                                 .ConfigureAwait(false);
 
                             break;
@@ -121,33 +121,8 @@ namespace Trader.Trading
 
                         case ExecutionReportUserDataStreamMessage report:
 
-                            if (!_options.Symbols.Contains(report.Symbol))
-                            {
-                                _logger.LogWarning(
-                                    "{Name} ignoring {MessageType} for unknown symbol {Symbol}",
-                                    Name, nameof(ExecutionReportUserDataStreamMessage), report.Symbol);
-
-                                break;
-                            }
-
-                            // first extract the trade from this report if any
-                            // this must be persisted before the order so concurrent algos can pick up consistent data based on the order
-                            if (report.ExecutionType == ExecutionType.Trade)
-                            {
-                                var trade = _mapper.Map<AccountTrade>(report);
-
-                                // todo: do this operation out of band
-                                await _repository
-                                    .SetTradeAsync(trade)
-                                    .ConfigureAwait(false);
-                            }
-
-                            // now extract the order from this report
-                            var order = _mapper.Map<OrderQueryResult>(report);
-
-                            // todo: do this operation out of band along with the upper one
-                            await _repository
-                                .SetOrderAsync(order, cancellationToken)
+                            await _executionChannel.Writer
+                                .WriteAsync(report, cancellationToken)
                                 .ConfigureAwait(false);
 
                             break;
@@ -247,6 +222,57 @@ namespace Trader.Trading
             }
         }
 
+        private async Task TickSaveExecutionsAsync(CancellationToken cancellationToken)
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                if (!await _executionChannel.Reader
+                    .WaitToReadAsync(cancellationToken)
+                    .ConfigureAwait(false))
+                {
+                    return;
+                }
+
+                while (_executionChannel.Reader.TryRead(out var report))
+                {
+                    if (!_options.Symbols.Contains(report.Symbol))
+                    {
+                        _logger.LogWarning(
+                            "{Name} ignoring {MessageType} for unknown symbol {Symbol}",
+                            Name, nameof(ExecutionReportUserDataStreamMessage), report.Symbol);
+
+                        break;
+                    }
+
+                    // first extract the trade from this report if any
+                    // this must be persisted before the order so concurrent algos can pick up consistent data based on the order
+                    if (report.ExecutionType == ExecutionType.Trade)
+                    {
+                        var trade = _mapper.Map<AccountTrade>(report);
+
+                        await _repository
+                            .SetTradeAsync(trade, cancellationToken)
+                            .ConfigureAwait(false);
+
+                        _logger.LogInformation(
+                            "{Name} saved {Symbol} {Side} trade {TradeId}",
+                            Name, report.Symbol, report.OrderSide, report.TradeId);
+                    }
+
+                    // now extract the order from this report
+                    var order = _mapper.Map<OrderQueryResult>(report);
+
+                    await _repository
+                        .SetOrderAsync(order, cancellationToken)
+                        .ConfigureAwait(false);
+
+                    _logger.LogInformation(
+                        "{Name} saved {Symbol} {Type} {Side} order {OrderId}",
+                        Name, report.Symbol, report.OrderType, report.OrderSide, report.OrderId);
+                }
+            }
+        }
+
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("{Name} starting...", Name);
@@ -254,10 +280,12 @@ namespace Trader.Trading
             // start the background work timers
             _workTimer = _timers.Create(TickWorkerAsync, TimeSpan.Zero, TimeSpan.FromSeconds(1), Timeout.InfiniteTimeSpan);
             _saveBalancesTimer = _timers.Create(TickSaveBalancesAsync, TimeSpan.Zero, TimeSpan.FromSeconds(1), Timeout.InfiniteTimeSpan);
+            _saveExecutionsTimer = _timers.Create(TickSaveExecutionsAsync, TimeSpan.Zero, TimeSpan.FromSeconds(1), Timeout.InfiniteTimeSpan);
 
             // cancel the background work early on startup cancellation
             using var workCancellation = cancellationToken.Register(() => _workTimer.Dispose());
             using var saveBalancesCancellation = cancellationToken.Register(() => _saveBalancesTimer.Dispose());
+            using var saveExecutionsCancellation = cancellationToken.Register(() => _saveExecutionsTimer.Dispose());
             using var readyCancellation = cancellationToken.Register(() => _ready.TrySetCanceled(cancellationToken));
 
             // wait for everything to sync before letting other services start
@@ -296,6 +324,7 @@ namespace Trader.Trading
             {
                 _workTimer?.Dispose();
                 _saveBalancesTimer?.Dispose();
+                _saveExecutionsTimer?.Dispose();
             }
 
             _disposed = true;

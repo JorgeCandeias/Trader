@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using AutoMapper;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Polly;
@@ -27,8 +28,9 @@ namespace Trader.Trading
         private readonly ITraderRepository _repository;
         private readonly ISystemClock _clock;
         private readonly ISafeTimerFactory _timers;
+        private readonly IMapper _mapper;
 
-        public UserDataStreamHost(IOptions<UserDataStreamHostOptions> options, ILogger<UserDataStreamHost> logger, ITradingService trader, IUserDataStreamClientFactory streams, IOrderSynchronizer orders, ITradeSynchronizer trades, ITraderRepository repository, ISystemClock clock, ISafeTimerFactory timers)
+        public UserDataStreamHost(IOptions<UserDataStreamHostOptions> options, ILogger<UserDataStreamHost> logger, ITradingService trader, IUserDataStreamClientFactory streams, IOrderSynchronizer orders, ITradeSynchronizer trades, ITraderRepository repository, ISystemClock clock, ISafeTimerFactory timers, IMapper mapper)
         {
             _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -39,6 +41,7 @@ namespace Trader.Trading
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _timers = timers ?? throw new ArgumentNullException(nameof(timers));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
         private static string Name => nameof(UserDataStreamHost);
@@ -129,25 +132,11 @@ namespace Trader.Trading
 
                             // first extract the trade from this report if any
                             // this must be persisted before the order so concurrent algos can pick up consistent data based on the order
-                            // todo: push this to the repository as a single transacted operation to improve consistency
-                            // todo: move this to automapper
                             if (report.ExecutionType == ExecutionType.Trade)
                             {
-                                var trade = new AccountTrade(
-                                    report.Symbol,
-                                    report.TradeId,
-                                    report.OrderId,
-                                    report.OrderListId,
-                                    report.LastExecutedPrice,
-                                    report.LastExecutedQuantity,
-                                    report.LastQuoteAssetTransactedQuantity,
-                                    report.CommissionAmount,
-                                    report.CommissionAsset,
-                                    report.TransactionTime,
-                                    report.OrderSide == OrderSide.Buy,
-                                    report.IsMakerOrder,
-                                    true);
+                                var trade = _mapper.Map<AccountTrade>(report);
 
+                                // todo: do this operation out of band
                                 await _repository
                                     .SetTradeAsync(trade)
                                     .ConfigureAwait(false);

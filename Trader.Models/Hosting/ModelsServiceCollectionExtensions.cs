@@ -1,5 +1,6 @@
 ﻿using Trader.Models;
 using Trader.Models.Collections;
+using static System.String;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -33,6 +34,20 @@ namespace Microsoft.Extensions.DependencyInjection
                         .ForCtorParam(nameof(AccountTrade.IsBuyer), x => x.MapFrom(y => y.OrderSide == OrderSide.Buy))
                         .ForCtorParam(nameof(AccountTrade.IsMaker), x => x.MapFrom(y => y.IsMakerOrder))
                         .ForCtorParam(nameof(AccountTrade.IsBestMatch), x => x.MapFrom(_ => true));
+
+                    options.CreateMap<ExecutionReportUserDataStreamMessage, OrderQueryResult>()
+                        .ForCtorParam(nameof(OrderQueryResult.ClientOrderId), x => x.MapFrom(y => IsNullOrWhiteSpace(y.OriginalClientOrderId) ? y.ClientOrderId : y.OriginalClientOrderId))
+                        .ForCtorParam(nameof(OrderQueryResult.Price), x => x.MapFrom(y => y.OrderPrice))
+                        .ForCtorParam(nameof(OrderQueryResult.OriginalQuantity), x => x.MapFrom(y => y.OrderQuantity))
+                        .ForCtorParam(nameof(OrderQueryResult.ExecutedQuantity), x => x.MapFrom(y => y.CummulativeFilledQuantity))
+                        .ForCtorParam(nameof(OrderQueryResult.CummulativeQuoteQuantity), x => x.MapFrom(y => y.CummulativeQuoteAssetTransactedQuantity))
+                        .ForCtorParam(nameof(OrderQueryResult.Status), x => x.MapFrom(y => y.OrderStatus))
+                        .ForCtorParam(nameof(OrderQueryResult.Type), x => x.MapFrom(y => y.OrderType))
+                        .ForCtorParam(nameof(OrderQueryResult.Side), x => x.MapFrom(y => y.OrderSide))
+                        .ForCtorParam(nameof(OrderQueryResult.Time), x => x.MapFrom(y => y.OrderCreatedTime))
+                        .ForCtorParam(nameof(OrderQueryResult.UpdateTime), x => x.MapFrom(y => y.TransactionTime))
+                        .ForCtorParam(nameof(OrderQueryResult.IsWorking), x => x.MapFrom(_ => true))
+                        .ForCtorParam(nameof(OrderQueryResult.OriginalQuoteOrderQuantity), x => x.MapFrom(y => y.QuoteOrderQuantity));
                 });
         }
     }

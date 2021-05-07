@@ -13,7 +13,6 @@ using Trader.Data;
 using Trader.Models;
 using Trader.Trading.Algorithms;
 using Trader.Trading.Binance;
-using static System.String;
 
 namespace Trader.Trading
 {
@@ -143,27 +142,9 @@ namespace Trader.Trading
                             }
 
                             // now extract the order from this report
-                            // todo: move this to automapper
-                            var order = new OrderQueryResult(
-                                report.Symbol,
-                                report.OrderId,
-                                report.OrderListId,
-                                IsNullOrWhiteSpace(report.OriginalClientOrderId) ? report.ClientOrderId : report.OriginalClientOrderId,
-                                report.OrderPrice,
-                                report.OrderQuantity,
-                                report.CummulativeFilledQuantity,
-                                report.CummulativeQuoteAssetTransactedQuantity,
-                                report.OrderStatus,
-                                report.TimeInForce,
-                                report.OrderType,
-                                report.OrderSide,
-                                report.StopPrice,
-                                report.IcebergQuantity,
-                                report.OrderCreatedTime,
-                                report.TransactionTime,
-                                true,
-                                report.QuoteOrderQuantity);
+                            var order = _mapper.Map<OrderQueryResult>(report);
 
+                            // todo: do this operation out of band along with the upper one
                             await _repository
                                 .SetOrderAsync(order, cancellationToken)
                                 .ConfigureAwait(false);

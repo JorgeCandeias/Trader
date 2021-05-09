@@ -55,6 +55,7 @@ namespace Trader.Trading
         private async Task TickAsync(CancellationToken cancellationToken)
         {
             // grab the exchange information once to share between all algo instances
+            // todo: perform this out of band
             var exchangeInfo = await _trader
                 .GetExchangeInfoAsync(cancellationToken)
                 .ConfigureAwait(false);

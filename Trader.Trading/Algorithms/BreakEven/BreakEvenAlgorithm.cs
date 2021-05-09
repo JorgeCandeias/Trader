@@ -23,7 +23,7 @@ namespace Trader.Trading.Algorithms.BreakEven
         public static string Type => nameof(BreakEvenAlgorithm);
         public string Symbol => _options.Symbol;
 
-        public Task GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default)
+        public Task GoAsync(ExchangeInfo exchangeInfo, CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("{Type} {Name} starting...", Type, _name);
 

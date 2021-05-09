@@ -42,7 +42,7 @@ namespace Trader.Trading.Algorithms.Averaging
             return Task.FromResult(Statistics.Zero);
         }
 
-        public async Task GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default)
+        public async Task GoAsync(ExchangeInfo exchangeInfo, CancellationToken cancellationToken = default)
         {
             // get the necessary info from the exchange
             var symbolInfo = exchangeInfo.Symbols.Single(x => x.Name == _options.Symbol);

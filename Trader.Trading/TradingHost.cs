@@ -10,7 +10,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Trader.Core.Time;
 using Trader.Core.Timers;
-using Trader.Models;
 using Trader.Trading.Algorithms;
 
 namespace Trader.Trading
@@ -60,16 +59,12 @@ namespace Trader.Trading
                 .GetExchangeInfoAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            var accountInfo = await _trader
-                .GetAccountInfoAsync(new GetAccountInfo(null, _clock.UtcNow), cancellationToken)
-                .ConfigureAwait(false);
-
             foreach (var algo in _algos)
             {
                 try
                 {
                     await algo
-                        .GoAsync(exchangeInfo, accountInfo, cancellationToken)
+                        .GoAsync(exchangeInfo, cancellationToken)
                         .ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)

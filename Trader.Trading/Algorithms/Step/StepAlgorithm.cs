@@ -54,7 +54,7 @@ namespace Trader.Trading.Algorithms.Step
 
         private Profit? _profit;
 
-        public async Task GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default)
+        public async Task GoAsync(ExchangeInfo exchangeInfo, CancellationToken cancellationToken = default)
         {
             var symbol = exchangeInfo.Symbols.Single(x => x.Name == _options.Symbol);
             var priceFilter = symbol.Filters.OfType<PriceSymbolFilter>().Single();

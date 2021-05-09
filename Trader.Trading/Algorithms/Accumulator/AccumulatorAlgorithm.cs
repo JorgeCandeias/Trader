@@ -18,26 +18,22 @@ namespace Trader.Trading.Algorithms.Accumulator
         private readonly ILogger _logger;
         private readonly ITradingService _trader;
         private readonly ISystemClock _clock;
-        private readonly IOrderSynchronizer _orderSynchronizer;
-        private readonly ITradeSynchronizer _tradeSynchronizer;
         private readonly ITraderRepository _repository;
 
-        public AccumulatorAlgorithm(string name, IOptionsSnapshot<AccumulatorAlgorithmOptions> options, ILogger<AccumulatorAlgorithm> logger, ITradingService trader, ISystemClock clock, IOrderSynchronizer orderSynchronizer, ITradeSynchronizer tradeSynchronizer, ITraderRepository repository)
+        public AccumulatorAlgorithm(string name, IOptionsSnapshot<AccumulatorAlgorithmOptions> options, ILogger<AccumulatorAlgorithm> logger, ITradingService trader, ISystemClock clock, ITraderRepository repository)
         {
             _name = name ?? throw new ArgumentNullException(nameof(name));
             _options = options.Get(name) ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-            _orderSynchronizer = orderSynchronizer ?? throw new ArgumentNullException(nameof(orderSynchronizer));
-            _tradeSynchronizer = tradeSynchronizer ?? throw new ArgumentNullException(nameof(tradeSynchronizer));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         }
 
         private static string Type => nameof(AccumulatorAlgorithm);
         public string Symbol => _options.Symbol;
 
-        public async Task GoAsync(ExchangeInfo exchangeInfo, AccountInfo accountInfo, CancellationToken cancellationToken = default)
+        public async Task GoAsync(ExchangeInfo exchangeInfo, CancellationToken cancellationToken = default)
         {
             // sync data from the exchange
             var orders = await GetOpenOrdersAsync(cancellationToken).ConfigureAwait(false);

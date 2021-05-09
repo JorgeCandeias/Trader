@@ -25,7 +25,7 @@ namespace Trader.Trading.Algorithms.Step
 
         [Required]
         [Range(0.001, 1)]
-        public decimal TargetQuoteBalanceFractionPerBand { get; set; } = 0.005m;
+        public decimal TargetQuoteBalanceFractionPerBand { get; set; } = 0.01m;
 
         /// <summary>
         /// If <see cref="true"/> the algo will create the opening band automatically.

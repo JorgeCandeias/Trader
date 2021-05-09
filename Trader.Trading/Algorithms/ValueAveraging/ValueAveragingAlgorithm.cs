@@ -48,6 +48,8 @@ namespace Trader.Trading.Algorithms.ValueAveraging
 
         public async Task GoAsync(ExchangeInfo exchangeInfo, CancellationToken cancellationToken = default)
         {
+            _logger.LogInformation("{Type} {Name} running...", Type, _name);
+
             // grab the symbol information
             // todo: make this a dictionary up front so the algos dont have to enumerate it all the time
             var symbol = exchangeInfo.Symbols.Single(x => x.Name == _options.Symbol);

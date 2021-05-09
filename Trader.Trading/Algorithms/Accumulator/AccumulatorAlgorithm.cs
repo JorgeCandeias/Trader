@@ -45,6 +45,10 @@ namespace Trader.Trading.Algorithms.Accumulator
 
         private async Task GoInnerAsync(ExchangeInfo exchangeInfo, CancellationToken cancellationToken)
         {
+            _logger.LogInformation(
+                "{Type} {Name} running...",
+                Type, _name);
+
             // get the symbol information
             var symbol = exchangeInfo.Symbols.Single(x => x.Name == _options.Symbol);
 

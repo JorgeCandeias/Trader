@@ -4,7 +4,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Events;
-using System;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -67,28 +66,18 @@ namespace Trader.App
                         })
                         .AddBase62NumberSerializer();
 
-                    // add all algorithms
-                    foreach (var type in context.Configuration.GetSection("Trading:Algorithms").GetChildren())
+                    // add all algorithms by type
+                    foreach (var algo in context.Configuration.GetSection("Trading:Algorithms:Accumulator").GetChildren())
                     {
-                        switch (type.Key)
-                        {
-                            case "Accumulator":
-                                foreach (var algo in type.GetChildren())
-                                {
-                                    services.AddAccumulatorAlgorithm(algo.Key, options => algo.Bind(options));
-                                }
-                                break;
-
-                            case "Step":
-                                foreach (var algo in type.GetChildren())
-                                {
-                                    services.AddStepAlgorithm(algo.Key, options => algo.Bind(options));
-                                }
-                                break;
-
-                            default:
-                                throw new InvalidOperationException($"Unknown algorithm type '{type.Key}'");
-                        }
+                        services.AddAccumulatorAlgorithm(algo.Key, options => algo.Bind(options));
+                    }
+                    foreach (var algo in context.Configuration.GetSection("Trading:Algorithms:ValueAveraging").GetChildren())
+                    {
+                        services.AddValueAveragingAlgorithm(algo.Key, options => algo.Bind(options));
+                    }
+                    foreach (var algo in context.Configuration.GetSection("Trading:Algorithms:Step").GetChildren())
+                    {
+                        services.AddStepAlgorithm(algo.Key, options => algo.Bind(options));
                     }
                 })
                 .RunConsoleAsync();

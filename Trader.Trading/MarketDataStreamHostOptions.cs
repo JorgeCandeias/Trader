@@ -14,6 +14,6 @@ namespace Trader.Trading
 
         [Required]
         [Range(typeof(TimeSpan), "0.00:00:00.000", "0.00:01:00.000")]
-        public TimeSpan StabilizationPeriod { get; set; } = TimeSpan.FromSeconds(10);
+        public TimeSpan StabilizationPeriod { get; set; } = TimeSpan.FromSeconds(5);
     }
 }

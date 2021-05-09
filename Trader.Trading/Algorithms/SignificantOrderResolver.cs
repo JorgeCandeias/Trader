@@ -52,6 +52,8 @@ namespace Trader.Trading.Algorithms
 
         public async Task<SignificantResult> ResolveAsync(string symbol, string quote, CancellationToken cancellationToken = default)
         {
+            // todo: request the Symbol object instead of the separate parameters
+
             // todo: push this mapping effort to the repository so less data needs to move about
             var watch = Stopwatch.StartNew();
             var orders = await _repository

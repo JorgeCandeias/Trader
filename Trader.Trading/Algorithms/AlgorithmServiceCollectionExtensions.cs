@@ -12,7 +12,8 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<IOrderSynchronizer, OrderSynchronizer>()
                 .AddSingleton<ITradeSynchronizer, TradeSynchronizer>()
                 .AddSingleton<IOrderCodeGenerator, OrderCodeGenerator>()
-                .AddSingleton<ITrackingBuyStep, TrackingBuyStep>();
+                .AddSingleton<ITrackingBuyStep, TrackingBuyStep>()
+                .AddSingleton<IAveragingSellStep, AveragingSellStep>();
         }
     }
 }

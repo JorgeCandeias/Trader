@@ -27,14 +27,14 @@ namespace Trader.Trading.Algorithms.Steps
 
         private static string Type => nameof(TrackingBuyStep);
 
-        public Task GoAsync(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, CancellationToken cancellationToken = default)
+        public Task<bool> GoAsync(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, CancellationToken cancellationToken = default)
         {
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
             return GoInnerAsync(symbol, pullbackRatio, targetQuoteBalanceFractionPerBuy, cancellationToken);
         }
 
-        private async Task GoInnerAsync(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, CancellationToken cancellationToken)
+        private async Task<bool> GoInnerAsync(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, CancellationToken cancellationToken)
         {
             // sync data from the exchange
             var orders = await GetOpenOrdersAsync(symbol, cancellationToken).ConfigureAwait(false);
@@ -73,7 +73,7 @@ namespace Trader.Trading.Algorithms.Steps
             // if there are still open orders then leave them be
             if (!orders.IsEmpty)
             {
-                return;
+                return false;
             }
 
             // calculate the amount to pay with
@@ -89,7 +89,7 @@ namespace Trader.Trading.Algorithms.Steps
                     "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}",
                     Type, symbol.Name, total, symbol.QuoteAsset, balance.Free, symbol.QuoteAsset);
 
-                return;
+                return false;
             }
 
             // calculate the appropriate quantity to buy
@@ -99,8 +99,8 @@ namespace Trader.Trading.Algorithms.Steps
             quantity = Math.Ceiling(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
 
             _logger.LogInformation(
-                "{Type} {Name} created {OrderSide} {OrderType} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",
-                Type, symbol.Name, OrderSide.Buy, OrderType.Limit, symbol.Name, quantity, symbol.BaseAsset, lowBuyPrice, symbol.QuoteAsset, quantity * lowBuyPrice, symbol.QuoteAsset);
+                "{Type} {Name} placing {OrderType} {OrderSode} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",
+                Type, symbol.Name, OrderType.Limit, OrderSide.Buy, symbol.Name, quantity, symbol.BaseAsset, lowBuyPrice, symbol.QuoteAsset, quantity * lowBuyPrice, symbol.QuoteAsset);
 
             // place the order now
             var order = await _trader
@@ -126,9 +126,7 @@ namespace Trader.Trading.Algorithms.Steps
                 .SetOrderAsync(order, 0m, 0m, 0m, cancellationToken)
                 .ConfigureAwait(false);
 
-            _logger.LogInformation(
-                "{Type} {Name} created {OrderSide} {OrderType} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",
-                Type, symbol.Name, order.Side, order.Type, order.Symbol, order.OriginalQuantity, symbol.BaseAsset, order.Price, symbol.QuoteAsset, order.OriginalQuantity * order.Price, symbol.QuoteAsset);
+            return true;
         }
 
         private async Task<ImmutableSortedOrderSet> GetOpenOrdersAsync(Symbol symbol, CancellationToken cancellationToken)

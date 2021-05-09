@@ -18,32 +18,36 @@ namespace Trader.Trading.Algorithms.ValueAveraging
         private readonly ILogger _logger;
         private readonly ITraderRepository _repository;
         private readonly ITradingService _trader;
+        private readonly ISignificantOrderResolver _significantOrderResolver;
         private readonly ISystemClock _clock;
         private readonly ITrackingBuyStep _trackingBuyStep;
+        private readonly IAveragingSellStep _averagingSellStep;
 
-        public ValueAveragingAlgorithm(string name, IOptionsSnapshot<ValueAveragingAlgorithmOptions> options, ILogger<ValueAveragingAlgorithmOptions> logger, ITraderRepository repository, ITradingService trader, ISystemClock clock, ITrackingBuyStep trackingBuyStep)
+        public ValueAveragingAlgorithm(string name, IOptionsSnapshot<ValueAveragingAlgorithmOptions> options, ILogger<ValueAveragingAlgorithmOptions> logger, ITraderRepository repository, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ISystemClock clock, ITrackingBuyStep trackingBuyStep, IAveragingSellStep averagingSellStep)
         {
             _name = name ?? throw new ArgumentNullException(nameof(name));
             _options = options?.Get(_name) ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
+            _significantOrderResolver = significantOrderResolver ?? throw new ArgumentNullException(nameof(significantOrderResolver));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _trackingBuyStep = trackingBuyStep ?? throw new ArgumentNullException(nameof(trackingBuyStep));
+            _averagingSellStep = averagingSellStep ?? throw new ArgumentNullException(nameof(averagingSellStep));
         }
 
-        public string Symbol => throw new System.NotImplementedException();
+        public string Symbol => _options.Symbol;
 
         private static string Type => nameof(ValueAveragingAlgorithm);
 
         public Task<Profit> GetProfitAsync(CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            return Task.FromResult(Profit.Zero(_options.Quote));
         }
 
         public Task<Statistics> GetStatisticsAsync(CancellationToken cancellationToken = default)
         {
-            throw new System.NotImplementedException();
+            return Task.FromResult(Statistics.Zero);
         }
 
         public async Task GoAsync(ExchangeInfo exchangeInfo, CancellationToken cancellationToken = default)
@@ -54,9 +58,41 @@ namespace Trader.Trading.Algorithms.ValueAveraging
             // todo: make this a dictionary up front so the algos dont have to enumerate it all the time
             var symbol = exchangeInfo.Symbols.Single(x => x.Name == _options.Symbol);
 
-            // first calculate a tracking buy
-            await _trackingBuyStep
-                .GoAsync(symbol, _options.PullbackRatio, _options.TargetQuoteBalanceFractionPerBuy, cancellationToken)
+            // first place the tracking buy
+            if (_options.IsOpeningEnabled)
+            {
+                if (await _trackingBuyStep
+                    .GoAsync(symbol, _options.PullbackRatio, _options.TargetQuoteBalanceFractionPerBuy, cancellationToken)
+                    .ConfigureAwait(false))
+                {
+                    return;
+                }
+            }
+            else
+            {
+                // check for significant orders first
+                var result = await _significantOrderResolver
+                    .ResolveAsync(symbol.Name, symbol.QuoteAsset, cancellationToken)
+                    .ConfigureAwait(false);
+
+                // if there are no significant orders left to sell then stop averaging them
+                if (result.Orders.Count == 0)
+                {
+                    return;
+                }
+
+                // otherwise keep averaging as normal
+                if (await _trackingBuyStep
+                    .GoAsync(symbol, _options.PullbackRatio, _options.TargetQuoteBalanceFractionPerBuy, cancellationToken)
+                    .ConfigureAwait(false))
+                {
+                    return;
+                }
+            }
+
+            // then place the averaging sell
+            await _averagingSellStep
+                .GoAsync(symbol, _options.ProfitMultipler, cancellationToken)
                 .ConfigureAwait(false);
         }
     }

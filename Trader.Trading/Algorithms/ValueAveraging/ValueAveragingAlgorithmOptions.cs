@@ -21,5 +21,12 @@ namespace Trader.Trading.Algorithms.ValueAveraging
         [Required]
         [Range(0.001, 1)]
         public decimal TargetQuoteBalanceFractionPerBuy { get; set; } = 0.01m;
+
+        [Required]
+        [Range(1, 2)]
+        public decimal ProfitMultipler { get; set; } = 1.1m;
+
+        [Required]
+        public bool IsOpeningEnabled { get; set; } = true;
     }
 }

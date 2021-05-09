@@ -2,9 +2,9 @@
 using System.ComponentModel.DataAnnotations;
 using static System.String;
 
-namespace Trader.Trading.Algorithms.Averaging
+namespace Trader.Trading.Algorithms.TimeAveraging
 {
-    public class AveragingAlgorithmOptions
+    public class TimeAveragingAlgorithmOptions
     {
         [Required]
         public string Symbol { get; set; } = Empty;

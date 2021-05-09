@@ -8,18 +8,18 @@ using Trader.Core.Time;
 using Trader.Data;
 using Trader.Models;
 
-namespace Trader.Trading.Algorithms.Averaging
+namespace Trader.Trading.Algorithms.TimeAveraging
 {
-    internal class AveragingAlgorithm : ITradingAlgorithm
+    internal class TimeAveragingAlgorithm : ITradingAlgorithm
     {
         private readonly string _name;
-        private readonly AveragingAlgorithmOptions _options;
+        private readonly TimeAveragingAlgorithmOptions _options;
         private readonly ILogger _logger;
         private readonly ITraderRepository _repository;
         private readonly ISystemClock _clock;
         private readonly ITradingService _trader;
 
-        public AveragingAlgorithm(string name, IOptionsSnapshot<AveragingAlgorithmOptions> options, ILogger<AveragingAlgorithm> logger, ITraderRepository repository, ISystemClock clock, ITradingService trader)
+        public TimeAveragingAlgorithm(string name, IOptionsSnapshot<TimeAveragingAlgorithmOptions> options, ILogger<TimeAveragingAlgorithm> logger, ITraderRepository repository, ISystemClock clock, ITradingService trader)
         {
             _name = name ?? throw new ArgumentNullException(nameof(name));
             _options = options.Get(_name) ?? throw new ArgumentNullException(nameof(options));
@@ -29,7 +29,7 @@ namespace Trader.Trading.Algorithms.Averaging
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
         }
 
-        private static string Type => nameof(AveragingAlgorithm);
+        private static string Type => nameof(TimeAveragingAlgorithm);
         public string Symbol => _options.Symbol;
 
         public Task<Profit> GetProfitAsync(CancellationToken cancellationToken = default)

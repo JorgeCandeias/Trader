@@ -18,13 +18,13 @@ using Trader.Models.Collections;
 
 namespace Trader.Data.Sql
 {
-    internal class SqlTraderRepository : ITraderRepository
+    internal class SqlTradingRepository : ITradingRepository
     {
-        private readonly SqlTraderRepositoryOptions _options;
+        private readonly SqlTradingRepositoryOptions _options;
         private readonly ILogger _logger;
         private readonly IMapper _mapper;
 
-        public SqlTraderRepository(IOptions<SqlTraderRepositoryOptions> options, ILogger<SqlTraderRepository> logger, IMapper mapper)
+        public SqlTradingRepository(IOptions<SqlTradingRepositoryOptions> options, ILogger<SqlTradingRepository> logger, IMapper mapper)
         {
             _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -41,7 +41,7 @@ namespace Trader.Data.Sql
                 });
         }
 
-        private static string Name => nameof(SqlTraderRepository);
+        private static string Name => nameof(SqlTradingRepository);
 
         private readonly AsyncRetryPolicy _retryPolicy;
 

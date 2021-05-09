@@ -23,10 +23,10 @@ namespace Trader.Trading.Algorithms.Step
         private readonly ISystemClock _clock;
         private readonly ITradingService _trader;
         private readonly ISignificantOrderResolver _significantOrderResolver;
-        private readonly ITraderRepository _repository;
+        private readonly ITradingRepository _repository;
         private readonly IOrderCodeGenerator _orderCodeGenerator;
 
-        public StepAlgorithm(string name, ILogger<StepAlgorithm> logger, IOptionsSnapshot<StepAlgorithmOptions> options, ISystemClock clock, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ITraderRepository repository, IOrderCodeGenerator orderCodeGenerator)
+        public StepAlgorithm(string name, ILogger<StepAlgorithm> logger, IOptionsSnapshot<StepAlgorithmOptions> options, ISystemClock clock, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ITradingRepository repository, IOrderCodeGenerator orderCodeGenerator)
         {
             _name = name ?? throw new ArgumentNullException(nameof(name));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));

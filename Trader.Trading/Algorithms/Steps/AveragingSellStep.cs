@@ -13,11 +13,11 @@ namespace Trader.Trading.Algorithms.Steps
     {
         private readonly ILogger _logger;
         private readonly ISignificantOrderResolver _significantOrderResolver;
-        private readonly ITraderRepository _repository;
+        private readonly ITradingRepository _repository;
         private readonly ITradingService _trader;
         private readonly ISystemClock _clock;
 
-        public AveragingSellStep(ILogger<AveragingSellStep> logger, ISignificantOrderResolver significantOrderResolver, ITraderRepository repository, ITradingService trader, ISystemClock clock)
+        public AveragingSellStep(ILogger<AveragingSellStep> logger, ISignificantOrderResolver significantOrderResolver, ITradingRepository repository, ITradingService trader, ISystemClock clock)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _significantOrderResolver = significantOrderResolver ?? throw new ArgumentNullException(nameof(significantOrderResolver));

@@ -16,14 +16,14 @@ namespace Trader.Trading.Algorithms.ValueAveraging
         private readonly string _name;
         private readonly ValueAveragingAlgorithmOptions _options;
         private readonly ILogger _logger;
-        private readonly ITraderRepository _repository;
+        private readonly ITradingRepository _repository;
         private readonly ITradingService _trader;
         private readonly ISignificantOrderResolver _significantOrderResolver;
         private readonly ISystemClock _clock;
         private readonly ITrackingBuyStep _trackingBuyStep;
         private readonly IAveragingSellStep _averagingSellStep;
 
-        public ValueAveragingAlgorithm(string name, IOptionsSnapshot<ValueAveragingAlgorithmOptions> options, ILogger<ValueAveragingAlgorithmOptions> logger, ITraderRepository repository, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ISystemClock clock, ITrackingBuyStep trackingBuyStep, IAveragingSellStep averagingSellStep)
+        public ValueAveragingAlgorithm(string name, IOptionsSnapshot<ValueAveragingAlgorithmOptions> options, ILogger<ValueAveragingAlgorithmOptions> logger, ITradingRepository repository, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ISystemClock clock, ITrackingBuyStep trackingBuyStep, IAveragingSellStep averagingSellStep)
         {
             _name = name ?? throw new ArgumentNullException(nameof(name));
             _options = options?.Get(_name) ?? throw new ArgumentNullException(nameof(options));

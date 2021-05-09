@@ -22,13 +22,13 @@ namespace Trader.Trading
         private readonly MarketDataStreamHostOptions _options;
         private readonly ILogger _logger;
         private readonly IMarketDataStreamClientFactory _factory;
-        private readonly ITraderRepository _repository;
+        private readonly ITradingRepository _repository;
         private readonly ITradingService _trader;
         private readonly ISystemClock _clock;
         private readonly IMapper _mapper;
         private readonly ISafeTimerFactory _timers;
 
-        public MarketDataStreamHost(IOptions<MarketDataStreamHostOptions> options, ILogger<MarketDataStreamHost> logger, IMarketDataStreamClientFactory factory, ITraderRepository repository, ITradingService trader, ISystemClock clock, IMapper mapper, ISafeTimerFactory timers)
+        public MarketDataStreamHost(IOptions<MarketDataStreamHostOptions> options, ILogger<MarketDataStreamHost> logger, IMarketDataStreamClientFactory factory, ITradingRepository repository, ITradingService trader, ISystemClock clock, IMapper mapper, ISafeTimerFactory timers)
         {
             _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));

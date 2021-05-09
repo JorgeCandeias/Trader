@@ -4,7 +4,7 @@ using static System.String;
 
 namespace Trader.Data.Sql
 {
-    public class SqlTraderRepositoryOptions
+    public class SqlTradingRepositoryOptions
     {
         [Required]
         public string ConnectionString { get; set; } = Empty;

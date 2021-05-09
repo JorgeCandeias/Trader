@@ -18,10 +18,10 @@ namespace Trader.Trading.Algorithms.Accumulator
         private readonly ILogger _logger;
         private readonly ITradingService _trader;
         private readonly ISystemClock _clock;
-        private readonly ITraderRepository _repository;
+        private readonly ITradingRepository _repository;
         private readonly ITrackingBuyStep _trackingBuyStep;
 
-        public AccumulatorAlgorithm(string name, IOptionsSnapshot<AccumulatorAlgorithmOptions> options, ILogger<AccumulatorAlgorithm> logger, ITradingService trader, ISystemClock clock, ITraderRepository repository, ITrackingBuyStep trackingBuyStep)
+        public AccumulatorAlgorithm(string name, IOptionsSnapshot<AccumulatorAlgorithmOptions> options, ILogger<AccumulatorAlgorithm> logger, ITradingService trader, ISystemClock clock, ITradingRepository repository, ITrackingBuyStep trackingBuyStep)
         {
             _name = name ?? throw new ArgumentNullException(nameof(name));
             _options = options.Get(name) ?? throw new ArgumentNullException(nameof(options));

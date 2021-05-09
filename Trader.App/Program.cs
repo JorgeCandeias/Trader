@@ -60,7 +60,7 @@ namespace Trader.App
                         .AddTradingHost(options => context.Configuration.Bind("Trading:Host"))
                         .AddSystemClock()
                         .AddSafeTimerFactory()
-                        .AddSqlTraderRepository(options =>
+                        .AddSqlTradingRepository(options =>
                         {
                             options.ConnectionString = context.Configuration.GetConnectionString("Trader");
                         })

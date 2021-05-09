@@ -12,11 +12,11 @@ namespace Trader.Trading.Algorithms
     internal class TradeSynchronizer : ITradeSynchronizer
     {
         private readonly ILogger _logger;
-        private readonly ITraderRepository _repository;
+        private readonly ITradingRepository _repository;
         private readonly ITradingService _trader;
         private readonly ISystemClock _clock;
 
-        public TradeSynchronizer(ILogger<TradeSynchronizer> logger, ITraderRepository repository, ITradingService trader, ISystemClock clock)
+        public TradeSynchronizer(ILogger<TradeSynchronizer> logger, ITradingRepository repository, ITradingService trader, ISystemClock clock)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));

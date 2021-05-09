@@ -15,11 +15,11 @@ namespace Trader.Trading.Algorithms.TimeAveraging
         private readonly string _name;
         private readonly TimeAveragingAlgorithmOptions _options;
         private readonly ILogger _logger;
-        private readonly ITraderRepository _repository;
+        private readonly ITradingRepository _repository;
         private readonly ISystemClock _clock;
         private readonly ITradingService _trader;
 
-        public TimeAveragingAlgorithm(string name, IOptionsSnapshot<TimeAveragingAlgorithmOptions> options, ILogger<TimeAveragingAlgorithm> logger, ITraderRepository repository, ISystemClock clock, ITradingService trader)
+        public TimeAveragingAlgorithm(string name, IOptionsSnapshot<TimeAveragingAlgorithmOptions> options, ILogger<TimeAveragingAlgorithm> logger, ITradingRepository repository, ISystemClock clock, ITradingService trader)
         {
             _name = name ?? throw new ArgumentNullException(nameof(name));
             _options = options.Get(_name) ?? throw new ArgumentNullException(nameof(options));

@@ -6,9 +6,9 @@ using Trader.Models;
 
 namespace Trader.Data.Sql
 {
-    internal class SqlTraderRepositoryProfile : Profile
+    internal class SqlTradingRepositoryProfile : Profile
     {
-        public SqlTraderRepositoryProfile()
+        public SqlTradingRepositoryProfile()
         {
             CreateMap<OrderQueryResult, OrderEntity>()
                 .ReverseMap();

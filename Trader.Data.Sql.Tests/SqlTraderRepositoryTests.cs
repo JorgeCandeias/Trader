@@ -15,14 +15,14 @@ namespace Trader.Data.Sql.Tests
 
         private static readonly IMapper _mapper = new MapperConfiguration(options =>
         {
-            options.AddProfile<SqlTraderRepositoryProfile>();
+            options.AddProfile<SqlTradingRepositoryProfile>();
         }).CreateMapper();
 
-        private static SqlTraderRepository CreateRepository()
+        private static SqlTradingRepository CreateRepository()
         {
-            return new SqlTraderRepository(
-                Options.Create(new SqlTraderRepositoryOptions { ConnectionString = ConnectionString }),
-                NullLogger<SqlTraderRepository>.Instance,
+            return new SqlTradingRepository(
+                Options.Create(new SqlTradingRepositoryOptions { ConnectionString = ConnectionString }),
+                NullLogger<SqlTradingRepository>.Instance,
                 _mapper);
         }
 

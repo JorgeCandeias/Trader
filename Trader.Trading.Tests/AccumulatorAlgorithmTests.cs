@@ -23,7 +23,7 @@ namespace Trader.Trading.Tests
             var logger = NullLogger<AccumulatorAlgorithm>.Instance;
             var trader = Mock.Of<ITradingService>();
             var clock = Mock.Of<ISystemClock>();
-            var repository = Mock.Of<ITraderRepository>();
+            var repository = Mock.Of<ITradingRepository>();
             var trackingBuyStep = Mock.Of<ITrackingBuyStep>();
 
             // act

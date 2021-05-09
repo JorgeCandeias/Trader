@@ -14,9 +14,9 @@ namespace Trader.Trading.Algorithms
         private readonly ILogger _logger;
         private readonly ISystemClock _clock;
         private readonly ITradingService _trader;
-        private readonly ITraderRepository _repository;
+        private readonly ITradingRepository _repository;
 
-        public OrderSynchronizer(ILogger<OrderSynchronizer> logger, ISystemClock clock, ITradingService trader, ITraderRepository repository)
+        public OrderSynchronizer(ILogger<OrderSynchronizer> logger, ISystemClock clock, ITradingService trader, ITradingRepository repository)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));

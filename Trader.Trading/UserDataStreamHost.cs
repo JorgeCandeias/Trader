@@ -25,12 +25,12 @@ namespace Trader.Trading
         private readonly IUserDataStreamClientFactory _streams;
         private readonly IOrderSynchronizer _orders;
         private readonly ITradeSynchronizer _trades;
-        private readonly ITraderRepository _repository;
+        private readonly ITradingRepository _repository;
         private readonly ISystemClock _clock;
         private readonly ISafeTimerFactory _timers;
         private readonly IMapper _mapper;
 
-        public UserDataStreamHost(IOptions<UserDataStreamHostOptions> options, ILogger<UserDataStreamHost> logger, ITradingService trader, IUserDataStreamClientFactory streams, IOrderSynchronizer orders, ITradeSynchronizer trades, ITraderRepository repository, ISystemClock clock, ISafeTimerFactory timers, IMapper mapper)
+        public UserDataStreamHost(IOptions<UserDataStreamHostOptions> options, ILogger<UserDataStreamHost> logger, ITradingService trader, IUserDataStreamClientFactory streams, IOrderSynchronizer orders, ITradeSynchronizer trades, ITradingRepository repository, ISystemClock clock, ISafeTimerFactory timers, IMapper mapper)
         {
             _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));

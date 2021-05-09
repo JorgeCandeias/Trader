@@ -6,7 +6,7 @@ using Trader.Models.Collections;
 
 namespace Trader.Data
 {
-    public interface ITraderRepository
+    public interface ITradingRepository
     {
         Task<long> GetLastPagedOrderIdAsync(string symbol, CancellationToken cancellationToken = default);
 

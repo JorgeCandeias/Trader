@@ -16,10 +16,10 @@ namespace Trader.Trading.Algorithms
     internal class SignificantOrderResolver : ISignificantOrderResolver
     {
         private readonly ILogger _logger;
-        private readonly ITraderRepository _repository;
+        private readonly ITradingRepository _repository;
         private readonly ISystemClock _clock;
 
-        public SignificantOrderResolver(ILogger<SignificantOrderResolver> logger, ITraderRepository repository, ISystemClock clock)
+        public SignificantOrderResolver(ILogger<SignificantOrderResolver> logger, ITradingRepository repository, ISystemClock clock)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));

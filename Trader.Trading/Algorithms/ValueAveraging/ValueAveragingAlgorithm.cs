@@ -40,14 +40,16 @@ namespace Trader.Trading.Algorithms.ValueAveraging
 
         private static string Type => nameof(ValueAveragingAlgorithm);
 
+        private Profit? _profit;
+
         public Task<Profit> GetProfitAsync(CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(Profit.Zero(_options.Quote));
+            return Task.FromResult(_profit ?? Profit.Zero(_options.Quote));
         }
 
         public Task<Statistics> GetStatisticsAsync(CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(Statistics.Zero);
+            return Task.FromResult(_profit is null ? Statistics.Zero : Statistics.FromProfit(_profit));
         }
 
         public async Task GoAsync(ExchangeInfo exchangeInfo, CancellationToken cancellationToken = default)
@@ -57,6 +59,13 @@ namespace Trader.Trading.Algorithms.ValueAveraging
             // grab the symbol information
             // todo: make this a dictionary up front so the algos dont have to enumerate it all the time
             var symbol = exchangeInfo.Symbols.Single(x => x.Name == _options.Symbol);
+
+            // run the resolve to calculate profit
+            var result = await _significantOrderResolver
+                .ResolveAsync(symbol.Name, symbol.QuoteAsset, cancellationToken)
+                .ConfigureAwait(false);
+
+            _profit = result.Profit;
 
             // first place the tracking buy
             if (_options.IsOpeningEnabled)
@@ -70,11 +79,6 @@ namespace Trader.Trading.Algorithms.ValueAveraging
             }
             else
             {
-                // check for significant orders first
-                var result = await _significantOrderResolver
-                    .ResolveAsync(symbol.Name, symbol.QuoteAsset, cancellationToken)
-                    .ConfigureAwait(false);
-
                 // if there are no significant orders left to sell then stop averaging them
                 if (result.Orders.Count == 0)
                 {

@@ -4,6 +4,7 @@ using Moq;
 using Trader.Core.Time;
 using Trader.Data;
 using Trader.Trading.Algorithms.Accumulator;
+using Trader.Trading.Algorithms.Steps;
 using Xunit;
 
 namespace Trader.Trading.Tests
@@ -23,9 +24,10 @@ namespace Trader.Trading.Tests
             var trader = Mock.Of<ITradingService>();
             var clock = Mock.Of<ISystemClock>();
             var repository = Mock.Of<ITraderRepository>();
+            var trackingBuyStep = Mock.Of<ITrackingBuyStep>();
 
             // act
-            var algo = new AccumulatorAlgorithm(name, options, logger, trader, clock, repository);
+            var algo = new AccumulatorAlgorithm(name, options, logger, trader, clock, repository, trackingBuyStep);
 
             // assert
             Assert.Equal("SomeSymbol", algo.Symbol);

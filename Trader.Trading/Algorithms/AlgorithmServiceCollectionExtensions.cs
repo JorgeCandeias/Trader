@@ -1,4 +1,5 @@
 ﻿using Trader.Trading.Algorithms;
+using Trader.Trading.Algorithms.Steps;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -10,7 +11,8 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<ISignificantOrderResolver, SignificantOrderResolver>()
                 .AddSingleton<IOrderSynchronizer, OrderSynchronizer>()
                 .AddSingleton<ITradeSynchronizer, TradeSynchronizer>()
-                .AddSingleton<IOrderCodeGenerator, OrderCodeGenerator>();
+                .AddSingleton<IOrderCodeGenerator, OrderCodeGenerator>()
+                .AddSingleton<ITrackingBuyStep, TrackingBuyStep>();
         }
     }
 }

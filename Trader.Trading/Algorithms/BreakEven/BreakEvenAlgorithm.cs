@@ -7,7 +7,7 @@ using Trader.Models;
 
 namespace Trader.Trading.Algorithms.BreakEven
 {
-    internal class BreakEvenAlgorithm : IBreakEvenAlgorithm
+    internal class BreakEvenAlgorithm : ITradingAlgorithm
     {
         private readonly string _name;
         private readonly BreakEvenAlgorithmOptions _options;
@@ -23,7 +23,12 @@ namespace Trader.Trading.Algorithms.BreakEven
         public static string Type => nameof(BreakEvenAlgorithm);
         public string Symbol => _options.Symbol;
 
-        public Task GoAsync(ExchangeInfo exchangeInfo, CancellationToken cancellationToken = default)
+        public Task InitializeAsync(ExchangeInfo exchangeInfo, CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task GoAsync(CancellationToken cancellationToken = default)
         {
             _logger.LogInformation("{Type} {Name} starting...", Type, _name);
 

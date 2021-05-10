@@ -29,6 +29,9 @@ namespace Trader.Trading.Algorithms.TimeAveraging
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
         }
 
+        private Symbol? _symbol;
+        private MinNotionalSymbolFilter? _minNotionalFilter;
+
         private static string Type => nameof(TimeAveragingAlgorithm);
         public string Symbol => _options.Symbol;
 
@@ -42,11 +45,20 @@ namespace Trader.Trading.Algorithms.TimeAveraging
             return Task.FromResult(Statistics.Zero);
         }
 
-        public async Task GoAsync(ExchangeInfo exchangeInfo, CancellationToken cancellationToken = default)
+        public Task InitializeAsync(ExchangeInfo exchangeInfo, CancellationToken cancellationToken = default)
         {
-            // get the necessary info from the exchange
-            var symbolInfo = exchangeInfo.Symbols.Single(x => x.Name == _options.Symbol);
-            var minNotionalFilter = symbolInfo.Filters.OfType<MinNotionalSymbolFilter>().Single();
+            if (exchangeInfo is null) throw new ArgumentNullException(nameof(exchangeInfo));
+
+            _symbol = exchangeInfo.Symbols.Single(x => x.Name == _options.Symbol);
+            _minNotionalFilter = _symbol.Filters.OfType<MinNotionalSymbolFilter>().Single();
+
+            return Task.CompletedTask;
+        }
+
+        public async Task GoAsync(CancellationToken cancellationToken = default)
+        {
+            if (_symbol is null) throw new AlgorithmNotInitializedException();
+            if (_minNotionalFilter is null) throw new AlgorithmNotInitializedException();
 
             // get the latest buy order
             var order = await _repository
@@ -78,10 +90,10 @@ namespace Trader.Trading.Algorithms.TimeAveraging
             }
 
             // calculate the total to take from the balance
-            var total = Math.Round(balance.Free * _options.QuoteFractionPerBuy, symbolInfo.QuoteAssetPrecision);
+            var total = Math.Round(balance.Free * _options.QuoteFractionPerBuy, _symbol.QuoteAssetPrecision);
 
             // raise the total to the minimum notional if needed
-            total = Math.Max(total, minNotionalFilter.MinNotional);
+            total = Math.Max(total, _minNotionalFilter.MinNotional);
 
             // ensure there is enough quote asset for it
             if (total > balance.Free)

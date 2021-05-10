@@ -36,6 +36,8 @@ namespace Trader.Trading.Algorithms.ValueAveraging
             _averagingSellStep = averagingSellStep ?? throw new ArgumentNullException(nameof(averagingSellStep));
         }
 
+        private Symbol? _symbol;
+
         public string Symbol => _options.Symbol;
 
         private static string Type => nameof(ValueAveragingAlgorithm);
@@ -44,7 +46,12 @@ namespace Trader.Trading.Algorithms.ValueAveraging
 
         public Task<Profit> GetProfitAsync(CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(_profit ?? Profit.Zero(_options.Quote));
+            if (_symbol is null)
+            {
+                throw new AlgorithmNotInitializedException();
+            }
+
+            return Task.FromResult(_profit ?? Profit.Zero(_symbol.QuoteAsset));
         }
 
         public Task<Statistics> GetStatisticsAsync(CancellationToken cancellationToken = default)
@@ -52,17 +59,27 @@ namespace Trader.Trading.Algorithms.ValueAveraging
             return Task.FromResult(_profit is null ? Statistics.Zero : Statistics.FromProfit(_profit));
         }
 
-        public async Task GoAsync(ExchangeInfo exchangeInfo, CancellationToken cancellationToken = default)
+        public Task InitializeAsync(ExchangeInfo exchangeInfo, CancellationToken cancellationToken = default)
         {
-            _logger.LogInformation("{Type} {Name} running...", Type, _name);
+            if (exchangeInfo is null) throw new ArgumentNullException(nameof(exchangeInfo));
 
-            // grab the symbol information
-            // todo: make this a dictionary up front so the algos dont have to enumerate it all the time
-            var symbol = exchangeInfo.Symbols.Single(x => x.Name == _options.Symbol);
+            _symbol = exchangeInfo.Symbols.Single(x => x.Name == _options.Symbol);
+
+            return Task.CompletedTask;
+        }
+
+        public async Task GoAsync(CancellationToken cancellationToken = default)
+        {
+            if (_symbol is null)
+            {
+                throw new AlgorithmNotInitializedException();
+            }
+
+            _logger.LogInformation("{Type} {Name} running...", Type, _name);
 
             // run the resolve to calculate profit
             var result = await _significantOrderResolver
-                .ResolveAsync(symbol.Name, symbol.QuoteAsset, cancellationToken)
+                .ResolveAsync(_symbol.Name, _symbol.QuoteAsset, cancellationToken)
                 .ConfigureAwait(false);
 
             _profit = result.Profit;
@@ -71,7 +88,7 @@ namespace Trader.Trading.Algorithms.ValueAveraging
             if (_options.IsOpeningEnabled)
             {
                 if (await _trackingBuyStep
-                    .GoAsync(symbol, _options.PullbackRatio, _options.TargetQuoteBalanceFractionPerBuy, cancellationToken)
+                    .GoAsync(_symbol, _options.PullbackRatio, _options.TargetQuoteBalanceFractionPerBuy, cancellationToken)
                     .ConfigureAwait(false))
                 {
                     return;
@@ -87,7 +104,7 @@ namespace Trader.Trading.Algorithms.ValueAveraging
 
                 // otherwise keep averaging as normal
                 if (await _trackingBuyStep
-                    .GoAsync(symbol, _options.PullbackRatio, _options.TargetQuoteBalanceFractionPerBuy, cancellationToken)
+                    .GoAsync(_symbol, _options.PullbackRatio, _options.TargetQuoteBalanceFractionPerBuy, cancellationToken)
                     .ConfigureAwait(false))
                 {
                     return;
@@ -96,7 +113,7 @@ namespace Trader.Trading.Algorithms.ValueAveraging
 
             // then place the averaging sell
             await _averagingSellStep
-                .GoAsync(symbol, _options.ProfitMultipler, cancellationToken)
+                .GoAsync(_symbol, _options.ProfitMultipler, cancellationToken)
                 .ConfigureAwait(false);
         }
     }

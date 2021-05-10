@@ -37,11 +37,20 @@ namespace Trader.Trading
 
         private ISafeTimer? _timer;
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
-            _timer = _timers.Create(TickAsync, TimeSpan.Zero, _options.TickPeriod, Debugger.IsAttached ? _options.TickTimeoutWithDebugger : _options.TickTimeout);
+            var exchangeInfo = await _trader
+                .GetExchangeInfoAsync(cancellationToken)
+                .ConfigureAwait(false);
 
-            return Task.CompletedTask;
+            foreach (var algo in _algos)
+            {
+                await algo
+                    .InitializeAsync(exchangeInfo, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
+            _timer = _timers.Create(TickAsync, TimeSpan.Zero, _options.TickPeriod, Debugger.IsAttached ? _options.TickTimeoutWithDebugger : _options.TickTimeout);
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
@@ -54,18 +63,12 @@ namespace Trader.Trading
         [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Timer")]
         private async Task TickAsync(CancellationToken cancellationToken)
         {
-            // grab the exchange information once to share between all algo instances
-            // todo: perform this out of band
-            var exchangeInfo = await _trader
-                .GetExchangeInfoAsync(cancellationToken)
-                .ConfigureAwait(false);
-
             foreach (var algo in _algos)
             {
                 try
                 {
                     await algo
-                        .GoAsync(exchangeInfo, cancellationToken)
+                        .GoAsync(cancellationToken)
                         .ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)

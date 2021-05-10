@@ -9,12 +9,6 @@ namespace Trader.Trading.Algorithms.ValueAveraging
         public string Symbol { get; set; } = Empty;
 
         [Required]
-        public string Asset { get; set; } = Empty;
-
-        [Required]
-        public string Quote { get; set; } = Empty;
-
-        [Required]
         [Range(0.01, 0.99)]
         public decimal PullbackRatio { get; set; } = 0.90m;
 

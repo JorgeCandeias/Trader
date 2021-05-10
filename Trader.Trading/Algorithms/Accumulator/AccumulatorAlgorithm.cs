@@ -11,7 +11,7 @@ using Trader.Trading.Algorithms.Steps;
 
 namespace Trader.Trading.Algorithms.Accumulator
 {
-    internal class AccumulatorAlgorithm : IAccumulatorAlgorithm
+    internal class AccumulatorAlgorithm : ITradingAlgorithm
     {
         private readonly string _name;
         private readonly AccumulatorAlgorithmOptions _options;
@@ -32,28 +32,34 @@ namespace Trader.Trading.Algorithms.Accumulator
             _trackingBuyStep = trackingBuyStep ?? throw new ArgumentNullException(nameof(trackingBuyStep));
         }
 
+        private Symbol? _symbol;
+
         private static string Type => nameof(AccumulatorAlgorithm);
 
         public string Symbol => _options.Symbol;
 
-        public Task GoAsync(ExchangeInfo exchangeInfo, CancellationToken cancellationToken = default)
+        public Task InitializeAsync(ExchangeInfo exchangeInfo, CancellationToken cancellationToken = default)
         {
             if (exchangeInfo is null) throw new ArgumentNullException(nameof(exchangeInfo));
 
-            return GoInnerAsync(exchangeInfo, cancellationToken);
+            _symbol = exchangeInfo.Symbols.Single(x => x.Name == _options.Symbol);
+
+            return Task.CompletedTask;
         }
 
-        private async Task GoInnerAsync(ExchangeInfo exchangeInfo, CancellationToken cancellationToken)
+        public async Task GoAsync(CancellationToken cancellationToken = default)
         {
+            if (_symbol is null)
+            {
+                throw new AlgorithmNotInitializedException();
+            }
+
             _logger.LogInformation(
                 "{Type} {Name} running...",
                 Type, _name);
 
-            // get the symbol information
-            var symbol = exchangeInfo.Symbols.Single(x => x.Name == _options.Symbol);
-
             await _trackingBuyStep
-                .GoAsync(symbol, _options.PullbackRatio, _options.TargetQuoteBalanceFractionPerBuy, cancellationToken)
+                .GoAsync(_symbol, _options.PullbackRatio, _options.TargetQuoteBalanceFractionPerBuy, cancellationToken)
                 .ConfigureAwait(false);
         }
 

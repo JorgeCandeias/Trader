@@ -8,7 +8,6 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Trader.Core.Time;
 using Trader.Core.Timers;
 using Trader.Trading.Algorithms;
 
@@ -21,16 +20,14 @@ namespace Trader.Trading
         private readonly IEnumerable<ITradingAlgorithm> _algos;
         private readonly ISafeTimerFactory _timers;
         private readonly ITradingService _trader;
-        private readonly ISystemClock _clock;
 
-        public TradingHost(IOptions<TradingHostOptions> options, ILogger<TradingHost> logger, IEnumerable<ITradingAlgorithm> algos, ISafeTimerFactory timers, ITradingService trader, ISystemClock clock)
+        public TradingHost(IOptions<TradingHostOptions> options, ILogger<TradingHost> logger, IEnumerable<ITradingAlgorithm> algos, ISafeTimerFactory timers, ITradingService trader)
         {
             _options = options.Value ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _algos = algos ?? throw new ArgumentNullException(nameof(algos));
             _timers = timers ?? throw new ArgumentNullException(nameof(timers));
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
         private static string Name => nameof(TradingHost);

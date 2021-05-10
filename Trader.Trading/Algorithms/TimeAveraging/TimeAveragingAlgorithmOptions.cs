@@ -10,12 +10,6 @@ namespace Trader.Trading.Algorithms.TimeAveraging
         public string Symbol { get; set; } = Empty;
 
         [Required]
-        public string Asset { get; set; } = Empty;
-
-        [Required]
-        public string Quote { get; set; } = Empty;
-
-        [Required]
         [Range(typeof(TimeSpan), "0.00:01:00.000", "1.00:00:00.000")]
         public TimeSpan Period { get; set; } = TimeSpan.FromHours(1);
 

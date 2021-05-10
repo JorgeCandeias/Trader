@@ -37,7 +37,9 @@ namespace Trader.Trading.Algorithms.TimeAveraging
 
         public Task<Profit> GetProfitAsync(CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(Profit.Zero(_options.Quote));
+            if (_symbol is null) throw new AlgorithmNotInitializedException();
+
+            return Task.FromResult(Profit.Zero(_symbol.QuoteAsset));
         }
 
         public Task<Statistics> GetStatisticsAsync(CancellationToken cancellationToken = default)
@@ -81,12 +83,12 @@ namespace Trader.Trading.Algorithms.TimeAveraging
 
             // get the available balance for the quote asset
             var balance = await _repository
-                .GetBalanceAsync(_options.Quote, cancellationToken)
+                .GetBalanceAsync(_symbol.QuoteAsset, cancellationToken)
                 .ConfigureAwait(false);
 
             if (balance is null)
             {
-                throw new AlgorithmException($"Could not get balance for asset '{_options.Quote}'");
+                throw new AlgorithmException($"Could not get balance for asset '{_symbol.QuoteAsset}'");
             }
 
             // calculate the total to take from the balance
@@ -100,7 +102,7 @@ namespace Trader.Trading.Algorithms.TimeAveraging
             {
                 _logger.LogWarning(
                     "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}",
-                    Type, _name, total, _options.Quote, balance.Free, _options.Quote);
+                    Type, _name, total, _symbol.QuoteAsset, balance.Free, _symbol.QuoteAsset);
 
                 return;
             }
@@ -111,7 +113,7 @@ namespace Trader.Trading.Algorithms.TimeAveraging
 
             _logger.LogInformation(
                 "{Type} {Symbol} reports the next due time of {DueTime} has been reached and is placing a {OrderType} {OrderSide} {TimeInForce} order for a total of {Notional} {Quote}",
-                Type, Symbol, due, orderType, orderSide, timeInForce, total, _options.Quote);
+                Type, Symbol, due, orderType, orderSide, timeInForce, total, _symbol.QuoteAsset);
 
             var result = await _trader
                 .CreateOrderAsync(

@@ -75,10 +75,12 @@ namespace Trader.Trading.Algorithms.Step
 
         public async Task GoAsync(CancellationToken cancellationToken = default)
         {
+            if (_symbol is null) throw new AlgorithmNotInitializedException();
+
             await ApplyAccountInfoAsync(cancellationToken).ConfigureAwait(false);
 
             var significant = await _significantOrderResolver
-                .ResolveAsync(_options.Symbol, _options.Quote, cancellationToken)
+                .ResolveAsync(_options.Symbol, _symbol.QuoteAsset, cancellationToken)
                 .ConfigureAwait(false);
 
             _profit = significant.Profit;
@@ -96,7 +98,9 @@ namespace Trader.Trading.Algorithms.Step
 
         public Task<Profit> GetProfitAsync(CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(_profit ?? Profit.Zero(_options.Quote));
+            if (_symbol is null) throw new AlgorithmNotInitializedException();
+
+            return Task.FromResult(_profit ?? Profit.Zero(_symbol.QuoteAsset));
         }
 
         public Task<Statistics> GetStatisticsAsync(CancellationToken cancellationToken = default)
@@ -106,46 +110,52 @@ namespace Trader.Trading.Algorithms.Step
 
         private async Task ApplyAccountInfoAsync(CancellationToken cancellationToken)
         {
+            if (_symbol is null) throw new AlgorithmNotInitializedException();
+
             var assetBalance = await _repository
-                .GetBalanceAsync(_options.Asset, cancellationToken)
+                .GetBalanceAsync(_symbol.BaseAsset, cancellationToken)
                 .ConfigureAwait(false) ??
-                throw new AlgorithmException($"Could not get balance for base asset {_options.Asset}");
+                throw new AlgorithmException($"Could not get balance for base asset {_symbol.BaseAsset}");
 
             _balances.Asset.Free = assetBalance.Free;
             _balances.Asset.Locked = assetBalance.Locked;
 
             _logger.LogInformation(
                 "{Type} {Name} reports balance for base asset {Asset} is (Free = {Free}, Locked = {Locked}, Total = {Total})",
-                Type, _name, _options.Asset, _balances.Asset.Free, _balances.Asset.Locked, _balances.Asset.Total);
+                Type, _name, _symbol.BaseAsset, _balances.Asset.Free, _balances.Asset.Locked, _balances.Asset.Total);
 
             var quoteBalance = await _repository
-                .GetBalanceAsync(_options.Quote, cancellationToken)
+                .GetBalanceAsync(_symbol.QuoteAsset, cancellationToken)
                 .ConfigureAwait(false) ??
-                throw new AlgorithmException($"Could not get balance for quote asset {_options.Quote}");
+                throw new AlgorithmException($"Could not get balance for quote asset {_symbol.QuoteAsset}");
 
             _balances.Quote.Free = quoteBalance.Free;
             _balances.Quote.Locked = quoteBalance.Locked;
 
             _logger.LogInformation(
                 "{Type} {Name} reports balance for quote asset {Asset} is (Free = {Free}, Locked = {Locked}, Total = {Total})",
-                Type, _name, _options.Quote, _balances.Quote.Free, _balances.Quote.Locked, _balances.Quote.Total);
+                Type, _name, _symbol.QuoteAsset, _balances.Quote.Free, _balances.Quote.Locked, _balances.Quote.Total);
         }
 
         private async Task<MiniTicker> SyncAssetPriceAsync(CancellationToken cancellationToken = default)
         {
+            if (_symbol is null) throw new AlgorithmNotInitializedException();
+
             var ticker = await _repository
                 .GetTickerAsync(_options.Symbol, cancellationToken)
                 .ConfigureAwait(false);
 
             _logger.LogInformation(
                 "{Type} {Name} reports latest asset price is {Price} {QuoteAsset}",
-                Type, _name, ticker.ClosePrice, _options.Quote);
+                Type, _name, ticker.ClosePrice, _symbol.QuoteAsset);
 
             return ticker;
         }
 
         private async Task<bool> TryCloseOutOfRangeBandsAsync(MiniTicker ticker, CancellationToken cancellationToken = default)
         {
+            if (_symbol is null) throw new AlgorithmNotInitializedException();
+
             // take the upper band
             var upper = _bands.Max;
             if (upper is null) return false;
@@ -185,7 +195,7 @@ namespace Trader.Trading.Algorithms.Step
 
                 _logger.LogInformation(
                     "{Type} {Name} closed out-of-range {OrderSide} {OrderType} for {Quantity} {Asset} at {Price} {Quote}",
-                    Type, _name, result.Side, result.Type, result.OriginalQuantity, _options.Asset, result.Price, _options.Quote);
+                    Type, _name, result.Side, result.Type, result.OriginalQuantity, _symbol.BaseAsset, result.Price, _symbol.QuoteAsset);
             }
 
             return true;
@@ -193,6 +203,7 @@ namespace Trader.Trading.Algorithms.Step
 
         private async Task<bool> TryCreateLowerBandOrderAsync(MiniTicker ticker, CancellationToken cancellationToken = default)
         {
+            if (_symbol is null) throw new AlgorithmNotInitializedException();
             if (_priceFilter is null) throw new AlgorithmNotInitializedException();
             if (_minNotionalFilter is null) throw new AlgorithmNotInitializedException();
             if (_lotSizeFilter is null) throw new AlgorithmNotInitializedException();
@@ -216,7 +227,7 @@ namespace Trader.Trading.Algorithms.Step
             {
                 _logger.LogInformation(
                     "{Type} {Name} reports price {Price} {Quote} is within the current low band of {OpenPrice} {Quote} to {ClosePrice} {Quote}",
-                    Type, _name, ticker.ClosePrice, _options.Quote, lowBand.OpenPrice, _options.Quote, lowBand.ClosePrice, _options.Quote);
+                    Type, _name, ticker.ClosePrice, _symbol.QuoteAsset, lowBand.OpenPrice, _symbol.QuoteAsset, lowBand.ClosePrice, _symbol.QuoteAsset);
 
                 // let the algo continue
                 return false;
@@ -271,7 +282,7 @@ namespace Trader.Trading.Algorithms.Step
             {
                 _logger.LogWarning(
                     "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}",
-                    Type, _name, total, _options.Quote, _balances.Quote.Free, _options.Quote);
+                    Type, _name, total, _symbol.QuoteAsset, _balances.Quote.Free, _symbol.QuoteAsset);
 
                 // there's no money for creating bands so let algo continue
                 return false;
@@ -310,7 +321,7 @@ namespace Trader.Trading.Algorithms.Step
 
             _logger.LogInformation(
                 "{Type} {Name} placed {OrderType} {OrderSide} for {Quantity} {Asset} at {Price} {Quote}",
-                Type, _name, result.Type, result.Side, result.OriginalQuantity, _options.Asset, result.Price, _options.Quote);
+                Type, _name, result.Type, result.Side, result.OriginalQuantity, _symbol.BaseAsset, result.Price, _symbol.QuoteAsset);
 
             return false;
         }
@@ -320,6 +331,8 @@ namespace Trader.Trading.Algorithms.Step
         /// </summary>
         private async Task<bool> TrySetBandSellOrdersAsync(CancellationToken cancellationToken = default)
         {
+            if (_symbol is null) throw new AlgorithmNotInitializedException();
+
             foreach (var band in _bands.Where(x => x.Status == BandStatus.Open))
             {
                 if (band.CloseOrderId is 0)
@@ -329,7 +342,7 @@ namespace Trader.Trading.Algorithms.Step
                     {
                         _logger.LogError(
                             "{Type} {Name} cannot set band sell order of {Quantity} {Asset} for {Price} {Quote} because there are only {Balance} {Asset} free",
-                            Type, _name, band.Quantity, _options.Asset, band.ClosePrice, _options.Quote, _balances.Asset.Free, _options.Asset);
+                            Type, _name, band.Quantity, _symbol.BaseAsset, band.ClosePrice, _symbol.QuoteAsset, _balances.Asset.Free, _symbol.BaseAsset);
 
                         return false;
                     }
@@ -362,7 +375,7 @@ namespace Trader.Trading.Algorithms.Step
 
                     _logger.LogInformation(
                         "{Type} {Name} placed {OrderType} {OrderSide} order for band of {Quantity} {Asset} with {OpenPrice} {Quote} at {ClosePrice} {Quote}",
-                        Type, _name, result.Type, result.Side, result.OriginalQuantity, _options.Asset, band.OpenPrice, _options.Quote, result.Price, _options.Quote);
+                        Type, _name, result.Type, result.Side, result.OriginalQuantity, _symbol.BaseAsset, band.OpenPrice, _symbol.QuoteAsset, result.Price, _symbol.QuoteAsset);
 
                     return true;
                 }
@@ -376,6 +389,8 @@ namespace Trader.Trading.Algorithms.Step
         /// </summary>
         private async Task<bool> TryCancelRogueSellOrdersAsync(CancellationToken cancellationToken = default)
         {
+            if (_symbol is null) throw new AlgorithmNotInitializedException();
+
             // get all transient sell orders
             var orders = await _repository
                 .GetTransientOrdersBySideAsync(_options.Symbol, OrderSide.Sell, cancellationToken)
@@ -407,7 +422,7 @@ namespace Trader.Trading.Algorithms.Step
 
                     _logger.LogWarning(
                         "{Type} {Name} cancelled sell order not associated with a band for {Quantity} {Asset} at {Price} {Quote}",
-                        Type, _name, result.OriginalQuantity, _options.Asset, result.Price, _options.Quote);
+                        Type, _name, result.OriginalQuantity, _symbol.BaseAsset, result.Price, _symbol.QuoteAsset);
 
                     fail = true;
                 }
@@ -418,10 +433,10 @@ namespace Trader.Trading.Algorithms.Step
 
         private async Task<bool> TrySetStartingTradeAsync(MiniTicker ticker, CancellationToken cancellationToken = default)
         {
+            if (_symbol is null) throw new AlgorithmNotInitializedException();
             if (_priceFilter is null) throw new AlgorithmNotInitializedException();
             if (_minNotionalFilter is null) throw new AlgorithmNotInitializedException();
             if (_lotSizeFilter is null) throw new AlgorithmNotInitializedException();
-            if (_symbol is null) throw new AlgorithmNotInitializedException();
 
             // only manage the opening if there are no bands or only a single order band to move around
             if (_bands.Count == 0 || _bands.Count == 1 && _bands.Single().Status == BandStatus.Ordered)
@@ -434,7 +449,7 @@ namespace Trader.Trading.Algorithms.Step
 
                 _logger.LogInformation(
                     "{Type} {Name} identified first buy target price at {LowPrice} {LowQuote} with current price at {CurrentPrice} {CurrentQuote}",
-                    Type, _name, lowBuyPrice, _options.Quote, ticker.ClosePrice, _options.Quote);
+                    Type, _name, lowBuyPrice, _symbol.QuoteAsset, ticker.ClosePrice, _symbol.QuoteAsset);
 
                 // cancel the lowest open buy order with a open price lower than the lower band to the current price
                 var orders = await _repository
@@ -471,7 +486,7 @@ namespace Trader.Trading.Algorithms.Step
                     {
                         _logger.LogInformation(
                             "{Type} {Name} identified a closer opening order for {Quantity} {Asset} at {Price} {Quote} and will leave as-is",
-                            Type, _name, lowest.OriginalQuantity, _options.Asset, lowest.Price, _options.Quote);
+                            Type, _name, lowest.OriginalQuantity, _symbol.BaseAsset, lowest.Price, _symbol.QuoteAsset);
                     }
 
                     // let the algo resync
@@ -498,7 +513,7 @@ namespace Trader.Trading.Algorithms.Step
                 {
                     _logger.LogWarning(
                         "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}",
-                        Type, _name, total, _options.Quote, _balances.Quote.Free, _options.Quote);
+                        Type, _name, total, _symbol.QuoteAsset, _balances.Quote.Free, _symbol.QuoteAsset);
 
                     return false;
                 }
@@ -536,7 +551,7 @@ namespace Trader.Trading.Algorithms.Step
 
                 _logger.LogInformation(
                     "{Type} {Name} created {OrderSide} {OrderType} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",
-                    Type, _name, result.Side, result.Type, result.Symbol, result.OriginalQuantity, _options.Asset, result.Price, _options.Quote, result.OriginalQuantity * result.Price, _options.Quote);
+                    Type, _name, result.Side, result.Type, result.Symbol, result.OriginalQuantity, _symbol.BaseAsset, result.Price, _symbol.QuoteAsset, result.OriginalQuantity * result.Price, _symbol.QuoteAsset);
 
                 // skip the rest of this tick to let the algo resync
                 return true;
@@ -549,6 +564,7 @@ namespace Trader.Trading.Algorithms.Step
 
         private async Task<bool> TryCreateTradingBandsAsync(ImmutableSortedOrderSet significant, MiniTicker ticker, CancellationToken cancellationToken = default)
         {
+            if (_symbol is null) throw new AlgorithmNotInitializedException();
             if (_percentFilter is null) throw new AlgorithmNotInitializedException();
             if (_priceFilter is null) throw new AlgorithmNotInitializedException();
             if (_minNotionalFilter is null) throw new AlgorithmNotInitializedException();
@@ -562,7 +578,7 @@ namespace Trader.Trading.Algorithms.Step
                 {
                     _logger.LogError(
                         "{Type} {Name} identified a significant {OrderSide} {OrderType} order {OrderId} for {Quantity} {Asset} on {Time} with zero price and will let the algo refresh to pick up missing trades",
-                        Type, _name, order.Side, order.Type, order.OrderId, order.ExecutedQuantity, _options.Asset, order.Time);
+                        Type, _name, order.Side, order.Type, order.OrderId, order.ExecutedQuantity, _symbol.BaseAsset, order.Time);
 
                     return true;
                 }
@@ -604,7 +620,7 @@ namespace Trader.Trading.Algorithms.Step
                 {
                     _logger.LogError(
                         "{Type} {Name} identified a significant {OrderSide} {OrderType} order {OrderId} for {Quantity} {Asset} on {Time} with zero price and will let the algo refresh to pick up missing trades",
-                        Type, _name, order.Side, order.Type, order.OrderId, order.ExecutedQuantity, _options.Asset, order.Time);
+                        Type, _name, order.Side, order.Type, order.OrderId, order.ExecutedQuantity, _symbol.BaseAsset, order.Time);
 
                     return true;
                 }
@@ -638,7 +654,7 @@ namespace Trader.Trading.Algorithms.Step
                 {
                     _logger.LogError(
                         "{Type} {Name} detected band sell price for {Quantity} {Asset} of {Price} {Quote} is above the percent price filter of {MaxPrice} {Quote}",
-                        Type, _name, band.Quantity, _options.Asset, band.ClosePrice, _options.Quote, maxPrice, _options.Quote);
+                        Type, _name, band.Quantity, _symbol.BaseAsset, band.ClosePrice, _symbol.QuoteAsset, maxPrice, _symbol.QuoteAsset);
 
                     // todo: this will raise an error later on so we need to handle this better
                 }
@@ -650,7 +666,7 @@ namespace Trader.Trading.Algorithms.Step
                 {
                     _logger.LogWarning(
                         "{Type} {Name} adjusted sell of {Quantity} {Asset} for {ClosePrice} {Quote} to {MinPrice} {Quote} because it is below the percent price filter of {MinPrice} {Quote}",
-                        Type, _name, band.Quantity, _options.Asset, band.ClosePrice, _options.Quote, minPrice, _options.Quote, minPrice, _options.Quote);
+                        Type, _name, band.Quantity, _symbol.BaseAsset, band.ClosePrice, _symbol.QuoteAsset, minPrice, _symbol.QuoteAsset, minPrice, _symbol.QuoteAsset);
 
                     band.ClosePrice = minPrice;
                 }
@@ -680,11 +696,11 @@ namespace Trader.Trading.Algorithms.Step
                     _name,
                     leftovers.Count,
                     leftovers.Sum(x => x.Quantity),
-                    _options.Asset,
+                    _symbol.BaseAsset,
                     buyNotional,
-                    _options.Quote,
+                    _symbol.QuoteAsset,
                     nowNotional,
-                    _options.Quote,
+                    _symbol.QuoteAsset,
                     buyNotional > 0 ? nowNotional / buyNotional : 0);
             }
 

@@ -10,12 +10,6 @@ namespace Trader.Trading.Algorithms.Step
         public string Symbol { get; set; } = Empty;
 
         [Required]
-        public string Asset { get; set; } = Empty;
-
-        [Required]
-        public string Quote { get; set; } = Empty;
-
-        [Required]
         [Range(1, 99)]
         public int MaxBands { get; set; } = 99;
 

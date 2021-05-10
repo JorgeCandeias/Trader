@@ -65,7 +65,9 @@ namespace Trader.Trading.Algorithms.Accumulator
 
         public Task<Profit> GetProfitAsync(CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(Profit.Zero(_options.Quote));
+            _ = _symbol ?? throw new AlgorithmNotInitializedException();
+
+            return Task.FromResult(Profit.Zero(_symbol.QuoteAsset));
         }
 
         public Task<Statistics> GetStatisticsAsync(CancellationToken cancellationToken = default)

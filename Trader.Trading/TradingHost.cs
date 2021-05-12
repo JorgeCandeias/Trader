@@ -30,12 +30,16 @@ namespace Trader.Trading
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
         }
 
-        private static string Name => nameof(TradingHost);
+        private static string TypeName => nameof(TradingHost);
 
         private ISafeTimer? _timer;
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
+            _logger.LogInformation(
+                "{TypeName} querying exchange information...",
+                TypeName);
+
             var exchangeInfo = await _trader
                 .GetExchangeInfoAsync(cancellationToken)
                 .ConfigureAwait(false);
@@ -75,8 +79,8 @@ namespace Trader.Trading
                 catch (Exception ex)
                 {
                     _logger.LogError(ex,
-                        "{Name} reports {Symbol} algorithm has faulted",
-                        Name, algo.Symbol);
+                        "{TypeName} reports {Symbol} algorithm has faulted",
+                        TypeName, algo.Symbol);
                 }
             }
 
@@ -97,22 +101,22 @@ namespace Trader.Trading
             foreach (var group in profits.GroupBy(x => x.Profit.Quote).OrderBy(x => x.Key))
             {
                 _logger.LogInformation(
-                    "{Name} reporting profit for quote {Quote}...",
-                    Name, group.Key);
+                    "{TypeName} reporting profit for quote {Quote}...",
+                    TypeName, group.Key);
 
                 foreach (var item in group.OrderByDescending(x => x.Profit.Today).ThenBy(x => x.Symbol))
                 {
                     _logger.LogInformation(
-                        "{Name} reports {Symbol,8} profit as (T: {@Today,12:F8}, T-1: {@Yesterday,12:F8}, W: {@ThisWeek,12:F8}, W-1: {@PrevWeek,12:F8}, M: {@ThisMonth,12:F8}, Y: {@ThisYear,13:F8}) (APD1: {@AveragePerDay1,12:F8}, APD7: {@AveragePerDay7,12:F8}, APD30: {@AveragePerDay30,12:F8})",
-                        Name, item.Symbol, item.Profit.Today, item.Profit.Yesterday, item.Profit.ThisWeek, item.Profit.PrevWeek, item.Profit.ThisMonth, item.Profit.ThisYear, item.Stats.AvgPerDay1, item.Stats.AvgPerDay7, item.Stats.AvgPerDay30);
+                        "{TypeName} reports {Symbol,8} profit as (T: {@Today,12:F8}, T-1: {@Yesterday,12:F8}, W: {@ThisWeek,12:F8}, W-1: {@PrevWeek,12:F8}, M: {@ThisMonth,12:F8}, Y: {@ThisYear,13:F8}) (APD1: {@AveragePerDay1,12:F8}, APD7: {@AveragePerDay7,12:F8}, APD30: {@AveragePerDay30,12:F8})",
+                        TypeName, item.Symbol, item.Profit.Today, item.Profit.Yesterday, item.Profit.ThisWeek, item.Profit.PrevWeek, item.Profit.ThisMonth, item.Profit.ThisYear, item.Stats.AvgPerDay1, item.Stats.AvgPerDay7, item.Stats.AvgPerDay30);
                 }
 
                 var totalProfit = Profit.Aggregate(group.Select(x => x.Profit));
                 var totalStats = Statistics.FromProfit(totalProfit);
 
                 _logger.LogInformation(
-                    "{Name} reports {Quote,8} profit as (T: {@Today,12:F8}, T-1: {@Yesterday,12:F8}, W: {@ThisWeek,12:F8}, W-1: {@PrevWeek,12:F8}, M: {@ThisMonth,12:F8}, Y: {@ThisYear,13:F8}) (APD1: {@AveragePerDay1,12:F8}, APD7: {@AveragePerDay7,12:F8}, APD30: {@AveragePerDay30,12:F8})",
-                    Name,
+                    "{TypeName} reports {Quote,8} profit as (T: {@Today,12:F8}, T-1: {@Yesterday,12:F8}, W: {@ThisWeek,12:F8}, W-1: {@PrevWeek,12:F8}, M: {@ThisMonth,12:F8}, Y: {@ThisYear,13:F8}) (APD1: {@AveragePerDay1,12:F8}, APD7: {@AveragePerDay7,12:F8}, APD30: {@AveragePerDay30,12:F8})",
+                    TypeName,
                     group.Key,
                     totalProfit.Today,
                     totalProfit.Yesterday,

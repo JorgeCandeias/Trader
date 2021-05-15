@@ -274,6 +274,12 @@ namespace Trader.Trading.Algorithms.Step
             // calculate the quote amount to pay with
             var total = _balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand;
 
+            // lower below the max notional if needed
+            if (_options.MaxNotional.HasValue)
+            {
+                total = Math.Min(total, _options.MaxNotional.Value);
+            }
+
             // raise to the minimum notional if needed
             total = Math.Max(total, _minNotionalFilter.MinNotional);
 
@@ -504,6 +510,12 @@ namespace Trader.Trading.Algorithms.Step
 
                 // calculate the amount to pay with
                 var total = Math.Round(_balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand, _symbol.QuoteAssetPrecision);
+
+                // lower below the max notional if needed
+                if (_options.MaxNotional.HasValue)
+                {
+                    total = Math.Min(total, _options.MaxNotional.Value);
+                }
 
                 // raise to the minimum notional if needed
                 total = Math.Max(total, _minNotionalFilter.MinNotional);

@@ -36,5 +36,7 @@ namespace Trader.Trading.Algorithms.Step
         /// </summary>
         [Required]
         public bool IsLowerBandOpeningEnabled { get; set; } = true;
+
+        public decimal? MaxNotional { get; set; }
     }
 }

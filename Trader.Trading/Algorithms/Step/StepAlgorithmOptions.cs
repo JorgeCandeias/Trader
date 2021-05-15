@@ -35,6 +35,6 @@ namespace Trader.Trading.Algorithms.Step
         /// If <see cref="false"/> the algo will no longer create any new lower bands.
         /// </summary>
         [Required]
-        public bool EnableLowerBands { get; set; } = true;
+        public bool IsLowerBandOpeningEnabled { get; set; } = true;
     }
 }

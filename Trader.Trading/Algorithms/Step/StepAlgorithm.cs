@@ -245,7 +245,7 @@ namespace Trader.Trading.Algorithms.Step
             }
 
             // skip if lower band creation is disabled
-            if (!_options.EnableLowerBands)
+            if (!_options.IsLowerBandOpeningEnabled)
             {
                 _logger.LogWarning(
                     "{Type} {Name} cannot create lower band because the feature is disabled",

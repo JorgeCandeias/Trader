@@ -493,7 +493,7 @@ namespace Trader.Trading.Algorithms.Step
                     return true;
                 }
 
-                if (!_options.EnableOpening)
+                if (!_options.IsOpeningEnabled)
                 {
                     _logger.LogWarning(
                         "{Type} {Name} cannot create the opening band because it is disabled",

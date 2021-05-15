@@ -28,7 +28,7 @@ namespace Trader.Trading.Algorithms.Step
         /// The algo will still continue to open lower bands for as long as the top band is open.
         /// </summary>
         [Required]
-        public bool EnableOpening { get; set; } = true;
+        public bool IsOpeningEnabled { get; set; } = true;
 
         /// <summary>
         /// If <see cref="true"/> the algo will keep creating lower bands below the top band as normal.

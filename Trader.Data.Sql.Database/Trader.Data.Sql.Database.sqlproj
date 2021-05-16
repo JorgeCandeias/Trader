@@ -106,6 +106,7 @@
     <Build Include="Procedures\SetTickers.sql" />
     <Build Include="Procedures\GetTicker.sql" />
     <Build Include="Procedures\GetSignificantCompletedOrders.sql" />
+    <Build Include="Tables\PriceHistory.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Scripts\Script.PostDeployment.sql" />

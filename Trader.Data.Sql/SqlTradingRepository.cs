@@ -661,5 +661,47 @@ namespace Trader.Data.Sql
 
             return _mapper.Map<MiniTicker>(entity);
         }
+
+        public async Task SetCandlesticksAsync(IEnumerable<Candlestick> candlesticks, CancellationToken cancellationToken = default)
+        {
+            _ = candlesticks ?? throw new ArgumentNullException(nameof(candlesticks));
+
+            // get the cached ids for the incoming symbols
+            var symbolIds = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (var candlestick in candlesticks)
+            {
+                // check the local fast dictionary
+                if (!symbolIds.ContainsKey(candlestick.Symbol))
+                {
+                    // defer to the slower shared dictionary and database
+                    symbolIds.Add(candlestick.Symbol, await GetOrAddSymbolAsync(candlestick.Symbol, cancellationToken).ConfigureAwait(false));
+                }
+            }
+
+            var entities = _mapper.Map<IEnumerable<CandlestickTableParameterEntity>>(candlesticks, options =>
+            {
+                options.Items[nameof(CandlestickTableParameterEntity.SymbolId)] = symbolIds;
+            });
+
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            await _retryPolicy
+                .ExecuteAsync(ct => connection
+                    .ExecuteAsync(
+                        new CommandDefinition(
+                            "[dbo].[SetCandlesticks]",
+                            new
+                            {
+                                Candlesticks = entities.AsSqlDataRecords().AsTableValuedParameter("[dbo].[CandlestickTableParameter]")
+                            },
+                            null,
+                            _options.CommandTimeoutAsInteger,
+                            CommandType.StoredProcedure,
+                            CommandFlags.Buffered,
+                        ct)),
+                        cancellationToken,
+                        false)
+                .ConfigureAwait(false);
+        }
     }
 }

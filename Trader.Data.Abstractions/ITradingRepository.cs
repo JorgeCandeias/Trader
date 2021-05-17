@@ -55,5 +55,7 @@ namespace Trader.Data
         Task SetTickersAsync(IEnumerable<MiniTicker> tickers, CancellationToken cancellationToken = default);
 
         Task<MiniTicker> GetTickerAsync(string symbol, CancellationToken cancellationToken = default);
+
+        Task SetCandlesticksAsync(IEnumerable<Candlestick> candlesticks, CancellationToken cancellationToken = default);
     }
 }

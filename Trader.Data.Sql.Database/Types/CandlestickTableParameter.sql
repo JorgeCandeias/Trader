@@ -1,4 +1,4 @@
-﻿CREATE TABLE [dbo].[PriceHistory]
+﻿CREATE TYPE [dbo].[CandlestickTableParameter] AS TABLE
 (
 	[SymbolId] INT NOT NULL,
 	[Interval] INT,
@@ -12,13 +12,6 @@
 	[QuoteAssetVolume] DECIMAL (18,8),
 	[TradeCount] INT,
 	[TakerBuyBaseAssetVolume] DECIMAL (18,8),
-	[TakerBuyQuoteAssetVolume] DECIMAL (18,8),
-
-	CONSTRAINT [PK_Candlestick] PRIMARY KEY CLUSTERED
-	(
-		[SymbolId],
-		[Interval],
-		[OpenTime]
-	)
+	[TakerBuyQuoteAssetVolume] DECIMAL (18,8)
 )
 GO

@@ -50,6 +50,9 @@ namespace Trader.Data.Sql
                 .ForCtorParam(nameof(TickerTableParameterEntity.SymbolId), x => x.MapFrom((source, context) => ((IDictionary<string, int>)context.Items[nameof(TickerTableParameterEntity.SymbolId)])[source.Symbol]));
 
             CreateMap<TickerEntity, MiniTicker>();
+
+            CreateMap<Candlestick, CandlestickTableParameterEntity>()
+                .ForCtorParam(nameof(CandlestickTableParameterEntity.SymbolId), x => x.MapFrom((source, context) => ((IDictionary<string, int>)context.Items[nameof(CandlestickTableParameterEntity.SymbolId)])[source.Symbol]));
         }
     }
 }

@@ -316,4 +316,24 @@
 
     internal record ListenKeyRequestModel(
         string ListenKey);
+
+    internal record KlineRequestModel(
+        string Symbol,
+        string Interval,
+        long StartTime,
+        long EndTime,
+        int Limit);
+
+    internal record KlineResponseModel(
+        long OpenTime,
+        long CloseTime,
+        string OpenPrice,
+        string HighPrice,
+        string LowPrice,
+        string ClosePrice,
+        string Volume,
+        string QuoteAssetVolume,
+        int TradeCount,
+        string TakerBuyBaseAssetVolume,
+        string TakerBuyQuoteAssetVolume);
 }

@@ -3,16 +3,17 @@
 namespace Trader.Models
 {
     public record Kline(
+        string Symbol,
+        KlineInterval Interval,
         DateTime OpenTime,
-        decimal Open,
-        decimal High,
-        decimal Low,
-        decimal Close,
-        decimal Volume,
         DateTime CloseTime,
+        decimal OpenPrice,
+        decimal HighPrice,
+        decimal LowPrice,
+        decimal ClosePrice,
+        decimal Volume,
         decimal QuoteAssetVolume,
-        int NumberOfTrades,
+        int TradeCount,
         decimal TakerBuyBaseAssetVolume,
-        decimal TakerBuyQuoteAssetVolume,
-        decimal Ignore);
+        decimal TakerBuyQuoteAssetVolume);
 }

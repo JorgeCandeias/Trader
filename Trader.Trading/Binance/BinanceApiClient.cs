@@ -323,13 +323,24 @@ namespace Trader.Trading.Binance
         public async Task<IEnumerable<AccountTradesResponseModel>> GetAccountTradesAsync(AccountTradesRequestModel model, CancellationToken cancellationToken = default)
         {
             _ = model ?? throw new ArgumentNullException(nameof(model));
-            _ = model.Symbol ?? throw new ArgumentException($"{nameof(GetOpenOrders.Symbol)} is required");
+            _ = model.Symbol ?? throw new ArgumentException($"{nameof(AccountTradesRequestModel.Symbol)} is required");
 
             return await _client
                 .GetFromJsonAsync<IEnumerable<AccountTradesResponseModel>>(
                     Combine(new Uri("/api/v3/myTrades", UriKind.Relative), model),
                     cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
+        }
+
+        public async Task<IEnumerable<KlineResponseModel>> GetKlinesAsync(KlineRequestModel model, CancellationToken cancellationToken = default)
+        {
+            _ = model ?? throw new ArgumentNullException(nameof(model));
+
+            var response = await _client
+                .GetFromJsonAsync<IEnumerable<JsonElement[]>>(Combine(new Uri("/api/v3/klines", UriKind.Relative), model), cancellationToken)
+                .ConfigureAwait(false);
+
+            return _mapper.Map<IEnumerable<KlineResponseModel>>(response);
         }
 
         /// <summary>

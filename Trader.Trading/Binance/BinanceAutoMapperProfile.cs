@@ -81,20 +81,6 @@ namespace Trader.Trading.Binance
                 .ForCtorParam(nameof(AggTrade.IsBuyerMaker), x => x.MapFrom(y => y["m"].GetBoolean()))
                 .ForCtorParam(nameof(AggTrade.IsBestMatch), x => x.MapFrom(y => y["M"].GetBoolean()));
 
-            CreateMap<JsonElement[], Kline>()
-                .ForCtorParam(nameof(Kline.OpenTime), x => x.MapFrom(y => y[0].GetInt64()))
-                .ForCtorParam(nameof(Kline.Open), x => x.MapFrom(y => y[1].GetString()))
-                .ForCtorParam(nameof(Kline.High), x => x.MapFrom(y => y[2].GetString()))
-                .ForCtorParam(nameof(Kline.Low), x => x.MapFrom(y => y[3].GetString()))
-                .ForCtorParam(nameof(Kline.Close), x => x.MapFrom(y => y[4].GetString()))
-                .ForCtorParam(nameof(Kline.Volume), x => x.MapFrom(y => y[5].GetString()))
-                .ForCtorParam(nameof(Kline.CloseTime), x => x.MapFrom(y => y[6].GetInt64()))
-                .ForCtorParam(nameof(Kline.QuoteAssetVolume), x => x.MapFrom(y => y[7].GetString()))
-                .ForCtorParam(nameof(Kline.NumberOfTrades), x => x.MapFrom(y => y[8].GetInt32()))
-                .ForCtorParam(nameof(Kline.TakerBuyBaseAssetVolume), x => x.MapFrom(y => y[9].GetString()))
-                .ForCtorParam(nameof(Kline.TakerBuyQuoteAssetVolume), x => x.MapFrom(y => y[10].GetString()))
-                .ForCtorParam(nameof(Kline.Ignore), x => x.MapFrom(y => y[11].GetString()));
-
             CreateMap<SymbolOrderBookTickerModel, SymbolOrderBookTicker>()
                 .ForCtorParam(nameof(SymbolOrderBookTicker.BidQuantity), x => x.MapFrom(y => y.BidQty))
                 .ForCtorParam(nameof(SymbolOrderBookTicker.AskQuantity), x => x.MapFrom(y => y.AskQty));

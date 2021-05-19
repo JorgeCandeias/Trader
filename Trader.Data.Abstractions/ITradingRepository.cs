@@ -56,6 +56,6 @@ namespace Trader.Data
 
         Task<MiniTicker> GetTickerAsync(string symbol, CancellationToken cancellationToken = default);
 
-        Task SetCandlesticksAsync(IEnumerable<Candlestick> candlesticks, CancellationToken cancellationToken = default);
+        Task SetCandlesticksAsync(IEnumerable<Kline> candlesticks, CancellationToken cancellationToken = default);
     }
 }

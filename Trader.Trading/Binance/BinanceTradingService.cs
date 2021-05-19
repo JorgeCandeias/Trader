@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Trader.Models;
@@ -147,6 +148,19 @@ namespace Trader.Trading.Binance
                 .ConfigureAwait(false);
 
             return _mapper.Map<Ticker>(output);
+        }
+
+        public async Task<IEnumerable<Kline>> GetKlinesAsync(GetKlines model, CancellationToken cancellationToken = default)
+        {
+            _ = model ?? throw new ArgumentNullException(nameof(model));
+
+            var input = _mapper.Map<KlineRequestModel>(model);
+
+            var output = await _client
+                .GetKlinesAsync(input, cancellationToken)
+                .ConfigureAwait(false);
+
+            return _mapper.Map<IEnumerable<Kline>>(output);
         }
 
         public async Task<string> CreateUserDataStreamAsync(CancellationToken cancellationToken = default)

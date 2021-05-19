@@ -662,7 +662,7 @@ namespace Trader.Data.Sql
             return _mapper.Map<MiniTicker>(entity);
         }
 
-        public async Task SetCandlesticksAsync(IEnumerable<Candlestick> candlesticks, CancellationToken cancellationToken = default)
+        public async Task SetCandlesticksAsync(IEnumerable<Kline> candlesticks, CancellationToken cancellationToken = default)
         {
             _ = candlesticks ?? throw new ArgumentNullException(nameof(candlesticks));
 

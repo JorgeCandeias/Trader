@@ -84,30 +84,29 @@ namespace Trader.Trading.Algorithms.ValueAveraging
 
             _profit = result.Profit;
 
-            // first place the tracking buy
-            if (_options.IsOpeningEnabled)
+            if ((result.Orders.Count > 0 && _options.IsAveragingEnabled) ||
+                (result.Orders.Count == 0 && _options.IsOpeningEnabled))
             {
-                if (await _trackingBuyStep
-                    .GoAsync(_symbol, _options.PullbackRatio, _options.TargetQuoteBalanceFractionPerBuy, cancellationToken)
-                    .ConfigureAwait(false))
+                // attempt to place the averaging buy
+                if (_options.IsAveragingEnabled)
                 {
-                    return;
+                    await _trackingBuyStep
+                        .GoAsync(_symbol, _options.PullbackRatio, _options.TargetQuoteBalanceFractionPerBuy, cancellationToken)
+                        .ConfigureAwait(false);
                 }
-            }
-            else
-            {
-                // if there are no significant orders left to sell then stop averaging them
-                if (result.Orders.Count == 0)
+                else
                 {
-                    return;
-                }
+                    // cancel all open buys
+                    var orders = await _repository
+                        .GetTransientOrdersBySideAsync(_symbol.Name, OrderSide.Buy, cancellationToken)
+                        .ConfigureAwait(false);
 
-                // otherwise keep averaging as normal
-                if (await _trackingBuyStep
-                    .GoAsync(_symbol, _options.PullbackRatio, _options.TargetQuoteBalanceFractionPerBuy, cancellationToken)
-                    .ConfigureAwait(false))
-                {
-                    return;
+                    foreach (var order in orders)
+                    {
+                        await _trader
+                            .CancelOrderAsync(new CancelStandardOrder(_options.Symbol, order.OrderId, null, null, null, _clock.UtcNow), cancellationToken)
+                            .ConfigureAwait(false);
+                    }
                 }
             }
 

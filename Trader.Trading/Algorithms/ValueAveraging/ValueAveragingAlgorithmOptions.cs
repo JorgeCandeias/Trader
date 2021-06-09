@@ -22,5 +22,8 @@ namespace Trader.Trading.Algorithms.ValueAveraging
 
         [Required]
         public bool IsOpeningEnabled { get; set; } = true;
+
+        [Required]
+        public bool IsAveragingEnabled { get; set; } = true;
     }
 }

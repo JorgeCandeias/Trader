@@ -87,26 +87,22 @@ namespace Trader.Trading.Algorithms.ValueAveraging
             if ((result.Orders.Count > 0 && _options.IsAveragingEnabled) ||
                 (result.Orders.Count == 0 && _options.IsOpeningEnabled))
             {
-                // attempt to place the averaging buy
-                if (_options.IsAveragingEnabled)
-                {
-                    await _trackingBuyStep
+                await _trackingBuyStep
                         .GoAsync(_symbol, _options.PullbackRatio, _options.TargetQuoteBalanceFractionPerBuy, cancellationToken)
                         .ConfigureAwait(false);
-                }
-                else
-                {
-                    // cancel all open buys
-                    var orders = await _repository
-                        .GetTransientOrdersBySideAsync(_symbol.Name, OrderSide.Buy, cancellationToken)
-                        .ConfigureAwait(false);
+            }
+            else
+            {
+                // cancel all open buys
+                var orders = await _repository
+                    .GetTransientOrdersBySideAsync(_symbol.Name, OrderSide.Buy, cancellationToken)
+                    .ConfigureAwait(false);
 
-                    foreach (var order in orders)
-                    {
-                        await _trader
-                            .CancelOrderAsync(new CancelStandardOrder(_options.Symbol, order.OrderId, null, null, null, _clock.UtcNow), cancellationToken)
-                            .ConfigureAwait(false);
-                    }
+                foreach (var order in orders)
+                {
+                    await _trader
+                        .CancelOrderAsync(new CancelStandardOrder(_options.Symbol, order.OrderId, null, null, null, _clock.UtcNow), cancellationToken)
+                        .ConfigureAwait(false);
                 }
             }
 

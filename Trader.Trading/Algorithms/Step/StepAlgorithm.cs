@@ -91,6 +91,7 @@ namespace Trader.Trading.Algorithms.Step
             if (await TryCreateTradingBandsAsync(significant.Orders, ticker, cancellationToken).ConfigureAwait(false)) return;
             if (await TrySetStartingTradeAsync(ticker, cancellationToken).ConfigureAwait(false)) return;
             if (await TryCancelRogueSellOrdersAsync(cancellationToken).ConfigureAwait(false)) return;
+            if (await TryCancelExcessSellOrdersAsync(cancellationToken).ConfigureAwait(false)) return;
             if (await TrySetBandSellOrdersAsync(cancellationToken).ConfigureAwait(false)) return;
             if (await TryCreateLowerBandOrderAsync(ticker, cancellationToken).ConfigureAwait(false)) return;
             await TryCloseOutOfRangeBandsAsync(ticker, cancellationToken).ConfigureAwait(false);
@@ -339,7 +340,18 @@ namespace Trader.Trading.Algorithms.Step
         {
             if (_symbol is null) throw new AlgorithmNotInitializedException();
 
-            foreach (var band in _bands.Where(x => x.Status == BandStatus.Open))
+            // skip if we have reach the max sell orders
+            var orders = await _repository
+                .GetTransientOrdersBySideAsync(_options.Symbol, OrderSide.Sell, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (orders.Count >= _options.MaxActiveSellOrders)
+            {
+                return false;
+            }
+
+            // apply new sell orders
+            foreach (var band in _bands.Where(x => x.Status == BandStatus.Open).OrderBy(x => x.OpenPrice))
             {
                 if (band.CloseOrderId is 0)
                 {
@@ -432,6 +444,55 @@ namespace Trader.Trading.Algorithms.Step
 
                     fail = true;
                 }
+            }
+
+            return fail;
+        }
+
+        /// <summary>
+        /// Identify and cancel excess sell orders above the limit.
+        /// </summary>
+        private async Task<bool> TryCancelExcessSellOrdersAsync(CancellationToken cancellationToken = default)
+        {
+            if (_symbol is null) throw new AlgorithmNotInitializedException();
+
+            // get all transient sell orders
+            var orders = await _repository
+                .GetTransientOrdersBySideAsync(_options.Symbol, OrderSide.Sell, cancellationToken)
+                .ConfigureAwait(false);
+
+            // skip if under the limit
+            if (orders.Count <= _options.MaxActiveSellOrders) return false;
+
+            // cancel all excess sell orders now
+
+            var fail = false;
+
+            foreach (var order in orders.OrderBy(x => x.Price).Skip(_options.MaxActiveSellOrders))
+            {
+                // close the rogue sell order
+                var result = await _trader
+                    .CancelOrderAsync(
+                        new CancelStandardOrder(
+                            _options.Symbol,
+                            order.OrderId,
+                            null,
+                            null,
+                            null,
+                            _clock.UtcNow),
+                        cancellationToken)
+                    .ConfigureAwait(false);
+
+                // save this order to the repository now to tolerate slow binance api updates
+                await _repository
+                    .SetOrderAsync(result, cancellationToken)
+                    .ConfigureAwait(false);
+
+                _logger.LogWarning(
+                    "{Type} {Name} cancelled sell order not associated with a band for {Quantity} {Asset} at {Price} {Quote}",
+                    Type, _name, result.OriginalQuantity, _symbol.BaseAsset, result.Price, _symbol.QuoteAsset);
+
+                fail = true;
             }
 
             return fail;

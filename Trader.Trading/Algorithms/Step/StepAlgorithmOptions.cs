@@ -14,6 +14,10 @@ namespace Trader.Trading.Algorithms.Step
         public int MaxBands { get; set; } = 99;
 
         [Required]
+        [Range(1, 99)]
+        public int MaxActiveSellOrders { get; set; } = 99;
+
+        [Required]
         [Range(0.01, 1)]
         public decimal PullbackRatio { get; set; } = 0.01m;
 

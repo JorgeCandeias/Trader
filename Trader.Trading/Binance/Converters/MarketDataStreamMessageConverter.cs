@@ -17,7 +17,7 @@ namespace Trader.Trading.Binance.Converters
             {
                 var error = new ExternalError(codeValue, messageProperty.GetRequiredString());
 
-                return new MarketDataStreamMessage(error, null);
+                return new MarketDataStreamMessage(error, null, null);
             }
 
             // see if we got a composite stream message
@@ -50,11 +50,38 @@ namespace Trader.Trading.Binance.Converters
                     element.GetProperty("v").GetRequiredDecimalFromString(),
                     element.GetProperty("q").GetRequiredDecimalFromString());
 
-                return new MarketDataStreamMessage(null, ticker);
+                return new MarketDataStreamMessage(null, ticker, null);
+            }
+
+            // attempt to parse a kline message
+            if (eventTypeProperty.ValueEquals("kline"))
+            {
+                var k = element.GetProperty("k");
+
+                var kline = new Kline(
+                    k.GetProperty("s").GetRequiredString(),
+                    context.Mapper.Map<KlineInterval>(k.GetProperty("i").GetRequiredString()),
+                    context.Mapper.Map<DateTime>(k.GetProperty("t").GetInt64()),
+                    context.Mapper.Map<DateTime>(k.GetProperty("T").GetInt64()),
+                    context.Mapper.Map<DateTime>(element.GetProperty("E").GetInt64()),
+                    k.GetProperty("f").GetInt64(),
+                    k.GetProperty("L").GetInt64(),
+                    k.GetProperty("o").GetRequiredDecimalFromString(),
+                    k.GetProperty("h").GetRequiredDecimalFromString(),
+                    k.GetProperty("l").GetRequiredDecimalFromString(),
+                    k.GetProperty("c").GetRequiredDecimalFromString(),
+                    k.GetProperty("v").GetRequiredDecimalFromString(),
+                    k.GetProperty("q").GetRequiredDecimalFromString(),
+                    k.GetProperty("n").GetInt32(),
+                    k.GetProperty("x").GetBoolean(),
+                    k.GetProperty("V").GetRequiredDecimalFromString(),
+                    k.GetProperty("Q").GetRequiredDecimalFromString());
+
+                return new MarketDataStreamMessage(null, null, kline);
             }
 
             // return an empty message if we cant detect the message type
-            return new MarketDataStreamMessage(null, null);
+            return MarketDataStreamMessage.Empty;
         }
     }
 }

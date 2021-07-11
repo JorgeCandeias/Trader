@@ -150,9 +150,11 @@ namespace Trader.Trading.Binance
             return _mapper.Map<Ticker>(output);
         }
 
-        public async Task<IEnumerable<Kline>> GetKlinesAsync(GetKlines model, CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyCollection<Kline>> GetKlinesAsync(GetKlines model, CancellationToken cancellationToken = default)
         {
             _ = model ?? throw new ArgumentNullException(nameof(model));
+
+            BinanceApiContext.SkipSigning = true;
 
             var input = _mapper.Map<KlineRequestModel>(model);
 
@@ -160,7 +162,11 @@ namespace Trader.Trading.Binance
                 .GetKlinesAsync(input, cancellationToken)
                 .ConfigureAwait(false);
 
-            return _mapper.Map<IEnumerable<Kline>>(output);
+            return _mapper.Map<IReadOnlyCollection<Kline>>(output, options =>
+            {
+                options.Items[nameof(Kline.Symbol)] = model.Symbol;
+                options.Items[nameof(Kline.Interval)] = model.Interval;
+            });
         }
 
         public async Task<string> CreateUserDataStreamAsync(CancellationToken cancellationToken = default)

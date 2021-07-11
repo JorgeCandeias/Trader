@@ -29,6 +29,7 @@ namespace Trader.Trading.Binance
             CreateMap<string, AccountType>().ConvertUsing<AccountTypeConverter>();
             CreateMap<string, ExecutionType>().ConvertUsing<ExecutionTypeConverter>();
             CreateMap<string, TimeZoneInfo>().ConvertUsing<TimeZoneInfoConverter>();
+            CreateMap<string, KlineInterval>().ConvertUsing<KlineIntervalConverter>();
             CreateMap<long, TimeSpan>().ConvertUsing<TimeSpanConverter>();
             CreateMap<decimal[], Bid>().ConvertUsing(x => new Bid(x[0], x[1]));
             CreateMap<decimal[], Ask>().ConvertUsing(x => new Ask(x[0], x[1]));
@@ -160,6 +161,29 @@ namespace Trader.Trading.Binance
 
             CreateMap<GetAllOrders, GetAllOrdersRequestModel>()
                 .ForCtorParam(nameof(GetAllOrdersRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
+
+            CreateMap<GetKlines, KlineRequestModel>();
+
+            CreateMap<JsonElement[], KlineResponseModel>()
+                .ForCtorParam(nameof(KlineResponseModel.OpenTime), x => x.MapFrom(y => y[0].GetInt64()))
+                .ForCtorParam(nameof(KlineResponseModel.OpenPrice), x => x.MapFrom(y => y[1].GetRequiredDecimalFromString()))
+                .ForCtorParam(nameof(KlineResponseModel.HighPrice), x => x.MapFrom(y => y[2].GetRequiredDecimalFromString()))
+                .ForCtorParam(nameof(KlineResponseModel.LowPrice), x => x.MapFrom(y => y[3].GetRequiredDecimalFromString()))
+                .ForCtorParam(nameof(KlineResponseModel.ClosePrice), x => x.MapFrom(y => y[4].GetRequiredDecimalFromString()))
+                .ForCtorParam(nameof(KlineResponseModel.Volume), x => x.MapFrom(y => y[5].GetRequiredDecimalFromString()))
+                .ForCtorParam(nameof(KlineResponseModel.CloseTime), x => x.MapFrom(y => y[6].GetInt64()))
+                .ForCtorParam(nameof(KlineResponseModel.QuoteAssetVolume), x => x.MapFrom(y => y[7].GetRequiredDecimalFromString()))
+                .ForCtorParam(nameof(KlineResponseModel.TradeCount), x => x.MapFrom(y => y[8].GetInt32()))
+                .ForCtorParam(nameof(KlineResponseModel.TakerBuyBaseAssetVolume), x => x.MapFrom(y => y[9].GetRequiredDecimalFromString()))
+                .ForCtorParam(nameof(KlineResponseModel.TakerBuyQuoteAssetVolume), x => x.MapFrom(y => y[10].GetRequiredDecimalFromString()));
+
+            CreateMap<KlineResponseModel, Kline>()
+                .ForCtorParam(nameof(Kline.Symbol), x => x.MapFrom((source, context) => context.Items[nameof(Kline.Symbol)]))
+                .ForCtorParam(nameof(Kline.Interval), x => x.MapFrom((source, context) => context.Items[nameof(Kline.Interval)]))
+                .ForCtorParam(nameof(Kline.EventTime), x => x.MapFrom(y => y.OpenTime))
+                .ForCtorParam(nameof(Kline.FirstTradeId), x => x.MapFrom(y => -1))
+                .ForCtorParam(nameof(Kline.LastTradeId), x => x.MapFrom(y => -1))
+                .ForCtorParam(nameof(Kline.IsClosed), x => x.MapFrom(y => true));
 
             // open converters
             // todo: move this to the shared model converters

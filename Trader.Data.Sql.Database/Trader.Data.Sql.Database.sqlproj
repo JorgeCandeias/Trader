@@ -106,9 +106,9 @@
     <Build Include="Procedures\SetTickers.sql" />
     <Build Include="Procedures\GetTicker.sql" />
     <Build Include="Procedures\GetSignificantCompletedOrders.sql" />
-    <Build Include="Tables\Candlestick.sql" />
-    <Build Include="Types\CandlestickTableParameter.sql" />
-    <Build Include="Procedures\SetCandlesticks.sql" />
+    <Build Include="Tables\Kline.sql" />
+    <Build Include="Types\KlineTableParameter.sql" />
+    <Build Include="Procedures\SetKlines.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Scripts\Script.PostDeployment.sql" />

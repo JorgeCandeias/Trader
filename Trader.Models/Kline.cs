@@ -7,6 +7,9 @@ namespace Trader.Models
         KlineInterval Interval,
         DateTime OpenTime,
         DateTime CloseTime,
+        DateTime EventTime,
+        long FirstTradeId,
+        long LastTradeId,
         decimal OpenPrice,
         decimal HighPrice,
         decimal LowPrice,
@@ -14,6 +17,7 @@ namespace Trader.Models
         decimal Volume,
         decimal QuoteAssetVolume,
         int TradeCount,
+        bool IsClosed,
         decimal TakerBuyBaseAssetVolume,
         decimal TakerBuyQuoteAssetVolume);
 }

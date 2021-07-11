@@ -1,11 +1,11 @@
-﻿CREATE PROCEDURE [dbo].[SetCandlesticks]
-	@Candlesticks [dbo].[CandlestickTableParameter] READONLY
+﻿CREATE PROCEDURE [dbo].[SetKlines]
+	@Klines [dbo].[KlineTableParameter] READONLY
 AS
 
 SET NOCOUNT ON;
 
-MERGE INTO [dbo].[Candlestick] AS [T]
-USING @Candlesticks AS [S]
+MERGE INTO [dbo].[Kline] AS [T]
+USING @Klines AS [S]
 ON [T].[SymbolId] = [S].[SymbolId]
 AND [T].[Interval] = [S].[Interval]
 AND [T].[OpenTime] = [S].[OpenTime]
@@ -16,6 +16,9 @@ INSERT
 	[Interval],
 	[OpenTime],
 	[CloseTime],
+	[EventTime],
+	[FirstTradeId],
+	[LastTradeId],
 	[OpenPrice],
 	[HighPrice],
 	[LowPrice],
@@ -23,6 +26,7 @@ INSERT
 	[Volume],
 	[QuoteAssetVolume],
 	[TradeCount],
+	[IsClosed],
 	[TakerBuyBaseAssetVolume],
 	[TakerBuyQuoteAssetVolume]
 )
@@ -32,6 +36,9 @@ VALUES
 	[Interval],
 	[OpenTime],
 	[CloseTime],
+	[EventTime],
+	[FirstTradeId],
+	[LastTradeId],
 	[OpenPrice],
 	[HighPrice],
 	[LowPrice],
@@ -39,6 +46,7 @@ VALUES
 	[Volume],
 	[QuoteAssetVolume],
 	[TradeCount],
+	[IsClosed],
 	[TakerBuyBaseAssetVolume],
 	[TakerBuyQuoteAssetVolume]
 )
@@ -47,11 +55,15 @@ UPDATE SET
 	[CloseTime] = [S].[CloseTime],
 	[OpenPrice] = [S].[OpenPrice],
 	[HighPrice] = [S].[HighPrice],
+	[EventTime] = [S].[EventTime],
+	[FirstTradeId] = [S].[FirstTradeId],
+	[LastTradeId] = [S].[LastTradeId],
 	[LowPrice] = [S].[LowPrice],
 	[ClosePrice] = [S].[ClosePrice],
 	[Volume] = [S].[Volume],
 	[QuoteAssetVolume] = [S].[QuoteAssetVolume],
 	[TradeCount] = [S].[TradeCount],
+	[IsClosed] = [S].[IsClosed],
 	[TakerBuyBaseAssetVolume] = [S].[TakerBuyBaseAssetVolume],
 	[TakerBuyQuoteAssetVolume] = [S].[TakerBuyQuoteAssetVolume]
 ;

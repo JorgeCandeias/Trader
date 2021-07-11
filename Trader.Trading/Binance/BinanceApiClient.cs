@@ -116,19 +116,6 @@ namespace Trader.Trading.Binance
             return _mapper.Map<IEnumerable<AggTrade>>(result);
         }
 
-        public async Task<IEnumerable<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, CancellationToken cancellationToken = default)
-        {
-            var intervalModel = _mapper.Map<string>(interval);
-
-            var result = await _client
-                .GetFromJsonAsync<JsonElement[][]>(
-                    new Uri($"/api/v3/klines?symbol={HttpUtility.UrlEncode(symbol)}&interval={HttpUtility.UrlEncode(intervalModel)}", UriKind.Relative),
-                    cancellationToken)
-                .ConfigureAwait(false);
-
-            return _mapper.Map<IEnumerable<Kline>>(result);
-        }
-
         public async Task<AvgPrice> GetAvgPriceAsync(string symbol, CancellationToken cancellationToken = default)
         {
             var result = await _client

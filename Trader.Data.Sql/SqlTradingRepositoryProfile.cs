@@ -51,8 +51,8 @@ namespace Trader.Data.Sql
 
             CreateMap<TickerEntity, MiniTicker>();
 
-            CreateMap<Kline, CandlestickTableParameterEntity>()
-                .ForCtorParam(nameof(CandlestickTableParameterEntity.SymbolId), x => x.MapFrom((source, context) => ((IDictionary<string, int>)context.Items[nameof(CandlestickTableParameterEntity.SymbolId)])[source.Symbol]));
+            CreateMap<Kline, KlineTableParameterEntity>()
+                .ForCtorParam(nameof(KlineTableParameterEntity.SymbolId), x => x.MapFrom((source, context) => ((IDictionary<string, int>)context.Items[nameof(KlineTableParameterEntity.SymbolId)])[source.Symbol]));
         }
     }
 }

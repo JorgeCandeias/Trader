@@ -662,7 +662,7 @@ namespace Trader.Data.Sql
             return _mapper.Map<MiniTicker>(entity);
         }
 
-        public async Task SetCandlesticksAsync(IEnumerable<Kline> candlesticks, CancellationToken cancellationToken = default)
+        public async Task SetKlinesAsync(IEnumerable<Kline> candlesticks, CancellationToken cancellationToken = default)
         {
             _ = candlesticks ?? throw new ArgumentNullException(nameof(candlesticks));
 
@@ -678,9 +678,9 @@ namespace Trader.Data.Sql
                 }
             }
 
-            var entities = _mapper.Map<IEnumerable<CandlestickTableParameterEntity>>(candlesticks, options =>
+            var entities = _mapper.Map<IEnumerable<KlineTableParameterEntity>>(candlesticks, options =>
             {
-                options.Items[nameof(CandlestickTableParameterEntity.SymbolId)] = symbolIds;
+                options.Items[nameof(KlineTableParameterEntity.SymbolId)] = symbolIds;
             });
 
             using var connection = new SqlConnection(_options.ConnectionString);
@@ -689,10 +689,10 @@ namespace Trader.Data.Sql
                 .ExecuteAsync(ct => connection
                     .ExecuteAsync(
                         new CommandDefinition(
-                            "[dbo].[SetCandlesticks]",
+                            "[dbo].[SetKlines]",
                             new
                             {
-                                Candlesticks = entities.AsSqlDataRecords().AsTableValuedParameter("[dbo].[CandlestickTableParameter]")
+                                Klines = entities.AsSqlDataRecords().AsTableValuedParameter("[dbo].[KlineTableParameter]")
                             },
                             null,
                             _options.CommandTimeoutAsInteger,

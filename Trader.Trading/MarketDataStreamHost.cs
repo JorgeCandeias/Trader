@@ -5,11 +5,12 @@ using Microsoft.Extensions.Options;
 using System;
 using System.Buffers;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
-using Trader.Core.Time;
 using Trader.Core.Timers;
 using Trader.Data;
 using Trader.Models;
@@ -24,18 +25,16 @@ namespace Trader.Trading
         private readonly IMarketDataStreamClientFactory _factory;
         private readonly ITradingRepository _repository;
         private readonly ITradingService _trader;
-        private readonly ISystemClock _clock;
         private readonly IMapper _mapper;
         private readonly ISafeTimerFactory _timers;
 
-        public MarketDataStreamHost(IOptions<MarketDataStreamHostOptions> options, ILogger<MarketDataStreamHost> logger, IMarketDataStreamClientFactory factory, ITradingRepository repository, ITradingService trader, ISystemClock clock, IMapper mapper, ISafeTimerFactory timers)
+        public MarketDataStreamHost(IOptions<MarketDataStreamHostOptions> options, ILogger<MarketDataStreamHost> logger, IMarketDataStreamClientFactory factory, ITradingRepository repository, ITradingService trader, IMapper mapper, ISafeTimerFactory timers)
         {
             _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _factory = factory ?? throw new ArgumentNullException(nameof(factory));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _timers = timers ?? throw new ArgumentNullException(nameof(timers));
         }
@@ -72,6 +71,11 @@ namespace Trader.Trading
         /// </summary>
         private readonly ConcurrentDictionary<string, MiniTicker> _tickers = new();
 
+        /// <summary>
+        /// Conflates the incoming kline data.
+        /// </summary>
+        private readonly KlineConflatorChannel _klines = new();
+
         [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "DTO")]
         private async Task TickWorkerAsync(CancellationToken cancellationToken)
         {
@@ -79,7 +83,9 @@ namespace Trader.Trading
             using var registration = cancellationToken.Register(() => _ready.TrySetCanceled(cancellationToken));
 
             // create a client for the streams we want
-            var streams = _options.Symbols.Select(x => $"{x.ToLowerInvariant()}@miniTicker").ToList();
+            var streams = new List<string>();
+            streams.AddRange(_options.Symbols.Select(x => $"{x.ToLowerInvariant()}@miniTicker"));
+            streams.AddRange(_options.Symbols.Select(x => $"{x.ToLowerInvariant()}@kline_{_mapper.Map<string>(KlineInterval.Minutes1)}"));
 
             _logger.LogInformation("{Name} connecting to streams {Streams}...", Name, streams);
 
@@ -107,6 +113,11 @@ namespace Trader.Trading
                     {
                         _tickers[message.MiniTicker.Symbol] = message.MiniTicker;
                     }
+
+                    if (message.Kline is not null && _options.Symbols.Contains(message.Kline.Symbol))
+                    {
+                        await _klines.Writer.WriteAsync(message.Kline, cancellationToken).ConfigureAwait(false);
+                    }
                 }
             }, cancellationToken);
 
@@ -116,6 +127,9 @@ namespace Trader.Trading
 
             // sync tickers from the api
             await SyncTickersAsync(cancellationToken).ConfigureAwait(false);
+
+            // sync klines from the api
+            await SyncKlinesAsync(cancellationToken).ConfigureAwait(false);
 
             // signal the start method that everything is ready
             _ready.TrySetResult();
@@ -150,7 +164,45 @@ namespace Trader.Trading
             _logger.LogInformation("{Name} synced tickers for {Tickers}", Name, segment.Select(x => x.Symbol));
         }
 
+        private async Task SyncKlinesAsync(CancellationToken cancellationToken)
+        {
+            var start = DateTime.UtcNow.AddDays(-2);
+            var end = DateTime.UtcNow;
+
+            _logger.LogInformation("{Name} is syncing klines for {Symbols} from {Start} to {End}", Name, _options.Symbols, start, end);
+
+            foreach (var symbol in _options.Symbols)
+            {
+                var current = start;
+                var count = 0;
+
+                while (current < end)
+                {
+                    var klines = await _trader
+                        .GetKlinesAsync(new GetKlines(symbol, KlineInterval.Minutes1, current, end, 1000), cancellationToken)
+                        .ConfigureAwait(false);
+
+                    if (klines.Count is 0) break;
+
+                    await _repository
+                        .SetKlinesAsync(klines, cancellationToken)
+                        .ConfigureAwait(false);
+
+                    current = klines.Max(x => x.OpenTime).AddMilliseconds(1);
+                    count += klines.Count;
+                }
+
+                _logger.LogInformation("{Name} synced {Count} kline items for {Symbol}", Name, count, symbol);
+            }
+        }
+
         private async Task TickSaveAsync(CancellationToken cancellationToken)
+        {
+            await SaveTickersAsync(cancellationToken).ConfigureAwait(false);
+            await SaveKlinesAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        private async Task SaveTickersAsync(CancellationToken cancellationToken)
         {
             var buffer = ArrayPool<MiniTicker>.Shared.Rent(_options.Symbols.Count);
             var count = 0;
@@ -170,11 +222,19 @@ namespace Trader.Trading
                 await _repository
                     .SetTickersAsync(segment, cancellationToken)
                     .ConfigureAwait(false);
-
-                //_logger.LogInformation("{Name} saved prices for {Symbols}", Name, segment.Select(x => x.Symbol));
             }
 
             ArrayPool<MiniTicker>.Shared.Return(buffer);
+        }
+
+        private async Task SaveKlinesAsync(CancellationToken cancellationToken)
+        {
+            if (_klines.Reader.TryRead(out var klines))
+            {
+                await _repository
+                    .SetKlinesAsync(klines, cancellationToken)
+                    .ConfigureAwait(false);
+            }
         }
 
         #region Hosted Service
@@ -250,5 +310,122 @@ namespace Trader.Trading
         }
 
         #endregion Disposable
+
+        private class KlineConflatorChannel : Channel<Kline, IEnumerable<Kline>>
+        {
+            private readonly Dictionary<(string Symbol, KlineInterval Interval, DateTime OpenTime), Kline> _conflation = new();
+            private readonly SemaphoreSlim _semaphore = new(1, 1);
+
+            internal KlineConflatorChannel()
+            {
+                Writer = new KlineConflatorWriter(this);
+                Reader = new KlineConflatorReader(this);
+            }
+
+            private ValueTask<bool> WaitToAccessAsync(CancellationToken cancellationToken = default)
+            {
+                // quick path for channel available
+                if (_semaphore.CurrentCount > 0)
+                {
+                    return new ValueTask<bool>(true);
+                }
+
+                // slow path for awaiting
+                return new ValueTask<bool>(WaitToAccessInnerAsync(cancellationToken));
+            }
+
+            private async Task<bool> WaitToAccessInnerAsync(CancellationToken cancellationToken)
+            {
+                // wait until the channel is free
+                await _semaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+                // release it as this is just a test
+                _semaphore.Release();
+
+                return true;
+            }
+
+            private class KlineConflatorReader : ChannelReader<IEnumerable<Kline>>
+            {
+                private readonly KlineConflatorChannel _channel;
+
+                public KlineConflatorReader(KlineConflatorChannel channel)
+                {
+                    _channel = channel ?? throw new ArgumentNullException(nameof(channel));
+                }
+
+                public override bool TryRead([MaybeNullWhen(false)] out IEnumerable<Kline> item)
+                {
+                    // attempt to reserve the channel
+                    if (!_channel._semaphore.Wait(TimeSpan.Zero))
+                    {
+                        item = null;
+                        return false;
+                    }
+
+                    try
+                    {
+                        // quick path for no items in the conflation
+                        if (_channel._conflation.Count is 0)
+                        {
+                            item = null;
+                            return false;
+                        }
+
+                        // otherwise switch the conflation and return the items
+                        item = _channel._conflation.Values.ToList();
+                        _channel._conflation.Clear();
+                        return true;
+                    }
+                    finally
+                    {
+                        // always release the channel
+                        _channel._semaphore.Release();
+                    }
+                }
+
+                public override ValueTask<bool> WaitToReadAsync(CancellationToken cancellationToken = default)
+                {
+                    return _channel.WaitToAccessAsync(cancellationToken);
+                }
+            }
+
+            private class KlineConflatorWriter : ChannelWriter<Kline>
+            {
+                private readonly KlineConflatorChannel _channel;
+
+                public KlineConflatorWriter(KlineConflatorChannel channel)
+                {
+                    _channel = channel ?? throw new ArgumentNullException(nameof(channel));
+                }
+
+                public override bool TryWrite(Kline item)
+                {
+                    if (item is null) throw new ArgumentNullException(nameof(item));
+
+                    // attempt to reserve the channel without blocking
+                    if (!_channel._semaphore.Wait(TimeSpan.Zero))
+                    {
+                        return false;
+                    }
+
+                    // conflate the item
+                    var key = (item.Symbol, item.Interval, item.OpenTime);
+                    if (!_channel._conflation.TryGetValue(key, out var current) || item.EventTime > current.EventTime)
+                    {
+                        _channel._conflation[key] = item;
+                    }
+
+                    // release the channel
+                    _channel._semaphore.Release();
+                    return true;
+                }
+
+                public override ValueTask<bool> WaitToWriteAsync(CancellationToken cancellationToken = default)
+                {
+                    return _channel.WaitToAccessAsync(cancellationToken);
+                }
+            }
+        }
     }
 }

@@ -2,11 +2,14 @@
 
 namespace Trader.Data.Sql.Models
 {
-    internal record CandlestickEntity(
+    internal record KlineEntity(
         int SymbolId,
         int Interval,
         DateTime OpenTime,
         DateTime CloseTime,
+        DateTime EventTime,
+        long FirstTradeId,
+        long LastTradeId,
         decimal OpenPrice,
         decimal HighPrice,
         decimal LowPrice,
@@ -14,6 +17,7 @@ namespace Trader.Data.Sql.Models
         decimal Volume,
         decimal QuoteAssetVolume,
         int TradeCount,
+        bool IsClosed,
         decimal TakerBuyBaseAssetVolume,
         decimal TakerBuyQuoteAssetVolume);
 }

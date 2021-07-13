@@ -464,9 +464,6 @@ namespace Trader.Trading.Algorithms.Step
                 .Where(x => x is not 0)
                 .ToHashSet();
 
-            // skip if there are no excess bands
-            if (bands.Count is 0) return false;
-
             // get all transient sell orders
             var orders = await _repository
                 .GetTransientOrdersBySideAsync(_options.Symbol, OrderSide.Sell, cancellationToken)

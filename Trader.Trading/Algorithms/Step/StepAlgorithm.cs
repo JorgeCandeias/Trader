@@ -350,8 +350,8 @@ namespace Trader.Trading.Algorithms.Step
                 return false;
             }
 
-            // apply new sell orders
-            foreach (var band in _bands.Where(x => x.Status == BandStatus.Open).OrderBy(x => x.OpenPrice))
+            // create a sell order for the lowest band only
+            foreach (var band in _bands.Where(x => x.Status == BandStatus.Open).Take(_options.MaxActiveSellOrders))
             {
                 if (band.CloseOrderId is 0)
                 {
@@ -470,7 +470,7 @@ namespace Trader.Trading.Algorithms.Step
                 .ConfigureAwait(false);
 
             // cancel all excess sell orders now
-            var changed = false;            
+            var changed = false;
             foreach (var order in orders)
             {
                 if (!bands.Contains(order.OrderId))
@@ -835,6 +835,9 @@ namespace Trader.Trading.Algorithms.Step
 
                 var byOpenPrice = OpenPrice.CompareTo(other.OpenPrice);
                 if (byOpenPrice is not 0) return byOpenPrice;
+
+                var byOpenOrderId = OpenOrderId.CompareTo(other.OpenOrderId);
+                if (byOpenOrderId is not 0) return byOpenOrderId;
 
                 var byId = Id.CompareTo(other.Id);
                 if (byId is not 0) return byId;

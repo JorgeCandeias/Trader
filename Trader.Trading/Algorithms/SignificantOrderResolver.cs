@@ -196,7 +196,7 @@ namespace Trader.Trading.Algorithms
                     if (sell.RemainingExecutedQuantity != 0)
                     {
                         // something went very wrong if we got here
-                        _logger.LogError(
+                        _logger.LogWarning(
                             "{Name} {Symbol} could not fill {Symbol} {Side} order {OrderId} with quantity {ExecutedQuantity} at price {Price} because there are {RemainingExecutedQuantity} units missing",
                             nameof(SignificantOrderResolver), symbol, sell.Order.Symbol, sell.Order.Side, sell.Order.OrderId, sell.Order.ExecutedQuantity, sell.Order.Price, sell.RemainingExecutedQuantity);
                     }
@@ -247,7 +247,7 @@ namespace Trader.Trading.Algorithms
                     if (sell.RemainingExecutedQuantity != 0)
                     {
                         // something went very wrong if we got here
-                        _logger.LogError(
+                        _logger.LogWarning(
                             "{Name} {Symbol} could not fill {Symbol} {Side} order {OrderId} with quantity {ExecutedQuantity} at price {Price} because there are {RemainingExecutedQuantity} units missing",
                             nameof(SignificantOrderResolver), symbol, sell.Order.Symbol, sell.Order.Side, sell.Order.OrderId, sell.Order.ExecutedQuantity, sell.Order.Price, sell.RemainingExecutedQuantity);
                     }

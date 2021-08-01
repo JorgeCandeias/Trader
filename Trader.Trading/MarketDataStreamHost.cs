@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Polly;
 using System;
 using System.Buffers;
 using System.Collections.Concurrent;
@@ -166,7 +167,7 @@ namespace Trader.Trading
 
         private async Task SyncKlinesAsync(CancellationToken cancellationToken)
         {
-            var start = DateTime.UtcNow.AddDays(-2);
+            var start = DateTime.UtcNow.Subtract(_options.KlineHistorySpan);
             var end = DateTime.UtcNow;
 
             _logger.LogInformation("{Name} is syncing klines for {Symbols} from {Start} to {End}", Name, _options.Symbols, start, end);
@@ -178,8 +179,19 @@ namespace Trader.Trading
 
                 while (current < end)
                 {
-                    var klines = await _trader
-                        .GetKlinesAsync(new GetKlines(symbol, KlineInterval.Minutes1, current, end, 1000), cancellationToken)
+                    var klines = await Policy
+                        .Handle<BinanceTooManyRequestsException>()
+                        .WaitAndRetryForeverAsync(
+                            (n, ex, ctx) => ((BinanceTooManyRequestsException)ex).RetryAfter,
+                            (ex, ts, ctx) =>
+                            {
+                                _logger.LogWarning(ex,
+                                    "{Name} backing off for {TimeSpan}...",
+                                    Name, ts);
+
+                                return Task.CompletedTask;
+                            })
+                        .ExecuteAsync(ct => _trader.GetKlinesAsync(new GetKlines(symbol, KlineInterval.Minutes1, current, end, 1000), ct), cancellationToken, false)
                         .ConfigureAwait(false);
 
                     if (klines.Count is 0) break;

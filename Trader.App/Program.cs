@@ -79,6 +79,10 @@ namespace Trader.App
                     {
                         services.AddStepAlgorithm(algo.Key, options => algo.Bind(options));
                     }
+                    foreach (var algo in context.Configuration.GetSection("Trading:Algorithms:Change").GetChildren())
+                    {
+                        services.AddChangeAlgorithm(algo.Key, options => algo.Bind(options));
+                    }
                 })
                 .RunConsoleAsync();
         }

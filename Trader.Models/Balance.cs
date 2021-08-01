@@ -6,5 +6,8 @@ namespace Trader.Models
         string Asset,
         decimal Free,
         decimal Locked,
-        DateTime UpdatedTime);
+        DateTime UpdatedTime)
+    {
+        public decimal Total => Free + Locked;
+    }
 }

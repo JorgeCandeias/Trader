@@ -109,6 +109,7 @@
     <Build Include="Tables\Kline.sql" />
     <Build Include="Types\KlineTableParameter.sql" />
     <Build Include="Procedures\SetKlines.sql" />
+    <Build Include="Procedures\GetKlines.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Scripts\Script.PostDeployment.sql" />

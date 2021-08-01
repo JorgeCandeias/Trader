@@ -703,5 +703,30 @@ namespace Trader.Data.Sql
                         false)
                 .ConfigureAwait(false);
         }
+
+        public async Task<IEnumerable<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime startOpenTime, DateTime endOpenTime, CancellationToken cancellationToken = default)
+        {
+            _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
+
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            return await connection
+                .QueryAsync<Kline>(
+                    new CommandDefinition(
+                        "[dbo].[GetKlines]",
+                        new
+                        {
+                            Symbol = symbol,
+                            Interval = interval,
+                            StartOpenTime = startOpenTime,
+                            EndOpenTime = endOpenTime
+                        },
+                        null,
+                        _options.CommandTimeoutAsInteger,
+                        CommandType.StoredProcedure,
+                        CommandFlags.Buffered,
+                        cancellationToken))
+                .ConfigureAwait(false);
+        }
     }
 }

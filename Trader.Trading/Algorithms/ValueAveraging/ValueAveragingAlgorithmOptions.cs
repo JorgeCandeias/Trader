@@ -14,7 +14,7 @@ namespace Trader.Trading.Algorithms.ValueAveraging
 
         [Required]
         [Range(0.001, 1)]
-        public decimal TargetQuoteBalanceFractionPerBuy { get; set; } = 0.01m;
+        public decimal TargetQuoteBalanceFractionPerBuy { get; set; } = 0.001m;
 
         [Required]
         [Range(1, 2)]

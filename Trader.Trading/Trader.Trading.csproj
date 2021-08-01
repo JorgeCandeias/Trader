@@ -34,4 +34,8 @@
     <ProjectReference Include="..\Trader.Trading.Abstractions\Trader.Trading.Abstractions.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Algorithms\Trend\" />
+  </ItemGroup>
+
 </Project>

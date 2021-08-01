@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Trader.Models;
@@ -57,5 +58,7 @@ namespace Trader.Data
         Task<MiniTicker> GetTickerAsync(string symbol, CancellationToken cancellationToken = default);
 
         Task SetKlinesAsync(IEnumerable<Kline> candlesticks, CancellationToken cancellationToken = default);
+
+        Task<IEnumerable<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime startOpenTime, DateTime endOpenTime, CancellationToken cancellationToken = default);
     }
 }

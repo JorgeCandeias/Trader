@@ -84,9 +84,19 @@ namespace Trader.Trading.Algorithms.Steps
             // check if the sell is under the minimum notional filter
             if (quantity * price < minNotionalFilter.MinNotional)
             {
-                _logger.LogInformation(
+                _logger.LogError(
                     "{Type} {Name} cannot set sell order for {Quantity} {Asset} at {Price} {Quote} totalling {Total} {Quote} because it is under the minimum notional of {MinNotional} {Quote}",
                     Type, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.QuoteAsset, minNotionalFilter.MinNotional, symbol.QuoteAsset);
+
+                return significant.Profit;
+            }
+
+            // check if the sell is above the maximum percent filter
+            if (price > ticker.ClosePrice * percentFilter.MultiplierUp)
+            {
+                _logger.LogError(
+                    "{Type} {Name} cannot set sell order for {Quantity} {Asset} at {Price} {Quote} totalling {Total} {Quote} because it is under the maximum percent filter price of {MaxPrice} {Quote}",
+                    Type, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.QuoteAsset, ticker.ClosePrice * percentFilter.MultiplierUp, symbol.QuoteAsset);
 
                 return significant.Profit;
             }

@@ -156,12 +156,12 @@ namespace Trader.Trading
                 await Policy
                     .Handle<BinanceTooManyRequestsException>()
                     .WaitAndRetryForeverAsync(
-                        (n, ex, ctx) => ((BinanceTooManyRequestsException)ex).RetryAfter,
+                        (n, ex, ctx) => ((BinanceTooManyRequestsException)ex).RetryAfter.Add(TimeSpan.FromSeconds(1)),
                         (ex, ts, ctx) =>
                         {
                             _logger.LogWarning(ex,
                                 "{Name} backing off for {TimeSpan}...",
-                                Name, ts);
+                                Name, ts.Add(TimeSpan.FromSeconds(1)));
 
                             return Task.CompletedTask;
                         })

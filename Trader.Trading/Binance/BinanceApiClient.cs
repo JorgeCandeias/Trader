@@ -374,6 +374,60 @@ namespace Trader.Trading.Binance
 
         #endregion Account Endpoints
 
+        #region Savings Endpoints
+
+        public async Task<LeftDailyRedemptionQuotaOnFlexibleProductResponseModel?> GetLeftDailyRedemptionQuotaOnFlexibleProductAsync(LeftDailyRedemptionQuotaOnFlexibleProductRequestModel model, CancellationToken cancellationToken = default)
+        {
+            _ = model ?? throw new ArgumentNullException(nameof(model));
+
+            try
+            {
+                return await _client
+                    .GetFromJsonAsync<LeftDailyRedemptionQuotaOnFlexibleProductResponseModel>(Combine(new Uri("/sapi/v1/lending/daily/userRedemptionQuota", UriKind.Relative), model), cancellationToken)
+                    .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
+            }
+            catch (BinanceCodeException ex) when (ex.BinanceCode == -6001)
+            {
+                // handle "daily product does not exist" response
+                return null;
+            }
+        }
+
+        public async Task<IEnumerable<FlexibleProductPositionResponseModel>> GetFlexibleProductPositionAsync(FlexibleProductPositionRequestModel model, CancellationToken cancellationToken = default)
+        {
+            _ = model ?? throw new ArgumentNullException(nameof(model));
+
+            return await _client
+                .GetFromJsonAsync<IEnumerable<FlexibleProductPositionResponseModel>>(Combine(new Uri("/sapi/v1/lending/daily/token/position", UriKind.Relative), model), cancellationToken)
+                .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
+        }
+
+        public async Task RedeemFlexibleProductAsync(FlexibleProductRedemptionRequestModel model, CancellationToken cancellationToken = default)
+        {
+            _ = model ?? throw new ArgumentNullException(nameof(model));
+
+            var response = await _client
+                .PostAsync(Combine(new Uri("/sapi/v1/lending/daily/redeem", UriKind.Relative), model), EmptyHttpContent.Instance, cancellationToken)
+                .ConfigureAwait(false);
+
+            response.EnsureSuccessStatusCode();
+        }
+
+        private readonly Uri _getFlexibleProductListUri = new("/sapi/v1/lending/daily/product/list", UriKind.Relative);
+
+        public async Task<IEnumerable<FlexibleProductResponseModel>> GetFlexibleProductListAsync(FlexibleProductRequestModel model, CancellationToken cancellationToken = default)
+        {
+            _ = model ?? throw new ArgumentNullException(nameof(model));
+
+            var uri = Combine(_getFlexibleProductListUri, model);
+
+            return await _client
+                .GetFromJsonAsync<IEnumerable<FlexibleProductResponseModel>>(uri, cancellationToken)
+                .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
+        }
+
+        #endregion Savings Endpoints
+
         #region Helpers
 
         /// <summary>

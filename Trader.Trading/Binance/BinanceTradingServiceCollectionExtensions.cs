@@ -78,6 +78,9 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<ExecutionTypeConverter>()
                 .AddSingleton<MarketDataStreamMessageConverter>()
                 .AddSingleton<KlineIntervalConverter>()
+                .AddSingleton<FlexibleProductRedemptionTypeConverter>()
+                .AddSingleton<FlexibleProductStatusConverter>()
+                .AddSingleton<FlexibleProductFeaturedConverter>()
                 .AddSingleton(typeof(ImmutableListConverter<,>)); // todo: move this to the shared model converters
 
             // add object pool

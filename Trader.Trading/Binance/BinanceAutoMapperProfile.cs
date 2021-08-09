@@ -30,6 +30,9 @@ namespace Trader.Trading.Binance
             CreateMap<string, ExecutionType>().ConvertUsing<ExecutionTypeConverter>();
             CreateMap<string, TimeZoneInfo>().ConvertUsing<TimeZoneInfoConverter>();
             CreateMap<string, KlineInterval>().ConvertUsing<KlineIntervalConverter>();
+            CreateMap<string, FlexibleProductRedemptionType>().ConvertUsing<FlexibleProductRedemptionTypeConverter>();
+            CreateMap<string, FlexibleProductStatus>().ConvertUsing<FlexibleProductStatusConverter>();
+            CreateMap<string, FlexibleProductFeatured>().ConvertUsing<FlexibleProductFeaturedConverter>();
             CreateMap<long, TimeSpan>().ConvertUsing<TimeSpanConverter>();
             CreateMap<decimal[], Bid>().ConvertUsing(x => new Bid(x[0], x[1]));
             CreateMap<decimal[], Ask>().ConvertUsing(x => new Ask(x[0], x[1]));
@@ -47,6 +50,9 @@ namespace Trader.Trading.Binance
             CreateMap<OcoOrderStatus, string>().ConvertUsing<OcoOrderStatusConverter>();
             CreateMap<AccountType, string>().ConvertUsing<AccountTypeConverter>();
             CreateMap<ExecutionType, string>().ConvertUsing<ExecutionTypeConverter>();
+            CreateMap<FlexibleProductRedemptionType, string>().ConvertUsing<FlexibleProductRedemptionTypeConverter>();
+            CreateMap<FlexibleProductStatus, string>().ConvertUsing<FlexibleProductStatusConverter>();
+            CreateMap<FlexibleProductFeatured, string>().ConvertUsing<FlexibleProductFeaturedConverter>();
 
             // simple model mappings
             CreateMap<ExchangeInfoModel, ExchangeInfo>();
@@ -184,6 +190,24 @@ namespace Trader.Trading.Binance
                 .ForCtorParam(nameof(Kline.FirstTradeId), x => x.MapFrom(y => -1))
                 .ForCtorParam(nameof(Kline.LastTradeId), x => x.MapFrom(y => -1))
                 .ForCtorParam(nameof(Kline.IsClosed), x => x.MapFrom(y => true));
+
+            CreateMap<GetFlexibleProductPosition, FlexibleProductPositionRequestModel>()
+                .ForCtorParam(nameof(FlexibleProductPositionRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
+
+            CreateMap<FlexibleProductPositionResponseModel, FlexibleProductPosition>();
+
+            CreateMap<GetLeftDailyRedemptionQuotaOnFlexibleProduct, LeftDailyRedemptionQuotaOnFlexibleProductRequestModel>()
+                .ForCtorParam(nameof(LeftDailyRedemptionQuotaOnFlexibleProductRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
+
+            CreateMap<LeftDailyRedemptionQuotaOnFlexibleProductResponseModel, LeftDailyRedemptionQuotaOnFlexibleProduct>();
+
+            CreateMap<RedeemFlexibleProduct, FlexibleProductRedemptionRequestModel>()
+                .ForCtorParam(nameof(FlexibleProductRedemptionRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
+
+            CreateMap<GetFlexibleProduct, FlexibleProductRequestModel>()
+                .ForCtorParam(nameof(FlexibleProductRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
+
+            CreateMap<FlexibleProductResponseModel, FlexibleProduct>();
 
             // open converters
             // todo: move this to the shared model converters

@@ -336,4 +336,66 @@
         int TradeCount,
         string TakerBuyBaseAssetVolume,
         string TakerBuyQuoteAssetVolume);
+
+    internal record FlexibleProductPositionRequestModel(
+        string Asset,
+        long? RecvWindow,
+        long Timestamp);
+
+    internal record FlexibleProductPositionResponseModel(
+        decimal AnnualInterestRate,
+        string Asset,
+        decimal AvgAnnualInterestRate,
+        bool CanRedeem,
+        decimal DailyInterestRate,
+        decimal FreeAmount,
+        decimal FreezeAmount,
+        decimal LockedAmount,
+        string ProductId,
+        string ProductName,
+        decimal RedeemingAmount,
+        decimal TodayPurchasedAmount,
+        decimal TotalAmount,
+        decimal TotalInterest);
+
+    internal record LeftDailyRedemptionQuotaOnFlexibleProductRequestModel(
+        string ProductId,
+        string Type,
+        long? RecvWindow,
+        long Timestamp);
+
+    internal record LeftDailyRedemptionQuotaOnFlexibleProductResponseModel(
+        string Asset,
+        decimal DailyQuota,
+        decimal LeftQuota,
+        decimal MinRedemptionAmount);
+
+    internal record FlexibleProductRedemptionRequestModel(
+        string ProductId,
+        decimal Amount,
+        string Type,
+        long? RecvWindow,
+        long Timestamp);
+
+    internal record FlexibleProductRequestModel(
+        string Status,
+        string Featured,
+        long? Current,
+        long? Size,
+        long? RecvWindow,
+        long Timestamp);
+
+    internal record FlexibleProductResponseModel(
+        string Asset,
+        decimal AvgAnnualInterestRate,
+        bool CanPurchase,
+        bool CanRedeem,
+        decimal DailyInterestPerThousand,
+        bool Featured,
+        decimal MinPurchaseAmount,
+        string ProductId,
+        decimal PurchasedAmount,
+        string Status,
+        decimal UpLimit,
+        decimal UpLimitPerUser);
 }

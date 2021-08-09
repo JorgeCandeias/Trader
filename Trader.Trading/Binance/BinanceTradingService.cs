@@ -4,8 +4,11 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Trader.Core.Time;
 using Trader.Models;
 using Trader.Models.Collections;
 
@@ -18,17 +21,21 @@ namespace Trader.Trading.Binance
         private readonly BinanceApiClient _client;
         private readonly BinanceUsageContext _usage;
         private readonly IMapper _mapper;
+        private readonly ISystemClock _clock;
 
-        public BinanceTradingService(ILogger<BinanceTradingService> logger, IOptions<BinanceOptions> options, BinanceApiClient client, BinanceUsageContext usage, IMapper mapper)
+        public BinanceTradingService(ILogger<BinanceTradingService> logger, IOptions<BinanceOptions> options, BinanceApiClient client, BinanceUsageContext usage, IMapper mapper, ISystemClock clock)
         {
             _logger = logger;
             _options = options.Value;
             _client = client;
             _usage = usage;
             _mapper = mapper;
+            _clock = clock;
         }
 
         private static string Name => nameof(BinanceTradingService);
+
+        private ImmutableDictionary<string, ImmutableList<FlexibleProduct>> _flexibleProducts = ImmutableDictionary<string, ImmutableList<FlexibleProduct>>.Empty;
 
         public async Task<ExchangeInfo> GetExchangeInfoAsync(CancellationToken cancellationToken = default)
         {
@@ -169,6 +176,80 @@ namespace Trader.Trading.Binance
             });
         }
 
+        public async Task<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionAsync(
+            string asset,
+            CancellationToken cancellationToken = default)
+        {
+            var model = new GetFlexibleProductPosition(asset, null, _clock.UtcNow);
+
+            var input = _mapper.Map<FlexibleProductPositionRequestModel>(model);
+
+            var output = await _client
+                .GetFlexibleProductPositionAsync(input, cancellationToken)
+                .ConfigureAwait(false);
+
+            return _mapper.Map<IReadOnlyCollection<FlexibleProductPosition>>(output);
+        }
+
+        public async Task<LeftDailyRedemptionQuotaOnFlexibleProduct?> GetLeftDailyRedemptionQuotaOnFlexibleProductAsync(
+            string productId,
+            FlexibleProductRedemptionType type,
+            CancellationToken cancellationToken = default)
+        {
+            var model = new GetLeftDailyRedemptionQuotaOnFlexibleProduct(productId, type, null, _clock.UtcNow);
+
+            var input = _mapper.Map<LeftDailyRedemptionQuotaOnFlexibleProductRequestModel>(model);
+
+            var output = await _client
+                .GetLeftDailyRedemptionQuotaOnFlexibleProductAsync(input, cancellationToken)
+                .ConfigureAwait(false);
+
+            return _mapper.Map<LeftDailyRedemptionQuotaOnFlexibleProduct>(output);
+        }
+
+        public async Task RedeemFlexibleProductAsync(
+            string productId,
+            decimal amount,
+            FlexibleProductRedemptionType type,
+            CancellationToken cancellationToken = default)
+        {
+            var model = new RedeemFlexibleProduct(productId, amount, type, null, _clock.UtcNow);
+
+            var input = _mapper.Map<FlexibleProductRedemptionRequestModel>(model);
+
+            await _client
+                .RedeemFlexibleProductAsync(input, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        public async Task<IReadOnlyCollection<FlexibleProduct>> GetFlexibleProductListAsync(
+            FlexibleProductStatus status,
+            FlexibleProductFeatured featured,
+            long? current,
+            long? size,
+            CancellationToken cancellationToken = default)
+        {
+            var model = new GetFlexibleProduct(status, featured, current, size, null, _clock.UtcNow);
+
+            var input = _mapper.Map<FlexibleProductRequestModel>(model);
+
+            var output = await _client
+                .GetFlexibleProductListAsync(input, cancellationToken)
+                .ConfigureAwait(false);
+
+            return _mapper.Map<IReadOnlyCollection<FlexibleProduct>>(output);
+        }
+
+        public IReadOnlyCollection<FlexibleProduct> GetCachedFlexibleProductsByAsset(string asset)
+        {
+            if (_flexibleProducts.TryGetValue(asset, out var value))
+            {
+                return value;
+            }
+
+            return ImmutableList<FlexibleProduct>.Empty;
+        }
+
         public async Task<string> CreateUserDataStreamAsync(CancellationToken cancellationToken = default)
         {
             var output = await _client
@@ -200,9 +281,10 @@ namespace Trader.Trading.Binance
                 .ConfigureAwait(false);
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
-            return SyncLimitsAsync(cancellationToken);
+            await SyncLimitsAsync(cancellationToken).ConfigureAwait(false);
+            await SyncFlexibleProductsAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
@@ -233,6 +315,33 @@ namespace Trader.Trading.Binance
 
                 _usage.SetLimit(limit.Type, limit.TimeSpan, limit.Limit);
             }
+        }
+
+        private async Task SyncFlexibleProductsAsync(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("{Name} querying flexible products...", Name);
+
+            var page = 0;
+            var list = new List<FlexibleProduct>();
+
+            while (true)
+            {
+                var result = await GetFlexibleProductListAsync(FlexibleProductStatus.All, FlexibleProductFeatured.All, ++page, 100, cancellationToken)
+                    .ConfigureAwait(false);
+
+                // stop if there are no more items to get
+                if (result.Count == 0) break;
+
+                _logger.LogInformation("{Name} queried a page with {Count} flexible products...", Name, result.Count);
+
+                // otherwise keep the items
+                list.AddRange(result);
+            }
+
+            _logger.LogInformation("{Name} queried a total of {Count} flexible products", Name, list.Count);
+
+            // keep the items in a safe state for concurrent querying
+            _flexibleProducts = list.GroupBy(x => x.Asset).ToImmutableDictionary(x => x.Key, x => x.ToImmutableList());
         }
 
         #endregion Helpers

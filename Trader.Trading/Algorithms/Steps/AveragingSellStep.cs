@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Trader.Core.Time;
 using Trader.Data;
 using Trader.Models;
+using Trader.Models.Collections;
 
 namespace Trader.Trading.Algorithms.Steps
 {
@@ -16,14 +17,16 @@ namespace Trader.Trading.Algorithms.Steps
         private readonly ITradingRepository _repository;
         private readonly ITradingService _trader;
         private readonly ISystemClock _clock;
+        private readonly IRedeemSavingsStep _redeemSavingsStep;
 
-        public AveragingSellStep(ILogger<AveragingSellStep> logger, ISignificantOrderResolver significantOrderResolver, ITradingRepository repository, ITradingService trader, ISystemClock clock)
+        public AveragingSellStep(ILogger<AveragingSellStep> logger, ISignificantOrderResolver significantOrderResolver, ITradingRepository repository, ITradingService trader, ISystemClock clock, IRedeemSavingsStep redeemSavingsStep)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _significantOrderResolver = significantOrderResolver ?? throw new ArgumentNullException(nameof(significantOrderResolver));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _redeemSavingsStep = redeemSavingsStep ?? throw new ArgumentNullException(nameof(redeemSavingsStep));
         }
 
         private static string Type => nameof(AveragingSellStep);
@@ -53,17 +56,29 @@ namespace Trader.Trading.Algorithms.Steps
                 .ResolveAsync(symbol.Name, symbol.QuoteAsset, cancellationToken)
                 .ConfigureAwait(false);
 
+            // calculate the desired sell
+            var desired = CalculateDesiredSell(symbol, profitMultiplier, significant.Orders, lotSizeFilter, percentFilter, ticker, priceFilter, minNotionalFilter);
+
+            // remove all non-desired buy orders and set the desired sell order if needed
+            await SetDesiredStateAsync(symbol, desired, cancellationToken).ConfigureAwait(false);
+
+            // return the latest known profit
+            return significant.Profit;
+        }
+
+        private DesiredSell CalculateDesiredSell(Symbol symbol, decimal profitMultiplier, ImmutableSortedOrderSet orders, LotSizeSymbolFilter lotSizeFilter, PercentPriceSymbolFilter percentFilter, MiniTicker ticker, PriceSymbolFilter priceFilter, MinNotionalSymbolFilter minNotionalFilter)
+        {
             // skip if there is nothing to sell
-            if (significant.Orders.IsEmpty)
+            if (orders.IsEmpty)
             {
-                return significant.Profit;
+                return DesiredSell.None;
             }
 
             // take all known significant buy orders on the symbol
-            var quantity = significant.Orders.Sum(x => x.ExecutedQuantity);
+            var quantity = orders.Sum(x => x.ExecutedQuantity);
 
             // calculate the weighted average price on all the significant orders
-            var price = significant.Orders.Sum(x => x.Price * x.ExecutedQuantity) / quantity;
+            var price = orders.Sum(x => x.Price * x.ExecutedQuantity) / quantity;
 
             // bump the price by the profit multipler so we have a sell price
             price *= profitMultiplier;
@@ -88,7 +103,7 @@ namespace Trader.Trading.Algorithms.Steps
                     "{Type} {Name} cannot set sell order for {Quantity} {Asset} at {Price} {Quote} totalling {Total} {Quote} because it is under the minimum notional of {MinNotional} {Quote}",
                     Type, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.QuoteAsset, minNotionalFilter.MinNotional, symbol.QuoteAsset);
 
-                return significant.Profit;
+                return DesiredSell.None;
             }
 
             // check if the sell is above the maximum percent filter
@@ -98,17 +113,21 @@ namespace Trader.Trading.Algorithms.Steps
                     "{Type} {Name} cannot set sell order for {Quantity} {Asset} at {Price} {Quote} totalling {Total} {Quote} because it is under the maximum percent filter price of {MaxPrice} {Quote}",
                     Type, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.QuoteAsset, ticker.ClosePrice * percentFilter.MultiplierUp, symbol.QuoteAsset);
 
-                return significant.Profit;
+                return DesiredSell.None;
             }
 
-            // we now have a valid desired sell
-            var desired = new DesiredSell(quantity, price);
+            // only sell if the price is at or above the ticker
+            if (price > ticker.ClosePrice)
+            {
+                _logger.LogInformation(
+                    "{Type} {Name} holding off sell order until price hits {Price} {Quote}",
+                    Type, symbol.Name, price, symbol.QuoteAsset);
 
-            // remove all non-desired buy orders and set the desired sell order if needed
-            await SetDesiredStateAsync(symbol, desired, cancellationToken).ConfigureAwait(false);
+                return DesiredSell.None;
+            }
 
-            // return the latest known profit
-            return significant.Profit;
+            // otherwise we now have a valid desired sell
+            return new DesiredSell(quantity, price);
         }
 
         private async Task SetDesiredStateAsync(Symbol symbol, DesiredSell desired, CancellationToken cancellationToken)
@@ -117,15 +136,16 @@ namespace Trader.Trading.Algorithms.Steps
                 .GetTransientOrdersBySideAsync(symbol.Name, OrderSide.Sell, cancellationToken)
                 .ConfigureAwait(false);
 
+            // cancel all non-desired orders
             foreach (var order in orders)
             {
-                if (order.Type != OrderType.Limit || order.OriginalQuantity != desired.Quantity || order.Price != desired.Price)
+                if (desired == DesiredSell.None || order.Type != OrderType.Limit || order.OriginalQuantity != desired.Quantity || order.Price != desired.Price)
                 {
                     _logger.LogInformation(
                         "{Type} {Name} cancelling non-desired {OrderType} {OrderSide} order {OrderId} for {Quantity} {Asset} at {Price} {Quote}",
                         Type, symbol.Name, order.Type, order.Side, order.OrderId, order.OriginalQuantity, symbol.BaseAsset, order.Price, symbol.QuoteAsset);
 
-                    var result = await _trader
+                    var orderResult = await _trader
                         .CancelOrderAsync(
                             new CancelStandardOrder(
                                 order.Symbol,
@@ -138,49 +158,81 @@ namespace Trader.Trading.Algorithms.Steps
                         .ConfigureAwait(false);
 
                     await _repository
-                        .SetOrderAsync(result, cancellationToken)
+                        .SetOrderAsync(orderResult, cancellationToken)
                         .ConfigureAwait(false);
+                }
+            }
 
-                    // let the balances resync now
+            // if any order survived then we can stop here
+            if (!orders.IsEmpty) return;
+
+            // if there is no desired sell then we can stop here
+            if (desired == DesiredSell.None) return;
+
+            // see if there is enough balance to set the sell order
+            var balance = await _repository
+                .GetBalanceAsync(symbol.BaseAsset, cancellationToken)
+                .ConfigureAwait(false);
+
+            var orderType = OrderType.Limit;
+            var orderSide = OrderSide.Sell;
+
+            // if there is not enough units to place the sell then attempt to redeem from savings
+            if (balance.Free < desired.Quantity)
+            {
+                _logger.LogWarning(
+                    "{Type} {Name} must place {OrderType} {OrderSide} of {Quantity} {Asset} for {Price} {Quote} but there is only {Free} {Asset} available. Will attempt to redeem the rest from savings.",
+                    Type, symbol.Name, orderType, orderSide, desired.Quantity, symbol.BaseAsset, desired.Price, symbol.QuoteAsset, balance.Free, symbol.BaseAsset);
+
+                var necessary = desired.Quantity - balance.Free;
+
+                var redeemed = await _redeemSavingsStep
+                    .GoAsync(symbol, necessary, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (!redeemed)
+                {
+                    _logger.LogError(
+                        "{Type} {Name} could not redeem the necessary {Quantity} {Asset} from savings",
+                        Type, symbol.Name, necessary, symbol.BaseAsset);
+
                     return;
                 }
             }
 
             // if there is no order left then we can set the desired sell
-            if (orders.IsEmpty)
-            {
-                var orderType = OrderType.Limit;
-                var orderSide = OrderSide.Sell;
 
-                _logger.LogInformation(
-                    "{Type} {Name} placing {OrderType} {OrderSide} order for {Quantity} {Asset} at {Price} {Quote}",
-                    Type, symbol.Name, orderType, orderSide, desired.Quantity, symbol.BaseAsset, desired.Price, symbol.QuoteAsset);
+            _logger.LogInformation(
+                "{Type} {Name} placing {OrderType} {OrderSide} order for {Quantity} {Asset} at {Price} {Quote}",
+                Type, symbol.Name, orderType, orderSide, desired.Quantity, symbol.BaseAsset, desired.Price, symbol.QuoteAsset);
 
-                var result = await _trader
-                    .CreateOrderAsync(
-                        new Order(
-                            symbol.Name,
-                            orderSide,
-                            orderType,
-                            TimeInForce.GoodTillCanceled,
-                            desired.Quantity,
-                            null,
-                            desired.Price,
-                            $"{symbol.Name}{desired.Price:F8}".Replace(".", "", StringComparison.Ordinal),
-                            null,
-                            null,
-                            NewOrderResponseType.Full,
-                            null,
-                            _clock.UtcNow),
-                        cancellationToken)
-                    .ConfigureAwait(false);
+            var result = await _trader
+                .CreateOrderAsync(
+                    new Order(
+                        symbol.Name,
+                        orderSide,
+                        orderType,
+                        TimeInForce.GoodTillCanceled,
+                        desired.Quantity,
+                        null,
+                        desired.Price,
+                        $"{symbol.Name}{desired.Price:F8}".Replace(".", "", StringComparison.Ordinal),
+                        null,
+                        null,
+                        NewOrderResponseType.Full,
+                        null,
+                        _clock.UtcNow),
+                    cancellationToken)
+                .ConfigureAwait(false);
 
-                await _repository
-                    .SetOrderAsync(result, 0m, 0m, 0m, cancellationToken)
-                    .ConfigureAwait(false);
-            }
+            await _repository
+                .SetOrderAsync(result, 0m, 0m, 0m, cancellationToken)
+                .ConfigureAwait(false);
         }
 
-        private record DesiredSell(decimal Quantity, decimal Price);
+        private record DesiredSell(decimal Quantity, decimal Price)
+        {
+            public static readonly DesiredSell None = new(0m, 0m);
+        }
     }
 }

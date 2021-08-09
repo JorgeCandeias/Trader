@@ -9,6 +9,7 @@ using Trader.Core.Time;
 using Trader.Data;
 using Trader.Models;
 using Trader.Models.Collections;
+using Trader.Trading.Algorithms.Steps;
 using static System.String;
 
 namespace Trader.Trading.Algorithms.Step
@@ -25,8 +26,9 @@ namespace Trader.Trading.Algorithms.Step
         private readonly ISignificantOrderResolver _significantOrderResolver;
         private readonly ITradingRepository _repository;
         private readonly IOrderCodeGenerator _orderCodeGenerator;
+        private readonly IRedeemSavingsStep _redeemSavingsStep;
 
-        public StepAlgorithm(string name, ILogger<StepAlgorithm> logger, IOptionsSnapshot<StepAlgorithmOptions> options, ISystemClock clock, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ITradingRepository repository, IOrderCodeGenerator orderCodeGenerator)
+        public StepAlgorithm(string name, ILogger<StepAlgorithm> logger, IOptionsSnapshot<StepAlgorithmOptions> options, ISystemClock clock, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ITradingRepository repository, IOrderCodeGenerator orderCodeGenerator, IRedeemSavingsStep redeemSavingsStep)
         {
             _name = name ?? throw new ArgumentNullException(nameof(name));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -36,6 +38,7 @@ namespace Trader.Trading.Algorithms.Step
             _significantOrderResolver = significantOrderResolver ?? throw new ArgumentNullException(nameof(significantOrderResolver));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _orderCodeGenerator = orderCodeGenerator ?? throw new ArgumentNullException(nameof(orderCodeGenerator));
+            _redeemSavingsStep = redeemSavingsStep ?? throw new ArgumentNullException(nameof(redeemSavingsStep));
         }
 
         private Symbol? _symbol;
@@ -358,11 +361,29 @@ namespace Trader.Trading.Algorithms.Step
                     // acount for leftovers
                     if (band.Quantity > _balances.Asset.Free)
                     {
-                        _logger.LogError(
-                            "{Type} {Name} cannot set band sell order of {Quantity} {Asset} for {Price} {Quote} because there are only {Balance} {Asset} free",
-                            Type, _name, band.Quantity, _symbol.BaseAsset, band.ClosePrice, _symbol.QuoteAsset, _balances.Asset.Free, _symbol.BaseAsset);
+                        var necessary = band.Quantity - _balances.Asset.Free;
 
-                        return false;
+                        _logger.LogWarning(
+                            "{Type} {Name} must place {OrderType} {OrderSide} of {Quantity} {Asset} for {Price} {Quote} but there is only {Free} {Asset} available. Will attempt to redeem {Necessary} {Asset} rest from savings.",
+                            Type, _name, OrderType.Limit, OrderSide.Sell, band.Quantity, _symbol.BaseAsset, band.ClosePrice, _symbol.QuoteAsset, _balances.Asset.Free, _symbol.BaseAsset, necessary, _symbol.BaseAsset);
+
+                        var redeemed = await _redeemSavingsStep
+                            .GoAsync(_symbol, necessary, cancellationToken)
+                            .ConfigureAwait(false);
+
+                        if (redeemed)
+                        {
+                            // let the algo cycle to allow redemption to process
+                            return true;
+                        }
+                        else
+                        {
+                            _logger.LogError(
+                               "{Type} {Name} cannot set band sell order of {Quantity} {Asset} for {Price} {Quote} because there are only {Balance} {Asset} free and savings redemption failed",
+                                Type, _name, band.Quantity, _symbol.BaseAsset, band.ClosePrice, _symbol.QuoteAsset, _balances.Asset.Free, _symbol.BaseAsset);
+
+                            return false;
+                        }
                     }
 
                     var result = await _trader

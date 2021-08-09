@@ -30,6 +30,30 @@ namespace Trader.Trading
 
         Task<IReadOnlyCollection<Kline>> GetKlinesAsync(GetKlines model, CancellationToken cancellationToken = default);
 
+        Task<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionAsync(
+            string asset,
+            CancellationToken cancellationToken = default);
+
+        Task<LeftDailyRedemptionQuotaOnFlexibleProduct?> GetLeftDailyRedemptionQuotaOnFlexibleProductAsync(
+            string productId,
+            FlexibleProductRedemptionType type,
+            CancellationToken cancellationToken = default);
+
+        Task RedeemFlexibleProductAsync(
+            string productId,
+            decimal amount,
+            FlexibleProductRedemptionType type,
+            CancellationToken cancellationToken = default);
+
+        Task<IReadOnlyCollection<FlexibleProduct>> GetFlexibleProductListAsync(
+           FlexibleProductStatus status,
+           FlexibleProductFeatured featured,
+           long? current,
+           long? size,
+           CancellationToken cancellationToken = default);
+
+        IReadOnlyCollection<FlexibleProduct> GetCachedFlexibleProductsByAsset(string asset);
+
         Task<string> CreateUserDataStreamAsync(CancellationToken cancellationToken = default);
 
         Task PingUserDataStreamAsync(string listenKey, CancellationToken cancellationToken = default);

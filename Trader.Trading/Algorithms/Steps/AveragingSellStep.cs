@@ -187,7 +187,7 @@ namespace Trader.Trading.Algorithms.Steps
                 var necessary = desired.Quantity - balance.Free;
 
                 var redeemed = await _redeemSavingsStep
-                    .GoAsync(symbol, necessary, cancellationToken)
+                    .GoAsync(symbol.BaseAsset, necessary, cancellationToken)
                     .ConfigureAwait(false);
 
                 if (!redeemed)

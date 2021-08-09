@@ -368,11 +368,15 @@ namespace Trader.Trading.Algorithms.Step
                             Type, _name, OrderType.Limit, OrderSide.Sell, band.Quantity, _symbol.BaseAsset, band.ClosePrice, _symbol.QuoteAsset, _balances.Asset.Free, _symbol.BaseAsset, necessary, _symbol.BaseAsset);
 
                         var redeemed = await _redeemSavingsStep
-                            .GoAsync(_symbol, necessary, cancellationToken)
+                            .GoAsync(_symbol.BaseAsset, necessary, cancellationToken)
                             .ConfigureAwait(false);
 
                         if (redeemed)
                         {
+                            _logger.LogInformation(
+                                "{Type} {Name} redeemed {Amount} {Asset} successfully",
+                                Type, _name, necessary, _symbol.BaseAsset);
+
                             // let the algo cycle to allow redemption to process
                             return true;
                         }
@@ -611,11 +615,33 @@ namespace Trader.Trading.Algorithms.Step
                 // ensure there is enough quote asset for it
                 if (total > _balances.Quote.Free)
                 {
+                    var necessary = total - _balances.Quote.Free;
+
                     _logger.LogWarning(
-                        "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}",
+                        "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}. Will attempt to redeem from savings...",
                         Type, _name, total, _symbol.QuoteAsset, _balances.Quote.Free, _symbol.QuoteAsset);
 
-                    return false;
+                    var redeemed = await _redeemSavingsStep
+                        .GoAsync(_symbol.QuoteAsset, necessary, cancellationToken)
+                        .ConfigureAwait(false);
+
+                    if (redeemed)
+                    {
+                        _logger.LogInformation(
+                            "{Type} {Name} redeemed {Amount} {Asset} successfully",
+                            Type, _name, necessary, _symbol.QuoteAsset);
+
+                        // let the algo cycle to allow redemption to process
+                        return true;
+                    }
+                    else
+                    {
+                        _logger.LogError(
+                            "{Type} {Name} failed to redeem the necessary amount of {Quantity} {Asset}",
+                            Type, _name, necessary, _symbol.QuoteAsset);
+
+                        return false;
+                    }
                 }
 
                 // calculate the appropriate quantity to buy

@@ -16,13 +16,15 @@ namespace Trader.Trading.Algorithms.Steps
         private readonly ITradingRepository _repository;
         private readonly ITradingService _trader;
         private readonly ISystemClock _clock;
+        private readonly IRedeemSavingsStep _redeemSavingsStep;
 
-        public TrackingBuyStep(ILogger<TrackingBuyStep> logger, ITradingRepository repository, ITradingService trader, ISystemClock clock)
+        public TrackingBuyStep(ILogger<TrackingBuyStep> logger, ITradingRepository repository, ITradingService trader, ISystemClock clock, IRedeemSavingsStep redeemSavingsStep)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _redeemSavingsStep = redeemSavingsStep ?? throw new ArgumentNullException(nameof(redeemSavingsStep));
         }
 
         private static string Type => nameof(TrackingBuyStep);
@@ -85,11 +87,32 @@ namespace Trader.Trading.Algorithms.Steps
             // ensure there is enough quote asset for it
             if (total > balance.Free)
             {
-                _logger.LogWarning(
-                    "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}",
-                    Type, symbol.Name, total, symbol.QuoteAsset, balance.Free, symbol.QuoteAsset);
+                var necessary = total - balance.Free;
 
-                return false;
+                _logger.LogWarning(
+                    "{Type} {Name} must place order with amount of {Total} {Quote} but the free amount is only {Free} {Quote}. Will attempt to redeem the necessary {Necessary} {Quote} from savings...",
+                    Type, symbol.Name, total, symbol.QuoteAsset, balance.Free, symbol.QuoteAsset, necessary, symbol.QuoteAsset);
+
+                var redeemed = await _redeemSavingsStep
+                    .GoAsync(symbol.QuoteAsset, necessary, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (redeemed)
+                {
+                    _logger.LogInformation(
+                        "{Type} {Name} redeemed {Quantity} {Asset} from savings",
+                        Type, symbol.Name, necessary, symbol.QuoteAsset);
+
+                    return true;
+                }
+                else
+                {
+                    _logger.LogError(
+                        "{Type} {Name} could not redeem the necessary {Quantity} {Asset} from savings",
+                        Type, symbol.Name, necessary, symbol.QuoteAsset);
+
+                    return false;
+                }
             }
 
             // calculate the appropriate quantity to buy

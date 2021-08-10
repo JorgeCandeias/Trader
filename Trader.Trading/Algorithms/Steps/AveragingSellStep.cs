@@ -117,11 +117,11 @@ namespace Trader.Trading.Algorithms.Steps
             }
 
             // only sell if the price is at or above the ticker
-            if (price > ticker.ClosePrice)
+            if (ticker.ClosePrice < price)
             {
                 _logger.LogInformation(
-                    "{Type} {Name} holding off sell order until price hits {Price} {Quote}",
-                    Type, symbol.Name, price, symbol.QuoteAsset);
+                    "{Type} {Name} holding off sell order of {Quantity} {Asset} until price hits {Price} {Quote} ({Percent:P2} of current value of {Ticker} {Quote})",
+                    Type, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, price / ticker.ClosePrice, ticker.ClosePrice, symbol.QuoteAsset);
 
                 return DesiredSell.None;
             }

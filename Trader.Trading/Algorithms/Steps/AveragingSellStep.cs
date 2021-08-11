@@ -53,7 +53,7 @@ namespace Trader.Trading.Algorithms.Steps
 
             // get all significant buys
             var significant = await _significantOrderResolver
-                .ResolveAsync(symbol.Name, symbol.QuoteAsset, cancellationToken)
+                .ResolveAsync(symbol, cancellationToken)
                 .ConfigureAwait(false);
 
             // calculate the desired sell

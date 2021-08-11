@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -279,7 +278,7 @@ namespace Trader.Trading.Algorithms.Change
             if (_symbol is null) throw new AlgorithmNotInitializedException();
 
             _significant = await _significantOrderResolver
-                .ResolveAsync(_options.Symbol, _symbol.QuoteAsset, cancellationToken)
+                .ResolveAsync(_symbol, cancellationToken)
                 .ConfigureAwait(false);
         }
     }

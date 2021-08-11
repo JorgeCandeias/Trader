@@ -83,7 +83,7 @@ namespace Trader.Trading.Algorithms.Step
             await ApplyAccountInfoAsync(cancellationToken).ConfigureAwait(false);
 
             var significant = await _significantOrderResolver
-                .ResolveAsync(_options.Symbol, _symbol.QuoteAsset, cancellationToken)
+                .ResolveAsync(_symbol, cancellationToken)
                 .ConfigureAwait(false);
 
             _profit = significant.Profit;

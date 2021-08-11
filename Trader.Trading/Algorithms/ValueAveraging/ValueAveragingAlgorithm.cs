@@ -79,7 +79,7 @@ namespace Trader.Trading.Algorithms.ValueAveraging
 
             // run the resolve to calculate profit
             var result = await _significantOrderResolver
-                .ResolveAsync(_symbol.Name, _symbol.QuoteAsset, cancellationToken)
+                .ResolveAsync(_symbol, cancellationToken)
                 .ConfigureAwait(false);
 
             _profit = result.Profit;

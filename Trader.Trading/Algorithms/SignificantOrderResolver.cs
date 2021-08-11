@@ -50,18 +50,18 @@ namespace Trader.Trading.Algorithms
             public static MapComparer Instance { get; } = new MapComparer();
         }
 
-        public async Task<SignificantResult> ResolveAsync(string symbol, string quote, CancellationToken cancellationToken = default)
+        public async Task<SignificantResult> ResolveAsync(Symbol symbol, CancellationToken cancellationToken = default)
         {
             // todo: request the Symbol object instead of the separate parameters
 
             // todo: push this mapping effort to the repository so less data needs to move about
             var watch = Stopwatch.StartNew();
             var orders = await _repository
-                .GetSignificantCompletedOrdersAsync(symbol, cancellationToken)
+                .GetSignificantCompletedOrdersAsync(symbol.Name, cancellationToken)
                 .ConfigureAwait(false);
 
             var trades = await _repository
-                .GetTradesAsync(symbol, cancellationToken)
+                .GetTradesAsync(symbol.Name, cancellationToken)
                 .ConfigureAwait(false);
 
             var lookup = trades.ToLookup(x => x.OrderId);
@@ -86,7 +86,7 @@ namespace Trader.Trading.Algorithms
                     // we have missing trades if this happened
                     _logger.LogError(
                         "{Name} {Symbol} could not match {OrderSide} {OrderType} {OrderId} at {Time} for {ExecutedQuantity} units with total trade quantity of {TradeQuantity}",
-                        Name, symbol, order.Side, order.Type, order.OrderId, order.Time, order.ExecutedQuantity, quantity);
+                        Name, symbol.Name, order.Side, order.Type, order.OrderId, order.Time, order.ExecutedQuantity, quantity);
                 }
             }
 
@@ -198,7 +198,7 @@ namespace Trader.Trading.Algorithms
                         // something went very wrong if we got here
                         _logger.LogWarning(
                             "{Name} {Symbol} could not fill {Symbol} {Side} order {OrderId} with quantity {ExecutedQuantity} at price {Price} because there are {RemainingExecutedQuantity} units missing",
-                            nameof(SignificantOrderResolver), symbol, sell.Order.Symbol, sell.Order.Side, sell.Order.OrderId, sell.Order.ExecutedQuantity, sell.Order.Price, sell.RemainingExecutedQuantity);
+                            nameof(SignificantOrderResolver), symbol.Name, sell.Order.Symbol, sell.Order.Side, sell.Order.OrderId, sell.Order.ExecutedQuantity, sell.Order.Price, sell.RemainingExecutedQuantity);
                     }
                 }
             }
@@ -249,7 +249,7 @@ namespace Trader.Trading.Algorithms
                         // something went very wrong if we got here
                         _logger.LogWarning(
                             "{Name} {Symbol} could not fill {Symbol} {Side} order {OrderId} with quantity {ExecutedQuantity} at price {Price} because there are {RemainingExecutedQuantity} units missing",
-                            nameof(SignificantOrderResolver), symbol, sell.Order.Symbol, sell.Order.Side, sell.Order.OrderId, sell.Order.ExecutedQuantity, sell.Order.Price, sell.RemainingExecutedQuantity);
+                            nameof(SignificantOrderResolver), symbol.Name, sell.Order.Symbol, sell.Order.Side, sell.Order.OrderId, sell.Order.ExecutedQuantity, sell.Order.Price, sell.RemainingExecutedQuantity);
                     }
                 }
             }
@@ -288,10 +288,10 @@ namespace Trader.Trading.Algorithms
 
             _logger.LogInformation(
                 "{Name} {Symbol} identified {Count} significant orders in {ElapsedMs}ms",
-                nameof(SignificantOrderResolver), symbol, significant.Count, watch.ElapsedMilliseconds);
+                nameof(SignificantOrderResolver), symbol.Name, significant.Count, watch.ElapsedMilliseconds);
 
             var summary = new Profit(
-                quote,
+                symbol.QuoteAsset,
                 todayProfit,
                 yesterdayProfit,
                 thisWeekProfit,

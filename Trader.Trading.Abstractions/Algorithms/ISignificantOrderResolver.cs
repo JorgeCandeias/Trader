@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Trader.Models;
 using Trader.Models.Collections;
 using static System.String;
 
@@ -9,7 +10,7 @@ namespace Trader.Trading.Algorithms
 {
     public interface ISignificantOrderResolver
     {
-        Task<SignificantResult> ResolveAsync(string symbol, string quote, CancellationToken cancellationToken = default);
+        Task<SignificantResult> ResolveAsync(Symbol symbol, CancellationToken cancellationToken = default);
     }
 
     public record SignificantResult(ImmutableSortedOrderSet Orders, Profit Profit);

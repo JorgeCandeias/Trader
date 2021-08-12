@@ -17,5 +17,8 @@ namespace Trader.Trading.Algorithms.Accumulator
         public decimal TargetQuoteBalanceFractionPerBuy { get; set; } = 0.01m;
 
         public decimal? MaxNotional { get; set; }
+
+        [Required]
+        public bool Enabled { get; set; } = true;
     }
 }

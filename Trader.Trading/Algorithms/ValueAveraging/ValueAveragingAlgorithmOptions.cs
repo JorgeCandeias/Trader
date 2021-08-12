@@ -20,6 +20,8 @@ namespace Trader.Trading.Algorithms.ValueAveraging
         [Range(1, 2)]
         public decimal ProfitMultipler { get; set; } = 1.1m;
 
+        public decimal? MaxNotional { get; set; }
+
         [Required]
         public bool IsOpeningEnabled { get; set; } = true;
 

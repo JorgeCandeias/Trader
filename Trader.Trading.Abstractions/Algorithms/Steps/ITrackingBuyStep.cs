@@ -6,6 +6,6 @@ namespace Trader.Trading.Algorithms.Steps
 {
     public interface ITrackingBuyStep
     {
-        Task<bool> GoAsync(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, CancellationToken cancellationToken = default);
+        Task<bool> GoAsync(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, CancellationToken cancellationToken = default);
     }
 }

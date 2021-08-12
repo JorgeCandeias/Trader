@@ -88,7 +88,7 @@ namespace Trader.Trading.Algorithms.ValueAveraging
                 (result.Orders.Count == 0 && _options.IsOpeningEnabled))
             {
                 await _trackingBuyStep
-                    .GoAsync(_symbol, _options.PullbackRatio, _options.TargetQuoteBalanceFractionPerBuy, cancellationToken)
+                    .GoAsync(_symbol, _options.PullbackRatio, _options.TargetQuoteBalanceFractionPerBuy, _options.MaxNotional, cancellationToken)
                     .ConfigureAwait(false);
             }
             else

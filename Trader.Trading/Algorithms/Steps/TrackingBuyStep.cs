@@ -29,14 +29,14 @@ namespace Trader.Trading.Algorithms.Steps
 
         private static string Type => nameof(TrackingBuyStep);
 
-        public Task<bool> GoAsync(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, CancellationToken cancellationToken = default)
+        public Task<bool> GoAsync(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, CancellationToken cancellationToken = default)
         {
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
-            return GoInnerAsync(symbol, pullbackRatio, targetQuoteBalanceFractionPerBuy, cancellationToken);
+            return GoInnerAsync(symbol, pullbackRatio, targetQuoteBalanceFractionPerBuy, maxNotional, cancellationToken);
         }
 
-        private async Task<bool> GoInnerAsync(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, CancellationToken cancellationToken)
+        private async Task<bool> GoInnerAsync(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, CancellationToken cancellationToken)
         {
             // sync data from the exchange
             var orders = await GetOpenOrdersAsync(symbol, cancellationToken).ConfigureAwait(false);
@@ -78,11 +78,36 @@ namespace Trader.Trading.Algorithms.Steps
                 return false;
             }
 
-            // calculate the amount to pay with
+            // calculate the target notional
             var total = balance.Free * targetQuoteBalanceFractionPerBuy;
+
+            // cap it at the max notional
+            if (maxNotional.HasValue)
+            {
+                total = Math.Min(total, maxNotional.Value);
+            }
 
             // bump it to the minimum notional if needed
             total = Math.Max(total, minNotionalFilter.MinNotional);
+
+            // calculate the appropriate quantity to buy
+            var quantity = total / lowBuyPrice;
+
+            // round it down to the lot size step
+            quantity = Math.Ceiling(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
+
+            // calculat the true notional after adjustments
+            total = quantity * lowBuyPrice;
+
+            // check if it still is under the max notional after adjustments - some assets have very high minimum notionals or lot sizes
+            if (maxNotional.HasValue && total > maxNotional)
+            {
+                _logger.LogError(
+                    "{Type} {Name} cannot place sell order with amount of {Total} {Quote} because it is above the configured maximum notional of {MaxNotional}",
+                    Type, symbol.Name, total, symbol.QuoteAsset, maxNotional);
+
+                return false;
+            }
 
             // ensure there is enough quote asset for it
             if (total > balance.Free)
@@ -114,12 +139,6 @@ namespace Trader.Trading.Algorithms.Steps
                     return false;
                 }
             }
-
-            // calculate the appropriate quantity to buy
-            var quantity = total / lowBuyPrice;
-
-            // round it down to the lot size step
-            quantity = Math.Ceiling(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
 
             _logger.LogInformation(
                 "{Type} {Name} placing {OrderType} {OrderSode} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",

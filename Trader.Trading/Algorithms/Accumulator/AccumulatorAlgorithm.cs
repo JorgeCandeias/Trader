@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Trader.Models;
+using Trader.Trading.Algorithms.Exceptions;
 using Trader.Trading.Algorithms.Steps;
 
 namespace Trader.Trading.Algorithms.Accumulator

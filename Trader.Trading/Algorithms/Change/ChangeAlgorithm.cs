@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Trader.Core.Time;
 using Trader.Data;
 using Trader.Models;
+using Trader.Trading.Algorithms.Exceptions;
 using Trader.Trading.Indicators;
 using static System.String;
 

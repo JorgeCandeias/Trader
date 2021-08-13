@@ -9,6 +9,7 @@ using Trader.Core.Time;
 using Trader.Data;
 using Trader.Models;
 using Trader.Models.Collections;
+using Trader.Trading.Algorithms.Exceptions;
 using Trader.Trading.Algorithms.Steps;
 using static System.String;
 

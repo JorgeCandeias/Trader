@@ -6,6 +6,7 @@ using Serilog;
 using Serilog.Events;
 using System.Linq;
 using System.Threading.Tasks;
+using static System.String;
 
 namespace Trader.App
 {
@@ -46,7 +47,8 @@ namespace Trader.App
                                 .GetSection("Trading:Algorithms")
                                 .GetChildren()
                                 .SelectMany(x => x.GetChildren())
-                                .Select(x => x["Symbol"]));
+                                .Select(x => x["Symbol"])
+                                .Where(x => !IsNullOrEmpty(x)));
                         })
                         .AddUserDataStreamHost(options =>
                         {
@@ -55,7 +57,8 @@ namespace Trader.App
                                 .GetSection("Trading:Algorithms")
                                 .GetChildren()
                                 .SelectMany(x => x.GetChildren())
-                                .Select(x => x["Symbol"]));
+                                .Select(x => x["Symbol"])
+                                .Where(x => !IsNullOrEmpty(x)));
                         })
                         .AddTradingHost(options => context.Configuration.Bind("Trading:Host"))
                         .AddSystemClock()
@@ -67,6 +70,10 @@ namespace Trader.App
                         .AddBase62NumberSerializer();
 
                     // add all algorithms by type
+                    foreach (var algo in context.Configuration.GetSection("Trading:Algorithms:MinimumBalance").GetChildren())
+                    {
+                        services.AddMinimumBalanceAlgorithm(algo.Key, options => algo.Bind(options));
+                    }
                     foreach (var algo in context.Configuration.GetSection("Trading:Algorithms:Accumulator").GetChildren())
                     {
                         services.AddAccumulatorAlgorithm(algo.Key, options => algo.Bind(options));

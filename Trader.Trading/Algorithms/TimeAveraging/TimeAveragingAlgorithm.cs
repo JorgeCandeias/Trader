@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Trader.Core.Time;
 using Trader.Data;
 using Trader.Models;
+using Trader.Trading.Algorithms.Exceptions;
 
 namespace Trader.Trading.Algorithms.TimeAveraging
 {

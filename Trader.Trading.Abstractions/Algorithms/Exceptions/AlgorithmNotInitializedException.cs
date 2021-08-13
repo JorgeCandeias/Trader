@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace Trader.Trading.Algorithms
+namespace Trader.Trading.Algorithms.Exceptions
 {
     [Serializable]
     public class AlgorithmNotInitializedException : AlgorithmException

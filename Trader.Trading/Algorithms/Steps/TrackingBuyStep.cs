@@ -103,7 +103,7 @@ namespace Trader.Trading.Algorithms.Steps
             if (maxNotional.HasValue && total > maxNotional)
             {
                 _logger.LogError(
-                    "{Type} {Name} cannot place sell order with amount of {Total} {Quote} because it is above the configured maximum notional of {MaxNotional}",
+                    "{Type} {Name} cannot place buy order with amount of {Total} {Quote} because it is above the configured maximum notional of {MaxNotional}",
                     Type, symbol.Name, total, symbol.QuoteAsset, maxNotional);
 
                 return false;

@@ -37,6 +37,7 @@ namespace Trader.App
                 .ConfigureServices((context, services) =>
                 {
                     services
+                        .AddTrader()
                         .AddModelServices()
                         .AddAlgorithmResolvers()
                         .AddBinanceTradingService(options => context.Configuration.Bind("Api", options))

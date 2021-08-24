@@ -5,7 +5,7 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class AlgorithmServiceCollectionExtensions
     {
-        public static IServiceCollection AddAlgorithmResolvers(this IServiceCollection services)
+        public static IServiceCollection AddTraderAlgorithmBlocks(this IServiceCollection services)
         {
             return services
                 .AddSingleton<ISignificantOrderResolver, SignificantOrderResolver>()

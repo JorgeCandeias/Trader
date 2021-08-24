@@ -37,31 +37,46 @@ namespace Trader.App
                 .ConfigureServices((context, services) =>
                 {
                     services
-                        .AddTrader()
-                        .AddModelServices()
-                        .AddAlgorithmResolvers()
                         .AddBinanceTradingService(options => context.Configuration.Bind("Api", options))
+
+                        // temporary brute force configuration - to refactor into dynamic dependency graph once orleans is brought in
                         .AddMarketDataStreamHost(options =>
                         {
                             options.Symbols.UnionWith(context
                                 .Configuration
-                                .GetSection("Trading:Algorithms")
+                                .GetSection("Trader:Algorithms")
                                 .GetChildren()
                                 .SelectMany(x => x.GetChildren())
                                 .Select(x => x["Symbol"])
                                 .Where(x => !IsNullOrEmpty(x)));
+
+                            options.Symbols.UnionWith(context
+                                .Configuration
+                                .GetSection("Trader:Algos")
+                                .GetChildren()
+                                .Select(x => x.GetSection("Options"))
+                                .Select(x => x["Symbol"]));
                         })
+
+                        // temporary brute force configuration - to refactor into dynamic dependency graph once orleans is brought in
                         .AddUserDataStreamHost(options =>
                         {
                             options.Symbols.UnionWith(context
                                 .Configuration
-                                .GetSection("Trading:Algorithms")
+                                .GetSection("Trader:Algorithms")
                                 .GetChildren()
                                 .SelectMany(x => x.GetChildren())
                                 .Select(x => x["Symbol"])
                                 .Where(x => !IsNullOrEmpty(x)));
+
+                            options.Symbols.UnionWith(context
+                                .Configuration
+                                .GetSection("Trader:Algos")
+                                .GetChildren()
+                                .Select(x => x.GetSection("Options"))
+                                .Select(x => x["Symbol"]));
                         })
-                        .AddTradingHost(options => context.Configuration.Bind("Trading:Host"))
+                        .AddTradingHost(options => context.Configuration.Bind("Trader:Host"))
                         .AddSystemClock()
                         .AddSafeTimerFactory()
                         .AddSqlTradingRepository(options =>
@@ -71,26 +86,29 @@ namespace Trader.App
                         .AddBase62NumberSerializer();
 
                     // add all algorithms by type
-                    foreach (var algo in context.Configuration.GetSection("Trading:Algorithms:MinimumBalance").GetChildren())
+                    foreach (var algo in context.Configuration.GetSection("Trader:Algorithms:MinimumBalance").GetChildren())
                     {
                         services.AddMinimumBalanceAlgorithm(algo.Key, options => algo.Bind(options));
                     }
-                    foreach (var algo in context.Configuration.GetSection("Trading:Algorithms:Accumulator").GetChildren())
+                    foreach (var algo in context.Configuration.GetSection("Trader:Algorithms:Accumulator").GetChildren())
                     {
                         services.AddAccumulatorAlgorithm(algo.Key, options => algo.Bind(options));
                     }
-                    foreach (var algo in context.Configuration.GetSection("Trading:Algorithms:ValueAveraging").GetChildren())
+                    foreach (var algo in context.Configuration.GetSection("Trader:Algorithms:ValueAveraging").GetChildren())
                     {
                         services.AddValueAveragingAlgorithm(algo.Key, options => algo.Bind(options));
                     }
-                    foreach (var algo in context.Configuration.GetSection("Trading:Algorithms:Step").GetChildren())
+                    foreach (var algo in context.Configuration.GetSection("Trader:Algorithms:Step").GetChildren())
                     {
                         services.AddStepAlgorithm(algo.Key, options => algo.Bind(options));
                     }
-                    foreach (var algo in context.Configuration.GetSection("Trading:Algorithms:Change").GetChildren())
+                    foreach (var algo in context.Configuration.GetSection("Trader:Algorithms:Change").GetChildren())
                     {
                         services.AddChangeAlgorithm(algo.Key, options => algo.Bind(options));
                     }
+                })
+                .UseTrader(trader =>
+                {
                 })
                 .RunConsoleAsync();
         }

@@ -9,7 +9,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <summary>
         /// Adds shared business-to-business model type converter services for the specialized collections.
         /// </summary>
-        public static IServiceCollection AddModelServices(this IServiceCollection services)
+        public static IServiceCollection AddModelAutoMapperProfiles(this IServiceCollection services)
         {
             return services
                 .AddSingleton(typeof(ImmutableSortedOrderSetConverter<>))

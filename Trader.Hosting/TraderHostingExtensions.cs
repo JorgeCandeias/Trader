@@ -47,8 +47,15 @@ namespace Microsoft.Extensions.DependencyInjection
                     switch (type)
                     {
                         case "Accumulator":
-                            services.AddAccumulatorAlgorithm(algo.Key, options => algo.Bind("Options", options));
+                            services.AddAccumulatorAlgorithm(name, options => algo.Bind("Options", options));
                             break;
+
+                        case "ValueAveraging":
+                            services.AddValueAveragingAlgorithm(name, options => algo.Bind("Options", options));
+                            break;
+
+                        default:
+                            throw new TraderConfigurationException($"Algorithm '{name}' has unknown type '{type}'");
                     }
                 }
             });

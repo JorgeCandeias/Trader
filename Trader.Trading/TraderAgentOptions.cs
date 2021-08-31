@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Trader.Trading
 {
-    public class TradingHostOptions
+    public class TraderAgentOptions
     {
         [Required]
         [Range(typeof(TimeSpan), "0.00:00:01.000", "1.00:00:00.000")]

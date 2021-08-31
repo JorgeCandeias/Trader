@@ -19,15 +19,6 @@ namespace Trader.Hosting
             return this;
         }
 
-        public ITraderHostBuilder ConfigureServices(Action<IServiceCollection> configure)
-        {
-            if (configure is null) throw new ArgumentNullException(nameof(configure));
-
-            _serviceActions.Add((context, services) => configure(services));
-
-            return this;
-        }
-
         public ITraderHostBuilder ConfigureTrader(Action<HostBuilderContext, ITraderHostBuilder> configure)
         {
             if (configure is null) throw new ArgumentNullException(nameof(configure));

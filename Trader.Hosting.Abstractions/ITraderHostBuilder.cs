@@ -8,6 +8,6 @@ namespace Trader.Hosting
     {
         public ITraderHostBuilder ConfigureServices(Action<HostBuilderContext, IServiceCollection> configure);
 
-        public ITraderHostBuilder ConfigureServices(Action<IServiceCollection> configure);
+        public ITraderHostBuilder ConfigureTrader(Action<HostBuilderContext, ITraderHostBuilder> configure);
     }
 }

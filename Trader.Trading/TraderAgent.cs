@@ -13,15 +13,15 @@ using Trader.Trading.Algorithms;
 
 namespace Trader.Trading
 {
-    internal class TradingHost : IHostedService
+    internal class TraderAgent : IHostedService
     {
-        private readonly TradingHostOptions _options;
+        private readonly TraderAgentOptions _options;
         private readonly ILogger _logger;
         private readonly IEnumerable<ITradingAlgorithm> _algos;
         private readonly ISafeTimerFactory _timers;
         private readonly ITradingService _trader;
 
-        public TradingHost(IOptions<TradingHostOptions> options, ILogger<TradingHost> logger, IEnumerable<ITradingAlgorithm> algos, ISafeTimerFactory timers, ITradingService trader)
+        public TraderAgent(IOptions<TraderAgentOptions> options, ILogger<TraderAgent> logger, IEnumerable<ITradingAlgorithm> algos, ISafeTimerFactory timers, ITradingService trader)
         {
             _options = options.Value ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -30,7 +30,7 @@ namespace Trader.Trading
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
         }
 
-        private static string TypeName => nameof(TradingHost);
+        private static string TypeName => nameof(TraderAgent);
 
         private ISafeTimer? _timer;
 

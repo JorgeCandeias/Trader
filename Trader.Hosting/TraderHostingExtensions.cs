@@ -23,7 +23,7 @@ namespace Microsoft.Extensions.DependencyInjection
         public static ITraderHostBuilder AddTraderAlgorithmsFromConfigSection(this ITraderHostBuilder builder, string section)
         {
             if (builder is null) throw new ArgumentNullException(nameof(builder));
-            if (section is null) throw new ArgumentNullException(nameof(section));
+            if (IsNullOrWhiteSpace(section)) throw new ArgumentNullException(nameof(section));
 
             return builder.ConfigureServices((context, services) =>
             {
@@ -54,6 +54,18 @@ namespace Microsoft.Extensions.DependencyInjection
                             services.AddValueAveragingAlgorithm(name, options => algo.Bind("Options", options));
                             break;
 
+                        case "MinimumBalance":
+                            services.AddMinimumBalanceAlgorithm(name, options => algo.Bind("Options", options));
+                            break;
+
+                        case "Step":
+                            services.AddStepAlgorithm(name, options => algo.Bind("Options", options));
+                            break;
+
+                        case "Change":
+                            services.AddChangeAlgorithm(name, options => algo.Bind("Options", options));
+                            break;
+
                         default:
                             throw new TraderConfigurationException($"Algorithm '{name}' has unknown type '{type}'");
                     }
@@ -69,6 +81,10 @@ namespace Microsoft.Extensions.DependencyInjection
                 .ConfigureServices((context, services) =>
                 {
                     services
+                        .AddTradingHost(options => context.Configuration.Bind("Trader:Host"))
+                        .AddSystemClock()
+                        .AddSafeTimerFactory()
+                        .AddBase62NumberSerializer()
                         .AddModelAutoMapperProfiles()
                         .AddTraderAlgorithmBlocks();
                 })
@@ -76,6 +92,14 @@ namespace Microsoft.Extensions.DependencyInjection
         }
 
         public static IHostBuilder UseTrader(this IHostBuilder builder, Action<ITraderHostBuilder> configure)
+        {
+            if (builder is null) throw new ArgumentNullException(nameof(builder));
+            if (configure is null) throw new ArgumentNullException(nameof(configure));
+
+            return builder.UseTrader((context, trader) => configure(trader));
+        }
+
+        public static IHostBuilder UseTrader(this IHostBuilder builder, Action<HostBuilderContext, ITraderHostBuilder> configure)
         {
             if (builder is null) throw new ArgumentNullException(nameof(builder));
             if (configure is null) throw new ArgumentNullException(nameof(configure));
@@ -90,12 +114,10 @@ namespace Microsoft.Extensions.DependencyInjection
             {
                 builder.Properties[nameof(TraderHostBuilder)] = trader = new TraderHostBuilder();
 
-                trader.AddTraderCore();
-
                 builder.ConfigureServices((context, services) => trader.Build(context, services));
             }
 
-            configure(trader);
+            trader.ConfigureTrader(configure);
 
             return builder;
         }

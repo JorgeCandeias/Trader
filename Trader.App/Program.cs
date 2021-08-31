@@ -6,7 +6,6 @@ using Serilog;
 using Serilog.Events;
 using System.Linq;
 using System.Threading.Tasks;
-using static System.String;
 
 namespace Trader.App
 {
@@ -37,19 +36,10 @@ namespace Trader.App
                 .ConfigureServices((context, services) =>
                 {
                     services
-                        .AddBinanceTradingService(options => context.Configuration.Bind("Api", options))
 
                         // temporary brute force configuration - to refactor into dynamic dependency graph once orleans is brought in
                         .AddMarketDataStreamHost(options =>
                         {
-                            options.Symbols.UnionWith(context
-                                .Configuration
-                                .GetSection("Trader:Algorithms")
-                                .GetChildren()
-                                .SelectMany(x => x.GetChildren())
-                                .Select(x => x["Symbol"])
-                                .Where(x => !IsNullOrEmpty(x)));
-
                             options.Symbols.UnionWith(context
                                 .Configuration
                                 .GetSection("Trader:Algos")
@@ -63,52 +53,23 @@ namespace Trader.App
                         {
                             options.Symbols.UnionWith(context
                                 .Configuration
-                                .GetSection("Trader:Algorithms")
-                                .GetChildren()
-                                .SelectMany(x => x.GetChildren())
-                                .Select(x => x["Symbol"])
-                                .Where(x => !IsNullOrEmpty(x)));
-
-                            options.Symbols.UnionWith(context
-                                .Configuration
                                 .GetSection("Trader:Algos")
                                 .GetChildren()
                                 .Select(x => x.GetSection("Options"))
                                 .Select(x => x["Symbol"]));
-                        })
-                        .AddTradingHost(options => context.Configuration.Bind("Trader:Host"))
-                        .AddSystemClock()
-                        .AddSafeTimerFactory()
+                        });
+                })
+                .UseTrader((context, trader) =>
+                {
+                    trader
                         .AddSqlTradingRepository(options =>
                         {
                             options.ConnectionString = context.Configuration.GetConnectionString("Trader");
                         })
-                        .AddBase62NumberSerializer();
-
-                    // add all algorithms by type
-                    foreach (var algo in context.Configuration.GetSection("Trader:Algorithms:MinimumBalance").GetChildren())
-                    {
-                        services.AddMinimumBalanceAlgorithm(algo.Key, options => algo.Bind(options));
-                    }
-                    foreach (var algo in context.Configuration.GetSection("Trader:Algorithms:Accumulator").GetChildren())
-                    {
-                        services.AddAccumulatorAlgorithm(algo.Key, options => algo.Bind(options));
-                    }
-                    foreach (var algo in context.Configuration.GetSection("Trader:Algorithms:ValueAveraging").GetChildren())
-                    {
-                        services.AddValueAveragingAlgorithm(algo.Key, options => algo.Bind(options));
-                    }
-                    foreach (var algo in context.Configuration.GetSection("Trader:Algorithms:Step").GetChildren())
-                    {
-                        services.AddStepAlgorithm(algo.Key, options => algo.Bind(options));
-                    }
-                    foreach (var algo in context.Configuration.GetSection("Trader:Algorithms:Change").GetChildren())
-                    {
-                        services.AddChangeAlgorithm(algo.Key, options => algo.Bind(options));
-                    }
-                })
-                .UseTrader(trader =>
-                {
+                        .UseBinanceTradingService(options =>
+                        {
+                            context.Configuration.Bind("Binance", options);
+                        });
                 })
                 .RunConsoleAsync();
         }

@@ -31,6 +31,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Trader.Data.Abstractions\Trader.Data.Abstractions.csproj" />
+    <ProjectReference Include="..\Trader.Hosting.Abstractions\Trader.Hosting.Abstractions.csproj" />
   </ItemGroup>
 
 </Project>

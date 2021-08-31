@@ -84,6 +84,14 @@ namespace Trader.Trading.Algorithms.Steps
             price *= profitMultiplier;
 
             // adjust the quantity down to lot size filter
+            if (quantity < lotSizeFilter.StepSize)
+            {
+                _logger.LogError(
+                    "{Type} {Name} cannot set sell order for {Quantity} {Asset} because the quantity is under the minimum lot size of {MinLotSize} {Asset}",
+                    Type, symbol.Name, quantity, symbol.BaseAsset, lotSizeFilter.StepSize, symbol.BaseAsset);
+
+                return DesiredSell.None;
+            }
             quantity = Math.Floor(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
 
             // adjust the sell price up to the minimum percent filter

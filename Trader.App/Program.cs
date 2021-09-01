@@ -21,6 +21,8 @@ namespace Trader.App
                 .ConfigureAppConfiguration(config =>
                 {
                     config.AddUserSecrets<Program>();
+                    config.AddEnvironmentVariables("Trader");
+                    config.AddJsonFile("appsettings.local.json", true);
                 })
                 .ConfigureLogging(logging =>
                 {

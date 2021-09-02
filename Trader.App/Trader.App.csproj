@@ -4,8 +4,8 @@
     <TargetFramework>net5.0</TargetFramework>
     <UserSecretsId>02dcbda9-a75b-41c8-a83c-95986c6f4cce</UserSecretsId>
     <ServerGarbageCollection>true</ServerGarbageCollection>
-    <Nullable>enable</Nullable>
     <NeutralLanguage>en-GB</NeutralLanguage>
+    <Nullable>enable</Nullable>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>

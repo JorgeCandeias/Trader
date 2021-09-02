@@ -63,7 +63,6 @@
     <Folder Include="Scripts" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Trader.Data.Sql.Database.Production.publish.xml" />
     <None Include="Trader.Data.Sql.Database.LocalDB.publish.xml" />
   </ItemGroup>
   <ItemGroup>

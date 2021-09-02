@@ -17,6 +17,8 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 5.0.x
+    - name: Removed database project
+      run: dotnet sln remove Trader.Data.Sql.Database.sqlproj
     - name: Restore dependencies
       run: dotnet restore
     - name: Build

@@ -19,6 +19,8 @@ jobs:
         dotnet-version: 5.0.x
     - name: Remove database project
       run: dotnet sln remove Trader.Data.Sql.Database/Trader.Data.Sql.Database.sqlproj
+    - name: Remove database test project
+      run: dotnet sln remove Trader.Data.Sql.Tests/Trader.Data.Sql.Tests.csproj
     - name: Restore dependencies
       run: dotnet restore
     - name: Build

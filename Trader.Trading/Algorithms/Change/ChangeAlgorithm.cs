@@ -21,9 +21,8 @@ namespace Trader.Trading.Algorithms.Change
         private readonly ITradingRepository _repository;
         private readonly ISignificantOrderResolver _significantOrderResolver;
         private readonly ISystemClock _clock;
-        private readonly ITradingService _trader;
 
-        public ChangeAlgorithm(string name, ILogger<ChangeAlgorithm> logger, IOptionsSnapshot<ChangeAlgorithmOptions> options, ITradingRepository repository, ISignificantOrderResolver significantOrderResolver, ISystemClock clock, ITradingService trader)
+        public ChangeAlgorithm(string name, ILogger<ChangeAlgorithm> logger, IOptionsSnapshot<ChangeAlgorithmOptions> options, ITradingRepository repository, ISignificantOrderResolver significantOrderResolver, ISystemClock clock)
         {
             _name = name ?? throw new ArgumentNullException(nameof(name));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -31,7 +30,6 @@ namespace Trader.Trading.Algorithms.Change
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _significantOrderResolver = significantOrderResolver ?? throw new ArgumentNullException(nameof(significantOrderResolver));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-            _trader = trader ?? throw new ArgumentNullException(nameof(trader));
         }
 
         private Symbol? _symbol;

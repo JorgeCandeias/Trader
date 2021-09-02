@@ -58,9 +58,6 @@
     <Folder Include="Properties" />
     <Folder Include="Tables" />
     <Folder Include="Procedures" />
-    <Folder Include="Security" />
-    <Folder Include="Security\Logins" />
-    <Folder Include="Security\Users" />
     <Folder Include="Types" />
     <Folder Include="Sequences" />
     <Folder Include="Scripts" />
@@ -81,8 +78,6 @@
     <Build Include="Procedures\GetTrades.sql" />
     <Build Include="Procedures\GetTransientOrdersBySide.sql" />
     <Build Include="Procedures\GetNonSignificantTransientOrdersBySide.sql" />
-    <Build Include="Security\Logins\Trader.sql" />
-    <Build Include="Security\Users\Trader.sql" />
     <Build Include="Procedures\SetOrders.sql" />
     <Build Include="Types\OrderTableParameter.sql" />
     <Build Include="Procedures\CancelOrder.sql" />

@@ -52,9 +52,6 @@ jobs:
     - name: Build
       run: dotnet build --no-restore
       
-    - name: Test
-      run: dotnet test --no-build --verbosity normal
-      
     - name: Build and analyze
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
@@ -63,4 +60,5 @@ jobs:
       run: |
         sonar/scanner/dotnet-sonarscanner begin /k:"JorgeCandeias_Trader" /o:"jorgecandeias" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io"
         dotnet build --no-restore
+        dotnet test --no-build --verbosity normal
         sonar/scanner/dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"

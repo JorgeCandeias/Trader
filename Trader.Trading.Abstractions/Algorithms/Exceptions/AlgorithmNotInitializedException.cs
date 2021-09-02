@@ -18,7 +18,7 @@ namespace Trader.Trading.Algorithms.Exceptions
         {
         }
 
-        protected AlgorithmNotInitializedException(SerializationInfo serializationInfo, StreamingContext streamingContext)
+        protected AlgorithmNotInitializedException(SerializationInfo serializationInfo, StreamingContext streamingContext) : base(serializationInfo, streamingContext)
         {
         }
     }

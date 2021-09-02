@@ -18,7 +18,7 @@ namespace Trader.Core
         {
         }
 
-        protected TraderConfigurationException(SerializationInfo serializationInfo, StreamingContext streamingContext)
+        protected TraderConfigurationException(SerializationInfo serializationInfo, StreamingContext streamingContext) : base(serializationInfo, streamingContext)
         {
         }
     }

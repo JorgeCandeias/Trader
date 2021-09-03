@@ -1,10 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using Outcompute.Trader.Models;
+using Outcompute.Trader.Models.Collections;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Trader.Models;
-using Trader.Models.Collections;
 
-namespace Trader.Trading
+namespace Outcompute.Trader.Trading
 {
     public interface ITradingService
     {

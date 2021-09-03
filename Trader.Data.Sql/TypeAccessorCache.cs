@@ -1,6 +1,6 @@
 ﻿using FastMember;
 
-namespace Trader.Data.Sql
+namespace Outcompute.Trader.Data.Sql
 {
     internal static class TypeAccessorCache<T>
     {

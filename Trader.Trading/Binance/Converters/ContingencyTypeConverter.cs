@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
-using Trader.Models;
+using Outcompute.Trader.Models;
 
-namespace Trader.Trading.Binance.Converters
+namespace Outcompute.Trader.Trading.Binance.Converters
 {
     internal class ContingencyTypeConverter : ITypeConverter<string, ContingencyType>, ITypeConverter<ContingencyType, string>
     {

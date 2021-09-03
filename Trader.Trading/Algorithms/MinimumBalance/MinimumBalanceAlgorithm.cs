@@ -1,14 +1,14 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Outcompute.Trader.Data;
+using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Algorithms.Exceptions;
 using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Trader.Data;
-using Trader.Models;
-using Trader.Trading.Algorithms.Exceptions;
 
-namespace Trader.Trading.Algorithms.MinimumBalance
+namespace Outcompute.Trader.Trading.Algorithms.MinimumBalance
 {
     internal class MinimumBalanceAlgorithm : ITradingAlgorithm
     {

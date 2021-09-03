@@ -1,12 +1,12 @@
-﻿using System;
+﻿using Outcompute.Trader.Models;
+using Outcompute.Trader.Models.Collections;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Trader.Models;
-using Trader.Models.Collections;
 using static System.String;
 
-namespace Trader.Trading.Algorithms
+namespace Outcompute.Trader.Trading.Algorithms
 {
     public interface ISignificantOrderResolver
     {

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace Trader.Trading.Algorithms
+namespace Outcompute.Trader.Trading.Algorithms
 {
     public interface IOrderCodeGenerator
     {

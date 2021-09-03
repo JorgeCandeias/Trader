@@ -1,6 +1,6 @@
 ﻿using System;
-using Trader.Trading.Algorithms;
-using Trader.Trading.Algorithms.Step;
+using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Algorithms.Step;
 
 namespace Microsoft.Extensions.DependencyInjection
 {

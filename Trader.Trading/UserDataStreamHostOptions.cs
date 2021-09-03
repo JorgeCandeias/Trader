@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace Trader.Trading
+namespace Outcompute.Trader.Trading
 {
     public class UserDataStreamHostOptions
     {

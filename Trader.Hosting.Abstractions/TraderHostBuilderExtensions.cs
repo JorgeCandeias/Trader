@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System;
 
-namespace Trader.Hosting
+namespace Outcompute.Trader.Hosting
 {
     public static class TraderHostBuilderExtensions
     {

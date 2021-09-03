@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Trader.Trading
+namespace Outcompute.Trader.Trading
 {
     public interface IMarketDataStreamClientFactory
     {

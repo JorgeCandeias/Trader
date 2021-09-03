@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Trader.Core.Serializers
+namespace Outcompute.Trader.Core.Serializers
 {
     public interface IBase62NumberSerializer
     {

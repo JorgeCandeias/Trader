@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using static System.String;
 
-namespace Trader.Trading.Algorithms.TimeAveraging
+namespace Outcompute.Trader.Trading.Algorithms.TimeAveraging
 {
     public class TimeAveragingAlgorithmOptions
     {

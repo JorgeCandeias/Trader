@@ -1,5 +1,5 @@
 ﻿using System;
-using Trader.Hosting;
+using Outcompute.Trader.Hosting;
 
 namespace Microsoft.Extensions.Hosting
 {

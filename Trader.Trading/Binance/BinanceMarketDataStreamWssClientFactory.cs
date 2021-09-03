@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Trader.Trading.Binance
+namespace Outcompute.Trader.Trading.Binance
 {
     internal class BinanceMarketDataStreamWssClientFactory : IMarketDataStreamClientFactory
     {

@@ -1,9 +1,9 @@
-﻿using System;
+﻿using Outcompute.Trader.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using Trader.Models;
 
-namespace Trader.Trading.Algorithms
+namespace Outcompute.Trader.Trading.Algorithms
 {
     /// <summary>
     /// Maps an order to any resulting trades.

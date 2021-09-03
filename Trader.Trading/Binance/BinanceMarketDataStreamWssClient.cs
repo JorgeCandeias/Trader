@@ -6,10 +6,10 @@ using System.Collections.Generic;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
-using Trader.Models;
+using Outcompute.Trader.Models;
 using static System.String;
 
-namespace Trader.Trading.Binance
+namespace Outcompute.Trader.Trading.Binance
 {
     internal sealed class BinanceMarketDataStreamWssClient : IMarketDataStreamClient
     {

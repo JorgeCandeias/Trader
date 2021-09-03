@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace Trader.Trading.Algorithms
+namespace Outcompute.Trader.Trading.Algorithms
 {
     public interface IOrderSynchronizer
     {

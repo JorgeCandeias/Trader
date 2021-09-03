@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
 using System;
-using Trader.Models;
+using Outcompute.Trader.Models;
 
-namespace Trader.Trading.Binance.Converters
+namespace Outcompute.Trader.Trading.Binance.Converters
 {
     internal class FlexibleProductRedemptionTypeConverter : ITypeConverter<FlexibleProductRedemptionType, string>, ITypeConverter<string, FlexibleProductRedemptionType>
     {

@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 
-namespace Trader.Data.Sql.Models
+namespace Outcompute.Trader.Data.Sql.Models
 {
     internal record OrderTableParameterEntity(
         int SymbolId,

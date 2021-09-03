@@ -3,11 +3,11 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using Trader.Core.Time;
-using Trader.Data;
-using Trader.Models;
+using Outcompute.Trader.Core.Time;
+using Outcompute.Trader.Data;
+using Outcompute.Trader.Models;
 
-namespace Trader.Trading.Algorithms
+namespace Outcompute.Trader.Trading.Algorithms
 {
     internal class TradeSynchronizer : ITradeSynchronizer
     {

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Trader.Models
+namespace Outcompute.Trader.Models
 {
     public record LeftDailyRedemptionQuotaOnFlexibleProduct(
         string Asset,

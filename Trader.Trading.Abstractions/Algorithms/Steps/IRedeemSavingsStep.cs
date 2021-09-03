@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace Trader.Trading.Algorithms.Steps
+namespace Outcompute.Trader.Trading.Algorithms.Steps
 {
     public interface IRedeemSavingsStep
     {

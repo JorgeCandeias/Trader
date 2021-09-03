@@ -1,10 +1,10 @@
 ﻿using AutoMapper;
+using Outcompute.Trader.Data.Sql.Models;
+using Outcompute.Trader.Models;
 using System.Collections.Generic;
 using System.Linq;
-using Trader.Data.Sql.Models;
-using Trader.Models;
 
-namespace Trader.Data.Sql
+namespace Outcompute.Trader.Data.Sql
 {
     internal class SqlTradingRepositoryProfile : Profile
     {

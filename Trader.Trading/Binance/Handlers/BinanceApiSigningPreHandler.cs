@@ -3,9 +3,9 @@ using System;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Trader.Trading.Binance.Signing;
+using Outcompute.Trader.Trading.Binance.Signing;
 
-namespace Trader.Trading.Binance.Handlers
+namespace Outcompute.Trader.Trading.Binance.Handlers
 {
     internal class BinanceApiSigningPreHandler : DelegatingHandler
     {

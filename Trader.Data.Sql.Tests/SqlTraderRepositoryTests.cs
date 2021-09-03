@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System.Transactions;
 using Xunit;
 
-namespace Trader.Data.Sql.Tests
+namespace Outcompute.Trader.Data.Sql.Tests
 {
     public class SqlTraderRepositoryTests
     {

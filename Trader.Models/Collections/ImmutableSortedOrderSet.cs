@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 
-namespace Trader.Models.Collections
+namespace Outcompute.Trader.Models.Collections
 {
     public sealed class ImmutableSortedOrderSet : IImmutableSet<OrderQueryResult>
     {

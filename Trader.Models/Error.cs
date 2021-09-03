@@ -1,4 +1,4 @@
-﻿namespace Trader.Models
+﻿namespace Outcompute.Trader.Models
 {
     public record ExternalError(int Code, string Message);
 }

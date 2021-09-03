@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Trader.Core.Serializers
+namespace Outcompute.Trader.Core.Serializers
 {
     internal class Base62NumberSerializer : IBase62NumberSerializer
     {

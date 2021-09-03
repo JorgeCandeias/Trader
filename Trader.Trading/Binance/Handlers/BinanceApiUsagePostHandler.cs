@@ -5,10 +5,10 @@ using System.Globalization;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Trader.Core.Time;
-using Trader.Models;
+using Outcompute.Trader.Core.Time;
+using Outcompute.Trader.Models;
 
-namespace Trader.Trading.Binance.Handlers
+namespace Outcompute.Trader.Trading.Binance.Handlers
 {
     internal class BinanceApiUsagePostHandler : DelegatingHandler
     {

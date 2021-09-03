@@ -1,7 +1,7 @@
 ﻿using System;
-using Trader.Data;
-using Trader.Data.Sql;
-using Trader.Hosting;
+using Outcompute.Trader.Data;
+using Outcompute.Trader.Data.Sql;
+using Outcompute.Trader.Hosting;
 
 namespace Microsoft.Extensions.DependencyInjection
 {

@@ -1,9 +1,9 @@
 ﻿using AutoMapper;
 using System.Collections.Immutable;
 using System.Linq;
-using Trader.Models;
+using Outcompute.Trader.Models;
 
-namespace Trader.Trading.Binance.Converters
+namespace Outcompute.Trader.Trading.Binance.Converters
 {
     internal class OrderBookConverter : ITypeConverter<OrderBookModel, OrderBook>
     {

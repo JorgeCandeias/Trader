@@ -1,5 +1,5 @@
 ﻿using System;
-using Trader.Trading;
+using Outcompute.Trader.Trading;
 
 namespace Microsoft.Extensions.DependencyInjection
 {

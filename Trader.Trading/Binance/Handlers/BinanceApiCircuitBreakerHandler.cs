@@ -2,9 +2,9 @@
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Trader.Core.Time;
+using Outcompute.Trader.Core.Time;
 
-namespace Trader.Trading.Binance.Handlers
+namespace Outcompute.Trader.Trading.Binance.Handlers
 {
     internal class BinanceApiCircuitBreakerHandler : DelegatingHandler
     {

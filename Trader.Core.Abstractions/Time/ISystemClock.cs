@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Trader.Core.Time
+namespace Outcompute.Trader.Core.Time
 {
     public interface ISystemClock
     {

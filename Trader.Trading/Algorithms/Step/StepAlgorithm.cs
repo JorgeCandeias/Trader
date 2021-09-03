@@ -1,19 +1,19 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Outcompute.Trader.Core.Time;
+using Outcompute.Trader.Data;
+using Outcompute.Trader.Models;
+using Outcompute.Trader.Models.Collections;
+using Outcompute.Trader.Trading.Algorithms.Exceptions;
+using Outcompute.Trader.Trading.Algorithms.Steps;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Trader.Core.Time;
-using Trader.Data;
-using Trader.Models;
-using Trader.Models.Collections;
-using Trader.Trading.Algorithms.Exceptions;
-using Trader.Trading.Algorithms.Steps;
 using static System.String;
 
-namespace Trader.Trading.Algorithms.Step
+namespace Outcompute.Trader.Trading.Algorithms.Step
 {
     internal class StepAlgorithm : ITradingAlgorithm
     {

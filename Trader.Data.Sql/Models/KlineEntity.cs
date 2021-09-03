@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Trader.Data.Sql.Models
+namespace Outcompute.Trader.Data.Sql.Models
 {
     internal record KlineEntity(
         int SymbolId,

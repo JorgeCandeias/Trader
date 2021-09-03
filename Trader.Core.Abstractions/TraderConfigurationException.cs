@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace Trader.Core
+namespace Outcompute.Trader.Core
 {
     [Serializable]
     public class TraderConfigurationException : Exception

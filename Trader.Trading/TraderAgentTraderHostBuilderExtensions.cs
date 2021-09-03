@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System;
-using Trader.Trading;
+using Outcompute.Trader.Trading;
 
-namespace Trader.Hosting
+namespace Outcompute.Trader.Hosting
 {
     public static class TraderAgentTraderHostBuilderExtensions
     {

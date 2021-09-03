@@ -1,9 +1,9 @@
-﻿using System;
+﻿using Outcompute.Trader.Models;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Trader.Models;
 
-namespace Trader.Trading
+namespace Outcompute.Trader.Trading
 {
     public interface IUserDataStreamClient : IDisposable
     {

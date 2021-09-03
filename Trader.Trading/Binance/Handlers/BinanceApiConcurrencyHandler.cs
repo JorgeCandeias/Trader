@@ -3,7 +3,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Trader.Trading.Binance.Handlers
+namespace Outcompute.Trader.Trading.Binance.Handlers
 {
     internal class BinanceApiConcurrencyHandler : DelegatingHandler
     {

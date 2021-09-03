@@ -5,9 +5,9 @@ using System.Buffers;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
-using Trader.Models;
+using Outcompute.Trader.Models;
 
-namespace Trader.Trading.Binance
+namespace Outcompute.Trader.Trading.Binance
 {
     internal sealed class BinanceUserDataStreamWssClient : IUserDataStreamClient
     {

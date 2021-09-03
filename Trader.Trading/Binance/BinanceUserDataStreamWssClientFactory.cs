@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System;
 
-namespace Trader.Trading.Binance
+namespace Outcompute.Trader.Trading.Binance
 {
     internal class BinanceUserDataStreamWssClientFactory : IUserDataStreamClientFactory
     {

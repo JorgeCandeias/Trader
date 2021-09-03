@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Trader.Trading.Binance.Signing
+namespace Outcompute.Trader.Trading.Binance.Signing
 {
     internal class Signer : ISigner
     {

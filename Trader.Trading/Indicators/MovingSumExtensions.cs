@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Trader.Trading.Indicators
+namespace Outcompute.Trader.Trading.Indicators
 {
     public static class MovingSumExtensions
     {

@@ -1,8 +1,8 @@
-﻿using System.Threading;
+﻿using Outcompute.Trader.Models;
+using System.Threading;
 using System.Threading.Tasks;
-using Trader.Models;
 
-namespace Trader.Trading.Algorithms.Steps
+namespace Outcompute.Trader.Trading.Algorithms.Steps
 {
     public interface ITrackingBuyStep
     {

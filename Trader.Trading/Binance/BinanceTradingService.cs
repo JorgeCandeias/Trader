@@ -8,11 +8,11 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Trader.Core.Time;
-using Trader.Models;
-using Trader.Models.Collections;
+using Outcompute.Trader.Core.Time;
+using Outcompute.Trader.Models;
+using Outcompute.Trader.Models.Collections;
 
-namespace Trader.Trading.Binance
+namespace Outcompute.Trader.Trading.Binance
 {
     internal class BinanceTradingService : ITradingService, IHostedService
     {

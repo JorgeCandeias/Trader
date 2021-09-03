@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Immutable;
 
-namespace Trader.Models
+namespace Outcompute.Trader.Models
 {
     public record AccountInfo(
         decimal MakerCommission,

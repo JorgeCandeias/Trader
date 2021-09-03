@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using System.Collections.Generic;
 
-namespace Trader.Models.Collections
+namespace Outcompute.Trader.Models.Collections
 {
     internal class ImmutableSortedOrderSetProfile : Profile
     {

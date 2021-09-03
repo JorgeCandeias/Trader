@@ -1,9 +1,9 @@
-﻿using System;
+﻿using Outcompute.Trader.Core.Serializers;
+using System;
 using System.Buffers;
-using Trader.Core.Serializers;
 using Xunit;
 
-namespace Trader.Core.Tests
+namespace Outcompute.Trader.Core.Tests
 {
     public class Base62NumberSerializerTests
     {

@@ -3,10 +3,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text.Json;
-using Trader.Models;
-using Trader.Trading.Binance.Converters;
+using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Binance.Converters;
 
-namespace Trader.Trading.Binance
+namespace Outcompute.Trader.Trading.Binance
 {
     internal class BinanceAutoMapperProfile : Profile
     {

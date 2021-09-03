@@ -1,13 +1,13 @@
 ﻿using Microsoft.Extensions.Logging;
+using Outcompute.Trader.Core.Time;
+using Outcompute.Trader.Data;
+using Outcompute.Trader.Models;
 using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using Trader.Core.Time;
-using Trader.Data;
-using Trader.Models;
 
-namespace Trader.Trading.Algorithms
+namespace Outcompute.Trader.Trading.Algorithms
 {
     internal class OrderSynchronizer : IOrderSynchronizer
     {

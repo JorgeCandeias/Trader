@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using static System.String;
 
-namespace Trader.Trading.Algorithms.ValueAveraging
+namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
 {
     public class ValueAveragingAlgorithmOptions
     {

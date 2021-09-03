@@ -1,6 +1,6 @@
 ﻿using System;
-using Trader.Trading.Algorithms;
-using Trader.Trading.Algorithms.ValueAveraging;
+using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Algorithms.ValueAveraging;
 
 namespace Microsoft.Extensions.DependencyInjection
 {

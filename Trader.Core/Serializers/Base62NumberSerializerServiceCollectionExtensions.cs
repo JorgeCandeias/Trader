@@ -1,4 +1,4 @@
-﻿using Trader.Core.Serializers;
+﻿using Outcompute.Trader.Core.Serializers;
 
 namespace Microsoft.Extensions.DependencyInjection
 {

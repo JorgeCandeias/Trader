@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using static System.String;
 
-namespace Trader.Trading.Algorithms.MinimumBalance
+namespace Outcompute.Trader.Trading.Algorithms.MinimumBalance
 {
     public class MinimumBalanceAlgorithmOptions
     {

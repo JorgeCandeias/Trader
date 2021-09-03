@@ -7,7 +7,7 @@ using Serilog.Events;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Trader.App
+namespace Outcompute.Trader.App
 {
     internal class Program
     {

@@ -1,12 +1,12 @@
 ﻿using AutoMapper;
+using Outcompute.Trader.Models.Collections;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Trader.Models.Collections;
 using Xunit;
 using static System.String;
 
-namespace Trader.Models.Tests
+namespace Outcompute.Trader.Models.Tests
 {
     public class ImmutableSortedOrderSetConverterTests
     {

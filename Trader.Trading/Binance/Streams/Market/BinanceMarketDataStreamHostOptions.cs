@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace Trader.Trading.Binance.Streams.Market
+namespace Outcompute.Trader.Trading.Binance.Streams.Market
 {
     public class BinanceMarketDataStreamHostOptions
     {

@@ -12,11 +12,11 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using Trader.Core.Timers;
-using Trader.Data;
-using Trader.Models;
+using Outcompute.Trader.Core.Timers;
+using Outcompute.Trader.Data;
+using Outcompute.Trader.Models;
 
-namespace Trader.Trading.Binance.Streams.Market
+namespace Outcompute.Trader.Trading.Binance.Streams.Market
 {
     internal sealed class BinanceMarketDataStreamHost : IHostedService, IDisposable
     {

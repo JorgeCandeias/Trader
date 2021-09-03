@@ -1,4 +1,4 @@
-﻿using Trader.Core.Timers;
+﻿using Outcompute.Trader.Core.Timers;
 
 namespace Microsoft.Extensions.DependencyInjection
 {

@@ -3,6 +3,9 @@ using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Outcompute.Trader.Data.Sql.Models;
+using Outcompute.Trader.Models;
+using Outcompute.Trader.Models.Collections;
 using Polly;
 using Polly.Retry;
 using System;
@@ -12,11 +15,8 @@ using System.Data;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Trader.Data.Sql.Models;
-using Trader.Models;
-using Trader.Models.Collections;
 
-namespace Trader.Data.Sql
+namespace Outcompute.Trader.Data.Sql
 {
     internal class SqlTradingRepository : ITradingRepository
     {

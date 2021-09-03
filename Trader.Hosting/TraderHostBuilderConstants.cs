@@ -1,4 +1,4 @@
-﻿namespace Trader.Hosting
+﻿namespace Outcompute.Trader.Hosting
 {
     internal static class TraderHostBuilderConstants
     {

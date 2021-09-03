@@ -1,17 +1,17 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Outcompute.Trader.Core.Time;
+using Outcompute.Trader.Data;
+using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Algorithms.Exceptions;
+using Outcompute.Trader.Trading.Indicators;
 using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Trader.Core.Time;
-using Trader.Data;
-using Trader.Models;
-using Trader.Trading.Algorithms.Exceptions;
-using Trader.Trading.Indicators;
 using static System.String;
 
-namespace Trader.Trading.Algorithms.Change
+namespace Outcompute.Trader.Trading.Algorithms.Change
 {
     internal class ChangeAlgorithm : ITradingAlgorithm
     {

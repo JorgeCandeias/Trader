@@ -1,4 +1,4 @@
-﻿namespace Trader.Trading
+﻿namespace Outcompute.Trader.Trading
 {
     public interface IUserDataStreamClientFactory
     {

@@ -1,11 +1,11 @@
 ﻿using Microsoft.Extensions.Logging;
+using Outcompute.Trader.Models;
 using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Trader.Models;
 
-namespace Trader.Trading.Algorithms.Steps
+namespace Outcompute.Trader.Trading.Algorithms.Steps
 {
     internal class RedeemSavingsStep : IRedeemSavingsStep
     {

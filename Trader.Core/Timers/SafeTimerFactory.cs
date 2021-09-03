@@ -3,7 +3,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Trader.Core.Timers
+namespace Outcompute.Trader.Core.Timers
 {
     internal class SafeTimerFactory : ISafeTimerFactory
     {

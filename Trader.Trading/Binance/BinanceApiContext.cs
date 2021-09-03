@@ -1,6 +1,6 @@
 ﻿using System.Threading;
 
-namespace Trader.Trading.Binance
+namespace Outcompute.Trader.Trading.Binance
 {
     internal static class BinanceApiContext
     {

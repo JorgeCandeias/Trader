@@ -1,5 +1,5 @@
-﻿using System.Data;
-using Trader.Data.Sql;
+﻿using Outcompute.Trader.Data.Sql;
+using System.Data;
 
 namespace System.Collections.Generic
 {

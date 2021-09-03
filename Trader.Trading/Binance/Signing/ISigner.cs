@@ -1,4 +1,4 @@
-﻿namespace Trader.Trading.Binance.Signing
+﻿namespace Outcompute.Trader.Trading.Binance.Signing
 {
     internal interface ISigner
     {

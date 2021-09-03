@@ -1,10 +1,10 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using Trader.Core;
+using Outcompute.Trader.Core;
 using static System.String;
 
-namespace Trader.Hosting
+namespace Outcompute.Trader.Hosting
 {
     public static class TraderHostBuilderExtensions
     {

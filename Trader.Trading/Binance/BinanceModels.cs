@@ -1,4 +1,4 @@
-﻿namespace Trader.Trading.Binance
+﻿namespace Outcompute.Trader.Trading.Binance
 {
     internal record ErrorModel(int Code, string Msg);
 

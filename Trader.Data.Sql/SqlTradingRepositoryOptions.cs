@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using static System.String;
 
-namespace Trader.Data.Sql
+namespace Outcompute.Trader.Data.Sql
 {
     public class SqlTradingRepositoryOptions
     {

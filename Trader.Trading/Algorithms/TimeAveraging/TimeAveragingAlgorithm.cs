@@ -4,12 +4,12 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Trader.Core.Time;
-using Trader.Data;
-using Trader.Models;
-using Trader.Trading.Algorithms.Exceptions;
+using Outcompute.Trader.Core.Time;
+using Outcompute.Trader.Data;
+using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Algorithms.Exceptions;
 
-namespace Trader.Trading.Algorithms.TimeAveraging
+namespace Outcompute.Trader.Trading.Algorithms.TimeAveraging
 {
     internal class TimeAveragingAlgorithm : ITradingAlgorithm
     {

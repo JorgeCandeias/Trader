@@ -3,7 +3,7 @@ using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 
-namespace Trader.Hosting
+namespace Outcompute.Trader.Hosting
 {
     internal class TraderHostBuilder : ITraderHostBuilder
     {

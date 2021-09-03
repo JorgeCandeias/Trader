@@ -1,5 +1,5 @@
-﻿using Trader.Models;
-using Trader.Models.Collections;
+﻿using Outcompute.Trader.Models;
+using Outcompute.Trader.Models.Collections;
 using static System.String;
 
 namespace Microsoft.Extensions.DependencyInjection

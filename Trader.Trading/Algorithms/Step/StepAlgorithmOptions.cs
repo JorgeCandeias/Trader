@@ -2,7 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using static System.String;
 
-namespace Trader.Trading.Algorithms.Step
+namespace Outcompute.Trader.Trading.Algorithms.Step
 {
     public class StepAlgorithmOptions
     {

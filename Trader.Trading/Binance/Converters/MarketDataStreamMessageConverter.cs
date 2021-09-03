@@ -1,9 +1,9 @@
 ﻿using AutoMapper;
 using System;
 using System.Text.Json;
-using Trader.Models;
+using Outcompute.Trader.Models;
 
-namespace Trader.Trading.Binance.Converters
+namespace Outcompute.Trader.Trading.Binance.Converters
 {
     internal class MarketDataStreamMessageConverter : ITypeConverter<Memory<byte>, MarketDataStreamMessage>
     {

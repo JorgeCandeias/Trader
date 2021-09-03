@@ -8,14 +8,14 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using Trader.Core.Time;
-using Trader.Core.Timers;
-using Trader.Data;
-using Trader.Models;
-using Trader.Trading.Algorithms;
-using Trader.Trading.Binance;
+using Outcompute.Trader.Core.Time;
+using Outcompute.Trader.Core.Timers;
+using Outcompute.Trader.Data;
+using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Binance;
 
-namespace Trader.Trading
+namespace Outcompute.Trader.Trading
 {
     internal sealed class UserDataStreamHost : IHostedService, IDisposable
     {

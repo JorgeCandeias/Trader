@@ -1,5 +1,5 @@
 ﻿using System;
-using Trader.Trading.Binance.Streams.Market;
+using Outcompute.Trader.Trading.Binance.Streams.Market;
 
 namespace Microsoft.Extensions.DependencyInjection
 {

@@ -8,10 +8,10 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Trader.Core.Timers;
-using Trader.Trading.Algorithms;
+using Outcompute.Trader.Core.Timers;
+using Outcompute.Trader.Trading.Algorithms;
 
-namespace Trader.Trading
+namespace Outcompute.Trader.Trading
 {
     internal class TraderAgent : IHostedService
     {

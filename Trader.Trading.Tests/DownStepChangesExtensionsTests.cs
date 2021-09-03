@@ -1,8 +1,8 @@
 ﻿using System.Linq;
-using Trader.Trading.Indicators;
+using Outcompute.Trader.Trading.Indicators;
 using Xunit;
 
-namespace Trader.Trading.Tests
+namespace Outcompute.Trader.Trading.Tests
 {
     public class DownStepChangesExtensionsTests
     {

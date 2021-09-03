@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Trader.Models
+namespace Outcompute.Trader.Models
 {
     public record AccountTrade(
         string Symbol,

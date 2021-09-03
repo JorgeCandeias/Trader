@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using System;
 
-namespace Trader.Trading.Binance.Converters
+namespace Outcompute.Trader.Trading.Binance.Converters
 {
     internal class ServerTimeConverter : ITypeConverter<ServerTimeModel, DateTime>
     {

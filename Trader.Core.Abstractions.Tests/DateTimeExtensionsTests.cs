@@ -1,7 +1,7 @@
 ﻿using System;
 using Xunit;
 
-namespace Trader.Core.Abstractions.Tests
+namespace Outcompute.Trader.Core.Abstractions.Tests
 {
     public class DateTimeExtensionsTests
     {

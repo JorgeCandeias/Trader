@@ -1,14 +1,14 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Algorithms.Exceptions;
+using Outcompute.Trader.Trading.Algorithms.Steps;
 using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Trader.Models;
-using Trader.Trading.Algorithms.Exceptions;
-using Trader.Trading.Algorithms.Steps;
 
-namespace Trader.Trading.Algorithms.Accumulator
+namespace Outcompute.Trader.Trading.Algorithms.Accumulator
 {
     internal class AccumulatorAlgorithm : ITradingAlgorithm
     {

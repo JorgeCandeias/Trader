@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Trader.Core.Timers
+namespace Outcompute.Trader.Core.Timers
 {
     public interface ISafeTimer : IDisposable
     {

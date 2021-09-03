@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Trader.Core.Timers
+namespace Outcompute.Trader.Core.Timers
 {
     internal sealed class SafeTimer : ISafeTimer
     {

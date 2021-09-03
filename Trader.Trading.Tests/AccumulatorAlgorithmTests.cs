@@ -1,11 +1,11 @@
 ﻿using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
-using Trader.Trading.Algorithms.Accumulator;
-using Trader.Trading.Algorithms.Steps;
+using Outcompute.Trader.Trading.Algorithms.Accumulator;
+using Outcompute.Trader.Trading.Algorithms.Steps;
 using Xunit;
 
-namespace Trader.Trading.Tests
+namespace Outcompute.Trader.Trading.Tests
 {
     public class AccumulatorAlgorithmTests
     {

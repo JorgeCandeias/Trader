@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Hosting;
 using System;
 
-namespace Trader.Hosting
+namespace Outcompute.Trader.Hosting
 {
     public interface ITraderHostBuilder
     {

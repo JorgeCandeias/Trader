@@ -1,25 +1,31 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
-    <NeutralLanguage>en-GB</NeutralLanguage>
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+		<NeutralLanguage>en-GB</NeutralLanguage>
+		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
+		<EnableNETAnalyzers>true</EnableNETAnalyzers>
+		<Nullable>enable</Nullable>
+		<AssemblyName>Outcompute.Trader.Models</AssemblyName>
+		<RootNamespace>Outcompute.Trader.Models</RootNamespace>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="10.1.1" />
-    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.1" />
-    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="5.0.3">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0" />
-    <PackageReference Include="SonarAnalyzer.CSharp" Version="8.27.0.35380">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
+	<ItemGroup>
+		<InternalsVisibleTo Include="Outcompute.Trader.Models.Tests" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="AutoMapper" Version="10.1.1" />
+		<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.1" />
+		<PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="5.0.3">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0" />
+		<PackageReference Include="SonarAnalyzer.CSharp" Version="8.27.0.35380">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
 </Project>

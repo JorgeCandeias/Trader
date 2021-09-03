@@ -1,32 +1,34 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <NeutralLanguage>en-GB</NeutralLanguage>
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
-    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<NeutralLanguage>en-GB</NeutralLanguage>
+		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+		<EnableNETAnalyzers>true</EnableNETAnalyzers>
+		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
+		<AssemblyName>Outcompute.Trader.Core</AssemblyName>
+		<RootNamespace>Outcompute.Trader.Core</RootNamespace>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <InternalsVisibleTo Include="Trader.Core.Tests" />
-  </ItemGroup>
+	<ItemGroup>
+		<InternalsVisibleTo Include="Outcompute.Trader.Core.Tests" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="5.0.3">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
-    <PackageReference Include="SonarAnalyzer.CSharp" Version="8.27.0.35380">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="5.0.3">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
+		<PackageReference Include="SonarAnalyzer.CSharp" Version="8.27.0.35380">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Trader.Core.Abstractions\Trader.Core.Abstractions.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Trader.Core.Abstractions\Trader.Core.Abstractions.csproj" />
+	</ItemGroup>
 </Project>

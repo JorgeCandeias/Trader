@@ -8,6 +8,8 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AssemblyName>Outcompute.Trader.Models.Tests</AssemblyName>
+    <RootNamespace>Outcompute.Trader.Models.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,24 +1,30 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFramework>net5.0</TargetFramework>
-		<RootNamespace>Trader.Hosting</RootNamespace>
+		<RootNamespace>Outcompute.Trader.Hosting</RootNamespace>
 		<Nullable>enable</Nullable>
 		<NeutralLanguage>en-GB</NeutralLanguage>
 		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 		<EnableNETAnalyzers>true</EnableNETAnalyzers>
 		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
+		<AssemblyName>Outcompute.Trader.Hosting.Abstractions</AssemblyName>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<InternalsVisibleTo Include="Outcompute.Trader.Hosting.Abstractions.Tests" />
+	</ItemGroup>
+
 	<ItemGroup>
 		<PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="5.0.3">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="5.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
 		<PackageReference Include="SonarAnalyzer.CSharp" Version="8.27.0.35380">
-		  <PrivateAssets>all</PrivateAssets>
-		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 	</ItemGroup>
 </Project>

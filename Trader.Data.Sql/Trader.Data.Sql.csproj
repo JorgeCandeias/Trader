@@ -1,37 +1,42 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
-    <NeutralLanguage>en-GB</NeutralLanguage>
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
-    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+		<NeutralLanguage>en-GB</NeutralLanguage>
+		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+		<EnableNETAnalyzers>true</EnableNETAnalyzers>
+		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
+		<Nullable>enable</Nullable>
+		<AssemblyName>Outcompute.Trader.Data.Sql</AssemblyName>
+		<RootNamespace>Outcompute.Trader.Data.Sql</RootNamespace>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="10.1.1" />
-    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.1" />
-    <PackageReference Include="Dapper" Version="2.0.90" />
-    <PackageReference Include="FastMember" Version="1.5.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="5.0.3">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="3.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="5.0.0" />
-    <PackageReference Include="Polly" Version="7.2.2" />
-    <PackageReference Include="SonarAnalyzer.CSharp" Version="8.27.0.35380">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
+	<ItemGroup>
+		<InternalsVisibleTo Include="Outcompute.Trader.Data.Sql.Tests" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Trader.Data.Abstractions\Trader.Data.Abstractions.csproj" />
-    <ProjectReference Include="..\Trader.Hosting.Abstractions\Trader.Hosting.Abstractions.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="AutoMapper" Version="10.1.1" />
+		<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.1" />
+		<PackageReference Include="Dapper" Version="2.0.90" />
+		<PackageReference Include="FastMember" Version="1.5.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="5.0.3">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.Data.SqlClient" Version="3.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="5.0.0" />
+		<PackageReference Include="Polly" Version="7.2.2" />
+		<PackageReference Include="SonarAnalyzer.CSharp" Version="8.27.0.35380">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
 
+	<ItemGroup>
+		<ProjectReference Include="..\Trader.Data.Abstractions\Trader.Data.Abstractions.csproj" />
+		<ProjectReference Include="..\Trader.Hosting.Abstractions\Trader.Hosting.Abstractions.csproj" />
+	</ItemGroup>
 </Project>

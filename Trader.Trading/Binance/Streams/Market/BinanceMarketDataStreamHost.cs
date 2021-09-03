@@ -15,13 +15,12 @@ using System.Threading.Tasks;
 using Trader.Core.Timers;
 using Trader.Data;
 using Trader.Models;
-using Trader.Trading.Binance;
 
-namespace Trader.Trading
+namespace Trader.Trading.Binance.Streams.Market
 {
-    internal sealed class MarketDataStreamHost : IHostedService, IDisposable
+    internal sealed class BinanceMarketDataStreamHost : IHostedService, IDisposable
     {
-        private readonly MarketDataStreamHostOptions _options;
+        private readonly BinanceMarketDataStreamHostOptions _options;
         private readonly ILogger _logger;
         private readonly IMarketDataStreamClientFactory _factory;
         private readonly ITradingRepository _repository;
@@ -29,7 +28,7 @@ namespace Trader.Trading
         private readonly IMapper _mapper;
         private readonly ISafeTimerFactory _timers;
 
-        public MarketDataStreamHost(IOptions<MarketDataStreamHostOptions> options, ILogger<MarketDataStreamHost> logger, IMarketDataStreamClientFactory factory, ITradingRepository repository, ITradingService trader, IMapper mapper, ISafeTimerFactory timers)
+        public BinanceMarketDataStreamHost(IOptions<BinanceMarketDataStreamHostOptions> options, ILogger<BinanceMarketDataStreamHost> logger, IMarketDataStreamClientFactory factory, ITradingRepository repository, ITradingService trader, IMapper mapper, ISafeTimerFactory timers)
         {
             _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -40,7 +39,7 @@ namespace Trader.Trading
             _timers = timers ?? throw new ArgumentNullException(nameof(timers));
         }
 
-        private static string Name => nameof(MarketDataStreamHost);
+        private static string Name => nameof(BinanceMarketDataStreamHost);
 
         /// <summary>
         /// Cancels the worker task.
@@ -316,7 +315,7 @@ namespace Trader.Trading
             GC.SuppressFinalize(this);
         }
 
-        ~MarketDataStreamHost()
+        ~BinanceMarketDataStreamHost()
         {
             Dispose(false);
         }

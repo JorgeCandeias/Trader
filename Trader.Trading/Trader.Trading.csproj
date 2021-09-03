@@ -1,43 +1,48 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <NeutralLanguage>en-GB</NeutralLanguage>
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
-    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<NeutralLanguage>en-GB</NeutralLanguage>
+		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+		<EnableNETAnalyzers>true</EnableNETAnalyzers>
+		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
+		<AssemblyName>Outcompute.Trader.Trading</AssemblyName>
+		<RootNamespace>Outcompute.Trader.Trading</RootNamespace>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="AutoMapper" Version="10.1.1" />
-    <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.1" />
-    <PackageReference Include="FastMember" Version="1.5.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="5.0.3">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="5.0.0" />
-    <PackageReference Include="Polly" Version="7.2.2" />
-    <PackageReference Include="SonarAnalyzer.CSharp" Version="8.27.0.35380">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
+	<ItemGroup>
+		<InternalsVisibleTo Include="Outcompute.Trader.Trading.Tests" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Trader.Core\Trader.Core.csproj" />
-    <ProjectReference Include="..\Trader.Hosting.Abstractions\Trader.Hosting.Abstractions.csproj" />
-    <ProjectReference Include="..\Trader.Trading.Abstractions\Trader.Trading.Abstractions.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="AutoMapper" Version="10.1.1" />
+		<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.1" />
+		<PackageReference Include="FastMember" Version="1.5.0" />
+		<PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="5.0.3">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="5.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="5.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="5.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="5.0.0" />
+		<PackageReference Include="Polly" Version="7.2.2" />
+		<PackageReference Include="SonarAnalyzer.CSharp" Version="8.27.0.35380">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Algorithms\Trend\" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Trader.Core\Trader.Core.csproj" />
+		<ProjectReference Include="..\Trader.Hosting.Abstractions\Trader.Hosting.Abstractions.csproj" />
+		<ProjectReference Include="..\Trader.Trading.Abstractions\Trader.Trading.Abstractions.csproj" />
+	</ItemGroup>
 
+	<ItemGroup>
+		<Folder Include="Algorithms\Trend\" />
+	</ItemGroup>
 </Project>

@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace Trader.Trading
+namespace Trader.Trading.Binance.Streams.Market
 {
-    public class MarketDataStreamHostOptions
+    public class BinanceMarketDataStreamHostOptions
     {
         public ISet<string> Symbols { get; } = new HashSet<string>(StringComparer.Ordinal);
 

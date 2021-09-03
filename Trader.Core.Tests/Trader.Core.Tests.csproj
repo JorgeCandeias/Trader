@@ -7,6 +7,8 @@
 		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 		<EnableNETAnalyzers>true</EnableNETAnalyzers>
 		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
+		<AssemblyName>Outcompute.Trader.Core.Tests</AssemblyName>
+		<RootNamespace>Outcompute.Trader.Core.Tests</RootNamespace>
 	</PropertyGroup>
 
 	<ItemGroup>

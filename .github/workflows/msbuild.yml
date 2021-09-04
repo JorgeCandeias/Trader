@@ -50,7 +50,13 @@ jobs:
       run: |
         New-Item -Path .\.sonar\scanner -ItemType Directory
         dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
-
+        
+    - name: Remove database project
+      run: dotnet sln remove Trader.Data.Sql.Database/Trader.Data.Sql.Database.sqlproj
+      
+    - name: Build Database Project
+      run: msbuild /m /t:Build /p:Configuration=${{env.BUILD_CONFIGURATION}} Trader.Data.Sql.Database/Trader.Data.Sql.Database.sqlproj
+      
     - name: Restore NuGet packages
       working-directory: ${{env.GITHUB_WORKSPACE}}
       run: nuget restore ${{env.SOLUTION_FILE_PATH}}
@@ -62,5 +68,6 @@ jobs:
       shell: powershell
       run: |
         .\.sonar\scanner\dotnet-sonarscanner begin /k:"JorgeCandeias_Trader" /o:"jorgecandeias" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io"
-        msbuild /m /t:Rebuild /p:Configuration=${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_FILE_PATH}}
+        dotnet build --no-restore
+        dotnet test --no-build --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=opencover.xml
         .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"

@@ -17,6 +17,10 @@ jobs:
 
     steps:
     
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+    
     - name: Set up JDK 11
       uses: actions/setup-java@v1
       with:
@@ -49,10 +53,6 @@ jobs:
       run: |
         New-Item -Path .\.sonar\scanner -ItemType Directory
         dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
-        
-    - uses: actions/checkout@v2
-      with:
-        fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
         
     - name: Remove database project
       run: dotnet sln remove Trader.Data.Sql.Database/Trader.Data.Sql.Database.sqlproj

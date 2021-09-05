@@ -62,7 +62,7 @@ jobs:
       
     - name: Deploy Database Project
       working-directory: Trader.Data.Sql.Database\bin\${{ env.BUILD_CONFIGURATION }}
-      run: sqlpackage /Action:Publish /Profile:Trader.Data.Sql.Database.LocalDB.publish.xml /SourceFile:Trader.Data.Sql.Database.dacpac
+      run: sqlpackage /Action:Publish /Profile:Trader.Data.Sql.Database.LocalDB.publish.xml /SourceFile:Trader.Data.Sql.Database.dacpac /TargetDatabaseName:TraderTest
       
     - name: Restore dependencies
       run: dotnet restore

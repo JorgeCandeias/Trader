@@ -49,14 +49,15 @@ namespace Outcompute.Trader.Data.Sql.Tests
 
             await connection
                 .ExecuteAsync(@"
+                    INSERT INTO [dbo].[Symbol] ([Id], [Name]) VALUES (999, 'ZZZ');
                     INSERT INTO [dbo].[Trade]
                     (
-                        [Symbol], [Id], [OrderId], [OrderListId], [Price], [Quantity], [QuoteQuantity], [Commission], [CommissionAsset], [Time], [IsBuyer], [IsMaker], [IsBestMatch]
+                        [SymbolId], [Id], [OrderId], [OrderListId], [Price], [Quantity], [QuoteQuantity], [Commission], [CommissionAsset], [Time], [IsBuyer], [IsMaker], [IsBestMatch]
                     )
                     VALUES
-                        ('ZZZ', 1, 2, 0, 0, 0, 0, 0, 'AAA', '2021-01-01', 0, 0, 0),
-                        ('ZZZ', 2, 2, 0, 0, 0, 0, 0, 'AAA', '2021-01-01', 0, 0, 0),
-                        ('ZZZ', 3, 2, 0, 0, 0, 0, 0, 'AAA', '2021-01-01', 0, 0, 0)")
+                        (999, 1, 2, 0, 0, 0, 0, 0, 'AAA', '2021-01-01', 0, 0, 0),
+                        (999, 2, 2, 0, 0, 0, 0, 0, 'AAA', '2021-01-01', 0, 0, 0),
+                        (999, 3, 2, 0, 0, 0, 0, 0, 'AAA', '2021-01-01', 0, 0, 0)")
                 .ConfigureAwait(false);
 
             var repository = CreateRepository();

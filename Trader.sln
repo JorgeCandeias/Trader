@@ -35,7 +35,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Data.Sql.Tests", "Tr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Hosting", "Trader.Hosting\Trader.Hosting.csproj", "{7D82A67E-17B7-4073-84B0-27F78FF8EDBE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Hosting.Abstractions", "Trader.Hosting.Abstractions\Trader.Hosting.Abstractions.csproj", "{9A189382-A594-4350-89EE-39F72C7B311D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Hosting.Abstractions", "Trader.Hosting.Abstractions\Trader.Hosting.Abstractions.csproj", "{9A189382-A594-4350-89EE-39F72C7B311D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

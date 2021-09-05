@@ -63,7 +63,9 @@
     <Folder Include="Scripts" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Trader.Data.Sql.Database.LocalDB.publish.xml" />
+    <None Include="Trader.Data.Sql.Database.LocalDB.publish.xml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Build Include="Tables\Order.sql" />

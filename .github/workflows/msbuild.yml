@@ -58,7 +58,11 @@ jobs:
       run: dotnet sln remove Trader.Data.Sql.Database/Trader.Data.Sql.Database.sqlproj
       
     - name: Build Database Project
-      run: msbuild /m /t:Build /p:Configuration=${{env.BUILD_CONFIGURATION}} Trader.Data.Sql.Database/Trader.Data.Sql.Database.sqlproj
+      run: msbuild /m /t:Build /p:Configuration=${{ env.BUILD_CONFIGURATION }} Trader.Data.Sql.Database/Trader.Data.Sql.Database.sqlproj
+      
+    - name: Deploy Database Project
+      working-directory: Trader.Data.Sql.Database\bin\${{ env.BUILD_CONFIGURATION }}
+      run: sqlpackage /Action:Publish /Profile:Trader.Data.Sql.Database.LocalDB.publish.xml /SourceFile:Trader.Data.Sql.Database.dacpac
       
     - name: Restore dependencies
       run: dotnet restore

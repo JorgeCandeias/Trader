@@ -2,6 +2,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Orleans;
+using Orleans.Hosting;
 using Serilog;
 using Serilog.Events;
 using System.Linq;
@@ -60,6 +62,10 @@ namespace Outcompute.Trader.App
                                 .Select(x => x.GetSection("Options"))
                                 .Select(x => x["Symbol"]));
                         });
+                })
+                .UseOrleans(orleans =>
+                {
+                    orleans.UseLocalhostClustering();
                 })
                 .UseTrader((context, trader) =>
                 {

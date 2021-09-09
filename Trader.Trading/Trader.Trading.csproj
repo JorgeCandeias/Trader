@@ -44,5 +44,6 @@
 
 	<ItemGroup>
 		<Folder Include="Algorithms\Trend\" />
+		<Folder Include="Binance\" />
 	</ItemGroup>
 </Project>

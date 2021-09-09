@@ -32,6 +32,7 @@
     <ProjectReference Include="..\Trader.Core\Trader.Core.csproj" />
     <ProjectReference Include="..\Trader.Data.Sql\Trader.Data.Sql.csproj" />
     <ProjectReference Include="..\Trader.Hosting\Trader.Hosting.csproj" />
+    <ProjectReference Include="..\Trader.Trading.Binance\Trader.Trading.Binance.csproj" />
     <ProjectReference Include="..\Trader.Trading\Trader.Trading.csproj" />
   </ItemGroup>
   <ItemGroup>

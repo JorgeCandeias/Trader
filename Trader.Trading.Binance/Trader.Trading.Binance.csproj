@@ -12,7 +12,28 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Trader.Trading.Binance.Abstractions\Trader.Trading.Binance.Abstractions.csproj" />
+	  <PackageReference Include="AutoMapper" Version="10.1.1" />
+	  <PackageReference Include="FastMember" Version="1.5.0" />
+	  <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="5.0.3">
+	    <PrivateAssets>all</PrivateAssets>
+	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	  </PackageReference>
+	  <PackageReference Include="Microsoft.Extensions.Http" Version="5.0.0" />
+	  <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
+	  <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="5.0.9" />
+	  <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="5.0.0" />
+	  <PackageReference Include="Polly" Version="7.2.2" />
+	  <PackageReference Include="SonarAnalyzer.CSharp" Version="8.28.0.36354">
+	    <PrivateAssets>all</PrivateAssets>
+	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	  </PackageReference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Trader.Core.Abstractions\Trader.Core.Abstractions.csproj" />
+		<ProjectReference Include="..\Trader.Hosting.Abstractions\Trader.Hosting.Abstractions.csproj" />
+		<ProjectReference Include="..\Trader.Models\Trader.Models.csproj" />
+		<ProjectReference Include="..\Trader.Trading.Abstractions\Trader.Trading.Abstractions.csproj" />
 	</ItemGroup>
 
 </Project>

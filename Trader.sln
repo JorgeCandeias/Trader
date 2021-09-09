@@ -39,8 +39,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Hosting.Abstractions
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Trading.Binance", "Trader.Trading.Binance\Trader.Trading.Binance.csproj", "{9114AF79-F4B1-4F97-8B72-DB8110568926}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Trading.Binance.Abstractions", "Trader.Trading.Binance.Abstractions\Trader.Trading.Binance.Abstractions.csproj", "{6C0FDFD0-B7A7-43EE-9F0C-B328B20F0F3A}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -117,10 +115,6 @@ Global
 		{9114AF79-F4B1-4F97-8B72-DB8110568926}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9114AF79-F4B1-4F97-8B72-DB8110568926}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9114AF79-F4B1-4F97-8B72-DB8110568926}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6C0FDFD0-B7A7-43EE-9F0C-B328B20F0F3A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6C0FDFD0-B7A7-43EE-9F0C-B328B20F0F3A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6C0FDFD0-B7A7-43EE-9F0C-B328B20F0F3A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6C0FDFD0-B7A7-43EE-9F0C-B328B20F0F3A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

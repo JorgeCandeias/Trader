@@ -43,6 +43,7 @@ namespace Microsoft.Extensions.DependencyInjection
                         .AddSingleton<ISigner, Signer>()
                         .AddSingleton<IUserDataStreamClientFactory, BinanceUserDataStreamWssClientFactory>()
                         .AddSingleton<IMarketDataStreamClientFactory, BinanceMarketDataStreamWssClientFactory>()
+                        .AddHostedService<BinanceMarketDataStreamHost>()
 
                         // add typed http client
                         .AddHttpClient<BinanceApiClient>((p, x) =>

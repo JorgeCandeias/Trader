@@ -42,17 +42,6 @@ namespace Outcompute.Trader.App
                     services
 
                         // temporary brute force configuration - to refactor into dynamic dependency graph once orleans is brought in
-                        .AddMarketDataStreamHost(options =>
-                        {
-                            options.Symbols.UnionWith(context
-                                .Configuration
-                                .GetSection("Trader:Algos")
-                                .GetChildren()
-                                .Select(x => x.GetSection("Options"))
-                                .Select(x => x["Symbol"]));
-                        })
-
-                        // temporary brute force configuration - to refactor into dynamic dependency graph once orleans is brought in
                         .AddUserDataStreamHost(options =>
                         {
                             options.Symbols.UnionWith(context
@@ -77,6 +66,14 @@ namespace Outcompute.Trader.App
                         .UseBinanceTradingService(options =>
                         {
                             context.Configuration.Bind("Binance", options);
+
+                            // temporary brute force configuration - to refactor into dynamic dependency graph once orleans is brought in
+                            options.MarketDataStreamSymbols.UnionWith(context
+                                .Configuration
+                                .GetSection("Trader:Algos")
+                                .GetChildren()
+                                .Select(x => x.GetSection("Options"))
+                                .Select(x => x["Symbol"]));
                         });
                 })
                 .RunConsoleAsync();

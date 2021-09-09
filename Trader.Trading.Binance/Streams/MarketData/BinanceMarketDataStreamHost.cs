@@ -2,6 +2,9 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Outcompute.Trader.Core.Timers;
+using Outcompute.Trader.Data;
+using Outcompute.Trader.Models;
 using Polly;
 using System;
 using System.Buffers;
@@ -12,15 +15,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using Outcompute.Trader.Core.Timers;
-using Outcompute.Trader.Data;
-using Outcompute.Trader.Models;
 
 namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
 {
     internal sealed class BinanceMarketDataStreamHost : IHostedService, IDisposable
     {
-        private readonly BinanceMarketDataStreamHostOptions _options;
+        private readonly BinanceOptions _options;
         private readonly ILogger _logger;
         private readonly IMarketDataStreamClientFactory _factory;
         private readonly ITradingRepository _repository;
@@ -28,9 +28,9 @@ namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
         private readonly IMapper _mapper;
         private readonly ISafeTimerFactory _timers;
 
-        public BinanceMarketDataStreamHost(IOptions<BinanceMarketDataStreamHostOptions> options, ILogger<BinanceMarketDataStreamHost> logger, IMarketDataStreamClientFactory factory, ITradingRepository repository, ITradingService trader, IMapper mapper, ISafeTimerFactory timers)
+        public BinanceMarketDataStreamHost(IOptions<BinanceOptions> options, ILogger<BinanceMarketDataStreamHost> logger, IMarketDataStreamClientFactory factory, ITradingRepository repository, ITradingService trader, IMapper mapper, ISafeTimerFactory timers)
         {
-            _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
+            _options = options.Value ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _factory = factory ?? throw new ArgumentNullException(nameof(factory));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -84,8 +84,8 @@ namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
 
             // create a client for the streams we want
             var streams = new List<string>();
-            streams.AddRange(_options.Symbols.Select(x => $"{x.ToLowerInvariant()}@miniTicker"));
-            streams.AddRange(_options.Symbols.Select(x => $"{x.ToLowerInvariant()}@kline_{_mapper.Map<string>(KlineInterval.Minutes1)}"));
+            streams.AddRange(_options.MarketDataStreamSymbols.Select(x => $"{x.ToLowerInvariant()}@miniTicker"));
+            streams.AddRange(_options.MarketDataStreamSymbols.Select(x => $"{x.ToLowerInvariant()}@kline_{_mapper.Map<string>(KlineInterval.Minutes1)}"));
 
             _logger.LogInformation("{Name} connecting to streams {Streams}...", Name, streams);
 
@@ -109,12 +109,12 @@ namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
                         throw new BinanceCodeException(message.Error.Code, message.Error.Message, 0);
                     }
 
-                    if (message.MiniTicker is not null && _options.Symbols.Contains(message.MiniTicker.Symbol))
+                    if (message.MiniTicker is not null && _options.MarketDataStreamSymbols.Contains(message.MiniTicker.Symbol))
                     {
                         _tickers[message.MiniTicker.Symbol] = message.MiniTicker;
                     }
 
-                    if (message.Kline is not null && _options.Symbols.Contains(message.Kline.Symbol))
+                    if (message.Kline is not null && _options.MarketDataStreamSymbols.Contains(message.Kline.Symbol))
                     {
                         await _klines.Writer.WriteAsync(message.Kline, cancellationToken).ConfigureAwait(false);
                     }
@@ -122,8 +122,8 @@ namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
             }, cancellationToken);
 
             // wait for a few seconds for the stream to stabilize so we don't miss any incoming data from binance
-            _logger.LogInformation("{Name} waiting {Period} for stream to stabilize...", Name, _options.StabilizationPeriod);
-            await Task.Delay(_options.StabilizationPeriod, cancellationToken).ConfigureAwait(false);
+            _logger.LogInformation("{Name} waiting {Period} for stream to stabilize...", Name, _options.MarketDataStreamStabilizationPeriod);
+            await Task.Delay(_options.MarketDataStreamStabilizationPeriod, cancellationToken).ConfigureAwait(false);
 
             // sync tickers from the api
             await SyncTickersAsync(cancellationToken).ConfigureAwait(false);
@@ -140,13 +140,13 @@ namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
 
         private async Task SyncTickersAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("{Name} is syncing tickers for {Symbols}...", Name, _options.Symbols);
+            _logger.LogInformation("{Name} is syncing tickers for {Symbols}...", Name, _options.MarketDataStreamSymbols);
 
-            var buffer = ArrayPool<MiniTicker>.Shared.Rent(_options.Symbols.Count);
-            var segment = new ArraySegment<MiniTicker>(buffer, 0, _options.Symbols.Count);
+            var buffer = ArrayPool<MiniTicker>.Shared.Rent(_options.MarketDataStreamSymbols.Count);
+            var segment = new ArraySegment<MiniTicker>(buffer, 0, _options.MarketDataStreamSymbols.Count);
             var count = 0;
 
-            foreach (var symbol in _options.Symbols)
+            foreach (var symbol in _options.MarketDataStreamSymbols)
             {
                 var ticker = await _trader
                     .Get24hTickerPriceChangeStatisticsAsync(symbol, cancellationToken)
@@ -166,12 +166,12 @@ namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
 
         private async Task SyncKlinesAsync(CancellationToken cancellationToken)
         {
-            var start = DateTime.UtcNow.Subtract(_options.KlineHistorySpan);
+            var start = DateTime.UtcNow.Subtract(_options.MarketDataStreamKlineHistoryImportSpan);
             var end = DateTime.UtcNow;
 
-            _logger.LogInformation("{Name} is syncing klines for {Symbols} from {Start} to {End}", Name, _options.Symbols, start, end);
+            _logger.LogInformation("{Name} is syncing klines for {Symbols} from {Start} to {End}", Name, _options.MarketDataStreamSymbols, start, end);
 
-            foreach (var symbol in _options.Symbols)
+            foreach (var symbol in _options.MarketDataStreamSymbols)
             {
                 var current = start;
                 var count = 0;
@@ -215,10 +215,10 @@ namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
 
         private async Task SaveTickersAsync(CancellationToken cancellationToken)
         {
-            var buffer = ArrayPool<MiniTicker>.Shared.Rent(_options.Symbols.Count);
+            var buffer = ArrayPool<MiniTicker>.Shared.Rent(_options.MarketDataStreamSymbols.Count);
             var count = 0;
 
-            foreach (var symbol in _options.Symbols)
+            foreach (var symbol in _options.MarketDataStreamSymbols)
             {
                 if (_tickers.TryRemove(symbol, out var ticker))
                 {
@@ -258,7 +258,7 @@ namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
             _linkedStartupCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _cancellation.Token);
 
             // start the work timer
-            _workTimer = _timers.Create(TickWorkerAsync, TimeSpan.Zero, _options.RetryDelay, Timeout.InfiniteTimeSpan);
+            _workTimer = _timers.Create(TickWorkerAsync, TimeSpan.Zero, _options.MarketDataStreamRetryDelay, Timeout.InfiniteTimeSpan);
 
             // start the save timer
             _saveTimer = _timers.Create(TickSaveAsync, TimeSpan.Zero, TimeSpan.FromMilliseconds(100), Timeout.InfiniteTimeSpan);

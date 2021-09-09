@@ -44,6 +44,7 @@ namespace Microsoft.Extensions.DependencyInjection
                         .AddSingleton<IUserDataStreamClientFactory, BinanceUserDataStreamWssClientFactory>()
                         .AddSingleton<IMarketDataStreamClientFactory, BinanceMarketDataStreamWssClientFactory>()
                         .AddHostedService<BinanceMarketDataStreamHost>()
+                        .AddHostedService<BinanceUserDataStreamHost>()
 
                         // add typed http client
                         .AddHttpClient<BinanceApiClient>((p, x) =>

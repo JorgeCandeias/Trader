@@ -2,24 +2,23 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Outcompute.Trader.Core.Time;
+using Outcompute.Trader.Core.Timers;
+using Outcompute.Trader.Data;
+using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Algorithms;
 using Polly;
 using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
-using Outcompute.Trader.Core.Time;
-using Outcompute.Trader.Core.Timers;
-using Outcompute.Trader.Data;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Algorithms;
-using Outcompute.Trader.Trading.Binance;
 
 namespace Outcompute.Trader.Trading.Binance.Streams.UserData
 {
     internal sealed class BinanceUserDataStreamHost : IHostedService, IDisposable
     {
-        private readonly BinanceUserDataStreamHostOptions _options;
+        private readonly BinanceOptions _options;
         private readonly ILogger _logger;
         private readonly ITradingService _trader;
         private readonly IUserDataStreamClientFactory _streams;
@@ -30,7 +29,7 @@ namespace Outcompute.Trader.Trading.Binance.Streams.UserData
         private readonly ISafeTimerFactory _timers;
         private readonly IMapper _mapper;
 
-        public BinanceUserDataStreamHost(IOptions<BinanceUserDataStreamHostOptions> options, ILogger<BinanceUserDataStreamHost> logger, ITradingService trader, IUserDataStreamClientFactory streams, IOrderSynchronizer orders, ITradeSynchronizer trades, ITradingRepository repository, ISystemClock clock, ISafeTimerFactory timers, IMapper mapper)
+        public BinanceUserDataStreamHost(IOptions<BinanceOptions> options, ILogger<BinanceUserDataStreamHost> logger, ITradingService trader, IUserDataStreamClientFactory streams, IOrderSynchronizer orders, ITradeSynchronizer trades, ITradingRepository repository, ISystemClock clock, ISafeTimerFactory timers, IMapper mapper)
         {
             _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -58,7 +57,7 @@ namespace Outcompute.Trader.Trading.Binance.Streams.UserData
 
         private void BumpPingTime()
         {
-            _nextPingTime = _clock.UtcNow.Add(_options.PingPeriod);
+            _nextPingTime = _clock.UtcNow.Add(_options.UserDataStreamPingPeriod);
         }
 
         private async Task TickWorkerAsync(CancellationToken cancellationToken)
@@ -138,8 +137,8 @@ namespace Outcompute.Trader.Trading.Binance.Streams.UserData
             }, cancellationToken);
 
             // wait for a few seconds for the stream to stabilize so we don't miss any incoming data from binance
-            _logger.LogInformation("{Name} waiting {Period} for stream to stabilize...", Name, _options.StabilizationPeriod);
-            await Task.Delay(_options.StabilizationPeriod, cancellationToken).ConfigureAwait(false);
+            _logger.LogInformation("{Name} waiting {Period} for stream to stabilize...", Name, _options.UserDataStreamStabilizationPeriod);
+            await Task.Delay(_options.UserDataStreamStabilizationPeriod, cancellationToken).ConfigureAwait(false);
 
             // sync asset balances
             var accountInfo = await _trader
@@ -151,7 +150,7 @@ namespace Outcompute.Trader.Trading.Binance.Streams.UserData
                 .ConfigureAwait(false);
 
             // sync orders for all symbols
-            foreach (var symbol in _options.Symbols)
+            foreach (var symbol in _options.UserDataStreamSymbols)
             {
                 await Policy
                     .Handle<BinanceTooManyRequestsException>()
@@ -170,7 +169,7 @@ namespace Outcompute.Trader.Trading.Binance.Streams.UserData
             }
 
             // sync trades for all symbols
-            foreach (var symbol in _options.Symbols)
+            foreach (var symbol in _options.UserDataStreamSymbols)
             {
                 await Policy
                     .Handle<BinanceTooManyRequestsException>()
@@ -235,7 +234,7 @@ namespace Outcompute.Trader.Trading.Binance.Streams.UserData
 
                 while (_executionChannel.Reader.TryRead(out var report))
                 {
-                    if (!_options.Symbols.Contains(report.Symbol))
+                    if (!_options.UserDataStreamSymbols.Contains(report.Symbol))
                     {
                         _logger.LogWarning(
                             "{Name} ignoring {MessageType} for unknown symbol {Symbol}",

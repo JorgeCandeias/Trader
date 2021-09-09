@@ -37,21 +37,6 @@ namespace Outcompute.Trader.App
                         .WriteTo.Console()
                         .CreateLogger(), true);
                 })
-                .ConfigureServices((context, services) =>
-                {
-                    services
-
-                        // temporary brute force configuration - to refactor into dynamic dependency graph once orleans is brought in
-                        .AddUserDataStreamHost(options =>
-                        {
-                            options.Symbols.UnionWith(context
-                                .Configuration
-                                .GetSection("Trader:Algos")
-                                .GetChildren()
-                                .Select(x => x.GetSection("Options"))
-                                .Select(x => x["Symbol"]));
-                        });
-                })
                 .UseOrleans(orleans =>
                 {
                     orleans.UseLocalhostClustering();
@@ -69,6 +54,14 @@ namespace Outcompute.Trader.App
 
                             // temporary brute force configuration - to refactor into dynamic dependency graph once orleans is brought in
                             options.MarketDataStreamSymbols.UnionWith(context
+                                .Configuration
+                                .GetSection("Trader:Algos")
+                                .GetChildren()
+                                .Select(x => x.GetSection("Options"))
+                                .Select(x => x["Symbol"]));
+
+                            // temporary brute force configuration - to refactor into dynamic dependency graph once orleans is brought in
+                            options.UserDataStreamSymbols.UnionWith(context
                                 .Configuration
                                 .GetSection("Trader:Algos")
                                 .GetChildren()

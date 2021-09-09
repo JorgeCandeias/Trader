@@ -16,7 +16,7 @@ using Outcompute.Trader.Core.Timers;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 
-namespace Outcompute.Trader.Trading.Binance.Streams.Market
+namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
 {
     internal sealed class BinanceMarketDataStreamHost : IHostedService, IDisposable
     {

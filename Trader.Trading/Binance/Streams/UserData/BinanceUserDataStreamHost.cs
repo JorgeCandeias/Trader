@@ -15,11 +15,11 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Binance;
 
-namespace Outcompute.Trader.Trading
+namespace Outcompute.Trader.Trading.Binance.Streams.UserData
 {
-    internal sealed class UserDataStreamHost : IHostedService, IDisposable
+    internal sealed class BinanceUserDataStreamHost : IHostedService, IDisposable
     {
-        private readonly UserDataStreamHostOptions _options;
+        private readonly BinanceUserDataStreamHostOptions _options;
         private readonly ILogger _logger;
         private readonly ITradingService _trader;
         private readonly IUserDataStreamClientFactory _streams;
@@ -30,7 +30,7 @@ namespace Outcompute.Trader.Trading
         private readonly ISafeTimerFactory _timers;
         private readonly IMapper _mapper;
 
-        public UserDataStreamHost(IOptions<UserDataStreamHostOptions> options, ILogger<UserDataStreamHost> logger, ITradingService trader, IUserDataStreamClientFactory streams, IOrderSynchronizer orders, ITradeSynchronizer trades, ITradingRepository repository, ISystemClock clock, ISafeTimerFactory timers, IMapper mapper)
+        public BinanceUserDataStreamHost(IOptions<BinanceUserDataStreamHostOptions> options, ILogger<BinanceUserDataStreamHost> logger, ITradingService trader, IUserDataStreamClientFactory streams, IOrderSynchronizer orders, ITradeSynchronizer trades, ITradingRepository repository, ISystemClock clock, ISafeTimerFactory timers, IMapper mapper)
         {
             _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -44,7 +44,7 @@ namespace Outcompute.Trader.Trading
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
         }
 
-        private static string Name => nameof(UserDataStreamHost);
+        private static string Name => nameof(BinanceUserDataStreamHost);
 
         private readonly TaskCompletionSource _ready = new();
         private string? _listenKey;
@@ -336,7 +336,7 @@ namespace Outcompute.Trader.Trading
             GC.SuppressFinalize(this);
         }
 
-        ~UserDataStreamHost()
+        ~BinanceUserDataStreamHost()
         {
             Dispose(false);
         }

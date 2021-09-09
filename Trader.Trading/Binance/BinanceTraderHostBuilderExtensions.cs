@@ -2,13 +2,15 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.ObjectPool;
 using Microsoft.Extensions.Options;
-using System;
 using Outcompute.Trader.Hosting;
 using Outcompute.Trader.Trading;
 using Outcompute.Trader.Trading.Binance;
 using Outcompute.Trader.Trading.Binance.Converters;
 using Outcompute.Trader.Trading.Binance.Handlers;
 using Outcompute.Trader.Trading.Binance.Signing;
+using Outcompute.Trader.Trading.Binance.Streams.MarketData;
+using Outcompute.Trader.Trading.Binance.Streams.UserData;
+using System;
 
 namespace Microsoft.Extensions.DependencyInjection
 {

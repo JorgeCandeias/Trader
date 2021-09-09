@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Outcompute.Trader.Models;
 
-namespace Outcompute.Trader.Trading.Binance
+namespace Outcompute.Trader.Trading.Binance.Streams.UserData
 {
     internal sealed class BinanceUserDataStreamWssClient : IUserDataStreamClient
     {

@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
 using Outcompute.Trader.Core;
+using System;
 using static System.String;
 
 namespace Outcompute.Trader.Hosting
@@ -79,7 +79,8 @@ namespace Outcompute.Trader.Hosting
                         .AddSafeTimerFactory()
                         .AddBase62NumberSerializer()
                         .AddModelAutoMapperProfiles()
-                        .AddTraderAlgorithmBlocks();
+                        .AddTraderAlgorithmBlocks()
+                        .AddGrainWatchdog();
                 })
                 .AddTraderAlgorithmsFromConfig();
         }

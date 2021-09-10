@@ -80,7 +80,8 @@ namespace Outcompute.Trader.Hosting
                         .AddBase62NumberSerializer()
                         .AddModelAutoMapperProfiles()
                         .AddTraderAlgorithmBlocks()
-                        .AddGrainWatchdog();
+                        .AddGrainWatchdog()
+                        .AddRandomGenerator();
                 })
                 .AddTraderAlgorithmsFromConfig();
         }

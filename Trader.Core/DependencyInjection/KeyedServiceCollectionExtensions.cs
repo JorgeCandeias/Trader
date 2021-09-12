@@ -2,6 +2,7 @@
 
 namespace Microsoft.Extensions.DependencyInjection
 {
+    // todo: remove this in favor of the orleans implementation of named services
     public static class KeyedServiceCollectionExtensions
     {
         #region Keyed

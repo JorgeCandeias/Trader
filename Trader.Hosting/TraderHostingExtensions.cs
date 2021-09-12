@@ -62,8 +62,10 @@ namespace Microsoft.Extensions.Hosting
                                     .AddBase62NumberSerializer()
                                     .AddModelAutoMapperProfiles()
                                     .AddAlgoServices()
-                                    .AddAlgoManagerGrain(context.Configuration.GetSection($"{TraderHostBuilderConstants.TraderRootConfigurationKey}:{TraderHostBuilderConstants.TraderAlgorithmsConfigurationSectionKey}"))
-                                    .AddRandomGenerator();
+                                    .AddRandomGenerator()
+                                    .AddAlgoFactoryResolver()
+                                    .AddAlgoManagerGrain()
+                                    .AddAlgoHostGrain();
                             });
                     });
 

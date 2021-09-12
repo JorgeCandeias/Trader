@@ -2,12 +2,19 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Hosting;
+using Outcompute.Trader.Hosting;
+using Outcompute.Trader.Trading.Algorithms;
 using Serilog;
 using Serilog.Events;
+using System;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace Outcompute.Trader.App
 {
@@ -69,9 +76,39 @@ namespace Outcompute.Trader.App
                                 .Select(x => x.GetSection("Options"))
                                 .Select(x => x["Symbol"])
                                 .Where(x => x is not null));
-                        });
+                        })
+                        .AddAlgoType<TestAlgo, TestAlgoOptions>("Test");
                 })
                 .RunConsoleAsync();
+        }
+
+        internal class TestAlgo : IAlgo
+        {
+            private readonly IOptionsMonitor<TestAlgoOptions> _options;
+            private readonly ILogger _logger;
+            private readonly IAlgoContext _context;
+
+            public TestAlgo(IOptionsMonitor<TestAlgoOptions> options, ILogger<TestAlgo> logger, IAlgoContext context)
+            {
+                _options = options ?? throw new ArgumentNullException(nameof(options));
+                _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+                _context = context ?? throw new ArgumentNullException(nameof(context));
+            }
+
+            public Task GoAsync(CancellationToken cancellationToken = default)
+            {
+                var options = _options.Get(_context.Name);
+
+                _logger.LogInformation("My name is {Name} and my options are {Options}", _context.Name, options);
+
+                return Task.CompletedTask;
+            }
+        }
+
+        public class TestAlgoOptions
+        {
+            [Required]
+            public string SomeValue { get; set; } = "Default";
         }
     }
 }

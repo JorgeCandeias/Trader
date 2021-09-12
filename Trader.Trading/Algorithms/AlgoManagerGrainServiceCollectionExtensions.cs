@@ -1,17 +1,16 @@
-﻿using Microsoft.Extensions.Configuration;
-using Orleans;
+﻿using Orleans;
 using Outcompute.Trader.Trading.Algorithms;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
     public static class AlgoManagerGrainServiceCollectionExtensions
     {
-        public static IServiceCollection AddAlgoManagerGrain(this IServiceCollection services, IConfigurationSection config)
+        public static IServiceCollection AddAlgoManagerGrain(this IServiceCollection services)
         {
             return services
                 .AddGrainWatchdogEntry(factory => factory.GetAlgoManagerGrain())
+                .ConfigureOptions<AlgoManagerGrainOptionsConfigurator>()
                 .AddOptions<AlgoManagerGrainOptions>()
-                .Bind(config)
                 .ValidateDataAnnotations()
                 .Services;
         }

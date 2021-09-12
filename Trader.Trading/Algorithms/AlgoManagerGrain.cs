@@ -3,7 +3,6 @@ using Microsoft.Extensions.Options;
 using Orleans;
 using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
@@ -17,11 +16,7 @@ namespace Outcompute.Trader.Trading.Algorithms
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-
-            _options.OnChange(_ => Interlocked.Exchange(ref _changed, 1));
         }
-
-        private int _changed = 1;
 
         public override Task OnActivateAsync()
         {
@@ -33,13 +28,16 @@ namespace Outcompute.Trader.Trading.Algorithms
         [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         private async Task TryPingAllAlgoGrainsAsync()
         {
-            if (Interlocked.CompareExchange(ref _changed, 0, 1) is 0) return;
-
+            // snapshot the current options for this tick
             var options = _options.CurrentValue;
 
-            foreach (var name in options.Names)
+            // ping all enabled algos
+            foreach (var algo in options.Algos)
             {
-                var grain = GrainFactory.GetSymbolAlgoHostGrain(name);
+                // skip disabled algo
+                if (!algo.Value) continue;
+
+                var grain = GrainFactory.GetAlgoHostGrain(algo.Key);
 
                 try
                 {

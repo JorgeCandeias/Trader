@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
     public class AlgoManagerGrainOptions
     {
-        public ISet<string> Names { get; } = new HashSet<string>(StringComparer.Ordinal);
+        public IDictionary<string, bool> Algos { get; } = new Dictionary<string, bool>();
     }
 }

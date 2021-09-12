@@ -28,8 +28,10 @@ namespace Microsoft.Extensions.DependencyInjection
         where TService : class
         where TInstance : TService
     {
+        private static readonly ObjectFactory _factory = ActivatorUtilities.CreateFactory(typeof(TInstance), Array.Empty<Type>());
+
         public KeyedSingletonService(TKey key, IServiceProvider services)
-            : base(key, services, (sp, k) => sp.GetService<TInstance>())
+            : base(key, services, (sp, k) => (TInstance)_factory(sp, null))
         {
         }
     }

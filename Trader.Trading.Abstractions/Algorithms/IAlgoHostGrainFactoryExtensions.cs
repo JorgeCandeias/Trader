@@ -5,7 +5,7 @@ namespace Orleans
 {
     public static class IAlgoHostGrainFactoryExtensions
     {
-        public static IAlgoHostGrain GetSymbolAlgoHostGrain(this IGrainFactory factory, string name)
+        public static IAlgoHostGrain GetAlgoHostGrain(this IGrainFactory factory, string name)
         {
             if (factory is null) throw new ArgumentNullException(nameof(factory));
 

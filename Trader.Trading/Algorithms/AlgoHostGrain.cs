@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Orleans;
 using System;
 using System.Threading.Tasks;
@@ -10,12 +11,14 @@ namespace Outcompute.Trader.Trading.Algorithms
     internal class AlgoHostGrain : Grain, IAlgoHostGrain
     {
         private readonly ILogger _logger;
-        private readonly IAlgoFactory _factory;
+        private readonly IOptionsMonitor<AlgoHostGrainOptions> _options;
+        private readonly IAlgoFactoryResolver _resolver;
 
-        public AlgoHostGrain(ILogger<AlgoHostGrain> logger, IAlgoFactory factory)
+        public AlgoHostGrain(ILogger<AlgoHostGrain> logger, IOptionsMonitor<AlgoHostGrainOptions> options, IAlgoFactoryResolver resolver)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _factory = factory ?? throw new ArgumentNullException(nameof(factory));
+            _options = options ?? throw new ArgumentNullException(nameof(options));
+            _resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
         }
 
         private string _name = Empty;
@@ -23,11 +26,17 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public override Task OnActivateAsync()
         {
+            // the name of the algo is the key for this grain instance
             _name = this.GetPrimaryKeyString();
 
-            _algo = _factory.Create(_name);
+            // snapshot the current algo host options
+            var options = _options.Get(_name);
 
-            _logger.LogInformation("Created an algo of type {Type}", _algo.GetType().FullName);
+            // resolve the factory for the current algo type
+            var factory = _resolver.Resolve(options.Type);
+
+            // create the algo instance
+            _algo = factory.Create(_name);
 
             _logger.AlgoHostGrainStarted(_name);
 

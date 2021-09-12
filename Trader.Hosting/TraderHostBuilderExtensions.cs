@@ -6,16 +6,17 @@ using static System.String;
 
 namespace Outcompute.Trader.Hosting
 {
+    // todo: remove once dynamic algo config is implemented
     public static class TraderHostBuilderExtensions
     {
-        public static ITraderHostBuilder AddTraderAlgorithmsFromConfig(this ITraderHostBuilder builder)
+        public static ITraderBuilder AddTraderAlgorithmsFromConfig(this ITraderBuilder builder)
         {
             if (builder is null) throw new ArgumentNullException(nameof(builder));
 
             return builder.AddTraderAlgorithmsFromConfigSection($"{TraderHostBuilderConstants.TraderRootConfigurationKey}:{TraderHostBuilderConstants.TraderAlgorithmsConfigurationSectionKey}");
         }
 
-        public static ITraderHostBuilder AddTraderAlgorithmsFromConfigSection(this ITraderHostBuilder builder, string section)
+        public static ITraderBuilder AddTraderAlgorithmsFromConfigSection(this ITraderBuilder builder, string section)
         {
             if (builder is null) throw new ArgumentNullException(nameof(builder));
             if (IsNullOrWhiteSpace(section)) throw new ArgumentNullException(nameof(section));
@@ -36,7 +37,7 @@ namespace Outcompute.Trader.Hosting
                         throw new TraderConfigurationException($"Algorithm '{name}' does not have a valid '{TraderHostBuilderConstants.TraderAlgorithmsConfigurationTypeKey}' property specified.");
                     }
 
-                    // todo: refactor this into a registration factory pattern
+                    // todo: remove this once the algos are hosted by the algo grain host
                     switch (type)
                     {
                         case "Accumulator":
@@ -60,30 +61,11 @@ namespace Outcompute.Trader.Hosting
                             break;
 
                         default:
-                            throw new TraderConfigurationException($"Algorithm '{name}' has unknown type '{type}'");
+                            //throw new TraderConfigurationException($"Algorithm '{name}' has unknown type '{type}'");
+                            break;
                     }
                 }
             });
-        }
-
-        public static ITraderHostBuilder AddTraderCore(this ITraderHostBuilder builder)
-        {
-            if (builder is null) throw new ArgumentNullException(nameof(builder));
-
-            return builder
-                .ConfigureServices((context, services) =>
-                {
-                    services
-                        .AddTraderAgent(options => context.Configuration.Bind($"{TraderHostBuilderConstants.TraderRootConfigurationKey}:{TraderHostBuilderConstants.TraderAgentSectionConfigurationKey}"))
-                        .AddSystemClock()
-                        .AddSafeTimerFactory()
-                        .AddBase62NumberSerializer()
-                        .AddModelAutoMapperProfiles()
-                        .AddTraderAlgorithmBlocks()
-                        .AddGrainWatchdog()
-                        .AddRandomGenerator();
-                })
-                .AddTraderAlgorithmsFromConfig();
         }
     }
 }

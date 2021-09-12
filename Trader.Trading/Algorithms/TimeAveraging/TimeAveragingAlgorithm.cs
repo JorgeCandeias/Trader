@@ -11,7 +11,7 @@ using Outcompute.Trader.Trading.Algorithms.Exceptions;
 
 namespace Outcompute.Trader.Trading.Algorithms.TimeAveraging
 {
-    internal class TimeAveragingAlgorithm : ITradingAlgorithm
+    internal class TimeAveragingAlgorithm : ISymbolAlgo
     {
         private readonly string _name;
         private readonly TimeAveragingAlgorithmOptions _options;

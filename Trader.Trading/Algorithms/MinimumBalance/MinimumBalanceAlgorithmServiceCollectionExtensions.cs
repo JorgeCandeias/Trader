@@ -9,7 +9,7 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddMinimumBalanceAlgorithm(this IServiceCollection services, string name, Action<MinimumBalanceAlgorithmOptions> configure)
         {
             return services
-                .AddSingleton<ITradingAlgorithm, MinimumBalanceAlgorithm>(sp => ActivatorUtilities.CreateInstance<MinimumBalanceAlgorithm>(sp, name))
+                .AddSingleton<ISymbolAlgo, MinimumBalanceAlgorithm>(sp => ActivatorUtilities.CreateInstance<MinimumBalanceAlgorithm>(sp, name))
                 .AddOptions<MinimumBalanceAlgorithmOptions>(name)
                 .Configure(configure)
                 .ValidateDataAnnotations()

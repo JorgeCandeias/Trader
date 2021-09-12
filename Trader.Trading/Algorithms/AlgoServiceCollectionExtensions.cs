@@ -3,9 +3,9 @@ using Outcompute.Trader.Trading.Algorithms.Steps;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
-    public static class AlgorithmServiceCollectionExtensions
+    public static class AlgoServiceCollectionExtensions
     {
-        public static IServiceCollection AddTraderAlgorithmBlocks(this IServiceCollection services)
+        public static IServiceCollection AddAlgoServices(this IServiceCollection services)
         {
             return services
                 .AddSingleton<ISignificantOrderResolver, SignificantOrderResolver>()
@@ -14,7 +14,11 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<IOrderCodeGenerator, OrderCodeGenerator>()
                 .AddSingleton<ITrackingBuyStep, TrackingBuyStep>()
                 .AddSingleton<IAveragingSellStep, AveragingSellStep>()
-                .AddSingleton<IRedeemSavingsStep, RedeemSavingsStep>();
+                .AddSingleton<IRedeemSavingsStep, RedeemSavingsStep>()
+
+                .AddTransient<IAlgoContext, AlgoContext>()
+
+                .AddOptions<AlgoConfigurationMappingOptions>().ValidateDataAnnotations().Services;
         }
     }
 }

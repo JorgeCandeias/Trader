@@ -9,7 +9,7 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddTimeAveragingAlgorithm(this IServiceCollection services, string name, Action<TimeAveragingAlgorithmOptions> configure)
         {
             return services
-                .AddSingleton<ITradingAlgorithm, TimeAveragingAlgorithm>(sp => ActivatorUtilities.CreateInstance<TimeAveragingAlgorithm>(sp, name))
+                .AddSingleton<ISymbolAlgo, TimeAveragingAlgorithm>(sp => ActivatorUtilities.CreateInstance<TimeAveragingAlgorithm>(sp, name))
                 .AddOptions<TimeAveragingAlgorithmOptions>(name)
                 .Configure(configure)
                 .ValidateDataAnnotations()

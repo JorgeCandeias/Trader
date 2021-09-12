@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms.MinimumBalance
 {
-    internal class MinimumBalanceAlgorithm : ITradingAlgorithm
+    internal class MinimumBalanceAlgorithm : ISymbolAlgo
     {
         private readonly MinimumBalanceAlgorithmOptions _options;
         private readonly ILogger _logger;

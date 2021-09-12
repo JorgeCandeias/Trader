@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms.Accumulator
 {
-    internal class AccumulatorAlgorithm : ITradingAlgorithm
+    internal class AccumulatorAlgorithm : ISymbolAlgo
     {
         private readonly string _name;
         private readonly AccumulatorAlgorithmOptions _options;

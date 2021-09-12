@@ -4,13 +4,11 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
-    public interface ITradingAlgorithm
+    public interface ISymbolAlgo : IAlgo
     {
         string Symbol { get; }
 
         Task InitializeAsync(ExchangeInfo exchangeInfo, CancellationToken cancellationToken = default);
-
-        Task GoAsync(CancellationToken cancellationToken = default);
 
         Task<Profit> GetProfitAsync(CancellationToken cancellationToken = default);
 

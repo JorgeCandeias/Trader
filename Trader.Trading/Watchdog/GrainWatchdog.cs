@@ -22,8 +22,9 @@ namespace Outcompute.Trader.Trading.Watchdog
         private readonly IHostApplicationLifetime _lifetime;
         private readonly ISiloStatusOracle _oracle;
         private readonly IRandomGenerator _random;
+        private readonly IGrainFactory _factory;
 
-        public GrainWatchdog(IOptions<GrainWatchdogOptions> options, ILogger<GrainWatchdog> logger, IEnumerable<IGrainWatchdogEntry> entries, IHostApplicationLifetime lifetime, ISiloStatusOracle oracle, IRandomGenerator random)
+        public GrainWatchdog(IOptions<GrainWatchdogOptions> options, ILogger<GrainWatchdog> logger, IEnumerable<IGrainWatchdogEntry> entries, IHostApplicationLifetime lifetime, ISiloStatusOracle oracle, IRandomGenerator random, IGrainFactory factory)
         {
             _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -31,6 +32,7 @@ namespace Outcompute.Trader.Trading.Watchdog
             _lifetime = lifetime ?? throw new ArgumentNullException(nameof(lifetime));
             _oracle = oracle ?? throw new ArgumentNullException(nameof(oracle));
             _random = random ?? throw new ArgumentNullException(nameof(random));
+            _factory = factory ?? throw new ArgumentNullException(nameof(factory));
         }
 
         private readonly List<IWatchdogGrainExtension> _extensions = new();
@@ -42,7 +44,7 @@ namespace Outcompute.Trader.Trading.Watchdog
             // cache the extension proxies to avoid redundant garbage during execution
             foreach (var entry in _entries)
             {
-                var grain = entry.GetGrain();
+                var grain = entry.GetGrain(_factory);
 
                 _extensions.Add(grain.AsReference<IWatchdogGrainExtension>());
                 _identities.Add(grain.GetGrainIdentity());

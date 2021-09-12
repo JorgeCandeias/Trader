@@ -13,7 +13,7 @@ using static System.String;
 
 namespace Outcompute.Trader.Trading.Algorithms.Change
 {
-    internal class ChangeAlgorithm : ITradingAlgorithm
+    internal class ChangeAlgorithm : ISymbolAlgo
     {
         private readonly string _name;
         private readonly ILogger _logger;

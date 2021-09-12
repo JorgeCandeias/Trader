@@ -6,7 +6,7 @@ namespace Outcompute.Trader.Hosting
 {
     public static class TraderAgentTraderHostBuilderExtensions
     {
-        public static ITraderHostBuilder ConfigureTraderAgent(this ITraderHostBuilder trader, Action<TraderAgentOptions> configure)
+        public static ITraderBuilder ConfigureTraderAgent(this ITraderBuilder trader, Action<TraderAgentOptions> configure)
         {
             if (trader is null) throw new ArgumentNullException(nameof(trader));
             if (configure is null) throw new ArgumentNullException(nameof(configure));

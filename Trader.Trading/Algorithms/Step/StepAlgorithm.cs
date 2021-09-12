@@ -15,7 +15,7 @@ using static System.String;
 
 namespace Outcompute.Trader.Trading.Algorithms.Step
 {
-    internal class StepAlgorithm : ITradingAlgorithm
+    internal class StepAlgorithm : ISymbolAlgo
     {
         private readonly string _name;
 

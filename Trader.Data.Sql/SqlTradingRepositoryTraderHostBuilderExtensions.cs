@@ -7,7 +7,7 @@ namespace Microsoft.Extensions.DependencyInjection
 {
     public static class SqlTradingRepositoryTraderHostBuilderExtensions
     {
-        public static ITraderHostBuilder AddSqlTradingRepository(this ITraderHostBuilder builder, Action<SqlTradingRepositoryOptions> configure)
+        public static ITraderBuilder AddSqlTradingRepository(this ITraderBuilder builder, Action<SqlTradingRepositoryOptions> configure)
         {
             if (builder is null) throw new ArgumentNullException(nameof(builder));
             if (configure is null) throw new ArgumentNullException(nameof(configure));

@@ -1,5 +1,6 @@
 ﻿namespace Outcompute.Trader.Hosting
 {
+    // todo: remove when replaced by AlgoConfigurationMappingOptions
     internal static class TraderHostBuilderConstants
     {
         public const string TraderRootConfigurationKey = "Trader";

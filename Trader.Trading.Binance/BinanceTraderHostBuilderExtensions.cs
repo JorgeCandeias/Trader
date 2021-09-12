@@ -18,7 +18,7 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public const string HasBinanceTradingServicesKey = "HasBinanceTradingServices";
 
-        public static ITraderHostBuilder UseBinanceTradingService(this ITraderHostBuilder trader, Action<BinanceOptions> configure)
+        public static ITraderBuilder UseBinanceTradingService(this ITraderBuilder trader, Action<BinanceOptions> configure)
         {
             if (trader is null) throw new ArgumentNullException(nameof(trader));
             if (configure is null) throw new ArgumentNullException(nameof(configure));
@@ -26,7 +26,7 @@ namespace Microsoft.Extensions.DependencyInjection
             trader.ConfigureServices((context, services) =>
             {
                 // add core services only once
-                if (!context.Properties.TryGetValue(HasBinanceTradingServicesKey, out var flag))
+                if (!context.Properties.ContainsKey(nameof(UseBinanceTradingService)))
                 {
                     services
 
@@ -95,6 +95,8 @@ namespace Microsoft.Extensions.DependencyInjection
                     // add object pool
                     services.TryAddSingleton<ObjectPoolProvider, DefaultObjectPoolProvider>();
                     services.TryAddSingleton(sp => sp.GetRequiredService<ObjectPoolProvider>().CreateStringBuilderPool());
+
+                    context.Properties[nameof(UseBinanceTradingService)] = true;
                 }
 
                 // always bind to the options delegate

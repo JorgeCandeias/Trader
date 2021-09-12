@@ -5,13 +5,13 @@ namespace Outcompute.Trader.Trading.Watchdog
 {
     internal class GrainWatchdogEntry : IGrainWatchdogEntry
     {
-        private readonly Func<IGrain> _factory;
+        private readonly Func<IGrainFactory, IGrain> _action;
 
-        public GrainWatchdogEntry(Func<IGrain> factory)
+        public GrainWatchdogEntry(Func<IGrainFactory, IGrain> action)
         {
-            _factory = factory ?? throw new ArgumentNullException(nameof(factory));
+            _action = action ?? throw new ArgumentNullException(nameof(action));
         }
 
-        public IGrain GetGrain() => _factory();
+        public IGrain GetGrain(IGrainFactory factory) => _action(factory);
     }
 }

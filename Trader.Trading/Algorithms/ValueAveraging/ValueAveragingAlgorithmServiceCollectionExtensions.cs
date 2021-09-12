@@ -9,7 +9,7 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddValueAveragingAlgorithm(this IServiceCollection services, string name, Action<ValueAveragingAlgorithmOptions> configure)
         {
             return services
-                .AddSingleton<ITradingAlgorithm, ValueAveragingAlgorithm>(sp => ActivatorUtilities.CreateInstance<ValueAveragingAlgorithm>(sp, name))
+                .AddSingleton<ISymbolAlgo, ValueAveragingAlgorithm>(sp => ActivatorUtilities.CreateInstance<ValueAveragingAlgorithm>(sp, name))
                 .AddOptions<ValueAveragingAlgorithmOptions>(name)
                 .Configure(configure)
                 .ValidateDataAnnotations()

@@ -1,11 +1,12 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Orleans.Hosting;
 using System;
 
 namespace Outcompute.Trader.Hosting
 {
-    public static class TraderHostBuilderExtensions
+    public static class ITraderBuilderExtensions
     {
-        public static ITraderHostBuilder ConfigureServices(this ITraderHostBuilder trader, Action<IServiceCollection> configure)
+        public static ITraderBuilder ConfigureServices(this ITraderBuilder trader, Action<IServiceCollection> configure)
         {
             if (trader is null) throw new ArgumentNullException(nameof(trader));
             if (configure is null) throw new ArgumentNullException(nameof(configure));
@@ -13,15 +14,15 @@ namespace Outcompute.Trader.Hosting
             return trader.ConfigureServices((context, services) => configure(services));
         }
 
-        public static ITraderHostBuilder ConfigureTrader(this ITraderHostBuilder trader, Action<ITraderHostBuilder> configure)
+        public static ITraderBuilder ConfigureTrader(this ITraderBuilder trader, Action<ITraderBuilder> configure)
         {
             if (trader is null) throw new ArgumentNullException(nameof(trader));
             if (configure is null) throw new ArgumentNullException(nameof(configure));
 
-            return trader.ConfigureTrader(configure);
+            return trader.ConfigureTrader((context, trader) => configure(trader));
         }
 
-        public static ITraderHostBuilder Configure<TOptions>(this ITraderHostBuilder trader, Action<TOptions> configure) where TOptions : class
+        public static ITraderBuilder Configure<TOptions>(this ITraderBuilder trader, Action<TOptions> configure) where TOptions : class
         {
             if (trader is null) throw new ArgumentNullException(nameof(trader));
             if (configure is null) throw new ArgumentNullException(nameof(configure));

@@ -12,7 +12,7 @@ using Outcompute.Trader.Trading.Algorithms.Steps;
 
 namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
 {
-    internal class ValueAveragingAlgorithm : ITradingAlgorithm
+    internal class ValueAveragingAlgorithm : ISymbolAlgo
     {
         private readonly string _name;
         private readonly ValueAveragingAlgorithmOptions _options;

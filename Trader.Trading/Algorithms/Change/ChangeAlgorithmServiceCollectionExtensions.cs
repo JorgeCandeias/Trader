@@ -9,7 +9,7 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddChangeAlgorithm(this IServiceCollection services, string name, Action<ChangeAlgorithmOptions> configure)
         {
             return services
-                .AddSingleton<ITradingAlgorithm, ChangeAlgorithm>(sp => ActivatorUtilities.CreateInstance<ChangeAlgorithm>(sp, name))
+                .AddSingleton<ISymbolAlgo, ChangeAlgorithm>(sp => ActivatorUtilities.CreateInstance<ChangeAlgorithm>(sp, name))
                 .AddOptions<ChangeAlgorithmOptions>(name)
                 .Configure(configure)
                 .ValidateDataAnnotations()

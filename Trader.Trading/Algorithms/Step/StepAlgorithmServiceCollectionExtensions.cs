@@ -9,7 +9,7 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddStepAlgorithm(this IServiceCollection services, string name, Action<StepAlgorithmOptions> configure)
         {
             return services
-                .AddSingleton<ITradingAlgorithm, StepAlgorithm>(sp => ActivatorUtilities.CreateInstance<StepAlgorithm>(sp, name))
+                .AddSingleton<ISymbolAlgo, StepAlgorithm>(sp => ActivatorUtilities.CreateInstance<StepAlgorithm>(sp, name))
                 .AddOptions<StepAlgorithmOptions>(name)
                 .Configure(configure)
                 .ValidateDataAnnotations()

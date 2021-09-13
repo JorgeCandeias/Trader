@@ -40,16 +40,8 @@ namespace Outcompute.Trader.Hosting
                     // todo: remove this once the algos are hosted by the algo grain host
                     switch (type)
                     {
-                        case "Accumulator":
-                            //services.AddAccumulatorAlgorithm(name, options => algo.Bind(TraderHostBuilderConstants.TraderAlgorithmsConfigurationOptionsKey, options));
-                            break;
-
                         case "ValueAveraging":
                             services.AddValueAveragingAlgorithm(name, options => algo.Bind(TraderHostBuilderConstants.TraderAlgorithmsConfigurationOptionsKey, options));
-                            break;
-
-                        case "MinimumBalance":
-                            services.AddMinimumBalanceAlgorithm(name, options => algo.Bind(TraderHostBuilderConstants.TraderAlgorithmsConfigurationOptionsKey, options));
                             break;
 
                         case "Step":

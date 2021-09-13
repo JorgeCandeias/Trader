@@ -3,7 +3,7 @@ using static System.String;
 
 namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
 {
-    public class ValueAveragingAlgorithmOptions
+    public class ValueAveragingAlgoOptions
     {
         [Required]
         public string Symbol { get; set; } = Empty;

@@ -105,7 +105,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
         {
             if (_symbol is null) throw new AlgorithmNotInitializedException();
 
-            return Task.FromResult(_profit ?? Profit.Zero(_symbol.QuoteAsset));
+            return Task.FromResult(_profit ?? Profit.Zero(_symbol.Name, _symbol.BaseAsset, _symbol.QuoteAsset));
         }
 
         public Task<Statistics> GetStatisticsAsync(CancellationToken cancellationToken = default)

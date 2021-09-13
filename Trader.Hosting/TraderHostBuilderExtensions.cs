@@ -41,7 +41,7 @@ namespace Outcompute.Trader.Hosting
                     switch (type)
                     {
                         case "Accumulator":
-                            services.AddAccumulatorAlgorithm(name, options => algo.Bind(TraderHostBuilderConstants.TraderAlgorithmsConfigurationOptionsKey, options));
+                            //services.AddAccumulatorAlgorithm(name, options => algo.Bind(TraderHostBuilderConstants.TraderAlgorithmsConfigurationOptionsKey, options));
                             break;
 
                         case "ValueAveraging":

@@ -3,6 +3,7 @@ using Outcompute.Trader.Trading.Algorithms;
 
 namespace Outcompute.Trader.Hosting
 {
+    // todo: add attribute-based auto-discovery in addition to these methods
     public static class AlgoFactoryTraderBuilderExtensions
     {
         public static ITraderBuilder AddAlgoType<TAlgo>(this ITraderBuilder builder, string typeName)

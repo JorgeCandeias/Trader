@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
+using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Algorithms.Accumulator;
 using Outcompute.Trader.Trading.Algorithms.Steps;
 using Xunit;
@@ -13,19 +14,20 @@ namespace Outcompute.Trader.Trading.Tests
         public void Constructs()
         {
             // arrange
+            var context = Mock.Of<IAlgoContext>();
             var name = "SomeSymbol";
-            var options = Mock.Of<IOptionsSnapshot<AccumulatorAlgorithmOptions>>(x => x.Get(name) == new AccumulatorAlgorithmOptions
+            var options = Mock.Of<IOptionsMonitor<AccumulatorAlgoOptions>>(x => x.Get(name) == new AccumulatorAlgoOptions
             {
                 Symbol = "SomeSymbol"
             });
-            var logger = NullLogger<AccumulatorAlgorithm>.Instance;
+            var logger = NullLogger<AccumulatorAlgo>.Instance;
             var trackingBuyStep = Mock.Of<ITrackingBuyStep>();
 
             // act
-            var algo = new AccumulatorAlgorithm(name, options, logger, trackingBuyStep);
+            var algo = new AccumulatorAlgo(context, options, logger, trackingBuyStep);
 
             // assert
-            Assert.Equal("SomeSymbol", algo.Symbol);
+            Assert.NotNull(algo);
         }
     }
 }

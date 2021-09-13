@@ -75,7 +75,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             var options = _options.Get(_name);
 
             // enable or disable timer based execution as needed
-            if (options.TickEnabled)
+            if (options.Enabled && options.TickEnabled)
             {
                 if (_timer is null)
                 {

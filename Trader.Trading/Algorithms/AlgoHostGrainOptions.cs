@@ -18,7 +18,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         [Required]
         [Range(typeof(TimeSpan), "0.00:00:00.001", "1.00:00:00.000")]
-        public TimeSpan TickDelay { get; set; } = TimeSpan.FromSeconds(1);
+        public TimeSpan TickDelay { get; set; } = TimeSpan.FromSeconds(10);
 
         [Required]
         public bool TickEnabled { get; set; } = false;

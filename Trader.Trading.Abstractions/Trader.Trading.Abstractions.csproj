@@ -33,7 +33,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Exchange\" />
     <Folder Include="Indicators\" />
   </ItemGroup>
 </Project>

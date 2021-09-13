@@ -53,6 +53,7 @@ namespace Microsoft.Extensions.Hosting
                     {
                         trader
                             .AddTraderAlgorithmsFromConfig()
+                            .AddAccumulatorAlgo()
                             .ConfigureServices((context, services) =>
                             {
                                 services

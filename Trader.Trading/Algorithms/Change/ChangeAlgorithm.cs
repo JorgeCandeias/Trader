@@ -59,12 +59,12 @@ namespace Outcompute.Trader.Trading.Algorithms.Change
 
         public Task<Profit> GetProfitAsync(CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(_significant?.Profit ?? Profit.Zero(_symbol?.QuoteAsset ?? Empty));
+            return Task.FromResult(_significant?.Profit ?? Profit.Zero(_symbol?.Name ?? Empty, _symbol?.BaseAsset ?? Empty, _symbol?.QuoteAsset ?? Empty));
         }
 
         public Task<Statistics> GetStatisticsAsync(CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(Statistics.FromProfit(_significant?.Profit ?? Profit.Zero(_symbol?.QuoteAsset ?? Empty)));
+            return Task.FromResult(Statistics.FromProfit(_significant?.Profit ?? Profit.Zero(_symbol?.Name ?? Empty, _symbol?.BaseAsset ?? Empty, _symbol?.QuoteAsset ?? Empty)));
         }
 
         public async Task GoAsync(CancellationToken cancellationToken = default)

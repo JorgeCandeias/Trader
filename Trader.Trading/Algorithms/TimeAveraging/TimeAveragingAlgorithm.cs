@@ -40,7 +40,7 @@ namespace Outcompute.Trader.Trading.Algorithms.TimeAveraging
         {
             if (_symbol is null) throw new AlgorithmNotInitializedException();
 
-            return Task.FromResult(Profit.Zero(_symbol.QuoteAsset));
+            return Task.FromResult(Profit.Zero(_symbol.Name, _symbol.BaseAsset, _symbol.QuoteAsset));
         }
 
         public Task<Statistics> GetStatisticsAsync(CancellationToken cancellationToken = default)

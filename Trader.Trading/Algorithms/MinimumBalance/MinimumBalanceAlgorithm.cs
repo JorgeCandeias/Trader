@@ -32,7 +32,7 @@ namespace Outcompute.Trader.Trading.Algorithms.MinimumBalance
 
         public Task<Profit> GetProfitAsync(CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(Profit.Zero(_options.Asset));
+            return Task.FromResult(Profit.Zero(string.Empty, string.Empty, _options.Asset));
         }
 
         public Task<Statistics> GetStatisticsAsync(CancellationToken cancellationToken = default)

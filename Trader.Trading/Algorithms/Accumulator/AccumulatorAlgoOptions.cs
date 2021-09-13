@@ -3,7 +3,7 @@ using static System.String;
 
 namespace Outcompute.Trader.Trading.Algorithms.Accumulator
 {
-    public class AccumulatorAlgorithmOptions
+    public class AccumulatorAlgoOptions
     {
         [Required]
         public string Symbol { get; set; } = Empty;

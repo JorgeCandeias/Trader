@@ -85,7 +85,7 @@ namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
             // create a client for the streams we want
             var streams = new List<string>();
             streams.AddRange(_options.MarketDataStreamSymbols.Select(x => $"{x.ToLowerInvariant()}@miniTicker"));
-            streams.AddRange(_options.MarketDataStreamSymbols.Select(x => $"{x.ToLowerInvariant()}@kline_{_mapper.Map<string>(KlineInterval.Minutes1)}"));
+            //streams.AddRange(_options.MarketDataStreamSymbols.Select(x => $"{x.ToLowerInvariant()}@kline_{_mapper.Map<string>(KlineInterval.Minutes1)}"));
 
             _logger.LogInformation("{Name} connecting to streams {Streams}...", Name, streams);
 
@@ -129,7 +129,7 @@ namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
             await SyncTickersAsync(cancellationToken).ConfigureAwait(false);
 
             // sync klines from the api
-            await SyncKlinesAsync(cancellationToken).ConfigureAwait(false);
+            //await SyncKlinesAsync(cancellationToken).ConfigureAwait(false);
 
             // signal the start method that everything is ready
             _ready.TrySetResult();

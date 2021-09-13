@@ -291,6 +291,8 @@ namespace Outcompute.Trader.Trading.Algorithms
                 nameof(SignificantOrderResolver), symbol.Name, significant.Count, watch.ElapsedMilliseconds);
 
             var summary = new Profit(
+                symbol.Name,
+                symbol.BaseAsset,
                 symbol.QuoteAsset,
                 todayProfit,
                 yesterdayProfit,

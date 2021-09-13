@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Orleans;
 using Outcompute.Trader.Trading.Algorithms;
 using System;
 using System.Collections.Generic;
@@ -20,14 +21,16 @@ namespace Outcompute.Trader.Trading
         private readonly IEnumerable<ISymbolAlgo> _algos;
         private readonly ITradingService _trader;
         private readonly IHostApplicationLifetime _lifetime;
+        private readonly IGrainFactory _factory;
 
-        public TraderAgent(IOptions<TraderAgentOptions> options, ILogger<TraderAgent> logger, IEnumerable<ISymbolAlgo> algos, ITradingService trader, IHostApplicationLifetime lifetime)
+        public TraderAgent(IOptions<TraderAgentOptions> options, ILogger<TraderAgent> logger, IEnumerable<ISymbolAlgo> algos, ITradingService trader, IHostApplicationLifetime lifetime, IGrainFactory factory)
         {
             _options = options.Value ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _algos = algos ?? throw new ArgumentNullException(nameof(algos));
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
             _lifetime = lifetime ?? throw new ArgumentNullException(nameof(lifetime));
+            _factory = factory ?? throw new ArgumentNullException(nameof(factory));
         }
 
         private static string TypeName => nameof(TraderAgent);
@@ -101,6 +104,17 @@ namespace Outcompute.Trader.Trading
                         .ConfigureAwait(false);
 
                     profits.Add((algo.Symbol, profit, stats));
+                }
+
+                // add published profits
+                var published = await _factory
+                    .GetProfitAggregatorGrain()
+                    .GetProfitsAsync()
+                    .ConfigureAwait(false);
+
+                foreach (var item in published)
+                {
+                    profits.Add((item.Symbol, item, Statistics.FromProfit(item)));
                 }
 
                 foreach (var group in profits.GroupBy(x => x.Profit.Quote).OrderBy(x => x.Key))

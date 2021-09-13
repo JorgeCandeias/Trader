@@ -36,17 +36,6 @@ namespace Outcompute.Trader.Hosting
                     {
                         throw new TraderConfigurationException($"Algorithm '{name}' does not have a valid '{TraderHostBuilderConstants.TraderAlgorithmsConfigurationTypeKey}' property specified.");
                     }
-
-                    // todo: remove this once the algos are hosted by the algo grain host
-                    switch (type)
-                    {
-                        case "Step":
-                            services.AddStepAlgorithm(name, options => algo.Bind(TraderHostBuilderConstants.TraderAlgorithmsConfigurationOptionsKey, options));
-                            break;
-
-                        default:
-                            break;
-                    }
                 }
             });
         }

@@ -55,6 +55,7 @@ namespace Microsoft.Extensions.Hosting
                             .AddTraderAlgorithmsFromConfig()
                             .AddAccumulatorAlgo()
                             .AddValueAveragingAlgo()
+                            .AddStepAlgo()
                             .ConfigureServices((context, services) =>
                             {
                                 services

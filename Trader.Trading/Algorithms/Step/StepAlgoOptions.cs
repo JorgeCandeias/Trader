@@ -4,7 +4,7 @@ using static System.String;
 
 namespace Outcompute.Trader.Trading.Algorithms.Step
 {
-    public class StepAlgorithmOptions
+    public class StepAlgoOptions
     {
         [Required]
         public string Symbol { get; set; } = Empty;

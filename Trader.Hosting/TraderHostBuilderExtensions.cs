@@ -48,12 +48,7 @@ namespace Outcompute.Trader.Hosting
                             services.AddStepAlgorithm(name, options => algo.Bind(TraderHostBuilderConstants.TraderAlgorithmsConfigurationOptionsKey, options));
                             break;
 
-                        case "Change":
-                            services.AddChangeAlgorithm(name, options => algo.Bind(TraderHostBuilderConstants.TraderAlgorithmsConfigurationOptionsKey, options));
-                            break;
-
                         default:
-                            //throw new TraderConfigurationException($"Algorithm '{name}' has unknown type '{type}'");
                             break;
                     }
                 }

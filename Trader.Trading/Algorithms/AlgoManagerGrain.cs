@@ -35,7 +35,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             foreach (var algo in options.Algos)
             {
                 // skip disabled algo
-                if (!algo.Value) continue;
+                if (!algo.Value.Enabled) continue;
 
                 var grain = GrainFactory.GetAlgoHostGrain(algo.Key);
 

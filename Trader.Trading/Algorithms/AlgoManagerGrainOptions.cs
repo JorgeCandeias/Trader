@@ -4,6 +4,6 @@ namespace Outcompute.Trader.Trading.Algorithms
 {
     public class AlgoManagerGrainOptions
     {
-        public IDictionary<string, bool> Algos { get; } = new Dictionary<string, bool>();
+        public IDictionary<string, AlgoHostGrainOptions> Algos { get; } = new Dictionary<string, AlgoHostGrainOptions>();
     }
 }

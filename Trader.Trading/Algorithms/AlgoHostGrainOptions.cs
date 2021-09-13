@@ -10,7 +10,7 @@ namespace Outcompute.Trader.Trading.Algorithms
         public string Type { get; set; } = Empty;
 
         [Required]
-        public bool Enabled { get; set; } = false;
+        public bool Enabled { get; set; } = true;
 
         [Required]
         [Range(typeof(TimeSpan), "0.00:00:00.001", "1.00:00:00.000")]
@@ -21,6 +21,6 @@ namespace Outcompute.Trader.Trading.Algorithms
         public TimeSpan TickDelay { get; set; } = TimeSpan.FromSeconds(10);
 
         [Required]
-        public bool TickEnabled { get; set; } = false;
+        public bool TickEnabled { get; set; } = true;
     }
 }

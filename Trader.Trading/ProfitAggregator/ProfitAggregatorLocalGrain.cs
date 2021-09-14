@@ -31,13 +31,6 @@ namespace Outcompute.Trader.Trading.ProfitAggregator
         {
             if (profit is null) throw new ArgumentNullException(nameof(profit));
 
-            // break early if the item does not affect the cache
-            if (_cache.TryGetValue(profit.Symbol, out var current) && profit == current)
-            {
-                return Task.CompletedTask;
-            }
-
-            // otherwise apply to the cache
             _cache[profit.Symbol] = profit;
 
             return Task.CompletedTask;

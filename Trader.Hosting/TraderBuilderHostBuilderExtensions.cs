@@ -5,7 +5,7 @@ using System;
 
 namespace Microsoft.Extensions.Hosting
 {
-    public static class TraderHostingExtensions
+    public static class TraderBuilderHostBuilderExtensions
     {
         public static IHostBuilder UseTrader(this IHostBuilder builder, Action<ITraderBuilder> configure)
         {
@@ -52,14 +52,14 @@ namespace Microsoft.Extensions.Hosting
                     .UseTrader(trader =>
                     {
                         trader
-                            .AddTraderAlgorithmsFromConfig()
                             .AddAccumulatorAlgo()
                             .AddValueAveragingAlgo()
                             .AddStepAlgo()
                             .ConfigureServices((context, services) =>
                             {
                                 services
-                                    .AddTraderAgent(options => context.Configuration.Bind($"{TraderHostBuilderConstants.TraderRootConfigurationKey}:{TraderHostBuilderConstants.TraderAgentSectionConfigurationKey}"))
+                                    // todo: make this depend on algo configuration mapping options
+                                    .AddTraderAgent(options => context.Configuration.Bind("Trader:Agent", options))
                                     .AddSystemClock()
                                     .AddSafeTimerFactory()
                                     .AddBase62NumberSerializer()

@@ -4,7 +4,6 @@ using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Exceptions;
-using Outcompute.Trader.Trading.Blocks;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,9 +19,8 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         private readonly ITradingService _trader;
         private readonly ISignificantOrderResolver _significantOrderResolver;
         private readonly ISystemClock _clock;
-        private readonly IAveragingSellBlock _averagingSellStep;
 
-        public ValueAveragingAlgo(IAlgoContext context, IOptionsMonitor<ValueAveragingAlgoOptions> options, ILogger<ValueAveragingAlgoOptions> logger, ITradingRepository repository, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ISystemClock clock, IAveragingSellBlock averagingSellStep)
+        public ValueAveragingAlgo(IAlgoContext context, IOptionsMonitor<ValueAveragingAlgoOptions> options, ILogger<ValueAveragingAlgoOptions> logger, ITradingRepository repository, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ISystemClock clock)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _options = options ?? throw new ArgumentNullException(nameof(options));
@@ -31,7 +29,6 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
             _significantOrderResolver = significantOrderResolver ?? throw new ArgumentNullException(nameof(significantOrderResolver));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-            _averagingSellStep = averagingSellStep ?? throw new ArgumentNullException(nameof(averagingSellStep));
         }
 
         private static string TypeName => nameof(ValueAveragingAlgo);
@@ -79,8 +76,8 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
             }
 
             // then place the averaging sell
-            await _averagingSellStep
-                .GoAsync(symbol, options.ProfitMultipler, cancellationToken)
+            await _context
+                .SetAveragingSellAsync(symbol, options.ProfitMultipler, cancellationToken)
                 .ConfigureAwait(false);
 
             // publish the profit stats

@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Outcompute.Trader.Trading.Algorithms.Exceptions;
-using Outcompute.Trader.Trading.Algorithms.Steps;
+using Outcompute.Trader.Trading.Blocks;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,9 +13,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Accumulator
         private readonly IAlgoContext _context;
         private readonly IOptionsMonitor<AccumulatorAlgoOptions> _options;
         private readonly ILogger _logger;
-        private readonly ITrackingBuyStep _trackingBuyStep;
+        private readonly ITrackingBuyBlock _trackingBuyStep;
 
-        public AccumulatorAlgo(IAlgoContext context, IOptionsMonitor<AccumulatorAlgoOptions> options, ILogger<AccumulatorAlgo> logger, ITrackingBuyStep trackingBuyStep)
+        public AccumulatorAlgo(IAlgoContext context, IOptionsMonitor<AccumulatorAlgoOptions> options, ILogger<AccumulatorAlgo> logger, ITrackingBuyBlock trackingBuyStep)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _options = options ?? throw new ArgumentNullException(nameof(options));

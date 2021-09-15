@@ -52,6 +52,7 @@ namespace Microsoft.Extensions.Hosting
                     .UseTrader(trader =>
                     {
                         trader
+                            .AddTradingServices()
                             .AddAccumulatorAlgo()
                             .AddValueAveragingAlgo()
                             .AddStepAlgo()

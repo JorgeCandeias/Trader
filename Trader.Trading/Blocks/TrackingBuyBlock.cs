@@ -3,14 +3,15 @@ using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
+using Outcompute.Trader.Trading.Algorithms.Steps;
 using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Algorithms.Steps
+namespace Outcompute.Trader.Trading.Blocks
 {
-    internal class TrackingBuyStep : ITrackingBuyStep
+    internal class TrackingBuyBlock : ITrackingBuyBlock
     {
         private readonly ILogger _logger;
         private readonly ITradingRepository _repository;
@@ -18,7 +19,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Steps
         private readonly ISystemClock _clock;
         private readonly IRedeemSavingsStep _redeemSavingsStep;
 
-        public TrackingBuyStep(ILogger<TrackingBuyStep> logger, ITradingRepository repository, ITradingService trader, ISystemClock clock, IRedeemSavingsStep redeemSavingsStep)
+        public TrackingBuyBlock(ILogger<TrackingBuyBlock> logger, ITradingRepository repository, ITradingService trader, ISystemClock clock, IRedeemSavingsStep redeemSavingsStep)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -27,7 +28,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Steps
             _redeemSavingsStep = redeemSavingsStep ?? throw new ArgumentNullException(nameof(redeemSavingsStep));
         }
 
-        private static string Type => nameof(TrackingBuyStep);
+        private static string TypeName => nameof(TrackingBuyBlock);
 
         public Task<bool> GoAsync(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, CancellationToken cancellationToken = default)
         {
@@ -64,7 +65,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Steps
 
             _logger.LogInformation(
                 "{Type} {Name} identified first buy target price at {LowPrice} {LowQuote} with current price at {CurrentPrice} {CurrentQuote}",
-                Type, symbol.Name, lowBuyPrice, symbol.QuoteAsset, ticker.ClosePrice, symbol.QuoteAsset);
+                TypeName, symbol.Name, lowBuyPrice, symbol.QuoteAsset, ticker.ClosePrice, symbol.QuoteAsset);
 
             orders = await TryCloseLowBuysAsync(symbol, orders, lowBuyPrice, cancellationToken)
                 .ConfigureAwait(false);
@@ -104,7 +105,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Steps
             {
                 _logger.LogError(
                     "{Type} {Name} cannot place buy order with amount of {Total} {Quote} because it is above the configured maximum notional of {MaxNotional}",
-                    Type, symbol.Name, total, symbol.QuoteAsset, maxNotional);
+                    TypeName, symbol.Name, total, symbol.QuoteAsset, maxNotional);
 
                 return false;
             }
@@ -116,7 +117,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Steps
 
                 _logger.LogWarning(
                     "{Type} {Name} must place order with amount of {Total} {Quote} but the free amount is only {Free} {Quote}. Will attempt to redeem the necessary {Necessary} {Quote} from savings...",
-                    Type, symbol.Name, total, symbol.QuoteAsset, balance.Free, symbol.QuoteAsset, necessary, symbol.QuoteAsset);
+                    TypeName, symbol.Name, total, symbol.QuoteAsset, balance.Free, symbol.QuoteAsset, necessary, symbol.QuoteAsset);
 
                 var redeemed = await _redeemSavingsStep
                     .GoAsync(symbol.QuoteAsset, necessary, cancellationToken)
@@ -126,7 +127,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Steps
                 {
                     _logger.LogInformation(
                         "{Type} {Name} redeemed {Quantity} {Asset} from savings",
-                        Type, symbol.Name, necessary, symbol.QuoteAsset);
+                        TypeName, symbol.Name, necessary, symbol.QuoteAsset);
 
                     return true;
                 }
@@ -134,7 +135,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Steps
                 {
                     _logger.LogError(
                         "{Type} {Name} could not redeem the necessary {Quantity} {Asset} from savings",
-                        Type, symbol.Name, necessary, symbol.QuoteAsset);
+                        TypeName, symbol.Name, necessary, symbol.QuoteAsset);
 
                     return false;
                 }
@@ -142,7 +143,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Steps
 
             _logger.LogInformation(
                 "{Type} {Name} placing {OrderType} {OrderSode} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",
-                Type, symbol.Name, OrderType.Limit, OrderSide.Buy, symbol.Name, quantity, symbol.BaseAsset, lowBuyPrice, symbol.QuoteAsset, quantity * lowBuyPrice, symbol.QuoteAsset);
+                TypeName, symbol.Name, OrderType.Limit, OrderSide.Buy, symbol.Name, quantity, symbol.BaseAsset, lowBuyPrice, symbol.QuoteAsset, quantity * lowBuyPrice, symbol.QuoteAsset);
 
             // place the order now
             var order = await _trader
@@ -181,7 +182,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Steps
             {
                 _logger.LogInformation(
                     "{Type} {Name} identified open {OrderSide} {OrderType} order for {Quantity} {Asset} at {Price} {Quote} totalling {Notional:N8} {Quote}",
-                    Type, symbol.Name, order.Side, order.Type, order.OriginalQuantity, symbol.BaseAsset, order.Price, symbol.QuoteAsset, order.OriginalQuantity * order.Price, symbol.QuoteAsset);
+                    TypeName, symbol.Name, order.Side, order.Type, order.OriginalQuantity, symbol.BaseAsset, order.Price, symbol.QuoteAsset, order.OriginalQuantity * order.Price, symbol.QuoteAsset);
             }
 
             return orders;
@@ -194,7 +195,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Steps
             {
                 _logger.LogInformation(
                     "{Type} {Name} cancelling low starting open order with price {Price} for {Quantity} units",
-                    Type, symbol.Name, order.Price, order.OriginalQuantity);
+                    TypeName, symbol.Name, order.Price, order.OriginalQuantity);
 
                 var result = await _trader
                     .CancelOrderAsync(
@@ -224,7 +225,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Steps
             {
                 _logger.LogInformation(
                     "{Type} {Name} cancelling low starting open order with price {Price} for {Quantity} units",
-                    Type, symbol.Name, order.Price, order.OriginalQuantity);
+                    TypeName, symbol.Name, order.Price, order.OriginalQuantity);
 
                 var result = await _trader
                     .CancelOrderAsync(

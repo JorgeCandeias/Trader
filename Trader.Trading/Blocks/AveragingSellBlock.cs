@@ -3,14 +3,16 @@ using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
+using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Algorithms.Steps;
 using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Algorithms.Steps
+namespace Outcompute.Trader.Trading.Blocks
 {
-    internal class AveragingSellStep : IAveragingSellStep
+    internal class AveragingSellBlock : IAveragingSellBlock
     {
         private readonly ILogger _logger;
         private readonly ISignificantOrderResolver _significantOrderResolver;
@@ -19,7 +21,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Steps
         private readonly ISystemClock _clock;
         private readonly IRedeemSavingsStep _redeemSavingsStep;
 
-        public AveragingSellStep(ILogger<AveragingSellStep> logger, ISignificantOrderResolver significantOrderResolver, ITradingRepository repository, ITradingService trader, ISystemClock clock, IRedeemSavingsStep redeemSavingsStep)
+        public AveragingSellBlock(ILogger<AveragingSellBlock> logger, ISignificantOrderResolver significantOrderResolver, ITradingRepository repository, ITradingService trader, ISystemClock clock, IRedeemSavingsStep redeemSavingsStep)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _significantOrderResolver = significantOrderResolver ?? throw new ArgumentNullException(nameof(significantOrderResolver));
@@ -29,7 +31,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Steps
             _redeemSavingsStep = redeemSavingsStep ?? throw new ArgumentNullException(nameof(redeemSavingsStep));
         }
 
-        private static string Type => nameof(AveragingSellStep);
+        private static string Type => nameof(AveragingSellBlock);
 
         public Task GoAsync(Symbol symbol, decimal profitMultiplier, CancellationToken cancellationToken = default)
         {

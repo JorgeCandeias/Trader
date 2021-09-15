@@ -4,7 +4,7 @@ using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Exceptions;
-using Outcompute.Trader.Trading.Algorithms.Steps;
+using Outcompute.Trader.Trading.Blocks;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,9 +20,9 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         private readonly ITradingService _trader;
         private readonly ISignificantOrderResolver _significantOrderResolver;
         private readonly ISystemClock _clock;
-        private readonly IAveragingSellStep _averagingSellStep;
+        private readonly IAveragingSellBlock _averagingSellStep;
 
-        public ValueAveragingAlgo(IAlgoContext context, IOptionsMonitor<ValueAveragingAlgoOptions> options, ILogger<ValueAveragingAlgoOptions> logger, ITradingRepository repository, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ISystemClock clock, IAveragingSellStep averagingSellStep)
+        public ValueAveragingAlgo(IAlgoContext context, IOptionsMonitor<ValueAveragingAlgoOptions> options, ILogger<ValueAveragingAlgoOptions> logger, ITradingRepository repository, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ISystemClock clock, IAveragingSellBlock averagingSellStep)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _options = options ?? throw new ArgumentNullException(nameof(options));

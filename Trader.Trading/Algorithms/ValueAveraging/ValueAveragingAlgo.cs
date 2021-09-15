@@ -5,7 +5,6 @@ using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Exceptions;
 using Outcompute.Trader.Trading.Algorithms.Steps;
-using Outcompute.Trader.Trading.Blocks;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,10 +20,9 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         private readonly ITradingService _trader;
         private readonly ISignificantOrderResolver _significantOrderResolver;
         private readonly ISystemClock _clock;
-        private readonly ITrackingBuyBlock _trackingBuyStep;
         private readonly IAveragingSellStep _averagingSellStep;
 
-        public ValueAveragingAlgo(IAlgoContext context, IOptionsMonitor<ValueAveragingAlgoOptions> options, ILogger<ValueAveragingAlgoOptions> logger, ITradingRepository repository, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ISystemClock clock, ITrackingBuyBlock trackingBuyStep, IAveragingSellStep averagingSellStep)
+        public ValueAveragingAlgo(IAlgoContext context, IOptionsMonitor<ValueAveragingAlgoOptions> options, ILogger<ValueAveragingAlgoOptions> logger, ITradingRepository repository, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ISystemClock clock, IAveragingSellStep averagingSellStep)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _options = options ?? throw new ArgumentNullException(nameof(options));
@@ -33,7 +31,6 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
             _significantOrderResolver = significantOrderResolver ?? throw new ArgumentNullException(nameof(significantOrderResolver));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-            _trackingBuyStep = trackingBuyStep ?? throw new ArgumentNullException(nameof(trackingBuyStep));
             _averagingSellStep = averagingSellStep ?? throw new ArgumentNullException(nameof(averagingSellStep));
         }
 
@@ -62,8 +59,8 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
             if ((result.Orders.Count > 0 && options.IsAveragingEnabled) ||
                 (result.Orders.Count == 0 && options.IsOpeningEnabled))
             {
-                await _trackingBuyStep
-                    .GoAsync(symbol, options.PullbackRatio, options.TargetQuoteBalanceFractionPerBuy, options.MaxNotional, cancellationToken)
+                await _context
+                    .SetTrackingBuyAsync(symbol, options.PullbackRatio, options.TargetQuoteBalanceFractionPerBuy, options.MaxNotional, cancellationToken)
                     .ConfigureAwait(false);
             }
             else

@@ -3,7 +3,6 @@ using Microsoft.Extensions.Options;
 using Moq;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Algorithms.Accumulator;
-using Outcompute.Trader.Trading.Blocks;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
@@ -21,10 +20,9 @@ namespace Outcompute.Trader.Trading.Tests
                 Symbol = "SomeSymbol"
             });
             var logger = NullLogger<AccumulatorAlgo>.Instance;
-            var trackingBuyStep = Mock.Of<ITrackingBuyBlock>();
 
             // act
-            var algo = new AccumulatorAlgo(context, options, logger, trackingBuyStep);
+            var algo = new AccumulatorAlgo(context, options, logger);
 
             // assert
             Assert.NotNull(algo);

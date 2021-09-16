@@ -8,7 +8,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 {
     public static class IRedeemSavingsBlockAlgoContextExtensions
     {
-        public static Task RedeemSavingsAsync(this IAlgoContext context, string asset, decimal amount, CancellationToken cancellationToken = default)
+        public static Task<bool> TryRedeemSavingsAsync(this IAlgoContext context, string asset, decimal amount, CancellationToken cancellationToken = default)
         {
             if (context is null) throw new ArgumentNullException(nameof(context));
 

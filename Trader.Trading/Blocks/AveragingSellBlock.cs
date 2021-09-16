@@ -18,16 +18,16 @@ namespace Outcompute.Trader.Trading.Blocks
         private readonly ITradingRepository _repository;
         private readonly ITradingService _trader;
         private readonly ISystemClock _clock;
-        private readonly IRedeemSavingsBlock _redeemSavingsStep;
+        private readonly IRedeemSavingsBlock _redeemSavingsBlock;
 
-        public AveragingSellBlock(ILogger<AveragingSellBlock> logger, ISignificantOrderResolver significantOrderResolver, ITradingRepository repository, ITradingService trader, ISystemClock clock, IRedeemSavingsBlock redeemSavingsStep)
+        public AveragingSellBlock(ILogger<AveragingSellBlock> logger, ISignificantOrderResolver significantOrderResolver, ITradingRepository repository, ITradingService trader, ISystemClock clock, IRedeemSavingsBlock redeemSavingsBlock)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _significantOrderResolver = significantOrderResolver ?? throw new ArgumentNullException(nameof(significantOrderResolver));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-            _redeemSavingsStep = redeemSavingsStep ?? throw new ArgumentNullException(nameof(redeemSavingsStep));
+            _redeemSavingsBlock = redeemSavingsBlock ?? throw new ArgumentNullException(nameof(redeemSavingsBlock));
         }
 
         private static string Type => nameof(AveragingSellBlock);
@@ -195,7 +195,7 @@ namespace Outcompute.Trader.Trading.Blocks
 
                 var necessary = desired.Quantity - balance.Free;
 
-                var redeemed = await _redeemSavingsStep
+                var redeemed = await _redeemSavingsBlock
                     .GoAsync(symbol.BaseAsset, necessary, cancellationToken)
                     .ConfigureAwait(false);
 

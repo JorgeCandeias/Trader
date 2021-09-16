@@ -5,7 +5,6 @@ using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms.Exceptions;
-using Outcompute.Trader.Trading.Blocks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,9 +26,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
         private readonly ISignificantOrderResolver _significantOrderResolver;
         private readonly ITradingRepository _repository;
         private readonly IOrderCodeGenerator _orderCodeGenerator;
-        private readonly IRedeemSavingsBlock _redeemSavingsStep;
 
-        public StepAlgo(IAlgoContext context, ILogger<StepAlgo> logger, IOptionsMonitor<StepAlgoOptions> options, ISystemClock clock, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ITradingRepository repository, IOrderCodeGenerator orderCodeGenerator, IRedeemSavingsBlock redeemSavingsStep)
+        public StepAlgo(IAlgoContext context, ILogger<StepAlgo> logger, IOptionsMonitor<StepAlgoOptions> options, ISystemClock clock, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ITradingRepository repository, IOrderCodeGenerator orderCodeGenerator)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -39,7 +37,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
             _significantOrderResolver = significantOrderResolver ?? throw new ArgumentNullException(nameof(significantOrderResolver));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _orderCodeGenerator = orderCodeGenerator ?? throw new ArgumentNullException(nameof(orderCodeGenerator));
-            _redeemSavingsStep = redeemSavingsStep ?? throw new ArgumentNullException(nameof(redeemSavingsStep));
         }
 
         private static string TypeName => nameof(StepAlgo);
@@ -263,8 +260,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
                     "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}. Will attempt to redeem from savings...",
                     TypeName, _context.Name, total, symbol.QuoteAsset, _balances.Quote.Free, symbol.QuoteAsset);
 
-                var redeemed = await _redeemSavingsStep
-                    .GoAsync(symbol.QuoteAsset, necessary, cancellationToken)
+                var redeemed = await _context
+                    .TryRedeemSavingsAsync(symbol.QuoteAsset, necessary, cancellationToken)
                     .ConfigureAwait(false);
 
                 if (redeemed)
@@ -353,8 +350,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
                             "{Type} {Name} must place {OrderType} {OrderSide} of {Quantity} {Asset} for {Price} {Quote} but there is only {Free} {Asset} available. Will attempt to redeem {Necessary} {Asset} rest from savings.",
                             TypeName, _context.Name, OrderType.Limit, OrderSide.Sell, band.Quantity, symbol.BaseAsset, band.ClosePrice, symbol.QuoteAsset, _balances.Asset.Free, symbol.BaseAsset, necessary, symbol.BaseAsset);
 
-                        var redeemed = await _redeemSavingsStep
-                            .GoAsync(symbol.BaseAsset, necessary, cancellationToken)
+                        var redeemed = await _context
+                            .TryRedeemSavingsAsync(symbol.BaseAsset, necessary, cancellationToken)
                             .ConfigureAwait(false);
 
                         if (redeemed)
@@ -598,8 +595,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
                         "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}. Will attempt to redeem from savings...",
                         TypeName, _context.Name, total, symbol.QuoteAsset, _balances.Quote.Free, symbol.QuoteAsset);
 
-                    var redeemed = await _redeemSavingsStep
-                        .GoAsync(symbol.QuoteAsset, necessary, cancellationToken)
+                    var redeemed = await _context
+                        .TryRedeemSavingsAsync(symbol.QuoteAsset, necessary, cancellationToken)
                         .ConfigureAwait(false);
 
                     if (redeemed)

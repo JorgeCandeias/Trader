@@ -15,7 +15,8 @@ namespace Outcompute.Trader.Hosting
                 {
                     services
                         .AddSingleton<ITrackingBuyBlock, TrackingBuyBlock>()
-                        .AddSingleton<IAveragingSellBlock, AveragingSellBlock>();
+                        .AddSingleton<IAveragingSellBlock, AveragingSellBlock>()
+                        .AddSingleton<IRedeemSavingsBlock, RedeemSavingsBlock>();
                 });
         }
     }

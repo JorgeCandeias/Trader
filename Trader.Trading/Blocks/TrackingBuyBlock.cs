@@ -3,7 +3,6 @@ using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
-using Outcompute.Trader.Trading.Algorithms.Steps;
 using System;
 using System.Linq;
 using System.Threading;
@@ -17,9 +16,9 @@ namespace Outcompute.Trader.Trading.Blocks
         private readonly ITradingRepository _repository;
         private readonly ITradingService _trader;
         private readonly ISystemClock _clock;
-        private readonly IRedeemSavingsStep _redeemSavingsStep;
+        private readonly IRedeemSavingsBlock _redeemSavingsStep;
 
-        public TrackingBuyBlock(ILogger<TrackingBuyBlock> logger, ITradingRepository repository, ITradingService trader, ISystemClock clock, IRedeemSavingsStep redeemSavingsStep)
+        public TrackingBuyBlock(ILogger<TrackingBuyBlock> logger, ITradingRepository repository, ITradingService trader, ISystemClock clock, IRedeemSavingsBlock redeemSavingsStep)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));

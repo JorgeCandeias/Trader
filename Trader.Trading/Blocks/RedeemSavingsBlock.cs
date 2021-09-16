@@ -5,20 +5,20 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Algorithms.Steps
+namespace Outcompute.Trader.Trading.Blocks
 {
-    internal class RedeemSavingsStep : IRedeemSavingsStep
+    internal class RedeemSavingsBlock : IRedeemSavingsBlock
     {
         private readonly ILogger _logger;
         private readonly ITradingService _trader;
 
-        public RedeemSavingsStep(ILogger<RedeemSavingsStep> logger, ITradingService trader)
+        public RedeemSavingsBlock(ILogger<RedeemSavingsBlock> logger, ITradingService trader)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
         }
 
-        private static string Type => nameof(RedeemSavingsStep);
+        private static string Type => nameof(RedeemSavingsBlock);
 
         public async Task<bool> GoAsync(string asset, decimal amount, CancellationToken cancellationToken = default)
         {

@@ -1,5 +1,4 @@
 ﻿using Outcompute.Trader.Trading.Algorithms;
-using Outcompute.Trader.Trading.Algorithms.Steps;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -13,7 +12,6 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<IOrderSynchronizer, OrderSynchronizer>()
                 .AddSingleton<ITradeSynchronizer, TradeSynchronizer>()
                 .AddSingleton<IOrderCodeGenerator, OrderCodeGenerator>()
-                .AddSingleton<IRedeemSavingsStep, RedeemSavingsStep>()
 
                 .AddTransient<IAlgoContext, AlgoContext>()
 

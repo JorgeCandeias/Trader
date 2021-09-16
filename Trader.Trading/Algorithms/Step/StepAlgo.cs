@@ -5,7 +5,7 @@ using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms.Exceptions;
-using Outcompute.Trader.Trading.Algorithms.Steps;
+using Outcompute.Trader.Trading.Blocks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,9 +27,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
         private readonly ISignificantOrderResolver _significantOrderResolver;
         private readonly ITradingRepository _repository;
         private readonly IOrderCodeGenerator _orderCodeGenerator;
-        private readonly IRedeemSavingsStep _redeemSavingsStep;
+        private readonly IRedeemSavingsBlock _redeemSavingsStep;
 
-        public StepAlgo(IAlgoContext context, ILogger<StepAlgo> logger, IOptionsMonitor<StepAlgoOptions> options, ISystemClock clock, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ITradingRepository repository, IOrderCodeGenerator orderCodeGenerator, IRedeemSavingsStep redeemSavingsStep)
+        public StepAlgo(IAlgoContext context, ILogger<StepAlgo> logger, IOptionsMonitor<StepAlgoOptions> options, ISystemClock clock, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ITradingRepository repository, IOrderCodeGenerator orderCodeGenerator, IRedeemSavingsBlock redeemSavingsStep)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));

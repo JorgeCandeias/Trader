@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading
 {
+    // todo: remove this class once there is a basic interface in place
     internal class TraderAgent : BackgroundService
     {
         private readonly TraderAgentOptions _options;

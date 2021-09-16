@@ -32,7 +32,7 @@ namespace Outcompute.Trader.Trading.ProfitAggregator
             return Task.CompletedTask;
         }
 
-        public ValueTask<IEnumerable<Profit>> GetProfitsAsync()
+        public Task<IEnumerable<Profit>> GetProfitsAsync()
         {
             var builder = ImmutableList.CreateBuilder<Profit>();
 
@@ -41,7 +41,7 @@ namespace Outcompute.Trader.Trading.ProfitAggregator
                 builder.Add(item.Value);
             }
 
-            return new ValueTask<IEnumerable<Profit>>(builder.ToImmutable());
+            return Task.FromResult<IEnumerable<Profit>>(builder.ToImmutable());
         }
     }
 }

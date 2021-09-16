@@ -9,6 +9,6 @@ namespace Outcompute.Trader.Trading.ProfitAggregator
     {
         Task PublishAsync(IEnumerable<Profit> profits);
 
-        ValueTask<IEnumerable<Profit>> GetProfitsAsync();
+        Task<IEnumerable<Profit>> GetProfitsAsync();
     }
 }

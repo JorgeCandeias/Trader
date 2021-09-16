@@ -3,59 +3,31 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
 using Outcompute.Trader.Trading.Algorithms;
+using Polly;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading
 {
-    // todo: remove when the orleans implementation is complete
     internal class TraderAgent : BackgroundService
     {
         private readonly TraderAgentOptions _options;
         private readonly ILogger _logger;
-        private readonly IEnumerable<ISymbolAlgo> _algos;
-        private readonly ITradingService _trader;
         private readonly IHostApplicationLifetime _lifetime;
         private readonly IGrainFactory _factory;
 
-        public TraderAgent(IOptions<TraderAgentOptions> options, ILogger<TraderAgent> logger, IEnumerable<ISymbolAlgo> algos, ITradingService trader, IHostApplicationLifetime lifetime, IGrainFactory factory)
+        public TraderAgent(IOptions<TraderAgentOptions> options, ILogger<TraderAgent> logger, IHostApplicationLifetime lifetime, IGrainFactory factory)
         {
             _options = options.Value ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _algos = algos ?? throw new ArgumentNullException(nameof(algos));
-            _trader = trader ?? throw new ArgumentNullException(nameof(trader));
             _lifetime = lifetime ?? throw new ArgumentNullException(nameof(lifetime));
             _factory = factory ?? throw new ArgumentNullException(nameof(factory));
         }
 
         private static string TypeName => nameof(TraderAgent);
 
-        public override async Task StartAsync(CancellationToken cancellationToken)
-        {
-            _logger.LogInformation(
-                "{TypeName} querying exchange information...",
-                TypeName);
-
-            var exchangeInfo = await _trader
-                .GetExchangeInfoAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-            foreach (var algo in _algos)
-            {
-                await algo
-                    .InitializeAsync(exchangeInfo, cancellationToken)
-                    .ConfigureAwait(false);
-            }
-
-            await base.StartAsync(cancellationToken).ConfigureAwait(false);
-        }
-
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             // wait for the application to finish starting
@@ -67,57 +39,23 @@ namespace Outcompute.Trader.Trading
             // keep ticking
             while (!stoppingToken.IsCancellationRequested)
             {
-                // enforce a max tick time
-                using var earlyTokenSource = new CancellationTokenSource(Debugger.IsAttached ? _options.TickTimeoutWithDebugger : _options.TickTimeout);
-                using var safeTokenSource = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken, earlyTokenSource.Token);
-
-                // perform the tick
-                foreach (var algo in _algos)
-                {
-                    try
+                // query published profits
+                var published = await Policy
+                    .Handle<Exception>()
+                    .RetryForeverAsync(ex =>
                     {
-                        await algo
-                            .GoAsync(safeTokenSource.Token)
-                            .ConfigureAwait(false);
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        throw;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex,
-                            "{TypeName} reports {Symbol} algorithm has faulted",
-                            TypeName, algo.Symbol);
-                    }
-                }
-
-                var profits = new List<(string Symbol, Profit Profit, Statistics Stats)>();
-                foreach (var algo in _algos)
-                {
-                    var profit = await algo
-                        .GetProfitAsync(safeTokenSource.Token)
-                        .ConfigureAwait(false);
-
-                    var stats = await algo
-                        .GetStatisticsAsync(safeTokenSource.Token)
-                        .ConfigureAwait(false);
-
-                    profits.Add((algo.Symbol, profit, stats));
-                }
-
-                // add published profits
-                var published = await _factory
-                    .GetProfitAggregatorGrain()
-                    .GetProfitsAsync()
+                        _logger.LogError(ex, "{TypeName} failed to query profit", TypeName);
+                    })
+                    .ExecuteAsync(_ => _factory.GetProfitAggregatorGrain().GetProfitsAsync(), stoppingToken)
                     .ConfigureAwait(false);
 
-                foreach (var item in published)
-                {
-                    profits.Add((item.Symbol, item, Statistics.FromProfit(item)));
-                }
+                // compose stats items for display
+                var profits = published
+                    .Select(x => (x.Symbol, Profit: x, Stats: Statistics.FromProfit(x)))
+                    .GroupBy(x => x.Profit.Quote)
+                    .OrderBy(x => x.Key);
 
-                foreach (var group in profits.GroupBy(x => x.Profit.Quote).OrderBy(x => x.Key))
+                foreach (var group in profits)
                 {
                     _logger.LogInformation(
                         "{TypeName} reporting profit for quote {Quote}...",

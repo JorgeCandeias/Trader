@@ -55,6 +55,10 @@ namespace Outcompute.Trader.App
                         {
                             options.ConnectionString = context.Configuration.GetConnectionString("Trader");
                         })
+                        .UseTraderDashboard(options =>
+                        {
+                            options.UseHttps = true;
+                        })
                         .UseBinanceTradingService(options =>
                         {
                             context.Configuration.Bind("Binance", options);

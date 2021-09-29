@@ -1,0 +1,76 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<AddRazorSupportForMvc>true</AddRazorSupportForMvc>
+		<AssemblyName>Outcompute.Trader.Dashboard</AssemblyName>
+		<RootNamespace>Outcompute.Trader.Dashboard</RootNamespace>
+		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+		<EnableNETAnalyzers>true</EnableNETAnalyzers>
+		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Include="..\Trader.Dashboard.WebApp\wwwroot\favicon.ico">
+			<Visible>false</Visible>
+			<LogicalName>wwwroot.favicon.ico</LogicalName>
+		</EmbeddedResource>
+		<EmbeddedResource Include="..\Trader.Dashboard.WebApp\wwwroot\css\site.css">
+			<Visible>false</Visible>
+			<LogicalName>wwwroot.css.site.css</LogicalName>
+		</EmbeddedResource>
+		<EmbeddedResource Include="..\Trader.Dashboard.WebApp\wwwroot\css\bootstrap\bootstrap.min.css">
+			<Visible>false</Visible>
+			<LogicalName>wwwroot.css.bootstrap.bootstrap.min.css</LogicalName>
+		</EmbeddedResource>
+		<EmbeddedResource Include="..\Trader.Dashboard.WebApp\wwwroot\css\open-iconic\font\css\open-iconic-bootstrap.min.css">
+			<Visible>false</Visible>
+			<LogicalName>wwwroot.css.open-iconic.font.css.open-iconic-bootstrap.min.css</LogicalName>
+		</EmbeddedResource>
+		<EmbeddedResource Include="..\Trader.Dashboard.WebApp\wwwroot\css\open-iconic\font\fonts\open-iconic.eot">
+			<Visible>false</Visible>
+			<LogicalName>wwwroot.css.open-iconic.font.fonts.open-iconic.eot</LogicalName>
+		</EmbeddedResource>
+		<EmbeddedResource Include="..\Trader.Dashboard.WebApp\wwwroot\css\open-iconic\font\fonts\open-iconic.otf">
+			<Visible>false</Visible>
+			<LogicalName>wwwroot.css.open-iconic.font.fonts.open-iconic.otf</LogicalName>
+		</EmbeddedResource>
+		<EmbeddedResource Include="..\Trader.Dashboard.WebApp\wwwroot\css\open-iconic\font\fonts\open-iconic.svg">
+			<Visible>false</Visible>
+			<LogicalName>wwwroot.css.open-iconic.font.fonts.open-iconic.svg</LogicalName>
+		</EmbeddedResource>
+		<EmbeddedResource Include="..\Trader.Dashboard.WebApp\wwwroot\css\open-iconic\font\fonts\open-iconic.ttf">
+			<Visible>false</Visible>
+			<LogicalName>wwwroot.css.open-iconic.font.fonts.open-iconic.ttf</LogicalName>
+		</EmbeddedResource>
+		<EmbeddedResource Include="..\Trader.Dashboard.WebApp\wwwroot\css\open-iconic\font\fonts\open-iconic.woff">
+			<Visible>false</Visible>
+			<LogicalName>wwwroot.css.open-iconic.font.fonts.open-iconic.woff</LogicalName>
+		</EmbeddedResource>
+		<EmbeddedResource Include="..\Trader.Dashboard.WebApp\obj\Debug\net5.0\scopedcss\bundle\Outcompute.Trader.Dashboard.WebApp.styles.css">
+			<Visible>false</Visible>
+			<LogicalName>wwwroot.Outcompute.Trader.Dashboard.WebApp.styles.css</LogicalName>
+		</EmbeddedResource>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="5.0.3">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="SonarAnalyzer.CSharp" Version="8.29.0.36737">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Trader.Dashboard.WebApp\Trader.Dashboard.WebApp.csproj" />
+		<ProjectReference Include="..\Trader.Hosting.Abstractions\Trader.Hosting.Abstractions.csproj" />
+	</ItemGroup>
+</Project>

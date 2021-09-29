@@ -29,7 +29,7 @@
 		<PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="5.0.0" />
 		<PackageReference Include="Polly" Version="7.2.2" />
-		<PackageReference Include="SonarAnalyzer.CSharp" Version="8.28.0.36354">
+		<PackageReference Include="SonarAnalyzer.CSharp" Version="8.29.0.36737">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
@@ -37,6 +37,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Trader.Data.Abstractions\Trader.Data.Abstractions.csproj" />
+		<ProjectReference Include="..\Trader.Data.Sql.Database\Trader.Data.Sql.Database.sqlproj" />
 		<ProjectReference Include="..\Trader.Hosting.Abstractions\Trader.Hosting.Abstractions.csproj" />
 	</ItemGroup>
 </Project>

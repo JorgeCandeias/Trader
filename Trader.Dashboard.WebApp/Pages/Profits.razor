@@ -1,0 +1,60 @@
+﻿@page "/profits"
+
+<h1>Profit</h1>
+
+@if (_profits is null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!_profits.Any())
+{
+    <p><em>Waiting for profit to be published...</em></p>
+}
+else
+{
+    @foreach (var group in _profits.Select(x => (x.Symbol, Profit: x, Stats: Statistics.FromProfit(x))).GroupBy(x => x.Profit.Quote).OrderBy(x => x.Key))
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Today</th>
+                    <th>Yesterday</th>
+                    <th>This Week</th>
+                    <th>Prev Week</th>
+                    <th>This Month</th>
+                    <th>This Year</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in group.OrderByDescending(x => x.Profit.Today).ThenByDescending(x => x.Profit.ThisYear).ThenBy(x => x.Symbol))
+                {
+                    <tr>
+                        <td>@item.Symbol</td>
+                        <td>@item.Profit.Today.ToString("F8", CultureInfo.CurrentUICulture)</td>
+                        <td>@item.Profit.Yesterday.ToString("F8", CultureInfo.CurrentUICulture)</td>
+                        <td>@item.Profit.ThisWeek.ToString("F8", CultureInfo.CurrentUICulture)</td>
+                        <td>@item.Profit.PrevWeek.ToString("F8", CultureInfo.CurrentUICulture)</td>
+                        <td>@item.Profit.ThisMonth.ToString("F8", CultureInfo.CurrentUICulture)</td>
+                        <td>@item.Profit.ThisYear.ToString("F8", CultureInfo.CurrentUICulture)</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                @{
+                    var totalProfit = Profit.Aggregate(group.Select(x => x.Profit));
+                    var totalStats = Statistics.FromProfit(totalProfit);
+                }
+                <tr>
+                    <td>@group.Key</td>
+                    <td>@totalProfit.Today.ToString("F8", CultureInfo.CurrentUICulture)</td>
+                    <td>@totalProfit.Yesterday.ToString("F8", CultureInfo.CurrentUICulture)</td>
+                    <td>@totalProfit.ThisWeek.ToString("F8", CultureInfo.CurrentUICulture)</td>
+                    <td>@totalProfit.PrevWeek.ToString("F8", CultureInfo.CurrentUICulture)</td>
+                    <td>@totalProfit.ThisMonth.ToString("F8", CultureInfo.CurrentUICulture)</td>
+                    <td>@totalProfit.ThisYear.ToString("F8", CultureInfo.CurrentUICulture)</td>
+                </tr>
+            </tfoot>
+        </table>
+    }
+}

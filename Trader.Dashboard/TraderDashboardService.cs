@@ -5,7 +5,11 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Orleans;
+using Outcompute.Trader.Core.Timers;
+using Outcompute.Trader.Dashboard.WebApp;
 using Outcompute.Trader.Dashboard.WebApp.Data;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,7 +20,7 @@ namespace Outcompute.Trader.Dashboard
     {
         private readonly IHost _host;
 
-        public TraderDashboardService(IOptions<TraderDashboardOptions> options, IEnumerable<ILoggerProvider> loggerProviders)
+        public TraderDashboardService(IOptions<TraderDashboardOptions> options, IEnumerable<ILoggerProvider> loggerProviders, IServiceProvider provider)
         {
             _host = Host.CreateDefaultBuilder()
                 .ConfigureWebHostDefaults(web =>
@@ -34,13 +38,16 @@ namespace Outcompute.Trader.Dashboard
                     {
                         services.AddRazorPages();
                         services.AddServerSideBlazor();
-                        services.AddSingleton<WeatherForecastService>();
-                    });
 
-                    web.UseStaticWebAssets();
+                        services
+                            .AddSingleton<WeatherForecastService>()
+                            .AddTransient(_ => provider.GetRequiredService<IGrainFactory>())
+                            .AddTransient(_ => provider.GetRequiredService<ISafeTimerFactory>());
+                    });
 
                     web.Configure((context, app) =>
                     {
+                        context.HostingEnvironment.ApplicationName = typeof(App).Assembly.GetName().Name;
                         context.HostingEnvironment.WebRootFileProvider = new EmbeddedFileProvider(typeof(TraderDashboardService).Assembly, "wwwroot");
 
                         if (context.HostingEnvironment.IsDevelopment())

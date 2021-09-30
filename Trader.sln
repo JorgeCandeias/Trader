@@ -41,7 +41,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Trading.Binance", "T
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Dashboard", "Trader.Dashboard\Trader.Dashboard.csproj", "{2FD3F128-3DC0-4D4E-BFE7-318D0BEF07F6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Dashboard.WebApp", "Trader.Dashboard.WebApp\Trader.Dashboard.WebApp.csproj", "{CA238D76-74A2-4C5C-9A96-A6534457A2BE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Dashboard.WebApp", "Trader.Dashboard.WebApp\Trader.Dashboard.WebApp.csproj", "{CA238D76-74A2-4C5C-9A96-A6534457A2BE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

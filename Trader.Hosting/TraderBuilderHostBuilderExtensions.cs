@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Outcompute.Trader.Hosting;
 using System;
 
@@ -59,8 +58,6 @@ namespace Microsoft.Extensions.Hosting
                             .ConfigureServices((context, services) =>
                             {
                                 services
-                                    // todo: make this depend on algo configuration mapping options
-                                    .AddTraderAgent(options => context.Configuration.Bind("Trader:Agent", options))
                                     .AddSystemClock()
                                     .AddSafeTimerFactory()
                                     .AddBase62NumberSerializer()

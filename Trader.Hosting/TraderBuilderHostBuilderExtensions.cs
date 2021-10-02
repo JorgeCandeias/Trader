@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Orleans;
+using Orleans.Hosting;
 using Outcompute.Trader.Hosting;
 using System;
 
@@ -47,6 +49,10 @@ namespace Microsoft.Extensions.Hosting
             {
                 // perform one-time actions
                 builder
+                    .UseOrleans(orleans =>
+                    {
+                        orleans.ConfigureApplicationParts(manager => manager.AddApplicationPart(typeof(TraderBuilder).Assembly).WithReferences());
+                    })
                     .UseGrainWatchdog()
                     .UseTrader(trader =>
                     {

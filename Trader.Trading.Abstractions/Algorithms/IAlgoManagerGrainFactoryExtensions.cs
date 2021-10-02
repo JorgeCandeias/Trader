@@ -3,7 +3,7 @@ using System;
 
 namespace Orleans
 {
-    public static class AlgoManagerGrainFactoryExtensions
+    public static class IAlgoManagerGrainFactoryExtensions
     {
         public static IAlgoManagerGrain GetAlgoManagerGrain(this IGrainFactory factory)
         {

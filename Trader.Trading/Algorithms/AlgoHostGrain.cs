@@ -106,6 +106,11 @@ namespace Outcompute.Trader.Trading.Algorithms
             // execute the algo under the limits
             await _algo.GoAsync(linked.Token).ConfigureAwait(true);
         }
+
+        public Task TickAsync()
+        {
+            return ExecuteAlgoAsync();
+        }
     }
 
     internal interface IAlgoHostGrainInternal : IAlgoHostGrain

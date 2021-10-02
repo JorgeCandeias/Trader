@@ -10,10 +10,10 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Dashboard.WebApp.Pages
 {
-    public sealed partial class Profits : ComponentBase, IDisposable
+    public sealed partial class Algos : ComponentBase, IDisposable
     {
         [Inject]
-        public ILogger<Profits> Logger { get; set; } = null!;
+        public ILogger<Algos> Logger { get; set; } = null!;
 
         [Inject]
         public IGrainFactory GrainFactory { get; set; } = null!;
@@ -21,7 +21,7 @@ namespace Outcompute.Trader.Dashboard.WebApp.Pages
         [Inject]
         public ISafeTimerFactory SafeTimerFactory { get; set; } = null!;
 
-        private IEnumerable<Profit>? _profits;
+        private IEnumerable<AlgoInfo>? _algos;
 
         private ISafeTimer? _timer;
 
@@ -31,14 +31,14 @@ namespace Outcompute.Trader.Dashboard.WebApp.Pages
             {
                 await InvokeAsync(async () =>
                 {
-                    // query published profits
-                    _profits = await Policy
+                    // query algos
+                    _algos = await Policy
                         .Handle<Exception>()
                         .RetryForeverAsync(ex =>
                         {
-                            Logger.LogError(ex, "{TypeName} failed to query profit", nameof(Profits));
+                            Logger.LogError(ex, "{TypeName} failed to query profit", nameof(Algos));
                         })
-                        .ExecuteAsync(_ => GrainFactory.GetProfitAggregatorGrain().GetProfitsAsync(), token, true);
+                        .ExecuteAsync(_ => GrainFactory.GetAlgoManagerGrain().GetAlgosAsync(), token, true);
 
                     StateHasChanged();
                 });

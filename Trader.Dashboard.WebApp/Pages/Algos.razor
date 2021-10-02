@@ -1,0 +1,29 @@
+﻿@page "/algos"
+
+<h1>Algos</h1>
+
+@if (_algos is null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!_algos.Any())
+{
+    <p><em>No algos defined.</em></p>
+}
+else
+{
+    @foreach (var algo in _algos)
+    {
+        <div class="card" style="width: 18rem; display: inline-block">
+            <div class="card-body">
+                <h5 class="card-title">@algo.Name</h5>
+                <p class="card-text">
+                    <b>Type:</b>@algo.Type
+                    <b>Enabled:</b>@algo.Enabled
+                    <b></b>
+                </p>
+                <a href="#" class="btn btn-primary">Go somewhere</a>
+            </div>
+        </div>
+    }
+}

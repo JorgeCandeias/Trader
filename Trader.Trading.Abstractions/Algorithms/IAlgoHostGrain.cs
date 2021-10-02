@@ -9,5 +9,7 @@ namespace Outcompute.Trader.Trading.Algorithms
     public interface IAlgoHostGrain : IGrainWithStringKey
     {
         Task PingAsync();
+
+        Task TickAsync();
     }
 }

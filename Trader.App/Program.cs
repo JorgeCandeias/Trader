@@ -49,7 +49,10 @@ namespace Outcompute.Trader.App
                 .UseOrleans(orleans =>
                 {
                     orleans.UseLocalhostClustering();
-                    orleans.UseDashboard();
+                    orleans.UseDashboard(options =>
+                    {
+                        options.Port = 6001;
+                    });
                 })
                 .UseTrader((context, trader) =>
                 {
@@ -60,7 +63,7 @@ namespace Outcompute.Trader.App
                         })
                         .UseTraderDashboard(options =>
                         {
-                            options.UseHttps = true;
+                            options.Port = 6002;
                         })
                         .UseBinanceTradingService(options =>
                         {

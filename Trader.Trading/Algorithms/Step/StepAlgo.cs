@@ -76,7 +76,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
                 .ConfigureAwait(false);
 
             // always update the latest price
-            var ticker = await SyncAssetPriceAsync(options, symbol, cancellationToken).ConfigureAwait(false);
+            var ticker = await TrySyncAssetPriceAsync(options, symbol, cancellationToken).ConfigureAwait(false);
+            if (ticker is null) return;
 
             if (await TryCreateTradingBandsAsync(options, symbol, percentFilter, priceFilter, minNotionalFilter, significant.Orders, ticker, cancellationToken).ConfigureAwait(false)) return;
             if (await TrySetStartingTradeAsync(options, symbol, priceFilter, minNotionalFilter, lotSizeFilter, ticker, cancellationToken).ConfigureAwait(false)) return;
@@ -114,15 +115,18 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
                 TypeName, _context.Name, symbol.QuoteAsset, _balances.Quote.Free, _balances.Quote.Locked, _balances.Quote.Total);
         }
 
-        private async Task<MiniTicker> SyncAssetPriceAsync(StepAlgoOptions options, Symbol symbol, CancellationToken cancellationToken = default)
+        private async Task<MiniTicker?> TrySyncAssetPriceAsync(StepAlgoOptions options, Symbol symbol, CancellationToken cancellationToken = default)
         {
-            var ticker = await _repository
-                .GetTickerAsync(options.Symbol, cancellationToken)
+            var ticker = await _context
+                .TryGetTickerAsync(options.Symbol, cancellationToken)
                 .ConfigureAwait(false);
 
-            _logger.LogInformation(
+            if (ticker is not null)
+            {
+                _logger.LogInformation(
                 "{Type} {Name} reports latest asset price is {Price} {QuoteAsset}",
                 TypeName, _context.Name, ticker.ClosePrice, symbol.QuoteAsset);
+            }
 
             return ticker;
         }

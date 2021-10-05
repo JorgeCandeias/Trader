@@ -4,6 +4,7 @@ using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Linq;
 using System.Threading;
@@ -19,8 +20,9 @@ namespace Outcompute.Trader.Trading.Blocks
         private readonly ITradingService _trader;
         private readonly ISystemClock _clock;
         private readonly IRedeemSavingsBlock _redeemSavingsBlock;
+        private readonly ITickerProvider _tickers;
 
-        public AveragingSellBlock(ILogger<AveragingSellBlock> logger, ISignificantOrderResolver significantOrderResolver, ITradingRepository repository, ITradingService trader, ISystemClock clock, IRedeemSavingsBlock redeemSavingsBlock)
+        public AveragingSellBlock(ILogger<AveragingSellBlock> logger, ISignificantOrderResolver significantOrderResolver, ITradingRepository repository, ITradingService trader, ISystemClock clock, IRedeemSavingsBlock redeemSavingsBlock, ITickerProvider tickers)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _significantOrderResolver = significantOrderResolver ?? throw new ArgumentNullException(nameof(significantOrderResolver));
@@ -28,9 +30,10 @@ namespace Outcompute.Trader.Trading.Blocks
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _redeemSavingsBlock = redeemSavingsBlock ?? throw new ArgumentNullException(nameof(redeemSavingsBlock));
+            _tickers = tickers ?? throw new ArgumentNullException(nameof(tickers));
         }
 
-        private static string Type => nameof(AveragingSellBlock);
+        private static string TypeName => nameof(AveragingSellBlock);
 
         public Task GoAsync(Symbol symbol, decimal profitMultiplier, CancellationToken cancellationToken = default)
         {
@@ -47,15 +50,24 @@ namespace Outcompute.Trader.Trading.Blocks
             var minNotionalFilter = symbol.Filters.OfType<MinNotionalSymbolFilter>().Single();
             var lotSizeFilter = symbol.Filters.OfType<LotSizeSymbolFilter>().Single();
 
-            // get the current ticker for the symbol
-            var ticker = await _repository
-                .GetTickerAsync(symbol.Name, cancellationToken)
-                .ConfigureAwait(false);
-
             // get all significant buys
             var significant = await _significantOrderResolver
                 .ResolveAsync(symbol, cancellationToken)
                 .ConfigureAwait(false);
+
+            // get the current ticker for the symbol
+            var ticker = await _tickers
+                .TryGetTickerAsync(symbol.Name, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (ticker is null)
+            {
+                _logger.LogWarning(
+                    "{Type} cannot evaluate desired sell for symbol {Symbol} because no ticker information is yet available",
+                    TypeName, symbol.Name);
+
+                return significant.Profit;
+            }
 
             // calculate the desired sell
             var desired = CalculateDesiredSell(symbol, profitMultiplier, significant.Orders, lotSizeFilter, percentFilter, ticker, priceFilter, minNotionalFilter);
@@ -89,7 +101,7 @@ namespace Outcompute.Trader.Trading.Blocks
             {
                 _logger.LogError(
                     "{Type} {Name} cannot set sell order for {Quantity} {Asset} because the quantity is under the minimum lot size of {MinLotSize} {Asset}",
-                    Type, symbol.Name, quantity, symbol.BaseAsset, lotSizeFilter.StepSize, symbol.BaseAsset);
+                    TypeName, symbol.Name, quantity, symbol.BaseAsset, lotSizeFilter.StepSize, symbol.BaseAsset);
 
                 return DesiredSell.None;
             }
@@ -110,7 +122,7 @@ namespace Outcompute.Trader.Trading.Blocks
             {
                 _logger.LogError(
                     "{Type} {Name} cannot set sell order for {Quantity} {Asset} at {Price} {Quote} totalling {Total} {Quote} because it is under the minimum notional of {MinNotional} {Quote}",
-                    Type, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.QuoteAsset, minNotionalFilter.MinNotional, symbol.QuoteAsset);
+                    TypeName, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.QuoteAsset, minNotionalFilter.MinNotional, symbol.QuoteAsset);
 
                 return DesiredSell.None;
             }
@@ -120,7 +132,7 @@ namespace Outcompute.Trader.Trading.Blocks
             {
                 _logger.LogError(
                     "{Type} {Name} cannot set sell order for {Quantity} {Asset} at {Price} {Quote} totalling {Total} {Quote} because it is under the maximum percent filter price of {MaxPrice} {Quote}",
-                    Type, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.QuoteAsset, ticker.ClosePrice * percentFilter.MultiplierUp, symbol.QuoteAsset);
+                    TypeName, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.QuoteAsset, ticker.ClosePrice * percentFilter.MultiplierUp, symbol.QuoteAsset);
 
                 return DesiredSell.None;
             }
@@ -130,7 +142,7 @@ namespace Outcompute.Trader.Trading.Blocks
             {
                 _logger.LogInformation(
                     "{Type} {Name} holding off sell order of {Quantity} {Asset} until price hits {Price} {Quote} ({Percent:P2} of current value of {Ticker} {Quote})",
-                    Type, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, price / ticker.ClosePrice, ticker.ClosePrice, symbol.QuoteAsset);
+                    TypeName, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, price / ticker.ClosePrice, ticker.ClosePrice, symbol.QuoteAsset);
 
                 return DesiredSell.None;
             }
@@ -152,7 +164,7 @@ namespace Outcompute.Trader.Trading.Blocks
                 {
                     _logger.LogInformation(
                         "{Type} {Name} cancelling non-desired {OrderType} {OrderSide} order {OrderId} for {Quantity} {Asset} at {Price} {Quote}",
-                        Type, symbol.Name, order.Type, order.Side, order.OrderId, order.OriginalQuantity, symbol.BaseAsset, order.Price, symbol.QuoteAsset);
+                        TypeName, symbol.Name, order.Type, order.Side, order.OrderId, order.OriginalQuantity, symbol.BaseAsset, order.Price, symbol.QuoteAsset);
 
                     var orderResult = await _trader
                         .CancelOrderAsync(
@@ -191,7 +203,7 @@ namespace Outcompute.Trader.Trading.Blocks
             {
                 _logger.LogWarning(
                     "{Type} {Name} must place {OrderType} {OrderSide} of {Quantity} {Asset} for {Price} {Quote} but there is only {Free} {Asset} available. Will attempt to redeem the rest from savings.",
-                    Type, symbol.Name, orderType, orderSide, desired.Quantity, symbol.BaseAsset, desired.Price, symbol.QuoteAsset, balance.Free, symbol.BaseAsset);
+                    TypeName, symbol.Name, orderType, orderSide, desired.Quantity, symbol.BaseAsset, desired.Price, symbol.QuoteAsset, balance.Free, symbol.BaseAsset);
 
                 var necessary = desired.Quantity - balance.Free;
 
@@ -203,7 +215,7 @@ namespace Outcompute.Trader.Trading.Blocks
                 {
                     _logger.LogError(
                         "{Type} {Name} could not redeem the necessary {Quantity} {Asset} from savings",
-                        Type, symbol.Name, necessary, symbol.BaseAsset);
+                        TypeName, symbol.Name, necessary, symbol.BaseAsset);
 
                     return;
                 }
@@ -213,7 +225,7 @@ namespace Outcompute.Trader.Trading.Blocks
 
             _logger.LogInformation(
                 "{Type} {Name} placing {OrderType} {OrderSide} order for {Quantity} {Asset} at {Price} {Quote}",
-                Type, symbol.Name, orderType, orderSide, desired.Quantity, symbol.BaseAsset, desired.Price, symbol.QuoteAsset);
+                TypeName, symbol.Name, orderType, orderSide, desired.Quantity, symbol.BaseAsset, desired.Price, symbol.QuoteAsset);
 
             var result = await _trader
                 .CreateOrderAsync(

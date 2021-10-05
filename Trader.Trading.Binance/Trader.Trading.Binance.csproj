@@ -11,6 +11,14 @@
 		<RootNamespace>Outcompute.Trader.Trading.Binance</RootNamespace>
 	</PropertyGroup>
 
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	  <NoWarn>1701;1702</NoWarn>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+	  <NoWarn>1701;1702</NoWarn>
+	</PropertyGroup>
+
 	<ItemGroup>
 	  <PackageReference Include="AutoMapper" Version="10.1.1" />
 	  <PackageReference Include="FastMember" Version="1.5.0" />

@@ -3,6 +3,7 @@ using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
+using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Linq;
 using System.Threading;
@@ -17,14 +18,16 @@ namespace Outcompute.Trader.Trading.Blocks
         private readonly ITradingService _trader;
         private readonly ISystemClock _clock;
         private readonly IRedeemSavingsBlock _redeemSavingsStep;
+        private readonly ITickerProvider _tickers;
 
-        public TrackingBuyBlock(ILogger<TrackingBuyBlock> logger, ITradingRepository repository, ITradingService trader, ISystemClock clock, IRedeemSavingsBlock redeemSavingsStep)
+        public TrackingBuyBlock(ILogger<TrackingBuyBlock> logger, ITradingRepository repository, ITradingService trader, ISystemClock clock, IRedeemSavingsBlock redeemSavingsStep, ITickerProvider tickers)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _redeemSavingsStep = redeemSavingsStep ?? throw new ArgumentNullException(nameof(redeemSavingsStep));
+            _tickers = tickers ?? throw new ArgumentNullException(nameof(tickers));
         }
 
         private static string TypeName => nameof(TrackingBuyBlock);
@@ -41,10 +44,19 @@ namespace Outcompute.Trader.Trading.Blocks
             // sync data from the exchange
             var orders = await GetOpenOrdersAsync(symbol, cancellationToken).ConfigureAwait(false);
 
-            // get the current price
-            var ticker = await _repository
-                .GetTickerAsync(symbol.Name, cancellationToken)
+            // get the current ticker for the symbol
+            var ticker = await _tickers
+                .TryGetTickerAsync(symbol.Name, cancellationToken)
                 .ConfigureAwait(false);
+
+            if (ticker is null)
+            {
+                _logger.LogWarning(
+                    "{Type} cannot evaluate desired sell for symbol {Symbol} because no ticker information is yet available",
+                    TypeName, symbol.Name);
+
+                return false;
+            }
 
             // get the symbol filters
             var priceFilter = symbol.Filters.OfType<PriceSymbolFilter>().Single();

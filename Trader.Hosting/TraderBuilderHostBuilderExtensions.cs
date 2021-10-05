@@ -1,6 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Orleans;
-using Orleans.Hosting;
 using Outcompute.Trader.Hosting;
 using System;
 
@@ -45,39 +43,33 @@ namespace Microsoft.Extensions.Hosting
         {
             if (builder is null) throw new ArgumentNullException(nameof(builder));
 
-            if (!builder.Properties.ContainsKey(nameof(UseTraderCore)))
-            {
-                // perform one-time actions
-                builder
-                    .UseOrleans(orleans =>
-                    {
-                        orleans.ConfigureApplicationParts(manager => manager.AddApplicationPart(typeof(TraderBuilder).Assembly).WithReferences());
-                    })
-                    .UseGrainWatchdog()
-                    .UseTrader(trader =>
-                    {
-                        trader
-                            .AddTradingServices()
-                            .AddAccumulatorAlgo()
-                            .AddValueAveragingAlgo()
-                            .AddStepAlgo()
-                            .ConfigureServices((context, services) =>
-                            {
-                                services
-                                    .AddSystemClock()
-                                    .AddSafeTimerFactory()
-                                    .AddBase62NumberSerializer()
-                                    .AddModelAutoMapperProfiles()
-                                    .AddAlgoServices()
-                                    .AddRandomGenerator()
-                                    .AddAlgoFactoryResolver()
-                                    .AddAlgoManagerGrain()
-                                    .AddAlgoHostGrain();
-                            });
-                    });
+            if (builder.Properties.ContainsKey(nameof(UseTraderCore))) return builder;
 
-                builder.Properties[nameof(UseTraderCore)] = true;
-            }
+            // perform one-time actions
+            builder
+                .UseOrleans(orleans =>
+                {
+                    //orleans.ConfigureApplicationParts(manager => manager.AddApplicationPart(typeof(TraderBuilder).Assembly).WithReferences());
+                })
+                .UseTrader(trader =>
+                {
+                    trader
+                        .ConfigureServices((context, services) =>
+                        {
+                            services
+                                .AddSystemClock()
+                                .AddSafeTimerFactory()
+                                .AddBase62NumberSerializer()
+                                .AddModelAutoMapperProfiles()
+                                .AddAlgoServices()
+                                .AddRandomGenerator()
+                                .AddAlgoFactoryResolver()
+                                .AddAlgoManagerGrain()
+                                .AddAlgoHostGrain();
+                        });
+                });
+
+            builder.Properties[nameof(UseTraderCore)] = true;
 
             return builder;
         }

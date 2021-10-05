@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Outcompute.Trader.Models;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using static System.String;
 
@@ -31,5 +33,29 @@ namespace Outcompute.Trader.Trading.Algorithms
         /// </summary>
         [Required]
         public bool BatchEnabled { get; set; } = true;
+
+        /// <summary>
+        /// Describes the data dependencies for this algo instance.
+        /// </summary>
+        [Required]
+        public AlgoHostGrainOptionsDependsOn DependsOn { get; } = new AlgoHostGrainOptionsDependsOn();
+    }
+
+    public class AlgoHostGrainOptionsDependsOn
+    {
+        public ISet<string> Tickers { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        public ISet<string> Balances { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        public IList<AlgoHostGrainOptionsKline> Klines { get; } = new List<AlgoHostGrainOptionsKline>();
+    }
+
+    public class AlgoHostGrainOptionsKline
+    {
+        [Required]
+        public string Symbol { get; set; } = Empty;
+
+        [Required]
+        public KlineInterval Interval { get; set; }
     }
 }

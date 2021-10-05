@@ -1,34 +1,41 @@
-﻿using Microsoft.Extensions.DependencyInjection.Extensions;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.ObjectPool;
 using Microsoft.Extensions.Options;
-using Outcompute.Trader.Hosting;
 using Outcompute.Trader.Trading;
 using Outcompute.Trader.Trading.Binance;
 using Outcompute.Trader.Trading.Binance.Converters;
 using Outcompute.Trader.Trading.Binance.Handlers;
+using Outcompute.Trader.Trading.Binance.Providers;
 using Outcompute.Trader.Trading.Binance.Signing;
 using Outcompute.Trader.Trading.Binance.Streams.MarketData;
 using Outcompute.Trader.Trading.Binance.Streams.UserData;
+using Outcompute.Trader.Trading.Providers;
 using System;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace Orleans.Hosting
 {
-    public static class BinanceTraderHostBuilderExtensions
+    public static class BinanceSiloBuilderExtensions
     {
-        public const string HasBinanceTradingServicesKey = "HasBinanceTradingServices";
-
-        public static ITraderBuilder UseBinanceTradingService(this ITraderBuilder trader, Action<BinanceOptions> configure)
+        public static ISiloBuilder AddBinanceTradingService(this ISiloBuilder builder, Action<BinanceOptions> configure)
         {
-            if (trader is null) throw new ArgumentNullException(nameof(trader));
+            if (builder is null) throw new ArgumentNullException(nameof(builder));
             if (configure is null) throw new ArgumentNullException(nameof(configure));
 
-            trader.ConfigureServices((context, services) =>
-            {
-                // add core services only once
-                if (!context.Properties.ContainsKey(nameof(UseBinanceTradingService)))
+            // add the kitchen sink
+            builder
+
+                .ConfigureApplicationParts(manager => manager.AddApplicationPart(typeof(BinanceSiloBuilderExtensions).Assembly).WithReferences())
+                .ConfigureServices(services =>
                 {
                     services
+
+                        // add options
+                        .AddOptions<BinanceOptions>()
+                        .Configure(configure)
+                        .ValidateDataAnnotations()
+                        .Services
 
                         // add implementation
                         .AddSingleton<BinanceUsageContext>()
@@ -43,7 +50,7 @@ namespace Microsoft.Extensions.DependencyInjection
                         .AddSingleton<ISigner, Signer>()
                         .AddSingleton<IUserDataStreamClientFactory, BinanceUserDataStreamWssClientFactory>()
                         .AddSingleton<IMarketDataStreamClientFactory, BinanceMarketDataStreamWssClientFactory>()
-                        .AddHostedService<BinanceMarketDataStreamHost>()
+                        .AddSingleton<ITickerProvider, BinanceTickerProvider>()
                         .AddHostedService<BinanceUserDataStreamHost>()
 
                         // add typed http client
@@ -90,23 +97,17 @@ namespace Microsoft.Extensions.DependencyInjection
                         .AddSingleton<FlexibleProductRedemptionTypeConverter>()
                         .AddSingleton<FlexibleProductStatusConverter>()
                         .AddSingleton<FlexibleProductFeaturedConverter>()
-                        .AddSingleton(typeof(ImmutableListConverter<,>)); // todo: move this to the shared model converters
+                        .AddSingleton(typeof(ImmutableListConverter<,>)) // todo: move this to the shared model converters
+
+                        // add watchdog entries
+                        .AddGrainWatchdogEntry(factory => factory.GetBinanceMarketDataGrain());
 
                     // add object pool
                     services.TryAddSingleton<ObjectPoolProvider, DefaultObjectPoolProvider>();
                     services.TryAddSingleton(sp => sp.GetRequiredService<ObjectPoolProvider>().CreateStringBuilderPool());
+                });
 
-                    context.Properties[nameof(UseBinanceTradingService)] = true;
-                }
-
-                // always bind to the options delegate
-                services
-                    .AddOptions<BinanceOptions>()
-                    .Configure(configure)
-                    .ValidateDataAnnotations();
-            });
-
-            return trader;
+            return builder;
         }
     }
 }

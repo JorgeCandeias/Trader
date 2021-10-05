@@ -5,7 +5,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Hosting;
-using Outcompute.Trader.Hosting;
 using Outcompute.Trader.Trading.Algorithms;
 using Serilog;
 using Serilog.Events;
@@ -46,48 +45,53 @@ namespace Outcompute.Trader.App
                         .WriteTo.Console()
                         .CreateLogger(), true);
                 })
-                .UseOrleans(orleans =>
+                .UseOrleans((context, orleans) =>
                 {
                     orleans.UseLocalhostClustering();
                     orleans.UseDashboard(options =>
                     {
                         options.Port = 6001;
                     });
-                })
-                .UseTrader((context, trader) =>
-                {
-                    trader
-                        .AddSqlTradingRepository(options =>
-                        {
-                            options.ConnectionString = context.Configuration.GetConnectionString("Trader");
-                        })
-                        .UseTraderDashboard(options =>
-                        {
-                            options.Port = 6002;
-                        })
-                        .UseBinanceTradingService(options =>
-                        {
-                            context.Configuration.Bind("Binance", options);
 
-                            // temporary brute force configuration - to refactor into dynamic dependency graph once orleans is brought in
-                            options.MarketDataStreamSymbols.UnionWith(context
-                                .Configuration
-                                .GetSection("Trader:Algos")
-                                .GetChildren()
-                                .Select(x => x.GetSection("Options"))
-                                .Select(x => x["Symbol"])
-                                .Where(x => x is not null));
+                    orleans.UseTrader(trader =>
+                    {
+                        trader
+                            .AddBinanceTradingService(options =>
+                            {
+                                context.Configuration.Bind("Binance", options);
 
-                            // temporary brute force configuration - to refactor into dynamic dependency graph once orleans is brought in
-                            options.UserDataStreamSymbols.UnionWith(context
-                                .Configuration
-                                .GetSection("Trader:Algos")
-                                .GetChildren()
-                                .Select(x => x.GetSection("Options"))
-                                .Select(x => x["Symbol"])
-                                .Where(x => x is not null));
-                        })
-                        .AddAlgoType<TestAlgo, TestAlgoOptions>("Test");
+                                // temporary brute force configuration - to refactor into dynamic dependency graph once orleans is brought in
+                                options.MarketDataStreamSymbols.UnionWith(context
+                                    .Configuration
+                                    .GetSection("Trader:Algos")
+                                    .GetChildren()
+                                    .Select(x => x.GetSection("Options"))
+                                    .Select(x => x["Symbol"])
+                                    .Where(x => x is not null));
+
+                                // temporary brute force configuration - to refactor into dynamic dependency graph once orleans is brought in
+                                options.UserDataStreamSymbols.UnionWith(context
+                                    .Configuration
+                                    .GetSection("Trader:Algos")
+                                    .GetChildren()
+                                    .Select(x => x.GetSection("Options"))
+                                    .Select(x => x["Symbol"])
+                                    .Where(x => x is not null));
+                            })
+                            .ConfigureServices((context, services) =>
+                            {
+                                services
+                                    .AddSqlTradingRepository(options =>
+                                     {
+                                         options.ConnectionString = context.Configuration.GetConnectionString("Trader");
+                                     })
+                                    .AddTraderDashboard(options =>
+                                    {
+                                        options.Port = 6002;
+                                    })
+                                    .AddAlgoType<TestAlgo, TestAlgoOptions>("Test");
+                            });
+                    });
                 })
                 .RunConsoleAsync();
         }

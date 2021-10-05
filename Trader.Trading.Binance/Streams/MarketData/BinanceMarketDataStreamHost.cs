@@ -18,6 +18,7 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
 {
+    [Obsolete("Replaced")]
     internal sealed class BinanceMarketDataStreamHost : IHostedService, IDisposable
     {
         private readonly BinanceOptions _options;

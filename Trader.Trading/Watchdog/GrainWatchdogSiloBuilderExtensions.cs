@@ -3,48 +3,41 @@ using Orleans.Hosting;
 using Outcompute.Trader.Trading.Watchdog;
 using System;
 
-namespace Microsoft.Extensions.Hosting
+namespace Orleans.Hosting
 {
-    public static class GrainWatchdogHostBuilderExtensions
+    public static class GrainWatchdogSiloBuilderExtensions
     {
-        public static IHostBuilder UseGrainWatchdog(this IHostBuilder builder)
+        public static ISiloBuilder UseGrainWatchdog(this ISiloBuilder builder)
         {
             return builder.UseGrainWatchdog(_ => { });
         }
 
-        public static IHostBuilder UseGrainWatchdog(this IHostBuilder builder, Action<GrainWatchdogOptions> configure)
+        public static ISiloBuilder UseGrainWatchdog(this ISiloBuilder builder, Action<GrainWatchdogOptions> configure)
         {
             if (builder is null) throw new ArgumentNullException(nameof(builder));
             if (configure is null) throw new ArgumentNullException(nameof(configure));
 
+            // perform one-time actions
             if (!builder.Properties.ContainsKey(nameof(UseGrainWatchdog)))
             {
-                // perform one time actions
                 builder
+                    .AddGrainExtension<IWatchdogGrainExtension, WatchdogGrainExtension>()
                     .ConfigureServices((context, services) =>
                     {
                         services
                             .AddHostedService<GrainWatchdog>()
                             .AddOptions<GrainWatchdogOptions>()
-                            .Configure(configure)
                             .ValidateDataAnnotations();
-                    })
-                    .UseOrleans(orleans =>
-                    {
-                        orleans.AddGrainExtension<IWatchdogGrainExtension, WatchdogGrainExtension>();
                     });
 
                 builder.Properties[nameof(UseGrainWatchdog)] = true;
             }
-            else
+
+            // perform cumulative actions
+            builder.ConfigureServices((context, services) =>
             {
-                // perform cumulative actions
-                builder.ConfigureServices((context, services) =>
-                {
-                    services
-                        .Configure(configure);
-                });
-            }
+                services.Configure(configure);
+            });
 
             return builder;
         }

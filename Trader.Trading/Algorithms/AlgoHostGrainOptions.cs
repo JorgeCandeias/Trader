@@ -57,5 +57,9 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         [Required]
         public KlineInterval Interval { get; set; }
+
+        [Required]
+        [Range(typeof(TimeSpan), "0.00:00:00.001", "9999.00:00:00.000")]
+        public TimeSpan Window { get; set; }
     }
 }

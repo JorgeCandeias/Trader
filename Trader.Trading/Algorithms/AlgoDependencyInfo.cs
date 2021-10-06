@@ -18,7 +18,19 @@ namespace Outcompute.Trader.Trading.Algorithms
         {
             var options = _options.CurrentValue;
 
-            return options.Algos.SelectMany(x => x.Value.DependsOn.Tickers).Distinct(StringComparer.OrdinalIgnoreCase);
+            return options.Algos
+                .SelectMany(x => x.Value.DependsOn.Tickers)
+                .Distinct(StringComparer.OrdinalIgnoreCase);
+        }
+
+        public IEnumerable<KlineDependency> GetKlines()
+        {
+            var options = _options.CurrentValue;
+
+            return options.Algos
+                .SelectMany(x => x.Value.DependsOn.Klines)
+                .Select(x => new KlineDependency(x.Symbol, x.Interval, x.Window))
+                .Distinct();
         }
     }
 }

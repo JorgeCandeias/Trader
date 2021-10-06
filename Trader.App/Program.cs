@@ -113,7 +113,7 @@ namespace Outcompute.Trader.App
             {
                 var options = _options.Get(_context.Name);
 
-                //_logger.LogInformation("My name is {Name} and my options are {@Options}", _context.Name, options);
+                _logger.LogInformation("My name is {Name} and my options are {@Options}", _context.Name, options);
 
                 return Task.CompletedTask;
             }

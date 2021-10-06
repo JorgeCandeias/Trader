@@ -51,6 +51,7 @@ namespace Orleans.Hosting
                         .AddSingleton<IUserDataStreamClientFactory, BinanceUserDataStreamWssClientFactory>()
                         .AddSingleton<IMarketDataStreamClientFactory, BinanceMarketDataStreamWssClientFactory>()
                         .AddSingleton<ITickerProvider, BinanceTickerProvider>()
+                        .AddSingleton<IKlineProvider, BinanceKlineProvider>()
                         .AddHostedService<BinanceUserDataStreamHost>()
 
                         // add typed http client

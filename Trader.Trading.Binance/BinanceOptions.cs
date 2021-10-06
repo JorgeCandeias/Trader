@@ -49,20 +49,6 @@ namespace Outcompute.Trader.Trading.Binance
         [Range(typeof(TimeSpan), "0.00:00:01.000", "0.01:00:00.000")]
         public TimeSpan MarketDataStreamKeepAliveInterval { get; set; } = TimeSpan.FromMinutes(1);
 
-        public ISet<string> MarketDataStreamSymbols { get; } = new HashSet<string>(StringComparer.Ordinal);
-
-        [Required]
-        [Range(typeof(TimeSpan), "0.00:00:00.000", "0.01:00:00.000")]
-        public TimeSpan MarketDataStreamRetryDelay { get; set; } = TimeSpan.FromSeconds(10);
-
-        [Required]
-        [Range(typeof(TimeSpan), "0.00:00:00.000", "0.00:01:00.000")]
-        public TimeSpan MarketDataStreamStabilizationPeriod { get; set; } = TimeSpan.FromSeconds(5);
-
-        [Required]
-        [Range(typeof(TimeSpan), "0.00:00:00.000", "10.00:00:00.000")]
-        public TimeSpan MarketDataStreamKlineHistoryImportSpan { get; set; } = TimeSpan.FromHours(1);
-
         public ISet<string> UserDataStreamSymbols { get; } = new HashSet<string>(StringComparer.Ordinal);
 
         [Required]

@@ -61,15 +61,6 @@ namespace Outcompute.Trader.App
                                 context.Configuration.Bind("Binance", options);
 
                                 // temporary brute force configuration - to refactor into dynamic dependency graph once orleans is brought in
-                                options.MarketDataStreamSymbols.UnionWith(context
-                                    .Configuration
-                                    .GetSection("Trader:Algos")
-                                    .GetChildren()
-                                    .Select(x => x.GetSection("Options"))
-                                    .Select(x => x["Symbol"])
-                                    .Where(x => x is not null));
-
-                                // temporary brute force configuration - to refactor into dynamic dependency graph once orleans is brought in
                                 options.UserDataStreamSymbols.UnionWith(context
                                     .Configuration
                                     .GetSection("Trader:Algos")

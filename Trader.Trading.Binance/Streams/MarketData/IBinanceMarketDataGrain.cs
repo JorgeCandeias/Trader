@@ -11,5 +11,7 @@ namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
         Task<MiniTicker?> TryGetTickerAsync(string symbol);
 
         Task<IEnumerable<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime start, DateTime end);
+
+        Task<bool> IsReadyAsync();
     }
 }

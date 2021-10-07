@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
+using Outcompute.Trader.Trading.Readyness;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,14 +15,14 @@ namespace Outcompute.Trader.Trading.Algorithms
         private readonly ILogger _logger;
         private readonly IOptionsMonitor<AlgoHostGrainOptions> _options;
         private readonly IAlgoFactoryResolver _resolver;
-        private readonly IGrainFactory _factory;
+        private readonly IReadynessProvider _readyness;
 
-        public AlgoHostGrain(ILogger<AlgoHostGrain> logger, IOptionsMonitor<AlgoHostGrainOptions> options, IAlgoFactoryResolver resolver, IGrainFactory factory)
+        public AlgoHostGrain(ILogger<AlgoHostGrain> logger, IOptionsMonitor<AlgoHostGrainOptions> options, IAlgoFactoryResolver resolver, IReadynessProvider readyness)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _options = options ?? throw new ArgumentNullException(nameof(options));
             _resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
-            _factory = factory ?? throw new ArgumentNullException(nameof(factory));
+            _readyness = readyness ?? throw new ArgumentNullException(nameof(readyness));
         }
 
         private readonly CancellationTokenSource _cancellation = new();
@@ -29,6 +30,7 @@ namespace Outcompute.Trader.Trading.Algorithms
         private string _name = Empty;
         private IAlgo _algo = NullAlgo.Instance;
         private IDisposable? _timer;
+        private bool _ready;
 
         public override async Task OnActivateAsync()
         {
@@ -49,6 +51,9 @@ namespace Outcompute.Trader.Trading.Algorithms
 
             // apply the options now
             await ApplyOptionsAsync().ConfigureAwait(true);
+
+            // spin up the readyness check
+            RegisterTimer(_ => TickReadynessAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
 
             _logger.AlgoHostGrainStarted(_name);
         }
@@ -96,6 +101,13 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         private async Task ExecuteAlgoAsync()
         {
+            // skip if the system is not ready
+            if (!_ready)
+            {
+                _logger.AlgoHostGrainSystemNotReady(_name);
+                return;
+            }
+
             // snapshot the options for this execution
             var options = _options.Get(_name);
 
@@ -110,6 +122,19 @@ namespace Outcompute.Trader.Trading.Algorithms
         public Task TickAsync()
         {
             return ExecuteAlgoAsync();
+        }
+
+        private async Task TickReadynessAsync()
+        {
+            try
+            {
+                _ready = await _readyness.IsReadyAsync(_cancellation.Token);
+            }
+            catch
+            {
+                _ready = false;
+                throw;
+            }
         }
     }
 
@@ -138,6 +163,16 @@ namespace Outcompute.Trader.Trading.Algorithms
         public static void AlgoHostGrainStopped(this ILogger logger, string name)
         {
             _stopped(logger, nameof(AlgoHostGrain), name, null!);
+        }
+
+        private static readonly Action<ILogger, string, string, Exception> _notReady = LoggerMessage.Define<string, string>(
+            LogLevel.Information,
+            new EventId(0, nameof(AlgoHostGrainSystemNotReady)),
+            "{Grain} {Name} is waiting until the system is ready...");
+
+        public static void AlgoHostGrainSystemNotReady(this ILogger logger, string name)
+        {
+            _notReady(logger, nameof(AlgoHostGrain), name, null!);
         }
     }
 }

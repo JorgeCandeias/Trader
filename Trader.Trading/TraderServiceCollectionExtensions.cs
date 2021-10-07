@@ -1,4 +1,5 @@
 ﻿using Outcompute.Trader.Trading.Blocks;
+using Outcompute.Trader.Trading.Readyness;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -9,7 +10,8 @@ namespace Microsoft.Extensions.DependencyInjection
             return services
                 .AddSingleton<ITrackingBuyBlock, TrackingBuyBlock>()
                 .AddSingleton<IAveragingSellBlock, AveragingSellBlock>()
-                .AddSingleton<IRedeemSavingsBlock, RedeemSavingsBlock>();
+                .AddSingleton<IRedeemSavingsBlock, RedeemSavingsBlock>()
+                .AddSingleton<IReadynessProvider, ReadynessProvider>();
         }
     }
 }

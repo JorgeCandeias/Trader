@@ -52,7 +52,6 @@ namespace Orleans.Hosting
                         .AddSingleton<IMarketDataStreamClientFactory, BinanceMarketDataStreamWssClientFactory>()
                         .AddSingleton<ITickerProvider, BinanceTickerProvider>()
                         .AddSingleton<IKlineProvider, BinanceKlineProvider>()
-                        .AddHostedService<BinanceUserDataStreamHost>()
 
                         // add typed http client
                         .AddHttpClient<BinanceApiClient>((p, x) =>
@@ -101,7 +100,12 @@ namespace Orleans.Hosting
                         .AddSingleton(typeof(ImmutableListConverter<,>)) // todo: move this to the shared model converters
 
                         // add watchdog entries
-                        .AddGrainWatchdogEntry(factory => factory.GetBinanceMarketDataGrain());
+                        .AddGrainWatchdogEntry(factory => factory.GetBinanceMarketDataGrain())
+                        .AddGrainWatchdogEntry(factory => factory.GetBinanceUserDataGrain())
+
+                        // add readyness entries
+                        .AddReadynessEntry(sp => sp.GetRequiredService<IGrainFactory>().GetBinanceUserDataGrain().IsReadyAsync())
+                        .AddReadynessEntry(sp => sp.GetRequiredService<IGrainFactory>().GetBinanceMarketDataGrain().IsReadyAsync());
 
                     // add object pool
                     services.TryAddSingleton<ObjectPoolProvider, DefaultObjectPoolProvider>();

@@ -68,6 +68,11 @@ namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
         /// </summary>
         private readonly ConcurrentDictionary<(string Symbol, KlineInterval Interval, DateTime OpenTime), (Kline Kline, bool Saved)> _klines = new();
 
+        /// <summary>
+        /// Keeps track of readyness state.
+        /// </summary>
+        private bool _ready;
+
         public override Task OnActivateAsync()
         {
             RegisterTimer(_ => EnsureWorkAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
@@ -127,51 +132,61 @@ namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
 
         private async Task ExecuteAsync()
         {
-            // create a client for the streams we want
-            var streams = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            streams.UnionWith(_tickerSymbols.Select(x => $"{x.ToLowerInvariant()}@miniTicker"));
-            streams.UnionWith(_klineItems.Select(x => $"{x.Key.Symbol.ToLowerInvariant()}@kline_{_mapper.Map<string>(x.Key.Interval)}"));
-
-            _logger.LogInformation("{Name} connecting to streams {Streams}...", TypeName, streams);
-
-            using var client = _factory.Create(streams);
-
-            await client.ConnectAsync(_cancellation.Token);
-
-            // start streaming in the background while we sync from the api
-            var streamTask = Task.Run(async () =>
+            try
             {
-                while (!_cancellation.Token.IsCancellationRequested)
+                // create a client for the streams we want
+                var streams = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                streams.UnionWith(_tickerSymbols.Select(x => $"{x.ToLowerInvariant()}@miniTicker"));
+                streams.UnionWith(_klineItems.Select(x => $"{x.Key.Symbol.ToLowerInvariant()}@kline_{_mapper.Map<string>(x.Key.Interval)}"));
+
+                _logger.LogInformation("{Name} connecting to streams {Streams}...", TypeName, streams);
+
+                using var client = _factory.Create(streams);
+
+                await client.ConnectAsync(_cancellation.Token);
+
+                // start streaming in the background while we sync from the api
+                var streamTask = Task.Run(async () =>
                 {
-                    var message = await client.ReceiveAsync(_cancellation.Token);
-
-                    if (message.Error is not null)
+                    while (!_cancellation.Token.IsCancellationRequested)
                     {
-                        throw new BinanceCodeException(message.Error.Code, message.Error.Message, 0);
+                        var message = await client.ReceiveAsync(_cancellation.Token);
+
+                        if (message.Error is not null)
+                        {
+                            throw new BinanceCodeException(message.Error.Code, message.Error.Message, 0);
+                        }
+
+                        if (message.MiniTicker is not null && _tickerSymbols.Contains(message.MiniTicker.Symbol))
+                        {
+                            // conflate the ticker if it is newer than the cached one - otherwise discard it
+                            _tickers.AddOrUpdate(message.MiniTicker.Symbol, (k, arg) => arg, (k, e, arg) => arg.Ticker.EventTime > e.Ticker.EventTime ? arg : e, (Ticker: message.MiniTicker, Saved: false));
+                        }
+
+                        if (message.Kline is not null && _klineItems.ContainsKey((message.Kline.Symbol, message.Kline.Interval)))
+                        {
+                            // conflate the kline if it is newer than the cached one - otherwise discard it
+                            _klines.AddOrUpdate((message.Kline.Symbol, message.Kline.Interval, message.Kline.OpenTime), (k, arg) => arg, (k, e, arg) => arg.Kline.EventTime > e.Kline.EventTime ? arg : e, (message.Kline, Saved: false));
+                        }
                     }
+                }, _cancellation.Token);
 
-                    if (message.MiniTicker is not null && _tickerSymbols.Contains(message.MiniTicker.Symbol))
-                    {
-                        // conflate the ticker if it is newer than the cached one - otherwise discard it
-                        _tickers.AddOrUpdate(message.MiniTicker.Symbol, (k, arg) => arg, (k, e, arg) => arg.Ticker.EventTime > e.Ticker.EventTime ? arg : e, (Ticker: message.MiniTicker, Saved: false));
-                    }
+                // sync tickers from the api
+                await SyncTickersAsync().ConfigureAwait(false);
 
-                    if (message.Kline is not null && _klineItems.ContainsKey((message.Kline.Symbol, message.Kline.Interval)))
-                    {
-                        // conflate the kline if it is newer than the cached one - otherwise discard it
-                        _klines.AddOrUpdate((message.Kline.Symbol, message.Kline.Interval, message.Kline.OpenTime), (k, arg) => arg, (k, e, arg) => arg.Kline.EventTime > e.Kline.EventTime ? arg : e, (message.Kline, Saved: false));
-                    }
-                }
-            }, _cancellation.Token);
+                // sync klines from the api
+                await SyncKlinesAsync().ConfigureAwait(false);
 
-            // sync tickers from the api
-            await SyncTickersAsync().ConfigureAwait(false);
+                // signal the ready state to allow algos to execute
+                _ready = true;
 
-            // sync klines from the api
-            await SyncKlinesAsync().ConfigureAwait(false);
-
-            // keep streaming now
-            await streamTask.ConfigureAwait(false);
+                // keep streaming now
+                await streamTask.ConfigureAwait(false);
+            }
+            finally
+            {
+                _ready = false;
+            }
         }
 
         /// <summary>
@@ -370,5 +385,7 @@ namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
 
             return Task.FromResult<IEnumerable<Kline>>(builder.ToImmutable());
         }
+
+        public Task<bool> IsReadyAsync() => Task.FromResult(_ready);
     }
 }

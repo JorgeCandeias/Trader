@@ -20,7 +20,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers
             _grain = factory.GetBinanceMarketDataGrain();
         }
 
-        public Task<IEnumerable<Kline>> TryGetTickerAsync(string symbol, KlineInterval interval, DateTime start, DateTime end, CancellationToken cancellationToken = default)
+        public Task<IEnumerable<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime start, DateTime end, CancellationToken cancellationToken = default)
         {
             return _grain.GetKlinesAsync(symbol, interval, start, end);
         }

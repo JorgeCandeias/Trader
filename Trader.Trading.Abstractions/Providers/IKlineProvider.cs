@@ -8,6 +8,6 @@ namespace Outcompute.Trader.Trading.Providers
 {
     public interface IKlineProvider
     {
-        Task<IEnumerable<Kline>> TryGetTickerAsync(string symbol, KlineInterval interval, DateTime start, DateTime end, CancellationToken cancellationToken = default);
+        Task<IEnumerable<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime start, DateTime end, CancellationToken cancellationToken = default);
     }
 }

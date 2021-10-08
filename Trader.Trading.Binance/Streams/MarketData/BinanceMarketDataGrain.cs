@@ -75,17 +75,17 @@ namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
 
         public override Task OnActivateAsync()
         {
-            RegisterTimer(_ => EnsureWorkAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+            RegisterTimer(_ => TickExecuteAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
 
             if (_tickerSymbols.Count > 0)
             {
-                RegisterTimer(_ => SaveTickersAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+                RegisterTimer(_ => TickSaveTickersAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
             }
 
             if (_klineItems.Count > 0)
             {
-                RegisterTimer(_ => SaveKlinesAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
-                RegisterTimer(_ => ClearKlinesAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+                RegisterTimer(_ => TickSaveKlinesAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+                RegisterTimer(_ => TickClearKlinesAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
             }
 
             return base.OnActivateAsync();
@@ -112,7 +112,7 @@ namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
             // schedule streaming work if nothing is running
             if (_work is null)
             {
-                _work = Task.Run(() => ExecuteAsync(), _cancellation.Token);
+                _work = Task.Run(() => TickExecuteAsync(), _cancellation.Token);
                 return;
             }
 
@@ -130,7 +130,7 @@ namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
             }
         }
 
-        private async Task ExecuteAsync()
+        private async Task TickExecuteAsync()
         {
             try
             {
@@ -172,16 +172,16 @@ namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
                 }, _cancellation.Token);
 
                 // sync tickers from the api
-                await SyncTickersAsync().ConfigureAwait(false);
+                await SyncTickersAsync();
 
                 // sync klines from the api
-                await SyncKlinesAsync().ConfigureAwait(false);
+                await SyncKlinesAsync();
 
                 // signal the ready state to allow algos to execute
                 _ready = true;
 
                 // keep streaming now
-                await streamTask.ConfigureAwait(false);
+                await streamTask;
             }
             finally
             {
@@ -212,10 +212,14 @@ namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
 
         private async Task SyncKlinesAsync()
         {
+            _logger.LogInformation("{Name} is syncing klines for {Symbols}...", TypeName, _klineItems.Select(x => x.Key.Symbol));
+            var watch = Stopwatch.StartNew();
+
             foreach (var item in _klineItems)
             {
-                var start = DateTime.UtcNow.Subtract(item.Value);
-                var end = DateTime.UtcNow;
+                // define the required window
+                var end = _clock.UtcNow;
+                var start = end.Subtract(item.Value);
 
                 _logger.LogInformation(
                     "{Name} is syncing klines for {Symbol} from {Start} to {End}",
@@ -258,12 +262,14 @@ namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
                     "{Name} synced {Total} klines for {Symbol}",
                     TypeName, count, item.Key.Symbol);
             }
+
+            _logger.LogInformation("{Name} synced klines for {Symbols} in {ElapsedMs}ms...", TypeName, _klineItems.Select(x => x.Key.Symbol), watch.ElapsedMilliseconds);
         }
 
         /// <summary>
         /// Saves conflated tickers to the repository.
         /// </summary>
-        private async Task SaveTickersAsync()
+        private async Task TickSaveTickersAsync()
         {
             var buffer = ArrayPool<MiniTicker>.Shared.Rent(_tickerSymbols.Count);
             var count = 0;
@@ -297,7 +303,7 @@ namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
         /// <summary>
         /// Saves conflated klines to the repository.
         /// </summary>
-        private async Task SaveKlinesAsync()
+        private async Task TickSaveKlinesAsync()
         {
             var buffer = ArrayPool<Kline>.Shared.Rent(_klines.Count);
             var count = 0;
@@ -335,7 +341,7 @@ namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
         /// <summary>
         /// Clears old klines from memory.
         /// </summary>
-        private Task ClearKlinesAsync()
+        private Task TickClearKlinesAsync()
         {
             var buffer = ArrayPool<Kline>.Shared.Rent(_klines.Count);
             var count = 0;

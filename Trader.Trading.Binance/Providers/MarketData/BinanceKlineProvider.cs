@@ -1,13 +1,12 @@
 ﻿using Orleans;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Binance.Streams.MarketData;
 using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Binance.Providers
+namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 {
     internal class BinanceKlineProvider : IKlineProvider
     {

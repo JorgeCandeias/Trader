@@ -7,10 +7,10 @@ using Outcompute.Trader.Trading;
 using Outcompute.Trader.Trading.Binance;
 using Outcompute.Trader.Trading.Binance.Converters;
 using Outcompute.Trader.Trading.Binance.Handlers;
-using Outcompute.Trader.Trading.Binance.Providers;
+using Outcompute.Trader.Trading.Binance.Providers.MarketData;
+using Outcompute.Trader.Trading.Binance.Providers.Savings;
+using Outcompute.Trader.Trading.Binance.Providers.UserData;
 using Outcompute.Trader.Trading.Binance.Signing;
-using Outcompute.Trader.Trading.Binance.Streams.MarketData;
-using Outcompute.Trader.Trading.Binance.Streams.UserData;
 using Outcompute.Trader.Trading.Providers;
 using System;
 
@@ -52,6 +52,7 @@ namespace Orleans.Hosting
                         .AddSingleton<IMarketDataStreamClientFactory, BinanceMarketDataStreamWssClientFactory>()
                         .AddSingleton<ITickerProvider, BinanceTickerProvider>()
                         .AddSingleton<IKlineProvider, BinanceKlineProvider>()
+                        .AddSingleton<ISavingsProvider, BinanceSavingsProvider>()
 
                         // add typed http client
                         .AddHttpClient<BinanceApiClient>((p, x) =>

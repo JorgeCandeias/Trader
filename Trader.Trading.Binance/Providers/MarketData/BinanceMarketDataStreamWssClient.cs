@@ -9,7 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using static System.String;
 
-namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
+namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 {
     internal sealed class BinanceMarketDataStreamWssClient : IMarketDataStreamClient
     {

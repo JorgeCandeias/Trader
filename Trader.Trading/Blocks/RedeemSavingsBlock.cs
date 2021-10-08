@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Linq;
 using System.Threading;
@@ -10,12 +11,12 @@ namespace Outcompute.Trader.Trading.Blocks
     internal class RedeemSavingsBlock : IRedeemSavingsBlock
     {
         private readonly ILogger _logger;
-        private readonly ITradingService _trader;
+        private readonly ISavingsProvider _savingsProvider;
 
-        public RedeemSavingsBlock(ILogger<RedeemSavingsBlock> logger, ITradingService trader)
+        public RedeemSavingsBlock(ILogger<RedeemSavingsBlock> logger, ISavingsProvider savingsProvider)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _trader = trader ?? throw new ArgumentNullException(nameof(trader));
+            _savingsProvider = savingsProvider ?? throw new ArgumentNullException(nameof(savingsProvider));
         }
 
         private static string Type => nameof(RedeemSavingsBlock);
@@ -23,7 +24,7 @@ namespace Outcompute.Trader.Trading.Blocks
         public async Task<bool> GoAsync(string asset, decimal amount, CancellationToken cancellationToken = default)
         {
             // get the current savings for this asset
-            var positions = await _trader
+            var positions = await _savingsProvider
                 .GetFlexibleProductPositionAsync(asset, cancellationToken)
                 .ConfigureAwait(false);
 
@@ -68,8 +69,8 @@ namespace Outcompute.Trader.Trading.Blocks
                 return false;
             }
 
-            var quota = await _trader
-                .GetLeftDailyRedemptionQuotaOnFlexibleProductAsync(savings.ProductId, FlexibleProductRedemptionType.Fast, cancellationToken)
+            var quota = await _savingsProvider
+                .TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(savings.Asset, savings.ProductId, FlexibleProductRedemptionType.Fast, cancellationToken)
                 .ConfigureAwait(false);
 
             // stop if there is no savings product
@@ -109,8 +110,8 @@ namespace Outcompute.Trader.Trading.Blocks
                 "{Type} attempting to redeem {Quantity} {Asset} from savings...",
                 Type, amount, asset);
 
-            await _trader
-                .RedeemFlexibleProductAsync(savings.ProductId, amount, FlexibleProductRedemptionType.Fast, cancellationToken)
+            await _savingsProvider
+                .RedeemFlexibleProductAsync(savings.Asset, savings.ProductId, amount, FlexibleProductRedemptionType.Fast, cancellationToken)
                 .ConfigureAwait(false);
 
             // let the algo cycle to allow time for the redeemption to process

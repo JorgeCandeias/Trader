@@ -13,7 +13,7 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Binance.Streams.UserData
+namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 {
     internal class BinanceUserDataGrain : Grain, IBinanceUserDataGrain
     {

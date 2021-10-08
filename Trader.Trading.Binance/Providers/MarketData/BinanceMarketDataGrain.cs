@@ -16,7 +16,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
+namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 {
     internal class BinanceMarketDataGrain : Grain, IBinanceMarketDataGrain
     {

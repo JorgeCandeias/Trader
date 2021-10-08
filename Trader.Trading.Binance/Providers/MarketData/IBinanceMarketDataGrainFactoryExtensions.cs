@@ -1,4 +1,4 @@
-﻿using Outcompute.Trader.Trading.Binance.Streams.MarketData;
+﻿using Outcompute.Trader.Trading.Binance.Providers.MarketData;
 using System;
 
 namespace Orleans

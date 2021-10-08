@@ -1,13 +1,13 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Options;
+using Outcompute.Trader.Models;
 using System;
 using System.Buffers;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
-using Outcompute.Trader.Models;
 
-namespace Outcompute.Trader.Trading.Binance.Streams.UserData
+namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 {
     internal sealed class BinanceUserDataStreamWssClient : IUserDataStreamClient
     {

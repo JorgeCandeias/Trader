@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Binance.Streams.MarketData
+namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 {
     internal interface IBinanceMarketDataGrain : IGrainWithGuidKey
     {

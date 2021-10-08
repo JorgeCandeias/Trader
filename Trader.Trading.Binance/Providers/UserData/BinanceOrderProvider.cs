@@ -1,11 +1,10 @@
 ﻿using Orleans;
-using Outcompute.Trader.Trading.Binance.Streams.UserData;
 using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Binance.Providers
+namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 {
     internal class BinanceOrderProvider : IOrderProvider
     {

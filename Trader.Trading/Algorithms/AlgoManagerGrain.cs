@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
@@ -20,19 +21,28 @@ namespace Outcompute.Trader.Trading.Algorithms
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
+        private readonly CancellationTokenSource _cancellation = new();
+
         public override Task OnActivateAsync()
         {
             // todo: move these settings to the options class
-            RegisterTimer(_ => TryPingAllAlgoGrainsAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+            RegisterTimer(_ => TickPingAllAlgoGrainsAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
 
             // todo: move these settings to the options class
-            RegisterTimer(_ => TryExecuteAllAlgosAsync(), null, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));
+            RegisterTimer(_ => TickExecuteAllAlgosAsync(), null, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));
 
             return base.OnActivateAsync();
         }
 
+        public override Task OnDeactivateAsync()
+        {
+            _cancellation.Dispose();
+
+            return base.OnDeactivateAsync();
+        }
+
         [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
-        private async Task TryPingAllAlgoGrainsAsync()
+        private async Task TickPingAllAlgoGrainsAsync()
         {
             // snapshot the current options for this tick
             var options = _options.CurrentValue;
@@ -40,6 +50,9 @@ namespace Outcompute.Trader.Trading.Algorithms
             // ping all enabled algos
             foreach (var algo in options.Algos)
             {
+                // break on deactivation
+                if (_cancellation.IsCancellationRequested) return;
+
                 // skip disabled algo
                 if (!algo.Value.Enabled) continue;
 
@@ -47,7 +60,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 
                 try
                 {
-                    await grain.PingAsync().ConfigureAwait(true);
+                    await grain.PingAsync();
                 }
                 catch (Exception ex)
                 {
@@ -59,7 +72,7 @@ namespace Outcompute.Trader.Trading.Algorithms
         }
 
         [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
-        private async Task TryExecuteAllAlgosAsync()
+        private async Task TickExecuteAllAlgosAsync()
         {
             // snapshot the current options for this tick
             var options = _options.CurrentValue;
@@ -67,6 +80,9 @@ namespace Outcompute.Trader.Trading.Algorithms
             // execute all algos ones by one
             foreach (var algo in options.Algos)
             {
+                // break on deactivation
+                if (_cancellation.IsCancellationRequested) return;
+
                 // skip algo non batch algo
                 if (!algo.Value.BatchEnabled) continue;
 
@@ -89,7 +105,7 @@ namespace Outcompute.Trader.Trading.Algorithms
         {
             var options = _options.CurrentValue;
 
-            // for now this will come from the options snapshot but later it will come from the repository
+            // for now this will come from the options snapshot but later it will come from a more sophisticated algo settings provider
             var builder = ImmutableList.CreateBuilder<AlgoInfo>();
             foreach (var option in options.Algos)
             {

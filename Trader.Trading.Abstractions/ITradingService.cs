@@ -34,7 +34,7 @@ namespace Outcompute.Trader.Trading
             string asset,
             CancellationToken cancellationToken = default);
 
-        Task<LeftDailyRedemptionQuotaOnFlexibleProduct?> GetLeftDailyRedemptionQuotaOnFlexibleProductAsync(
+        Task<LeftDailyRedemptionQuotaOnFlexibleProduct?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(
             string productId,
             FlexibleProductRedemptionType type,
             CancellationToken cancellationToken = default);

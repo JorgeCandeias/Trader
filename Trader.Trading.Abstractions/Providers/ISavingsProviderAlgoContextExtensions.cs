@@ -17,22 +17,22 @@ namespace Outcompute.Trader.Trading.Providers
             return context.ServiceProvider.GetRequiredService<ISavingsProvider>();
         }
 
-        public static Task<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionAsync(this IAlgoContext context, string asset, CancellationToken cancellationToken = default)
+        public static ValueTask<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionAsync(this IAlgoContext context, string asset, CancellationToken cancellationToken = default)
         {
             return context.GetProvider().GetFlexibleProductPositionAsync(asset, cancellationToken);
         }
 
-        public static Task<LeftDailyRedemptionQuotaOnFlexibleProduct?> GetLeftDailyRedemptionQuotaOnFlexibleProductAsync(this IAlgoContext context, string asset, string productId, FlexibleProductRedemptionType type, CancellationToken cancellationToken = default)
+        public static ValueTask<LeftDailyRedemptionQuotaOnFlexibleProduct?> GetLeftDailyRedemptionQuotaOnFlexibleProductAsync(this IAlgoContext context, string asset, string productId, FlexibleProductRedemptionType type, CancellationToken cancellationToken = default)
         {
             return context.GetProvider().TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(asset, productId, type, cancellationToken);
         }
 
-        public static Task RedeemFlexibleProductAsync(this IAlgoContext context, string asset, string productId, decimal amount, FlexibleProductRedemptionType type, CancellationToken cancellationToken = default)
+        public static ValueTask RedeemFlexibleProductAsync(this IAlgoContext context, string asset, string productId, decimal amount, FlexibleProductRedemptionType type, CancellationToken cancellationToken = default)
         {
             return context.GetProvider().RedeemFlexibleProductAsync(asset, productId, amount, type, cancellationToken);
         }
 
-        public static Task<FlexibleProductPosition?> TryGetFirstFlexibleProductPositionAsync(this IAlgoContext context, string asset, CancellationToken cancellationToken = default)
+        public static ValueTask<FlexibleProductPosition?> TryGetFirstFlexibleProductPositionAsync(this IAlgoContext context, string asset, CancellationToken cancellationToken = default)
         {
             return context.GetProvider().TryGetFirstFlexibleProductPositionAsync(asset, cancellationToken);
         }

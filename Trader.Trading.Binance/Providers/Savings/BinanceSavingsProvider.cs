@@ -17,22 +17,22 @@ namespace Outcompute.Trader.Trading.Binance.Providers.Savings
             _factory = factory ?? throw new ArgumentNullException(nameof(factory));
         }
 
-        public Task<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionAsync(string asset, CancellationToken cancellationToken = default)
+        public ValueTask<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionAsync(string asset, CancellationToken cancellationToken = default)
         {
             return _factory.GetBinanceSavingsGrain(asset).GetFlexibleProductPositionAsync();
         }
 
-        public Task<FlexibleProductPosition?> TryGetFirstFlexibleProductPositionAsync(string asset, CancellationToken cancellation = default)
+        public ValueTask<FlexibleProductPosition?> TryGetFirstFlexibleProductPositionAsync(string asset, CancellationToken cancellation = default)
         {
             return _factory.GetBinanceSavingsGrain(asset).TryGetFirstFlexibleProductPositionAsync();
         }
 
-        public Task<LeftDailyRedemptionQuotaOnFlexibleProduct?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string asset, string productId, FlexibleProductRedemptionType type, CancellationToken cancellationToken = default)
+        public ValueTask<LeftDailyRedemptionQuotaOnFlexibleProduct?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string asset, string productId, FlexibleProductRedemptionType type, CancellationToken cancellationToken = default)
         {
             return _factory.GetBinanceSavingsGrain(asset).TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(productId, type);
         }
 
-        public Task RedeemFlexibleProductAsync(string asset, string productId, decimal amount, FlexibleProductRedemptionType type, CancellationToken cancellationToken = default)
+        public ValueTask RedeemFlexibleProductAsync(string asset, string productId, decimal amount, FlexibleProductRedemptionType type, CancellationToken cancellationToken = default)
         {
             return _factory.GetBinanceSavingsGrain(asset).RedeemFlexibleProductAsync(productId, amount, type);
         }

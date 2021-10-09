@@ -7,12 +7,12 @@ namespace Outcompute.Trader.Trading.Providers
 {
     public interface ISavingsProvider
     {
-        Task<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionAsync(string asset, CancellationToken cancellationToken = default);
+        ValueTask<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionAsync(string asset, CancellationToken cancellationToken = default);
 
-        Task<FlexibleProductPosition?> TryGetFirstFlexibleProductPositionAsync(string asset, CancellationToken cancellation = default);
+        ValueTask<FlexibleProductPosition?> TryGetFirstFlexibleProductPositionAsync(string asset, CancellationToken cancellation = default);
 
-        Task<LeftDailyRedemptionQuotaOnFlexibleProduct?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string asset, string productId, FlexibleProductRedemptionType type, CancellationToken cancellationToken = default);
+        ValueTask<LeftDailyRedemptionQuotaOnFlexibleProduct?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string asset, string productId, FlexibleProductRedemptionType type, CancellationToken cancellationToken = default);
 
-        Task RedeemFlexibleProductAsync(string asset, string productId, decimal amount, FlexibleProductRedemptionType type, CancellationToken cancellationToken = default);
+        ValueTask RedeemFlexibleProductAsync(string asset, string productId, decimal amount, FlexibleProductRedemptionType type, CancellationToken cancellationToken = default);
     }
 }

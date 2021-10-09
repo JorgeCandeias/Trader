@@ -7,12 +7,12 @@ namespace Outcompute.Trader.Trading.Binance.Providers.Savings
 {
     internal interface IBinanceSavingsGrain : IGrainWithStringKey
     {
-        Task<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionAsync();
+        ValueTask<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionAsync();
 
-        Task<FlexibleProductPosition?> TryGetFirstFlexibleProductPositionAsync();
+        ValueTask<FlexibleProductPosition?> TryGetFirstFlexibleProductPositionAsync();
 
-        Task<LeftDailyRedemptionQuotaOnFlexibleProduct?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string productId, FlexibleProductRedemptionType type);
+        ValueTask<LeftDailyRedemptionQuotaOnFlexibleProduct?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string productId, FlexibleProductRedemptionType type);
 
-        Task RedeemFlexibleProductAsync(string productId, decimal amount, FlexibleProductRedemptionType type);
+        ValueTask RedeemFlexibleProductAsync(string productId, decimal amount, FlexibleProductRedemptionType type);
     }
 }

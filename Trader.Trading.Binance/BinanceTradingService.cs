@@ -191,7 +191,7 @@ namespace Outcompute.Trader.Trading.Binance
             return _mapper.Map<IReadOnlyCollection<FlexibleProductPosition>>(output);
         }
 
-        public async Task<LeftDailyRedemptionQuotaOnFlexibleProduct?> GetLeftDailyRedemptionQuotaOnFlexibleProductAsync(
+        public async Task<LeftDailyRedemptionQuotaOnFlexibleProduct?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(
             string productId,
             FlexibleProductRedemptionType type,
             CancellationToken cancellationToken = default)

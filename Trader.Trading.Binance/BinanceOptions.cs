@@ -58,5 +58,9 @@ namespace Outcompute.Trader.Trading.Binance
         [Required]
         [Range(typeof(TimeSpan), "0.00:00:00.000", "0.00:01:00.000")]
         public TimeSpan UserDataStreamStabilizationPeriod { get; set; } = TimeSpan.FromSeconds(5);
+
+        [Required]
+        [Range(typeof(TimeSpan), "0.00:00:00.001", "1.00:00:00.000")]
+        public TimeSpan SavingsCacheWindow { get; set; } = TimeSpan.FromSeconds(10);
     }
 }

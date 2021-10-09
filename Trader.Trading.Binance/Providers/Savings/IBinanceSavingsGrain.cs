@@ -9,6 +9,8 @@ namespace Outcompute.Trader.Trading.Binance.Providers.Savings
     {
         Task<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionAsync();
 
+        Task<FlexibleProductPosition?> TryGetFirstFlexibleProductPositionAsync();
+
         Task<LeftDailyRedemptionQuotaOnFlexibleProduct?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string productId, FlexibleProductRedemptionType type);
 
         Task RedeemFlexibleProductAsync(string productId, decimal amount, FlexibleProductRedemptionType type);

@@ -114,6 +114,11 @@ namespace Outcompute.Trader.Trading.Binance.Providers.Savings
             return Task.FromResult<IReadOnlyCollection<FlexibleProductPosition>>(_positions);
         }
 
+        public Task<FlexibleProductPosition?> TryGetFirstFlexibleProductPositionAsync()
+        {
+            return Task.FromResult(_positions.Count > 0 ? _positions[0] : null);
+        }
+
         public Task<LeftDailyRedemptionQuotaOnFlexibleProduct?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string productId, FlexibleProductRedemptionType type)
         {
             return Task.FromResult(_quotas.TryGetValue((productId, type), out var value) ? value.Quota : null);

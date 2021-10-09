@@ -31,5 +31,10 @@ namespace Outcompute.Trader.Trading.Providers
         {
             return context.GetProvider().RedeemFlexibleProductAsync(asset, productId, amount, type, cancellationToken);
         }
+
+        public static Task<FlexibleProductPosition?> TryGetFirstFlexibleProductPositionAsync(this IAlgoContext context, string asset, CancellationToken cancellationToken = default)
+        {
+            return context.GetProvider().TryGetFirstFlexibleProductPositionAsync(asset, cancellationToken);
+        }
     }
 }

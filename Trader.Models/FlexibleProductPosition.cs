@@ -1,5 +1,8 @@
-﻿namespace Outcompute.Trader.Models
+﻿using Orleans.Concurrency;
+
+namespace Outcompute.Trader.Models
 {
+    [Immutable]
     public record FlexibleProductPosition(
         decimal AnnualInterestRate,
         string Asset,
@@ -14,5 +17,8 @@
         decimal RedeemingAmount,
         decimal TodayPurchasedAmount,
         decimal TotalAmount,
-        decimal TotalInterest);
+        decimal TotalInterest)
+    {
+        public static FlexibleProductPosition Zero(string asset) => new(0m, asset, 0m, true, 0m, 0m, 0m, 0m, asset, asset, 0m, 0m, 0m, 0m);
+    }
 }

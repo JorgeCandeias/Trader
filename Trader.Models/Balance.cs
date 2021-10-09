@@ -9,5 +9,7 @@ namespace Outcompute.Trader.Models
         DateTime UpdatedTime)
     {
         public decimal Total => Free + Locked;
+
+        public static Balance Zero(string asset) => new(asset, 0m, 0m, DateTime.MinValue);
     }
 }

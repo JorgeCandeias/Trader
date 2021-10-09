@@ -9,13 +9,13 @@ namespace Outcompute.Trader.Trading.Algorithms
 {
     public static class IAveragingSellBlockAlgoContextExtensions
     {
-        public static Task SetAveragingSellAsync(this IAlgoContext context, Symbol symbol, decimal profitMultiplier, CancellationToken cancellationToken = default)
+        public static Task SetAveragingSellAsync(this IAlgoContext context, Symbol symbol, decimal profitMultiplier, bool useSavings, CancellationToken cancellationToken = default)
         {
             if (context is null) throw new ArgumentNullException(nameof(context));
 
             var block = context.ServiceProvider.GetRequiredService<IAveragingSellBlock>();
 
-            return block.GoAsync(symbol, profitMultiplier, cancellationToken);
+            return block.GoAsync(symbol, profitMultiplier, useSavings, cancellationToken);
         }
     }
 }

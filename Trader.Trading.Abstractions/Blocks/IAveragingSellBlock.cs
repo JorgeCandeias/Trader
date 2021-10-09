@@ -6,6 +6,6 @@ namespace Outcompute.Trader.Trading.Blocks
 {
     public interface IAveragingSellBlock
     {
-        Task GoAsync(Symbol symbol, decimal profitMultiplier, CancellationToken cancellationToken = default);
+        Task GoAsync(Symbol symbol, decimal profitMultiplier, bool useSavings, CancellationToken cancellationToken = default);
     }
 }

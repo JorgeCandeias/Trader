@@ -51,7 +51,7 @@ namespace Outcompute.Trader.Data
 
         Task SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default);
 
-        Task<Balance> GetBalanceAsync(string asset, CancellationToken cancellationToken = default);
+        Task<Balance?> TryGetBalanceAsync(string asset, CancellationToken cancellationToken = default);
 
         Task SetTickersAsync(IEnumerable<MiniTicker> tickers, CancellationToken cancellationToken = default);
 

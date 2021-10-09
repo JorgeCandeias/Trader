@@ -22,6 +22,11 @@ namespace Outcompute.Trader.Trading.Binance.Providers.Savings
             return _factory.GetBinanceSavingsGrain(asset).GetFlexibleProductPositionAsync();
         }
 
+        public Task<FlexibleProductPosition?> TryGetFirstFlexibleProductPositionAsync(string asset, CancellationToken cancellation = default)
+        {
+            return _factory.GetBinanceSavingsGrain(asset).TryGetFirstFlexibleProductPositionAsync();
+        }
+
         public Task<LeftDailyRedemptionQuotaOnFlexibleProduct?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string asset, string productId, FlexibleProductRedemptionType type, CancellationToken cancellationToken = default)
         {
             return _factory.GetBinanceSavingsGrain(asset).TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(productId, type);

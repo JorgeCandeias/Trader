@@ -538,7 +538,7 @@ namespace Outcompute.Trader.Data.Sql
                 .ConfigureAwait(false);
         }
 
-        public async Task<Balance> GetBalanceAsync(string asset, CancellationToken cancellationToken = default)
+        public async Task<Balance?> TryGetBalanceAsync(string asset, CancellationToken cancellationToken = default)
         {
             _ = asset ?? throw new ArgumentNullException(nameof(asset));
 

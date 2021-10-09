@@ -91,7 +91,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
         private async Task ApplyAccountInfoAsync(Symbol symbol, CancellationToken cancellationToken)
         {
             var assetBalance = await _repository
-                .GetBalanceAsync(symbol.BaseAsset, cancellationToken)
+                .TryGetBalanceAsync(symbol.BaseAsset, cancellationToken)
                 .ConfigureAwait(false) ??
                 throw new AlgorithmException($"Could not get balance for base asset {symbol.BaseAsset}");
 
@@ -103,7 +103,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
                 TypeName, _context.Name, symbol.BaseAsset, _balances.Asset.Free, _balances.Asset.Locked, _balances.Asset.Total);
 
             var quoteBalance = await _repository
-                .GetBalanceAsync(symbol.QuoteAsset, cancellationToken)
+                .TryGetBalanceAsync(symbol.QuoteAsset, cancellationToken)
                 .ConfigureAwait(false) ??
                 throw new AlgorithmException($"Could not get balance for quote asset {symbol.QuoteAsset}");
 

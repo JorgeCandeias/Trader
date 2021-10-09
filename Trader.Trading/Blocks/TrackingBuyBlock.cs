@@ -65,7 +65,7 @@ namespace Outcompute.Trader.Trading.Blocks
 
             // get the account free quote balance
             var balance = await _repository
-                .GetBalanceAsync(symbol.QuoteAsset, cancellationToken)
+                .TryGetBalanceAsync(symbol.QuoteAsset, cancellationToken)
                 .ConfigureAwait(false);
 
             // identify the target low price for the first buy

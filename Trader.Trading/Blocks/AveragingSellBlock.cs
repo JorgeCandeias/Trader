@@ -21,8 +21,9 @@ namespace Outcompute.Trader.Trading.Blocks
         private readonly ISystemClock _clock;
         private readonly IRedeemSavingsBlock _redeemSavingsBlock;
         private readonly ITickerProvider _tickers;
+        private readonly ISavingsProvider _savings;
 
-        public AveragingSellBlock(ILogger<AveragingSellBlock> logger, ISignificantOrderResolver significantOrderResolver, ITradingRepository repository, ITradingService trader, ISystemClock clock, IRedeemSavingsBlock redeemSavingsBlock, ITickerProvider tickers)
+        public AveragingSellBlock(ILogger<AveragingSellBlock> logger, ISignificantOrderResolver significantOrderResolver, ITradingRepository repository, ITradingService trader, ISystemClock clock, IRedeemSavingsBlock redeemSavingsBlock, ITickerProvider tickers, ISavingsProvider savings)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _significantOrderResolver = significantOrderResolver ?? throw new ArgumentNullException(nameof(significantOrderResolver));
@@ -31,18 +32,19 @@ namespace Outcompute.Trader.Trading.Blocks
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _redeemSavingsBlock = redeemSavingsBlock ?? throw new ArgumentNullException(nameof(redeemSavingsBlock));
             _tickers = tickers ?? throw new ArgumentNullException(nameof(tickers));
+            _savings = savings ?? throw new ArgumentNullException(nameof(savings));
         }
 
         private static string TypeName => nameof(AveragingSellBlock);
 
-        public Task GoAsync(Symbol symbol, decimal profitMultiplier, CancellationToken cancellationToken = default)
+        public Task GoAsync(Symbol symbol, decimal profitMultiplier, bool useSavings, CancellationToken cancellationToken = default)
         {
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
-            return GoInnerAsync(symbol, profitMultiplier, cancellationToken);
+            return GoInnerAsync(symbol, profitMultiplier, useSavings, cancellationToken);
         }
 
-        private async Task<Profit> GoInnerAsync(Symbol symbol, decimal profitMultiplier, CancellationToken cancellationToken)
+        private async Task<Profit> GoInnerAsync(Symbol symbol, decimal profitMultiplier, bool useSavings, CancellationToken cancellationToken)
         {
             // get any required filters from the symbol
             var priceFilter = symbol.Filters.OfType<PriceSymbolFilter>().Single();
@@ -55,32 +57,39 @@ namespace Outcompute.Trader.Trading.Blocks
                 .ResolveAsync(symbol, cancellationToken)
                 .ConfigureAwait(false);
 
+            // get the current balance
+            var balance = await _repository.TryGetBalanceAsync(symbol.BaseAsset, cancellationToken).ConfigureAwait(false)
+                ?? Balance.Zero(symbol.BaseAsset);
+
+            // get all savings if applicable
+            var savings = (useSavings ? await _savings.TryGetFirstFlexibleProductPositionAsync(symbol.BaseAsset, cancellationToken).ConfigureAwait(false) : null)
+                ?? FlexibleProductPosition.Zero(symbol.BaseAsset);
+
             // get the current ticker for the symbol
             var ticker = await _tickers
                 .TryGetTickerAsync(symbol.Name, cancellationToken)
                 .ConfigureAwait(false);
 
-            if (ticker is null)
-            {
-                _logger.LogWarning(
-                    "{Type} cannot evaluate desired sell for symbol {Symbol} because no ticker information is yet available",
-                    TypeName, symbol.Name);
-
-                return significant.Profit;
-            }
-
             // calculate the desired sell
-            var desired = CalculateDesiredSell(symbol, profitMultiplier, significant.Orders, lotSizeFilter, percentFilter, ticker, priceFilter, minNotionalFilter);
+            var desired = CalculateDesiredSell(symbol, profitMultiplier, significant.Orders, balance, savings, lotSizeFilter, percentFilter, ticker, priceFilter, minNotionalFilter);
 
             // remove all non-desired buy orders and set the desired sell order if needed
-            await SetDesiredStateAsync(symbol, desired, cancellationToken).ConfigureAwait(false);
+            await SetDesiredStateAsync(symbol, desired, balance, cancellationToken).ConfigureAwait(false);
 
             // return the latest known profit
             return significant.Profit;
         }
 
-        private DesiredSell CalculateDesiredSell(Symbol symbol, decimal profitMultiplier, ImmutableSortedOrderSet orders, LotSizeSymbolFilter lotSizeFilter, PercentPriceSymbolFilter percentFilter, MiniTicker ticker, PriceSymbolFilter priceFilter, MinNotionalSymbolFilter minNotionalFilter)
+        private DesiredSell CalculateDesiredSell(Symbol symbol, decimal profitMultiplier, ImmutableSortedOrderSet orders, Balance balance, FlexibleProductPosition savings, LotSizeSymbolFilter lotSizeFilter, PercentPriceSymbolFilter percentFilter, MiniTicker? ticker, PriceSymbolFilter priceFilter, MinNotionalSymbolFilter minNotionalFilter)
         {
+            // skip if there is no ticker information
+            if (ticker is null)
+            {
+                _logger.LogWarning("{Type} cannot evaluate desired sell for symbol {Symbol} because no ticker information is yet available", TypeName, symbol.Name);
+
+                return DesiredSell.None;
+            }
+
             // skip if there is nothing to sell
             if (orders.IsEmpty)
             {
@@ -90,8 +99,41 @@ namespace Outcompute.Trader.Trading.Blocks
             // take all known significant buy orders on the symbol
             var quantity = orders.Sum(x => x.ExecutedQuantity);
 
+            // break if there is nothing to sell
+            if (quantity <= 0m)
+            {
+                return DesiredSell.None;
+            }
+
+            // break if there are no assets to sell
+            var total = balance.Free + savings.FreeAmount;
+            if (total <= 0m)
+            {
+                _logger.LogWarning("{Type} cannot evaluate desired sell for symbol {Symbol} because there are not enough assets available to sell", TypeName, symbol.Name);
+
+                return DesiredSell.None;
+            }
+
+            // detect the excess quantity available - gained interest etc
+            var excess = total - quantity;
+            if (excess < 0m)
+            {
+                _logger.LogWarning("{Type} cannot evaluate desired sell for symbol {Symbol} because the extra quantity is negative", TypeName, symbol.Name);
+
+                return DesiredSell.None;
+            }
+
             // calculate the weighted average price on all the significant orders
-            var price = orders.Sum(x => x.Price * x.ExecutedQuantity) / quantity;
+            var price = orders.Sum(x => x.Price * x.ExecutedQuantity);
+
+            // if there is excess then add it at near zero cost
+            if (excess > 0)
+            {
+                price += 0.00000001m * excess;
+                quantity += excess;
+            }
+
+            price /= quantity;
 
             // bump the price by the profit multipler so we have a sell price
             price *= profitMultiplier;
@@ -151,7 +193,7 @@ namespace Outcompute.Trader.Trading.Blocks
             return new DesiredSell(quantity, price);
         }
 
-        private async Task SetDesiredStateAsync(Symbol symbol, DesiredSell desired, CancellationToken cancellationToken)
+        private async Task SetDesiredStateAsync(Symbol symbol, DesiredSell desired, Balance balance, CancellationToken cancellationToken)
         {
             var orders = await _repository
                 .GetTransientOrdersBySideAsync(symbol.Name, OrderSide.Sell, cancellationToken)
@@ -189,11 +231,6 @@ namespace Outcompute.Trader.Trading.Blocks
 
             // if there is no desired sell then we can stop here
             if (desired == DesiredSell.None) return;
-
-            // see if there is enough balance to set the sell order
-            var balance = await _repository
-                .GetBalanceAsync(symbol.BaseAsset, cancellationToken)
-                .ConfigureAwait(false);
 
             var orderType = OrderType.Limit;
             var orderSide = OrderSide.Sell;

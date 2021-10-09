@@ -77,7 +77,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
 
             // then place the averaging sell
             await _context
-                .SetAveragingSellAsync(symbol, options.ProfitMultipler, cancellationToken)
+                .SetAveragingSellAsync(symbol, options.ProfitMultipler, true, cancellationToken)
                 .ConfigureAwait(false);
 
             // publish the profit stats

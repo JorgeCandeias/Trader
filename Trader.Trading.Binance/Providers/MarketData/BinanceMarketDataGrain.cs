@@ -12,6 +12,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -56,7 +57,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         /// <summary>
         /// Holds the background streaming and syncing work.
         /// </summary>
-        private Task? _work = null;
+        private Task? _work;
 
         /// <summary>
         /// Conflates the incoming tickers from the background stream so the repository has a chance to keep up.
@@ -75,7 +76,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 
         public override Task OnActivateAsync()
         {
-            RegisterTimer(_ => TickExecuteAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+            RegisterTimer(_ => TickEnsureWorkAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
 
             if (_tickerSymbols.Count > 0)
             {
@@ -101,7 +102,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         /// <summary>
         /// Monitors the background streaming work task and ensures it remains active upon faulting.
         /// </summary>
-        private async Task EnsureWorkAsync()
+        private async Task TickEnsureWorkAsync()
         {
             // avoid starting streaming work upon shutdown
             if (_cancellation.IsCancellationRequested)
@@ -112,7 +113,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             // schedule streaming work if nothing is running
             if (_work is null)
             {
-                _work = Task.Run(() => TickExecuteAsync(), _cancellation.Token);
+                _work = Task.Run(() => ExecuteLongAsync(), _cancellation.Token);
                 return;
             }
 
@@ -130,7 +131,8 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             }
         }
 
-        private async Task TickExecuteAsync()
+        [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "N/A")]
+        private async Task ExecuteLongAsync()
         {
             try
             {
@@ -199,12 +201,16 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 
             foreach (var symbol in _tickerSymbols)
             {
+                var subWatch = Stopwatch.StartNew();
+
                 var result = await _trader.Get24hTickerPriceChangeStatisticsAsync(symbol, _cancellation.Token);
                 var ticker = _mapper.Map<MiniTicker>(result);
                 var value = (Ticker: ticker, Saved: false);
 
                 // conflate the ticker if it is newer than the cached one - otherwise discard it
                 _tickers.AddOrUpdate(symbol, (k, arg) => arg, (k, e, arg) => arg.Ticker.EventTime > e.Ticker.EventTime ? arg : e, value);
+
+                _logger.LogInformation("{Name} synced ticker for {Symbol} in {ElapsedMs}ms", TypeName, symbol, subWatch.ElapsedMilliseconds);
             }
 
             _logger.LogInformation("{Name} synced tickers for {Symbols} in {ElapsedMs}ms", TypeName, _tickerSymbols, watch.ElapsedMilliseconds);

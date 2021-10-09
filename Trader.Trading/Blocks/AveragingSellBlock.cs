@@ -116,11 +116,14 @@ namespace Outcompute.Trader.Trading.Blocks
 
             // detect the excess quantity available - gained interest etc
             var excess = total - quantity;
+
+            // warn if there negative excess
+            // this can happen due to delay with savings info or the use or other products not monitored by the application
             if (excess < 0m)
             {
-                _logger.LogWarning("{Type} cannot evaluate desired sell for symbol {Symbol} because the extra quantity is negative", TypeName, symbol.Name);
+                _logger.LogWarning("{Type} detected negative excess for symbol {Symbol}", TypeName, symbol.Name);
 
-                return DesiredSell.None;
+                excess = 0m;
             }
 
             // calculate the weighted average price on all the significant orders

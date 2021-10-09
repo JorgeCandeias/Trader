@@ -49,11 +49,16 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
         private readonly Channel<OutboundAccountPositionUserDataStreamMessage> _balancesChannel = Channel.CreateUnbounded<OutboundAccountPositionUserDataStreamMessage>();
         private readonly Channel<ExecutionReportUserDataStreamMessage> _executionChannel = Channel.CreateUnbounded<ExecutionReportUserDataStreamMessage>();
 
-        private bool _ready = false;
+        private bool _ready;
+
+        /// <summary>
+        /// Holds the background streaming and syncing work.
+        /// </summary>
+        private Task? _work;
 
         public override Task OnActivateAsync()
         {
-            RegisterTimer(_ => TickWorkerAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+            RegisterTimer(_ => TickEnsureWorkAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
 
             RegisterTimer(_ => TickSaveBalancesAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
 
@@ -77,6 +82,38 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
             await base.OnDeactivateAsync();
         }
 
+        /// <summary>
+        /// Monitors the background streaming work task and ensures it remains active upon faulting.
+        /// </summary>
+        private async Task TickEnsureWorkAsync()
+        {
+            // avoid starting streaming work upon shutdown
+            if (_cancellation.IsCancellationRequested)
+            {
+                return;
+            }
+
+            // schedule streaming work if nothing is running
+            if (_work is null)
+            {
+                _work = Task.Run(() => ExecuteLongAsync(), _cancellation.Token);
+                return;
+            }
+
+            // propagate any exceptions from completed streaming work and release the task
+            if (_work.IsCompleted)
+            {
+                try
+                {
+                    await _work;
+                }
+                finally
+                {
+                    _work = null;
+                }
+            }
+        }
+
         public Task<bool> IsReadyAsync() => Task.FromResult(_ready);
 
         private void BumpPingTime()
@@ -84,7 +121,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
             _nextPingTime = _clock.UtcNow.Add(_options.UserDataStreamPingPeriod);
         }
 
-        private async Task TickWorkerAsync()
+        private async Task ExecuteLongAsync()
         {
             try
             {

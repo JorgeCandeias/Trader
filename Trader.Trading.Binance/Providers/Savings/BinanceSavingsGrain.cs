@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Binance.Providers.Savings
 {
-    internal class BinanceSavingsGrain : Grain, IBinanceSavingsGrainInternal
+    internal class BinanceSavingsGrain : Grain, IBinanceSavingsGrain
     {
         private readonly BinanceOptions _options;
         private readonly ILogger _logger;
@@ -26,32 +26,48 @@ namespace Outcompute.Trader.Trading.Binance.Providers.Savings
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
         }
 
-        private static string Name => nameof(BinanceSavingsGrain);
-
         private string _asset = string.Empty;
-        private ImmutableList<FlexibleProductPosition> _positions = ImmutableList<FlexibleProductPosition>.Empty;
 
         private readonly CancellationTokenSource _cancellation = new();
-        private readonly Dictionary<(string ProductId, FlexibleProductRedemptionType Type), LeftDailyRedemptionQuotaOnFlexibleProduct> _quotas = new();
         private readonly FlexibleProductRedemptionType[] _redemptionTypes = new[] { FlexibleProductRedemptionType.Fast };
+
+        #region Cache
+
+        private ImmutableList<FlexibleProductPosition> _positions = ImmutableList<FlexibleProductPosition>.Empty;
+        private readonly Dictionary<(string ProductId, FlexibleProductRedemptionType Type), LeftDailyRedemptionQuotaOnFlexibleProduct> _quotas = new();
+
+        private DateTime _expiration = DateTime.MinValue;
+
+        #endregion Cache
 
         public override async Task OnActivateAsync()
         {
             _asset = this.GetPrimaryKeyString();
-
-            await UpdateAsync();
-
-            // self-update every minute in safe way with incoming calls
-            RegisterTimer(_ => this.AsReference<IBinanceSavingsGrainInternal>().UpdateAsync(), default, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
 
             await base.OnActivateAsync();
         }
 
         public override Task OnDeactivateAsync()
         {
-            _cancellation.Dispose();
+            _cancellation.Cancel();
 
             return base.OnDeactivateAsync();
+        }
+
+        private async ValueTask EnsureUpdatedAsync()
+        {
+            if (_clock.UtcNow < _expiration) return;
+
+            await UpdateAsync();
+
+            _expiration = _clock.UtcNow.Add(_options.SavingsCacheWindow);
+        }
+
+        private void Invalidate()
+        {
+            _expiration = DateTime.MinValue;
+            _positions = ImmutableList<FlexibleProductPosition>.Empty;
+            _quotas.Clear();
         }
 
         public async Task UpdateAsync()
@@ -61,8 +77,6 @@ namespace Outcompute.Trader.Trading.Binance.Providers.Savings
                 .GetFlexibleProductPositionAsync(_asset, ct), _logger, _cancellation.Token);
 
             _positions = result.ToImmutableList();
-
-            _logger.LogInformation("{Name} {Asset} cached {Count} product positions", Name, _asset, _positions.Count);
 
             foreach (var position in _positions)
             {
@@ -78,35 +92,34 @@ namespace Outcompute.Trader.Trading.Binance.Providers.Savings
                     }
                 }
             }
-
-            _logger.LogInformation("{Name} {Asset} cached {Count} quotas", Name, _asset, _quotas.Count);
         }
 
-        public ValueTask<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionAsync()
+        public async ValueTask<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionAsync()
         {
-            return ValueTask.FromResult<IReadOnlyCollection<FlexibleProductPosition>>(_positions);
+            await EnsureUpdatedAsync();
+
+            return _positions;
         }
 
-        public ValueTask<FlexibleProductPosition?> TryGetFirstFlexibleProductPositionAsync()
+        public async ValueTask<FlexibleProductPosition?> TryGetFirstFlexibleProductPositionAsync()
         {
-            return ValueTask.FromResult(_positions.Count > 0 ? _positions[0] : null);
+            await EnsureUpdatedAsync();
+
+            return _positions.Count > 0 ? _positions[0] : null;
         }
 
-        public ValueTask<LeftDailyRedemptionQuotaOnFlexibleProduct?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string productId, FlexibleProductRedemptionType type)
+        public async ValueTask<LeftDailyRedemptionQuotaOnFlexibleProduct?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string productId, FlexibleProductRedemptionType type)
         {
-            return ValueTask.FromResult(_quotas.TryGetValue((productId, type), out var value) ? value : null);
+            await EnsureUpdatedAsync();
+
+            return _quotas.TryGetValue((productId, type), out var value) ? value : null;
         }
 
         public async ValueTask RedeemFlexibleProductAsync(string productId, decimal amount, FlexibleProductRedemptionType type)
         {
             await _trader.RedeemFlexibleProductAsync(productId, amount, type);
 
-            await UpdateAsync();
+            Invalidate();
         }
-    }
-
-    internal interface IBinanceSavingsGrainInternal : IBinanceSavingsGrain
-    {
-        Task UpdateAsync();
     }
 }

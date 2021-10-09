@@ -50,7 +50,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             _options.OnChange(_ => this.AsReference<IAlgoHostGrainInternal>().InvokeOneWay(x => x.ApplyOptionsAsync()));
 
             // apply the options now
-            await ApplyOptionsAsync().ConfigureAwait(true);
+            await ApplyOptionsAsync();
 
             // spin up the readyness check
             RegisterTimer(_ => TickReadynessAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
@@ -116,7 +116,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(limit.Token, _cancellation.Token);
 
             // execute the algo under the limits
-            await _algo.GoAsync(linked.Token).ConfigureAwait(true);
+            await _algo.GoAsync(linked.Token);
         }
 
         public Task TickAsync()

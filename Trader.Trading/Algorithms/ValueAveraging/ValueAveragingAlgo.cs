@@ -37,14 +37,8 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         {
             var options = _options.Get(_context.Name);
 
-            var symbol = await _context
-                .TryGetSymbolAsync(options.Symbol)
-                .ConfigureAwait(false);
-
-            if (symbol is null)
-            {
-                throw new AlgorithmNotInitializedException();
-            }
+            var symbol = await _context.TryGetSymbolAsync(options.Symbol).ConfigureAwait(false)
+                ?? throw new AlgorithmNotInitializedException();
 
             _logger.LogInformation("{Type} {Name} running...", TypeName, _context.Name);
 
@@ -77,7 +71,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
 
             // then place the averaging sell
             await _context
-                .SetAveragingSellAsync(symbol, options.ProfitMultipler, true, cancellationToken)
+                .SetAveragingSellAsync(symbol, options.ProfitMultipler, options.UseSavings, cancellationToken)
                 .ConfigureAwait(false);
 
             // publish the profit stats

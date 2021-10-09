@@ -27,5 +27,8 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
 
         [Required]
         public bool IsAveragingEnabled { get; set; } = true;
+
+        [Required]
+        public bool UseSavings { get; set; } = false;
     }
 }

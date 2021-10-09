@@ -111,8 +111,8 @@ namespace Outcompute.Trader.Trading.Algorithms
             var window30d = now.AddDays(-30);
             var today = now.Date;
 
-            // first map formal limit sells to formal buys
-            // the sells may not fill completely due to past algo bugs and missing trades
+            // first map formal limit sales to formal buys
+            // the sales may not fill completely using the buys due to selling from savings and buy market orders to help fix bugs
             for (var i = 0; i < subjects.Segment.Count; ++i)
             {
                 // loop through sales forward
@@ -125,7 +125,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                         var buy = subjects.Segment[j];
                         if (buy.Order.Side == OrderSide.Buy && buy.RemainingExecutedQuantity > 0 && buy.Order.OrderId == matchOpenOrderId)
                         {
-                            // remove as much as possible from the buy to satisfy the sell
+                            // remove as much as possible from the buy to satisfy the sale
                             var take = Math.Min(buy.RemainingExecutedQuantity, sell.RemainingExecutedQuantity);
                             buy.RemainingExecutedQuantity -= take;
                             sell.RemainingExecutedQuantity -= take;
@@ -153,7 +153,8 @@ namespace Outcompute.Trader.Trading.Algorithms
                 }
             }
 
-            // now match limit sell leftovers using lifo
+            // now match limit sale leftovers using lifo
+            // the sales may not fill completely using the buys due to selling from savings and buy market orders to help fix bugs
             for (var i = 0; i < subjects.Segment.Count; ++i)
             {
                 // loop through sales forward
@@ -166,7 +167,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                         var buy = subjects.Segment[j];
                         if (buy.Order.Side == OrderSide.Buy && buy.RemainingExecutedQuantity > 0m)
                         {
-                            // remove as much as possible from the buy to satisfy the sell
+                            // remove as much as possible from the buy to satisfy the sale
                             var take = Math.Min(buy.RemainingExecutedQuantity, sell.RemainingExecutedQuantity);
                             buy.RemainingExecutedQuantity -= take;
                             sell.RemainingExecutedQuantity -= take;
@@ -192,17 +193,18 @@ namespace Outcompute.Trader.Trading.Algorithms
                         }
                     }
 
-                    // if the sell was still not filled then we're missing some data
+                    // if the sale was still not filled then force close it
+                    // we assume the remaining assets used to fullfil the sale came either savings at zero cost or market buys at full cost
+                    // we can't know here so we ignore either case for now
                     if (sell.RemainingExecutedQuantity != 0)
                     {
-                        // something went very wrong if we got here
-                        _logger.LogWarning(
-                            "{Name} {Symbol} could not fill {Symbol} {Side} order {OrderId} with quantity {ExecutedQuantity} at price {Price} because there are {RemainingExecutedQuantity} units missing",
-                            nameof(SignificantOrderResolver), symbol.Name, sell.Order.Symbol, sell.Order.Side, sell.Order.OrderId, sell.Order.ExecutedQuantity, sell.Order.Price, sell.RemainingExecutedQuantity);
+                        // clear the sale
+                        sell.RemainingExecutedQuantity = 0m;
                     }
                 }
             }
 
+            /*
             // now match market sell leftovers using fifo
             // we use market sell orders to get rid of old leftovers manually when the asset is peaking in price
             for (var i = 0; i < subjects.Segment.Count; ++i)
@@ -253,6 +255,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                     }
                 }
             }
+            */
 
             // keep only buy orders with some quantity left to sell
             var significant = ImmutableSortedOrderSet.CreateBuilder();

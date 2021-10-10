@@ -43,6 +43,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Dashboard", "Trader.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Dashboard.WebApp", "Trader.Dashboard.WebApp\Trader.Dashboard.WebApp.csproj", "{CA238D76-74A2-4C5C-9A96-A6534457A2BE}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Bechmarks", "Bechmarks", "{97714005-5BCD-475B-823D-C7744EE49DB2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Trading.Indicators.Benchmarks", "Trader.Trading.Indicators.Benchmarks\Trader.Trading.Indicators.Benchmarks.csproj", "{7B60FAB9-BCA0-4542-B4DB-75F630B58F9D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -127,6 +131,10 @@ Global
 		{CA238D76-74A2-4C5C-9A96-A6534457A2BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CA238D76-74A2-4C5C-9A96-A6534457A2BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CA238D76-74A2-4C5C-9A96-A6534457A2BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7B60FAB9-BCA0-4542-B4DB-75F630B58F9D}.Debug|Any CPU.ActiveCfg = Release|Any CPU
+		{7B60FAB9-BCA0-4542-B4DB-75F630B58F9D}.Debug|Any CPU.Build.0 = Release|Any CPU
+		{7B60FAB9-BCA0-4542-B4DB-75F630B58F9D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B60FAB9-BCA0-4542-B4DB-75F630B58F9D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -137,6 +145,7 @@ Global
 		{7E5752AD-4F91-45BB-8042-C271EDF04DEC} = {724871D8-46E7-4280-B828-D6A28360E820}
 		{DC8BFA1D-F3E3-4F95-9ED6-6536ED64FF53} = {724871D8-46E7-4280-B828-D6A28360E820}
 		{AC8B8F17-6688-4C1C-B11A-1AAC13D869FA} = {724871D8-46E7-4280-B828-D6A28360E820}
+		{7B60FAB9-BCA0-4542-B4DB-75F630B58F9D} = {97714005-5BCD-475B-823D-C7744EE49DB2}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7716D8A4-6E15-41AB-90E0-DE40D69C82EE}

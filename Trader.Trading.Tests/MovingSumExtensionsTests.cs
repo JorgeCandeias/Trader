@@ -1,5 +1,5 @@
 ﻿using System.Linq;
-using Outcompute.Trader.Trading.Indicators;
+using Outcompute.Trader.Trading.Indicators.Common;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests

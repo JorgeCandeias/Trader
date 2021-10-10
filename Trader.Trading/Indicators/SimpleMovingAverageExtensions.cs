@@ -1,10 +1,15 @@
-﻿using System;
+﻿using Outcompute.Trader.Trading.Indicators.Common;
+using System;
 using System.Collections.Generic;
 
 namespace Outcompute.Trader.Trading.Indicators
 {
     public static class SimpleMovingAverageExtensions
     {
+        /// <summary>
+        /// Emits the simple moving average of the last <paramref name="periods"/>.
+        /// Emits zero for the first <paramref name="periods"/>-1 items.
+        /// </summary>
         public static IEnumerable<decimal> SimpleMovingAverage(this IEnumerable<decimal> items, int periods)
         {
             if (items is null) throw new ArgumentNullException(nameof(items));
@@ -19,9 +24,12 @@ namespace Outcompute.Trader.Trading.Indicators
 
             foreach (var sum in items.MovingSum(periods))
             {
-                count = Math.Min(++count, periods);
+                if (++count < periods)
+                {
+                    yield return 0m;
+                }
 
-                yield return sum / count;
+                yield return sum / periods;
             }
         }
     }

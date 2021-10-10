@@ -1,10 +1,10 @@
-﻿using System.Linq;
-using Outcompute.Trader.Trading.Indicators;
+﻿using Outcompute.Trader.Trading.Indicators.Common;
+using System.Linq;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
 {
-    public static class AbsoluteExtensionsTests
+    public static class AbsExtensionsTests
     {
         [Fact]
         public static void EmitsEmptyOutput()
@@ -13,7 +13,7 @@ namespace Outcompute.Trader.Trading.Tests
             var input = Enumerable.Empty<decimal>();
 
             // act
-            var output = input.Absolute();
+            var output = input.Abs();
 
             // assert
             Assert.Empty(output);
@@ -26,7 +26,7 @@ namespace Outcompute.Trader.Trading.Tests
             var input = new decimal[] { 1, -1, 2, -3, 5, -8, 13, -21, 34, -55, 89, -144 };
 
             // act
-            var output = input.Absolute();
+            var output = input.Abs();
 
             // assert
             Assert.Collection(output,

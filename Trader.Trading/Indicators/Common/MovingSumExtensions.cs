@@ -74,14 +74,7 @@ namespace System.Collections.Generic
                 sum += value;
 
                 // return the moving sum only if we have enough periods
-                if (queue.Count >= periods)
-                {
-                    yield return sum;
-                }
-                else
-                {
-                    yield return 0m;
-                }
+                yield return queue.Count < periods ? 0m : sum;
             }
 
             QueuePool<decimal>.Shared.Return(queue);

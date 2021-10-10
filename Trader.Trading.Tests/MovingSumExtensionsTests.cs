@@ -7,7 +7,7 @@ namespace Outcompute.Trader.Trading.Tests
     public class MovingSumExtensionsTests
     {
         [Fact]
-        public void EmitsEmptyOutput()
+        public void YieldsEmptyOutput()
         {
             // arrange
             var input = Enumerable.Empty<decimal>();
@@ -20,7 +20,7 @@ namespace Outcompute.Trader.Trading.Tests
         }
 
         [Fact]
-        public void EmitsMovingSum()
+        public void YieldsMovingSum()
         {
             // arrange
             var input = new decimal[] { 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144 };
@@ -30,8 +30,8 @@ namespace Outcompute.Trader.Trading.Tests
 
             // assert
             Assert.Collection(output,
-                x => Assert.Equal(1, x),
-                x => Assert.Equal(2, x),
+                x => Assert.Equal(0, x),
+                x => Assert.Equal(0, x),
                 x => Assert.Equal(4, x),
                 x => Assert.Equal(6, x),
                 x => Assert.Equal(10, x),

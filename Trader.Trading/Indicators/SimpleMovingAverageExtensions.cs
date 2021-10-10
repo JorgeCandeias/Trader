@@ -61,6 +61,7 @@
                 if (++count < periods)
                 {
                     yield return 0m;
+                    continue;
                 }
 
                 // return the average over the periods

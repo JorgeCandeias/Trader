@@ -7,7 +7,7 @@ namespace Outcompute.Trader.Trading.Tests
     public class SimpleMovingAverageExtensionsTests
     {
         [Fact]
-        public void EmitsEmptyOutput()
+        public void YieldsEmptyOutput()
         {
             // arrange
             var input = Enumerable.Empty<decimal>();
@@ -20,7 +20,7 @@ namespace Outcompute.Trader.Trading.Tests
         }
 
         [Fact]
-        public void EmitsSimpleMovingAverage()
+        public void YieldsSimpleMovingAverage()
         {
             // arrange
             var input = new decimal[] { 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144 };
@@ -30,8 +30,8 @@ namespace Outcompute.Trader.Trading.Tests
 
             // assert
             Assert.Collection(output,
-                x => Assert.Equal(1m, x),
-                x => Assert.Equal(1m, x),
+                x => Assert.Equal(0m, x),
+                x => Assert.Equal(0m, x),
                 x => Assert.Equal(4m / 3m, x),
                 x => Assert.Equal(6m / 3m, x),
                 x => Assert.Equal(10m / 3m, x),

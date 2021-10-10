@@ -7,7 +7,7 @@ namespace Outcompute.Trader.Trading.Tests
     public static class AbsExtensionsTests
     {
         [Fact]
-        public static void EmitsEmptyOutput()
+        public static void YieldsEmptyOutput()
         {
             // arrange
             var input = Enumerable.Empty<decimal>();
@@ -20,7 +20,7 @@ namespace Outcompute.Trader.Trading.Tests
         }
 
         [Fact]
-        public static void EmitsAbsoluteOutput()
+        public static void YieldsAbsoluteOutput()
         {
             // arrange
             var input = new decimal[] { 1, -1, 2, -3, 5, -8, 13, -21, 34, -55, 89, -144 };

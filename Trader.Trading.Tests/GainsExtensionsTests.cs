@@ -4,29 +4,29 @@ using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
 {
-    public class UpStepChangesExtensionsTests
+    public class GainsExtensionsTests
     {
         [Fact]
-        public void EmitsEmptyResultOnEmptyInput()
+        public void YieldsEmptyResultOnEmptyInput()
         {
             // arrange
             var input = Enumerable.Empty<decimal>();
 
             // act
-            var output = input.UpStepChanges();
+            var output = input.Gains();
 
             // assert
             Assert.Empty(output);
         }
 
         [Fact]
-        public void EmitsPositiveChanges()
+        public void YieldsPositiveChanges()
         {
             // arrange
             var input = new decimal[] { 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144 };
 
             // act
-            var output = input.UpStepChanges();
+            var output = input.Gains();
 
             // assert
             Assert.Collection(output,
@@ -45,13 +45,13 @@ namespace Outcompute.Trader.Trading.Tests
         }
 
         [Fact]
-        public void EmitsNegativeChanges()
+        public void YieldsNegativeChanges()
         {
             // arrange
             var input = new decimal[] { 144, 89, 55, 34, 21, 13, 8, 5, 3, 2, 1, 1 };
 
             // act
-            var output = input.UpStepChanges();
+            var output = input.Gains();
 
             // assert
             Assert.Collection(output,
@@ -70,13 +70,13 @@ namespace Outcompute.Trader.Trading.Tests
         }
 
         [Fact]
-        public void EmitsMixedChanges()
+        public void YieldsMixedChanges()
         {
             // arrange
             var input = new decimal[] { 1, 2, 1, 5, 3, 13, 8, 34, 21, 89, 55, 144 };
 
             // act
-            var output = input.UpStepChanges();
+            var output = input.Gains();
 
             // assert
             Assert.Collection(output,

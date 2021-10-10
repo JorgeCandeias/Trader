@@ -1,8 +1,6 @@
 ﻿using Outcompute.Trader.Trading.Indicators.ObjectPools;
-using System;
-using System.Collections.Generic;
 
-namespace Outcompute.Trader.Trading.Indicators.Common
+namespace System.Collections.Generic
 {
     public static class MovingSumExtensions
     {

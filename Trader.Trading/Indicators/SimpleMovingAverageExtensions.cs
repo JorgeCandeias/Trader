@@ -1,8 +1,4 @@
-﻿using Outcompute.Trader.Trading.Indicators.Common;
-using System;
-using System.Collections.Generic;
-
-namespace Outcompute.Trader.Trading.Indicators
+﻿namespace System.Collections.Generic
 {
     public static class SimpleMovingAverageExtensions
     {

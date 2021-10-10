@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Outcompute.Trader.Trading.Indicators.Common
+﻿namespace System.Collections.Generic
 {
     public static class UpStepChangesExtensions
     {

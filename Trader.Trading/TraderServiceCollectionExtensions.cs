@@ -11,6 +11,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<ITrackingBuyBlock, TrackingBuyBlock>()
                 .AddSingleton<IAveragingSellBlock, AveragingSellBlock>()
                 .AddSingleton<IRedeemSavingsBlock, RedeemSavingsBlock>()
+                .AddSingleton<IClearOpenBuyOrdersBlock, ClearOpenBuyOrdersBlock>()
                 .AddSingleton<IReadynessProvider, ReadynessProvider>();
         }
     }

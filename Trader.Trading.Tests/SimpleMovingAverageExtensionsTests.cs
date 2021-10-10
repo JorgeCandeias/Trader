@@ -13,7 +13,7 @@ namespace Outcompute.Trader.Trading.Tests
             var input = Enumerable.Empty<decimal>();
 
             // act
-            var output = input.SimpleMovingAverage(3);
+            var output = input.SimpleMovingAverages(3);
 
             // assert
             Assert.Empty(output);
@@ -26,7 +26,7 @@ namespace Outcompute.Trader.Trading.Tests
             var input = new decimal[] { 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144 };
 
             // act
-            var output = input.SimpleMovingAverage(3);
+            var output = input.SimpleMovingAverages(3);
 
             // assert
             Assert.Collection(output,

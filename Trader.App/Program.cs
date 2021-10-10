@@ -5,7 +5,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Hosting;
+using Outcompute.Trader.Core.Time;
+using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Indicators;
 using Serilog;
 using Serilog.Events;
 using System;
@@ -92,21 +95,30 @@ namespace Outcompute.Trader.App
             private readonly IOptionsMonitor<TestAlgoOptions> _options;
             private readonly ILogger _logger;
             private readonly IAlgoContext _context;
+            private readonly ISystemClock _clock;
 
-            public TestAlgo(IOptionsMonitor<TestAlgoOptions> options, ILogger<TestAlgo> logger, IAlgoContext context)
+            public TestAlgo(IOptionsMonitor<TestAlgoOptions> options, ILogger<TestAlgo> logger, IAlgoContext context, ISystemClock clock)
             {
                 _options = options ?? throw new ArgumentNullException(nameof(options));
                 _logger = logger ?? throw new ArgumentNullException(nameof(logger));
                 _context = context ?? throw new ArgumentNullException(nameof(context));
+                _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             }
 
-            public Task GoAsync(CancellationToken cancellationToken = default)
+            public async Task GoAsync(CancellationToken cancellationToken = default)
             {
                 var options = _options.Get(_context.Name);
 
-                _logger.LogInformation("My name is {Name} and my options are {@Options}", _context.Name, options);
+                var end = _clock.UtcNow;
+                var start = end.Subtract(TimeSpan.FromDays(100));
 
-                return Task.CompletedTask;
+                var klines = await _context.GetKlinesAsync(options.Symbol, KlineInterval.Days1, start, end, cancellationToken).ConfigureAwait(false);
+
+                var sma7 = klines.LastSimpleMovingAverage(x => x.ClosePrice, 7);
+                var sma25 = klines.LastSimpleMovingAverage(x => x.ClosePrice, 25);
+                var sma99 = klines.LastSimpleMovingAverage(x => x.ClosePrice, 99);
+
+                _logger.LogInformation("My name is {Name} and my options are {@Options}", _context.Name, options);
             }
         }
 
@@ -114,6 +126,9 @@ namespace Outcompute.Trader.App
         {
             [Required]
             public string SomeValue { get; set; } = "Default";
+
+            [Required]
+            public string Symbol { get; set; } = "BTCGBP";
         }
     }
 }

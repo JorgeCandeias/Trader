@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Options;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
-using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Exceptions;
 using System;
 using System.Threading;
@@ -57,16 +56,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
             else
             {
                 // cancel all open buys
-                var orders = await _repository
-                    .GetTransientOrdersBySideAsync(symbol.Name, OrderSide.Buy, cancellationToken)
-                    .ConfigureAwait(false);
-
-                foreach (var order in orders)
-                {
-                    await _trader
-                        .CancelOrderAsync(new CancelStandardOrder(options.Symbol, order.OrderId, null, null, null, _clock.UtcNow), cancellationToken)
-                        .ConfigureAwait(false);
-                }
+                await _context.ClearOpenBuyOrdersAsync(symbol, cancellationToken).ConfigureAwait(false);
             }
 
             // then place the averaging sell

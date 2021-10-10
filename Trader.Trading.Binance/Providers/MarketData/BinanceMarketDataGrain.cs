@@ -383,19 +383,19 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         }
 
         // todo: refactor this into a local replica grain
-        public Task<IEnumerable<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime start, DateTime end)
+        public Task<IReadOnlyList<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime start, DateTime end)
         {
-            var builder = ImmutableList.CreateBuilder<Kline>();
+            var builder = ImmutableSortedSet.CreateBuilder(Kline.OpenTimeComparer);
 
             foreach (var item in _klines)
             {
-                if (item.Key.Symbol == symbol && item.Key.Interval == interval && item.Key.OpenTime <= start && item.Key.OpenTime >= end)
+                if (item.Key.Symbol == symbol && item.Key.Interval == interval && item.Key.OpenTime >= start && item.Key.OpenTime <= end)
                 {
                     builder.Add(item.Value.Kline);
                 }
             }
 
-            return Task.FromResult<IEnumerable<Kline>>(builder.ToImmutable());
+            return Task.FromResult<IReadOnlyList<Kline>>(builder.ToImmutable());
         }
 
         public Task<bool> IsReadyAsync() => Task.FromResult(_ready);

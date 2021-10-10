@@ -8,6 +8,11 @@ namespace Outcompute.Trader.Trading.Providers
 {
     public interface IKlineProvider
     {
-        Task<IEnumerable<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime start, DateTime end, CancellationToken cancellationToken = default);
+        /// <summary>
+        /// Returns the set of klines that fullfil the given criteria.
+        /// Returns an empty or partial collection if no complete dataset exists.
+        /// The result set is ordered by open time.
+        /// </summary>
+        Task<IReadOnlyList<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime start, DateTime end, CancellationToken cancellationToken = default);
     }
 }

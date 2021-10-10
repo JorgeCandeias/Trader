@@ -3,6 +3,7 @@ using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
+using Outcompute.Trader.Trading.Indicators;
 using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Linq;
@@ -17,17 +18,21 @@ namespace Outcompute.Trader.Trading.Blocks
         private readonly ITradingRepository _repository;
         private readonly ITradingService _trader;
         private readonly ISystemClock _clock;
+        private readonly IClearOpenBuyOrdersBlock _closeOpenBuyOrders;
         private readonly IRedeemSavingsBlock _redeemSavingsStep;
         private readonly ITickerProvider _tickers;
+        private readonly IKlineProvider _klines;
 
-        public TrackingBuyBlock(ILogger<TrackingBuyBlock> logger, ITradingRepository repository, ITradingService trader, ISystemClock clock, IRedeemSavingsBlock redeemSavingsStep, ITickerProvider tickers)
+        public TrackingBuyBlock(ILogger<TrackingBuyBlock> logger, ITradingRepository repository, ITradingService trader, ISystemClock clock, IClearOpenBuyOrdersBlock closeOpenBuyOrders, IRedeemSavingsBlock redeemSavingsStep, ITickerProvider tickers, IKlineProvider klines)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _closeOpenBuyOrders = closeOpenBuyOrders ?? throw new ArgumentNullException(nameof(closeOpenBuyOrders));
             _redeemSavingsStep = redeemSavingsStep ?? throw new ArgumentNullException(nameof(redeemSavingsStep));
             _tickers = tickers ?? throw new ArgumentNullException(nameof(tickers));
+            _klines = klines ?? throw new ArgumentNullException(nameof(klines));
         }
 
         private static string TypeName => nameof(TrackingBuyBlock);
@@ -41,13 +46,8 @@ namespace Outcompute.Trader.Trading.Blocks
 
         private async Task<bool> GoInnerAsync(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, CancellationToken cancellationToken)
         {
-            // sync data from the exchange
-            var orders = await GetOpenOrdersAsync(symbol, cancellationToken).ConfigureAwait(false);
-
             // get the current ticker for the symbol
-            var ticker = await _tickers
-                .TryGetTickerAsync(symbol.Name, cancellationToken)
-                .ConfigureAwait(false);
+            var ticker = await _tickers.TryGetTickerAsync(symbol.Name, cancellationToken).ConfigureAwait(false);
 
             if (ticker is null)
             {
@@ -58,7 +58,34 @@ namespace Outcompute.Trader.Trading.Blocks
                 return false;
             }
 
+            // calculate safety averages
+            var end = _clock.UtcNow;
+            var start = end.Subtract(TimeSpan.FromDays(100));
+            var klines = await _klines.GetKlinesAsync(symbol.Name, KlineInterval.Days1, start, end, cancellationToken).ConfigureAwait(false);
+            var sma7 = klines.LastSimpleMovingAverage(x => x.ClosePrice, 7);
+            var sma25 = klines.LastSimpleMovingAverage(x => x.ClosePrice, 25);
+            var sma99 = klines.LastSimpleMovingAverage(x => x.ClosePrice, 99);
+
+            _logger.LogInformation(
+                "{Type} {Symbol} using indicators: (SMA7 = {SMA7}, SMA25 = {SMA25}, SMA99 = {SMA99})",
+                TypeName, symbol.Name, sma7, sma25, sma99);
+
+            if (ticker.ClosePrice > sma7 || ticker.ClosePrice > sma25 || ticker.ClosePrice > sma99)
+            {
+                _logger.LogInformation(
+                    "{Type} {Symbol} detected ticker is above the safety averages of ({SMA5}, {SMA25}, {SMA99}) and will not place a buy order",
+                    TypeName, symbol.Name, sma7, sma25, sma99);
+
+                await _closeOpenBuyOrders.GoAsync(symbol, cancellationToken).ConfigureAwait(false);
+
+                return false;
+            }
+
+            // sync data from the exchange
+            var orders = await GetOpenOrdersAsync(symbol, cancellationToken).ConfigureAwait(false);
+
             // get the symbol filters
+
             var priceFilter = symbol.Filters.OfType<PriceSymbolFilter>().Single();
             var lotSizeFilter = symbol.Filters.OfType<LotSizeSymbolFilter>().Single();
             var minNotionalFilter = symbol.Filters.OfType<MinNotionalSymbolFilter>().Single();

@@ -16,8 +16,8 @@ namespace Outcompute.Trader.Trading.Indicators
 
         private static IEnumerable<decimal> RelativeStrengthIndexInner(IEnumerable<decimal> items, int periods)
         {
-            var averageUpEnumerator = items.UpStepChanges().SimpleMovingAverage(periods).GetEnumerator();
-            var averageDownEnumerator = items.DownStepChanges().Abs().SimpleMovingAverage(periods).GetEnumerator();
+            var averageUpEnumerator = items.UpStepChanges().SimpleMovingAverages(periods).GetEnumerator();
+            var averageDownEnumerator = items.DownStepChanges().Abs().SimpleMovingAverages(periods).GetEnumerator();
 
             while (averageUpEnumerator.MoveNext() && averageDownEnumerator.MoveNext())
             {

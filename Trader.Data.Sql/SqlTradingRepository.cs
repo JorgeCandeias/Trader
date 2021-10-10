@@ -338,6 +338,8 @@ namespace Outcompute.Trader.Data.Sql
 
         public async Task SetOrderAsync(CancelStandardOrderResult result, CancellationToken cancellationToken = default)
         {
+            // todo: fix the concurrency issue on this call - probably on the stored procedure itself
+
             _ = result ?? throw new ArgumentNullException(nameof(result));
 
             var symbolId = await GetOrAddSymbolAsync(result.Symbol, cancellationToken).ConfigureAwait(false);

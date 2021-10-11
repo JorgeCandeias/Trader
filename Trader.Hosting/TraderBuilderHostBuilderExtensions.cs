@@ -4,6 +4,7 @@ using System;
 
 namespace Microsoft.Extensions.Hosting
 {
+    [Obsolete("Remove")] // todo: remove this class
     public static class TraderBuilderHostBuilderExtensions
     {
         public static IHostBuilder UseTrader(this IHostBuilder builder, Action<ITraderBuilder> configure)

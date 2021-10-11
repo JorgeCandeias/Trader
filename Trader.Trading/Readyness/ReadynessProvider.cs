@@ -16,7 +16,7 @@ namespace Outcompute.Trader.Trading.Readyness
             _entries = entries ?? throw new ArgumentNullException(nameof(entries));
         }
 
-        public async Task<bool> IsReadyAsync(CancellationToken cancellationToken = default)
+        public async ValueTask<bool> IsReadyAsync(CancellationToken cancellationToken = default)
         {
             var result = true;
 

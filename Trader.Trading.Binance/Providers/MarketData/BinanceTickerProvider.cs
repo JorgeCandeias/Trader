@@ -9,19 +9,17 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 {
     internal class BinanceTickerProvider : ITickerProvider
     {
-        private readonly IBinanceMarketDataGrain _grain;
+        private readonly IGrainFactory _factory;
 
         public BinanceTickerProvider(IGrainFactory factory)
         {
-            _ = factory ?? throw new ArgumentNullException(nameof(factory));
-
-            _grain = factory.GetBinanceMarketDataGrain();
+            _factory = factory ?? throw new ArgumentNullException(nameof(factory));
         }
 
-        public Task<MiniTicker?> TryGetTickerAsync(string symbol, CancellationToken cancellationToken = default)
+        public ValueTask<MiniTicker?> TryGetTickerAsync(string symbol, CancellationToken cancellationToken = default)
         {
             // redirect the call to the binance market data grain
-            return _grain.TryGetTickerAsync(symbol);
+            return _factory.GetBinanceTickerProviderGrain(symbol).TryGetTickerAsync();
         }
     }
 }

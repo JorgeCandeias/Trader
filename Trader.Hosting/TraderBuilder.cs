@@ -5,6 +5,7 @@ using System.Collections.Generic;
 
 namespace Outcompute.Trader.Hosting
 {
+    [Obsolete("Remove")] // todo: remove this class
     internal class TraderBuilder : ITraderBuilder
     {
         private readonly List<Action<HostBuilderContext, ITraderBuilder>> _traderActions = new();

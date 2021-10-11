@@ -3,15 +3,16 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <Name>Trader.Data.Sql.Database</Name>
+    <Name>Trader.Orleans.Database</Name>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectVersion>4.1</ProjectVersion>
-    <ProjectGuid>{08ef872d-10fb-4998-8383-ae99f4c17192}</ProjectGuid>
+    <ProjectGuid>{fb4cd7ea-bec9-4e13-b475-9cd2de19cc2a}</ProjectGuid>
     <DSP>Microsoft.Data.Tools.Schema.Sql.Sql130DatabaseSchemaProvider</DSP>
     <OutputType>Database</OutputType>
-    <RootPath />
-    <RootNamespace>Outcompute.Trader.Data.Sql.Database</RootNamespace>
-    <AssemblyName>Outcompute.Trader.Data.Sql.Database</AssemblyName>
+    <RootPath>
+    </RootPath>
+    <RootNamespace>Outcompute.Trader.Orleans.Database</RootNamespace>
+    <AssemblyName>Outcompute.Trader.Orleans.Database</AssemblyName>
     <ModelCollation>1033, CI</ModelCollation>
     <DefaultFileStructure>BySchemaAndSchemaType</DefaultFileStructure>
     <DeployToDatabase>True</DeployToDatabase>
@@ -21,7 +22,6 @@
     <SqlServerVerification>False</SqlServerVerification>
     <IncludeCompositeObjects>True</IncludeCompositeObjects>
     <TargetDatabaseSet>True</TargetDatabaseSet>
-    <QueryStoreDesiredState>ReadWrite</QueryStoreDesiredState>
     <AllowSnapshotIsolation>True</AllowSnapshotIsolation>
     <ReadCommittedSnapshot>True</ReadCommittedSnapshot>
   </PropertyGroup>
@@ -47,11 +47,10 @@
     <DefineTrace>true</DefineTrace>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <RunSqlCodeAnalysis>True</RunSqlCodeAnalysis>
-    <SqlTargetName>Outcompute.Trader.Data.Sql</SqlTargetName>
   </PropertyGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">11.0</VisualStudioVersion>
+    <!-- Default to the v11.0 targets path if the targets file for the current VS version is not found -->
     <SSDTExists Condition="Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets')">True</SSDTExists>
     <VisualStudioVersion Condition="'$(SSDTExists)' == ''">11.0</VisualStudioVersion>
   </PropertyGroup>
@@ -60,57 +59,22 @@
   <ItemGroup>
     <Folder Include="Properties" />
     <Folder Include="Tables" />
-    <Folder Include="Procedures" />
-    <Folder Include="Types" />
-    <Folder Include="Sequences" />
     <Folder Include="Scripts" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Trader.Data.Sql.Database.LocalDB.publish.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Build Include="Tables\Order.sql" />
-    <Build Include="Tables\Trade.sql" />
-    <Build Include="Procedures\GetOrders.sql" />
-    <Build Include="Tables\PagedOrder.sql" />
-    <Build Include="Procedures\GetPagedOrder.sql" />
-    <Build Include="Procedures\SetPagedOrder.sql" />
-    <Build Include="Procedures\GetMaxTradeId.sql" />
-    <Build Include="Procedures\GetMinTransientOrderId.sql" />
-    <Build Include="Procedures\GetTrades.sql" />
-    <Build Include="Procedures\GetTransientOrdersBySide.sql" />
-    <Build Include="Procedures\GetNonSignificantTransientOrdersBySide.sql" />
-    <Build Include="Procedures\SetOrders.sql" />
-    <Build Include="Types\OrderTableParameter.sql" />
-    <Build Include="Procedures\CancelOrder.sql" />
-    <Build Include="Types\TradeTableParameter.sql" />
-    <Build Include="Procedures\SetTrades.sql" />
-    <Build Include="Tables\PagedTrade.sql" />
-    <Build Include="Procedures\SetPagedTrade.sql" />
-    <Build Include="Procedures\GetPagedTrade.sql" />
-    <Build Include="Tables\Balance.sql" />
-    <Build Include="Procedures\SetBalances.sql" />
-    <Build Include="Procedures\GetBalance.sql" />
-    <Build Include="Types\BalanceTableParameter.sql" />
-    <Build Include="Procedures\GetOrder.sql" />
-    <Build Include="Procedures\GetLatestOrderBySide.sql" />
-    <Build Include="Tables\Symbol.sql" />
-    <Build Include="Procedures\GetOrAddSymbol.sql" />
-    <Build Include="Sequences\SymbolSequence.sql" />
-    <Build Include="Sequences\OrderSequence.sql" />
-    <Build Include="Tables\Ticker.sql" />
-    <Build Include="Types\TickerTableParameter.sql" />
-    <Build Include="Procedures\SetTickers.sql" />
-    <Build Include="Procedures\GetTicker.sql" />
-    <Build Include="Procedures\GetSignificantCompletedOrders.sql" />
-    <Build Include="Tables\Kline.sql" />
-    <Build Include="Types\KlineTableParameter.sql" />
-    <Build Include="Procedures\SetKlines.sql" />
-    <Build Include="Procedures\GetKlines.sql" />
+    <Build Include="Tables\OrleansQuery.sql" />
+    <Build Include="Tables\OrleansMembershipVersionTable.sql" />
+    <Build Include="Tables\OrleansMembershipTable.sql" />
+    <Build Include="Tables\OrleansStorage.sql" />
+    <None Include="Scripts\Script.PostDeployment.Persistence.OrleansQuery.sql" />
+    <Build Include="Tables\OrleansRemindersTable.sql" />
+    <None Include="Scripts\Script.PostDeployment.Reminders.OrleansQuery.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Scripts\Script.PostDeployment.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Scripts\Script.PostDeployment.Clustering.OrleansQuery.sql" />
+    <None Include="Trader.Orleans.Database.LocalDB.publish.xml" />
   </ItemGroup>
 </Project>

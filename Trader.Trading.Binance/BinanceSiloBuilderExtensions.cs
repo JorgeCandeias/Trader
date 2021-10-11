@@ -25,7 +25,6 @@ namespace Orleans.Hosting
 
             // add the kitchen sink
             builder
-
                 .ConfigureApplicationParts(manager => manager.AddApplicationPart(typeof(BinanceSiloBuilderExtensions).Assembly).WithReferences())
                 .ConfigureServices(services =>
                 {

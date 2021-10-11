@@ -1,7 +1,9 @@
-﻿using System;
+﻿using Orleans.Concurrency;
+using System;
 
 namespace Outcompute.Trader.Models
 {
+    [Immutable]
     public record MiniTicker(
         string Symbol,
         DateTime EventTime,

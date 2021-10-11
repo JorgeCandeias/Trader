@@ -9,7 +9,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 {
     public static class ITickerProviderAlgoContextExtensions
     {
-        public static Task<MiniTicker?> TryGetTickerAsync(this IAlgoContext context, string symbol, CancellationToken cancellationToken = default)
+        public static ValueTask<MiniTicker?> TryGetTickerAsync(this IAlgoContext context, string symbol, CancellationToken cancellationToken = default)
         {
             if (context is null) throw new ArgumentNullException(nameof(context));
 

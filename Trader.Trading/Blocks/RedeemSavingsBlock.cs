@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
 using System;
@@ -6,34 +7,34 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Blocks
+namespace Outcompute.Trader.Trading.Algorithms
 {
-    internal class RedeemSavingsBlock : IRedeemSavingsBlock
+    public static class RedeemSavingsBlock
     {
-        private readonly ILogger _logger;
-        private readonly ISavingsProvider _savingsProvider;
+        private static string TypeName => nameof(RedeemSavingsBlock);
 
-        public RedeemSavingsBlock(ILogger<RedeemSavingsBlock> logger, ISavingsProvider savingsProvider)
+        public static ValueTask<bool> TryRedeemSavingsAsync(this IAlgoContext context, string asset, decimal amount, CancellationToken cancellationToken = default)
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _savingsProvider = savingsProvider ?? throw new ArgumentNullException(nameof(savingsProvider));
+            if (context is null) throw new ArgumentNullException(nameof(context));
+            if (asset is null) throw new ArgumentNullException(nameof(context));
+
+            return TryRedeemSavingsInnerAsync(context, asset, amount, cancellationToken);
         }
 
-        private static string Type => nameof(RedeemSavingsBlock);
-
-        public async Task<bool> GoAsync(string asset, decimal amount, CancellationToken cancellationToken = default)
+        private static async ValueTask<bool> TryRedeemSavingsInnerAsync(IAlgoContext context, string asset, decimal amount, CancellationToken cancellationToken)
         {
+            var logger = context.ServiceProvider.GetRequiredService<ILogger>();
+            var savingsProvider = context.ServiceProvider.GetRequiredService<ISavingsProvider>();
+
             // get the current savings for this asset
-            var positions = await _savingsProvider
-                .GetFlexibleProductPositionAsync(asset, cancellationToken)
-                .ConfigureAwait(false);
+            var positions = await savingsProvider.GetFlexibleProductPositionAsync(asset, cancellationToken).ConfigureAwait(false);
 
             // stop if there are no savings
             if (positions.Count is 0)
             {
-                _logger.LogError(
+                logger.LogError(
                     "{Type} cannot redeem the necessary amount of {Quantity} {Asset} because there are no savings for this asset",
-                    Type, amount, asset);
+                    TypeName, amount, asset);
 
                 return false;
             }
@@ -44,7 +45,7 @@ namespace Outcompute.Trader.Trading.Blocks
             // check if we can redeem at all - we cant redeem during maintenance windows etc
             if (!savings.CanRedeem)
             {
-                _logger.LogWarning("{Type} cannot redeem savings at this time because redeeming is disallowed", Type);
+                logger.LogWarning("{Type} cannot redeem savings at this time because redeeming is disallowed", TypeName);
 
                 return false;
             }
@@ -52,9 +53,9 @@ namespace Outcompute.Trader.Trading.Blocks
             // check if there is a redemption in progress
             if (savings.RedeemingAmount > 0)
             {
-                _logger.LogWarning(
+                logger.LogWarning(
                     "{Type} will not redeem savings now because a redemption of {RedeemingAmount} {Asset} is in progress",
-                    Type, savings.RedeemingAmount, asset);
+                    TypeName, savings.RedeemingAmount, asset);
 
                 return false;
             }
@@ -62,23 +63,23 @@ namespace Outcompute.Trader.Trading.Blocks
             // check if there is enough for redemption
             if (savings.FreeAmount < amount)
             {
-                _logger.LogError(
+                logger.LogError(
                     "{Type} cannot redeem the necessary {Quantity} {Asset} from savings because they only contain {FreeAmount} {Asset}",
-                    Type, amount, asset, savings.FreeAmount, asset);
+                    TypeName, amount, asset, savings.FreeAmount, asset);
 
                 return false;
             }
 
-            var quota = await _savingsProvider
+            var quota = await savingsProvider
                 .TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(savings.Asset, savings.ProductId, FlexibleProductRedemptionType.Fast, cancellationToken)
                 .ConfigureAwait(false);
 
             // stop if there is no savings product
             if (quota is null)
             {
-                _logger.LogError(
+                logger.LogError(
                     "{Type} cannot find a savings product for asset {Asset}",
-                    Type, asset);
+                    TypeName, asset);
 
                 return false;
             }
@@ -86,9 +87,9 @@ namespace Outcompute.Trader.Trading.Blocks
             // stop if we would exceed the daily quota outright
             if (quota.LeftQuota < amount)
             {
-                _logger.LogError(
+                logger.LogError(
                     "{Type} cannot redeem the necessary amount of {Quantity} {Asset} because it exceeds the available quota of {Quota} {Asset}",
-                    Type, amount, asset, quota.LeftQuota, asset);
+                    TypeName, amount, asset, quota.LeftQuota, asset);
 
                 return false;
             }
@@ -98,19 +99,19 @@ namespace Outcompute.Trader.Trading.Blocks
             {
                 var bumped = Math.Min(quota.MinRedemptionAmount, savings.FreeAmount);
 
-                _logger.LogInformation(
+                logger.LogInformation(
                     "{Type} bumped the necessary quantity of {Necessary} {Asset} to {Bumped} {Asset} to enable redemption",
-                    Type, amount, asset, bumped, asset);
+                    TypeName, amount, asset, bumped, asset);
 
                 amount = bumped;
             }
 
             // if we got here then we can attempt to redeem
-            _logger.LogInformation(
+            logger.LogInformation(
                 "{Type} attempting to redeem {Quantity} {Asset} from savings...",
-                Type, amount, asset);
+                TypeName, amount, asset);
 
-            await _savingsProvider
+            await savingsProvider
                 .RedeemFlexibleProductAsync(savings.Asset, savings.ProductId, amount, FlexibleProductRedemptionType.Fast, cancellationToken)
                 .ConfigureAwait(false);
 

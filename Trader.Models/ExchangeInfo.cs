@@ -51,7 +51,7 @@ namespace Outcompute.Trader.Models
         bool IsQuoteOrderQuantityMarketAllowed,
         bool IsSpotTradingAllowed,
         bool IsMarginTradingAllowed,
-        ImmutableList<SymbolFilter> Filters,
+        ImmutableList<SymbolFilter> Filters, // todo: refactor the filters into sub-properties so the algos don't have to iterate this collection
         ImmutableList<Permission> Permissions);
 
     [Immutable]

@@ -1,7 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Outcompute.Trader.Core.Time;
-using Outcompute.Trader.Data;
 using Outcompute.Trader.Trading.Algorithms.Exceptions;
 using System;
 using System.Threading;
@@ -14,20 +12,14 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         private readonly IAlgoContext _context;
         private readonly IOptionsMonitor<ValueAveragingAlgoOptions> _options;
         private readonly ILogger _logger;
-        private readonly ITradingRepository _repository;
-        private readonly ITradingService _trader;
         private readonly ISignificantOrderResolver _significantOrderResolver;
-        private readonly ISystemClock _clock;
 
-        public ValueAveragingAlgo(IAlgoContext context, IOptionsMonitor<ValueAveragingAlgoOptions> options, ILogger<ValueAveragingAlgoOptions> logger, ITradingRepository repository, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ISystemClock clock)
+        public ValueAveragingAlgo(IAlgoContext context, IOptionsMonitor<ValueAveragingAlgoOptions> options, ILogger<ValueAveragingAlgoOptions> logger, ISignificantOrderResolver significantOrderResolver)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _options = options ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-            _trader = trader ?? throw new ArgumentNullException(nameof(trader));
             _significantOrderResolver = significantOrderResolver ?? throw new ArgumentNullException(nameof(significantOrderResolver));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
         private static string TypeName => nameof(ValueAveragingAlgo);

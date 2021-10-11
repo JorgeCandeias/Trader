@@ -1,36 +1,38 @@
-﻿using Outcompute.Trader.Core.Time;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Blocks
+namespace Outcompute.Trader.Trading.Algorithms
 {
-    internal class ClearOpenBuyOrdersBlock : IClearOpenBuyOrdersBlock
+    public static class ClearOpenBuyOrdersBlock
     {
-        private readonly ITradingRepository _repository;
-        private readonly ITradingService _trader;
-        private readonly ISystemClock _clock;
-
-        public ClearOpenBuyOrdersBlock(ITradingRepository repository, ITradingService trader, ISystemClock clock)
+        public static ValueTask ClearOpenBuyOrdersAsync(this IAlgoContext context, Symbol symbol, CancellationToken cancellationToken = default)
         {
-            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-            _trader = trader ?? throw new ArgumentNullException(nameof(trader));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            if (context is null) throw new ArgumentNullException(nameof(context));
+            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+
+            return ClearOpenBuyOrdersInnerAsync(context, symbol, cancellationToken);
         }
 
-        public async ValueTask GoAsync(Symbol symbol, CancellationToken cancellationToken = default)
+        private static async ValueTask ClearOpenBuyOrdersInnerAsync(IAlgoContext context, Symbol symbol, CancellationToken cancellationToken)
         {
-            var orders = await _repository.GetTransientOrdersBySideAsync(symbol.Name, OrderSide.Buy, cancellationToken).ConfigureAwait(false);
+            var repository = context.ServiceProvider.GetRequiredService<ITradingRepository>();
+            var trader = context.ServiceProvider.GetRequiredService<ITradingService>();
+            var clock = context.ServiceProvider.GetRequiredService<ISystemClock>();
+
+            var orders = await repository.GetTransientOrdersBySideAsync(symbol.Name, OrderSide.Buy, cancellationToken).ConfigureAwait(false);
 
             foreach (var order in orders)
             {
-                var result = await _trader
-                    .CancelOrderAsync(new CancelStandardOrder(symbol.Name, order.OrderId, null, null, null, _clock.UtcNow), cancellationToken)
+                var result = await trader
+                    .CancelOrderAsync(new CancelStandardOrder(symbol.Name, order.OrderId, null, null, null, clock.UtcNow), cancellationToken)
                     .ConfigureAwait(false);
 
-                await _repository
+                await repository
                     .SetOrderAsync(result, cancellationToken)
                     .ConfigureAwait(false);
             }

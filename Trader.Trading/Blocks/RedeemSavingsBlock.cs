@@ -23,7 +23,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         private static async ValueTask<bool> TryRedeemSavingsInnerAsync(IAlgoContext context, string asset, decimal amount, CancellationToken cancellationToken)
         {
-            var logger = context.ServiceProvider.GetRequiredService<ILogger>();
+            var logger = context.ServiceProvider.GetRequiredService<ILogger<IAlgoContext>>();
             var savingsProvider = context.ServiceProvider.GetRequiredService<ISavingsProvider>();
 
             // get the current savings for this asset

@@ -27,7 +27,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         private static async ValueTask<bool> SetTrackingBuyInnerAsync(IAlgoContext context, Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, CancellationToken cancellationToken)
         {
-            var logger = context.ServiceProvider.GetRequiredService<ILogger>();
+            var logger = context.ServiceProvider.GetRequiredService<ILogger<IAlgoContext>>();
             var tickerProvider = context.ServiceProvider.GetRequiredService<ITickerProvider>();
             var clock = context.ServiceProvider.GetRequiredService<ISystemClock>();
             var klineProvider = context.ServiceProvider.GetRequiredService<IKlineProvider>();

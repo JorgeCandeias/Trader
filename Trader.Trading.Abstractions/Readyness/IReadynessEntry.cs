@@ -6,6 +6,6 @@ namespace Outcompute.Trader.Trading.Readyness
 {
     public interface IReadynessEntry
     {
-        Task<bool> IsReadyAsync(IServiceProvider provider, CancellationToken cancellationToken = default);
+        ValueTask<bool> IsReadyAsync(IServiceProvider provider, CancellationToken cancellationToken = default);
     }
 }

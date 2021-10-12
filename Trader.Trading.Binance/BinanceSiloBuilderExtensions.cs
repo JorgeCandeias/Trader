@@ -104,8 +104,8 @@ namespace Orleans.Hosting
                         .AddGrainWatchdogEntry(factory => factory.GetBinanceUserDataGrain())
 
                         // add readyness entries
-                        .AddReadynessEntry(sp => sp.GetRequiredService<IGrainFactory>().GetBinanceUserDataGrain().IsReadyAsync())
-                        .AddReadynessEntry(sp => sp.GetRequiredService<IGrainFactory>().GetBinanceMarketDataGrain().IsReadyAsync());
+                        .AddReadynessEntry(sp => sp.GetRequiredService<IGrainFactory>().GetBinanceUserDataReadynessGrain().IsReadyAsync())
+                        .AddReadynessEntry(sp => sp.GetRequiredService<IGrainFactory>().GetBinanceMarketDataReadynessGrain().IsReadyAsync());
 
                     // add object pool
                     services.TryAddSingleton<ObjectPoolProvider, DefaultObjectPoolProvider>();

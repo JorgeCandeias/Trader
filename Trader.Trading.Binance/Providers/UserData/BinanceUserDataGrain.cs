@@ -114,7 +114,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
             }
         }
 
-        public Task<bool> IsReadyAsync() => Task.FromResult(_ready);
+        public ValueTask<bool> IsReadyAsync() => new(_ready);
 
         private void BumpPingTime()
         {

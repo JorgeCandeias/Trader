@@ -408,7 +408,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 
         #region Kline Long Polling
 
-        public void SetKline(Kline kline)
+        private void SetKline(Kline kline)
         {
             // keep the kline if brand new or newer than existing one
             var candidate = (kline, false);

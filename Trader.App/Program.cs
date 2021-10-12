@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
+using Orleans.Configuration;
 using Orleans.Hosting;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
@@ -50,7 +51,22 @@ namespace Outcompute.Trader.App
                 })
                 .UseOrleans((context, orleans) =>
                 {
-                    orleans.UseLocalhostClustering();
+                    orleans.ConfigureEndpoints(11111, 30000);
+                    orleans.Configure<ClusterOptions>(options =>
+                    {
+                        options.ClusterId = nameof(Trader);
+                        options.ServiceId = nameof(Trader);
+                    });
+                    orleans.UseAdoNetClustering(options =>
+                    {
+                        options.Invariant = "Microsoft.Data.SqlClient";
+                        options.ConnectionString = context.Configuration.GetConnectionString("Trader");
+                    });
+                    orleans.UseAdoNetReminderService(options =>
+                    {
+                        options.Invariant = "Microsoft.Data.SqlClient";
+                        options.ConnectionString = context.Configuration.GetConnectionString("Trader");
+                    });
                     orleans.AddAdoNetGrainStorageAsDefault(options =>
                     {
                         options.Invariant = "Microsoft.Data.SqlClient";
@@ -68,7 +84,6 @@ namespace Outcompute.Trader.App
                             {
                                 context.Configuration.Bind("Binance", options);
 
-                                // temporary brute force configuration - to refactor into dynamic dependency graph once orleans is brought in
                                 options.UserDataStreamSymbols.UnionWith(context
                                     .Configuration
                                     .GetSection("Trader:Algos")

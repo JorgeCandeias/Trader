@@ -50,7 +50,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             public static MapComparer Instance { get; } = new MapComparer();
         }
 
-        public async Task<SignificantResult> ResolveAsync(Symbol symbol, CancellationToken cancellationToken = default)
+        public async ValueTask<SignificantResult> ResolveAsync(Symbol symbol, CancellationToken cancellationToken = default)
         {
             // todo: request the Symbol object instead of the separate parameters
 

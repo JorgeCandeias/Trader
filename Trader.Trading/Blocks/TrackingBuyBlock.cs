@@ -46,29 +46,6 @@ namespace Outcompute.Trader.Trading.Algorithms
                 return false;
             }
 
-            // calculate safety averages
-            var end = clock.UtcNow;
-            var start = end.Subtract(TimeSpan.FromDays(100));
-            var klines = await klineProvider.GetKlinesAsync(symbol.Name, KlineInterval.Days1, start, end, cancellationToken).ConfigureAwait(false);
-            var sma7 = klines.LastSimpleMovingAverage(x => x.ClosePrice, 7);
-            var sma25 = klines.LastSimpleMovingAverage(x => x.ClosePrice, 25);
-            var sma99 = klines.LastSimpleMovingAverage(x => x.ClosePrice, 99);
-
-            logger.LogInformation(
-                "{Type} {Symbol} using indicators: (SMA7 = {SMA7}, SMA25 = {SMA25}, SMA99 = {SMA99})",
-                TypeName, symbol.Name, sma7, sma25, sma99);
-
-            if (ticker.ClosePrice > sma7 || ticker.ClosePrice > sma25 || ticker.ClosePrice > sma99)
-            {
-                logger.LogInformation(
-                    "{Type} {Symbol} detected ticker is above the safety averages of ({SMA5}, {SMA25}, {SMA99}) and will not place a buy order",
-                    TypeName, symbol.Name, sma7, sma25, sma99);
-
-                await context.ClearOpenBuyOrdersAsync(symbol, cancellationToken).ConfigureAwait(false);
-
-                return false;
-            }
-
             // sync data from the exchange
             var orders = await context.GetOpenOrdersAsync(symbol, OrderSide.Buy, cancellationToken).ConfigureAwait(false);
 

@@ -49,6 +49,7 @@ namespace Outcompute.Trader.Trading.Binance
         [Range(typeof(TimeSpan), "0.00:00:01.000", "0.01:00:00.000")]
         public TimeSpan MarketDataStreamKeepAliveInterval { get; set; } = TimeSpan.FromMinutes(1);
 
+        [Obsolete("Remove")]
         public ISet<string> UserDataStreamSymbols { get; } = new HashSet<string>(StringComparer.Ordinal);
 
         [Required]

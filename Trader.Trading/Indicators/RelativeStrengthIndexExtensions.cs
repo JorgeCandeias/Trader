@@ -2,6 +2,72 @@
 {
     public static class RelativeStrengthIndexExtensions
     {
+        /// <inheritdoc cref="LastRelativeStrengthIndex{T}(IEnumerable{T}, Func{T, decimal}, int)"/>
+        public static decimal LastRelativeStrengthIndex(this IEnumerable<decimal> items, int periods)
+        {
+            return items.LastRelativeStrengthIndex(x => x, periods);
+        }
+
+        /// <summary>
+        /// Returns the RSI for the last position in the specified collection.
+        /// Throws <see cref="InvalidOperationException"/> if the collection is empty.
+        /// </summary>
+        public static decimal LastRelativeStrengthIndex<T>(this IEnumerable<T> items, Func<T, decimal> accessor, int periods)
+        {
+            if (items is null) throw new ArgumentNullException(nameof(items));
+            if (accessor is null) throw new ArgumentNullException(nameof(accessor));
+            if (periods < 1) throw new ArgumentOutOfRangeException(nameof(periods));
+
+            decimal? last = null;
+
+            foreach (var value in items.RelativeStrengthIndex(accessor, periods))
+            {
+                last = value;
+            }
+
+            if (last.HasValue)
+            {
+                return last.Value;
+            }
+            else
+            {
+                throw new InvalidOperationException();
+            }
+        }
+
+        /// <inheritdoc cref="LastRelativeStrengthIndexOrDefault{T}(IEnumerable{T}, Func{T, decimal}, int, decimal)"/>
+        public static decimal LastRelativeStrengthIndexOrDefault(this IEnumerable<decimal> items, int periods, decimal defaultValue = 50)
+        {
+            return items.LastRelativeStrengthIndexOrDefault(x => x, periods, defaultValue);
+        }
+
+        /// <summary>
+        /// Returns the RSI for the last position in the specified collection.
+        /// Returns <paramref name="defaultValue"/> if the collection is empty.
+        /// </summary>
+        public static decimal LastRelativeStrengthIndexOrDefault<T>(this IEnumerable<T> items, Func<T, decimal> accessor, int periods, decimal defaultValue = 50)
+        {
+            if (items is null) throw new ArgumentNullException(nameof(items));
+            if (accessor is null) throw new ArgumentNullException(nameof(accessor));
+            if (periods < 1) throw new ArgumentOutOfRangeException(nameof(periods));
+
+            decimal? last = null;
+
+            foreach (var value in items.RelativeStrengthIndex(accessor, periods))
+            {
+                last = value;
+            }
+
+            if (last.HasValue)
+            {
+                return last.Value;
+            }
+            else
+            {
+                return defaultValue;
+            }
+        }
+
         /// <inheritdoc cref="RelativeStrengthIndexInner{T}(IEnumerable{T}, Func{T, decimal}, int)"/>
         public static IEnumerable<decimal> RelativeStrengthIndex(this IEnumerable<decimal> items, int periods)
         {

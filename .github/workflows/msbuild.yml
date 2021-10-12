@@ -54,15 +54,21 @@ jobs:
         New-Item -Path .\.sonar\scanner -ItemType Directory
         dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
         
-    - name: Remove database project
-      run: dotnet sln remove Trader.Data.Sql.Database/Trader.Data.Sql.Database.sqlproj
+    - name: Remove Database Projects
+      run: |
+        dotnet sln remove Trader.Data.Sql.Database/Trader.Data.Sql.Database.sqlproj
+        dotnet sln remove Trader.Orleans.Database/Trader.Orleans.Database.sqlproj
       
-    - name: Build Database Project
-      run: msbuild /m /t:Build /p:Configuration=${{ env.BUILD_CONFIGURATION }} Trader.Data.Sql.Database/Trader.Data.Sql.Database.sqlproj
+    - name: Build Database Projects
+      run: |
+        msbuild /m /t:Build /p:Configuration=${{ env.BUILD_CONFIGURATION }} Trader.Data.Sql.Database/Trader.Data.Sql.Database.sqlproj
+        msbuild /m /t:Build /p:Configuration=${{ env.BUILD_CONFIGURATION }} Trader.Orleans.Database/Trader.Orleans.Database.sqlproj
       
-    - name: Deploy Database Project
+    - name: Deploy Database Projects
       working-directory: Trader.Data.Sql.Database\bin\${{ env.BUILD_CONFIGURATION }}
-      run: sqlpackage /Action:Publish /Profile:Trader.Data.Sql.Database.LocalDB.publish.xml /SourceFile:Trader.Data.Sql.Database.dacpac /TargetDatabaseName:TraderTest
+      run: |
+        sqlpackage /Action:Publish /Profile:Trader.Data.Sql.Database.LocalDB.publish.xml /SourceFile:Trader.Data.Sql.Database.dacpac /TargetDatabaseName:TraderTest
+        sqlpackage /Action:Publish /Profile:Trader.Orleans.Database.LocalDB.publish.xml /SourceFile:Trader.Orleans.Database.dacpac /TargetDatabaseName:TraderTest
       
     - name: Restore dependencies
       run: dotnet restore

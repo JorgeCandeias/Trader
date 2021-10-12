@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Orleans;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
@@ -10,7 +9,6 @@ using System;
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -21,7 +19,6 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 {
     internal class BinanceMarketDataGrain : Grain, IBinanceMarketDataGrain
     {
-        private readonly BinanceOptions _options;
         private readonly ILogger _logger;
         private readonly IMarketDataStreamClientFactory _factory;
         private readonly ITradingRepository _repository;
@@ -32,9 +29,8 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         private readonly HashSet<string> _tickerSymbols;
         private readonly Dictionary<(string Symbol, KlineInterval Interval), TimeSpan> _klineWindows;
 
-        public BinanceMarketDataGrain(IOptions<BinanceOptions> options, ILogger<BinanceMarketDataGrain> logger, IMarketDataStreamClientFactory factory, ITradingRepository repository, ITradingService trader, IMapper mapper, ISystemClock clock, IAlgoDependencyInfo dependencies)
+        public BinanceMarketDataGrain(ILogger<BinanceMarketDataGrain> logger, IMarketDataStreamClientFactory factory, ITradingRepository repository, ITradingService trader, IMapper mapper, ISystemClock clock, IAlgoDependencyInfo dependencies)
         {
-            _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _factory = factory ?? throw new ArgumentNullException(nameof(factory));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
@@ -67,12 +63,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         /// <summary>
         /// Conflates the incoming tickers from the background stream so the repository has a chance to keep up.
         /// </summary>
-        private readonly ConcurrentDictionary<string, (MiniTicker Ticker, Guid Version, bool Saved)> _tickers = new();
-
-        /// <summary>
-        /// Tracks completion requests for inbound reactive polls.
-        /// </summary>
-        private readonly ConcurrentDictionary<string, TaskCompletionSource<(MiniTicker?, Guid)>> _tickerCompletions = new();
+        private readonly ConcurrentDictionary<string, (MiniTicker Ticker, bool Saved)> _tickers = new();
 
         /// <summary>
         /// Conflates the incoming klines from the background stream so the repository has a chance to keep up.
@@ -86,17 +77,23 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 
         public override Task OnActivateAsync()
         {
-            RegisterTimer(_ => TickEnsureWorkAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
-
-            if (_tickerSymbols.Count > 0)
+            // if there are ticker or kline dependencies then ensure we keep streaming them
+            if (_tickerSymbols.Count > 0 || _klineWindows.Count > 0)
             {
-                RegisterTimer(_ => TickSaveTickersAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+                RegisterTimer(TickEnsureStreamAsync, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
             }
 
+            // if there are tickers to manage then ensure we keep saving them to the repository
+            if (_tickerSymbols.Count > 0)
+            {
+                RegisterTimer(TickSaveTickersAsync, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+            }
+
+            // if there are klines to manage then ensure we keep saving them to the repository
             if (_klineWindows.Count > 0)
             {
-                RegisterTimer(_ => TickSaveKlinesAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
-                RegisterTimer(_ => TickClearKlinesAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+                RegisterTimer(TickSaveKlinesAsync, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+                RegisterTimer(TickClearKlinesAsync, null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
             }
 
             return base.OnActivateAsync();
@@ -112,7 +109,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         /// <summary>
         /// Monitors the background streaming work task and ensures it remains active upon faulting.
         /// </summary>
-        private async Task TickEnsureWorkAsync()
+        private async Task TickEnsureStreamAsync(object _)
         {
             // avoid starting streaming work upon shutdown
             if (_cancellation.IsCancellationRequested)
@@ -123,7 +120,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             // schedule streaming work if nothing is running
             if (_work is null)
             {
-                _work = Task.Run(ExecuteLongAsync, _cancellation.Token);
+                _work = Task.Run(ExecuteStreamAsync, _cancellation.Token);
                 return;
             }
 
@@ -142,7 +139,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         }
 
         [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "N/A")]
-        private async Task ExecuteLongAsync()
+        private async Task ExecuteStreamAsync()
         {
             try
             {
@@ -278,44 +275,50 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         /// <summary>
         /// Saves conflated tickers to the repository.
         /// </summary>
-        private async Task TickSaveTickersAsync()
+        private async Task TickSaveTickersAsync(object _)
         {
-            var tickerBuffer = ArrayPool<MiniTicker>.Shared.Rent(_tickerSymbols.Count);
-            var versionBuffer = ArrayPool<Guid>.Shared.Rent(_tickerSymbols.Count);
+            var buffer = ArrayPool<MiniTicker>.Shared.Rent(_tickerSymbols.Count);
             var count = 0;
 
             // stage the unsaved tickers from the conflation
             foreach (var item in _tickers.Select(x => x.Value))
             {
-                tickerBuffer[count] = item.Ticker;
-                versionBuffer[count] = item.Version;
-                count++;
-            }
-
-            // save all tickers in one go
-            if (count > 0)
-            {
-                await _repository.SetTickersAsync(tickerBuffer.Take(count), _cancellation.Token);
-
-                // mark unchanged saved tickers in the concurrent conflation to avoid saving them again
-                for (var i = 0; i < count; i++)
+                if (count >= buffer.Length)
                 {
-                    var ticker = tickerBuffer[i];
-                    var version = versionBuffer[i];
+                    break;
+                }
 
-                    // the concurrent dictionary may have changed in the background so we must avoid marking newer data as saved
-                    _tickers.TryUpdate(ticker.Symbol, (ticker, version, true), (ticker, version, false));
+                if (!item.Saved)
+                {
+                    buffer[count++] = item.Ticker;
                 }
             }
 
-            ArrayPool<MiniTicker>.Shared.Return(tickerBuffer);
-            ArrayPool<Guid>.Shared.Return(versionBuffer);
+            // break if there is nothing to save
+            if (count <= 0)
+            {
+                return;
+            }
+
+            // save all tickers in one go
+            await _repository.SetTickersAsync(buffer.Take(count), _cancellation.Token);
+
+            // mark unchanged saved tickers in the concurrent conflation to avoid saving them again
+            for (var i = 0; i < count; i++)
+            {
+                var ticker = buffer[i];
+
+                // the concurrent dictionary may have changed in the background so we must avoid marking newer data as saved
+                _tickers.TryUpdate(ticker.Symbol, (ticker, true), (ticker, false));
+            }
+
+            ArrayPool<MiniTicker>.Shared.Return(buffer);
         }
 
         /// <summary>
         /// Saves conflated klines to the repository.
         /// </summary>
-        private async Task TickSaveKlinesAsync()
+        private async Task TickSaveKlinesAsync(object _)
         {
             var buffer = ArrayPool<Kline>.Shared.Rent(_klines.Count);
             var count = 0;
@@ -354,7 +357,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         /// <summary>
         /// Clears old klines from memory.
         /// </summary>
-        private Task TickClearKlinesAsync()
+        private Task TickClearKlinesAsync(object _)
         {
             var buffer = ArrayPool<Kline>.Shared.Rent(_klines.Count);
             var count = 0;
@@ -388,60 +391,44 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 
         public Task<bool> IsReadyAsync() => Task.FromResult(_ready);
 
-        #region Kline Long Polling
+        public ValueTask<MiniTicker?> TryGetTickerAsync(string symbol)
+        {
+            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
+            if (_tickers.TryGetValue(symbol, out var value))
+            {
+                return ValueTask.FromResult<MiniTicker?>(value.Ticker);
+            }
+            else
+            {
+                return ValueTask.FromResult<MiniTicker?>(null);
+            }
+        }
+
+        /// <summary>
+        /// Adds the specified kline to the cache.
+        /// </summary>
         private void SetKline(Kline kline)
         {
             // keep the kline if brand new or newer than existing one
-            var candidate = (kline, false);
             _klines.AddOrUpdate(
                 (kline.Symbol, kline.Interval, kline.OpenTime),
                 (key, arg) => arg,
                 (key, current, arg) => arg.kline.EventTime > current.Kline.EventTime ? arg : current,
-                candidate);
+                (kline, false));
         }
 
-        #endregion Kline Long Polling
-
-        #region Ticker Long Polling
-
+        /// <summary>
+        /// Adds the specified ticker to the cache.
+        /// </summary>
         private void SetTicker(MiniTicker ticker)
         {
-            // compose the dictionary candidate
-            var version = Guid.NewGuid();
-            var candidate = (ticker, version, false);
-
             // keep the ticker if brand new or newer than existing one
-            var result = _tickers.AddOrUpdate(
+            _tickers.AddOrUpdate(
                 ticker.Symbol,
                 (key, arg) => arg,
                 (key, current, arg) => arg.ticker.EventTime > current.Ticker.EventTime ? arg : current,
-                candidate);
-
-            // publish the ticker to active long polling clients
-            if (candidate == result && _tickerCompletions.Remove(ticker.Symbol, out var completion))
-            {
-                completion.SetResult((ticker, version));
-            }
+                (ticker, false));
         }
-
-        public ValueTask<(MiniTicker?, Guid)> LongPollTickerAsync(string symbol, Guid version)
-        {
-            // ensure a promise for the next version exists before checking the current version
-            // this avoids concurrency issues with the ticker stream which could cause the long poll to miss updates
-            var completion = _tickerCompletions.GetOrAdd(symbol, key => new TaskCompletionSource<(MiniTicker?, Guid)>(TaskCreationOptions.RunContinuationsAsynchronously));
-
-            // check the current version
-            if (_tickers.TryGetValue(symbol, out var item) && item.Version != version)
-            {
-                // the current item version is different from the client version so return the new version now
-                return new ValueTask<(MiniTicker?, Guid)>((item.Ticker, item.Version));
-            }
-
-            // let the client wait for the new version to resolve or timeout
-            return new ValueTask<(MiniTicker?, Guid)>(completion.Task.WithDefaultOnTimeout((null, Guid.Empty), _options.ReactivePollingDelay));
-        }
-
-        #endregion Ticker Long Polling
     }
 }

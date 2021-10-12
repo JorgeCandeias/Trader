@@ -66,5 +66,14 @@ namespace Outcompute.Trader.Trading.Binance
         [Required]
         [Range(typeof(TimeSpan), "0.00:00:00.001", "1.00:00:00.000")]
         public TimeSpan ReactivePollingDelay { get; set; } = TimeSpan.FromSeconds(10);
+
+        /// <summary>
+        /// The maximum delay for ticker information to be broadcast across silos that host algos.
+        /// Shorter delays will provide more timely data but will increase the load on the streaming grain and the silo that hosts it.
+        /// Defaults to one second.
+        /// </summary>
+        [Required]
+        [Range(typeof(TimeSpan), "0.00:00:00.001", "1.00:00:00.000")]
+        public TimeSpan TickerBroadcastDelay { get; set; } = TimeSpan.FromSeconds(1);
     }
 }

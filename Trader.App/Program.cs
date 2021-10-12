@@ -45,11 +45,6 @@ namespace Outcompute.Trader.App
                         .Filter.ByExcluding(x => x.Properties.TryGetValue("SourceContext", out var property) && property is ScalarValue scalar && scalar.Value.Equals("System.Net.Http.HttpClient.BinanceApiClient.LogicalHandler") && x.Level < LogEventLevel.Warning)
                         .Filter.ByExcluding(x => x.Properties.TryGetValue("SourceContext", out var property) && property is ScalarValue scalar && scalar.Value.Equals("Orleans.Runtime.SiloControl") && x.Level < LogEventLevel.Warning)
                         .Filter.ByExcluding(x => x.Properties.TryGetValue("SourceContext", out var property) && property is ScalarValue scalar && scalar.Value.Equals("Orleans.Runtime.Management.ManagementGrain") && x.Level < LogEventLevel.Warning)
-                        .Filter.ByExcluding(x => x.Properties.TryGetValue("SourceContext", out var property)
-                            && property is ScalarValue scalar
-                            && scalar.Value.Equals("Orleans.Runtime.InsideRuntimeClient")
-                            && x.Level == LogEventLevel.Information
-                            && x.MessageTemplate.Text.StartsWith("Received status update for pending request", StringComparison.Ordinal))
                         .WriteTo.Console()
                         .CreateLogger(), true);
                 })

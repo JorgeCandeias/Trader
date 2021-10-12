@@ -11,8 +11,8 @@
     <OutputType>Database</OutputType>
     <RootPath>
     </RootPath>
-    <RootNamespace>Outcompute.Trader.Orleans.Database</RootNamespace>
-    <AssemblyName>Outcompute.Trader.Orleans.Database</AssemblyName>
+    <RootNamespace>Trader.Orleans.Database</RootNamespace>
+    <AssemblyName>Trader.Orleans.Database</AssemblyName>
     <ModelCollation>1033, CI</ModelCollation>
     <DefaultFileStructure>BySchemaAndSchemaType</DefaultFileStructure>
     <DeployToDatabase>True</DeployToDatabase>

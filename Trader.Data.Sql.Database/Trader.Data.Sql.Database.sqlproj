@@ -10,8 +10,8 @@
     <DSP>Microsoft.Data.Tools.Schema.Sql.Sql130DatabaseSchemaProvider</DSP>
     <OutputType>Database</OutputType>
     <RootPath />
-    <RootNamespace>Outcompute.Trader.Data.Sql.Database</RootNamespace>
-    <AssemblyName>Outcompute.Trader.Data.Sql.Database</AssemblyName>
+    <RootNamespace>Trader.Data.Sql.Database</RootNamespace>
+    <AssemblyName>Trader.Data.Sql.Database</AssemblyName>
     <ModelCollation>1033, CI</ModelCollation>
     <DefaultFileStructure>BySchemaAndSchemaType</DefaultFileStructure>
     <DeployToDatabase>True</DeployToDatabase>

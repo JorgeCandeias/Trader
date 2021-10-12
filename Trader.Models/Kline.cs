@@ -1,8 +1,10 @@
-﻿using System;
+﻿using Orleans.Concurrency;
+using System;
 using System.Collections.Generic;
 
 namespace Outcompute.Trader.Models
 {
+    [Immutable]
     public record Kline(
         string Symbol,
         KlineInterval Interval,

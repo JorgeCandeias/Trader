@@ -6,7 +6,6 @@ using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
-using Polly;
 using System;
 using System.Buffers;
 using System.Collections.Concurrent;
@@ -31,7 +30,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         private readonly ISystemClock _clock;
 
         private readonly HashSet<string> _tickerSymbols;
-        private readonly Dictionary<(string Symbol, KlineInterval Interval), TimeSpan> _klineItems;
+        private readonly Dictionary<(string Symbol, KlineInterval Interval), TimeSpan> _klineWindows;
 
         public BinanceMarketDataGrain(IOptions<BinanceOptions> options, ILogger<BinanceMarketDataGrain> logger, IMarketDataStreamClientFactory factory, ITradingRepository repository, ITradingService trader, IMapper mapper, ISystemClock clock, IAlgoDependencyInfo dependencies)
         {
@@ -46,7 +45,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             _ = dependencies ?? throw new ArgumentNullException(nameof(dependencies));
             _tickerSymbols = dependencies.GetTickers().ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-            _klineItems = dependencies
+            _klineWindows = dependencies
                 .GetKlines()
                 .GroupBy(x => (x.Symbol, x.Interval))
                 .Select(x => (x.Key, Window: x.Max(y => y.Window)))
@@ -68,12 +67,12 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         /// <summary>
         /// Conflates the incoming tickers from the background stream so the repository has a chance to keep up.
         /// </summary>
-        private readonly Dictionary<string, (MiniTicker Ticker, Guid Version, bool Saved)> _tickers = new();
+        private readonly ConcurrentDictionary<string, (MiniTicker Ticker, Guid Version, bool Saved)> _tickers = new();
 
         /// <summary>
         /// Tracks completion requests for inbound reactive polls.
         /// </summary>
-        private readonly Dictionary<string, TaskCompletionSource<(MiniTicker?, Guid)>> _tickerPolls = new();
+        private readonly ConcurrentDictionary<string, TaskCompletionSource<(MiniTicker?, Guid)>> _tickerCompletions = new();
 
         /// <summary>
         /// Conflates the incoming klines from the background stream so the repository has a chance to keep up.
@@ -94,7 +93,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                 RegisterTimer(_ => TickSaveTickersAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
             }
 
-            if (_klineItems.Count > 0)
+            if (_klineWindows.Count > 0)
             {
                 RegisterTimer(_ => TickSaveKlinesAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
                 RegisterTimer(_ => TickClearKlinesAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
@@ -124,7 +123,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             // schedule streaming work if nothing is running
             if (_work is null)
             {
-                _work = Task.Run(() => ExecuteLongAsync(), _cancellation.Token);
+                _work = Task.Run(ExecuteLongAsync, _cancellation.Token);
                 return;
             }
 
@@ -154,7 +153,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                 // create a client for the streams we want
                 var streams = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 streams.UnionWith(_tickerSymbols.Select(x => $"{x.ToLowerInvariant()}@miniTicker"));
-                streams.UnionWith(_klineItems.Select(x => $"{x.Key.Symbol.ToLowerInvariant()}@kline_{_mapper.Map<string>(x.Key.Interval)}"));
+                streams.UnionWith(_klineWindows.Select(x => $"{x.Key.Symbol.ToLowerInvariant()}@kline_{_mapper.Map<string>(x.Key.Interval)}"));
 
                 _logger.LogInformation("{Name} connecting to streams {Streams}...", TypeName, streams);
 
@@ -164,7 +163,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 
                 // start streaming in the background while we sync from the api
                 // we use the activation scheduler for this background task so that we can access grain state in a concurrency safe manner
-                var streamTask = Task.Factory.StartNew(async () =>
+                var streamTask = Task.Run(async () =>
                 {
                     while (!linkedCancellation.Token.IsCancellationRequested)
                     {
@@ -180,13 +179,12 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                             SetTicker(message.MiniTicker);
                         }
 
-                        if (message.Kline is not null && _klineItems.ContainsKey((message.Kline.Symbol, message.Kline.Interval)))
+                        if (message.Kline is not null && _klineWindows.ContainsKey((message.Kline.Symbol, message.Kline.Interval)))
                         {
-                            // conflate the kline if it is newer than the cached one - otherwise discard it
-                            _klines.AddOrUpdate((message.Kline.Symbol, message.Kline.Interval, message.Kline.OpenTime), (k, arg) => arg, (k, e, arg) => arg.Kline.EventTime > e.Kline.EventTime ? arg : e, (message.Kline, Saved: false));
+                            SetKline(message.Kline);
                         }
                     }
-                }, linkedCancellation.Token, TaskCreationOptions.DenyChildAttach, TaskScheduler.Current).Unwrap();
+                }, linkedCancellation.Token);
 
                 // sync tickers from the api
                 await SyncTickersAsync(linkedCancellation.Token);
@@ -232,10 +230,10 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 
         private async Task SyncKlinesAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("{Name} is syncing klines for {Symbols}...", TypeName, _klineItems.Select(x => x.Key.Symbol));
+            _logger.LogInformation("{Name} is syncing klines for {Symbols}...", TypeName, _klineWindows.Select(x => x.Key.Symbol));
             var watch = Stopwatch.StartNew();
 
-            foreach (var item in _klineItems)
+            foreach (var item in _klineWindows)
             {
                 // define the required window
                 var end = _clock.UtcNow;
@@ -250,23 +248,15 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 
                 while (current < end)
                 {
-                    var klines = await Policy
-                        .Handle<BinanceTooManyRequestsException>()
-                        .WaitAndRetryForeverAsync(
-                            (n, ex, ctx) => ((BinanceTooManyRequestsException)ex).RetryAfter,
-                            (ex, ts, ctx) =>
-                            {
-                                _logger.LogWarning(ex, "{Name} backing off for {TimeSpan}...", TypeName, ts);
-
-                                return Task.CompletedTask;
-                            })
-                        .ExecuteAsync(ct => _trader.GetKlinesAsync(new GetKlines(item.Key.Symbol, item.Key.Interval, current, end, 1000), ct), cancellationToken, true);
+                    var klines = await _trader
+                        .WithWaitOnTooManyRequests((t, ct) => t
+                        .GetKlinesAsync(new GetKlines(item.Key.Symbol, item.Key.Interval, current, end, 1000), ct), _logger, cancellationToken);
 
                     if (klines.Count is 0) break;
 
                     foreach (var kline in klines)
                     {
-                        _klines.AddOrUpdate((kline.Symbol, kline.Interval, kline.OpenTime), (k, arg) => arg, (k, e, arg) => arg.Kline.EventTime > e.Kline.EventTime ? arg : e, (Kline: kline, Saved: false));
+                        SetKline(kline);
                     }
 
                     current = klines.Max(x => x.OpenTime).AddMilliseconds(1);
@@ -282,7 +272,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                     TypeName, count, item.Key.Symbol);
             }
 
-            _logger.LogInformation("{Name} synced klines for {Symbols} in {ElapsedMs}ms...", TypeName, _klineItems.Select(x => x.Key.Symbol), watch.ElapsedMilliseconds);
+            _logger.LogInformation("{Name} synced klines for {Symbols} in {ElapsedMs}ms...", TypeName, _klineWindows.Select(x => x.Key.Symbol), watch.ElapsedMilliseconds);
         }
 
         /// <summary>
@@ -295,7 +285,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             var count = 0;
 
             // stage the unsaved tickers from the conflation
-            foreach (var item in _tickers.Values)
+            foreach (var item in _tickers.Select(x => x.Value))
             {
                 tickerBuffer[count] = item.Ticker;
                 versionBuffer[count] = item.Version;
@@ -314,10 +304,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                     var version = versionBuffer[i];
 
                     // the concurrent dictionary may have changed in the background so we must avoid marking newer data as saved
-                    if (_tickers.TryGetValue(ticker.Symbol, out var current) && current.Version == version && !current.Saved)
-                    {
-                        _tickers[ticker.Symbol] = (ticker, version, true);
-                    }
+                    _tickers.TryUpdate(ticker.Symbol, (ticker, version, true), (ticker, version, false));
                 }
             }
 
@@ -334,28 +321,29 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             var count = 0;
 
             // stage the unsaved klines from the concurrent conflation
-            foreach (var item in _klines)
+            foreach (var item in _klines.Select(x => x.Value))
             {
                 // break if the buffer is full
                 if (count >= buffer.Length) break;
 
                 // skip saved items
-                if (item.Value.Saved) continue;
+                if (item.Saved) continue;
 
                 // stage unsaved items
-                buffer[count++] = item.Value.Kline;
+                buffer[count++] = item.Kline;
             }
 
             // save all klines to the repository
             if (count > 0)
             {
-                var segment = new ArraySegment<Kline>(buffer, 0, count);
-
-                await _repository.SetKlinesAsync(segment, _cancellation.Token);
+                await _repository.SetKlinesAsync(buffer.Take(count), _cancellation.Token);
 
                 // mark unsaved klines as saved to avoid saving them again
-                foreach (var kline in segment)
+                for (var i = 0; i < count; i++)
                 {
+                    var kline = buffer[i];
+
+                    // only mark the kline saved if it hasn't been removed by the clearing timer
                     _klines.TryUpdate((kline.Symbol, kline.Interval, kline.OpenTime), (kline, true), (kline, false));
                 }
             }
@@ -371,12 +359,15 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             var buffer = ArrayPool<Kline>.Shared.Rent(_klines.Count);
             var count = 0;
 
-            // elect klines for removal
-            // we only elected old klines which have not been saved yet
+            // elect expired saved klines for removal
             var now = _clock.UtcNow;
             foreach (var item in _klines)
             {
-                if (_klineItems.TryGetValue((item.Key.Symbol, item.Key.Interval), out var window) && item.Key.OpenTime < now.Subtract(window) && item.Value.Saved)
+                // protect against concurrent dictionary size increasing during enumeration
+                if (count >= buffer.Length) break;
+
+                // attempt to elect the item for removal
+                if (_klineWindows.TryGetValue((item.Key.Symbol, item.Key.Interval), out var window) && item.Key.OpenTime < now.Subtract(window) && item.Value.Saved)
                 {
                     buffer[count++] = item.Value.Kline;
                 }
@@ -387,7 +378,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             {
                 var item = buffer[i];
 
-                _klines.TryRemove(new KeyValuePair<(string Symbol, KlineInterval Interval, DateTime OpenTime), (Kline Kline, bool Saved)>((item.Symbol, item.Interval, item.OpenTime), (item, true)));
+                _klines.TryRemove(new KeyValuePair<(string, KlineInterval, DateTime), (Kline, bool)>((item.Symbol, item.Interval, item.OpenTime), (item, true)));
             }
 
             ArrayPool<Kline>.Shared.Return(buffer);
@@ -396,59 +387,77 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         }
 
         // todo: refactor this into a local replica grain
-        public Task<IReadOnlyList<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime start, DateTime end)
+        public ValueTask<IReadOnlyList<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime start, DateTime end)
         {
-            // todo: promote this builder to member variable
             var builder = ImmutableSortedSet.CreateBuilder(Kline.OpenTimeComparer);
 
-            foreach (var item in _klines)
+            foreach (var time in interval.Range(start, end))
             {
-                if (item.Key.Symbol == symbol && item.Key.Interval == interval && item.Key.OpenTime >= start && item.Key.OpenTime <= end)
+                if (!_klines.TryGetValue((symbol, interval, time), out var value))
                 {
-                    builder.Add(item.Value.Kline);
+                    throw new KeyNotFoundException($"Could not provide kline for (Symbol = '{symbol}', Interval = '{interval}', OpenTime = '{time}')");
                 }
+
+                builder.Add(value.Kline);
             }
 
-            return Task.FromResult<IReadOnlyList<Kline>>(builder.ToImmutable());
+            return ValueTask.FromResult<IReadOnlyList<Kline>>(builder.ToImmutable());
         }
 
         public Task<bool> IsReadyAsync() => Task.FromResult(_ready);
+
+        #region Kline Long Polling
+
+        public void SetKline(Kline kline)
+        {
+            // keep the kline if brand new or newer than existing one
+            var candidate = (kline, false);
+            _klines.AddOrUpdate(
+                (kline.Symbol, kline.Interval, kline.OpenTime),
+                (key, arg) => arg,
+                (key, current, arg) => arg.kline.EventTime > current.Kline.EventTime ? arg : current,
+                candidate);
+        }
+
+        #endregion Kline Long Polling
 
         #region Ticker Long Polling
 
         private void SetTicker(MiniTicker ticker)
         {
+            // compose the dictionary candidate
             var version = Guid.NewGuid();
-            var saved = false;
+            var candidate = (ticker, version, false);
 
             // keep the ticker if brand new or newer than existing one
-            if (!_tickers.TryGetValue(ticker.Symbol, out var item) || ticker.EventTime > item.Ticker.EventTime)
-            {
-                _tickers[ticker.Symbol] = (ticker, version, saved);
+            var result = _tickers.AddOrUpdate(
+                ticker.Symbol,
+                (key, arg) => arg,
+                (key, current, arg) => arg.ticker.EventTime > current.Ticker.EventTime ? arg : current,
+                candidate);
 
-                // publish the ticker to active long polling clients
-                if (_tickerPolls.Remove(ticker.Symbol, out var completion))
-                {
-                    completion.SetResult((ticker, version));
-                }
+            // publish the ticker to active long polling clients
+            if (candidate == result && _tickerCompletions.Remove(ticker.Symbol, out var completion))
+            {
+                completion.SetResult((ticker, version));
             }
         }
 
-        public Task<(MiniTicker?, Guid)> LongPollTickerAsync(string symbol, Guid version)
+        public ValueTask<(MiniTicker?, Guid)> LongPollTickerAsync(string symbol, Guid version)
         {
-            // check the current value
+            // ensure a promise for the next version exists before checking the current version
+            // this avoids concurrency issues with the ticker stream which could cause the long poll to miss updates
+            var completion = _tickerCompletions.GetOrAdd(symbol, key => new TaskCompletionSource<(MiniTicker?, Guid)>(TaskCreationOptions.RunContinuationsAsynchronously));
+
+            // check the current version
             if (_tickers.TryGetValue(symbol, out var item) && item.Version != version)
             {
                 // the current item version is different from the client version so return the new version now
-                return Task.FromResult<(MiniTicker?, Guid)>((item.Ticker, item.Version));
+                return new ValueTask<(MiniTicker?, Guid)>((item.Ticker, item.Version));
             }
 
-            // wait for the new version
-            if (!_tickerPolls.TryGetValue(symbol, out var completion))
-            {
-                _tickerPolls[symbol] = completion = new TaskCompletionSource<(MiniTicker?, Guid)>();
-            }
-            return completion.Task.WithDefaultOnTimeout((null, Guid.Empty), _options.ReactivePollingDelay);
+            // let the client wait for the new version to resolve or timeout
+            return new ValueTask<(MiniTicker?, Guid)>(completion.Task.WithDefaultOnTimeout((null, Guid.Empty), _options.ReactivePollingDelay));
         }
 
         #endregion Ticker Long Polling

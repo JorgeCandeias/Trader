@@ -11,7 +11,7 @@ namespace Outcompute.Trader.Trading.Algorithms
     public static class IKlineProviderAlgoContextExtensions
     {
         /// <inheritdoc cref="IKlineProvider.GetKlinesAsync(string, KlineInterval, DateTime, DateTime, CancellationToken)"/>
-        public static Task<IReadOnlyList<Kline>> GetKlinesAsync(this IAlgoContext context, string symbol, KlineInterval interval, DateTime start, DateTime end, CancellationToken cancellationToken = default)
+        public static ValueTask<IReadOnlyList<Kline>> GetKlinesAsync(this IAlgoContext context, string symbol, KlineInterval interval, DateTime start, DateTime end, CancellationToken cancellationToken = default)
         {
             if (context is null) throw new ArgumentNullException(nameof(context));
 

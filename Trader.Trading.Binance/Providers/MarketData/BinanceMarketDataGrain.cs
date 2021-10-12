@@ -386,24 +386,6 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             return Task.CompletedTask;
         }
 
-        // todo: refactor this into a local replica grain
-        public ValueTask<IReadOnlyList<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime start, DateTime end)
-        {
-            var builder = ImmutableSortedSet.CreateBuilder(Kline.OpenTimeComparer);
-
-            foreach (var time in interval.Range(start, end))
-            {
-                if (!_klines.TryGetValue((symbol, interval, time), out var value))
-                {
-                    throw new KeyNotFoundException($"Could not provide kline for (Symbol = '{symbol}', Interval = '{interval}', OpenTime = '{time}')");
-                }
-
-                builder.Add(value.Kline);
-            }
-
-            return ValueTask.FromResult<IReadOnlyList<Kline>>(builder.ToImmutable());
-        }
-
         public Task<bool> IsReadyAsync() => Task.FromResult(_ready);
 
         #region Kline Long Polling

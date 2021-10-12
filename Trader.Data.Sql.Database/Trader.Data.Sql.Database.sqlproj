@@ -24,6 +24,7 @@
     <QueryStoreDesiredState>ReadWrite</QueryStoreDesiredState>
     <AllowSnapshotIsolation>True</AllowSnapshotIsolation>
     <ReadCommittedSnapshot>True</ReadCommittedSnapshot>
+    <DacApplicationName>Trader.Data.Sql.Database</DacApplicationName>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <OutputPath>bin\Release\</OutputPath>

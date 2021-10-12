@@ -54,5 +54,42 @@ namespace Outcompute.Trader.Models
                 }
             }
         }
+
+        public static IComparer<Kline> KeyComparer { get; } = new KeyComparerInternal();
+
+        private sealed class KeyComparerInternal : Comparer<Kline>
+        {
+            public override int Compare(Kline? x, Kline? y)
+            {
+                if (x is null)
+                {
+                    if (y is null)
+                    {
+                        return 0;
+                    }
+                    else
+                    {
+                        return -1;
+                    }
+                }
+                else
+                {
+                    if (y is null)
+                    {
+                        return 1;
+                    }
+                    else
+                    {
+                        var bySymbol = Comparer<string>.Default.Compare(x.Symbol, y.Symbol);
+                        if (bySymbol != 0) return bySymbol;
+
+                        var byInterval = Comparer<KlineInterval>.Default.Compare(x.Interval, y.Interval);
+                        if (byInterval != 0) return byInterval;
+
+                        return Comparer<DateTime>.Default.Compare(x.OpenTime, y.OpenTime);
+                    }
+                }
+            }
+        }
     }
 }

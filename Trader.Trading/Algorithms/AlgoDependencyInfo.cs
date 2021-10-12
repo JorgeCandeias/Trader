@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
+using Outcompute.Trader.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,6 +30,17 @@ namespace Outcompute.Trader.Trading.Algorithms
 
             return options.Algos
                 .SelectMany(x => x.Value.DependsOn.Klines)
+                .Select(x => new KlineDependency(x.Symbol, x.Interval, x.Window))
+                .Distinct();
+        }
+
+        public IEnumerable<KlineDependency> GetKlines(string symbol, KlineInterval interval)
+        {
+            var options = _options.CurrentValue;
+
+            return options.Algos
+                .SelectMany(x => x.Value.DependsOn.Klines)
+                .Where(x => x.Symbol == symbol && x.Interval == interval)
                 .Select(x => new KlineDependency(x.Symbol, x.Interval, x.Window))
                 .Distinct();
         }

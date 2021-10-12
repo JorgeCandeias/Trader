@@ -31,6 +31,7 @@ namespace Outcompute.Trader.Trading.Algorithms
         private IAlgo _algo = NullAlgo.Instance;
         private IDisposable? _timer;
         private bool _ready;
+        private bool _loggedNotReady;
 
         public override async Task OnActivateAsync()
         {
@@ -104,9 +105,14 @@ namespace Outcompute.Trader.Trading.Algorithms
             // skip if the system is not ready
             if (!_ready)
             {
-                _logger.AlgoHostGrainSystemNotReady(_name);
+                if (!_loggedNotReady)
+                {
+                    _logger.AlgoHostGrainSystemNotReady(_name);
+                    _loggedNotReady = true;
+                }
                 return;
             }
+            _loggedNotReady = false;
 
             // snapshot the options for this execution
             var options = _options.Get(_name);

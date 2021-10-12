@@ -10,18 +10,16 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 {
     internal class BinanceKlineProvider : IKlineProvider
     {
-        private readonly IBinanceMarketDataGrain _grain;
+        private readonly IGrainFactory _factory;
 
         public BinanceKlineProvider(IGrainFactory factory)
         {
-            _ = factory ?? throw new ArgumentNullException(nameof(factory));
-
-            _grain = factory.GetBinanceMarketDataGrain();
+            _factory = factory ?? throw new ArgumentNullException(nameof(factory));
         }
 
         public ValueTask<IReadOnlyList<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime start, DateTime end, CancellationToken cancellationToken = default)
         {
-            return _grain.GetKlinesAsync(symbol, interval, start, end);
+            return _factory.GetBinanceKlineProviderGrain(symbol, interval).GetKlinesAsync(start, end);
         }
     }
 }

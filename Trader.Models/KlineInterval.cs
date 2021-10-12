@@ -36,6 +36,17 @@ namespace Outcompute.Trader.Models
             }
         }
 
+        public static IEnumerable<DateTime> RangeDescending(this KlineInterval interval, DateTime start, DateTime end)
+        {
+            start = start.AdjustToNext(interval);
+            end = end.AdjustToPrevious(interval);
+
+            for (var current = end; current >= start; current = current.Subtract(interval))
+            {
+                yield return current;
+            }
+        }
+
         public static DateTime AdjustToPrevious(this DateTime value, KlineInterval interval)
         {
             return interval switch
@@ -93,6 +104,11 @@ namespace Outcompute.Trader.Models
 
                 _ => throw new ArgumentNullException(nameof(interval))
             };
+        }
+
+        public static DateTime Subtract(this DateTime value, KlineInterval interval, int count = 1)
+        {
+            return value.Add(interval, count * -1);
         }
     }
 }

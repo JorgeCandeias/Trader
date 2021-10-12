@@ -67,7 +67,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Trader.Data.Sql.Database.LocalDB.publish.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   <ItemGroup>

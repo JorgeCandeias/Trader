@@ -75,6 +75,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Scripts\Script.PostDeployment.Clustering.OrleansQuery.sql" />
-    <None Include="Trader.Orleans.Database.LocalDB.publish.xml" />
+    <None Include="Trader.Orleans.Database.LocalDB.publish.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>

@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
@@ -16,24 +15,22 @@ namespace Outcompute.Trader.Trading.Algorithms
     {
         private static string TypeName => nameof(AveragingSellBlock);
 
-        public static ValueTask<Profit> SetAveragingSellAsync(this IAlgoContext context, Symbol symbol, decimal profitMultiplier, bool useSavings, CancellationToken cancellationToken = default)
+        public static ValueTask<Profit> SetAveragingSellAsync(this IAlgoContext context, Symbol symbol, decimal profitMultiplier, bool redeemSavings, bool sellSavings, CancellationToken cancellationToken = default)
         {
             if (context is null) throw new ArgumentNullException(nameof(context));
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
-            return SetAveragingSellInnerAsync(context, symbol, profitMultiplier, useSavings, cancellationToken);
+            return SetAveragingSellInnerAsync(context, symbol, profitMultiplier, redeemSavings, sellSavings, cancellationToken);
         }
 
-        private static async ValueTask<Profit> SetAveragingSellInnerAsync(IAlgoContext context, Symbol symbol, decimal profitMultiplier, bool useSavings, CancellationToken cancellationToken)
+        private static async ValueTask<Profit> SetAveragingSellInnerAsync(IAlgoContext context, Symbol symbol, decimal profitMultiplier, bool redeemSavings, bool sellSavings, CancellationToken cancellationToken)
         {
             // resolve services
             var significantOrderResolver = context.ServiceProvider.GetRequiredService<ISignificantOrderResolver>();
-            var repository = context.ServiceProvider.GetRequiredService<ITradingRepository>(); // todo: refactor repository calls into provider calls
+            var repository = context.ServiceProvider.GetRequiredService<ITradingRepository>();
             var savingsProvider = context.ServiceProvider.GetRequiredService<ISavingsProvider>();
             var tickerProvider = context.ServiceProvider.GetRequiredService<ITickerProvider>();
             var logger = context.ServiceProvider.GetRequiredService<ILogger<IAlgoContext>>();
-            var trader = context.ServiceProvider.GetRequiredService<ITradingService>();
-            var clock = context.ServiceProvider.GetRequiredService<ISystemClock>();
 
             // get any required filters from the symbol
             var priceFilter = symbol.Filters.OfType<PriceSymbolFilter>().Single();
@@ -49,7 +46,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 ?? Balance.Zero(symbol.BaseAsset);
 
             // get all savings if applicable
-            var savings = (useSavings ? await savingsProvider.TryGetFirstFlexibleProductPositionAsync(symbol.BaseAsset, cancellationToken).ConfigureAwait(false) : null)
+            var savings = (sellSavings ? await savingsProvider.TryGetFirstFlexibleProductPositionAsync(symbol.BaseAsset, cancellationToken).ConfigureAwait(false) : null)
                 ?? FlexibleProductPosition.Zero(symbol.BaseAsset);
 
             // get the current ticker for the symbol
@@ -58,8 +55,19 @@ namespace Outcompute.Trader.Trading.Algorithms
             // calculate the desired sell
             var desired = CalculateDesiredSell(logger, symbol, profitMultiplier, significant.Orders, balance, savings, lotSizeFilter, percentFilter, ticker, priceFilter, minNotionalFilter);
 
-            // remove all non-desired buy orders and set the desired sell order if needed
-            await SetDesiredStateAsync(context, repository, logger, trader, clock, symbol, desired, balance, cancellationToken).ConfigureAwait(false);
+            // apply the desired sell
+            if (desired == DesiredSell.None)
+            {
+                await context
+                    .ClearOpenOrdersAsync(symbol, OrderSide.Sell, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            else
+            {
+                await context
+                    .EnsureSingleOrderAsync(symbol, OrderSide.Sell, OrderType.Limit, desired.Quantity, desired.Price, redeemSavings, cancellationToken)
+                    .ConfigureAwait(false);
+            }
 
             // return the latest known profit
             return significant.Profit;
@@ -185,98 +193,6 @@ namespace Outcompute.Trader.Trading.Algorithms
 
             // otherwise we now have a valid desired sell
             return new DesiredSell(quantity, price);
-        }
-
-        private static async ValueTask SetDesiredStateAsync(IAlgoContext context, ITradingRepository repository, ILogger logger, ITradingService trader, ISystemClock clock, Symbol symbol, DesiredSell desired, Balance balance, CancellationToken cancellationToken)
-        {
-            var orders = await repository
-                .GetTransientOrdersBySideAsync(symbol.Name, OrderSide.Sell, cancellationToken)
-                .ConfigureAwait(false);
-
-            // cancel all non-desired orders
-            foreach (var order in orders)
-            {
-                if (desired == DesiredSell.None || order.Type != OrderType.Limit || order.OriginalQuantity != desired.Quantity || order.Price != desired.Price)
-                {
-                    logger.LogInformation(
-                        "{Type} {Name} cancelling non-desired {OrderType} {OrderSide} order {OrderId} for {Quantity} {Asset} at {Price} {Quote}",
-                        TypeName, symbol.Name, order.Type, order.Side, order.OrderId, order.OriginalQuantity, symbol.BaseAsset, order.Price, symbol.QuoteAsset);
-
-                    var orderResult = await trader
-                        .CancelOrderAsync(
-                            new CancelStandardOrder(
-                                order.Symbol,
-                                order.OrderId,
-                                null,
-                                null,
-                                null,
-                                clock.UtcNow),
-                            cancellationToken)
-                        .ConfigureAwait(false);
-
-                    await repository
-                        .SetOrderAsync(orderResult, cancellationToken)
-                        .ConfigureAwait(false);
-                }
-            }
-
-            // if any order survived then we can stop here
-            if (!orders.IsEmpty) return;
-
-            // if there is no desired sell then we can stop here
-            if (desired == DesiredSell.None) return;
-
-            var orderType = OrderType.Limit;
-            var orderSide = OrderSide.Sell;
-
-            // if there is not enough units to place the sell then attempt to redeem from savings
-            if (balance.Free < desired.Quantity)
-            {
-                logger.LogWarning(
-                    "{Type} {Name} must place {OrderType} {OrderSide} of {Quantity} {Asset} for {Price} {Quote} but there is only {Free} {Asset} available. Will attempt to redeem the rest from savings.",
-                    TypeName, symbol.Name, orderType, orderSide, desired.Quantity, symbol.BaseAsset, desired.Price, symbol.QuoteAsset, balance.Free, symbol.BaseAsset);
-
-                var necessary = desired.Quantity - balance.Free;
-
-                var redeemed = await context.TryRedeemSavingsAsync(symbol.BaseAsset, necessary, cancellationToken).ConfigureAwait(false);
-
-                if (!redeemed)
-                {
-                    logger.LogError(
-                        "{Type} {Name} could not redeem the necessary {Quantity} {Asset} from savings",
-                        TypeName, symbol.Name, necessary, symbol.BaseAsset);
-
-                    return;
-                }
-            }
-
-            // if there is no order left then we can set the desired sell
-            logger.LogInformation(
-                "{Type} {Name} placing {OrderType} {OrderSide} order for {Quantity} {Asset} at {Price} {Quote}",
-                TypeName, symbol.Name, orderType, orderSide, desired.Quantity, symbol.BaseAsset, desired.Price, symbol.QuoteAsset);
-
-            var result = await trader
-                .CreateOrderAsync(
-                    new Order(
-                        symbol.Name,
-                        orderSide,
-                        orderType,
-                        TimeInForce.GoodTillCanceled,
-                        desired.Quantity,
-                        null,
-                        desired.Price,
-                        $"{symbol.Name}{desired.Price:F8}".Replace(".", "", StringComparison.Ordinal),
-                        null,
-                        null,
-                        NewOrderResponseType.Full,
-                        null,
-                        clock.UtcNow),
-                    cancellationToken)
-                .ConfigureAwait(false);
-
-            await repository
-                .SetOrderAsync(result, 0m, 0m, 0m, cancellationToken)
-                .ConfigureAwait(false);
         }
 
         private sealed record DesiredSell(decimal Quantity, decimal Price)

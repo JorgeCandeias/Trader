@@ -33,7 +33,10 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         public bool IsAveragingEnabled { get; set; } = true;
 
         [Required]
-        public bool UseSavings { get; set; } = false;
+        public bool RedeemSavings { get; set; } = false;
+
+        [Required]
+        public bool SellSavings { get; set; } = false;
 
         [Required]
         public int SmaPeriodsA { get; set; } = 7;

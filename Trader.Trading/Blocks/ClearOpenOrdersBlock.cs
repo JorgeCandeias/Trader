@@ -8,23 +8,23 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
-    public static class ClearOpenBuyOrdersBlock
+    public static class ClearOpenOrdersBlock
     {
-        public static ValueTask ClearOpenBuyOrdersAsync(this IAlgoContext context, Symbol symbol, CancellationToken cancellationToken = default)
+        public static ValueTask ClearOpenOrdersAsync(this IAlgoContext context, Symbol symbol, OrderSide side, CancellationToken cancellationToken = default)
         {
             if (context is null) throw new ArgumentNullException(nameof(context));
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
-            return ClearOpenBuyOrdersInnerAsync(context, symbol, cancellationToken);
+            return ClearOpenOrdersInnerAsync(context, symbol, side, cancellationToken);
         }
 
-        private static async ValueTask ClearOpenBuyOrdersInnerAsync(IAlgoContext context, Symbol symbol, CancellationToken cancellationToken)
+        private static async ValueTask ClearOpenOrdersInnerAsync(IAlgoContext context, Symbol symbol, OrderSide side, CancellationToken cancellationToken)
         {
             var repository = context.ServiceProvider.GetRequiredService<ITradingRepository>();
             var trader = context.ServiceProvider.GetRequiredService<ITradingService>();
             var clock = context.ServiceProvider.GetRequiredService<ISystemClock>();
 
-            var orders = await repository.GetTransientOrdersBySideAsync(symbol.Name, OrderSide.Buy, cancellationToken).ConfigureAwait(false);
+            var orders = await repository.GetTransientOrdersBySideAsync(symbol.Name, side, cancellationToken).ConfigureAwait(false);
 
             foreach (var order in orders)
             {

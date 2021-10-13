@@ -6,7 +6,6 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Providers;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -128,8 +127,8 @@ namespace Outcompute.Trader.Trading.Algorithms
                     "{Type} {Name} must place order with amount of {Total} {Quote} but the free amount is only {Free} {Quote}. Will attempt to redeem the necessary {Necessary} {Quote} from savings...",
                     TypeName, symbol.Name, total, symbol.QuoteAsset, balance.Free, symbol.QuoteAsset, necessary, symbol.QuoteAsset);
 
-                var redeemed = await context.TryRedeemSavingsAsync(symbol.QuoteAsset, necessary, cancellationToken).ConfigureAwait(false);
-                if (redeemed)
+                var (success, _) = await context.TryRedeemSavingsAsync(symbol.QuoteAsset, necessary, cancellationToken).ConfigureAwait(false);
+                if (success)
                 {
                     logger.LogInformation(
                         "{Type} {Name} redeemed {Quantity} {Asset} from savings",

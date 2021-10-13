@@ -52,12 +52,14 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
             }
             else
             {
-                await _context.ClearOpenBuyOrdersAsync(symbol, cancellationToken).ConfigureAwait(false);
+                await _context
+                    .ClearOpenOrdersAsync(symbol, OrderSide.Buy, cancellationToken)
+                    .ConfigureAwait(false);
             }
 
             // then place the averaging sell
             await _context
-                .SetAveragingSellAsync(symbol, options.ProfitMultipler, options.UseSavings, cancellationToken)
+                .SetAveragingSellAsync(symbol, options.ProfitMultipler, options.RedeemSavings, options.SellSavings, cancellationToken)
                 .ConfigureAwait(false);
 
             // publish the profit stats

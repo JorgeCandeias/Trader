@@ -13,7 +13,7 @@ namespace Outcompute.Trader.Trading.Algorithms
     {
         private static string TypeName => nameof(RedeemSavingsBlock);
 
-        public static ValueTask<bool> TryRedeemSavingsAsync(this IAlgoContext context, string asset, decimal amount, CancellationToken cancellationToken = default)
+        public static ValueTask<(bool Success, decimal Redeemed)> TryRedeemSavingsAsync(this IAlgoContext context, string asset, decimal amount, CancellationToken cancellationToken = default)
         {
             if (context is null) throw new ArgumentNullException(nameof(context));
             if (asset is null) throw new ArgumentNullException(nameof(context));
@@ -21,7 +21,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             return TryRedeemSavingsInnerAsync(context, asset, amount, cancellationToken);
         }
 
-        private static async ValueTask<bool> TryRedeemSavingsInnerAsync(IAlgoContext context, string asset, decimal amount, CancellationToken cancellationToken)
+        private static async ValueTask<(bool Success, decimal Redeemed)> TryRedeemSavingsInnerAsync(IAlgoContext context, string asset, decimal amount, CancellationToken cancellationToken)
         {
             var logger = context.ServiceProvider.GetRequiredService<ILogger<IAlgoContext>>();
             var savingsProvider = context.ServiceProvider.GetRequiredService<ISavingsProvider>();
@@ -36,7 +36,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                     "{Type} cannot redeem the necessary amount of {Quantity} {Asset} because there are no savings for this asset",
                     TypeName, amount, asset);
 
-                return false;
+                return (false, 0m);
             }
 
             // there should only be one item in the result
@@ -47,7 +47,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             {
                 logger.LogWarning("{Type} cannot redeem savings at this time because redeeming is disallowed", TypeName);
 
-                return false;
+                return (false, 0m);
             }
 
             // check if there is a redemption in progress
@@ -57,7 +57,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                     "{Type} will not redeem savings now because a redemption of {RedeemingAmount} {Asset} is in progress",
                     TypeName, savings.RedeemingAmount, asset);
 
-                return false;
+                return (false, 0m);
             }
 
             // check if there is enough for redemption
@@ -67,7 +67,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                     "{Type} cannot redeem the necessary {Quantity} {Asset} from savings because they only contain {FreeAmount} {Asset}",
                     TypeName, amount, asset, savings.FreeAmount, asset);
 
-                return false;
+                return (false, 0m);
             }
 
             var quota = await savingsProvider
@@ -81,7 +81,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                     "{Type} cannot find a savings product for asset {Asset}",
                     TypeName, asset);
 
-                return false;
+                return (false, 0m);
             }
 
             // stop if we would exceed the daily quota outright
@@ -91,7 +91,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                     "{Type} cannot redeem the necessary amount of {Quantity} {Asset} because it exceeds the available quota of {Quota} {Asset}",
                     TypeName, amount, asset, quota.LeftQuota, asset);
 
-                return false;
+                return (false, 0m);
             }
 
             // bump the necessary value if needed now
@@ -116,7 +116,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 .ConfigureAwait(false);
 
             // let the algo cycle to allow time for the redeemption to process
-            return true;
+            return (true, amount);
         }
     }
 }

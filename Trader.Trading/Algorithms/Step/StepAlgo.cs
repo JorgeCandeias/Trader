@@ -264,11 +264,11 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
                     "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}. Will attempt to redeem from savings...",
                     TypeName, _context.Name, total, symbol.QuoteAsset, _balances.Quote.Free, symbol.QuoteAsset);
 
-                var redeemed = await _context
+                var (success, _) = await _context
                     .TryRedeemSavingsAsync(symbol.QuoteAsset, necessary, cancellationToken)
                     .ConfigureAwait(false);
 
-                if (redeemed)
+                if (success)
                 {
                     _logger.LogInformation(
                         "{Type} {Name} redeemed {Amount} {Asset} successfully",
@@ -354,11 +354,11 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
                             "{Type} {Name} must place {OrderType} {OrderSide} of {Quantity} {Asset} for {Price} {Quote} but there is only {Free} {Asset} available. Will attempt to redeem {Necessary} {Asset} rest from savings.",
                             TypeName, _context.Name, OrderType.Limit, OrderSide.Sell, band.Quantity, symbol.BaseAsset, band.ClosePrice, symbol.QuoteAsset, _balances.Asset.Free, symbol.BaseAsset, necessary, symbol.BaseAsset);
 
-                        var redeemed = await _context
+                        var (success, _) = await _context
                             .TryRedeemSavingsAsync(symbol.BaseAsset, necessary, cancellationToken)
                             .ConfigureAwait(false);
 
-                        if (redeemed)
+                        if (success)
                         {
                             _logger.LogInformation(
                                 "{Type} {Name} redeemed {Amount} {Asset} successfully",
@@ -599,11 +599,11 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
                         "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}. Will attempt to redeem from savings...",
                         TypeName, _context.Name, total, symbol.QuoteAsset, _balances.Quote.Free, symbol.QuoteAsset);
 
-                    var redeemed = await _context
+                    var (success, _) = await _context
                         .TryRedeemSavingsAsync(symbol.QuoteAsset, necessary, cancellationToken)
                         .ConfigureAwait(false);
 
-                    if (redeemed)
+                    if (success)
                     {
                         _logger.LogInformation(
                             "{Type} {Name} redeemed {Amount} {Asset} successfully",

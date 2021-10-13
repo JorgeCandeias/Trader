@@ -37,9 +37,6 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         public bool RedeemSavings { get; set; } = false;
 
         [Required]
-        public bool SellSavings { get; set; } = false;
-
-        [Required]
         public KlineInterval KlineInterval { get; set; } = KlineInterval.Days1;
 
         [Required]

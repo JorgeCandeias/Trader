@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
+using Orleans.Statistics;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
@@ -52,6 +53,7 @@ namespace Outcompute.Trader.App
                 .UseOrleans((context, orleans) =>
                 {
                     orleans.ConfigureEndpoints(11111, 30000);
+                    orleans.UseLinuxEnvironmentStatistics();
                     orleans.Configure<ClusterOptions>(options =>
                     {
                         options.ClusterId = nameof(Trader);

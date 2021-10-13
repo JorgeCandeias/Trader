@@ -52,7 +52,26 @@ namespace Outcompute.Trader.Models
         bool IsSpotTradingAllowed,
         bool IsMarginTradingAllowed,
         ImmutableList<SymbolFilter> Filters, // todo: refactor the filters into sub-properties so the algos don't have to iterate this collection
-        ImmutableList<Permission> Permissions);
+        ImmutableList<Permission> Permissions)
+    {
+        public static Symbol Empty { get; } = new Symbol(
+            string.Empty,
+            SymbolStatus.None,
+            string.Empty,
+            0,
+            string.Empty,
+            0,
+            0,
+            0,
+            ImmutableList<OrderType>.Empty,
+            false,
+            false,
+            false,
+            false,
+            false,
+            ImmutableList<SymbolFilter>.Empty,
+            ImmutableList<Permission>.Empty);
+    }
 
     [Immutable]
     public record SymbolFilter;

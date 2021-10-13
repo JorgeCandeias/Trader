@@ -132,7 +132,7 @@ namespace Outcompute.Trader.App
                 var end = _clock.UtcNow;
                 var start = end.Subtract(TimeSpan.FromDays(100));
 
-                var klines = await _context.GetKlinesAsync(options.Symbol, KlineInterval.Days1, start, end, cancellationToken).ConfigureAwait(false);
+                var klines = await _context.GetKlineProvider().GetKlinesAsync(options.Symbol, KlineInterval.Days1, start, end, cancellationToken).ConfigureAwait(false);
 
                 _logger.LogInformation("{Name} reports SMA7 = {Value}", nameof(TestAlgo), klines.LastSimpleMovingAverage(x => x.ClosePrice, 7));
                 _logger.LogInformation("{Name} reports SMA25 = {Value}", nameof(TestAlgo), klines.LastSimpleMovingAverage(x => x.ClosePrice, 25));

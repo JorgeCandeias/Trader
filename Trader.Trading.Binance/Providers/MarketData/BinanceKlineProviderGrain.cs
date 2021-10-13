@@ -46,9 +46,9 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         private KlineInterval _interval;
 
         /// <summary>
-        /// Holds the cache window for the current data set.
+        /// The cached periods for the current data set.
         /// </summary>
-        private TimeSpan _window = TimeSpan.Zero;
+        private int _periods;
 
         /// <summary>
         /// Holds the local kline cache.
@@ -63,10 +63,10 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             _interval = Enum.Parse<KlineInterval>(key[1]);
 
             // take the maximum window from all the algos that need the current kline set
-            _window = _dependencies
+            _periods = _dependencies
                 .GetKlines(_symbol, _interval)
                 .DefaultIfEmpty(KlineDependency.Empty)
-                .Max(x => x.Window);
+                .Max(x => x.Periods);
 
             // load and validate the initial data set
             await LoadAsync();
@@ -85,12 +85,16 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         /// </summary>
         private async Task LoadAsync()
         {
+            // skip if there are no periods to load
+            if (_periods <= 0) return;
+
             // load the existing klines from the repository
             var end = _clock.UtcNow;
-            var start = end.Subtract(_window);
-            foreach (var item in await _repository.GetKlinesAsync(_symbol, _interval, start, end))
+            var start = end.Subtract(_interval, _periods);
+            var klines = await _repository.GetKlinesAsync(_symbol, _interval, start, end);
+            foreach (var kline in klines)
             {
-                _cache[item.OpenTime] = item;
+                _cache[kline.OpenTime] = kline;
             }
 
             // validate that we have all klines needed by the current window
@@ -108,8 +112,12 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         /// </summary>
         private async Task UpdateAsync(object _)
         {
+            // skip if there are no periods to load
+            if (_periods <= 0) return;
+
+            // load the new klines from the repository
             var end = _clock.UtcNow;
-            var start = end.Subtract(_window);
+            var start = end.Subtract(_interval, _periods);
 
             // enumerate all needed kline timestamps
             foreach (var time in _interval.Range(start, end))
@@ -139,7 +147,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         private Task TickCleanupAsync(object _)
         {
             // prepare to elect expired keys for removal
-            var start = _clock.UtcNow.Subtract(_window);
+            var start = _clock.UtcNow.Subtract(_interval, _periods);
             var buffer = ArrayPool<DateTime>.Shared.Rent(_cache.Count);
             var count = 0;
 
@@ -169,7 +177,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             return Task.CompletedTask;
         }
 
-        public async ValueTask<IReadOnlyList<Kline>> GetKlinesAsync(DateTime start, DateTime end)
+        public async ValueTask<IReadOnlyCollection<Kline>> GetKlinesAsync(DateTime start, DateTime end)
         {
             var builder = ImmutableSortedSet.CreateBuilder(Kline.KeyComparer);
 
@@ -182,7 +190,13 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                     kline = await _repository.TryGetKlineAsync(_symbol, _interval, time);
 
                     // if the kline does not exist at all then we cant fullfill this request
-                    if (kline is null) throw new KeyNotFoundException($"Could not provide kline for (Symbol = '{_symbol}', Interval = '{_interval}', OpenTime = '{time}')");
+                    if (kline is null)
+                    {
+                        throw new KeyNotFoundException($"Could not provide kline for (Symbol = '{_symbol}', Interval = '{_interval}', OpenTime = '{time}')");
+                    }
+
+                    // otherwise keep it to save work for the next caller
+                    _cache[kline.OpenTime] = kline;
                 }
 
                 builder.Add(kline);

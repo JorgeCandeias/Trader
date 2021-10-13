@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading
 {
+    // todo: refactor all methods to take regular values instead of models
     public interface ITradingService
     {
         Task<ExchangeInfo> GetExchangeInfoAsync(CancellationToken cancellationToken = default);

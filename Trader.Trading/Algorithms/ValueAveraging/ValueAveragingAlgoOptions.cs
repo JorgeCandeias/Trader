@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Outcompute.Trader.Models;
+using System.ComponentModel.DataAnnotations;
 using static System.String;
 
 namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
@@ -39,6 +40,9 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         public bool SellSavings { get; set; } = false;
 
         [Required]
+        public KlineInterval KlineInterval { get; set; } = KlineInterval.Days1;
+
+        [Required]
         public int SmaPeriodsA { get; set; } = 7;
 
         [Required]
@@ -73,5 +77,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
 
         [Required]
         public decimal RsiOversoldC { get; set; } = 70m;
+
+        public static ValueAveragingAlgoOptions Default { get; } = new ValueAveragingAlgoOptions();
     }
 }

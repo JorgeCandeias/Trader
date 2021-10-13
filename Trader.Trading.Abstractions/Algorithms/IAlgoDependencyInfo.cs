@@ -1,5 +1,4 @@
 ﻿using Outcompute.Trader.Models;
-using System;
 using System.Collections.Generic;
 
 namespace Outcompute.Trader.Trading.Algorithms
@@ -13,8 +12,8 @@ namespace Outcompute.Trader.Trading.Algorithms
         IEnumerable<KlineDependency> GetKlines(string symbol, KlineInterval interval);
     }
 
-    public record KlineDependency(string Symbol, KlineInterval Interval, TimeSpan Window)
+    public record KlineDependency(string Symbol, KlineInterval Interval, int Periods)
     {
-        public static KlineDependency Empty { get; } = new KlineDependency(string.Empty, KlineInterval.None, TimeSpan.Zero);
+        public static KlineDependency Empty { get; } = new KlineDependency(string.Empty, KlineInterval.None, 0);
     };
 }

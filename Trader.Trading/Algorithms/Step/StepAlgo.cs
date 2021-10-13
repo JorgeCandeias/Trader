@@ -117,9 +117,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
 
         private async Task<MiniTicker?> TrySyncAssetPriceAsync(StepAlgoOptions options, Symbol symbol, CancellationToken cancellationToken = default)
         {
-            var ticker = await _context
-                .TryGetTickerAsync(options.Symbol, cancellationToken)
-                .ConfigureAwait(false);
+            var ticker = await _context.GetTickerProvider().TryGetTickerAsync(options.Symbol, cancellationToken).ConfigureAwait(false);
 
             if (ticker is not null)
             {

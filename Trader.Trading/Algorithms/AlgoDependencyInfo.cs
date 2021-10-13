@@ -30,7 +30,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 
             return options.Algos
                 .SelectMany(x => x.Value.DependsOn.Klines)
-                .Select(x => new KlineDependency(x.Symbol, x.Interval, x.Window))
+                .Select(x => new KlineDependency(x.Symbol, x.Interval, x.Periods))
                 .Distinct();
         }
 
@@ -41,7 +41,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             return options.Algos
                 .SelectMany(x => x.Value.DependsOn.Klines)
                 .Where(x => x.Symbol == symbol && x.Interval == interval)
-                .Select(x => new KlineDependency(x.Symbol, x.Interval, x.Window))
+                .Select(x => new KlineDependency(x.Symbol, x.Interval, x.Periods))
                 .Distinct();
         }
     }

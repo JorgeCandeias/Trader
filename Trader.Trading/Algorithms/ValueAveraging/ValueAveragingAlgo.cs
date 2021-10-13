@@ -1,10 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Outcompute.Trader.Core;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms.Exceptions;
-using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,214 +15,172 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
     internal class ValueAveragingAlgo : IAlgo
     {
         private readonly IAlgoContext _context;
-        private readonly IOptionsMonitor<ValueAveragingAlgoOptions> _options;
+        private readonly IOptionsMonitor<ValueAveragingAlgoOptions> _monitor;
         private readonly ILogger _logger;
         private readonly ISystemClock _clock;
-        private readonly IKlineProvider _klineProvider;
 
-        public ValueAveragingAlgo(IAlgoContext context, IOptionsMonitor<ValueAveragingAlgoOptions> options, ILogger<ValueAveragingAlgoOptions> logger, ISystemClock clock, IKlineProvider klineProvider)
+        public ValueAveragingAlgo(IAlgoContext context, IOptionsMonitor<ValueAveragingAlgoOptions> monitor, ILogger<ValueAveragingAlgoOptions> logger, ISystemClock clock)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
-            _options = options ?? throw new ArgumentNullException(nameof(options));
+            _monitor = monitor ?? throw new ArgumentNullException(nameof(monitor));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-            _klineProvider = klineProvider ?? throw new ArgumentNullException(nameof(klineProvider));
         }
 
         private static string TypeName => nameof(ValueAveragingAlgo);
 
+        private ValueAveragingAlgoOptions _options = ValueAveragingAlgoOptions.Default;
+        private Symbol _symbol = Symbol.Empty;
+        private SignificantResult _significant = SignificantResult.Empty;
+        private MiniTicker _ticker = MiniTicker.Empty;
+        private decimal _smaA;
+        private decimal _smaB;
+        private decimal _smaC;
+        private decimal _rsiA;
+        private decimal _rsiB;
+        private decimal _rsiC;
+
         public async Task GoAsync(CancellationToken cancellationToken = default)
         {
-            var options = _options.Get(_context.Name);
+            _options = _monitor.Get(_context.Name);
 
-            var symbol = await _context.TryGetSymbolAsync(options.Symbol).ConfigureAwait(false)
+            _symbol = await _context.TryGetSymbolAsync(_options.Symbol).ConfigureAwait(false)
                 ?? throw new AlgorithmNotInitializedException();
 
             _logger.LogInformation("{Type} {Name} running...", TypeName, _context.Name);
 
             // get significant orders
-            var result = await _context.ResolveSignificantOrdersAsync(symbol, cancellationToken).ConfigureAwait(false);
+            _significant = await _context.ResolveSignificantOrdersAsync(_symbol, cancellationToken).ConfigureAwait(false);
 
-            if (await TrySignalBuyOrder(options, symbol, result.Orders, cancellationToken).ConfigureAwait(false))
+            // get current ticker
+            _ticker = await _context.GetTickerProvider().TryGetTickerAsync(_symbol.Name, cancellationToken).ConfigureAwait(false)
+                ?? throw new AlgorithmNotInitializedException($"Could not get ticker for '{_symbol.Name}'");
+
+            // get the lastest klines
+            var maxPeriods = GetMaxPeriods();
+            var end = _clock.UtcNow;
+            var start = end.Subtract(_options.KlineInterval, maxPeriods);
+            var klines = await _context.GetKlineProvider().GetKlinesAsync(_symbol.Name, _options.KlineInterval, start, end, cancellationToken).ConfigureAwait(false);
+
+            // calculate the current moving averages
+            _smaA = klines.LastSimpleMovingAverage(x => x.ClosePrice, _options.SmaPeriodsA);
+            _smaB = klines.LastSimpleMovingAverage(x => x.ClosePrice, _options.SmaPeriodsB);
+            _smaC = klines.LastSimpleMovingAverage(x => x.ClosePrice, _options.SmaPeriodsC);
+
+            // calculate the rsi values
+            _rsiA = klines.LastRelativeStrengthIndexOrDefault(x => x.ClosePrice, _options.RsiPeriodsA);
+            _rsiB = klines.LastRelativeStrengthIndexOrDefault(x => x.ClosePrice, _options.RsiPeriodsB);
+            _rsiC = klines.LastRelativeStrengthIndexOrDefault(x => x.ClosePrice, _options.RsiPeriodsC);
+
+            if (TrySignalBuyOrder())
             {
                 await _context
-                    .SetTrackingBuyAsync(symbol, options.BuyOrderSafetyRatio, options.TargetQuoteBalanceFractionPerBuy, options.MaxNotional, cancellationToken)
+                    .SetTrackingBuyAsync(_symbol, _options.BuyOrderSafetyRatio, _options.TargetQuoteBalanceFractionPerBuy, _options.MaxNotional, cancellationToken)
                     .ConfigureAwait(false);
             }
             else
             {
                 await _context
-                    .ClearOpenOrdersAsync(symbol, OrderSide.Buy, cancellationToken)
+                    .ClearOpenOrdersAsync(_symbol, OrderSide.Buy, cancellationToken)
                     .ConfigureAwait(false);
             }
 
-            // then place the averaging sell
-            await _context
-                .SetAveragingSellAsync(symbol, options.ProfitMultipler, options.RedeemSavings, options.SellSavings, cancellationToken)
-                .ConfigureAwait(false);
+            if (TrySignalSellOrder())
+            {
+                // then place the averaging sell
+                await _context
+                    .SetSignificantAveragingSellAsync(_symbol, _ticker, _significant.Orders, _options.ProfitMultipler, _options.RedeemSavings, cancellationToken)
+                    .ConfigureAwait(false);
+            }
 
             // publish the profit stats
             await _context
-                .PublishProfitAsync(result.Profit)
+                .PublishProfitAsync(_significant.Profit)
                 .ConfigureAwait(false);
         }
 
-        private async ValueTask<bool> TrySignalBuyOrder(ValueAveragingAlgoOptions options, Symbol symbol, ImmutableSortedOrderSet orders, CancellationToken cancellationToken)
+        private int GetMaxPeriods()
         {
-            // evaluate the orders vs config for negative signals
-            if (orders.Count == 0 && !options.IsOpeningEnabled)
+            return MathS.Max(stackalloc int[] { _options.SmaPeriodsA, _options.SmaPeriodsB, _options.SmaPeriodsC, _options.RsiPeriodsA, _options.RsiPeriodsB, _options.RsiPeriodsC });
+        }
+
+        private bool TrySignalBuyOrder()
+        {
+            // break on disabled opening
+            if (_significant.Orders.Count == 0 && !_options.IsOpeningEnabled)
             {
                 _logger.LogInformation(
                     "{Type} {Symbol} has opening disabled and will not signal a buy order",
-                    TypeName, symbol.Name);
+                    TypeName, _symbol.Name);
 
                 return false;
             }
-            else if (orders.Count > 0 && !options.IsAveragingEnabled)
+
+            // break on disabled averaging
+            if (_significant.Orders.Count > 0 && !_options.IsAveragingEnabled)
             {
                 _logger.LogInformation(
                     "{Type} {Symbol} has averaging disabled and will not signal a buy order",
-                    TypeName, symbol.Name);
+                    TypeName, _symbol.Name);
 
                 return false;
             }
 
-            // get current ticker
-            var ticker = await _context.TryGetTickerAsync(symbol.Name, cancellationToken).ConfigureAwait(false)
-                ?? throw new AlgorithmNotInitializedException($"Could not get ticker for '{symbol.Name}'");
-
-            // evaluate ticker vs minimum past price
-            if (orders.Count > 0)
+            // break on price not low enough from previous significant buy
+            if (_significant.Orders.Count > 0)
             {
-                var minPrice = orders.Min(x => x.Price);
-                var lowPrice = minPrice * options.PullbackRatio;
-                if (ticker.ClosePrice > lowPrice)
+                var minPrice = _significant.Orders.Min(x => x.Price);
+                var lowPrice = minPrice * _options.PullbackRatio;
+                if (_ticker.ClosePrice > lowPrice)
                 {
                     _logger.LogInformation(
                         "{Type} {Symbol} detected ticker of {Ticker:F8} is above the low price of {LowPrice:F8} calculated as {PullBackRatio:F8} of the min significant buy price of {MinPrice:F8} and will not signal a buy order",
-                        TypeName, symbol.Name, ticker.ClosePrice, lowPrice, options.PullbackRatio, minPrice);
+                        TypeName, _symbol.Name, _ticker.ClosePrice, lowPrice, _options.PullbackRatio, minPrice);
 
                     return false;
                 }
             }
 
-            // get the lastest klines
-            var end = _clock.UtcNow;
-            var start = end.Subtract(TimeSpan.FromDays(100));
-            var klines = await _klineProvider.GetKlinesAsync(symbol.Name, KlineInterval.Days1, start, end, cancellationToken).ConfigureAwait(false);
-
-            // calculate the current moving averages
-            var smaA = klines.LastSimpleMovingAverage(x => x.ClosePrice, options.SmaPeriodsA);
-            var smaB = klines.LastSimpleMovingAverage(x => x.ClosePrice, options.SmaPeriodsB);
-            var smaC = klines.LastSimpleMovingAverage(x => x.ClosePrice, options.SmaPeriodsC);
-
             _logger.LogInformation(
                 "{Type} {Symbol} evaluating indicators (SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8})",
-                TypeName, symbol.Name, options.SmaPeriodsA, smaA, options.SmaPeriodsB, smaB, options.SmaPeriodsC, smaC);
-
-            // evaluate the smas for negative signals
-            if (smaA > smaB)
-            {
-                _logger.LogInformation(
-                    "{Type} {Symbol} detected SMA({SmaPeriodsA}) of {SMAA:F8} is greater than SMA({SmaPeriodsB}) of {SMAB:F8} and will not signal a buy order",
-                    TypeName, symbol.Name, options.SmaPeriodsA, smaA, options.SmaPeriodsB, smaB);
-
-                return false;
-            }
-            else if (smaB > smaC)
-            {
-                _logger.LogInformation(
-                    "{Type} {Symbol} detected SMA({SmaPeriodsB}) of {SMAB:F8} is greater than SMA({SmaPeriodsC}) of {SMAC:F8} and will not signal a buy order",
-                    TypeName, symbol.Name, options.SmaPeriodsB, smaB, options.SmaPeriodsC, smaC);
-
-                return false;
-            }
-
-            // evaluate the ticker vs smas for negative signals
-            if (ticker.ClosePrice >= smaA)
-            {
-                _logger.LogInformation(
-                    "{Type} {Symbol} detected ticker of {Ticker:F8} is greater than or equal to SMA({SmaPeriodsA}) of {SMAA:F8} and will not signal a buy order",
-                    TypeName, symbol.Name, ticker, options.SmaPeriodsA, smaA);
-
-                return false;
-            }
-            else if (ticker.ClosePrice >= smaB)
-            {
-                _logger.LogInformation(
-                    "{Type} {Symbol} detected ticker of {Ticker:F8} is greater than or equal to SMB({SmaPeriodsB}) of {SMAB:F8} and will not signal a buy order",
-                    TypeName, symbol.Name, ticker, options.SmaPeriodsB, smaB);
-
-                return false;
-            }
-            else if (ticker.ClosePrice >= smaC)
-            {
-                _logger.LogInformation(
-                    "{Type} {Symbol} detected ticker of {Ticker:F8} is greater than or equal to SMB({SmaPeriodsC}) of {SMAC:F8} and will not signal a buy order",
-                    TypeName, symbol.Name, ticker, options.SmaPeriodsC, smaC);
-
-                return false;
-            }
-
-            // calculate the rsi values
-            var rsiA = klines.LastRelativeStrengthIndexOrDefault(x => x.ClosePrice, options.RsiPeriodsA);
-            var rsiB = klines.LastRelativeStrengthIndexOrDefault(x => x.ClosePrice, options.RsiPeriodsB);
-            var rsiC = klines.LastRelativeStrengthIndexOrDefault(x => x.ClosePrice, options.RsiPeriodsC);
+                TypeName, _symbol.Name, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC);
 
             _logger.LogInformation(
-                "{Type} {Symbol} evaluating indicators (RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8})",
-                TypeName, symbol.Name, options.RsiPeriodsA, rsiA, options.RsiPeriodsB, rsiB, options.RsiPeriodsC, rsiC);
+                 "{Type} {Symbol} evaluating indicators (RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8})",
+                 TypeName, _symbol.Name, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC);
 
-            // evaluate the rsi waves against each other
-            if (rsiA > rsiB)
+            // evaluate the signal now
+            var isSmaOrdered = _smaA < _smaB && _smaB < _smaC;
+            var isTickerUnderSma = _ticker.ClosePrice < _smaA && _ticker.ClosePrice < _smaB && _ticker.ClosePrice < _smaC;
+            var isRsiOrdered = _rsiA < _rsiB && _rsiB < _rsiC;
+            var isRsiSignaling = _rsiA < _options.RsiOverboughtA && _rsiB < _options.RsiOverboughtB && _rsiC < _options.RsiOverboughtC;
+            var signal = isSmaOrdered && isTickerUnderSma && isRsiOrdered && isRsiSignaling;
+
+            if (signal)
             {
                 _logger.LogInformation(
-                    "{Type} {Symbol} detected RSI({RsiPeriodsA}) of {RSIA:F8} is greater than or equal to RSI({RsiPeriodsB}) of {RSIB:F8} and will not signal a buy order",
-                    TypeName, symbol.Name, options.RsiPeriodsA, rsiA, options.RsiPeriodsB, rsiB);
-
-                return false;
+                    "{Type} {Symbol} will signal a buy order for the current state (Ticker = {Ticker:F8}, SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}, RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8})",
+                    TypeName, _symbol.Name, _ticker.ClosePrice, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC);
             }
-            else if (rsiB > rsiC)
+
+            return signal;
+        }
+
+        private bool TrySignalSellOrder()
+        {
+            // evaluate the signal
+            var isRsiOrdered = _rsiA > _rsiB && _rsiB > _rsiC;
+            var isRsiSignaling = _rsiA > _options.RsiOversoldA && _rsiB > _options.RsiOversoldB && _rsiC > _options.RsiOversoldC;
+            var signal = isRsiOrdered && isRsiSignaling;
+
+            if (signal)
             {
                 _logger.LogInformation(
-                    "{Type} {Symbol} detected RSI({RsiPeriodsB}) of {RSIB:F8} is greater than or equal to RSI({RsiPeriodsC}) of {RSIC:F8} and will not signal a buy order",
-                    TypeName, symbol.Name, options.RsiPeriodsB, rsiB, options.RsiPeriodsC, rsiC);
-
-                return false;
+                    "{Type} {Symbol} will signal a sell order for the current state (Ticker = {Ticker:F8}, SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}, RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8})",
+                    TypeName, _symbol.Name, _ticker.ClosePrice, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC);
             }
 
-            // evaluate the rsi values for negative signals
-            if (rsiA > options.RsiOverboughtA)
-            {
-                _logger.LogInformation(
-                    "{Type} {Symbol} detected RSI({RsiPeriodsA}) of {RSIA:F8} is greater than overbought signal of {OverboughtA:F8} and will not signal a buy order",
-                    TypeName, symbol.Name, options.RsiPeriodsA, rsiA, options.RsiOverboughtA);
-
-                return false;
-            }
-            else if (rsiB > options.RsiOverboughtB)
-            {
-                _logger.LogInformation(
-                    "{Type} {Symbol} detected RSI({RsiPeriodsB}) of {RSIB:F8} is greater than overbought signal of {OverboughtB:F8} and will not signal a buy order",
-                    TypeName, symbol.Name, options.RsiPeriodsB, rsiB, options.RsiOverboughtB);
-
-                return false;
-            }
-            else if (rsiC > options.RsiOverboughtC)
-            {
-                _logger.LogInformation(
-                    "{Type} {Symbol} detected RSI({RsiPeriodsC}) of {RSIC:F8} is greater than overbought signal of {OverboughtC:F8} and will not signal a buy order",
-                    TypeName, symbol.Name, options.RsiPeriodsC, rsiC, options.RsiOverboughtC);
-
-                return false;
-            }
-
-            // if we reached here then we have a buy signal
-            _logger.LogInformation(
-                "{Type} {Symbol} will signal a buy order for the current state (Ticker = {Ticker:F8}, SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}, RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8})",
-                TypeName, symbol.Name, ticker.ClosePrice, options.SmaPeriodsA, smaA, options.SmaPeriodsB, smaB, options.SmaPeriodsC, smaC, options.RsiPeriodsA, rsiA, options.RsiPeriodsB, rsiB, options.RsiPeriodsC, rsiC);
-
-            return true;
+            return signal;
         }
     }
 }

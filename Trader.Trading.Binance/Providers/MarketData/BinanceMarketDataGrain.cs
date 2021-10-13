@@ -27,7 +27,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         private readonly ISystemClock _clock;
 
         private readonly HashSet<string> _tickerSymbols;
-        private readonly Dictionary<(string Symbol, KlineInterval Interval), TimeSpan> _klineWindows;
+        private readonly Dictionary<(string Symbol, KlineInterval Interval), int> _klineWindows;
 
         public BinanceMarketDataGrain(ILogger<BinanceMarketDataGrain> logger, IMarketDataStreamClientFactory factory, ITradingRepository repository, ITradingService trader, IMapper mapper, ISystemClock clock, IAlgoDependencyInfo dependencies)
         {
@@ -44,8 +44,8 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             _klineWindows = dependencies
                 .GetKlines()
                 .GroupBy(x => (x.Symbol, x.Interval))
-                .Select(x => (x.Key, Window: x.Max(y => y.Window)))
-                .ToDictionary(x => x.Key, x => x.Window);
+                .Select(x => (x.Key, Periods: x.Max(y => y.Periods)))
+                .ToDictionary(x => x.Key, x => x.Periods);
         }
 
         private static string TypeName => nameof(BinanceMarketDataGrain);
@@ -230,11 +230,12 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             _logger.LogInformation("{Name} is syncing klines for {Symbols}...", TypeName, _klineWindows.Select(x => x.Key.Symbol));
             var watch = Stopwatch.StartNew();
 
+            var end = _clock.UtcNow;
+
             foreach (var item in _klineWindows)
             {
                 // define the required window
-                var end = _clock.UtcNow;
-                var start = end.Subtract(item.Value);
+                var start = end.Subtract(item.Key.Interval, item.Value);
 
                 _logger.LogInformation(
                     "{Name} is syncing klines for {Symbol} from {Start} to {End}",
@@ -370,7 +371,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                 if (count >= buffer.Length) break;
 
                 // attempt to elect the item for removal
-                if (_klineWindows.TryGetValue((item.Key.Symbol, item.Key.Interval), out var window) && item.Key.OpenTime < now.Subtract(window) && item.Value.Saved)
+                if (_klineWindows.TryGetValue((item.Key.Symbol, item.Key.Interval), out var periods) && item.Key.OpenTime < now.Subtract(item.Key.Interval, periods) && item.Value.Saved)
                 {
                     buffer[count++] = item.Value.Kline;
                 }

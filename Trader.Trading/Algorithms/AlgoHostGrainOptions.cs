@@ -56,10 +56,11 @@ namespace Outcompute.Trader.Trading.Algorithms
         public string Symbol { get; set; } = Empty;
 
         [Required]
-        public KlineInterval Interval { get; set; }
+        [Range(1, int.MaxValue)]
+        public KlineInterval Interval { get; set; } = KlineInterval.Days1;
 
         [Required]
-        [Range(typeof(TimeSpan), "0.00:00:00.001", "9999.00:00:00.000")]
-        public TimeSpan Window { get; set; }
+        [Range(1, int.MaxValue)]
+        public int Periods { get; set; } = 100;
     }
 }

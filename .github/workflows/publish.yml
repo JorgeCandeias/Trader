@@ -14,7 +14,7 @@ env:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
     
@@ -29,6 +29,8 @@ jobs:
       run: |
         dotnet sln remove Trader.Data.Sql.Database/Trader.Data.Sql.Database.sqlproj
         dotnet sln remove Trader.Orleans.Database/Trader.Orleans.Database.sqlproj
+        rm -f -d -r Trader.Data.Sql.Database
+        rm -f -d -r Trader.Orleans.Database
               
     - name: Restore dependencies
       run: dotnet restore ${{ env.SOLUTION_FILE_PATH }}

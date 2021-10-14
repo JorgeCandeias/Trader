@@ -8,7 +8,6 @@ using Microsoft.Extensions.Options;
 using Orleans;
 using Outcompute.Trader.Core.Timers;
 using Outcompute.Trader.Dashboard.WebApp;
-using Outcompute.Trader.Dashboard.WebApp.Data;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -40,7 +39,6 @@ namespace Outcompute.Trader.Dashboard
                         services.AddServerSideBlazor();
 
                         services
-                            .AddSingleton<WeatherForecastService>()
                             .AddTransient(_ => provider.GetRequiredService<IGrainFactory>())
                             .AddTransient(_ => provider.GetRequiredService<ISafeTimerFactory>());
                     });

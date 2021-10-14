@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using System;
+using System.Linq;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
@@ -21,9 +22,9 @@ namespace Outcompute.Trader.Trading.Algorithms
         {
             var section = _config.GetSection(_mapping.RootKey);
 
-            foreach (var node in section.GetChildren())
+            foreach (var key in section.GetChildren().Select(x => x.Key))
             {
-                var name = node.Key;
+                var name = key;
                 var algoOptions = _algoOptionsMonitor.Get(name);
 
                 options.Algos[name] = algoOptions;

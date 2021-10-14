@@ -213,7 +213,10 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             {
                 var subWatch = Stopwatch.StartNew();
 
-                var result = await _trader.Get24hTickerPriceChangeStatisticsAsync(symbol, cancellationToken);
+                var result = await _trader
+                    .WithWaitOnTooManyRequests((t, ct) => t
+                    .Get24hTickerPriceChangeStatisticsAsync(symbol, ct), _logger, cancellationToken);
+
                 var ticker = _mapper.Map<MiniTicker>(result);
 
                 // conflate the ticker if it is newer than the cached one - otherwise discard it

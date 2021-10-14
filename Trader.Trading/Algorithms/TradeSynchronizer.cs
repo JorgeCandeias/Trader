@@ -1,11 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
+using Outcompute.Trader.Core.Time;
+using Outcompute.Trader.Data;
 using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
-using Outcompute.Trader.Core.Time;
-using Outcompute.Trader.Data;
-using Outcompute.Trader.Models;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
@@ -39,7 +38,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             {
                 // query for the next trades
                 var trades = await _trader
-                    .GetAccountTradesAsync(new GetAccountTrades(symbol, null, null, tradeId + 1, 1000, null, _clock.UtcNow), cancellationToken)
+                    .GetAccountTradesAsync(symbol, tradeId + 1, 1000, cancellationToken)
                     .ConfigureAwait(false);
 
                 // break if we got all trades

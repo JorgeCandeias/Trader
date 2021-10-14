@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -7,6 +8,7 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         #region Keyed
 
+        [SuppressMessage("Major Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "N/A")]
         public static TService? GetKeyedService<TKey, TService>(this IServiceProvider services, TKey key)
             where TKey : IEquatable<TKey>
             where TService : class

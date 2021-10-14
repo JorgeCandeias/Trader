@@ -1,6 +1,7 @@
 # Trader
 
 [![.NET](https://github.com/JorgeCandeias/Trader/actions/workflows/msbuild.yml/badge.svg)](https://github.com/JorgeCandeias/Trader/actions/workflows/msbuild.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=JorgeCandeias_Trader&metric=alert_status)](https://sonarcloud.io/dashboard?id=JorgeCandeias_Trader)
 
 Trader is a high-frequency algorithmic trading framework.
 

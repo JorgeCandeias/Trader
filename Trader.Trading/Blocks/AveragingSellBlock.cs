@@ -32,12 +32,6 @@ namespace Outcompute.Trader.Trading.Algorithms
             var tickerProvider = context.ServiceProvider.GetRequiredService<ITickerProvider>();
             var logger = context.ServiceProvider.GetRequiredService<ILogger<IAlgoContext>>();
 
-            // get any required filters from the symbol
-            var priceFilter = symbol.Filters.OfType<PriceSymbolFilter>().Single();
-            var percentFilter = symbol.Filters.OfType<PercentPriceSymbolFilter>().Single();
-            var minNotionalFilter = symbol.Filters.OfType<MinNotionalSymbolFilter>().Single();
-            var lotSizeFilter = symbol.Filters.OfType<LotSizeSymbolFilter>().Single();
-
             // get all significant buys
             var significant = await significantOrderResolver.ResolveAsync(symbol, cancellationToken).ConfigureAwait(false);
 
@@ -53,7 +47,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             var ticker = await tickerProvider.TryGetTickerAsync(symbol.Name, cancellationToken).ConfigureAwait(false);
 
             // calculate the desired sell
-            var desired = CalculateDesiredSell(logger, symbol, profitMultiplier, significant.Orders, balance, savings, lotSizeFilter, percentFilter, ticker, priceFilter, minNotionalFilter);
+            var desired = CalculateDesiredSell(logger, symbol, profitMultiplier, significant.Orders, balance, savings, ticker);
 
             // apply the desired sell
             if (desired == DesiredSell.None)
@@ -73,7 +67,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             return significant.Profit;
         }
 
-        private static DesiredSell CalculateDesiredSell(ILogger logger, Symbol symbol, decimal profitMultiplier, ImmutableSortedOrderSet orders, Balance balance, FlexibleProductPosition savings, LotSizeSymbolFilter lotSizeFilter, PercentPriceSymbolFilter percentFilter, MiniTicker? ticker, PriceSymbolFilter priceFilter, MinNotionalSymbolFilter minNotionalFilter)
+        private static DesiredSell CalculateDesiredSell(ILogger logger, Symbol symbol, decimal profitMultiplier, ImmutableSortedOrderSet orders, Balance balance, FlexibleProductPosition savings, MiniTicker? ticker)
         {
             // skip if there is no ticker information
             if (ticker is null)
@@ -141,42 +135,42 @@ namespace Outcompute.Trader.Trading.Algorithms
             price *= profitMultiplier;
 
             // adjust the quantity down to lot size filter
-            if (quantity < lotSizeFilter.StepSize)
+            if (quantity < symbol.Filters.LotSize.StepSize)
             {
                 logger.LogError(
                     "{Type} {Name} cannot set sell order for {Quantity} {Asset} because the quantity is under the minimum lot size of {MinLotSize} {Asset}",
-                    TypeName, symbol.Name, quantity, symbol.BaseAsset, lotSizeFilter.StepSize, symbol.BaseAsset);
+                    TypeName, symbol.Name, quantity, symbol.BaseAsset, symbol.Filters.LotSize.StepSize, symbol.BaseAsset);
 
                 return DesiredSell.None;
             }
-            quantity = Math.Floor(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
+            quantity = Math.Floor(quantity / symbol.Filters.LotSize.StepSize) * symbol.Filters.LotSize.StepSize;
 
             // adjust the sell price up to the minimum percent filter
-            var minPrice = ticker.ClosePrice * percentFilter.MultiplierDown;
+            var minPrice = ticker.ClosePrice * symbol.Filters.PercentPrice.MultiplierDown;
             if (price < minPrice)
             {
                 price = minPrice;
             }
 
             // adjust the sell price up to the tick size
-            price = Math.Ceiling(price / priceFilter.TickSize) * priceFilter.TickSize;
+            price = Math.Ceiling(price / symbol.Filters.Price.TickSize) * symbol.Filters.Price.TickSize;
 
             // check if the sell is under the minimum notional filter
-            if (quantity * price < minNotionalFilter.MinNotional)
+            if (quantity * price < symbol.Filters.MinNotional.MinNotional)
             {
                 logger.LogError(
                     "{Type} {Name} cannot set sell order for {Quantity} {Asset} at {Price} {Quote} totalling {Total} {Quote} because it is under the minimum notional of {MinNotional} {Quote}",
-                    TypeName, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.QuoteAsset, minNotionalFilter.MinNotional, symbol.QuoteAsset);
+                    TypeName, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.QuoteAsset, symbol.Filters.MinNotional.MinNotional, symbol.QuoteAsset);
 
                 return DesiredSell.None;
             }
 
             // check if the sell is above the maximum percent filter
-            if (price > ticker.ClosePrice * percentFilter.MultiplierUp)
+            if (price > ticker.ClosePrice * symbol.Filters.PercentPrice.MultiplierUp)
             {
                 logger.LogError(
                     "{Type} {Name} cannot set sell order for {Quantity} {Asset} at {Price} {Quote} totalling {Total} {Quote} because it is under the maximum percent filter price of {MaxPrice} {Quote}",
-                    TypeName, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.QuoteAsset, ticker.ClosePrice * percentFilter.MultiplierUp, symbol.QuoteAsset);
+                    TypeName, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.QuoteAsset, ticker.ClosePrice * symbol.Filters.PercentPrice.MultiplierUp, symbol.QuoteAsset);
 
                 return DesiredSell.None;
             }

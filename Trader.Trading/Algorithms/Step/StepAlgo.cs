@@ -60,10 +60,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
                 .ConfigureAwait(false);
 
             var symbol = exchange.Symbols.Single(x => x.Name == options.Symbol);
-            var priceFilter = symbol.Filters.OfType<PriceSymbolFilter>().Single();
-            var percentFilter = symbol.Filters.OfType<PercentPriceSymbolFilter>().Single();
-            var lotSizeFilter = symbol.Filters.OfType<LotSizeSymbolFilter>().Single();
-            var minNotionalFilter = symbol.Filters.OfType<MinNotionalSymbolFilter>().Single();
 
             await ApplyAccountInfoAsync(symbol, cancellationToken).ConfigureAwait(false);
 
@@ -79,12 +75,12 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
             var ticker = await TrySyncAssetPriceAsync(options, symbol, cancellationToken).ConfigureAwait(false);
             if (ticker is null) return;
 
-            if (await TryCreateTradingBandsAsync(options, symbol, percentFilter, priceFilter, minNotionalFilter, significant.Orders, ticker, cancellationToken).ConfigureAwait(false)) return;
-            if (await TrySetStartingTradeAsync(options, symbol, priceFilter, minNotionalFilter, lotSizeFilter, ticker, cancellationToken).ConfigureAwait(false)) return;
+            if (await TryCreateTradingBandsAsync(options, symbol, significant.Orders, ticker, cancellationToken).ConfigureAwait(false)) return;
+            if (await TrySetStartingTradeAsync(options, symbol, ticker, cancellationToken).ConfigureAwait(false)) return;
             if (await TryCancelRogueSellOrdersAsync(options, symbol, cancellationToken).ConfigureAwait(false)) return;
             if (await TryCancelExcessSellOrdersAsync(options, symbol, cancellationToken).ConfigureAwait(false)) return;
             if (await TrySetBandSellOrdersAsync(options, symbol, cancellationToken).ConfigureAwait(false)) return;
-            if (await TryCreateLowerBandOrderAsync(options, symbol, priceFilter, minNotionalFilter, lotSizeFilter, ticker, cancellationToken).ConfigureAwait(false)) return;
+            if (await TryCreateLowerBandOrderAsync(options, symbol, ticker, cancellationToken).ConfigureAwait(false)) return;
             await TryCloseOutOfRangeBandsAsync(options, symbol, ticker, cancellationToken).ConfigureAwait(false);
         }
 
@@ -176,7 +172,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
             return true;
         }
 
-        private async Task<bool> TryCreateLowerBandOrderAsync(StepAlgoOptions options, Symbol symbol, PriceSymbolFilter priceFilter, MinNotionalSymbolFilter minNotionalFilter, LotSizeSymbolFilter lotSizeFilter, MiniTicker ticker, CancellationToken cancellationToken = default)
+        private async Task<bool> TryCreateLowerBandOrderAsync(StepAlgoOptions options, Symbol symbol, MiniTicker ticker, CancellationToken cancellationToken = default)
         {
             // identify the highest and lowest bands
             var highBand = _bands.Max;
@@ -239,7 +235,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
             }
 
             // under adjust the buy price to the tick size
-            lowerPrice = Math.Floor(lowerPrice / priceFilter.TickSize) * priceFilter.TickSize;
+            lowerPrice = Math.Floor(lowerPrice / symbol.Filters.Price.TickSize) * symbol.Filters.Price.TickSize;
 
             // calculate the quote amount to pay with
             var total = _balances.Quote.Free * options.TargetQuoteBalanceFractionPerBand;
@@ -251,7 +247,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
             }
 
             // raise to the minimum notional if needed
-            total = Math.Max(total, minNotionalFilter.MinNotional);
+            total = Math.Max(total, symbol.Filters.MinNotional.MinNotional);
 
             // ensure there is enough quote asset for it
             if (total > _balances.Quote.Free)
@@ -289,7 +285,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
             var quantity = total / lowerPrice;
 
             // round it down to the lot size step
-            quantity = Math.Ceiling(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
+            quantity = Math.Ceiling(quantity / symbol.Filters.LotSize.StepSize) * symbol.Filters.LotSize.StepSize;
 
             // place the buy order
             var result = await _trader
@@ -510,7 +506,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
             return changed;
         }
 
-        private async Task<bool> TrySetStartingTradeAsync(StepAlgoOptions options, Symbol symbol, PriceSymbolFilter priceFilter, MinNotionalSymbolFilter minNotionalFilter, LotSizeSymbolFilter lotSizeFilter, MiniTicker ticker, CancellationToken cancellationToken = default)
+        private async Task<bool> TrySetStartingTradeAsync(StepAlgoOptions options, Symbol symbol, MiniTicker ticker, CancellationToken cancellationToken = default)
         {
             // only manage the opening if there are no bands or only a single order band to move around
             if (_bands.Count == 0 || _bands.Count == 1 && _bands.Single().Status == BandStatus.Ordered)
@@ -519,7 +515,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
                 var lowBuyPrice = ticker.ClosePrice;
 
                 // under adjust the buy price to the tick size
-                lowBuyPrice = Math.Floor(lowBuyPrice / priceFilter.TickSize) * priceFilter.TickSize;
+                lowBuyPrice = Math.Floor(lowBuyPrice / symbol.Filters.Price.TickSize) * symbol.Filters.Price.TickSize;
 
                 _logger.LogInformation(
                     "{Type} {Name} identified first buy target price at {LowPrice} {LowQuote} with current price at {CurrentPrice} {CurrentQuote}",
@@ -586,7 +582,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
                 }
 
                 // raise to the minimum notional if needed
-                total = Math.Max(total, minNotionalFilter.MinNotional);
+                total = Math.Max(total, symbol.Filters.MinNotional.MinNotional);
 
                 // ensure there is enough quote asset for it
                 if (total > _balances.Quote.Free)
@@ -624,7 +620,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
                 var quantity = total / lowBuyPrice;
 
                 // round it up to the lot size step
-                quantity = Math.Ceiling(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
+                quantity = Math.Ceiling(quantity / symbol.Filters.LotSize.StepSize) * symbol.Filters.LotSize.StepSize;
 
                 // place a limit order at the current price
                 var result = await _trader
@@ -664,7 +660,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
             }
         }
 
-        private async Task<bool> TryCreateTradingBandsAsync(StepAlgoOptions options, Symbol symbol, PercentPriceSymbolFilter percentFilter, PriceSymbolFilter priceFilter, MinNotionalSymbolFilter minNotionalFilter, ImmutableSortedOrderSet significant, MiniTicker ticker, CancellationToken cancellationToken = default)
+        private async Task<bool> TryCreateTradingBandsAsync(StepAlgoOptions options, Symbol symbol, ImmutableSortedOrderSet significant, MiniTicker ticker, CancellationToken cancellationToken = default)
         {
             _bands.Clear();
 
@@ -746,7 +742,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
 
                 // ensure the close price is below the max percent filter
                 // this can happen due to an asset crashing down several multiples
-                var maxPrice = ticker.ClosePrice * percentFilter.MultiplierUp;
+                var maxPrice = ticker.ClosePrice * symbol.Filters.PercentPrice.MultiplierUp;
                 if (band.ClosePrice > maxPrice)
                 {
                     _logger.LogError(
@@ -758,7 +754,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
 
                 // ensure the close price is above the min percent filter
                 // this can happen to old leftovers that were bought very cheap
-                var minPrice = ticker.ClosePrice * percentFilter.MultiplierDown;
+                var minPrice = ticker.ClosePrice * symbol.Filters.PercentPrice.MultiplierDown;
                 if (band.ClosePrice < minPrice)
                 {
                     _logger.LogWarning(
@@ -769,11 +765,11 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
                 }
 
                 // adjust the sell price up to the tick size
-                band.ClosePrice = Math.Ceiling(band.ClosePrice / priceFilter.TickSize) * priceFilter.TickSize;
+                band.ClosePrice = Math.Ceiling(band.ClosePrice / symbol.Filters.Price.TickSize) * symbol.Filters.Price.TickSize;
             }
 
             // identify bands where the target sell is somehow below the notional filter
-            var leftovers = _bands.Where(x => x.Status == BandStatus.Open && x.Quantity * x.ClosePrice < minNotionalFilter.MinNotional).ToHashSet();
+            var leftovers = _bands.Where(x => x.Status == BandStatus.Open && x.Quantity * x.ClosePrice < symbol.Filters.MinNotional.MinNotional).ToHashSet();
             if (leftovers.Count > 0)
             {
                 // remove all leftovers

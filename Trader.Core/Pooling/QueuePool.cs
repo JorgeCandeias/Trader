@@ -1,11 +1,13 @@
 ﻿using Microsoft.Extensions.ObjectPool;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
-namespace Outcompute.Trader.Trading.Indicators.ObjectPools
+namespace Outcompute.Trader.Core.Pooling
 {
-    internal static class QueuePool<T>
+    public static class QueuePool<T>
     {
-        public static ObjectPool<Queue<T>> Shared { get; } = IndicatorPoolProvider.Default.Create(QueuePooledObjectPolicy.Default);
+        [SuppressMessage("Design", "CA1000:Do not declare static members on generic types", Justification = "Type Rooting Pattern")]
+        public static ObjectPool<Queue<T>> Shared { get; } = CorePoolProvider.Default.Create(QueuePooledObjectPolicy.Default);
 
         private sealed class QueuePooledObjectPolicy : IPooledObjectPolicy<Queue<T>>
         {

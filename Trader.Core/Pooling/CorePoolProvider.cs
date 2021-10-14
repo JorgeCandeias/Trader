@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.ObjectPool;
 
-namespace Outcompute.Trader.Trading.Indicators.ObjectPools
+namespace Outcompute.Trader.Core.Pooling
 {
-    internal static class IndicatorPoolProvider
+    internal static class CorePoolProvider
     {
         public static ObjectPoolProvider Default { get; } = new DefaultObjectPoolProvider();
     }

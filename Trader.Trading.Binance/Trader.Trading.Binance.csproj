@@ -41,6 +41,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Trader.Core.Abstractions\Trader.Core.Abstractions.csproj" />
+		<ProjectReference Include="..\Trader.Core\Trader.Core.csproj" />
 		<ProjectReference Include="..\Trader.Hosting.Abstractions\Trader.Hosting.Abstractions.csproj" />
 		<ProjectReference Include="..\Trader.Models\Trader.Models.csproj" />
 		<ProjectReference Include="..\Trader.Trading.Abstractions\Trader.Trading.Abstractions.csproj" />

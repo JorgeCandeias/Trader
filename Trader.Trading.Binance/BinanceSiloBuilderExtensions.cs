@@ -81,6 +81,7 @@ namespace Orleans.Hosting
                         .AddSingleton<SymbolStatusConverter>()
                         .AddSingleton<OrderTypeConverter>()
                         .AddSingleton<SymbolFilterConverter>()
+                        .AddSingleton<SymbolFiltersConverter>()
                         .AddSingleton<PermissionConverter>()
                         .AddSingleton<OrderSideConverter>()
                         .AddSingleton<TimeInForceConverter>()

@@ -1,4 +1,4 @@
-﻿using Outcompute.Trader.Trading.Indicators.ObjectPools;
+﻿using Outcompute.Trader.Core.Pooling;
 
 namespace System.Collections.Generic
 {

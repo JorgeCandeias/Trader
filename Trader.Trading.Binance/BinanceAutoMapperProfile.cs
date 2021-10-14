@@ -1,10 +1,10 @@
 ﻿using AutoMapper;
+using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Binance.Converters;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text.Json;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Binance.Converters;
 
 namespace Outcompute.Trader.Trading.Binance
 {
@@ -64,6 +64,7 @@ namespace Outcompute.Trader.Trading.Binance
             CreateMap<RateLimiterModel, RateLimit>().ConvertUsing<RateLimitConverter>();
             CreateMap<ExchangeFilterModel, ExchangeFilter>().ConvertUsing<ExchangeFilterConverter>();
             CreateMap<SymbolFilterModel, SymbolFilter>().ConvertUsing<SymbolFilterConverter>();
+            CreateMap<IEnumerable<SymbolFilterModel>, SymbolFilters>().ConvertUsing<SymbolFiltersConverter>();
             CreateMap<OrderBookModel, OrderBook>().ConvertUsing<OrderBookConverter>();
             CreateMap<CancelAllOrdersResponseModel, CancelOrderResult>().ConvertUsing<CancelAllOrdersResponseModelConverter>();
 

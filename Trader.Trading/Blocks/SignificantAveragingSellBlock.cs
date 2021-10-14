@@ -36,13 +36,8 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         private static async ValueTask SetSignificantAveragingSellInnerAsync(IAlgoContext context, Symbol symbol, MiniTicker ticker, IReadOnlyCollection<OrderQueryResult> orders, decimal minimumProfitRate, bool redeemSavings, CancellationToken cancellationToken)
         {
-            // get any required filters from the symbol
-            var minNotionalFilter = symbol.Filters.OfType<MinNotionalSymbolFilter>().Single();
-            var lotSizeFilter = symbol.Filters.OfType<LotSizeSymbolFilter>().Single();
-            var priceFilter = symbol.Filters.OfType<PriceSymbolFilter>().Single();
-
             // calculate the desired sell
-            var desired = CalculateDesiredSell(context, symbol, minimumProfitRate, orders, lotSizeFilter, priceFilter, ticker, minNotionalFilter);
+            var desired = CalculateDesiredSell(context, symbol, minimumProfitRate, orders, ticker);
 
             // apply the desired sell
             if (desired == DesiredSell.None)
@@ -59,7 +54,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             }
         }
 
-        private static DesiredSell CalculateDesiredSell(IAlgoContext context, Symbol symbol, decimal minimumProfitRate, IReadOnlyCollection<OrderQueryResult> orders, LotSizeSymbolFilter lotSizeFilter, PriceSymbolFilter priceFilter, MiniTicker ticker, MinNotionalSymbolFilter minNotionalFilter)
+        private static DesiredSell CalculateDesiredSell(IAlgoContext context, Symbol symbol, decimal minimumProfitRate, IReadOnlyCollection<OrderQueryResult> orders, MiniTicker ticker)
         {
             // skip if there is nothing to sell
             if (orders.Count == 0)
@@ -83,7 +78,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 var candidateSellPrice = candidateAverageBuyPrice * minimumProfitRate;
 
                 // adjust the candidate average sell price up to the tick size
-                candidateSellPrice = Math.Ceiling(candidateSellPrice / priceFilter.TickSize) * priceFilter.TickSize;
+                candidateSellPrice = Math.Ceiling(candidateSellPrice / symbol.Filters.Price.TickSize) * symbol.Filters.Price.TickSize;
 
                 // elect the order if the candidate average sell price is below the ticker
                 if (candidateSellPrice <= ticker.ClosePrice)
@@ -109,24 +104,24 @@ namespace Outcompute.Trader.Trading.Algorithms
             }
 
             // break if the quantity is under the minimum lot size
-            if (quantity < lotSizeFilter.StepSize)
+            if (quantity < symbol.Filters.LotSize.StepSize)
             {
                 context.GetLogger().LogError(
                     "{Type} {Name} cannot set sell order for {Quantity} {Asset} because the quantity is under the minimum lot size of {MinLotSize} {Asset}",
-                    TypeName, symbol.Name, quantity, symbol.BaseAsset, lotSizeFilter.StepSize, symbol.BaseAsset);
+                    TypeName, symbol.Name, quantity, symbol.BaseAsset, symbol.Filters.LotSize.StepSize, symbol.BaseAsset);
 
                 return DesiredSell.None;
             }
 
             // adjust the quantity down to the lot size filter
-            quantity = Math.Floor(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
+            quantity = Math.Floor(quantity / symbol.Filters.LotSize.StepSize) * symbol.Filters.LotSize.StepSize;
 
             // check if the sell is under the minimum notional filter
-            if (quantity * ticker.ClosePrice < minNotionalFilter.MinNotional)
+            if (quantity * ticker.ClosePrice < symbol.Filters.MinNotional.MinNotional)
             {
                 context.GetLogger().LogError(
                     "{Type} {Name} cannot set sell order for {Quantity} {Asset} at {Price} {Quote} totalling {Total} {Quote} because it is under the minimum notional of {MinNotional} {Quote}",
-                    TypeName, symbol.Name, quantity, symbol.BaseAsset, ticker.ClosePrice, symbol.QuoteAsset, quantity * ticker.ClosePrice, symbol.QuoteAsset, minNotionalFilter.MinNotional, symbol.QuoteAsset);
+                    TypeName, symbol.Name, quantity, symbol.BaseAsset, ticker.ClosePrice, symbol.QuoteAsset, quantity * ticker.ClosePrice, symbol.QuoteAsset, symbol.Filters.MinNotional.MinNotional, symbol.QuoteAsset);
 
                 return DesiredSell.None;
             }

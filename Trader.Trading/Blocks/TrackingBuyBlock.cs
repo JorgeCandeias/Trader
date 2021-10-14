@@ -29,7 +29,6 @@ namespace Outcompute.Trader.Trading.Algorithms
             var logger = context.ServiceProvider.GetRequiredService<ILogger<IAlgoContext>>();
             var tickerProvider = context.ServiceProvider.GetRequiredService<ITickerProvider>();
             var clock = context.ServiceProvider.GetRequiredService<ISystemClock>();
-            var klineProvider = context.ServiceProvider.GetRequiredService<IKlineProvider>();
             var repository = context.ServiceProvider.GetRequiredService<ITradingRepository>();
             var trader = context.ServiceProvider.GetRequiredService<ITradingService>();
 
@@ -47,11 +46,6 @@ namespace Outcompute.Trader.Trading.Algorithms
 
             // sync data from the exchange
             var orders = await context.GetOpenOrdersAsync(symbol, OrderSide.Buy, cancellationToken).ConfigureAwait(false);
-
-            // get the symbol filters
-            var priceFilter = symbol.Filters.OfType<PriceSymbolFilter>().Single();
-            var lotSizeFilter = symbol.Filters.OfType<LotSizeSymbolFilter>().Single();
-            var minNotionalFilter = symbol.Filters.OfType<MinNotionalSymbolFilter>().Single();
 
             // get the account free quote balance
             var balance = await repository
@@ -71,7 +65,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             var lowBuyPrice = ticker.ClosePrice * pullbackRatio;
 
             // under adjust the buy price to the tick size
-            lowBuyPrice = Math.Floor(lowBuyPrice / priceFilter.TickSize) * priceFilter.TickSize;
+            lowBuyPrice = Math.Floor(lowBuyPrice / symbol.Filters.Price.TickSize) * symbol.Filters.Price.TickSize;
 
             logger.LogInformation(
                 "{Type} {Name} identified first buy target price at {LowPrice} {LowQuote} with current price at {CurrentPrice} {CurrentQuote}",
@@ -97,13 +91,13 @@ namespace Outcompute.Trader.Trading.Algorithms
             }
 
             // bump it to the minimum notional if needed
-            total = Math.Max(total, minNotionalFilter.MinNotional);
+            total = Math.Max(total, symbol.Filters.MinNotional.MinNotional);
 
             // calculate the appropriate quantity to buy
             var quantity = total / lowBuyPrice;
 
             // round it down to the lot size step
-            quantity = Math.Ceiling(quantity / lotSizeFilter.StepSize) * lotSizeFilter.StepSize;
+            quantity = Math.Ceiling(quantity / symbol.Filters.LotSize.StepSize) * symbol.Filters.LotSize.StepSize;
 
             // calculat the true notional after adjustments
             total = quantity * lowBuyPrice;

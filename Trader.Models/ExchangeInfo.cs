@@ -51,7 +51,7 @@ namespace Outcompute.Trader.Models
         bool IsQuoteOrderQuantityMarketAllowed,
         bool IsSpotTradingAllowed,
         bool IsMarginTradingAllowed,
-        ImmutableList<SymbolFilter> Filters, // todo: refactor the filters into sub-properties so the algos don't have to iterate this collection
+        SymbolFilters Filters,
         ImmutableList<Permission> Permissions)
     {
         public static Symbol Empty { get; } = new Symbol(
@@ -69,40 +69,96 @@ namespace Outcompute.Trader.Models
             false,
             false,
             false,
-            ImmutableList<SymbolFilter>.Empty,
+            SymbolFilters.Empty,
             ImmutableList<Permission>.Empty);
+    }
+
+    [Immutable]
+    public record SymbolFilters(
+        PriceSymbolFilter Price,
+        PercentPriceSymbolFilter PercentPrice,
+        LotSizeSymbolFilter LotSize,
+        MinNotionalSymbolFilter MinNotional,
+        IcebergPartsSymbolFilter IcebergParts,
+        MarketLotSizeSymbolFilter MarketLotSize,
+        MaxNumberOfOrdersSymbolFilter MaxNumberOfOrders,
+        MaxNumberOfAlgoOrdersSymbolFilter MaxNumberOfAlgoOrders,
+        MaxNumberOfIcebergOrdersSymbolFilter MaxNumberOfIcebergOrders,
+        MaxPositionSymbolFilter MaxPositions)
+    {
+        public static SymbolFilters Empty { get; } = new SymbolFilters(
+            PriceSymbolFilter.Empty,
+            PercentPriceSymbolFilter.Empty,
+            LotSizeSymbolFilter.Empty,
+            MinNotionalSymbolFilter.Empty,
+            IcebergPartsSymbolFilter.Empty,
+            MarketLotSizeSymbolFilter.Empty,
+            MaxNumberOfOrdersSymbolFilter.Empty,
+            MaxNumberOfAlgoOrdersSymbolFilter.Empty,
+            MaxNumberOfIcebergOrdersSymbolFilter.Empty,
+            MaxPositionSymbolFilter.Empty);
     }
 
     [Immutable]
     public record SymbolFilter;
 
     [Immutable]
-    public record PriceSymbolFilter(decimal MinPrice, decimal MaxPrice, decimal TickSize) : SymbolFilter;
+    public record PriceSymbolFilter(decimal MinPrice, decimal MaxPrice, decimal TickSize) : SymbolFilter
+    {
+        public static PriceSymbolFilter Empty { get; } = new PriceSymbolFilter(0m, 0m, 0m);
+    }
 
     [Immutable]
-    public record PercentPriceSymbolFilter(decimal MultiplierUp, decimal MultiplierDown, int AvgPriceMins) : SymbolFilter;
+    public record PercentPriceSymbolFilter(decimal MultiplierUp, decimal MultiplierDown, int AvgPriceMins) : SymbolFilter
+    {
+        public static PercentPriceSymbolFilter Empty { get; } = new PercentPriceSymbolFilter(0m, 0m, 0);
+    }
 
     [Immutable]
-    public record LotSizeSymbolFilter(decimal MinQuantity, decimal MaxQuantity, decimal StepSize) : SymbolFilter;
+    public record LotSizeSymbolFilter(decimal MinQuantity, decimal MaxQuantity, decimal StepSize) : SymbolFilter
+    {
+        public static LotSizeSymbolFilter Empty { get; } = new LotSizeSymbolFilter(0m, 0m, 0m);
+    }
 
     [Immutable]
-    public record MinNotionalSymbolFilter(decimal MinNotional, bool ApplyToMarket, int AvgPriceMins) : SymbolFilter;
+    public record MinNotionalSymbolFilter(decimal MinNotional, bool ApplyToMarket, int AvgPriceMins) : SymbolFilter
+    {
+        public static MinNotionalSymbolFilter Empty { get; } = new MinNotionalSymbolFilter(0m, false, 0);
+    }
 
     [Immutable]
-    public record IcebergPartsSymbolFilter(int Limit) : SymbolFilter;
+    public record IcebergPartsSymbolFilter(int Limit) : SymbolFilter
+    {
+        public static IcebergPartsSymbolFilter Empty { get; } = new IcebergPartsSymbolFilter(0);
+    }
 
     [Immutable]
-    public record MarketLotSizeSymbolFilter(decimal MinQuantity, decimal MaxQuantity, decimal StepSize) : SymbolFilter;
+    public record MarketLotSizeSymbolFilter(decimal MinQuantity, decimal MaxQuantity, decimal StepSize) : SymbolFilter
+    {
+        public static MarketLotSizeSymbolFilter Empty { get; } = new MarketLotSizeSymbolFilter(0m, 0m, 0m);
+    }
 
     [Immutable]
-    public record MaxNumberOfOrdersSymbolFilter(int MaxNumberOfOrders) : SymbolFilter;
+    public record MaxNumberOfOrdersSymbolFilter(int MaxNumberOfOrders) : SymbolFilter
+    {
+        public static MaxNumberOfOrdersSymbolFilter Empty { get; } = new MaxNumberOfOrdersSymbolFilter(0);
+    }
 
     [Immutable]
-    public record MaxNumberOfAlgoOrdersSymbolFilter(int MaxNumberOfAlgoOrders) : SymbolFilter;
+    public record MaxNumberOfAlgoOrdersSymbolFilter(int MaxNumberOfAlgoOrders) : SymbolFilter
+    {
+        public static MaxNumberOfAlgoOrdersSymbolFilter Empty { get; } = new MaxNumberOfAlgoOrdersSymbolFilter(0);
+    }
 
     [Immutable]
-    public record MaxNumberOfIcebergOrdersSymbolFilter(int MaxNumberOfIcebergOrders) : SymbolFilter;
+    public record MaxNumberOfIcebergOrdersSymbolFilter(int MaxNumberOfIcebergOrders) : SymbolFilter
+    {
+        public static MaxNumberOfIcebergOrdersSymbolFilter Empty { get; } = new MaxNumberOfIcebergOrdersSymbolFilter(0);
+    }
 
     [Immutable]
-    public record MaxPositionSymbolFilter(decimal MaxPosition) : SymbolFilter;
+    public record MaxPositionSymbolFilter(decimal MaxPosition) : SymbolFilter
+    {
+        public static MaxPositionSymbolFilter Empty { get; } = new MaxPositionSymbolFilter(0m);
+    }
 }

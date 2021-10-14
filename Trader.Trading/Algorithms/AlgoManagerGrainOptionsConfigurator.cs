@@ -20,9 +20,15 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public void Configure(AlgoManagerGrainOptions options)
         {
-            var section = _config.GetSection(_mapping.RootKey);
+            var mainSection = _config.GetSection(_mapping.TraderKey);
 
-            foreach (var key in section.GetChildren().Select(x => x.Key))
+            options.BatchEnabled = mainSection.GetValue(nameof(options.BatchEnabled), options.BatchEnabled);
+            options.BatchTickDelay = mainSection.GetValue(nameof(options.BatchTickDelay), options.BatchTickDelay);
+            options.PingDelay = mainSection.GetValue(nameof(options.PingDelay), options.PingDelay);
+
+            var algosSection = _config.GetSection(_mapping.AlgosKey);
+
+            foreach (var key in algosSection.GetChildren().Select(x => x.Key))
             {
                 var name = key;
                 var algoOptions = _algoOptionsMonitor.Get(name);

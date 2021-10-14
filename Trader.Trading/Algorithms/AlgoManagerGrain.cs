@@ -25,11 +25,11 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public override Task OnActivateAsync()
         {
-            // todo: move these settings to the options class
-            RegisterTimer(_ => TickPingAllAlgoGrainsAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+            var options = _options.CurrentValue;
 
-            // todo: move these settings to the options class
-            RegisterTimer(_ => TickExecuteAllAlgosAsync(), null, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));
+            RegisterTimer(_ => TickPingAllAlgoGrainsAsync(), null, options.PingDelay, options.PingDelay);
+
+            RegisterTimer(_ => TickExecuteAllAlgosAsync(), null, options.BatchTickDelay, options.BatchTickDelay);
 
             return base.OnActivateAsync();
         }

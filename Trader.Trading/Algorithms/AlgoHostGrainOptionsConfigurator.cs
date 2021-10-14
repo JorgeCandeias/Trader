@@ -21,7 +21,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             if (IsNullOrWhiteSpace(name)) throw new ArgumentNullException(nameof(name));
             if (options is null) throw new ArgumentNullException(nameof(options));
 
-            _config.GetSection(_mapping.RootKey).GetSection(name).Bind(options);
+            _config.GetSection(_mapping.AlgosKey).GetSection(name).Bind(options);
         }
 
         public void Configure(AlgoHostGrainOptions options)

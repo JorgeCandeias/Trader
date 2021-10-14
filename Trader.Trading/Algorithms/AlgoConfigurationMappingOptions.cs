@@ -5,12 +5,12 @@ namespace Outcompute.Trader.Trading.Algorithms
     public class AlgoConfigurationMappingOptions
     {
         [Required]
-        public string RootKey { get; set; } = "Trader:Algos";
+        public string TraderKey { get; set; } = "Trader";
 
         [Required]
-        public string EnabledSubKey { get; set; } = "Enabled";
+        public string AlgosKey { get; set; } = "Trader:Algos";
 
         [Required]
-        public string OptionsSubKey { get; set; } = "Options";
+        public string AlgoOptionsSubKey { get; set; } = "Options";
     }
 }

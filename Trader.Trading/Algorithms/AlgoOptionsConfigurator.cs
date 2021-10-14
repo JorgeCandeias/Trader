@@ -19,9 +19,9 @@ namespace Outcompute.Trader.Trading.Algorithms
         public void Configure(string name, TOptions options)
         {
             _config
-                .GetSection(_mapping.RootKey)
+                .GetSection(_mapping.AlgosKey)
                 .GetSection(name)
-                .GetSection(_mapping.OptionsSubKey)
+                .GetSection(_mapping.AlgoOptionsSubKey)
                 .Bind(options);
         }
 

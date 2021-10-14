@@ -40,3 +40,12 @@ jobs:
       
     - name: Publish
       run: dotnet publish ${{ env.SOLUTION_FILE_PATH }} --no-build --configuration ${{ env.BUILD_CONFIGURATION }}
+
+    - name: Publish NuGet Trader.Core.Abstractions
+      uses: brandedoutcast/publish-nuget@v2.5.5
+      with:
+        PROJECT_FILE_PATH: ./Trader.Core.Abstractions/Trader.Core.Abstractions.csproj
+        PACKAGE_NAME: Outcompute.Trader.Core.Abstractions
+        VERSION_FILE_PATH: Directory.Build.props
+        VERSION_REGEX: ^\s*<Version>(.*)<\/Version>\s*$
+        NUGET_KEY: ${{ secrets.NUGET_KEY }}

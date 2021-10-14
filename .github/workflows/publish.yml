@@ -14,7 +14,7 @@ env:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
     
@@ -29,6 +29,8 @@ jobs:
       run: |
         dotnet sln remove Trader.Data.Sql.Database/Trader.Data.Sql.Database.sqlproj
         dotnet sln remove Trader.Orleans.Database/Trader.Orleans.Database.sqlproj
+        rm -f -d -r Trader.Data.Sql.Database
+        rm -f -d -r Trader.Orleans.Database
               
     - name: Restore dependencies
       run: dotnet restore ${{ env.SOLUTION_FILE_PATH }}
@@ -38,3 +40,104 @@ jobs:
       
     - name: Publish
       run: dotnet publish ${{ env.SOLUTION_FILE_PATH }} --no-build --configuration ${{ env.BUILD_CONFIGURATION }}
+        
+    - name: Publish NuGet Trader.Core
+      uses: brandedoutcast/publish-nuget@v2.5.5
+      with:
+        PROJECT_FILE_PATH: ./Trader.Core/Trader.Core.csproj
+        PACKAGE_NAME: Outcompute.Trader.Core
+        VERSION_FILE_PATH: Directory.Build.props
+        VERSION_REGEX: ^\s*<Version>(.*)<\/Version>\s*$
+        NUGET_KEY: ${{ secrets.NUGET_KEY }}
+        
+    - name: Publish NuGet Trader.Core.Abstractions
+      uses: brandedoutcast/publish-nuget@v2.5.5
+      with:
+        PROJECT_FILE_PATH: ./Trader.Core.Abstractions/Trader.Core.Abstractions.csproj
+        PACKAGE_NAME: Outcompute.Trader.Core.Abstractions
+        VERSION_FILE_PATH: Directory.Build.props
+        VERSION_REGEX: ^\s*<Version>(.*)<\/Version>\s*$
+        NUGET_KEY: ${{ secrets.NUGET_KEY }}
+        
+    - name: Publish NuGet Trader.Dashboard
+      uses: brandedoutcast/publish-nuget@v2.5.5
+      with:
+        PROJECT_FILE_PATH: ./Trader.Dashboard/Trader.Dashboard.csproj
+        PACKAGE_NAME: Outcompute.Trader.Dashboard
+        VERSION_FILE_PATH: Directory.Build.props
+        VERSION_REGEX: ^\s*<Version>(.*)<\/Version>\s*$
+        NUGET_KEY: ${{ secrets.NUGET_KEY }}
+        
+
+    - name: Publish NuGet Trader.Data.Abstractions
+      uses: brandedoutcast/publish-nuget@v2.5.5
+      with:
+        PROJECT_FILE_PATH: ./Trader.Data.Abstractions/Trader.Data.Abstractions.csproj
+        PACKAGE_NAME: Outcompute.Trader.Data.Abstractions
+        VERSION_FILE_PATH: Directory.Build.props
+        VERSION_REGEX: ^\s*<Version>(.*)<\/Version>\s*$
+        NUGET_KEY: ${{ secrets.NUGET_KEY }}
+        
+    - name: Publish NuGet Trader.Data.Sql
+      uses: brandedoutcast/publish-nuget@v2.5.5
+      with:
+        PROJECT_FILE_PATH: ./Trader.Data.Sql/Trader.Data.Sql.csproj
+        PACKAGE_NAME: Outcompute.Trader.Data.Sql
+        VERSION_FILE_PATH: Directory.Build.props
+        VERSION_REGEX: ^\s*<Version>(.*)<\/Version>\s*$
+        NUGET_KEY: ${{ secrets.NUGET_KEY }}
+        
+
+    - name: Publish NuGet Trader.Hosting
+      uses: brandedoutcast/publish-nuget@v2.5.5
+      with:
+        PROJECT_FILE_PATH: ./Trader.Hosting/Trader.Hosting.csproj
+        PACKAGE_NAME: Outcompute.Trader.Hosting
+        VERSION_FILE_PATH: Directory.Build.props
+        VERSION_REGEX: ^\s*<Version>(.*)<\/Version>\s*$
+        NUGET_KEY: ${{ secrets.NUGET_KEY }}
+        
+    - name: Publish NuGet Trader.Hosting.Abstractions
+      uses: brandedoutcast/publish-nuget@v2.5.5
+      with:
+        PROJECT_FILE_PATH: ./Trader.Hosting.Abstractions/Trader.Hosting.Abstractions.csproj
+        PACKAGE_NAME: Outcompute.Trader.Hosting.Abstractions
+        VERSION_FILE_PATH: Directory.Build.props
+        VERSION_REGEX: ^\s*<Version>(.*)<\/Version>\s*$
+        NUGET_KEY: ${{ secrets.NUGET_KEY }}
+        
+    - name: Publish NuGet Trader.Models
+      uses: brandedoutcast/publish-nuget@v2.5.5
+      with:
+        PROJECT_FILE_PATH: ./Trader.Models/Trader.Models.csproj
+        PACKAGE_NAME: Outcompute.Trader.Models
+        VERSION_FILE_PATH: Directory.Build.props
+        VERSION_REGEX: ^\s*<Version>(.*)<\/Version>\s*$
+        NUGET_KEY: ${{ secrets.NUGET_KEY }}
+        
+    - name: Publish NuGet Trader.Trading
+      uses: brandedoutcast/publish-nuget@v2.5.5
+      with:
+        PROJECT_FILE_PATH: ./Trader.Trading/Trader.Trading.csproj
+        PACKAGE_NAME: Outcompute.Trader.Trading
+        VERSION_FILE_PATH: Directory.Build.props
+        VERSION_REGEX: ^\s*<Version>(.*)<\/Version>\s*$
+        NUGET_KEY: ${{ secrets.NUGET_KEY }}
+        
+    - name: Publish NuGet Trader.Trading.Abstractions
+      uses: brandedoutcast/publish-nuget@v2.5.5
+      with:
+        PROJECT_FILE_PATH: ./Trader.Trading.Abstractions/Trader.Trading.Abstractions.csproj
+        PACKAGE_NAME: Outcompute.Trader.Trading.Abstractions
+        VERSION_FILE_PATH: Directory.Build.props
+        VERSION_REGEX: ^\s*<Version>(.*)<\/Version>\s*$
+        NUGET_KEY: ${{ secrets.NUGET_KEY }}
+        
+    - name: Publish NuGet Trader.Trading.Binance
+      uses: brandedoutcast/publish-nuget@v2.5.5
+      with:
+        PROJECT_FILE_PATH: ./Trader.Trading.Binance/Trader.Trading.Binance.csproj
+        PACKAGE_NAME: Outcompute.Trader.Trading.Binance
+        VERSION_FILE_PATH: Directory.Build.props
+        VERSION_REGEX: ^\s*<Version>(.*)<\/Version>\s*$
+        NUGET_KEY: ${{ secrets.NUGET_KEY }}

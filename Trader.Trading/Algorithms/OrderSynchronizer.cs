@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
-using Outcompute.Trader.Models;
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -46,7 +45,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             while (!cancellationToken.IsCancellationRequested)
             {
                 var orders = await _trader
-                    .GetAllOrdersAsync(new GetAllOrders(symbol, orderId + 1, null, null, 1000, null, _clock.UtcNow), cancellationToken)
+                    .GetAllOrdersAsync(symbol, orderId + 1, 1000, cancellationToken)
                     .ConfigureAwait(false);
 
                 // break if we got all orders

@@ -1,0 +1,89 @@
+name: MSBuild
+
+on: [push]
+
+env:
+  # Path to the solution file relative to the root of the project.
+  SOLUTION_FILE_PATH: .
+
+  # Configuration type to build.
+  # You can convert this to a build matrix if you need coverage of multiple configuration types.
+  # https://docs.github.com/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+  BUILD_CONFIGURATION: Debug
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+    
+    - name: Set up JDK 11
+      uses: actions/setup-java@v1
+      with:
+        java-version: 1.11
+        
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+      
+    - name: setup-sqlpackage
+      uses: coreywebber/setup-sqlpackage@v1.0.3
+      
+    - name: Cache SonarCloud packages
+      uses: actions/cache@v1
+      with:
+        path: ~\sonar\cache
+        key: ${{ runner.os }}-sonar
+        restore-keys: ${{ runner.os }}-sonar
+
+    - name: Cache SonarCloud scanner
+      id: cache-sonar-scanner
+      uses: actions/cache@v1
+      with:
+        path: .\.sonar\scanner
+        key: ${{ runner.os }}-sonar-scanner
+        restore-keys: ${{ runner.os }}-sonar-scanner
+
+    - name: Install SonarCloud scanner
+      if: steps.cache-sonar-scanner.outputs.cache-hit != 'true'
+      shell: powershell
+      run: |
+        New-Item -Path .\.sonar\scanner -ItemType Directory
+        dotnet tool update dotnet-sonarscanner --tool-path .\.sonar\scanner
+        
+    - name: Remove Database Projects
+      run: |
+        dotnet sln remove Trader.Data.Sql.Database/Trader.Data.Sql.Database.sqlproj
+        dotnet sln remove Trader.Orleans.Database/Trader.Orleans.Database.sqlproj
+      
+    - name: Build Database Projects
+      run: |
+        msbuild /m /t:Build /p:Configuration=${{ env.BUILD_CONFIGURATION }} Trader.Data.Sql.Database/Trader.Data.Sql.Database.sqlproj
+        msbuild /m /t:Build /p:Configuration=${{ env.BUILD_CONFIGURATION }} Trader.Orleans.Database/Trader.Orleans.Database.sqlproj
+      
+    - name: Deploy Trader Database Project
+      working-directory: Trader.Data.Sql.Database\bin\${{ env.BUILD_CONFIGURATION }}
+      run: |
+        sqlpackage /Action:Publish /Profile:Trader.Data.Sql.Database.LocalDB.publish.xml /SourceFile:Trader.Data.Sql.Database.dacpac /TargetDatabaseName:TraderTest
+        
+    - name: Deploy Orleans Database Project
+      working-directory: Trader.Orleans.Database\bin\${{ env.BUILD_CONFIGURATION }}
+      run: |
+        sqlpackage /Action:Publish /Profile:Trader.Orleans.Database.LocalDB.publish.xml /SourceFile:Trader.Orleans.Database.dacpac /TargetDatabaseName:TraderTest
+      
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build & Analyze
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      shell: powershell
+      run: |
+        .\.sonar\scanner\dotnet-sonarscanner begin /k:"JorgeCandeias_Trader" /o:"jorgecandeias" /d:sonar.login="${{ secrets.SONAR_TOKEN }}" /d:sonar.host.url="https://sonarcloud.io" /d:sonar.cs.opencover.reportsPaths="**/opencover.xml"
+        dotnet build --no-restore
+        dotnet test --no-build --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=opencover /p:CoverletOutput=opencover.xml
+        .\.sonar\scanner\dotnet-sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"

@@ -45,7 +45,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Dashboard.WebApp", "
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Bechmarks", "Bechmarks", "{97714005-5BCD-475B-823D-C7744EE49DB2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Trading.Indicators.Benchmarks", "Trader.Trading.Indicators.Benchmarks\Trader.Trading.Indicators.Benchmarks.csproj", "{7B60FAB9-BCA0-4542-B4DB-75F630B58F9D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Trading.Indicators.Benchmarks", "Trader.Trading.Indicators.Benchmarks\Trader.Trading.Indicators.Benchmarks.csproj", "{7B60FAB9-BCA0-4542-B4DB-75F630B58F9D}"
 EndProject
 Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "Trader.Orleans.Database", "Trader.Orleans.Database\Trader.Orleans.Database.sqlproj", "{FB4CD7EA-BEC9-4E13-B475-9CD2DE19CC2A}"
 EndProject

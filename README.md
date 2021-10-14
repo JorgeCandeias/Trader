@@ -1,6 +1,6 @@
 # Trader
 
-[![.NET](https://github.com/JorgeCandeias/Trader/actions/workflows/dotnet.yml/badge.svg)](https://github.com/JorgeCandeias/Trader/actions/workflows/dotnet.yml)
+[![.NET](https://github.com/JorgeCandeias/Trader/actions/workflows/msbuild.yml/badge.svg)](https://github.com/JorgeCandeias/Trader/actions/workflows/msbuild.yml)
 
 Trader is a high-frequency algorithmic trading framework.
 

@@ -214,8 +214,8 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                 var subWatch = Stopwatch.StartNew();
 
                 var result = await _trader
-                    .WithWaitOnTooManyRequests((t, ct) => t
-                    .Get24hTickerPriceChangeStatisticsAsync(symbol, ct), _logger, cancellationToken);
+                    .WithBackoff()
+                    .Get24hTickerPriceChangeStatisticsAsync(symbol, cancellationToken);
 
                 var ticker = _mapper.Map<MiniTicker>(result);
 
@@ -261,8 +261,8 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                 {
                     // query a kline page from the exchange
                     var klines = await _trader
-                        .WithWaitOnTooManyRequests((t, ct) => t
-                        .GetKlinesAsync(new GetKlines(item.Key.Symbol, item.Key.Interval, current, end, 1000), ct), _logger, cancellationToken);
+                        .WithBackoff()
+                        .GetKlinesAsync(new GetKlines(item.Key.Symbol, item.Key.Interval, current, end, 1000), cancellationToken);
 
                     // break if the page is empty
                     if (klines.Count is 0)

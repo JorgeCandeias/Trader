@@ -9,6 +9,11 @@ namespace Outcompute.Trader.Trading
     // todo: refactor all methods to take regular values instead of models
     public interface ITradingService
     {
+        /// <summary>
+        /// Enables automatic backoff upon "too many requests" exceptions for the next request as implemented by the provider.
+        /// </summary>
+        ITradingService WithBackoff();
+
         Task<ExchangeInfo> GetExchangeInfoAsync(CancellationToken cancellationToken = default);
 
         Task<SymbolPriceTicker> GetSymbolPriceTickerAsync(string symbol, CancellationToken cancellationToken = default);

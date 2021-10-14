@@ -6,6 +6,7 @@ using Outcompute.Trader.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -73,22 +74,22 @@ namespace Outcompute.Trader.Trading.Binance.Providers.Savings
         public async Task UpdateAsync()
         {
             var result = await _trader
-                .WithWaitOnTooManyRequests((t, ct) => t
-                .GetFlexibleProductPositionAsync(_asset, ct), _logger, _cancellation.Token);
+                .WithBackoff()
+                .GetFlexibleProductPositionAsync(_asset, _cancellation.Token);
 
             _positions = result.ToImmutableList();
 
-            foreach (var position in _positions)
+            foreach (var productId in _positions.Select(x => x.ProductId))
             {
                 foreach (var type in _redemptionTypes)
                 {
                     var quota = await _trader
-                        .WithWaitOnTooManyRequests((t, ct) => t
-                        .TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(position.ProductId, type, ct), _logger, _cancellation.Token);
+                        .WithBackoff()
+                        .TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(productId, type, _cancellation.Token);
 
                     if (quota is not null)
                     {
-                        _quotas[(position.ProductId, type)] = quota;
+                        _quotas[(productId, type)] = quota;
                     }
                 }
             }

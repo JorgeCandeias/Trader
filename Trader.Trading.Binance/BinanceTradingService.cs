@@ -1,41 +1,47 @@
 ﻿using AutoMapper;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+using Outcompute.Trader.Core.Time;
+using Outcompute.Trader.Models;
+using Outcompute.Trader.Models.Collections;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Outcompute.Trader.Core.Time;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
 
 namespace Outcompute.Trader.Trading.Binance
 {
     internal class BinanceTradingService : ITradingService, IHostedService
     {
         private readonly ILogger _logger;
-        private readonly BinanceOptions _options;
         private readonly BinanceApiClient _client;
         private readonly BinanceUsageContext _usage;
         private readonly IMapper _mapper;
         private readonly ISystemClock _clock;
+        private readonly IServiceProvider _provider;
 
-        public BinanceTradingService(ILogger<BinanceTradingService> logger, IOptions<BinanceOptions> options, BinanceApiClient client, BinanceUsageContext usage, IMapper mapper, ISystemClock clock)
+        public BinanceTradingService(ILogger<BinanceTradingService> logger, BinanceApiClient client, BinanceUsageContext usage, IMapper mapper, ISystemClock clock, IServiceProvider provider)
         {
-            _logger = logger;
-            _options = options.Value;
-            _client = client;
-            _usage = usage;
-            _mapper = mapper;
-            _clock = clock;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _client = client ?? throw new ArgumentNullException(nameof(client));
+            _usage = usage ?? throw new ArgumentNullException(nameof(usage));
+            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _provider = provider ?? throw new ArgumentNullException(nameof(provider));
         }
 
         private static string Name => nameof(BinanceTradingService);
 
         private ImmutableDictionary<string, ImmutableList<FlexibleProduct>> _flexibleProducts = ImmutableDictionary<string, ImmutableList<FlexibleProduct>>.Empty;
+
+        public ITradingService WithBackoff()
+        {
+            // we must use the provider here in order to avoid recursiveness in service resolution
+            return _provider.GetRequiredService<BinanceTradingServiceWithBackoff>();
+        }
 
         public async Task<ExchangeInfo> GetExchangeInfoAsync(CancellationToken cancellationToken = default)
         {
@@ -281,6 +287,7 @@ namespace Outcompute.Trader.Trading.Binance
                 .ConfigureAwait(false);
         }
 
+        // todo: refactor this into a grain and remove this service as a hosted service
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             await SyncLimitsAsync(cancellationToken).ConfigureAwait(false);

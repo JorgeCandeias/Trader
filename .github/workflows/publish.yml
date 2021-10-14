@@ -1,13 +1,11 @@
 name: Publish
 
 on:
-  push:
-    branches:
-      - master
+  [workflow_dispatch]
 
 env:
   # Path to the solution file relative to the root of the project.
-  SOLUTION_FILE_PATH: .
+  SOLUTION_FILE_PATH: Trader.sln
 
   # Configuration type to build.
   # You can convert this to a build matrix if you need coverage of multiple configuration types.
@@ -16,11 +14,16 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
     
     - uses: actions/checkout@v2
+    
+    - name: Setup .NET Core SDK
+      uses: actions/setup-dotnet@v1.8.2
+      with:
+        dotnet-version: 5.x
             
     - name: Remove Database Projects
       run: |
@@ -28,10 +31,10 @@ jobs:
         dotnet sln remove Trader.Orleans.Database/Trader.Orleans.Database.sqlproj
               
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore ${{ env.SOLUTION_FILE_PATH }}
 
     - name: Build
-      run: dotnet build --no-restore --configuration ${{ env.BUILD_CONFIGURATION }}
+      run: dotnet build ${{ env.SOLUTION_FILE_PATH }} --no-restore --configuration ${{ env.BUILD_CONFIGURATION }}
       
     - name: Publish
-      run: dotnet publish --no-build --configuration ${{ env.BUILD_CONFIGURATION }}
+      run: dotnet publish ${{ env.SOLUTION_FILE_PATH }} --no-build --configuration ${{ env.BUILD_CONFIGURATION }}

@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Orleans.Runtime;
 using System;
 using static System.String;
 
@@ -17,7 +17,7 @@ namespace Outcompute.Trader.Trading.Algorithms
         {
             if (IsNullOrWhiteSpace(typeName)) throw new ArgumentNullException(nameof(typeName));
 
-            return _provider.GetRequiredNamedService<IAlgoFactory>(typeName);
+            return _provider.GetRequiredServiceByName<IAlgoFactory>(typeName);
         }
     }
 }

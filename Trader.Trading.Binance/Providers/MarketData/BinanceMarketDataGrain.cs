@@ -235,42 +235,80 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             foreach (var item in _klineWindows)
             {
                 // define the required window
-                var start = end.Subtract(item.Key.Interval, item.Value);
+                var start = end.Subtract(item.Key.Interval, item.Value).AdjustToNext(item.Key.Interval);
 
-                _logger.LogInformation(
-                    "{Name} is syncing klines for {Symbol} from {Start} to {End}",
-                    TypeName, item.Key.Symbol, start, end);
+                // discover the first kline missing
+                var missing = await TryGetFirstMissingKlineAsync(item.Key.Symbol, item.Key.Interval, start, end, cancellationToken);
 
+                // skip this dependency if we already have all the data
+                if (missing is null)
+                {
+                    continue;
+                }
+                else
+                {
+                    start = missing.Value;
+                }
+
+                // start syncing from the first missing kline
                 var current = start;
-                var count = 0;
+                var total = 0;
 
                 while (current < end)
                 {
+                    // query a kline page from the exchange
                     var klines = await _trader
                         .WithWaitOnTooManyRequests((t, ct) => t
                         .GetKlinesAsync(new GetKlines(item.Key.Symbol, item.Key.Interval, current, end, 1000), ct), _logger, cancellationToken);
 
-                    if (klines.Count is 0) break;
+                    // break if the page is empty
+                    if (klines.Count is 0)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        total += klines.Count;
+                    }
 
+                    // save all the klines in the page
                     foreach (var kline in klines)
                     {
                         SetKline(kline);
                     }
 
-                    current = klines.Max(x => x.OpenTime).AddMilliseconds(1);
-                    count += klines.Count;
-
                     _logger.LogInformation(
-                        "{Name} paged {Count} klines totalling {Total} klines for {Symbol}",
-                        TypeName, klines.Count, count, item.Key.Symbol);
-                }
+                        "{Name} paged {Count} klines for {Symbol} {Interval} between {Start} and {End} for a total of {Total}",
+                        TypeName, klines.Count, item.Key.Symbol, item.Key.Interval, current, end, total);
 
-                _logger.LogInformation(
-                    "{Name} synced {Total} klines for {Symbol}",
-                    TypeName, count, item.Key.Symbol);
+                    // break if the page wasnt full
+                    // using 10 as leeway as binance occasionaly sends complete pages without filling them by one or two items
+                    if (klines.Count < 990) break;
+
+                    // prepare the next page
+                    current = klines.Max(x => x.OpenTime).AddMilliseconds(1);
+                }
             }
 
             _logger.LogInformation("{Name} synced klines for {Symbols} in {ElapsedMs}ms...", TypeName, _klineWindows.Select(x => x.Key.Symbol), watch.ElapsedMilliseconds);
+        }
+
+        private async Task<DateTime?> TryGetFirstMissingKlineAsync(string symbol, KlineInterval interval, DateTime start, DateTime end, CancellationToken cancellationToken)
+        {
+            // load existing klines from repository
+            var saved = await _repository.GetKlinesAsync(symbol, interval, start, end, cancellationToken);
+            var times = saved.Where(x => x.IsClosed).Select(x => x.OpenTime).ToHashSet();
+
+            // discover the first kline missing
+            foreach (var time in interval.Range(start, end))
+            {
+                if (!times.Contains(time))
+                {
+                    return time;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>

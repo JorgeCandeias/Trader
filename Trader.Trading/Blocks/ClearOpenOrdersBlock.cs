@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using System;
@@ -22,7 +21,6 @@ namespace Outcompute.Trader.Trading.Algorithms
         {
             var repository = context.ServiceProvider.GetRequiredService<ITradingRepository>();
             var trader = context.ServiceProvider.GetRequiredService<ITradingService>();
-            var clock = context.ServiceProvider.GetRequiredService<ISystemClock>();
 
             var orders = await repository.GetTransientOrdersBySideAsync(symbol.Name, side, cancellationToken).ConfigureAwait(false);
 

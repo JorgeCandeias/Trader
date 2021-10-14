@@ -41,9 +41,9 @@ namespace Outcompute.Trader.Trading.Binance
 
         public ITradingService WithBackoff() => this;
 
-        public Task<CancelStandardOrderResult> CancelOrderAsync(CancelStandardOrder model, CancellationToken cancellationToken = default)
+        public Task<CancelStandardOrderResult> CancelOrderAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
         {
-            return WaitAndRetryForeverAsync(ct => _trader.CancelOrderAsync(model, ct), cancellationToken);
+            return WaitAndRetryForeverAsync(ct => _trader.CancelOrderAsync(symbol, orderId, ct), cancellationToken);
         }
 
         public Task CloseUserDataStreamAsync(string listenKey, CancellationToken cancellationToken = default)

@@ -181,15 +181,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                     TypeName, symbol.Name, order.Price, order.OriginalQuantity);
 
                 var result = await trader
-                    .CancelOrderAsync(
-                        new CancelStandardOrder(
-                            symbol.Name,
-                            order.OrderId,
-                            null,
-                            null,
-                            null,
-                            clock.UtcNow),
-                        cancellationToken)
+                    .CancelOrderAsync(symbol.Name, order.OrderId, cancellationToken)
                     .ConfigureAwait(false);
 
                 await repository
@@ -211,15 +203,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                     TypeName, symbol.Name, order.Price, order.OriginalQuantity);
 
                 var result = await trader
-                    .CancelOrderAsync(
-                        new CancelStandardOrder(
-                            symbol.Name,
-                            order.OrderId,
-                            null,
-                            null,
-                            null,
-                            clock.UtcNow),
-                        cancellationToken)
+                    .CancelOrderAsync(symbol.Name, order.OrderId, cancellationToken)
                     .ConfigureAwait(false);
 
                 await repository

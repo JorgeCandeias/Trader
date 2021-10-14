@@ -148,15 +148,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
             if (band.OpenOrderId is not 0)
             {
                 var result = await _trader
-                    .CancelOrderAsync(
-                        new CancelStandardOrder(
-                            options.Symbol,
-                            band.OpenOrderId,
-                            null,
-                            null,
-                            null,
-                            _clock.UtcNow),
-                        cancellationToken)
+                    .CancelOrderAsync(options.Symbol, band.OpenOrderId, cancellationToken)
                     .ConfigureAwait(false);
 
                 // save this order to the repository now to tolerate slow binance api updates
@@ -426,15 +418,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
                 {
                     // close the rogue sell order
                     var result = await _trader
-                        .CancelOrderAsync(
-                            new CancelStandardOrder(
-                                options.Symbol,
-                                orderId,
-                                null,
-                                null,
-                                null,
-                                _clock.UtcNow),
-                            cancellationToken)
+                        .CancelOrderAsync(options.Symbol, orderId, cancellationToken)
                         .ConfigureAwait(false);
 
                     // save this order to the repository now to tolerate slow binance api updates
@@ -479,15 +463,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
                 {
                     // close the rogue sell order
                     var result = await _trader
-                        .CancelOrderAsync(
-                            new CancelStandardOrder(
-                                options.Symbol,
-                                orderId,
-                                null,
-                                null,
-                                null,
-                                _clock.UtcNow),
-                            cancellationToken)
+                        .CancelOrderAsync(options.Symbol, orderId, cancellationToken)
                         .ConfigureAwait(false);
 
                     // save this order to the repository now to tolerate slow binance api updates
@@ -532,15 +508,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
                     if (lowest.Price < lowBuyPrice)
                     {
                         var cancelled = await _trader
-                            .CancelOrderAsync(
-                                new CancelStandardOrder(
-                                    options.Symbol,
-                                    lowest.OrderId,
-                                    null,
-                                    null,
-                                    null,
-                                    _clock.UtcNow),
-                                cancellationToken)
+                            .CancelOrderAsync(options.Symbol, lowest.OrderId, cancellationToken)
                             .ConfigureAwait(false);
 
                         // save this order to the repository now to tolerate slow binance api updates

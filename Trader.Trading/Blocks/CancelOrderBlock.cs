@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
-using Outcompute.Trader.Models;
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -32,15 +31,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             var watch = Stopwatch.StartNew();
 
             var order = await trader
-                .CancelOrderAsync(
-                    new CancelStandardOrder(
-                        symbol,
-                        orderId,
-                        null,
-                        null,
-                        null,
-                        clock.UtcNow),
-                    cancellationToken)
+                .CancelOrderAsync(symbol, orderId, cancellationToken)
                 .ConfigureAwait(false);
 
             await repository

@@ -26,7 +26,7 @@ namespace Outcompute.Trader.Trading
 
         Task<ImmutableSortedOrderSet> GetAllOrdersAsync(string symbol, long? orderId, int? limit, CancellationToken cancellationToken = default);
 
-        Task<CancelStandardOrderResult> CancelOrderAsync(CancelStandardOrder model, CancellationToken cancellationToken = default);
+        Task<CancelStandardOrderResult> CancelOrderAsync(string symbol, long orderId, CancellationToken cancellationToken = default);
 
         Task<OrderResult> CreateOrderAsync(Order model, CancellationToken cancellationToken = default);
 

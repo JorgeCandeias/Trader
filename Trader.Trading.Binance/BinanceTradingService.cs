@@ -122,10 +122,9 @@ namespace Outcompute.Trader.Trading.Binance
             return _mapper.Map<OrderResult>(output);
         }
 
-        public async Task<CancelStandardOrderResult> CancelOrderAsync(CancelStandardOrder model, CancellationToken cancellationToken = default)
+        public async Task<CancelStandardOrderResult> CancelOrderAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
         {
-            _ = model ?? throw new ArgumentNullException(nameof(model));
-
+            var model = new CancelStandardOrder(symbol, orderId, null, null, null, _clock.UtcNow);
             var input = _mapper.Map<CancelOrderRequestModel>(model);
 
             var output = await _client

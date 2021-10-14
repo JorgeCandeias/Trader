@@ -29,7 +29,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             foreach (var order in orders)
             {
                 var result = await trader
-                    .CancelOrderAsync(new CancelStandardOrder(symbol.Name, order.OrderId, null, null, null, clock.UtcNow), cancellationToken)
+                    .CancelOrderAsync(symbol.Name, order.OrderId, cancellationToken)
                     .ConfigureAwait(false);
 
                 await repository

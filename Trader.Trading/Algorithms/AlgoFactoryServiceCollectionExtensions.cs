@@ -2,7 +2,6 @@
 
 namespace Microsoft.Extensions.DependencyInjection
 {
-    // todo: add attribute-based auto-discovery in addition to these methods
     public static class AlgoFactoryServiceCollectionExtensions
     {
         public static IServiceCollection AddAlgoType<TAlgo>(this IServiceCollection services, string typeName)

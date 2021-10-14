@@ -133,10 +133,9 @@ namespace Outcompute.Trader.Trading.Binance
             return _mapper.Map<CancelStandardOrderResult>(output);
         }
 
-        public async Task<AccountInfo> GetAccountInfoAsync(GetAccountInfo model, CancellationToken cancellationToken = default)
+        public async Task<AccountInfo> GetAccountInfoAsync(CancellationToken cancellationToken = default)
         {
-            _ = model ?? throw new ArgumentNullException(nameof(model));
-
+            var model = new GetAccountInfo(null, _clock.UtcNow);
             var input = _mapper.Map<AccountRequestModel>(model);
 
             var output = await _client
@@ -159,13 +158,12 @@ namespace Outcompute.Trader.Trading.Binance
             return _mapper.Map<Ticker>(output);
         }
 
-        public async Task<IReadOnlyCollection<Kline>> GetKlinesAsync(GetKlines model, CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyCollection<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime startTime, DateTime endTime, int limit, CancellationToken cancellationToken = default)
         {
-            _ = model ?? throw new ArgumentNullException(nameof(model));
+            var model = new GetKlines(symbol, interval, startTime, endTime, limit);
+            var input = _mapper.Map<KlineRequestModel>(model);
 
             BinanceApiContext.SkipSigning = true;
-
-            var input = _mapper.Map<KlineRequestModel>(model);
 
             var output = await _client
                 .GetKlinesAsync(input, cancellationToken)

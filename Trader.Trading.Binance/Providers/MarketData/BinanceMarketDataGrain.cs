@@ -262,7 +262,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                     // query a kline page from the exchange
                     var klines = await _trader
                         .WithBackoff()
-                        .GetKlinesAsync(new GetKlines(item.Key.Symbol, item.Key.Interval, current, end, 1000), cancellationToken);
+                        .GetKlinesAsync(item.Key.Symbol, item.Key.Interval, current, end, 1000, cancellationToken);
 
                     // break if the page is empty
                     if (klines.Count is 0)

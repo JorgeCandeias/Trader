@@ -190,7 +190,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
                 await Task.Delay(_options.UserDataStreamStabilizationPeriod, _cancellation.Token);
 
                 // sync asset balances
-                var accountInfo = await _trader.GetAccountInfoAsync(new GetAccountInfo(null, _clock.UtcNow), _cancellation.Token);
+                var accountInfo = await _trader.GetAccountInfoAsync(_cancellation.Token);
 
                 await _repository.SetBalancesAsync(accountInfo, _cancellation.Token);
 

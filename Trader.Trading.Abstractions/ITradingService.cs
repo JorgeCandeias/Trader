@@ -1,5 +1,6 @@
 ﻿using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,11 +31,11 @@ namespace Outcompute.Trader.Trading
 
         Task<OrderResult> CreateOrderAsync(string symbol, OrderSide side, OrderType type, TimeInForce? timeInForce, decimal? quantity, decimal? quoteOrderQuantity, decimal? price, string? newClientOrderId, decimal? stopPrice, decimal? icebergQuantity, CancellationToken cancellationToken = default);
 
-        Task<AccountInfo> GetAccountInfoAsync(GetAccountInfo model, CancellationToken cancellationToken = default);
+        Task<AccountInfo> GetAccountInfoAsync(CancellationToken cancellationToken = default);
 
         Task<Ticker> Get24hTickerPriceChangeStatisticsAsync(string symbol, CancellationToken cancellationToken = default);
 
-        Task<IReadOnlyCollection<Kline>> GetKlinesAsync(GetKlines model, CancellationToken cancellationToken = default);
+        Task<IReadOnlyCollection<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime startTime, DateTime endTime, int limit, CancellationToken cancellationToken = default);
 
         Task<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionAsync(
             string asset,

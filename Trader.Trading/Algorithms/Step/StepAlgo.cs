@@ -420,16 +420,16 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
 
             var fail = false;
 
-            foreach (var order in orders)
+            foreach (var orderId in orders.Select(x => x.OrderId))
             {
-                if (!_bands.Any(x => x.CloseOrderId == order.OrderId))
+                if (!_bands.Any(x => x.CloseOrderId == orderId))
                 {
                     // close the rogue sell order
                     var result = await _trader
                         .CancelOrderAsync(
                             new CancelStandardOrder(
                                 options.Symbol,
-                                order.OrderId,
+                                orderId,
                                 null,
                                 null,
                                 null,
@@ -473,16 +473,16 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
 
             // cancel all excess sell orders now
             var changed = false;
-            foreach (var order in orders)
+            foreach (var orderId in orders.Select(x => x.OrderId))
             {
-                if (!bands.Contains(order.OrderId))
+                if (!bands.Contains(orderId))
                 {
                     // close the rogue sell order
                     var result = await _trader
                         .CancelOrderAsync(
                             new CancelStandardOrder(
                                 options.Symbol,
-                                order.OrderId,
+                                orderId,
                                 null,
                                 null,
                                 null,

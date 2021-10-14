@@ -61,17 +61,6 @@ namespace Outcompute.Trader.Trading.Binance
             return _mapper.Map<SymbolPriceTicker>(output);
         }
 
-        public async Task<ImmutableSortedTradeSet> GetAccountTradesAsync(GetAccountTrades model, CancellationToken cancellationToken = default)
-        {
-            var input = _mapper.Map<AccountTradesRequestModel>(model);
-
-            var output = await _client
-                .GetAccountTradesAsync(input, cancellationToken)
-                .ConfigureAwait(false);
-
-            return _mapper.Map<ImmutableSortedTradeSet>(output);
-        }
-
         public async Task<ImmutableSortedTradeSet> GetAccountTradesAsync(string symbol, long? fromId, int? limit, CancellationToken cancellationToken = default)
         {
             var model = new GetAccountTrades(symbol, null, null, fromId, limit, null, _clock.UtcNow);

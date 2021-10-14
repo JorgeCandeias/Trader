@@ -110,15 +110,15 @@ namespace Outcompute.Trader.Trading.Algorithms
         }
     }
 
-    public record Statistics(decimal AvgPerHourDay1, decimal AvgPerHourDay7, decimal AvgPerHourDay30, decimal AvgPerDay1, decimal AvgPerDay7, decimal AvgPerDay30)
+    public record Stats(decimal AvgPerHourDay1, decimal AvgPerHourDay7, decimal AvgPerHourDay30, decimal AvgPerDay1, decimal AvgPerDay7, decimal AvgPerDay30)
     {
-        public static Statistics Zero { get; } = new Statistics(0, 0, 0, 0, 0, 0);
+        public static Stats Zero { get; } = new Stats(0, 0, 0, 0, 0, 0);
 
-        public static Statistics FromProfit(Profit profit)
+        public static Stats FromProfit(Profit profit)
         {
             if (profit is null) throw new ArgumentNullException(nameof(profit));
 
-            return new Statistics(
+            return new Stats(
                 profit.D1 / 24m,
                 profit.D7 / (24m * 7m),
                 profit.D30 / (24m * 30m),

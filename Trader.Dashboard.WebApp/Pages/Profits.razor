@@ -12,7 +12,7 @@ else if (!_profits.Any())
 }
 else
 {
-    @foreach (var group in _profits.Select(x => (x.Symbol, Profit: x, Stats: Statistics.FromProfit(x))).GroupBy(x => x.Profit.Quote).OrderBy(x => x.Key))
+    @foreach (var group in _profits.Select(x => (x.Symbol, Profit: x, Stats: Stats.FromProfit(x))).GroupBy(x => x.Profit.Quote).OrderBy(x => x.Key))
     {
         <table class="table">
             <thead>
@@ -43,7 +43,7 @@ else
             <tfoot>
                 @{
                     var totalProfit = Profit.Aggregate(group.Select(x => x.Profit));
-                    var totalStats = Statistics.FromProfit(totalProfit);
+                    var totalStats = Stats.FromProfit(totalProfit);
                 }
                 <tr>
                     <td>@group.Key</td>

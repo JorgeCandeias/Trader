@@ -127,7 +127,7 @@ namespace Outcompute.Trader.App
                 _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             }
 
-            public async Task GoAsync(CancellationToken cancellationToken = default)
+            public async ValueTask GoAsync(CancellationToken cancellationToken = default)
             {
                 var options = _options.Get(_context.Name);
 

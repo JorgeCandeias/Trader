@@ -51,7 +51,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
         /// </summary>
         private readonly SortedSet<Band> _bands = new();
 
-        public async Task GoAsync(CancellationToken cancellationToken = default)
+        public async ValueTask GoAsync(CancellationToken cancellationToken = default)
         {
             var options = _options.Get(_context.Name);
 

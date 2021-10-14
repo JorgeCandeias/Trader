@@ -5,7 +5,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 {
     public interface IAlgo
     {
-        Task GoAsync(CancellationToken cancellationToken = default);
+        ValueTask GoAsync(CancellationToken cancellationToken = default);
     }
 
     /// <summary>
@@ -20,6 +20,6 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public static NullAlgo Instance { get; } = new NullAlgo();
 
-        public Task GoAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+        public ValueTask GoAsync(CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
     }
 }

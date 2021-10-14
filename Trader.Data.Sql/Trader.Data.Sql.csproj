@@ -9,6 +9,7 @@
 		<Nullable>enable</Nullable>
 		<AssemblyName>Outcompute.Trader.Data.Sql</AssemblyName>
 		<RootNamespace>Outcompute.Trader.Data.Sql</RootNamespace>
+		<Description>Outcomputer Trader repository provider backed by Microsoft SQL Server</Description>
 	</PropertyGroup>
 
 	<ItemGroup>

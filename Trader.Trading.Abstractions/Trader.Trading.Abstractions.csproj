@@ -9,6 +9,7 @@
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     <AssemblyName>Outcompute.Trader.Trading.Abstractions</AssemblyName>
+    <Description>Trading abstractions library of Outcompute Trader, a high-frequency trading framework.</Description>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

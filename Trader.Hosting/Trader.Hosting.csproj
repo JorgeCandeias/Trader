@@ -8,6 +8,7 @@
 		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 		<AssemblyName>Outcompute.Trader.Hosting</AssemblyName>
 		<RootNamespace>Outcompute.Trader.Hosting</RootNamespace>
+		<Description>Hosting library of Outcompute Trader, a high-frequency trading framework.</Description>
 	</PropertyGroup>
 	<ItemGroup>
 		<InternalsVisibleTo Include="Outcompute.Trader.Hosting.Tests" />

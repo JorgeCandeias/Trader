@@ -9,6 +9,7 @@
 		<Nullable>enable</Nullable>
 		<AssemblyName>Outcompute.Trader.Models</AssemblyName>
 		<RootNamespace>Outcompute.Trader.Models</RootNamespace>
+		<Description>Models library of Outcompute Trader, a high-frequency trading framework.</Description>
 	</PropertyGroup>
 
 	<ItemGroup>

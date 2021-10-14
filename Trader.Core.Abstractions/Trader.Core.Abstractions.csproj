@@ -9,6 +9,7 @@
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     <AssemblyName>Outcompute.Trader.Core.Abstractions</AssemblyName>
+    <Description>Core abstractions library of Outcompute Trader, a high-frequency trading framework.</Description>
   </PropertyGroup>
 
   <ItemGroup>

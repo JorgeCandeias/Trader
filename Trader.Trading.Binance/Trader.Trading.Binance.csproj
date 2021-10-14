@@ -9,6 +9,7 @@
 		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
 		<AssemblyName>Outcompute.Trader.Trading.Binance</AssemblyName>
 		<RootNamespace>Outcompute.Trader.Trading.Binance</RootNamespace>
+		<Description>Outcompute Trader exchange provider for Binance</Description>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

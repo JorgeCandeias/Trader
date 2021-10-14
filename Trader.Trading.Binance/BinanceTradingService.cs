@@ -73,10 +73,9 @@ namespace Outcompute.Trader.Trading.Binance
             return _mapper.Map<ImmutableSortedTradeSet>(output);
         }
 
-        public async Task<ImmutableSortedOrderSet> GetOpenOrdersAsync(GetOpenOrders model, CancellationToken cancellationToken = default)
+        public async Task<ImmutableSortedOrderSet> GetOpenOrdersAsync(string symbol, CancellationToken cancellationToken = default)
         {
-            _ = model ?? throw new ArgumentNullException(nameof(model));
-
+            var model = new GetOpenOrders(symbol, null, _clock.UtcNow);
             var input = _mapper.Map<GetOpenOrdersRequestModel>(model);
 
             var output = await _client

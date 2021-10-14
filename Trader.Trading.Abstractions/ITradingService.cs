@@ -20,7 +20,7 @@ namespace Outcompute.Trader.Trading
 
         Task<ImmutableSortedTradeSet> GetAccountTradesAsync(string symbol, long? fromId, int? limit, CancellationToken cancellationToken = default);
 
-        Task<ImmutableSortedOrderSet> GetOpenOrdersAsync(GetOpenOrders model, CancellationToken cancellationToken = default);
+        Task<ImmutableSortedOrderSet> GetOpenOrdersAsync(string symbol, CancellationToken cancellationToken = default);
 
         Task<OrderQueryResult> GetOrderAsync(OrderQuery model, CancellationToken cancellationToken = default);
 

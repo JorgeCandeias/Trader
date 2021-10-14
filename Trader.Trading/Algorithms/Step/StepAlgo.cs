@@ -280,23 +280,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
             quantity = Math.Ceiling(quantity / symbol.Filters.LotSize.StepSize) * symbol.Filters.LotSize.StepSize;
 
             // place the buy order
+            var tag = $"{options.Symbol}{lowerPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal);
             var result = await _trader
-                .CreateOrderAsync(
-                    new Order(
-                        options.Symbol,
-                        OrderSide.Buy,
-                        OrderType.Limit,
-                        TimeInForce.GoodTillCanceled,
-                        quantity,
-                        null,
-                        lowerPrice,
-                        $"{options.Symbol}{lowerPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal),
-                        null,
-                        null,
-                        NewOrderResponseType.Full,
-                        null,
-                        _clock.UtcNow),
-                    cancellationToken)
+                .CreateOrderAsync(options.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, lowerPrice, tag, null, null, cancellationToken)
                 .ConfigureAwait(false);
 
             // save this order to the repository now to tolerate slow binance api updates
@@ -363,23 +349,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
                         }
                     }
 
+                    var tag = _orderCodeGenerator.GetSellClientOrderId(band.OpenOrderId);
                     var result = await _trader
-                        .CreateOrderAsync(
-                            new Order(
-                                options.Symbol,
-                                OrderSide.Sell,
-                                OrderType.Limit,
-                                TimeInForce.GoodTillCanceled,
-                                band.Quantity,
-                                null,
-                                band.ClosePrice,
-                                _orderCodeGenerator.GetSellClientOrderId(band.OpenOrderId),
-                                null,
-                                null,
-                                NewOrderResponseType.Full,
-                                null,
-                                _clock.UtcNow),
-                            cancellationToken)
+                        .CreateOrderAsync(options.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, band.Quantity, null, band.ClosePrice, tag, null, null, cancellationToken)
                         .ConfigureAwait(false);
 
                     // save this order to the repository now to tolerate slow binance api updates
@@ -591,23 +563,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
                 quantity = Math.Ceiling(quantity / symbol.Filters.LotSize.StepSize) * symbol.Filters.LotSize.StepSize;
 
                 // place a limit order at the current price
+                var tag = $"{options.Symbol}{lowBuyPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal);
                 var result = await _trader
-                    .CreateOrderAsync(
-                        new Order(
-                            options.Symbol,
-                            OrderSide.Buy,
-                            OrderType.Limit,
-                            TimeInForce.GoodTillCanceled,
-                            quantity,
-                            null,
-                            lowBuyPrice,
-                            $"{options.Symbol}{lowBuyPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal),
-                            null,
-                            null,
-                            NewOrderResponseType.Full,
-                            null,
-                            _clock.UtcNow),
-                        cancellationToken)
+                    .CreateOrderAsync(options.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, lowBuyPrice, tag, null, null, cancellationToken)
                     .ConfigureAwait(false);
 
                 // save this order to the repository now to tolerate slow binance api updates

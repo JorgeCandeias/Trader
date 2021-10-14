@@ -145,23 +145,9 @@ namespace Outcompute.Trader.Trading.Algorithms
                 TypeName, symbol.Name, OrderType.Limit, OrderSide.Buy, symbol.Name, quantity, symbol.BaseAsset, lowBuyPrice, symbol.QuoteAsset, quantity * lowBuyPrice, symbol.QuoteAsset);
 
             // place the order now
+            var tag = $"{symbol.Name}{lowBuyPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal);
             var order = await trader
-                .CreateOrderAsync(
-                    new Order(
-                        symbol.Name,
-                        OrderSide.Buy,
-                        OrderType.Limit,
-                        TimeInForce.GoodTillCanceled,
-                        quantity,
-                        null,
-                        lowBuyPrice,
-                        $"{symbol.Name}{lowBuyPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal),
-                        null,
-                        null,
-                        NewOrderResponseType.Full,
-                        null,
-                        clock.UtcNow),
-                    cancellationToken)
+                .CreateOrderAsync(symbol.Name, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, lowBuyPrice, tag, null, null, cancellationToken)
                 .ConfigureAwait(false);
 
             await repository

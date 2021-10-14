@@ -109,10 +109,9 @@ namespace Outcompute.Trader.Trading.Binance
             return _mapper.Map<ImmutableSortedOrderSet>(output);
         }
 
-        public async Task<OrderResult> CreateOrderAsync(Order model, CancellationToken cancellationToken = default)
+        public async Task<OrderResult> CreateOrderAsync(string symbol, OrderSide side, OrderType type, TimeInForce? timeInForce, decimal? quantity, decimal? quoteOrderQuantity, decimal? price, string? newClientOrderId, decimal? stopPrice, decimal? icebergQuantity, CancellationToken cancellationToken = default)
         {
-            _ = model ?? throw new ArgumentNullException(nameof(model));
-
+            var model = new Order(symbol, side, type, timeInForce, quantity, quoteOrderQuantity, price, newClientOrderId, stopPrice, icebergQuantity, NewOrderResponseType.Full, null, _clock.UtcNow);
             var input = _mapper.Map<NewOrderRequestModel>(model);
 
             var output = await _client

@@ -38,22 +38,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 TypeName, symbol.Name, type, side, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.QuoteAsset);
 
             var result = await trader
-                .CreateOrderAsync(
-                    new Order(
-                        symbol.Name,
-                        side,
-                        type,
-                        timeInForce,
-                        quantity,
-                        null,
-                        price,
-                        tag,
-                        null,
-                        null,
-                        NewOrderResponseType.Full,
-                        null,
-                        clock.UtcNow),
-                    cancellationToken)
+                .CreateOrderAsync(symbol.Name, side, type, timeInForce, quantity, null, price, tag, null, null, cancellationToken)
                 .ConfigureAwait(false);
 
             await repository

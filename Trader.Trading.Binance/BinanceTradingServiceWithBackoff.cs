@@ -51,9 +51,9 @@ namespace Outcompute.Trader.Trading.Binance
             return WaitAndRetryForeverAsync(ct => _trader.CloseUserDataStreamAsync(listenKey, ct), cancellationToken);
         }
 
-        public Task<OrderResult> CreateOrderAsync(Order model, CancellationToken cancellationToken = default)
+        public Task<OrderResult> CreateOrderAsync(string symbol, OrderSide side, OrderType type, TimeInForce? timeInForce, decimal? quantity, decimal? quoteOrderQuantity, decimal? price, string? newClientOrderId, decimal? stopPrice, decimal? icebergQuantity, CancellationToken cancellationToken = default)
         {
-            return WaitAndRetryForeverAsync(ct => _trader.CreateOrderAsync(model, ct), cancellationToken);
+            return WaitAndRetryForeverAsync(ct => _trader.CreateOrderAsync(symbol, side, type, timeInForce, quantity, quoteOrderQuantity, price, newClientOrderId, stopPrice, icebergQuantity, ct), cancellationToken);
         }
 
         public Task<string> CreateUserDataStreamAsync(CancellationToken cancellationToken = default)

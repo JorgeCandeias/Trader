@@ -40,6 +40,7 @@ namespace System.Buffers
             return owner;
         }
 
+        [SuppressMessage("Minor Code Smell", "S3260:Non-derived \"private\" classes and records should be \"sealed\"", Justification = "N/A")]
         private static class Typed<T>
         {
             public static ObjectPool<ArraySegmentOwner<T>> ArrayOwnerPool { get; } = new DefaultObjectPool<ArraySegmentOwner<T>>(new DefaultPooledObjectPolicy<ArraySegmentOwner<T>>());

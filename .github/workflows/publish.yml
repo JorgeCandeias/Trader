@@ -22,12 +22,6 @@ jobs:
     
     - uses: actions/checkout@v2
             
-    - name: Add MSBuild to PATH
-      uses: microsoft/setup-msbuild@v1.0.2
-      
-    - name: setup-sqlpackage
-      uses: coreywebber/setup-sqlpackage@v1.0.3
-        
     - name: Remove Database Projects
       run: |
         dotnet sln remove Trader.Data.Sql.Database/Trader.Data.Sql.Database.sqlproj

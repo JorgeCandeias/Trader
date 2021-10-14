@@ -1,11 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
+using static System.String;
 
 namespace Outcompute.Trader.Dashboard.WebApp.Pages
 {
@@ -13,16 +9,9 @@ namespace Outcompute.Trader.Dashboard.WebApp.Pages
     [IgnoreAntiforgeryToken]
     public class ErrorModel : PageModel
     {
-        public string RequestId { get; set; }
+        public string RequestId { get; set; } = Empty;
 
-        public bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
-
-        private readonly ILogger<ErrorModel> _logger;
-
-        public ErrorModel(ILogger<ErrorModel> logger)
-        {
-            _logger = logger;
-        }
+        public bool ShowRequestId => !IsNullOrEmpty(RequestId);
 
         public void OnGet()
         {

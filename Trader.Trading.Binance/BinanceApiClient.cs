@@ -1,9 +1,11 @@
 ﻿using AutoMapper;
 using FastMember;
 using Microsoft.Extensions.ObjectPool;
+using Outcompute.Trader.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -12,7 +14,6 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
-using Outcompute.Trader.Models;
 
 namespace Outcompute.Trader.Trading.Binance
 {
@@ -433,6 +434,7 @@ namespace Outcompute.Trader.Trading.Binance
         /// <summary>
         /// Caches type data at zero lookup cost.
         /// </summary>
+        [SuppressMessage("Minor Code Smell", "S3260:Non-derived \"private\" classes and records should be \"sealed\"", Justification = "Type Cache Pattern")]
         private static class TypeCache<T>
         {
             public static TypeAccessor TypeAccessor { get; } = TypeAccessor.Create(typeof(T));

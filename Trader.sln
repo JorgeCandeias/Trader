@@ -56,6 +56,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Trading.Binance.Tests", "Trader.Trading.Binance.Tests\Trader.Trading.Binance.Tests.csproj", "{AAA8F74C-7697-424E-8BE2-A09116997A49}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -150,6 +152,10 @@ Global
 		{FB4CD7EA-BEC9-4E13-B475-9CD2DE19CC2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FB4CD7EA-BEC9-4E13-B475-9CD2DE19CC2A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{FB4CD7EA-BEC9-4E13-B475-9CD2DE19CC2A}.Release|Any CPU.Deploy.0 = Release|Any CPU
+		{AAA8F74C-7697-424E-8BE2-A09116997A49}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AAA8F74C-7697-424E-8BE2-A09116997A49}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AAA8F74C-7697-424E-8BE2-A09116997A49}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AAA8F74C-7697-424E-8BE2-A09116997A49}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -161,6 +167,7 @@ Global
 		{DC8BFA1D-F3E3-4F95-9ED6-6536ED64FF53} = {724871D8-46E7-4280-B828-D6A28360E820}
 		{AC8B8F17-6688-4C1C-B11A-1AAC13D869FA} = {724871D8-46E7-4280-B828-D6A28360E820}
 		{7B60FAB9-BCA0-4542-B4DB-75F630B58F9D} = {97714005-5BCD-475B-823D-C7744EE49DB2}
+		{AAA8F74C-7697-424E-8BE2-A09116997A49} = {724871D8-46E7-4280-B828-D6A28360E820}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7716D8A4-6E15-41AB-90E0-DE40D69C82EE}

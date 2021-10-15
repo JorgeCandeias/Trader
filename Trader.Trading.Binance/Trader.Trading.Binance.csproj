@@ -12,6 +12,11 @@
 		<Description>Outcompute Trader exchange provider for Binance</Description>
 	</PropertyGroup>
 
+	<ItemGroup>
+		<InternalsVisibleTo Include="Outcompute.Trader.Trading.Binance.Tests" />
+		<InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+	</ItemGroup>
+
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
 	  <NoWarn>1701;1702;CA2007</NoWarn>
 	</PropertyGroup>

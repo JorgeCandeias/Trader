@@ -91,5 +91,7 @@ namespace Outcompute.Trader.Models
                 }
             }
         }
+
+        public static Kline Empty { get; } = new Kline(string.Empty, KlineInterval.None, DateTime.MinValue, DateTime.MinValue, DateTime.MinValue, 0, 0, 0, 0, 0, 0, 0, 0, 0, true, 0, 0);
     }
 }

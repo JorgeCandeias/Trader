@@ -15,6 +15,8 @@ namespace Outcompute.Trader.Trading.Binance.Tests.Fakes
 
         public FakeTradingRepository(IGrainFactory factory)
         {
+            if (factory is null) throw new ArgumentNullException(nameof(factory));
+
             _grain = factory.GetGrain<IFakeTradingRepositoryGrain>(Guid.Empty);
         }
 

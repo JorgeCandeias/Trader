@@ -50,17 +50,13 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         {
             var options = _options.Get(_context.Name);
 
-            var exchange = await _context
-                .GetExchangeInfoAsync()
-                .ConfigureAwait(false);
+            var exchange = await _context.GetExchangeInfoAsync().ConfigureAwait(false);
 
             var symbol = exchange.Symbols.Single(x => x.Name == options.Symbol);
 
             await ApplyAccountInfoAsync(symbol, cancellationToken).ConfigureAwait(false);
 
-            var significant = await _context
-                .ResolveSignificantOrdersAsync(symbol, cancellationToken)
-                .ConfigureAwait(false);
+            var significant = await _context.GetSignificantOrderResolver().ResolveAsync(symbol, cancellationToken).ConfigureAwait(false);
 
             await _context
                 .PublishProfitAsync(significant.Profit)

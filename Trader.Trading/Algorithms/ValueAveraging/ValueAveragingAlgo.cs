@@ -50,7 +50,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
             _logger.LogInformation("{Type} {Name} running...", TypeName, _context.Name);
 
             // get significant orders
-            _significant = await _context.ResolveSignificantOrdersAsync(_symbol, cancellationToken).ConfigureAwait(false);
+            _significant = await _context.GetSignificantOrderResolver().ResolveAsync(_symbol, cancellationToken).ConfigureAwait(false);
 
             // get current ticker
             _ticker = await _context.GetTickerProvider().TryGetTickerAsync(_symbol.Name, cancellationToken).ConfigureAwait(false)

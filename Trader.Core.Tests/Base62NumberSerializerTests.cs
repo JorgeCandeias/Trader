@@ -98,7 +98,7 @@ namespace Outcompute.Trader.Core.Tests
             var serializer = new Base62NumberSerializer();
 
             // act
-            var exception = Assert.Throws<ArgumentNullException>(() => serializer.DeserializeOne(null));
+            var exception = Assert.Throws<ArgumentNullException>(() => serializer.DeserializeOne(null!));
 
             // assert
             Assert.Equal("value", exception.ParamName);
@@ -163,7 +163,7 @@ namespace Outcompute.Trader.Core.Tests
             var serializer = new Base62NumberSerializer();
 
             // act
-            var exception = Assert.Throws<ArgumentNullException>(() => serializer.DeserializeMany(null));
+            var exception = Assert.Throws<ArgumentNullException>(() => serializer.DeserializeMany(null!));
 
             // assert
             Assert.Equal("values", exception.ParamName);

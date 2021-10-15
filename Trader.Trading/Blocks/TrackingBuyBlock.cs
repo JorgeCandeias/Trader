@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
@@ -28,7 +27,6 @@ namespace Outcompute.Trader.Trading.Algorithms
         {
             var logger = context.ServiceProvider.GetRequiredService<ILogger<IAlgoContext>>();
             var tickerProvider = context.ServiceProvider.GetRequiredService<ITickerProvider>();
-            var clock = context.ServiceProvider.GetRequiredService<ISystemClock>();
             var repository = context.ServiceProvider.GetRequiredService<ITradingRepository>();
             var trader = context.ServiceProvider.GetRequiredService<ITradingService>();
 
@@ -71,9 +69,9 @@ namespace Outcompute.Trader.Trading.Algorithms
                 "{Type} {Name} identified first buy target price at {LowPrice} {LowQuote} with current price at {CurrentPrice} {CurrentQuote}",
                 TypeName, symbol.Name, lowBuyPrice, symbol.QuoteAsset, ticker.ClosePrice, symbol.QuoteAsset);
 
-            orders = await TryCloseLowBuysAsync(logger, trader, clock, repository, symbol, orders, lowBuyPrice, cancellationToken).ConfigureAwait(false);
+            orders = await TryCloseLowBuysAsync(logger, trader, repository, symbol, orders, lowBuyPrice, cancellationToken).ConfigureAwait(false);
 
-            orders = await TryCloseHighBuysAsync(logger, trader, clock, repository, symbol, orders, cancellationToken).ConfigureAwait(false);
+            orders = await TryCloseHighBuysAsync(logger, trader, repository, symbol, orders, cancellationToken).ConfigureAwait(false);
 
             // if there are still open orders then leave them be
             if (!orders.IsEmpty)
@@ -157,7 +155,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             return true;
         }
 
-        private static async Task<ImmutableSortedOrderSet> TryCloseLowBuysAsync(ILogger logger, ITradingService trader, ISystemClock clock, ITradingRepository repository, Symbol symbol, ImmutableSortedOrderSet orders, decimal lowBuyPrice, CancellationToken cancellationToken)
+        private static async Task<ImmutableSortedOrderSet> TryCloseLowBuysAsync(ILogger logger, ITradingService trader, ITradingRepository repository, Symbol symbol, ImmutableSortedOrderSet orders, decimal lowBuyPrice, CancellationToken cancellationToken)
         {
             // cancel all open buy orders with an open price lower than the lower band to the current price
             foreach (var order in orders.Where(x => x.Side == OrderSide.Buy && x.Price < lowBuyPrice))
@@ -180,7 +178,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             return orders;
         }
 
-        private static async Task<ImmutableSortedOrderSet> TryCloseHighBuysAsync(ILogger logger, ITradingService trader, ISystemClock clock, ITradingRepository repository, Symbol symbol, ImmutableSortedOrderSet orders, CancellationToken cancellationToken)
+        private static async Task<ImmutableSortedOrderSet> TryCloseHighBuysAsync(ILogger logger, ITradingService trader, ITradingRepository repository, Symbol symbol, ImmutableSortedOrderSet orders, CancellationToken cancellationToken)
         {
             foreach (var order in orders.Where(x => x.Side == OrderSide.Buy).OrderBy(x => x.Price).Skip(1))
             {

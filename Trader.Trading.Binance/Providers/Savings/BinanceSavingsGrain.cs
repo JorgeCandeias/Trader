@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using Orleans;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
@@ -15,14 +14,12 @@ namespace Outcompute.Trader.Trading.Binance.Providers.Savings
     internal class BinanceSavingsGrain : Grain, IBinanceSavingsGrain
     {
         private readonly BinanceOptions _options;
-        private readonly ILogger _logger;
         private readonly ISystemClock _clock;
         private readonly ITradingService _trader;
 
-        public BinanceSavingsGrain(IOptions<BinanceOptions> options, ILogger<BinanceSavingsGrain> logger, ISystemClock clock, ITradingService trader)
+        public BinanceSavingsGrain(IOptions<BinanceOptions> options, ISystemClock clock, ITradingService trader)
         {
             _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
         }

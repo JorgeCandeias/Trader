@@ -17,7 +17,24 @@ namespace Outcompute.Trader.Models
         TimeInForce TimeInForce,
         OrderType Type,
         OrderSide Side,
-        ImmutableList<OrderFill> Fills);
+        ImmutableList<OrderFill> Fills)
+    {
+        public static OrderResult Empty { get; } = new OrderResult(
+            string.Empty,
+            0,
+            0,
+            string.Empty,
+            DateTime.MinValue,
+            0,
+            0,
+            0,
+            0,
+            OrderStatus.None,
+            TimeInForce.None,
+            OrderType.None,
+            OrderSide.None,
+            ImmutableList<OrderFill>.Empty);
+    }
 
     public record OrderFill(
         decimal Price,

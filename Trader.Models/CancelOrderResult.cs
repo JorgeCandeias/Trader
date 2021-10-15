@@ -18,7 +18,23 @@ namespace Outcompute.Trader.Models
         OrderStatus Status,
         TimeInForce TimeInForce,
         OrderType Type,
-        OrderSide Side) : CancelOrderResult;
+        OrderSide Side) : CancelOrderResult
+    {
+        public static CancelStandardOrderResult Empty { get; } = new CancelStandardOrderResult(
+            string.Empty,
+            string.Empty,
+            0,
+            0,
+            string.Empty,
+            0m,
+            0m,
+            0m,
+            0m,
+            OrderStatus.None,
+            TimeInForce.None,
+            OrderType.None,
+            OrderSide.None);
+    }
 
     public record CancelOcoOrderResult(
         long OrderListId,

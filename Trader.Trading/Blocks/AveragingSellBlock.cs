@@ -15,7 +15,7 @@ namespace Outcompute.Trader.Trading.Algorithms
     {
         private static string TypeName => nameof(AveragingSellBlock);
 
-        public static ValueTask SetAveragingSellAsync(this IAlgoContext context, Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, bool sellSavings, CancellationToken cancellationToken = default)
+        public static ValueTask SetAveragingSellAsync(this IAlgoContext context, Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, CancellationToken cancellationToken = default)
         {
             if (context is null) throw new ArgumentNullException(nameof(context));
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
@@ -33,10 +33,10 @@ namespace Outcompute.Trader.Trading.Algorithms
                 }
             }
 
-            return SetAveragingSellInnerAsync(context, symbol, orders, profitMultiplier, redeemSavings, sellSavings, cancellationToken);
+            return SetAveragingSellInnerAsync(context, symbol, orders, profitMultiplier, redeemSavings, cancellationToken);
         }
 
-        private static async ValueTask SetAveragingSellInnerAsync(IAlgoContext context, Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, bool sellSavings, CancellationToken cancellationToken)
+        private static async ValueTask SetAveragingSellInnerAsync(IAlgoContext context, Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, CancellationToken cancellationToken)
         {
             // resolve services
             var repository = context.ServiceProvider.GetRequiredService<ITradingRepository>();
@@ -49,7 +49,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 ?? Balance.Zero(symbol.BaseAsset);
 
             // get all savings if applicable
-            var savings = (sellSavings ? await savingsProvider.TryGetFirstFlexibleProductPositionAsync(symbol.BaseAsset, cancellationToken).ConfigureAwait(false) : null)
+            var savings = (redeemSavings ? await savingsProvider.TryGetFirstFlexibleProductPositionAsync(symbol.BaseAsset, cancellationToken).ConfigureAwait(false) : null)
                 ?? FlexibleProductPosition.Zero(symbol.BaseAsset);
 
             // get the current ticker for the symbol
@@ -96,7 +96,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 
             // break if there are no assets to sell
             var total = balance.Free + savings.FreeAmount;
-            if (total <= 0m)
+            if (total < quantity)
             {
                 logger.LogWarning(
                     "{Type} cannot evaluate desired sell for symbol {Symbol} because there are not enough assets available to sell",
@@ -105,31 +105,8 @@ namespace Outcompute.Trader.Trading.Algorithms
                 return DesiredSell.None;
             }
 
-            // detect the excess quantity available - gained interest etc
-            var excess = total - quantity;
-
-            // warn if there negative excess
-            // this can happen due to delay with savings info or the use or other products not monitored by the application
-            if (excess < 0m)
-            {
-                logger.LogWarning(
-                    "{Type} detected negative excess for symbol {Symbol}",
-                    TypeName, symbol.Name);
-
-                excess = 0m;
-            }
-
             // calculate the weighted average price on all the significant orders
-            var price = orders.Sum(x => x.Price * x.ExecutedQuantity);
-
-            // if there is excess then add it at near zero cost
-            if (excess > 0)
-            {
-                price += 0.00000001m * excess;
-                quantity += excess;
-            }
-
-            price /= quantity;
+            var price = orders.Sum(x => x.Price * x.ExecutedQuantity) / quantity;
 
             // bump the price by the profit multipler so we have a sell price
             price *= profitMultiplier;

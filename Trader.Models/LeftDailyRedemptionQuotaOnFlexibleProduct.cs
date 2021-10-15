@@ -7,5 +7,12 @@ namespace Outcompute.Trader.Models
         string Asset,
         decimal DailyQuota,
         decimal LeftQuota,
-        decimal MinRedemptionAmount);
+        decimal MinRedemptionAmount)
+    {
+        public static LeftDailyRedemptionQuotaOnFlexibleProduct Empty { get; } = new LeftDailyRedemptionQuotaOnFlexibleProduct(
+            string.Empty,
+            0m,
+            0m,
+            0m);
+    }
 }

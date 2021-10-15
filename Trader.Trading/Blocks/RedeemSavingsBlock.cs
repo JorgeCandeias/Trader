@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -27,20 +26,8 @@ namespace Outcompute.Trader.Trading.Algorithms
             var savingsProvider = context.ServiceProvider.GetRequiredService<ISavingsProvider>();
 
             // get the current savings for this asset
-            var positions = await savingsProvider.GetFlexibleProductPositionAsync(asset, cancellationToken).ConfigureAwait(false);
-
-            // stop if there are no savings
-            if (positions.Count is 0)
-            {
-                logger.LogError(
-                    "{Type} cannot redeem the necessary amount of {Quantity} {Asset} because there are no savings for this asset",
-                    TypeName, amount, asset);
-
-                return (false, 0m);
-            }
-
-            // there should only be one item in the result
-            var savings = positions.Single();
+            var savings = await savingsProvider.TryGetFirstFlexibleProductPositionAsync(asset, cancellationToken).ConfigureAwait(false)
+                ?? FlexibleProductPosition.Zero(asset);
 
             // check if we can redeem at all - we cant redeem during maintenance windows etc
             if (!savings.CanRedeem)

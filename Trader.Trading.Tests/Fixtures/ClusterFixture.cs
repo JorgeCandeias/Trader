@@ -36,14 +36,15 @@ namespace Outcompute.Trader.Trading.Tests.Fixtures
     {
         public void Configure(IHostBuilder hostBuilder)
         {
-            hostBuilder.ConfigureAppConfiguration(config =>
-            {
-                config.AddInMemoryCollection(new Dictionary<string, string>
+            hostBuilder
+                .ConfigureAppConfiguration(config =>
                 {
-                    { "Trader:Algos:MyTestAlgo:Type", "Test" },
-                    { "Trader:Algos:MyTestAlgo:Options:TestValue", "123" },
+                    config.AddInMemoryCollection(new Dictionary<string, string>
+                    {
+                        { "Trader:Algos:MyTestAlgo:Type", "Test" },
+                        { "Trader:Algos:MyTestAlgo:Options:TestValue", "123" },
+                    });
                 });
-            });
         }
     }
 

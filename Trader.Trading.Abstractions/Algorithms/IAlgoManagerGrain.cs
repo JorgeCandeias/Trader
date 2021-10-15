@@ -6,6 +6,6 @@ namespace Outcompute.Trader.Trading.Algorithms
 {
     public interface IAlgoManagerGrain : IGrainWithGuidKey
     {
-        Task<IEnumerable<AlgoInfo>> GetAlgosAsync();
+        Task<IReadOnlyCollection<AlgoInfo>> GetAlgosAsync();
     }
 }

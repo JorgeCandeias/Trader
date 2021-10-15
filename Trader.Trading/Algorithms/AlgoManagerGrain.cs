@@ -101,7 +101,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             }
         }
 
-        public Task<IEnumerable<AlgoInfo>> GetAlgosAsync()
+        public Task<IReadOnlyCollection<AlgoInfo>> GetAlgosAsync()
         {
             var options = _options.CurrentValue;
 
@@ -117,7 +117,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                     option.Value.TickDelay,
                     option.Value.TickEnabled));
             }
-            return Task.FromResult<IEnumerable<AlgoInfo>>(builder.ToImmutable());
+            return Task.FromResult<IReadOnlyCollection<AlgoInfo>>(builder.ToImmutable());
         }
     }
 }

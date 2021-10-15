@@ -211,7 +211,6 @@ namespace Outcompute.Trader.Trading.Binance
             CreateMap<FlexibleProductResponseModel, FlexibleProduct>();
 
             // open converters
-            // todo: move this to the shared model converters
             CreateMap(typeof(IEnumerable<>), typeof(ImmutableList<>)).ConvertUsing(typeof(ImmutableListConverter<,>));
 
             // convert payloads from the user data stream

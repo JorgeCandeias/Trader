@@ -134,7 +134,7 @@ namespace Outcompute.Trader.Trading.Watchdog
             return base.StopAsync(cancellationToken);
         }
 
-        private class ActiveSiloCounter : ISiloStatusListener
+        private sealed class ActiveSiloCounter : ISiloStatusListener
         {
             private readonly HashSet<SiloAddress> _silos = new();
 

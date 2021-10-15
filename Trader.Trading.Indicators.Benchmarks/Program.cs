@@ -1,4 +1,13 @@
 ﻿using BenchmarkDotNet.Running;
 using System.Reflection;
 
-BenchmarkSwitcher.FromAssembly(Assembly.GetEntryAssembly()).Run();
+namespace Trader.Trading.Indicators.Benchmarks
+{
+    public static class Program
+    {
+        public static void Main()
+        {
+            BenchmarkSwitcher.FromAssembly(Assembly.GetEntryAssembly()).Run();
+        }
+    }
+}

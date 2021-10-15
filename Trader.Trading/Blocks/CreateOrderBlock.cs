@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using System;
@@ -22,17 +21,15 @@ namespace Outcompute.Trader.Trading.Algorithms
             var logger = context.ServiceProvider.GetRequiredService<ILogger<IAlgoContext>>();
             var trader = context.ServiceProvider.GetRequiredService<ITradingService>();
             var repository = context.ServiceProvider.GetRequiredService<ITradingRepository>();
-            var clock = context.ServiceProvider.GetRequiredService<ISystemClock>();
 
-            return CreateOrderInnerAsync(symbol, type, side, timeInForce, quantity, price, tag, logger, trader, repository, clock, cancellationToken);
+            return CreateOrderInnerAsync(symbol, type, side, timeInForce, quantity, price, tag, logger, trader, repository, cancellationToken);
         }
 
-        private static async ValueTask<OrderResult> CreateOrderInnerAsync(Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag, ILogger logger, ITradingService trader, ITradingRepository repository, ISystemClock clock, CancellationToken cancellationToken = default)
+        private static async ValueTask<OrderResult> CreateOrderInnerAsync(Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag, ILogger logger, ITradingService trader, ITradingRepository repository, CancellationToken cancellationToken = default)
         {
             // if we got here then we can place the order
             var watch = Stopwatch.StartNew();
 
-            // todo: refactor to LoggerMessage on dotnet 6
             logger.LogInformation(
                 "{Type} {Name} placing {OrderType} {OrderSide} order for {Quantity:F8} {Asset} at {Price:F8} {Quote} for a total of {Total:F8} {Quote}",
                 TypeName, symbol.Name, type, side, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.QuoteAsset);
@@ -45,7 +42,6 @@ namespace Outcompute.Trader.Trading.Algorithms
                 .SetOrderAsync(result, 0m, 0m, 0m, cancellationToken)
                 .ConfigureAwait(false);
 
-            // todo: refactor to LoggerMessage on dotnet 6
             logger.LogInformation(
                 "{Type} {Name} placed {OrderType} {OrderSide} order for {Quantity:F8} {Asset} at {Price:F8} {Quote} for a total of {Total:F8} {Quote} in {ElapsedMs}ms",
                 TypeName, symbol.Name, type, side, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.QuoteAsset, watch.ElapsedMilliseconds);

@@ -20,5 +20,26 @@ namespace Outcompute.Trader.Models
         DateTime Time,
         DateTime UpdateTime,
         bool IsWorking,
-        decimal OriginalQuoteOrderQuantity);
+        decimal OriginalQuoteOrderQuantity)
+    {
+        public static OrderQueryResult Empty { get; } = new OrderQueryResult(
+            string.Empty,
+            0,
+            0,
+            string.Empty,
+            0,
+            0,
+            0,
+            0,
+            OrderStatus.None,
+            TimeInForce.None,
+            OrderType.None,
+            OrderSide.None,
+            0,
+            0,
+            DateTime.MinValue,
+            DateTime.MinValue,
+            false,
+            0);
+    }
 }

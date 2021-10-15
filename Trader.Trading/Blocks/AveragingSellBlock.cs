@@ -2,9 +2,9 @@
 using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Providers;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,25 +15,34 @@ namespace Outcompute.Trader.Trading.Algorithms
     {
         private static string TypeName => nameof(AveragingSellBlock);
 
-        public static ValueTask<Profit> SetAveragingSellAsync(this IAlgoContext context, Symbol symbol, decimal profitMultiplier, bool redeemSavings, bool sellSavings, CancellationToken cancellationToken = default)
+        public static ValueTask SetAveragingSellAsync(this IAlgoContext context, Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, bool sellSavings, CancellationToken cancellationToken = default)
         {
             if (context is null) throw new ArgumentNullException(nameof(context));
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+            if (orders is null) throw new ArgumentNullException(nameof(orders));
 
-            return SetAveragingSellInnerAsync(context, symbol, profitMultiplier, redeemSavings, sellSavings, cancellationToken);
+            foreach (var order in orders)
+            {
+                if (order.Side != OrderSide.Buy)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(orders), $"Order {order.OrderId} is not a buy order");
+                }
+                else if (order.ExecutedQuantity <= 0m)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(orders), $"Order {order.OrderId} has non-significant executed quantity");
+                }
+            }
+
+            return SetAveragingSellInnerAsync(context, symbol, orders, profitMultiplier, redeemSavings, sellSavings, cancellationToken);
         }
 
-        private static async ValueTask<Profit> SetAveragingSellInnerAsync(IAlgoContext context, Symbol symbol, decimal profitMultiplier, bool redeemSavings, bool sellSavings, CancellationToken cancellationToken)
+        private static async ValueTask SetAveragingSellInnerAsync(IAlgoContext context, Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, bool sellSavings, CancellationToken cancellationToken)
         {
             // resolve services
-            var significantOrderResolver = context.ServiceProvider.GetRequiredService<ISignificantOrderResolver>();
             var repository = context.ServiceProvider.GetRequiredService<ITradingRepository>();
             var savingsProvider = context.ServiceProvider.GetRequiredService<ISavingsProvider>();
             var tickerProvider = context.ServiceProvider.GetRequiredService<ITickerProvider>();
             var logger = context.ServiceProvider.GetRequiredService<ILogger<IAlgoContext>>();
-
-            // get all significant buys
-            var significant = await significantOrderResolver.ResolveAsync(symbol, cancellationToken).ConfigureAwait(false);
 
             // get the current balance
             var balance = await repository.TryGetBalanceAsync(symbol.BaseAsset, cancellationToken).ConfigureAwait(false)
@@ -47,7 +56,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             var ticker = await tickerProvider.TryGetTickerAsync(symbol.Name, cancellationToken).ConfigureAwait(false);
 
             // calculate the desired sell
-            var desired = CalculateDesiredSell(logger, symbol, profitMultiplier, significant.Orders, balance, savings, ticker);
+            var desired = CalculateDesiredSell(logger, symbol, profitMultiplier, orders, balance, savings, ticker);
 
             // apply the desired sell
             if (desired == DesiredSell.None)
@@ -62,12 +71,9 @@ namespace Outcompute.Trader.Trading.Algorithms
                     .EnsureSingleOrderAsync(symbol, OrderSide.Sell, OrderType.Limit, desired.Quantity, desired.Price, redeemSavings, cancellationToken)
                     .ConfigureAwait(false);
             }
-
-            // return the latest known profit
-            return significant.Profit;
         }
 
-        private static DesiredSell CalculateDesiredSell(ILogger logger, Symbol symbol, decimal profitMultiplier, ImmutableSortedOrderSet orders, Balance balance, FlexibleProductPosition savings, MiniTicker? ticker)
+        private static DesiredSell CalculateDesiredSell(ILogger logger, Symbol symbol, decimal profitMultiplier, IReadOnlyCollection<OrderQueryResult> orders, Balance balance, FlexibleProductPosition savings, MiniTicker? ticker)
         {
             // skip if there is no ticker information
             if (ticker is null)
@@ -80,19 +86,13 @@ namespace Outcompute.Trader.Trading.Algorithms
             }
 
             // skip if there is nothing to sell
-            if (orders.IsEmpty)
+            if (orders.Count == 0)
             {
                 return DesiredSell.None;
             }
 
             // take all known significant buy orders on the symbol
             var quantity = orders.Sum(x => x.ExecutedQuantity);
-
-            // break if there is nothing to sell
-            if (quantity <= 0m)
-            {
-                return DesiredSell.None;
-            }
 
             // break if there are no assets to sell
             var total = balance.Free + savings.FreeAmount;

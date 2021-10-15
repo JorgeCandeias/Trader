@@ -12,11 +12,11 @@
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-	  <NoWarn>1701;1702;CA2007;CA2012</NoWarn>
+	  <NoWarn>1701;1702;CA2007;CA2012;CA1812</NoWarn>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-	  <NoWarn>1701;1702;CA2007;CA2012</NoWarn>
+	  <NoWarn>1701;1702;CA2007;CA2012;CA1812</NoWarn>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -24,7 +24,13 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
+		<PackageReference Include="JetBrains.DotMemoryUnit" Version="3.1.20200127.214830" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.11.0" />
+		<PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" Version="3.5.0">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.Orleans.TestingHost" Version="3.5.0" />
 		<PackageReference Include="Moq" Version="4.16.1" />
 		<PackageReference Include="SonarAnalyzer.CSharp" Version="8.30.0.37606">
 			<PrivateAssets>all</PrivateAssets>
@@ -42,6 +48,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\Trader.Hosting\Trader.Hosting.csproj" />
 	  <ProjectReference Include="..\Trader.Trading.Binance\Trader.Trading.Binance.csproj" />
 	</ItemGroup>
 </Project>

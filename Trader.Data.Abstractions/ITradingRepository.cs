@@ -57,7 +57,7 @@ namespace Outcompute.Trader.Data
 
         Task<MiniTicker> GetTickerAsync(string symbol, CancellationToken cancellationToken = default);
 
-        Task SetKlinesAsync(IEnumerable<Kline> candlesticks, CancellationToken cancellationToken = default);
+        Task SetKlinesAsync(IEnumerable<Kline> items, CancellationToken cancellationToken = default);
 
         Task<IEnumerable<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime startOpenTime, DateTime endOpenTime, CancellationToken cancellationToken = default);
 

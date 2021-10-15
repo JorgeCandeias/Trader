@@ -28,7 +28,7 @@ namespace Outcompute.Trader.Trading.Binance.Tests
 
             var positions = Enumerable
                 .Range(1, 3)
-                .Select(x => new FlexibleProductPosition(0, asset, 0, true, 0, 0, 0, 0, $"P{x}", $"Product{x}", 0, 0, 0, 0))
+                .Select(x => new FlexibleProductPosition(asset, $"P{x}", $"Product{x}", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, true))
                 .ToImmutableList();
 
             var quotas = Enumerable
@@ -40,11 +40,11 @@ namespace Outcompute.Trader.Trading.Binance.Tests
                 .GetFakeTradingServiceGrain()
                 .SetFlexibleProductPositionsAsync(positions);
 
-            foreach (var item in quotas)
+            foreach (var (productId, quota) in quotas)
             {
                 await _cluster.GrainFactory
                     .GetFakeTradingServiceGrain()
-                    .SetLeftDailyRedemptionQuotaOnFlexibleProductAsync(item.ProductId, FlexibleProductRedemptionType.Fast, item.Quota);
+                    .SetLeftDailyRedemptionQuotaOnFlexibleProductAsync(productId, FlexibleProductRedemptionType.Fast, quota);
             }
 
             // act

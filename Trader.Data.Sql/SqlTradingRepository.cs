@@ -386,13 +386,13 @@ namespace Outcompute.Trader.Data.Sql
 
             // get the cached ids for the incoming symbols
             var ids = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-            foreach (var order in orders)
+            foreach (var symbol in orders.Select(x => x.Symbol))
             {
                 // check the local fast dictionary
-                if (!ids.ContainsKey(order.Symbol))
+                if (!ids.ContainsKey(symbol))
                 {
                     // defer to the slower shared dictionary and database
-                    ids.Add(order.Symbol, await GetOrAddSymbolAsync(order.Symbol, cancellationToken).ConfigureAwait(false));
+                    ids.Add(symbol, await GetOrAddSymbolAsync(symbol, cancellationToken).ConfigureAwait(false));
                 }
             }
 
@@ -443,13 +443,13 @@ namespace Outcompute.Trader.Data.Sql
 
             // get the cached ids for the incoming symbols
             var ids = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-            foreach (var trade in trades)
+            foreach (var symbol in trades.Select(x => x.Symbol))
             {
                 // check the local fast dictionary
-                if (!ids.ContainsKey(trade.Symbol))
+                if (!ids.ContainsKey(symbol))
                 {
                     // defer to the slower shared dictionary and database
-                    ids.Add(trade.Symbol, await GetOrAddSymbolAsync(trade.Symbol, cancellationToken).ConfigureAwait(false));
+                    ids.Add(symbol, await GetOrAddSymbolAsync(symbol, cancellationToken).ConfigureAwait(false));
                 }
             }
 
@@ -604,13 +604,13 @@ namespace Outcompute.Trader.Data.Sql
 
             // get the cached ids for the incoming symbols
             var symbolIds = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-            foreach (var ticker in tickers)
+            foreach (var symbol in tickers.Select(x => x.Symbol))
             {
                 // check the local fast dictionary
-                if (!symbolIds.ContainsKey(ticker.Symbol))
+                if (!symbolIds.ContainsKey(symbol))
                 {
                     // defer to the slower shared dictionary and database
-                    symbolIds.Add(ticker.Symbol, await GetOrAddSymbolAsync(ticker.Symbol, cancellationToken).ConfigureAwait(false));
+                    symbolIds.Add(symbol, await GetOrAddSymbolAsync(symbol, cancellationToken).ConfigureAwait(false));
                 }
             }
 
@@ -664,23 +664,23 @@ namespace Outcompute.Trader.Data.Sql
             return _mapper.Map<MiniTicker>(entity);
         }
 
-        public async Task SetKlinesAsync(IEnumerable<Kline> candlesticks, CancellationToken cancellationToken = default)
+        public async Task SetKlinesAsync(IEnumerable<Kline> items, CancellationToken cancellationToken = default)
         {
-            _ = candlesticks ?? throw new ArgumentNullException(nameof(candlesticks));
+            _ = items ?? throw new ArgumentNullException(nameof(items));
 
             // get the cached ids for the incoming symbols
             var symbolIds = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-            foreach (var candlestick in candlesticks)
+            foreach (var symbol in items.Select(x => x.Symbol))
             {
                 // check the local fast dictionary
-                if (!symbolIds.ContainsKey(candlestick.Symbol))
+                if (!symbolIds.ContainsKey(symbol))
                 {
                     // defer to the slower shared dictionary and database
-                    symbolIds.Add(candlestick.Symbol, await GetOrAddSymbolAsync(candlestick.Symbol, cancellationToken).ConfigureAwait(false));
+                    symbolIds.Add(symbol, await GetOrAddSymbolAsync(symbol, cancellationToken).ConfigureAwait(false));
                 }
             }
 
-            var entities = _mapper.Map<IEnumerable<KlineTableParameterEntity>>(candlesticks, options =>
+            var entities = _mapper.Map<IEnumerable<KlineTableParameterEntity>>(items, options =>
             {
                 options.Items[nameof(KlineTableParameterEntity.SymbolId)] = symbolIds;
             });

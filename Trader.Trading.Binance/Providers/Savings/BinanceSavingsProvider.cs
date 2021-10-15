@@ -19,7 +19,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.Savings
 
         public ValueTask<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionAsync(string asset, CancellationToken cancellationToken = default)
         {
-            return _factory.GetBinanceSavingsGrain(asset).GetFlexibleProductPositionAsync();
+            return _factory.GetBinanceSavingsGrain(asset).GetFlexibleProductPositionsAsync();
         }
 
         public ValueTask<FlexibleProductPosition?> TryGetFirstFlexibleProductPositionAsync(string asset, CancellationToken cancellation = default)

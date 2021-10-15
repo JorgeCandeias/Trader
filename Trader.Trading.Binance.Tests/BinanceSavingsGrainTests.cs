@@ -50,7 +50,7 @@ namespace Outcompute.Trader.Trading.Binance.Tests
             // act
             var result = await _cluster.GrainFactory
                 .GetBinanceSavingsGrain(asset)
-                .GetFlexibleProductPositionAsync();
+                .GetFlexibleProductPositionsAsync();
 
             Assert.Equal(3, result.Count);
             Assert.Contains(positions, x => x.Asset == asset && x.ProductId == "P1");

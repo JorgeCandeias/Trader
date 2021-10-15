@@ -95,7 +95,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.Savings
             }
         }
 
-        public async ValueTask<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionAsync()
+        public async ValueTask<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionsAsync()
         {
             await EnsureUpdatedAsync();
 

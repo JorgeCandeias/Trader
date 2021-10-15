@@ -7,7 +7,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.Savings
 {
     internal interface IBinanceSavingsGrain : IGrainWithStringKey
     {
-        ValueTask<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionAsync();
+        ValueTask<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionsAsync();
 
         ValueTask<FlexibleProductPosition?> TryGetFirstFlexibleProductPositionAsync();
 

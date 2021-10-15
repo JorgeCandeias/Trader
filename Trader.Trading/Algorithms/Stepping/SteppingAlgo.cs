@@ -4,7 +4,6 @@ using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms.Exceptions;
-using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -76,7 +75,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
             await _context.PublishProfitAsync(significant.Profit);
 
-            _ticker = await _context.GetTickerProvider().GetRequiredTickerAsync(_symbol.Name, cancellationToken);
+            _ticker = await _context.GetRequiredTickerAsync(_symbol.Name, cancellationToken);
 
             _logger.LogInformation(
                 "{Type} {Name} reports latest asset price is {Price} {QuoteAsset}",

@@ -3,7 +3,6 @@ using Microsoft.Extensions.Options;
 using Outcompute.Trader.Core;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Algorithms.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -44,23 +43,21 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         {
             _options = _monitor.Get(_context.Name);
 
-            _symbol = await _context.TryGetSymbolAsync(_options.Symbol).ConfigureAwait(false)
-                ?? throw new AlgorithmNotInitializedException();
+            _symbol = await _context.GetRequiredSymbolAsync(_options.Symbol);
 
             _logger.LogInformation("{Type} {Name} running...", TypeName, _context.Name);
 
             // get significant orders
-            _significant = await _context.GetSignificantOrderResolver().ResolveAsync(_symbol, cancellationToken).ConfigureAwait(false);
+            _significant = await _context.GetSignificantOrderResolver().ResolveAsync(_symbol, cancellationToken);
 
             // get current ticker
-            _ticker = await _context.GetTickerProvider().TryGetTickerAsync(_symbol.Name, cancellationToken).ConfigureAwait(false)
-                ?? throw new AlgorithmNotInitializedException($"Could not get ticker for '{_symbol.Name}'");
+            _ticker = await _context.GetRequiredTickerAsync(_symbol.Name, cancellationToken);
 
             // get the lastest klines
             var maxPeriods = GetMaxPeriods();
             var end = _clock.UtcNow;
             var start = end.Subtract(_options.KlineInterval, maxPeriods);
-            var klines = await _context.GetKlineProvider().GetKlinesAsync(_symbol.Name, _options.KlineInterval, start, end, cancellationToken).ConfigureAwait(false);
+            var klines = await _context.GetKlinesAsync(_symbol.Name, _options.KlineInterval, start, end, cancellationToken);
 
             // calculate the current moving averages
             _smaA = klines.LastSimpleMovingAverage(x => x.ClosePrice, _options.SmaPeriodsA);
@@ -74,29 +71,24 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
 
             if (TrySignalBuyOrder())
             {
-                await _context
-                    .SetTrackingBuyAsync(_symbol, _options.BuyOrderSafetyRatio, _options.TargetQuoteBalanceFractionPerBuy, _options.MaxNotional, cancellationToken)
-                    .ConfigureAwait(false);
+                await _context.SetTrackingBuyAsync(_symbol, _options.BuyOrderSafetyRatio, _options.TargetQuoteBalanceFractionPerBuy, _options.MaxNotional, cancellationToken);
             }
             else
             {
-                await _context
-                    .ClearOpenOrdersAsync(_symbol, OrderSide.Buy, cancellationToken)
-                    .ConfigureAwait(false);
+                await _context.ClearOpenOrdersAsync(_symbol, OrderSide.Buy, cancellationToken);
             }
 
             if (TrySignalSellOrder())
             {
-                // then place the averaging sell
-                await _context
-                    .SetSignificantAveragingSellAsync(_symbol, _ticker, _significant.Orders, _options.ProfitMultipler, _options.RedeemSavings, cancellationToken)
-                    .ConfigureAwait(false);
+                await _context.SetSignificantAveragingSellAsync(_symbol, _ticker, _significant.Orders, _options.ProfitMultipler, _options.RedeemSavings, cancellationToken);
+            }
+            else
+            {
+                await _context.ClearOpenOrdersAsync(_symbol, OrderSide.Sell, cancellationToken);
             }
 
             // publish the profit stats
-            await _context
-                .PublishProfitAsync(_significant.Profit)
-                .ConfigureAwait(false);
+            await _context.PublishProfitAsync(_significant.Profit);
         }
 
         private int GetMaxPeriods()

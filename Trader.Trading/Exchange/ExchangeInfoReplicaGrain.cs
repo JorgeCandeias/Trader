@@ -25,11 +25,11 @@ namespace Outcompute.Trader.Trading.Exchange
 
         public override async Task OnActivateAsync()
         {
-            await RefreshAsync().ConfigureAwait(true);
+            await RefreshAsync();
 
-            RegisterTimer(_ => TryRefreshAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+            RegisterTimer(TickTryRefreshAsync, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
 
-            await base.OnActivateAsync().ConfigureAwait(true);
+            await base.OnActivateAsync();
         }
 
         public ValueTask<ExchangeInfo> GetExchangeInfoAsync()
@@ -49,20 +49,14 @@ namespace Outcompute.Trader.Trading.Exchange
 
         private async Task RefreshAsync()
         {
-            (_info, _version) = await _factory
-                .GetExchangeInfoGrain()
-                .GetExchangeInfoAsync()
-                .ConfigureAwait(true);
+            (_info, _version) = await _factory.GetExchangeInfoGrain().GetExchangeInfoAsync();
 
             Index();
         }
 
-        private async Task TryRefreshAsync()
+        private async Task TickTryRefreshAsync(object _)
         {
-            var result = await _factory
-                .GetExchangeInfoGrain()
-                .TryGetNewExchangeInfoAsync(_version)
-                .ConfigureAwait(true);
+            var result = await _factory.GetExchangeInfoGrain().TryGetNewExchangeInfoAsync(_version);
 
             if (result.Info is not null)
             {

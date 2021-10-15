@@ -36,7 +36,7 @@ namespace Outcompute.Trader.Trading
 
         Task<IReadOnlyCollection<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime startTime, DateTime endTime, int limit, CancellationToken cancellationToken = default);
 
-        Task<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionAsync(
+        Task<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionsAsync(
             string asset,
             CancellationToken cancellationToken = default);
 

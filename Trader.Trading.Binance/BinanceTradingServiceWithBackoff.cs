@@ -96,9 +96,9 @@ namespace Outcompute.Trader.Trading.Binance
             return WaitAndRetryForeverAsync(ct => _trader.GetFlexibleProductListAsync(status, featured, current, size, ct), cancellationToken);
         }
 
-        public Task<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionAsync(string asset, CancellationToken cancellationToken = default)
+        public Task<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionsAsync(string asset, CancellationToken cancellationToken = default)
         {
-            return WaitAndRetryForeverAsync(ct => _trader.GetFlexibleProductPositionAsync(asset, ct), cancellationToken);
+            return WaitAndRetryForeverAsync(ct => _trader.GetFlexibleProductPositionsAsync(asset, ct), cancellationToken);
         }
 
         public Task<IReadOnlyCollection<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime startTime, DateTime endTime, int limit, CancellationToken cancellationToken = default)

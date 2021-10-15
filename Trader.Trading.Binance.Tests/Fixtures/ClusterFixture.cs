@@ -64,7 +64,8 @@ namespace Outcompute.Trader.Trading.Binance.Tests.Fixtures
                     .ConfigureServices(services =>
                     {
                         services
-                            .AddSingleton<ITradingRepository, FakeTradingRepository>();
+                            .AddSingleton<ITradingRepository, FakeTradingRepository>()
+                            .AddSingleton<ITradingService, FakeTradingService>();
                     });
             });
         }

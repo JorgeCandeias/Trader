@@ -2,6 +2,7 @@
 
 namespace Outcompute.Trader.Models
 {
+    // todo: re-order these fields
     [Immutable]
     public record FlexibleProductPosition(
         decimal AnnualInterestRate,

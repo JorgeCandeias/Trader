@@ -176,7 +176,7 @@ namespace Outcompute.Trader.Trading.Binance
             });
         }
 
-        public async Task<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionAsync(
+        public async Task<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionsAsync(
             string asset,
             CancellationToken cancellationToken = default)
         {

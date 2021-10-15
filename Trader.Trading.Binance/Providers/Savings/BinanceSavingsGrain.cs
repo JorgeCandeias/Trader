@@ -71,11 +71,11 @@ namespace Outcompute.Trader.Trading.Binance.Providers.Savings
             _quotas.Clear();
         }
 
-        public async Task UpdateAsync()
+        private async Task UpdateAsync()
         {
             var result = await _trader
                 .WithBackoff()
-                .GetFlexibleProductPositionAsync(_asset, _cancellation.Token);
+                .GetFlexibleProductPositionsAsync(_asset, _cancellation.Token);
 
             _positions = result.ToImmutableList();
 

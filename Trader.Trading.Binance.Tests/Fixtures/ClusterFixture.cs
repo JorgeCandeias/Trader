@@ -56,10 +56,15 @@ namespace Outcompute.Trader.Trading.Binance.Tests.Fixtures
                     .ConfigureApplicationParts(manager => manager.AddApplicationPart(typeof(ClusterFixture).Assembly).WithReferences())
                     .AddBinanceTradingService(options =>
                     {
+                        options.ApiKey = "<TEST>";
+                        options.SecretKey = "<TEST>";
+                        options.BaseApiAddress = new Uri("http://localhost/test");
+                        options.BaseWssAddress = new Uri("http://localhost/test");
                     })
                     .ConfigureServices(services =>
                     {
-                        services.AddSingleton<ITradingRepository, FakeTradingRepository>();
+                        services
+                            .AddSingleton<ITradingRepository, FakeTradingRepository>();
                     });
             });
         }

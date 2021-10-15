@@ -8,7 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace Trader.Trading.Binance.Tests
+namespace Outcompute.Trader.Trading.Binance.Tests
 {
     public class BinanceKlineProviderTests
     {

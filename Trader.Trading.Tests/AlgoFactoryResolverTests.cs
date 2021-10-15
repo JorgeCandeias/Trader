@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Orleans.Runtime;
 using Outcompute.Trader.Trading.Algorithms;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,7 +18,6 @@ namespace Outcompute.Trader.Trading.Tests
         {
             // arrange
             var services = new ServiceCollection();
-            services.AddSingleton(typeof(IKeyedServiceCollection<,>), typeof(KeyedServiceCollection<,>));
             services.AddAlgoType<MyAlgo>("MyAlgo");
             var provider = services.BuildServiceProvider();
             var resolver = new AlgoFactoryResolver(provider);

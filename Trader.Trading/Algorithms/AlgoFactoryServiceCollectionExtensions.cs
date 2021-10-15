@@ -1,4 +1,5 @@
-﻿using Orleans.Runtime;
+﻿using Microsoft.Extensions.DependencyInjection.Extensions;
+using Orleans.Runtime;
 using Outcompute.Trader.Trading.Algorithms;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -8,6 +9,8 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddAlgoType<TAlgo>(this IServiceCollection services, string typeName)
             where TAlgo : IAlgo
         {
+            services.TryAddSingleton(typeof(IKeyedServiceCollection<,>), typeof(KeyedServiceCollection<,>));
+
             return services.AddSingletonNamedService<IAlgoFactory, AlgoFactory<TAlgo>>(typeName);
         }
 

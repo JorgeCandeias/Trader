@@ -9,7 +9,7 @@ namespace Outcompute.Trader.Trading.Algorithms
         {
         }
 
-        private class OrderTradeMapComparer : IComparer<OrderTradeMap>
+        private sealed class OrderTradeMapComparer : IComparer<OrderTradeMap>
         {
             private OrderTradeMapComparer()
             {

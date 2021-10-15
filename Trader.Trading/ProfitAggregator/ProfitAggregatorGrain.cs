@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using Orleans;
+﻿using Orleans;
 using Outcompute.Trader.Trading.Algorithms;
 using System;
 using System.Collections.Generic;
@@ -11,13 +10,6 @@ namespace Outcompute.Trader.Trading.ProfitAggregator
     // todo: implement local aggregator pattern
     internal class ProfitAggregatorGrain : Grain, IProfitAggregatorGrain
     {
-        private readonly ILogger _logger;
-
-        public ProfitAggregatorGrain(ILogger<ProfitAggregatorGrain> logger)
-        {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        }
-
         private readonly Dictionary<string, Profit> _profits = new();
 
         public Task PublishAsync(IEnumerable<Profit> profits)

@@ -2,6 +2,7 @@
 using Orleans;
 using Outcompute.Trader.Models;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
@@ -26,6 +27,12 @@ namespace Outcompute.Trader.Trading.Algorithms
                 .GetRequiredService<IGrainFactory>()
                 .GetExchangeInfoReplicaGrain()
                 .TryGetSymbolAsync(name);
+        }
+
+        public static async ValueTask<Symbol> GetRequiredSymbolAsync(this IAlgoContext context, string name)
+        {
+            return await context.TryGetSymbolAsync(name).ConfigureAwait(false)
+                ?? throw new KeyNotFoundException($"Could not get symbol information for '{name}'");
         }
     }
 }

@@ -14,7 +14,7 @@ namespace Outcompute.Trader.Trading.Algorithms
     {
         private static string TypeName => nameof(CreateOrderBlock);
 
-        public static ValueTask CreateOrderAsync(this IAlgoContext context, Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag, CancellationToken cancellationToken = default)
+        public static ValueTask<OrderResult> CreateOrderAsync(this IAlgoContext context, Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag, CancellationToken cancellationToken = default)
         {
             if (context is null) throw new ArgumentNullException(nameof(context));
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
@@ -27,7 +27,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             return CreateOrderInnerAsync(symbol, type, side, timeInForce, quantity, price, tag, logger, trader, repository, clock, cancellationToken);
         }
 
-        private static async ValueTask CreateOrderInnerAsync(Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag, ILogger logger, ITradingService trader, ITradingRepository repository, ISystemClock clock, CancellationToken cancellationToken = default)
+        private static async ValueTask<OrderResult> CreateOrderInnerAsync(Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag, ILogger logger, ITradingService trader, ITradingRepository repository, ISystemClock clock, CancellationToken cancellationToken = default)
         {
             // if we got here then we can place the order
             var watch = Stopwatch.StartNew();
@@ -49,6 +49,8 @@ namespace Outcompute.Trader.Trading.Algorithms
             logger.LogInformation(
                 "{Type} {Name} placed {OrderType} {OrderSide} order for {Quantity:F8} {Asset} at {Price:F8} {Quote} for a total of {Total:F8} {Quote} in {ElapsedMs}ms",
                 TypeName, symbol.Name, type, side, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.QuoteAsset, watch.ElapsedMilliseconds);
+
+            return result;
         }
     }
 }

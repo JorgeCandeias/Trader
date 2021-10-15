@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
+using Outcompute.Trader.Models;
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -11,7 +11,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 {
     public static class CancelOrderBlock
     {
-        public static ValueTask CancelOrderAsync(this IAlgoContext context, string symbol, long orderId, CancellationToken cancellationToken = default)
+        public static ValueTask<CancelStandardOrderResult> CancelOrderAsync(this IAlgoContext context, string symbol, long orderId, CancellationToken cancellationToken = default)
         {
             if (context is null) throw new ArgumentNullException(nameof(context));
             if (symbol is null) throw new ArgumentNullException(nameof(context));
@@ -19,12 +19,11 @@ namespace Outcompute.Trader.Trading.Algorithms
             var logger = context.ServiceProvider.GetRequiredService<ILogger<IAlgoContext>>();
             var trader = context.ServiceProvider.GetRequiredService<ITradingService>();
             var repository = context.ServiceProvider.GetRequiredService<ITradingRepository>();
-            var clock = context.ServiceProvider.GetRequiredService<ISystemClock>();
 
-            return CancelOrderInnerAsync(symbol, orderId, logger, trader, repository, clock, cancellationToken);
+            return CancelOrderInnerAsync(symbol, orderId, logger, trader, repository, cancellationToken);
         }
 
-        private static async ValueTask CancelOrderInnerAsync(string symbol, long orderId, ILogger logger, ITradingService trader, ITradingRepository repository, ISystemClock clock, CancellationToken cancellationToken = default)
+        private static async ValueTask<CancelStandardOrderResult> CancelOrderInnerAsync(string symbol, long orderId, ILogger logger, ITradingService trader, ITradingRepository repository, CancellationToken cancellationToken = default)
         {
             logger.LogStart(symbol, orderId);
 
@@ -39,6 +38,8 @@ namespace Outcompute.Trader.Trading.Algorithms
                 .ConfigureAwait(false);
 
             logger.LogEnd(symbol, orderId, watch.ElapsedMilliseconds);
+
+            return order;
         }
 
         private static readonly Action<ILogger, string, string, long, Exception> _logStart = LoggerMessage.Define<string, string, long>(

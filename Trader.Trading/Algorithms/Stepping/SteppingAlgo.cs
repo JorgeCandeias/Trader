@@ -4,6 +4,7 @@ using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms.Exceptions;
+using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +19,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         private readonly IAlgoContext _context;
 
         private readonly ILogger _logger;
-        private readonly IOptionsMonitor<SteppingAlgoOptions> _options;
+        private readonly IOptionsMonitor<SteppingAlgoOptions> _monitor;
 
         private readonly ITradingService _trader;
         private readonly ITradingRepository _repository;
@@ -28,13 +29,28 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _options = options ?? throw new ArgumentNullException(nameof(options));
+            _monitor = options ?? throw new ArgumentNullException(nameof(options));
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _orderCodeGenerator = orderCodeGenerator ?? throw new ArgumentNullException(nameof(orderCodeGenerator));
         }
 
         private static string TypeName => nameof(SteppingAlgo);
+
+        /// <summary>
+        /// Options active for each execution.
+        /// </summary>
+        private SteppingAlgoOptions _options = new();
+
+        /// <summary>
+        /// Holds full symbol information.
+        /// </summary>
+        private Symbol _symbol = Symbol.Empty;
+
+        /// <summary>
+        /// Holds the ticker for the execution.
+        /// </summary>
+        private MiniTicker _ticker = MiniTicker.Empty;
 
         /// <summary>
         /// Keeps track of the relevant account balances.
@@ -48,82 +64,62 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
         public async ValueTask GoAsync(CancellationToken cancellationToken = default)
         {
-            var options = _options.Get(_context.Name);
+            // pin the options for this execution
+            _options = _monitor.Get(_context.Name);
 
-            var exchange = await _context.GetExchangeInfoAsync().ConfigureAwait(false);
+            // get full symbol info from the exchange
+            _symbol = await _context.GetRequiredSymbolAsync(_options.Symbol);
 
-            var symbol = exchange.Symbols.Single(x => x.Name == options.Symbol);
+            await ApplyAccountInfoAsync(cancellationToken);
 
-            await ApplyAccountInfoAsync(symbol, cancellationToken).ConfigureAwait(false);
+            var significant = await _context.GetSignificantOrderResolver().ResolveAsync(_symbol, cancellationToken);
 
-            var significant = await _context.GetSignificantOrderResolver().ResolveAsync(symbol, cancellationToken).ConfigureAwait(false);
+            await _context.PublishProfitAsync(significant.Profit);
 
-            await _context
-                .PublishProfitAsync(significant.Profit)
-                .ConfigureAwait(false);
+            _ticker = await _context.GetTickerProvider().GetRequiredTickerAsync(_symbol.Name, cancellationToken);
 
-            // always update the latest price
-            var ticker = await TrySyncAssetPriceAsync(options, symbol, cancellationToken).ConfigureAwait(false);
-            if (ticker is null) return;
+            _logger.LogInformation(
+                "{Type} {Name} reports latest asset price is {Price} {QuoteAsset}",
+                TypeName, _context.Name, _ticker.ClosePrice, _symbol.QuoteAsset);
 
-            if (await TryCreateTradingBandsAsync(options, symbol, significant.Orders, ticker, cancellationToken).ConfigureAwait(false)) return;
-            if (await TrySetStartingTradeAsync(options, symbol, ticker, cancellationToken).ConfigureAwait(false)) return;
-            if (await TryCancelRogueSellOrdersAsync(options, symbol, cancellationToken).ConfigureAwait(false)) return;
-            if (await TryCancelExcessSellOrdersAsync(options, symbol, cancellationToken).ConfigureAwait(false)) return;
-            if (await TrySetBandSellOrdersAsync(options, symbol, cancellationToken).ConfigureAwait(false)) return;
-            if (await TryCreateLowerBandOrderAsync(options, symbol, ticker, cancellationToken).ConfigureAwait(false)) return;
-            await TryCloseOutOfRangeBandsAsync(options, symbol, ticker, cancellationToken).ConfigureAwait(false);
+            if (await TryCreateTradingBandsAsync(significant.Orders, cancellationToken)) return;
+            if (await TrySetStartingTradeAsync(cancellationToken)) return;
+            if (await TryCancelRogueSellOrdersAsync(cancellationToken)) return;
+            if (await TryCancelExcessSellOrdersAsync(cancellationToken)) return;
+            if (await TrySetBandSellOrdersAsync(cancellationToken)) return;
+            if (await TryCreateLowerBandOrderAsync(cancellationToken)) return;
+            await TryCloseOutOfRangeBandsAsync(cancellationToken);
         }
 
-        private async Task ApplyAccountInfoAsync(Symbol symbol, CancellationToken cancellationToken)
+        private async Task ApplyAccountInfoAsync(CancellationToken cancellationToken)
         {
-            var assetBalance = await _repository
-                .TryGetBalanceAsync(symbol.BaseAsset, cancellationToken)
-                .ConfigureAwait(false) ??
-                throw new AlgorithmException($"Could not get balance for base asset {symbol.BaseAsset}");
+            var assetBalance = await _context.GetRequiredBalanceAsync(_symbol.BaseAsset, cancellationToken);
 
             _balances.Asset.Free = assetBalance.Free;
             _balances.Asset.Locked = assetBalance.Locked;
 
             _logger.LogInformation(
                 "{Type} {Name} reports balance for base asset {Asset} is (Free = {Free}, Locked = {Locked}, Total = {Total})",
-                TypeName, _context.Name, symbol.BaseAsset, _balances.Asset.Free, _balances.Asset.Locked, _balances.Asset.Total);
+                TypeName, _context.Name, _symbol.BaseAsset, _balances.Asset.Free, _balances.Asset.Locked, _balances.Asset.Total);
 
-            var quoteBalance = await _repository
-                .TryGetBalanceAsync(symbol.QuoteAsset, cancellationToken)
-                .ConfigureAwait(false) ??
-                throw new AlgorithmException($"Could not get balance for quote asset {symbol.QuoteAsset}");
+            var quoteBalance = await _context.GetRequiredBalanceAsync(_symbol.QuoteAsset, cancellationToken);
 
             _balances.Quote.Free = quoteBalance.Free;
             _balances.Quote.Locked = quoteBalance.Locked;
 
             _logger.LogInformation(
                 "{Type} {Name} reports balance for quote asset {Asset} is (Free = {Free}, Locked = {Locked}, Total = {Total})",
-                TypeName, _context.Name, symbol.QuoteAsset, _balances.Quote.Free, _balances.Quote.Locked, _balances.Quote.Total);
+                TypeName, _context.Name, _symbol.QuoteAsset, _balances.Quote.Free, _balances.Quote.Locked, _balances.Quote.Total);
         }
 
-        private async Task<MiniTicker?> TrySyncAssetPriceAsync(SteppingAlgoOptions options, Symbol symbol, CancellationToken cancellationToken = default)
-        {
-            var ticker = await _context.GetTickerProvider().TryGetTickerAsync(options.Symbol, cancellationToken).ConfigureAwait(false);
-
-            if (ticker is not null)
-            {
-                _logger.LogInformation(
-                "{Type} {Name} reports latest asset price is {Price} {QuoteAsset}",
-                TypeName, _context.Name, ticker.ClosePrice, symbol.QuoteAsset);
-            }
-
-            return ticker;
-        }
-
-        private async Task<bool> TryCloseOutOfRangeBandsAsync(SteppingAlgoOptions options, Symbol symbol, MiniTicker ticker, CancellationToken cancellationToken = default)
+        private async Task<bool> TryCloseOutOfRangeBandsAsync(CancellationToken cancellationToken = default)
         {
             // take the upper band
             var upper = _bands.Max;
             if (upper is null) return false;
 
             // calculate the step size
-            var step = upper.OpenPrice * options.PullbackRatio;
+            var step = upper.OpenPrice * _options.PullbackRatio;
 
             // take the lower band
             var band = _bands.Min;
@@ -133,29 +129,22 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             if (band.Status != BandStatus.Ordered) return false;
 
             // ensure the lower band is opening within reasonable range of the current price
-            if (band.OpenPrice >= ticker.ClosePrice - step) return false;
+            if (band.OpenPrice >= _ticker.ClosePrice - step) return false;
 
             // if the above checks fails then close the band
             if (band.OpenOrderId is not 0)
             {
-                var result = await _trader
-                    .CancelOrderAsync(options.Symbol, band.OpenOrderId, cancellationToken)
-                    .ConfigureAwait(false);
-
-                // save this order to the repository now to tolerate slow binance api updates
-                await _repository
-                    .SetOrderAsync(result, cancellationToken)
-                    .ConfigureAwait(false);
+                var result = await _context.CancelOrderAsync(_symbol.Name, band.OpenOrderId, cancellationToken);
 
                 _logger.LogInformation(
                     "{Type} {Name} closed out-of-range {OrderSide} {OrderType} for {Quantity} {Asset} at {Price} {Quote}",
-                    TypeName, _context.Name, result.Side, result.Type, result.OriginalQuantity, symbol.BaseAsset, result.Price, symbol.QuoteAsset);
+                    TypeName, _context.Name, result.Side, result.Type, result.OriginalQuantity, _symbol.BaseAsset, result.Price, _symbol.QuoteAsset);
             }
 
             return true;
         }
 
-        private async Task<bool> TryCreateLowerBandOrderAsync(SteppingAlgoOptions options, Symbol symbol, MiniTicker ticker, CancellationToken cancellationToken = default)
+        private async Task<bool> TryCreateLowerBandOrderAsync(CancellationToken cancellationToken = default)
         {
             // identify the highest and lowest bands
             var highBand = _bands.Max;
@@ -172,29 +161,29 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             }
 
             // skip if the current price is at or above the band open price
-            if (ticker.ClosePrice >= lowBand.OpenPrice)
+            if (_ticker.ClosePrice >= lowBand.OpenPrice)
             {
                 _logger.LogInformation(
                     "{Type} {Name} reports price {Price} {Quote} is within the current low band of {OpenPrice} {Quote} to {ClosePrice} {Quote}",
-                    TypeName, _context.Name, ticker.ClosePrice, symbol.QuoteAsset, lowBand.OpenPrice, symbol.QuoteAsset, lowBand.ClosePrice, symbol.QuoteAsset);
+                    TypeName, _context.Name, _ticker.ClosePrice, _symbol.QuoteAsset, lowBand.OpenPrice, _symbol.QuoteAsset, lowBand.ClosePrice, _symbol.QuoteAsset);
 
                 // let the algo continue
                 return false;
             }
 
             // skip if we are already at the maximum number of bands
-            if (_bands.Count >= options.MaxBands)
+            if (_bands.Count >= _options.MaxBands)
             {
                 _logger.LogWarning(
                     "{Type} {Name} has reached the maximum number of {Count} bands",
-                    TypeName, _context.Name, options.MaxBands);
+                    TypeName, _context.Name, _options.MaxBands);
 
                 // let the algo continue
                 return false;
             }
 
             // skip if lower band creation is disabled
-            if (!options.IsLowerBandOpeningEnabled)
+            if (!_options.IsLowerBandOpeningEnabled)
             {
                 _logger.LogWarning(
                     "{Type} {Name} cannot create lower band because the feature is disabled",
@@ -206,7 +195,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             // find the lower price under the current price and low band
             var lowerPrice = highBand.OpenPrice;
             var stepPrice = highBand.ClosePrice - highBand.OpenPrice;
-            while (lowerPrice >= ticker.ClosePrice || lowerPrice >= lowBand.OpenPrice)
+            while (lowerPrice >= _ticker.ClosePrice || lowerPrice >= lowBand.OpenPrice)
             {
                 lowerPrice -= stepPrice;
             }
@@ -218,19 +207,19 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             }
 
             // under adjust the buy price to the tick size
-            lowerPrice = Math.Floor(lowerPrice / symbol.Filters.Price.TickSize) * symbol.Filters.Price.TickSize;
+            lowerPrice = Math.Floor(lowerPrice / _symbol.Filters.Price.TickSize) * _symbol.Filters.Price.TickSize;
 
             // calculate the quote amount to pay with
-            var total = _balances.Quote.Free * options.TargetQuoteBalanceFractionPerBand;
+            var total = _balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand;
 
             // lower below the max notional if needed
-            if (options.MaxNotional.HasValue)
+            if (_options.MaxNotional.HasValue)
             {
-                total = Math.Min(total, options.MaxNotional.Value);
+                total = Math.Min(total, _options.MaxNotional.Value);
             }
 
             // raise to the minimum notional if needed
-            total = Math.Max(total, symbol.Filters.MinNotional.MinNotional);
+            total = Math.Max(total, _symbol.Filters.MinNotional.MinNotional);
 
             // ensure there is enough quote asset for it
             if (total > _balances.Quote.Free)
@@ -239,17 +228,15 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
                 _logger.LogWarning(
                     "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}. Will attempt to redeem from savings...",
-                    TypeName, _context.Name, total, symbol.QuoteAsset, _balances.Quote.Free, symbol.QuoteAsset);
+                    TypeName, _context.Name, total, _symbol.QuoteAsset, _balances.Quote.Free, _symbol.QuoteAsset);
 
-                var (success, _) = await _context
-                    .TryRedeemSavingsAsync(symbol.QuoteAsset, necessary, cancellationToken)
-                    .ConfigureAwait(false);
+                var (success, _) = await _context.TryRedeemSavingsAsync(_symbol.QuoteAsset, necessary, cancellationToken);
 
                 if (success)
                 {
                     _logger.LogInformation(
                         "{Type} {Name} redeemed {Amount} {Asset} successfully",
-                        TypeName, _context.Name, necessary, symbol.QuoteAsset);
+                        TypeName, _context.Name, necessary, _symbol.QuoteAsset);
 
                     // let the algo cycle to allow redemption to process
                     return true;
@@ -258,7 +245,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 {
                     _logger.LogError(
                         "{Type} {Name} failed to redeem the necessary amount of {Quantity} {Asset}",
-                        TypeName, _context.Name, necessary, symbol.QuoteAsset);
+                        TypeName, _context.Name, necessary, _symbol.QuoteAsset);
 
                     return false;
                 }
@@ -268,22 +255,18 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             var quantity = total / lowerPrice;
 
             // round it down to the lot size step
-            quantity = Math.Ceiling(quantity / symbol.Filters.LotSize.StepSize) * symbol.Filters.LotSize.StepSize;
+            quantity = Math.Ceiling(quantity / _symbol.Filters.LotSize.StepSize) * _symbol.Filters.LotSize.StepSize;
 
             // place the buy order
-            var tag = $"{options.Symbol}{lowerPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal);
-            var result = await _trader
-                .CreateOrderAsync(options.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, lowerPrice, tag, null, null, cancellationToken)
-                .ConfigureAwait(false);
+            var tag = $"{_symbol.Name}{lowerPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal);
+            var result = await _context.CreateOrderAsync(_symbol, OrderType.Limit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, lowerPrice, tag, cancellationToken);
 
             // save this order to the repository now to tolerate slow binance api updates
-            await _repository
-                .SetOrderAsync(result, 0m, 0m, 0m, cancellationToken)
-                .ConfigureAwait(false);
+            await _repository.SetOrderAsync(result, 0m, 0m, 0m, cancellationToken);
 
             _logger.LogInformation(
                 "{Type} {Name} placed {OrderType} {OrderSide} for {Quantity} {Asset} at {Price} {Quote}",
-                TypeName, _context.Name, result.Type, result.Side, result.OriginalQuantity, symbol.BaseAsset, result.Price, symbol.QuoteAsset);
+                TypeName, _context.Name, result.Type, result.Side, result.OriginalQuantity, _symbol.BaseAsset, result.Price, _symbol.QuoteAsset);
 
             return false;
         }
@@ -291,20 +274,18 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         /// <summary>
         /// Sets sell orders for open bands that do not have them yet.
         /// </summary>
-        private async Task<bool> TrySetBandSellOrdersAsync(SteppingAlgoOptions options, Symbol symbol, CancellationToken cancellationToken = default)
+        private async Task<bool> TrySetBandSellOrdersAsync(CancellationToken cancellationToken = default)
         {
             // skip if we have reach the max sell orders
-            var orders = await _repository
-                .GetTransientOrdersBySideAsync(options.Symbol, OrderSide.Sell, cancellationToken)
-                .ConfigureAwait(false);
+            var orders = await _repository.GetTransientOrdersBySideAsync(_symbol.Name, OrderSide.Sell, cancellationToken);
 
-            if (orders.Count >= options.MaxActiveSellOrders)
+            if (orders.Count >= _options.MaxActiveSellOrders)
             {
                 return false;
             }
 
             // create a sell order for the lowest band only
-            foreach (var band in _bands.Where(x => x.Status == BandStatus.Open).Take(options.MaxActiveSellOrders))
+            foreach (var band in _bands.Where(x => x.Status == BandStatus.Open).Take(_options.MaxActiveSellOrders))
             {
                 if (band.CloseOrderId is 0)
                 {
@@ -315,17 +296,15 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
                         _logger.LogWarning(
                             "{Type} {Name} must place {OrderType} {OrderSide} of {Quantity} {Asset} for {Price} {Quote} but there is only {Free} {Asset} available. Will attempt to redeem {Necessary} {Asset} rest from savings.",
-                            TypeName, _context.Name, OrderType.Limit, OrderSide.Sell, band.Quantity, symbol.BaseAsset, band.ClosePrice, symbol.QuoteAsset, _balances.Asset.Free, symbol.BaseAsset, necessary, symbol.BaseAsset);
+                            TypeName, _context.Name, OrderType.Limit, OrderSide.Sell, band.Quantity, _symbol.BaseAsset, band.ClosePrice, _symbol.QuoteAsset, _balances.Asset.Free, _symbol.BaseAsset, necessary, _symbol.BaseAsset);
 
-                        var (success, _) = await _context
-                            .TryRedeemSavingsAsync(symbol.BaseAsset, necessary, cancellationToken)
-                            .ConfigureAwait(false);
+                        var (success, _) = await _context.TryRedeemSavingsAsync(_symbol.BaseAsset, necessary, cancellationToken);
 
                         if (success)
                         {
                             _logger.LogInformation(
                                 "{Type} {Name} redeemed {Amount} {Asset} successfully",
-                                TypeName, _context.Name, necessary, symbol.BaseAsset);
+                                TypeName, _context.Name, necessary, _symbol.BaseAsset);
 
                             // let the algo cycle to allow redemption to process
                             return true;
@@ -334,27 +313,23 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                         {
                             _logger.LogError(
                                "{Type} {Name} cannot set band sell order of {Quantity} {Asset} for {Price} {Quote} because there are only {Balance} {Asset} free and savings redemption failed",
-                                TypeName, _context.Name, band.Quantity, symbol.BaseAsset, band.ClosePrice, symbol.QuoteAsset, _balances.Asset.Free, symbol.BaseAsset);
+                                TypeName, _context.Name, band.Quantity, _symbol.BaseAsset, band.ClosePrice, _symbol.QuoteAsset, _balances.Asset.Free, _symbol.BaseAsset);
 
                             return false;
                         }
                     }
 
                     var tag = _orderCodeGenerator.GetSellClientOrderId(band.OpenOrderId);
-                    var result = await _trader
-                        .CreateOrderAsync(options.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, band.Quantity, null, band.ClosePrice, tag, null, null, cancellationToken)
-                        .ConfigureAwait(false);
+                    var result = await _trader.CreateOrderAsync(_symbol.Name, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, band.Quantity, null, band.ClosePrice, tag, null, null, cancellationToken);
 
                     // save this order to the repository now to tolerate slow binance api updates
-                    await _repository
-                        .SetOrderAsync(result, 0m, 0m, 0m, cancellationToken)
-                        .ConfigureAwait(false);
+                    await _repository.SetOrderAsync(result, 0m, 0m, 0m, cancellationToken);
 
                     band.CloseOrderId = result.OrderId;
 
                     _logger.LogInformation(
                         "{Type} {Name} placed {OrderType} {OrderSide} order for band of {Quantity} {Asset} with {OpenPrice} {Quote} at {ClosePrice} {Quote}",
-                        TypeName, _context.Name, result.Type, result.Side, result.OriginalQuantity, symbol.BaseAsset, band.OpenPrice, symbol.QuoteAsset, result.Price, symbol.QuoteAsset);
+                        TypeName, _context.Name, result.Type, result.Side, result.OriginalQuantity, _symbol.BaseAsset, band.OpenPrice, _symbol.QuoteAsset, result.Price, _symbol.QuoteAsset);
 
                     return true;
                 }
@@ -366,12 +341,10 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         /// <summary>
         /// Identify and cancel rogue sell orders that do not belong to a trading band.
         /// </summary>
-        private async Task<bool> TryCancelRogueSellOrdersAsync(SteppingAlgoOptions options, Symbol symbol, CancellationToken cancellationToken = default)
+        private async Task<bool> TryCancelRogueSellOrdersAsync(CancellationToken cancellationToken = default)
         {
             // get all transient sell orders
-            var orders = await _repository
-                .GetTransientOrdersBySideAsync(options.Symbol, OrderSide.Sell, cancellationToken)
-                .ConfigureAwait(false);
+            var orders = await _repository.GetTransientOrdersBySideAsync(_symbol.Name, OrderSide.Sell, cancellationToken);
 
             var fail = false;
 
@@ -380,18 +353,14 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 if (!_bands.Any(x => x.CloseOrderId == orderId))
                 {
                     // close the rogue sell order
-                    var result = await _trader
-                        .CancelOrderAsync(options.Symbol, orderId, cancellationToken)
-                        .ConfigureAwait(false);
+                    var result = await _trader.CancelOrderAsync(_symbol.Name, orderId, cancellationToken);
 
                     // save this order to the repository now to tolerate slow binance api updates
-                    await _repository
-                        .SetOrderAsync(result, cancellationToken)
-                        .ConfigureAwait(false);
+                    await _repository.SetOrderAsync(result, cancellationToken);
 
                     _logger.LogWarning(
                         "{Type} {Name} cancelled sell order not associated with a band for {Quantity} {Asset} at {Price} {Quote}",
-                        TypeName, _context.Name, result.OriginalQuantity, symbol.BaseAsset, result.Price, symbol.QuoteAsset);
+                        TypeName, _context.Name, result.OriginalQuantity, _symbol.BaseAsset, result.Price, _symbol.QuoteAsset);
 
                     fail = true;
                 }
@@ -403,20 +372,18 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         /// <summary>
         /// Identify and cancel excess sell orders above the limit.
         /// </summary>
-        private async Task<bool> TryCancelExcessSellOrdersAsync(SteppingAlgoOptions options, Symbol symbol, CancellationToken cancellationToken = default)
+        private async Task<bool> TryCancelExcessSellOrdersAsync(CancellationToken cancellationToken = default)
         {
             // get the order ids for the lowest open bands
             var bands = _bands
                 .Where(x => x.Status == BandStatus.Open)
-                .Take(options.MaxActiveSellOrders)
+                .Take(_options.MaxActiveSellOrders)
                 .Select(x => x.CloseOrderId)
                 .Where(x => x is not 0)
                 .ToHashSet();
 
             // get all transient sell orders
-            var orders = await _repository
-                .GetTransientOrdersBySideAsync(options.Symbol, OrderSide.Sell, cancellationToken)
-                .ConfigureAwait(false);
+            var orders = await _repository.GetTransientOrdersBySideAsync(_symbol.Name, OrderSide.Sell, cancellationToken);
 
             // cancel all excess sell orders now
             var changed = false;
@@ -425,18 +392,14 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 if (!bands.Contains(orderId))
                 {
                     // close the rogue sell order
-                    var result = await _trader
-                        .CancelOrderAsync(options.Symbol, orderId, cancellationToken)
-                        .ConfigureAwait(false);
+                    var result = await _trader.CancelOrderAsync(_symbol.Name, orderId, cancellationToken);
 
                     // save this order to the repository now to tolerate slow binance api updates
-                    await _repository
-                        .SetOrderAsync(result, cancellationToken)
-                        .ConfigureAwait(false);
+                    await _repository.SetOrderAsync(result, cancellationToken);
 
                     _logger.LogWarning(
                         "{Type} {Name} cancelled excess sell order for {Quantity} {Asset} at {Price} {Quote}",
-                        TypeName, _context.Name, result.OriginalQuantity, symbol.BaseAsset, result.Price, symbol.QuoteAsset);
+                        TypeName, _context.Name, result.OriginalQuantity, _symbol.BaseAsset, result.Price, _symbol.QuoteAsset);
 
                     changed = true;
                 }
@@ -445,39 +408,33 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             return changed;
         }
 
-        private async Task<bool> TrySetStartingTradeAsync(SteppingAlgoOptions options, Symbol symbol, MiniTicker ticker, CancellationToken cancellationToken = default)
+        private async Task<bool> TrySetStartingTradeAsync(CancellationToken cancellationToken = default)
         {
             // only manage the opening if there are no bands or only a single order band to move around
             if (_bands.Count == 0 || _bands.Count == 1 && _bands.Single().Status == BandStatus.Ordered)
             {
                 // identify the target low price for the first buy
-                var lowBuyPrice = ticker.ClosePrice;
+                var lowBuyPrice = _ticker.ClosePrice;
 
                 // under adjust the buy price to the tick size
-                lowBuyPrice = Math.Floor(lowBuyPrice / symbol.Filters.Price.TickSize) * symbol.Filters.Price.TickSize;
+                lowBuyPrice = Math.Floor(lowBuyPrice / _symbol.Filters.Price.TickSize) * _symbol.Filters.Price.TickSize;
 
                 _logger.LogInformation(
                     "{Type} {Name} identified first buy target price at {LowPrice} {LowQuote} with current price at {CurrentPrice} {CurrentQuote}",
-                    TypeName, _context.Name, lowBuyPrice, symbol.QuoteAsset, ticker.ClosePrice, symbol.QuoteAsset);
+                    TypeName, _context.Name, lowBuyPrice, _symbol.QuoteAsset, _ticker.ClosePrice, _symbol.QuoteAsset);
 
                 // cancel the lowest open buy order with a open price lower than the lower band to the current price
-                var orders = await _repository
-                    .GetTransientOrdersBySideAsync(options.Symbol, OrderSide.Buy, cancellationToken)
-                    .ConfigureAwait(false);
+                var orders = await _repository.GetTransientOrdersBySideAsync(_symbol.Name, OrderSide.Buy, cancellationToken);
 
                 var lowest = orders.FirstOrDefault(x => x.Side == OrderSide.Buy && x.Status.IsTransientStatus());
                 if (lowest is not null)
                 {
                     if (lowest.Price < lowBuyPrice)
                     {
-                        var cancelled = await _trader
-                            .CancelOrderAsync(options.Symbol, lowest.OrderId, cancellationToken)
-                            .ConfigureAwait(false);
+                        var cancelled = await _trader.CancelOrderAsync(_symbol.Name, lowest.OrderId, cancellationToken);
 
                         // save this order to the repository now to tolerate slow binance api updates
-                        await _repository
-                            .SetOrderAsync(cancelled, cancellationToken)
-                            .ConfigureAwait(false);
+                        await _repository.SetOrderAsync(cancelled, cancellationToken);
 
                         _logger.LogInformation(
                             "{Type} {Name} cancelled low starting open order with price {Price} for {Quantity} units",
@@ -487,14 +444,14 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                     {
                         _logger.LogInformation(
                             "{Type} {Name} identified a closer opening order for {Quantity} {Asset} at {Price} {Quote} and will leave as-is",
-                            TypeName, _context.Name, lowest.OriginalQuantity, symbol.BaseAsset, lowest.Price, symbol.QuoteAsset);
+                            TypeName, _context.Name, lowest.OriginalQuantity, _symbol.BaseAsset, lowest.Price, _symbol.QuoteAsset);
                     }
 
                     // let the algo resync
                     return true;
                 }
 
-                if (!options.IsOpeningEnabled)
+                if (!_options.IsOpeningEnabled)
                 {
                     _logger.LogWarning(
                         "{Type} {Name} cannot create the opening band because it is disabled",
@@ -504,16 +461,16 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 }
 
                 // calculate the amount to pay with
-                var total = Math.Round(_balances.Quote.Free * options.TargetQuoteBalanceFractionPerBand, symbol.QuoteAssetPrecision);
+                var total = Math.Round(_balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand, _symbol.QuoteAssetPrecision);
 
                 // lower below the max notional if needed
-                if (options.MaxNotional.HasValue)
+                if (_options.MaxNotional.HasValue)
                 {
-                    total = Math.Min(total, options.MaxNotional.Value);
+                    total = Math.Min(total, _options.MaxNotional.Value);
                 }
 
                 // raise to the minimum notional if needed
-                total = Math.Max(total, symbol.Filters.MinNotional.MinNotional);
+                total = Math.Max(total, _symbol.Filters.MinNotional.MinNotional);
 
                 // ensure there is enough quote asset for it
                 if (total > _balances.Quote.Free)
@@ -522,17 +479,15 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
                     _logger.LogWarning(
                         "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}. Will attempt to redeem from savings...",
-                        TypeName, _context.Name, total, symbol.QuoteAsset, _balances.Quote.Free, symbol.QuoteAsset);
+                        TypeName, _context.Name, total, _symbol.QuoteAsset, _balances.Quote.Free, _symbol.QuoteAsset);
 
-                    var (success, _) = await _context
-                        .TryRedeemSavingsAsync(symbol.QuoteAsset, necessary, cancellationToken)
-                        .ConfigureAwait(false);
+                    var (success, _) = await _context.TryRedeemSavingsAsync(_symbol.QuoteAsset, necessary, cancellationToken);
 
                     if (success)
                     {
                         _logger.LogInformation(
                             "{Type} {Name} redeemed {Amount} {Asset} successfully",
-                            TypeName, _context.Name, necessary, symbol.QuoteAsset);
+                            TypeName, _context.Name, necessary, _symbol.QuoteAsset);
 
                         // let the algo cycle to allow redemption to process
                         return true;
@@ -541,7 +496,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                     {
                         _logger.LogError(
                             "{Type} {Name} failed to redeem the necessary amount of {Quantity} {Asset}",
-                            TypeName, _context.Name, necessary, symbol.QuoteAsset);
+                            TypeName, _context.Name, necessary, _symbol.QuoteAsset);
 
                         return false;
                     }
@@ -551,22 +506,18 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 var quantity = total / lowBuyPrice;
 
                 // round it up to the lot size step
-                quantity = Math.Ceiling(quantity / symbol.Filters.LotSize.StepSize) * symbol.Filters.LotSize.StepSize;
+                quantity = Math.Ceiling(quantity / _symbol.Filters.LotSize.StepSize) * _symbol.Filters.LotSize.StepSize;
 
                 // place a limit order at the current price
-                var tag = $"{options.Symbol}{lowBuyPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal);
-                var result = await _trader
-                    .CreateOrderAsync(options.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, lowBuyPrice, tag, null, null, cancellationToken)
-                    .ConfigureAwait(false);
+                var tag = $"{_symbol.Name}{lowBuyPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal);
+                var result = await _trader.CreateOrderAsync(_symbol.Name, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, lowBuyPrice, tag, null, null, cancellationToken);
 
                 // save this order to the repository now to tolerate slow binance api updates
-                await _repository
-                    .SetOrderAsync(result, 0m, 0m, 0m, cancellationToken)
-                    .ConfigureAwait(false);
+                await _repository.SetOrderAsync(result, 0m, 0m, 0m, cancellationToken);
 
                 _logger.LogInformation(
                     "{Type} {Name} created {OrderSide} {OrderType} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",
-                    TypeName, _context.Name, result.Side, result.Type, result.Symbol, result.OriginalQuantity, symbol.BaseAsset, result.Price, symbol.QuoteAsset, result.OriginalQuantity * result.Price, symbol.QuoteAsset);
+                    TypeName, _context.Name, result.Side, result.Type, result.Symbol, result.OriginalQuantity, _symbol.BaseAsset, result.Price, _symbol.QuoteAsset, result.OriginalQuantity * result.Price, _symbol.QuoteAsset);
 
                 // skip the rest of this tick to let the algo resync
                 return true;
@@ -577,7 +528,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             }
         }
 
-        private async Task<bool> TryCreateTradingBandsAsync(SteppingAlgoOptions options, Symbol symbol, ImmutableSortedOrderSet significant, MiniTicker ticker, CancellationToken cancellationToken = default)
+        private async Task<bool> TryCreateTradingBandsAsync(ImmutableSortedOrderSet significant, CancellationToken cancellationToken = default)
         {
             _bands.Clear();
 
@@ -588,7 +539,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 {
                     _logger.LogError(
                         "{Type} {Name} identified a significant {OrderSide} {OrderType} order {OrderId} for {Quantity} {Asset} on {Time} with zero price and will let the algo refresh to pick up missing trades",
-                        TypeName, _context.Name, order.Side, order.Type, order.OrderId, order.ExecutedQuantity, symbol.BaseAsset, order.Time);
+                        TypeName, _context.Name, order.Side, order.Type, order.OrderId, order.ExecutedQuantity, _symbol.BaseAsset, order.Time);
 
                     return true;
                 }
@@ -620,9 +571,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             }
 
             // apply the non-significant open buy orders to the bands
-            var orders = await _repository
-                .GetNonSignificantTransientOrdersBySideAsync(options.Symbol, OrderSide.Buy, cancellationToken)
-                .ConfigureAwait(false);
+            var orders = await _repository.GetNonSignificantTransientOrdersBySideAsync(_symbol.Name, OrderSide.Buy, cancellationToken);
 
             foreach (var order in orders)
             {
@@ -630,7 +579,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 {
                     _logger.LogError(
                         "{Type} {Name} identified a significant {OrderSide} {OrderType} order {OrderId} for {Quantity} {Asset} on {Time} with zero price and will let the algo refresh to pick up missing trades",
-                        TypeName, _context.Name, order.Side, order.Type, order.OrderId, order.ExecutedQuantity, symbol.BaseAsset, order.Time);
+                        TypeName, _context.Name, order.Side, order.Type, order.OrderId, order.ExecutedQuantity, _symbol.BaseAsset, order.Time);
 
                     return true;
                 }
@@ -650,7 +599,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             if (_bands.Count == 0) return false;
 
             // figure out the constant step size
-            var stepSize = _bands.Max!.OpenPrice * options.PullbackRatio;
+            var stepSize = _bands.Max!.OpenPrice * _options.PullbackRatio;
 
             // adjust close prices on the bands
             foreach (var band in _bands)
@@ -659,34 +608,32 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
                 // ensure the close price is below the max percent filter
                 // this can happen due to an asset crashing down several multiples
-                var maxPrice = ticker.ClosePrice * symbol.Filters.PercentPrice.MultiplierUp;
+                var maxPrice = _ticker.ClosePrice * _symbol.Filters.PercentPrice.MultiplierUp;
                 if (band.ClosePrice > maxPrice)
                 {
                     _logger.LogError(
                         "{Type} {Name} detected band sell price for {Quantity} {Asset} of {Price} {Quote} is above the percent price filter of {MaxPrice} {Quote}",
-                        TypeName, _context.Name, band.Quantity, symbol.BaseAsset, band.ClosePrice, symbol.QuoteAsset, maxPrice, symbol.QuoteAsset);
-
-                    // todo: this will raise an error later on so we need to handle this better
+                        TypeName, _context.Name, band.Quantity, _symbol.BaseAsset, band.ClosePrice, _symbol.QuoteAsset, maxPrice, _symbol.QuoteAsset);
                 }
 
                 // ensure the close price is above the min percent filter
                 // this can happen to old leftovers that were bought very cheap
-                var minPrice = ticker.ClosePrice * symbol.Filters.PercentPrice.MultiplierDown;
+                var minPrice = _ticker.ClosePrice * _symbol.Filters.PercentPrice.MultiplierDown;
                 if (band.ClosePrice < minPrice)
                 {
                     _logger.LogWarning(
                         "{Type} {Name} adjusted sell of {Quantity} {Asset} for {ClosePrice} {Quote} to {MinPrice} {Quote} because it is below the percent price filter of {MinPrice} {Quote}",
-                        TypeName, _context.Name, band.Quantity, symbol.BaseAsset, band.ClosePrice, symbol.QuoteAsset, minPrice, symbol.QuoteAsset, minPrice, symbol.QuoteAsset);
+                        TypeName, _context.Name, band.Quantity, _symbol.BaseAsset, band.ClosePrice, _symbol.QuoteAsset, minPrice, _symbol.QuoteAsset, minPrice, _symbol.QuoteAsset);
 
                     band.ClosePrice = minPrice;
                 }
 
                 // adjust the sell price up to the tick size
-                band.ClosePrice = Math.Ceiling(band.ClosePrice / symbol.Filters.Price.TickSize) * symbol.Filters.Price.TickSize;
+                band.ClosePrice = Math.Ceiling(band.ClosePrice / _symbol.Filters.Price.TickSize) * _symbol.Filters.Price.TickSize;
             }
 
             // identify bands where the target sell is somehow below the notional filter
-            var leftovers = _bands.Where(x => x.Status == BandStatus.Open && x.Quantity * x.ClosePrice < symbol.Filters.MinNotional.MinNotional).ToHashSet();
+            var leftovers = _bands.Where(x => x.Status == BandStatus.Open && x.Quantity * x.ClosePrice < _symbol.Filters.MinNotional.MinNotional).ToHashSet();
             if (leftovers.Count > 0)
             {
                 // remove all leftovers
@@ -698,7 +645,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 var quantity = leftovers.Sum(x => x.Quantity);
                 var openPrice = leftovers.Sum(x => x.OpenPrice * x.Quantity) / leftovers.Sum(x => x.Quantity);
                 var buyNotional = quantity * openPrice;
-                var nowNotional = quantity * ticker.ClosePrice;
+                var nowNotional = quantity * _ticker.ClosePrice;
 
                 _logger.LogWarning(
                     "{Type} {Name} ignoring {Count} under notional bands of {Quantity:N8} {Asset} bought at {BuyNotional:N8} {Quote} now worth {NowNotional:N8} {Quote} ({Percent:P2})",
@@ -706,20 +653,18 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                     _context.Name,
                     leftovers.Count,
                     leftovers.Sum(x => x.Quantity),
-                    symbol.BaseAsset,
+                    _symbol.BaseAsset,
                     buyNotional,
-                    symbol.QuoteAsset,
+                    _symbol.QuoteAsset,
                     nowNotional,
-                    symbol.QuoteAsset,
+                    _symbol.QuoteAsset,
                     buyNotional > 0 ? nowNotional / buyNotional : 0);
             }
 
             // apply open sell orders to the bands
             var used = new HashSet<Band>();
 
-            orders = await _repository
-                .GetTransientOrdersBySideAsync(options.Symbol, OrderSide.Sell, cancellationToken)
-                .ConfigureAwait(false);
+            orders = await _repository.GetTransientOrdersBySideAsync(_symbol.Name, OrderSide.Sell, cancellationToken);
 
             foreach (var order in orders)
             {
@@ -747,7 +692,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             Open
         }
 
-        private class Band : IComparable<Band>
+        private sealed class Band : IComparable<Band>
         {
             public Guid Id { get; } = Guid.NewGuid();
 
@@ -827,14 +772,14 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             }
         }
 
-        private class Balance
+        private sealed class Balance
         {
             public decimal Free { get; set; }
             public decimal Locked { get; set; }
             public decimal Total => Free + Locked;
         }
 
-        private class Balances
+        private sealed class Balances
         {
             public Balance Asset { get; } = new();
             public Balance Quote { get; } = new();

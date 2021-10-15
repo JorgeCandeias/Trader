@@ -1,13 +1,13 @@
-﻿using Outcompute.Trader.Trading.Algorithms.Step;
+﻿using Outcompute.Trader.Trading.Algorithms.Stepping;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
-    public static class StepAlgoServiceCollectionExtensions
+    public static class SteppingAlgoServiceCollectionExtensions
     {
         public static IServiceCollection AddStepAlgo(this IServiceCollection trader)
         {
             return trader
-                .AddAlgoType<StepAlgo, StepAlgoOptions>("Step");
+                .AddAlgoType<SteppingAlgo, SteppingAlgoOptions>("Stepping");
         }
     }
 }

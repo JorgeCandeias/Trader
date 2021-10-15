@@ -2,9 +2,9 @@
 using System.ComponentModel.DataAnnotations;
 using static System.String;
 
-namespace Outcompute.Trader.Trading.Algorithms.Step
+namespace Outcompute.Trader.Trading.Algorithms.Stepping
 {
-    public class StepAlgoOptions
+    public class SteppingAlgoOptions
     {
         [Required]
         public string Symbol { get; set; } = Empty;

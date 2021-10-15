@@ -12,14 +12,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using static System.String;
 
-namespace Outcompute.Trader.Trading.Algorithms.Step
+namespace Outcompute.Trader.Trading.Algorithms.Stepping
 {
-    internal class StepAlgo : IAlgo
+    internal class SteppingAlgo : IAlgo
     {
         private readonly IAlgoContext _context;
 
         private readonly ILogger _logger;
-        private readonly IOptionsMonitor<StepAlgoOptions> _options;
+        private readonly IOptionsMonitor<SteppingAlgoOptions> _options;
 
         private readonly ISystemClock _clock;
         private readonly ITradingService _trader;
@@ -27,7 +27,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
         private readonly ITradingRepository _repository;
         private readonly IOrderCodeGenerator _orderCodeGenerator;
 
-        public StepAlgo(IAlgoContext context, ILogger<StepAlgo> logger, IOptionsMonitor<StepAlgoOptions> options, ISystemClock clock, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ITradingRepository repository, IOrderCodeGenerator orderCodeGenerator)
+        public SteppingAlgo(IAlgoContext context, ILogger<SteppingAlgo> logger, IOptionsMonitor<SteppingAlgoOptions> options, ISystemClock clock, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ITradingRepository repository, IOrderCodeGenerator orderCodeGenerator)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -39,7 +39,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
             _orderCodeGenerator = orderCodeGenerator ?? throw new ArgumentNullException(nameof(orderCodeGenerator));
         }
 
-        private static string TypeName => nameof(StepAlgo);
+        private static string TypeName => nameof(SteppingAlgo);
 
         /// <summary>
         /// Keeps track of the relevant account balances.
@@ -111,7 +111,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
                 TypeName, _context.Name, symbol.QuoteAsset, _balances.Quote.Free, _balances.Quote.Locked, _balances.Quote.Total);
         }
 
-        private async Task<MiniTicker?> TrySyncAssetPriceAsync(StepAlgoOptions options, Symbol symbol, CancellationToken cancellationToken = default)
+        private async Task<MiniTicker?> TrySyncAssetPriceAsync(SteppingAlgoOptions options, Symbol symbol, CancellationToken cancellationToken = default)
         {
             var ticker = await _context.GetTickerProvider().TryGetTickerAsync(options.Symbol, cancellationToken).ConfigureAwait(false);
 
@@ -125,7 +125,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
             return ticker;
         }
 
-        private async Task<bool> TryCloseOutOfRangeBandsAsync(StepAlgoOptions options, Symbol symbol, MiniTicker ticker, CancellationToken cancellationToken = default)
+        private async Task<bool> TryCloseOutOfRangeBandsAsync(SteppingAlgoOptions options, Symbol symbol, MiniTicker ticker, CancellationToken cancellationToken = default)
         {
             // take the upper band
             var upper = _bands.Max;
@@ -164,7 +164,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
             return true;
         }
 
-        private async Task<bool> TryCreateLowerBandOrderAsync(StepAlgoOptions options, Symbol symbol, MiniTicker ticker, CancellationToken cancellationToken = default)
+        private async Task<bool> TryCreateLowerBandOrderAsync(SteppingAlgoOptions options, Symbol symbol, MiniTicker ticker, CancellationToken cancellationToken = default)
         {
             // identify the highest and lowest bands
             var highBand = _bands.Max;
@@ -300,7 +300,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
         /// <summary>
         /// Sets sell orders for open bands that do not have them yet.
         /// </summary>
-        private async Task<bool> TrySetBandSellOrdersAsync(StepAlgoOptions options, Symbol symbol, CancellationToken cancellationToken = default)
+        private async Task<bool> TrySetBandSellOrdersAsync(SteppingAlgoOptions options, Symbol symbol, CancellationToken cancellationToken = default)
         {
             // skip if we have reach the max sell orders
             var orders = await _repository
@@ -375,7 +375,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
         /// <summary>
         /// Identify and cancel rogue sell orders that do not belong to a trading band.
         /// </summary>
-        private async Task<bool> TryCancelRogueSellOrdersAsync(StepAlgoOptions options, Symbol symbol, CancellationToken cancellationToken = default)
+        private async Task<bool> TryCancelRogueSellOrdersAsync(SteppingAlgoOptions options, Symbol symbol, CancellationToken cancellationToken = default)
         {
             // get all transient sell orders
             var orders = await _repository
@@ -412,7 +412,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
         /// <summary>
         /// Identify and cancel excess sell orders above the limit.
         /// </summary>
-        private async Task<bool> TryCancelExcessSellOrdersAsync(StepAlgoOptions options, Symbol symbol, CancellationToken cancellationToken = default)
+        private async Task<bool> TryCancelExcessSellOrdersAsync(SteppingAlgoOptions options, Symbol symbol, CancellationToken cancellationToken = default)
         {
             // get the order ids for the lowest open bands
             var bands = _bands
@@ -454,7 +454,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
             return changed;
         }
 
-        private async Task<bool> TrySetStartingTradeAsync(StepAlgoOptions options, Symbol symbol, MiniTicker ticker, CancellationToken cancellationToken = default)
+        private async Task<bool> TrySetStartingTradeAsync(SteppingAlgoOptions options, Symbol symbol, MiniTicker ticker, CancellationToken cancellationToken = default)
         {
             // only manage the opening if there are no bands or only a single order band to move around
             if (_bands.Count == 0 || _bands.Count == 1 && _bands.Single().Status == BandStatus.Ordered)
@@ -586,7 +586,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Step
             }
         }
 
-        private async Task<bool> TryCreateTradingBandsAsync(StepAlgoOptions options, Symbol symbol, ImmutableSortedOrderSet significant, MiniTicker ticker, CancellationToken cancellationToken = default)
+        private async Task<bool> TryCreateTradingBandsAsync(SteppingAlgoOptions options, Symbol symbol, ImmutableSortedOrderSet significant, MiniTicker ticker, CancellationToken cancellationToken = default)
         {
             _bands.Clear();
 

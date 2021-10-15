@@ -21,17 +21,15 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         private readonly IOptionsMonitor<SteppingAlgoOptions> _options;
 
         private readonly ITradingService _trader;
-        private readonly ISignificantOrderResolver _significantOrderResolver;
         private readonly ITradingRepository _repository;
         private readonly IOrderCodeGenerator _orderCodeGenerator;
 
-        public SteppingAlgo(IAlgoContext context, ILogger<SteppingAlgo> logger, IOptionsMonitor<SteppingAlgoOptions> options, ITradingService trader, ISignificantOrderResolver significantOrderResolver, ITradingRepository repository, IOrderCodeGenerator orderCodeGenerator)
+        public SteppingAlgo(IAlgoContext context, ILogger<SteppingAlgo> logger, IOptionsMonitor<SteppingAlgoOptions> options, ITradingService trader, ITradingRepository repository, IOrderCodeGenerator orderCodeGenerator)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _options = options ?? throw new ArgumentNullException(nameof(options));
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
-            _significantOrderResolver = significantOrderResolver ?? throw new ArgumentNullException(nameof(significantOrderResolver));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _orderCodeGenerator = orderCodeGenerator ?? throw new ArgumentNullException(nameof(orderCodeGenerator));
         }
@@ -60,8 +58,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
             await ApplyAccountInfoAsync(symbol, cancellationToken).ConfigureAwait(false);
 
-            var significant = await _significantOrderResolver
-                .ResolveAsync(symbol, cancellationToken)
+            var significant = await _context
+                .ResolveSignificantOrdersAsync(symbol, cancellationToken)
                 .ConfigureAwait(false);
 
             await _context

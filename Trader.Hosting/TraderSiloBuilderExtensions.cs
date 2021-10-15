@@ -38,7 +38,6 @@ namespace Orleans.Hosting
                         .AddSafeTimerFactory()
                         .AddBase62NumberSerializer()
                         .AddModelAutoMapperProfiles()
-                        .AddAlgoServices()
                         .AddRandomGenerator()
                         .AddAlgoFactoryResolver()
                         .AddAlgoManagerGrain()

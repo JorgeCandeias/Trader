@@ -62,7 +62,6 @@ namespace Microsoft.Extensions.Hosting
                                 .AddSafeTimerFactory()
                                 .AddBase62NumberSerializer()
                                 .AddModelAutoMapperProfiles()
-                                .AddAlgoServices()
                                 .AddRandomGenerator()
                                 .AddAlgoFactoryResolver()
                                 .AddAlgoManagerGrain()

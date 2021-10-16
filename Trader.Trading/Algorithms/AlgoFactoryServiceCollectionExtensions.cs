@@ -11,7 +11,8 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             services.TryAddSingleton(typeof(IKeyedServiceCollection<,>), typeof(KeyedServiceCollection<,>));
 
-            return services.AddSingletonNamedService<IAlgoFactory, AlgoFactory<TAlgo>>(typeName);
+            // todo: add named scoped support to orleans itself
+            return services.AddTransientNamedService<IAlgoFactory, AlgoFactory<TAlgo>>(typeName);
         }
 
         public static IServiceCollection AddAlgoType<TAlgo, TOptions>(this IServiceCollection services, string typeName)

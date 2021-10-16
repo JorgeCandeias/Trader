@@ -7,7 +7,7 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddAlgoFactoryResolver(this IServiceCollection services)
         {
             return services
-                .AddSingleton<IAlgoFactoryResolver, AlgoFactoryResolver>();
+                .AddScoped<IAlgoFactoryResolver, AlgoFactoryResolver>();
         }
     }
 }

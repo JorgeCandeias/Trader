@@ -7,21 +7,22 @@ namespace Outcompute.Trader.Trading.Algorithms
         where TAlgo : IAlgo
     {
         private readonly IServiceProvider _provider;
-        private readonly ObjectFactory _factory;
 
         public AlgoFactory(IServiceProvider provider)
         {
             _provider = provider ?? throw new ArgumentNullException(nameof(provider));
-            _factory = ActivatorUtilities.CreateFactory(typeof(TAlgo), Array.Empty<Type>());
         }
 
         public IAlgo Create(string name)
         {
             if (name is null) throw new ArgumentNullException(nameof(name));
 
-            AlgoFactoryContext.AlgoName = name;
+            // set up the scoped context for the new algo to resolve
+            var context = _provider.GetRequiredService<AlgoContext>();
+            context.Name = name;
 
-            return (IAlgo)_factory(_provider, Array.Empty<object>());
+            // resolve the algo instance now
+            return ActivatorUtilities.CreateInstance<TAlgo>(_provider);
         }
     }
 }

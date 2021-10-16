@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
 {
-    internal class ValueAveragingAlgo : IAlgo
+    internal class ValueAveragingAlgo : SymbolAlgo
     {
         private readonly IAlgoContext _context;
         private readonly IOptionsMonitor<ValueAveragingAlgoOptions> _monitor;
@@ -39,7 +39,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         private decimal _rsiB;
         private decimal _rsiC;
 
-        public async ValueTask GoAsync(CancellationToken cancellationToken = default)
+        public override async ValueTask GoAsync(CancellationToken cancellationToken = default)
         {
             _options = _monitor.Get(_context.Name);
 
@@ -52,6 +52,24 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
 
             // get current ticker
             _ticker = await _context.GetRequiredTickerAsync(_symbol.Name, cancellationToken);
+
+            // calculate current unrealized pnl
+            if (_significant.Orders.Count > 0)
+            {
+                var quantity = _significant.Orders.Sum(x => x.ExecutedQuantity);
+                var total = _significant.Orders.Sum(x => x.Price * x.ExecutedQuantity);
+                var now = quantity * _ticker.ClosePrice;
+                var pnl = now - total;
+                var percent = pnl / total;
+
+                _logger.LogInformation(
+                    "{Type} {Name} reports Unrealized PnL = {Pnl:F8} {Asset}, Change % = {Change:P2}",
+                    TypeName, _context.Name, pnl, _symbol.QuoteAsset, percent);
+
+                _logger.LogInformation(
+                    "{Type} {Name} reports Realized PnL = {Pnl:F8} {Asset}",
+                    TypeName, _context.Name, _significant.Profit.ThisYear, _symbol.QuoteAsset);
+            }
 
             // get the lastest klines
             var maxPeriods = GetMaxPeriods();

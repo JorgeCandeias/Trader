@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
 using Outcompute.Trader.Trading.Readyness;
@@ -10,19 +11,19 @@ using static System.String;
 namespace Outcompute.Trader.Trading.Algorithms
 {
     /// <inheritdoc cref="IAlgoHostGrain" />
-    internal class AlgoHostGrain : Grain, IAlgoHostGrainInternal
+    internal sealed class AlgoHostGrain : Grain, IAlgoHostGrainInternal, IDisposable
     {
         private readonly ILogger _logger;
         private readonly IOptionsMonitor<AlgoHostGrainOptions> _options;
-        private readonly IAlgoFactoryResolver _resolver;
         private readonly IReadynessProvider _readyness;
+        private readonly IServiceScope _scope;
 
-        public AlgoHostGrain(ILogger<AlgoHostGrain> logger, IOptionsMonitor<AlgoHostGrainOptions> options, IAlgoFactoryResolver resolver, IReadynessProvider readyness)
+        public AlgoHostGrain(ILogger<AlgoHostGrain> logger, IOptionsMonitor<AlgoHostGrainOptions> options, IReadynessProvider readyness, IServiceProvider provider)
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _options = options ?? throw new ArgumentNullException(nameof(options));
-            _resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
-            _readyness = readyness ?? throw new ArgumentNullException(nameof(readyness));
+            _logger = logger;
+            _options = options;
+            _readyness = readyness;
+            _scope = provider.CreateScope();
         }
 
         private readonly CancellationTokenSource _cancellation = new();
@@ -42,7 +43,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             var options = _options.Get(_name);
 
             // resolve the factory for the current algo type
-            var factory = _resolver.Resolve(options.Type);
+            var factory = _scope.ServiceProvider.GetRequiredService<IAlgoFactoryResolver>().Resolve(options.Type);
 
             // create the algo instance
             _algo = factory.Create(_name);
@@ -141,6 +142,13 @@ namespace Outcompute.Trader.Trading.Algorithms
                 _ready = false;
                 throw;
             }
+        }
+
+        public void Dispose()
+        {
+            _cancellation.Dispose();
+            _timer?.Dispose();
+            _scope.Dispose();
         }
     }
 

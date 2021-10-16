@@ -1,4 +1,5 @@
 ﻿using System;
+using static System.String;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
@@ -6,11 +7,10 @@ namespace Outcompute.Trader.Trading.Algorithms
     {
         public AlgoContext(IServiceProvider serviceProvider)
         {
-            Name = AlgoFactoryContext.AlgoName;
-            ServiceProvider = serviceProvider;
+            ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         }
 
-        public string Name { get; }
+        public string Name { get; internal set; } = Empty;
 
         public IServiceProvider ServiceProvider { get; }
     }

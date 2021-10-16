@@ -15,7 +15,8 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<ITradeSynchronizer, TradeSynchronizer>()
                 .AddSingleton<IOrderCodeGenerator, OrderCodeGenerator>()
                 .AddSingleton<IAlgoDependencyInfo, AlgoDependencyInfo>()
-                .AddTransient<IAlgoContext, AlgoContext>()
+                .AddScoped<AlgoContext>()
+                .AddScoped<IAlgoContext>(sp => sp.GetRequiredService<AlgoContext>())
                 .AddOptions<AlgoConfigurationMappingOptions>().ValidateDataAnnotations().Services
                 .AddOptions<SavingsOptions>().ValidateDataAnnotations().Services;
         }

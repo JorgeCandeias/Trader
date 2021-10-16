@@ -3,23 +3,16 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
+    /// <summary>
+    /// Base interface for algos that do not follow the suggested lifecycle.
+    /// Consider implementing the Algo class for less effort.
+    /// </summary>
     public interface IAlgo
     {
+        ValueTask StartAsync(CancellationToken cancellationToken = default);
+
+        ValueTask StopAsync(CancellationToken cancellationToken = default);
+
         ValueTask GoAsync(CancellationToken cancellationToken = default);
-    }
-
-    /// <summary>
-    /// An empty algo that does nothing.
-    /// For use with non nullable fields and unit testing.
-    /// </summary>
-    public class NullAlgo : IAlgo
-    {
-        private NullAlgo()
-        {
-        }
-
-        public static NullAlgo Instance { get; } = new NullAlgo();
-
-        public ValueTask GoAsync(CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
     }
 }

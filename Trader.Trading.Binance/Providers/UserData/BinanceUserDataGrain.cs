@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
@@ -9,7 +10,6 @@ using Outcompute.Trader.Trading.Algorithms;
 using Polly;
 using System;
 using System.Linq;
-using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
@@ -26,8 +26,9 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
         private readonly ITradingRepository _repository;
         private readonly ISystemClock _clock;
         private readonly IMapper _mapper;
+        private readonly IHostApplicationLifetime _lifetime;
 
-        public BinanceUserDataGrain(IOptions<BinanceOptions> options, ILogger<BinanceUserDataGrain> logger, ITradingService trader, IUserDataStreamClientFactory streams, IOrderSynchronizer orders, ITradeSynchronizer trades, ITradingRepository repository, ISystemClock clock, IMapper mapper)
+        public BinanceUserDataGrain(IOptions<BinanceOptions> options, ILogger<BinanceUserDataGrain> logger, ITradingService trader, IUserDataStreamClientFactory streams, IOrderSynchronizer orders, ITradeSynchronizer trades, ITradingRepository repository, ISystemClock clock, IMapper mapper, IHostApplicationLifetime lifetime)
         {
             _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -38,11 +39,11 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
+            _lifetime = lifetime ?? throw new ArgumentNullException(nameof(lifetime));
         }
 
         private static string Name => nameof(BinanceUserDataGrain);
 
-        private readonly CancellationTokenSource _cancellation = new();
         private string? _listenKey;
         private DateTime _nextPingTime;
 
@@ -71,12 +72,10 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 
         public override async Task OnDeactivateAsync()
         {
-            _cancellation.Dispose();
-
             // gracefully unregister the user stream
             if (_listenKey is not null)
             {
-                await _trader.CloseUserDataStreamAsync(_listenKey, _cancellation.Token);
+                await _trader.CloseUserDataStreamAsync(_listenKey, _lifetime.ApplicationStopping);
             }
 
             await base.OnDeactivateAsync();
@@ -88,7 +87,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
         private async Task TickEnsureWorkAsync()
         {
             // avoid starting streaming work upon shutdown
-            if (_cancellation.IsCancellationRequested)
+            if (_lifetime.ApplicationStopping.IsCancellationRequested)
             {
                 return;
             }
@@ -96,7 +95,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
             // schedule streaming work if nothing is running
             if (_work is null)
             {
-                _work = Task.Run(() => ExecuteLongAsync(), _cancellation.Token);
+                _work = Task.Run(() => ExecuteLongAsync(), _lifetime.ApplicationStopping);
                 return;
             }
 
@@ -127,7 +126,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
             {
                 _logger.LogInformation("{Name} creating user stream key...", Name);
 
-                _listenKey = await _trader.CreateUserDataStreamAsync(_cancellation.Token);
+                _listenKey = await _trader.CreateUserDataStreamAsync(_lifetime.ApplicationStopping);
 
                 _logger.LogInformation("{Name} created user stream with key {ListenKey}", Name, _listenKey);
 
@@ -135,7 +134,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 
                 using var client = _streams.Create(_listenKey);
 
-                await client.ConnectAsync(_cancellation.Token);
+                await client.ConnectAsync(_lifetime.ApplicationStopping);
 
                 BumpPingTime();
 
@@ -144,22 +143,22 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
                 // start streaming in the background while we sync from the api
                 var streamTask = Task.Run(async () =>
                 {
-                    while (!_cancellation.Token.IsCancellationRequested)
+                    while (!_lifetime.ApplicationStopping.IsCancellationRequested)
                     {
                         if (_clock.UtcNow >= _nextPingTime)
                         {
-                            await _trader.PingUserDataStreamAsync(_listenKey, _cancellation.Token);
+                            await _trader.PingUserDataStreamAsync(_listenKey, _lifetime.ApplicationStopping);
 
                             BumpPingTime();
                         }
 
-                        var message = await client.ReceiveAsync(_cancellation.Token);
+                        var message = await client.ReceiveAsync(_lifetime.ApplicationStopping);
 
                         switch (message)
                         {
                             case OutboundAccountPositionUserDataStreamMessage balance:
 
-                                await _balancesChannel.Writer.WriteAsync(balance, _cancellation.Token);
+                                await _balancesChannel.Writer.WriteAsync(balance, _lifetime.ApplicationStopping);
 
                                 break;
 
@@ -171,7 +170,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 
                             case ExecutionReportUserDataStreamMessage report:
 
-                                await _executionChannel.Writer.WriteAsync(report, _cancellation.Token);
+                                await _executionChannel.Writer.WriteAsync(report, _lifetime.ApplicationStopping);
 
                                 break;
 
@@ -183,16 +182,16 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
                                 break;
                         }
                     }
-                }, _cancellation.Token);
+                }, _lifetime.ApplicationStopping);
 
                 // wait for a few seconds for the stream to stabilize so we don't miss any incoming data from binance
                 _logger.LogInformation("{Name} waiting {Period} for stream to stabilize...", Name, _options.UserDataStreamStabilizationPeriod);
-                await Task.Delay(_options.UserDataStreamStabilizationPeriod, _cancellation.Token);
+                await Task.Delay(_options.UserDataStreamStabilizationPeriod, _lifetime.ApplicationStopping);
 
                 // sync asset balances
-                var accountInfo = await _trader.GetAccountInfoAsync(_cancellation.Token);
+                var accountInfo = await _trader.GetAccountInfoAsync(_lifetime.ApplicationStopping);
 
-                await _repository.SetBalancesAsync(accountInfo, _cancellation.Token);
+                await _repository.SetBalancesAsync(accountInfo, _lifetime.ApplicationStopping);
 
                 // sync orders for all symbols
                 foreach (var symbol in _options.UserDataStreamSymbols)
@@ -209,7 +208,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 
                                 return Task.CompletedTask;
                             })
-                        .ExecuteAsync(ct => _orders.SynchronizeOrdersAsync(symbol, ct), _cancellation.Token, true);
+                        .ExecuteAsync(ct => _orders.SynchronizeOrdersAsync(symbol, ct), _lifetime.ApplicationStopping, true);
                 }
 
                 // sync trades for all symbols
@@ -227,7 +226,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 
                                 return Task.CompletedTask;
                             })
-                        .ExecuteAsync(ct => _trades.SynchronizeTradesAsync(symbol, _cancellation.Token), _cancellation.Token, true);
+                        .ExecuteAsync(ct => _trades.SynchronizeTradesAsync(symbol, ct), _lifetime.ApplicationStopping, true);
                 }
 
                 // signal that everything is ready
@@ -245,9 +244,9 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 
         private async Task TickSaveBalancesAsync()
         {
-            while (!_cancellation.Token.IsCancellationRequested)
+            while (!_lifetime.ApplicationStopping.IsCancellationRequested)
             {
-                if (!await _balancesChannel.Reader.WaitToReadAsync(_cancellation.Token))
+                if (!await _balancesChannel.Reader.WaitToReadAsync(_lifetime.ApplicationStopping))
                 {
                     return;
                 }
@@ -256,7 +255,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
                 {
                     var balances = message.Balances.Select(x => new Balance(x.Asset, x.Free, x.Locked, message.LastAccountUpdateTime));
 
-                    await _repository.SetBalancesAsync(balances, _cancellation.Token);
+                    await _repository.SetBalancesAsync(balances, _lifetime.ApplicationStopping);
 
                     _logger.LogInformation("{Name} saved balances for {Assets}", Name, message.Balances.Select(x => x.Asset));
                 }
@@ -265,9 +264,9 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 
         private async Task TickSaveExecutionsAsync()
         {
-            while (!_cancellation.Token.IsCancellationRequested)
+            while (!_lifetime.ApplicationStopping.IsCancellationRequested)
             {
-                if (!await _executionChannel.Reader.WaitToReadAsync(_cancellation.Token))
+                if (!await _executionChannel.Reader.WaitToReadAsync(_lifetime.ApplicationStopping))
                 {
                     return;
                 }
@@ -289,7 +288,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
                     {
                         var trade = _mapper.Map<AccountTrade>(report);
 
-                        await _repository.SetTradeAsync(trade, _cancellation.Token);
+                        await _repository.SetTradeAsync(trade, _lifetime.ApplicationStopping);
 
                         _logger.LogInformation(
                             "{Name} saved {Symbol} {Side} trade {TradeId}",
@@ -299,7 +298,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
                     // now extract the order from this report
                     var order = _mapper.Map<OrderQueryResult>(report);
 
-                    await _repository.SetOrderAsync(order, _cancellation.Token);
+                    await _repository.SetOrderAsync(order, _lifetime.ApplicationStopping);
 
                     _logger.LogInformation(
                         "{Name} saved {Symbol} {Type} {Side} order {OrderId}",

@@ -13,7 +13,7 @@ using static System.String;
 
 namespace Outcompute.Trader.Trading.Algorithms.Stepping
 {
-    internal class SteppingAlgo : IAlgo
+    internal class SteppingAlgo : Algo
     {
         private readonly IAlgoContext _context;
 
@@ -61,13 +61,13 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         /// </summary>
         private readonly SortedSet<Band> _bands = new();
 
-        public async ValueTask GoAsync(CancellationToken cancellationToken = default)
+        public override async ValueTask GoAsync(CancellationToken cancellationToken = default)
         {
             // pin the options for this execution
             _options = _monitor.Get(_context.Name);
 
             // get full symbol info from the exchange
-            _symbol = await _context.GetRequiredSymbolAsync(_options.Symbol);
+            _symbol = await _context.GetRequiredSymbolAsync(_options.Symbol, cancellationToken);
 
             await ApplyAccountInfoAsync(cancellationToken);
 

@@ -43,7 +43,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         {
             _options = _monitor.Get(_context.Name);
 
-            _symbol = await _context.GetRequiredSymbolAsync(_options.Symbol);
+            _symbol = await _context.GetRequiredSymbolAsync(_options.Symbol, cancellationToken);
 
             _logger.LogInformation("{Type} {Name} running...", TypeName, _context.Name);
 

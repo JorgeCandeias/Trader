@@ -3,8 +3,16 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
-    public abstract class SymbolAlgo : IAlgo
+    public abstract class SymbolAlgo : Algo, ISymbolAlgo
     {
-        public abstract ValueTask GoAsync(CancellationToken cancellationToken = default);
+        public override ValueTask GoAsync(CancellationToken cancellationToken = default)
+        {
+            return OnExecuteAsync(cancellationToken);
+        }
+
+        protected virtual ValueTask OnExecuteAsync(CancellationToken cancellationToken = default)
+        {
+            return ValueTask.CompletedTask;
+        }
     }
 }

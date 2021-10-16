@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
+using Outcompute.Trader.Trading.Algorithms.Exceptions;
 using Outcompute.Trader.Trading.Readyness;
 using System;
 using System.Threading;
@@ -48,6 +49,26 @@ namespace Outcompute.Trader.Trading.Algorithms
             // create the algo instance
             _algo = factory.Create(_name);
 
+            // perform specific tasks for symbol algos
+            // this ad-hoc code needs to get refactored into its own component for each algo type using some strategy pattern
+            if (_algo is ISymbolAlgo symbolAlgo)
+            {
+                // validate the symbol option
+                if (IsNullOrWhiteSpace(options.Symbol))
+                {
+                    throw new AlgorithmException($"Algo '{_name}' is a '{nameof(ISymbolAlgo)}' and must specify the '{nameof(options.Symbol)}' option");
+                }
+
+                // get the scoped context
+                var context = _scope.ServiceProvider.GetRequiredService<AlgoContext>();
+
+                // set the symbol info on the scoped context
+                context.Symbol = await context.GetRequiredSymbolAsync(options.Symbol, _cancellation.Token);
+            }
+
+            // run startup work
+            await _algo.StartAsync(_cancellation.Token);
+
             // keep the execution behaviour updated upon options change
             _options.OnChange(_ => this.AsReference<IAlgoHostGrainInternal>().InvokeOneWay(x => x.ApplyOptionsAsync()));
 
@@ -60,19 +81,24 @@ namespace Outcompute.Trader.Trading.Algorithms
             _logger.AlgoHostGrainStarted(_name);
         }
 
-        public override Task OnDeactivateAsync()
+        public override async Task OnDeactivateAsync()
         {
-            if (_timer is not null)
-            {
-                _timer.Dispose();
-                _timer = null;
-            }
+            StopTicking();
 
             _cancellation.Cancel();
 
-            _logger.AlgoHostGrainStopped(_name);
+            try
+            {
+                var options = _options.Get(_name);
+                using var stopCancellation = new CancellationTokenSource(options.StopTimeout);
+                await _algo.StopAsync(stopCancellation.Token);
+            }
+            finally
+            {
+                _logger.AlgoHostGrainStopped(_name);
+            }
 
-            return base.OnDeactivateAsync();
+            await base.OnDeactivateAsync();
         }
 
         public Task PingAsync() => Task.CompletedTask;
@@ -84,21 +110,31 @@ namespace Outcompute.Trader.Trading.Algorithms
             // enable or disable timer based execution as needed
             if (options.Enabled && options.TickEnabled)
             {
-                if (_timer is null)
-                {
-                    _timer = RegisterTimer(_ => ExecuteAlgoAsync(), null, options.TickDelay, options.TickDelay);
-                }
+                StartTicking(options);
             }
             else
             {
-                if (_timer is not null)
-                {
-                    _timer.Dispose();
-                    _timer = null;
-                }
+                StopTicking();
             }
 
             return Task.CompletedTask;
+        }
+
+        private void StartTicking(AlgoHostGrainOptions options)
+        {
+            if (_timer is null)
+            {
+                _timer = RegisterTimer(_ => ExecuteAlgoAsync(), null, options.TickDelay, options.TickDelay);
+            }
+        }
+
+        private void StopTicking()
+        {
+            if (_timer is not null)
+            {
+                _timer.Dispose();
+                _timer = null;
+            }
         }
 
         private async Task ExecuteAlgoAsync()

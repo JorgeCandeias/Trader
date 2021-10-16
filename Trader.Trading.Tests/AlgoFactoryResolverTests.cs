@@ -8,9 +8,9 @@ namespace Outcompute.Trader.Trading.Tests
 {
     public class AlgoFactoryResolverTests
     {
-        private class MyAlgo : IAlgo
+        public class MyAlgo : Algo
         {
-            public ValueTask GoAsync(CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+            public override ValueTask GoAsync(CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
         }
 
         [Fact]

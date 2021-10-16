@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Outcompute.Trader.Models;
+using System;
 using static System.String;
 
 namespace Outcompute.Trader.Trading.Algorithms
@@ -11,6 +12,8 @@ namespace Outcompute.Trader.Trading.Algorithms
         }
 
         public string Name { get; internal set; } = Empty;
+
+        public Symbol Symbol { get; internal set; } = Symbol.Empty;
 
         public IServiceProvider ServiceProvider { get; }
     }

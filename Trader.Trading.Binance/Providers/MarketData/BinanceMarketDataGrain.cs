@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Orleans;
 using Outcompute.Trader.Core.Time;
@@ -25,11 +26,12 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         private readonly ITradingService _trader;
         private readonly IMapper _mapper;
         private readonly ISystemClock _clock;
+        private readonly IHostApplicationLifetime _lifetime;
 
         private readonly HashSet<string> _tickerSymbols;
         private readonly Dictionary<(string Symbol, KlineInterval Interval), int> _klineWindows;
 
-        public BinanceMarketDataGrain(ILogger<BinanceMarketDataGrain> logger, IMarketDataStreamClientFactory factory, ITradingRepository repository, ITradingService trader, IMapper mapper, ISystemClock clock, IAlgoDependencyInfo dependencies)
+        public BinanceMarketDataGrain(ILogger<BinanceMarketDataGrain> logger, IMarketDataStreamClientFactory factory, ITradingRepository repository, ITradingService trader, IMapper mapper, ISystemClock clock, IAlgoDependencyInfo dependencies, IHostApplicationLifetime lifetime)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _factory = factory ?? throw new ArgumentNullException(nameof(factory));
@@ -37,6 +39,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
             _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _lifetime = lifetime ?? throw new ArgumentNullException(nameof(lifetime));
 
             _ = dependencies ?? throw new ArgumentNullException(nameof(dependencies));
             _tickerSymbols = dependencies.GetTickers().ToHashSet(StringComparer.OrdinalIgnoreCase);
@@ -49,11 +52,6 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         }
 
         private static string TypeName => nameof(BinanceMarketDataGrain);
-
-        /// <summary>
-        /// Helps cancel background work upon grain deactivation.
-        /// </summary>
-        private readonly CancellationTokenSource _cancellation = new();
 
         /// <summary>
         /// Holds the background streaming and syncing work.
@@ -99,28 +97,18 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             return base.OnActivateAsync();
         }
 
-        public override Task OnDeactivateAsync()
-        {
-            _cancellation.Cancel();
-
-            return base.OnDeactivateAsync();
-        }
-
         /// <summary>
         /// Monitors the background streaming work task and ensures it remains active upon faulting.
         /// </summary>
         private async Task TickEnsureStreamAsync(object _)
         {
             // avoid starting streaming work upon shutdown
-            if (_cancellation.IsCancellationRequested)
-            {
-                return;
-            }
+            if (_lifetime.ApplicationStopping.IsCancellationRequested) return;
 
             // schedule streaming work if nothing is running
             if (_work is null)
             {
-                _work = Task.Run(ExecuteStreamAsync, _cancellation.Token);
+                _work = Task.Run(ExecuteStreamAsync, _lifetime.ApplicationStopping);
                 return;
             }
 
@@ -145,7 +133,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             {
                 // this helps cancel every local step upon stream failure at any point
                 using var localCancellation = new CancellationTokenSource();
-                using var linkedCancellation = CancellationTokenSource.CreateLinkedTokenSource(localCancellation.Token, _cancellation.Token);
+                using var linkedCancellation = CancellationTokenSource.CreateLinkedTokenSource(localCancellation.Token, _lifetime.ApplicationStopping);
 
                 // create a client for the streams we want
                 var streams = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -319,6 +307,9 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         /// </summary>
         private async Task TickSaveTickersAsync(object _)
         {
+            // avoid ticking on application shutdown
+            if (_lifetime.ApplicationStopping.IsCancellationRequested) return;
+
             var buffer = ArrayPool<MiniTicker>.Shared.Rent(_tickerSymbols.Count);
             var count = 0;
 
@@ -343,7 +334,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             }
 
             // save all tickers in one go
-            await _repository.SetTickersAsync(buffer.Take(count), _cancellation.Token);
+            await _repository.SetTickersAsync(buffer.Take(count), _lifetime.ApplicationStopping);
 
             // mark unchanged saved tickers in the concurrent conflation to avoid saving them again
             for (var i = 0; i < count; i++)
@@ -362,6 +353,9 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         /// </summary>
         private async Task TickSaveKlinesAsync(object _)
         {
+            // avoid ticking on application shutdown
+            if (_lifetime.ApplicationStopping.IsCancellationRequested) return;
+
             var buffer = ArrayPool<Kline>.Shared.Rent(_klines.Count);
             var count = 0;
 
@@ -381,7 +375,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             // save all klines to the repository
             if (count > 0)
             {
-                await _repository.SetKlinesAsync(buffer.Take(count), _cancellation.Token);
+                await _repository.SetKlinesAsync(buffer.Take(count), _lifetime.ApplicationStopping);
 
                 // mark unsaved klines as saved to avoid saving them again
                 for (var i = 0; i < count; i++)
@@ -401,6 +395,9 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         /// </summary>
         private Task TickClearKlinesAsync(object _)
         {
+            // avoid ticking on application shutdown
+            if (_lifetime.ApplicationStopping.IsCancellationRequested) return Task.CompletedTask;
+
             var buffer = ArrayPool<Kline>.Shared.Rent(_klines.Count);
             var count = 0;
 

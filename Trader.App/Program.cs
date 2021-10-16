@@ -112,7 +112,7 @@ namespace Outcompute.Trader.App
                 .RunConsoleAsync();
         }
 
-        internal class TestAlgo : IAlgo
+        internal class TestAlgo : Algo
         {
             private readonly IOptionsMonitor<TestAlgoOptions> _options;
             private readonly ILogger _logger;
@@ -127,7 +127,7 @@ namespace Outcompute.Trader.App
                 _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             }
 
-            public async ValueTask GoAsync(CancellationToken cancellationToken = default)
+            public override async ValueTask GoAsync(CancellationToken cancellationToken = default)
             {
                 var options = _options.Get(_context.Name);
 

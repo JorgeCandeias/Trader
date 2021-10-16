@@ -62,12 +62,12 @@ namespace Outcompute.Trader.Trading.Tests.Fixtures
         }
     }
 
-    internal class TestAlgo : IAlgo
+    public class TestAlgo : Algo
     {
-        public ValueTask GoAsync(CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+        public override ValueTask GoAsync(CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
     }
 
-    internal class TestAlgoOptions
+    public class TestAlgoOptions
     {
         public int TestValue { get; set; }
     }

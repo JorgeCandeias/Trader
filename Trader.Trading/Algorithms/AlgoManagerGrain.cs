@@ -1,11 +1,11 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
@@ -14,35 +14,28 @@ namespace Outcompute.Trader.Trading.Algorithms
     {
         private readonly IOptionsMonitor<AlgoManagerGrainOptions> _options;
         private readonly ILogger _logger;
+        private readonly IHostApplicationLifetime _lifetime;
 
-        public AlgoManagerGrain(IOptionsMonitor<AlgoManagerGrainOptions> options, ILogger<AlgoManagerGrain> logger)
+        public AlgoManagerGrain(IOptionsMonitor<AlgoManagerGrainOptions> options, ILogger<AlgoManagerGrain> logger, IHostApplicationLifetime lifetime)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _lifetime = lifetime ?? throw new ArgumentNullException(nameof(lifetime));
         }
-
-        private readonly CancellationTokenSource _cancellation = new();
 
         public override Task OnActivateAsync()
         {
             var options = _options.CurrentValue;
 
-            RegisterTimer(_ => TickPingAllAlgoGrainsAsync(), null, options.PingDelay, options.PingDelay);
+            RegisterTimer(TickPingAllAlgoGrainsAsync, null, options.PingDelay, options.PingDelay);
 
-            RegisterTimer(_ => TickExecuteAllAlgosAsync(), null, options.BatchTickDelay, options.BatchTickDelay);
+            RegisterTimer(TickExecuteAllAlgosAsync, null, options.BatchTickDelay, options.BatchTickDelay);
 
             return base.OnActivateAsync();
         }
 
-        public override Task OnDeactivateAsync()
-        {
-            _cancellation.Dispose();
-
-            return base.OnDeactivateAsync();
-        }
-
         [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
-        private async Task TickPingAllAlgoGrainsAsync()
+        private async Task TickPingAllAlgoGrainsAsync(object _)
         {
             // snapshot the current options for this tick
             var options = _options.CurrentValue;
@@ -50,11 +43,17 @@ namespace Outcompute.Trader.Trading.Algorithms
             // ping all enabled algos
             foreach (var algo in options.Algos)
             {
-                // break on deactivation
-                if (_cancellation.IsCancellationRequested) return;
+                // break early on app shutdown
+                if (_lifetime.ApplicationStopping.IsCancellationRequested)
+                {
+                    return;
+                }
 
                 // skip disabled algo
-                if (!algo.Value.Enabled) continue;
+                if (!algo.Value.Enabled)
+                {
+                    continue;
+                }
 
                 var grain = GrainFactory.GetAlgoHostGrain(algo.Key);
 
@@ -72,7 +71,7 @@ namespace Outcompute.Trader.Trading.Algorithms
         }
 
         [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
-        private async Task TickExecuteAllAlgosAsync()
+        private async Task TickExecuteAllAlgosAsync(object _)
         {
             // snapshot the current options for this tick
             var options = _options.CurrentValue;
@@ -80,8 +79,8 @@ namespace Outcompute.Trader.Trading.Algorithms
             // execute all algos ones by one
             foreach (var algo in options.Algos)
             {
-                // break on deactivation
-                if (_cancellation.IsCancellationRequested) return;
+                // break early on app shutdown
+                if (_lifetime.ApplicationStopping.IsCancellationRequested) return;
 
                 // skip algo non batch algo
                 if (!algo.Value.BatchEnabled) continue;

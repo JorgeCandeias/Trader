@@ -1,5 +1,6 @@
 ﻿using Outcompute.Trader.Trading;
 using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Providers;
 using Outcompute.Trader.Trading.Readyness;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -15,6 +16,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<ITradeSynchronizer, TradeSynchronizer>()
                 .AddSingleton<IOrderCodeGenerator, OrderCodeGenerator>()
                 .AddSingleton<IAlgoDependencyInfo, AlgoDependencyInfo>()
+                .AddSingleton<ISymbolProvider, SymbolProvider>()
                 .AddScoped<AlgoContext>()
                 .AddScoped<IAlgoContext>(sp => sp.GetRequiredService<AlgoContext>())
                 .AddOptions<AlgoConfigurationMappingOptions>().ValidateDataAnnotations().Services

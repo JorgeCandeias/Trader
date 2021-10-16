@@ -8,8 +8,16 @@ namespace Outcompute.Trader.Trading.Algorithms
 {
     public class AlgoHostGrainOptions
     {
+        /// <summary>
+        /// The type name of the algorithm to use.
+        /// </summary>
         [Required]
         public string Type { get; set; } = Empty;
+
+        /// <summary>
+        /// The symbol for this algo. Only useful for algos that derive from <see cref="ISymbolAlgo"/>.
+        /// </summary>
+        public string Symbol { get; set; } = Empty;
 
         [Required]
         public bool Enabled { get; set; } = true;
@@ -21,6 +29,10 @@ namespace Outcompute.Trader.Trading.Algorithms
         [Required]
         [Range(typeof(TimeSpan), "0.00:00:00.001", "1.00:00:00.000")]
         public TimeSpan TickDelay { get; set; } = TimeSpan.FromSeconds(10);
+
+        [Required]
+        [Range(typeof(TimeSpan), "0.00:00:00.001", "1.00:00:00.000")]
+        public TimeSpan StopTimeout { get; set; } = TimeSpan.FromSeconds(10);
 
         /// <summary>
         /// Run the algo on its own tick schedule as defined by <see cref="TickDelay"/>.

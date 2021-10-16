@@ -70,10 +70,19 @@ namespace Outcompute.Trader.Trading.Algorithms
 
                 foreach (var trade in lookup[order.OrderId])
                 {
-                    details.Add(new Map(order, trade)
+                    // map the order to the trade so we have info on both
+                    var map = new Map(order, trade)
                     {
                         RemainingExecutedQuantity = trade.Quantity
-                    });
+                    };
+
+                    // remove the spent commission from the buy balance if taken from the same asset
+                    if (trade.IsBuyer && trade.CommissionAsset == symbol.BaseAsset)
+                    {
+                        map.RemainingExecutedQuantity -= trade.Commission;
+                    }
+
+                    details.Add(map);
 
                     quantity += trade.Quantity;
                 }
@@ -107,48 +116,6 @@ namespace Outcompute.Trader.Trading.Algorithms
             var window7d = now.AddDays(-7);
             var window30d = now.AddDays(-30);
             var today = now.Date;
-
-            // first map formal sales to formal buys (same algo tag)
-            // the sales may not fill completely using the buys due to selling from savings and buy market orders to help fix bugs
-            for (var i = 0; i < subjects.Segment.Count; ++i)
-            {
-                // loop through sales forward
-                var sell = subjects.Segment[i];
-                if (sell.Order.Side == OrderSide.Sell && sell.RemainingExecutedQuantity > 0 && long.TryParse(sell.Order.ClientOrderId, out var matchOpenOrderId) && matchOpenOrderId > 0)
-                {
-                    // look through buys backwards from the sale
-                    for (var j = i - 1; j >= 0; --j)
-                    {
-                        var buy = subjects.Segment[j];
-                        if (buy.Order.Side == OrderSide.Buy && buy.RemainingExecutedQuantity > 0 && buy.Order.OrderId == matchOpenOrderId)
-                        {
-                            // remove as much as possible from the buy to satisfy the sale
-                            var take = Math.Min(buy.RemainingExecutedQuantity, sell.RemainingExecutedQuantity);
-                            buy.RemainingExecutedQuantity -= take;
-                            sell.RemainingExecutedQuantity -= take;
-
-                            // calculate profit for this
-                            var profit = take * (sell.Trade.Price - buy.Trade.Price);
-
-                            // assign to the appropriate counters
-                            if (sell.Trade.Time.Date == today) todayProfit += profit;
-                            if (sell.Trade.Time.Date == today.AddDays(-1)) yesterdayProfit += profit;
-                            if (sell.Trade.Time.Date >= today.Previous(DayOfWeek.Sunday)) thisWeekProfit += profit;
-                            if (sell.Trade.Time.Date >= today.Previous(DayOfWeek.Sunday, 2) && sell.Trade.Time.Date < today.Previous(DayOfWeek.Sunday)) prevWeekProfit += profit;
-                            if (sell.Trade.Time.Date >= today.AddDays(-today.Day + 1)) thisMonthProfit += profit;
-                            if (sell.Trade.Time.Date >= new DateTime(today.Year, 1, 1)) thisYearProfit += profit;
-
-                            // assign to the window counters
-                            if (sell.Trade.Time >= window1d) d1 += profit;
-                            if (sell.Trade.Time >= window7d) d7 += profit;
-                            if (sell.Trade.Time >= window30d) d30 += profit;
-
-                            // if the sale is filled then we can break early
-                            if (sell.RemainingExecutedQuantity == 0) break;
-                        }
-                    }
-                }
-            }
 
             // now match sale leftovers using lifo
             // the sales may not fill completely using the buys due to selling from savings and buy market orders to help fix bugs
@@ -190,12 +157,36 @@ namespace Outcompute.Trader.Trading.Algorithms
                         }
                     }
 
+                    // if the commission was taken from the sell asset then remove it from profit
+                    if (sell.Trade.CommissionAsset == symbol.QuoteAsset)
+                    {
+                        // calculate loss for this
+                        var loss = sell.Trade.Commission;
+
+                        // assign to the appropriate counters
+                        if (sell.Trade.Time.Date == today) todayProfit -= loss;
+                        if (sell.Trade.Time.Date == today.AddDays(-1)) yesterdayProfit -= loss;
+                        if (sell.Trade.Time.Date >= today.Previous(DayOfWeek.Sunday)) thisWeekProfit -= loss;
+                        if (sell.Trade.Time.Date >= today.Previous(DayOfWeek.Sunday, 2) && sell.Trade.Time.Date < today.Previous(DayOfWeek.Sunday)) prevWeekProfit -= loss;
+                        if (sell.Trade.Time.Date >= today.AddDays(-today.Day + 1)) thisMonthProfit -= loss;
+                        if (sell.Trade.Time.Date >= new DateTime(today.Year, 1, 1)) thisYearProfit -= loss;
+
+                        // assign to the window counters
+                        if (sell.Trade.Time >= window1d) d1 -= loss;
+                        if (sell.Trade.Time >= window7d) d7 -= loss;
+                        if (sell.Trade.Time >= window30d) d30 -= loss;
+                    }
+
                     // if the sale was still not filled then force close it
                     // we assume the remaining assets used to fullfil the sale came either savings or market conversions
                     // both of which we cant track here
                     if (sell.RemainingExecutedQuantity != 0)
                     {
                         // clear the sale
+                        _logger.LogWarning(
+                            "{Name} {Symbol} could not fill {Type} {Side} order {OrderId} as there is {Missing} {Asset} missing",
+                            nameof(SignificantOrderResolver), symbol.Name, sell.Order.Type, sell.Order.Side, sell.Order.OrderId, sell.RemainingExecutedQuantity, symbol.BaseAsset);
+
                         sell.RemainingExecutedQuantity = 0m;
                     }
                 }

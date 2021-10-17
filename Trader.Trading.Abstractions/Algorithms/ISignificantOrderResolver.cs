@@ -28,14 +28,14 @@ namespace Outcompute.Trader.Trading.Algorithms
         string Quote,
 
         // fixed windows
-        decimal Today, decimal Yesterday, decimal ThisWeek, decimal PrevWeek, decimal ThisMonth, decimal ThisYear,
+        decimal Today, decimal Yesterday, decimal ThisWeek, decimal PrevWeek, decimal ThisMonth, decimal ThisYear, decimal All,
 
         // rolling windows
         decimal D1, decimal D7, decimal D30)
     {
         public static Profit Zero(string symbol, string asset, string quote)
         {
-            return new Profit(symbol, asset, quote, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+            return new Profit(symbol, asset, quote, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
         }
 
         public static Profit Aggregate(IEnumerable<Profit> items)
@@ -48,6 +48,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             var prevWeek = 0m;
             var thisMonth = 0m;
             var thisYear = 0m;
+            var all = 0m;
             var d1 = 0m;
             var d7 = 0m;
             var d30 = 0m;
@@ -81,12 +82,13 @@ namespace Outcompute.Trader.Trading.Algorithms
                 prevWeek += item.PrevWeek;
                 thisMonth += item.ThisMonth;
                 thisYear += item.ThisYear;
+                all += item.All;
                 d1 += item.D1;
                 d7 += item.D7;
                 d30 += item.D30;
             }
 
-            return new Profit(symbol ?? Empty, asset ?? Empty, quote ?? Empty, today, yesterday, thisWeek, prevWeek, thisMonth, thisYear, d1, d7, d30);
+            return new Profit(symbol ?? Empty, asset ?? Empty, quote ?? Empty, today, yesterday, thisWeek, prevWeek, thisMonth, thisYear, all, d1, d7, d30);
         }
 
         public Profit Add(Profit item)
@@ -104,6 +106,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 PrevWeek + item.PrevWeek,
                 ThisMonth + item.ThisMonth,
                 ThisYear + item.ThisYear,
+                All + item.All,
                 D1 + item.D1,
                 D7 + item.D7,
                 D30 + item.D30);

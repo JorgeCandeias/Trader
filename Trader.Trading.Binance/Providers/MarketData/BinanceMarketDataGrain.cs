@@ -269,7 +269,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                     }
 
                     _logger.LogInformation(
-                        "{Name} paged {Count} klines for {Symbol} {Interval} between {Start} and {End} for a total of {Total}",
+                        "{Name} paged {Count} klines for {Symbol} {Interval} between {Start} and {End} for a total of {Total} klines",
                         TypeName, klines.Count, item.Key.Symbol, item.Key.Interval, current, end, total);
 
                     // break if the page wasnt full

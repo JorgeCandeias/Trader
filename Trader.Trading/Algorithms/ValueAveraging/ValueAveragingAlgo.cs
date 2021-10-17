@@ -51,19 +51,37 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
             // calculate current unrealized pnl
             if (_significant.Orders.Count > 0)
             {
-                var quantity = _significant.Orders.Sum(x => x.ExecutedQuantity);
                 var total = _significant.Orders.Sum(x => x.Price * x.ExecutedQuantity);
+                var quantity = _significant.Orders.Sum(x => x.ExecutedQuantity);
+
+                _logger.LogInformation(
+                    "{Type} {Name} reports Buy Value = {Total:F8}",
+                    TypeName, _context.Name, total);
+
                 var now = quantity * _ticker.ClosePrice;
-                var pnl = now - total;
-                var percent = pnl / total;
 
                 _logger.LogInformation(
-                    "{Type} {Name} reports Unrealized PnL = {Pnl:F8} {Asset}, Change % = {Change:P2}",
-                    TypeName, _context.Name, pnl, _context.Symbol.QuoteAsset, percent);
+                    "{Type} {Name} reports Present Value = {Value:F8}",
+                    TypeName, _context.Name, now);
+
+                var uPnL = now - total;
 
                 _logger.LogInformation(
-                    "{Type} {Name} reports Realized PnL = {Pnl:F8} {Asset}",
-                    TypeName, _context.Name, _significant.Profit.ThisYear, _context.Symbol.QuoteAsset);
+                    "{Type} {Name} reports Unrealized PnL = {Value:F8} ({Ratio:P8})",
+                    TypeName, _context.Name, uPnL, uPnL / total);
+
+                var rPnl = _significant.Profit.All;
+
+                // this requires the full order set to calculate as a ratio
+                _logger.LogInformation(
+                    "{Type} {Name} reports Realized PnL = {Value:F8}",
+                    TypeName, _context.Name, rPnl, rPnl);
+
+                var pPnl = uPnL + rPnl;
+
+                _logger.LogInformation(
+                    "{Type} {Name} reports Present PnL = {Value:F8}",
+                    TypeName, _context.Name, pPnl);
             }
 
             // get the lastest klines

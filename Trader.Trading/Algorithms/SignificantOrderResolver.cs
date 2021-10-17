@@ -106,6 +106,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             var prevWeekProfit = 0m;
             var thisMonthProfit = 0m;
             var thisYearProfit = 0m;
+            var all = 0m;
             var d1 = 0m;
             var d7 = 0m;
             var d30 = 0m;
@@ -146,6 +147,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                             if (sell.Trade.Time.Date >= today.Previous(DayOfWeek.Sunday, 2) && sell.Trade.Time.Date < today.Previous(DayOfWeek.Sunday)) prevWeekProfit += profit;
                             if (sell.Trade.Time.Date >= today.AddDays(-today.Day + 1)) thisMonthProfit += profit;
                             if (sell.Trade.Time.Date >= new DateTime(today.Year, 1, 1)) thisYearProfit += profit;
+                            all += profit;
 
                             // assign to the window counters
                             if (sell.Trade.Time >= window1d) d1 += profit;
@@ -170,6 +172,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                         if (sell.Trade.Time.Date >= today.Previous(DayOfWeek.Sunday, 2) && sell.Trade.Time.Date < today.Previous(DayOfWeek.Sunday)) prevWeekProfit -= loss;
                         if (sell.Trade.Time.Date >= today.AddDays(-today.Day + 1)) thisMonthProfit -= loss;
                         if (sell.Trade.Time.Date >= new DateTime(today.Year, 1, 1)) thisYearProfit -= loss;
+                        all -= loss;
 
                         // assign to the window counters
                         if (sell.Trade.Time >= window1d) d1 -= loss;
@@ -238,6 +241,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 prevWeekProfit,
                 thisMonthProfit,
                 thisYearProfit,
+                all,
                 d1,
                 d7,
                 d30);

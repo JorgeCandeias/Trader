@@ -20,9 +20,16 @@
 
 	<ItemGroup>
 	  <PackageReference Include="BenchmarkDotNet" Version="0.13.1" />
+	  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.2" />
 	  <PackageReference Include="SonarAnalyzer.CSharp" Version="8.30.0.37606">
 	    <PrivateAssets>all</PrivateAssets>
 	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	  </PackageReference>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\Trader.Data.Sql\Trader.Data.Sql.csproj" />
+	  <ProjectReference Include="..\Trader.Trading.Abstractions\Trader.Trading.Abstractions.csproj" />
+	  <ProjectReference Include="..\Trader.Trading\Trader.Trading.csproj" />
 	</ItemGroup>
 </Project>

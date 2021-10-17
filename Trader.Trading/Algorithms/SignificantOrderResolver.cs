@@ -52,7 +52,6 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public async ValueTask<SignificantResult> ResolveAsync(Symbol symbol, CancellationToken cancellationToken = default)
         {
-            var watch = Stopwatch.StartNew();
             var orders = await _repository
                 .GetSignificantCompletedOrdersAsync(symbol.Name, cancellationToken)
                 .ConfigureAwait(false);
@@ -60,6 +59,13 @@ namespace Outcompute.Trader.Trading.Algorithms
             var trades = await _repository
                 .GetTradesAsync(symbol.Name, cancellationToken)
                 .ConfigureAwait(false);
+
+            return Resolve(symbol, orders, trades);
+        }
+
+        public SignificantResult Resolve(Symbol symbol, ImmutableSortedOrderSet orders, ImmutableSortedTradeSet trades)
+        {
+            var watch = Stopwatch.StartNew();
 
             var lookup = trades.ToLookup(x => x.OrderId);
 

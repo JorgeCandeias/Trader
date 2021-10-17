@@ -1,5 +1,7 @@
 ﻿using BenchmarkDotNet.Attributes;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
@@ -18,6 +20,8 @@ namespace Trader.Trading.Indicators.Benchmarks
         private readonly ImmutableSortedOrderSet _orders;
 
         private readonly ImmutableSortedTradeSet _trades;
+
+        private readonly ILogger _logger = NullLogger.Instance;
 
         public SignificantOrderResolverBenchmarks()
         {
@@ -52,12 +56,6 @@ namespace Trader.Trading.Indicators.Benchmarks
         public async ValueTask<SignificantResult> ResolveAsync()
         {
             return await _resolver.ResolveAsync(_symbol);
-        }
-
-        [Benchmark]
-        public SignificantResult Resolve()
-        {
-            return _resolver.Resolve(_symbol, _orders, _trades);
         }
     }
 }

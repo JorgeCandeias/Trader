@@ -54,10 +54,13 @@ namespace Outcompute.Trader.Trading.Tests.Fixtures
         {
             siloBuilder.UseTrader(trader =>
             {
-                trader.ConfigureServices(services =>
-                {
-                    services.AddAlgoType<TestAlgo, TestAlgoOptions>("Test");
-                });
+                trader
+                    .AddInMemoryTradingRepository()
+                    .ConfigureServices(services =>
+                    {
+                        services
+                            .AddAlgoType<TestAlgo, TestAlgoOptions>("Test");
+                    });
             });
         }
     }

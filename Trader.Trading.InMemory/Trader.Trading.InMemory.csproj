@@ -26,6 +26,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\Trader.Core\Trader.Core.csproj" />
 	  <ProjectReference Include="..\Trader.Models\Trader.Models.csproj" />
 	  <ProjectReference Include="..\Trader.Trading.Abstractions\Trader.Trading.Abstractions.csproj" />
 	</ItemGroup>

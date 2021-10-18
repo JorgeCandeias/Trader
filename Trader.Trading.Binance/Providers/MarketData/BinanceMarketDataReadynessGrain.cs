@@ -8,6 +8,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
     /// <summary>
     /// Actively pulls the readyness state of the <see cref="BinanceMarketDataGrain"/> into each silo that needs it.
     /// </summary>
+    [Reentrant]
     [StatelessWorker(1)]
     internal class BinanceMarketDataReadynessGrain : Grain, IBinanceMarketDataReadynessGrain
     {

@@ -1,4 +1,6 @@
 ﻿using Orleans;
+using Orleans.TestingHost;
+using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Tests.Fixtures;
 using System;
 using System.Threading.Tasks;
@@ -9,41 +11,36 @@ namespace Outcompute.Trader.Trading.Tests
     [Collection(nameof(ClusterCollectionFixture))]
     public class OrderProviderGrainTests
     {
-        private readonly IGrainFactory _factory;
+        private readonly TestCluster _cluster;
 
         public OrderProviderGrainTests(ClusterFixture cluster)
         {
-            _factory = cluster?.Cluster.GrainFactory ?? throw new ArgumentNullException(nameof(cluster));
+            _cluster = cluster?.Cluster ?? throw new ArgumentNullException(nameof(cluster));
         }
 
         [Fact]
-        public async Task GetOrdersAsync()
+        public async Task SetGetOrdersAsync()
         {
             // arrange
             var symbol = Guid.NewGuid().ToString();
+            var orders = new[]
+            {
+                OrderQueryResult.Empty with { Symbol = symbol, OrderId = 1001 },
+                OrderQueryResult.Empty with { Symbol = symbol, OrderId = 1002 },
+                OrderQueryResult.Empty with { Symbol = symbol, OrderId = 1003 }
+            };
+            var grain = _cluster.GrainFactory.GetOrderProviderGrain(symbol);
 
             // act
-            var result = await _factory.GetOrderProviderGrain(symbol).GetOrdersAsync();
+            await grain.SetOrdersAsync(orders);
+            var result = await grain.GetOrdersAsync();
 
             // assert
             Assert.NotEqual(Guid.Empty, result.Version);
             Assert.Equal(3, result.MaxSerial);
-            Assert.Collection(result.Orders,
-                x =>
-                {
-                    Assert.Equal(symbol, x.Symbol);
-                    Assert.Equal(1001, x.OrderId);
-                },
-                x =>
-                {
-                    Assert.Equal(symbol, x.Symbol);
-                    Assert.Equal(1002, x.OrderId);
-                },
-                x =>
-                {
-                    Assert.Equal(symbol, x.Symbol);
-                    Assert.Equal(1003, x.OrderId);
-                });
+            Assert.Contains(result.Orders, x => x.OrderId == 1001);
+            Assert.Contains(result.Orders, x => x.OrderId == 1002);
+            Assert.Contains(result.Orders, x => x.OrderId == 1003);
         }
     }
 }

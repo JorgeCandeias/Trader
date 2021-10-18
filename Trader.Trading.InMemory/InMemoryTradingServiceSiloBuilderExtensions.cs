@@ -14,7 +14,8 @@ namespace Orleans.Hosting
                     services
                         .AddSingleton<InMemoryTradingService>()
                         .AddSingleton<IInMemoryTradingService>(sp => sp.GetRequiredService<InMemoryTradingService>())
-                        .AddSingleton<ITradingService>(sp => sp.GetRequiredService<InMemoryTradingService>());
+                        .AddSingleton<ITradingService>(sp => sp.GetRequiredService<InMemoryTradingService>())
+                        .AddSingleton<IMarketDataStreamClientFactory, InMemoryMarketDataStreamClientFactory>();
                 })
                 .ConfigureApplicationParts(manager => manager.AddApplicationPart(typeof(InMemoryTradingServiceSiloBuilderExtensions).Assembly).WithReferences());
         }

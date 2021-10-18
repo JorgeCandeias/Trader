@@ -13,8 +13,9 @@ namespace Outcompute.Trader.Trading.Binance.Tests.Fixtures
         public ClusterFixture()
         {
             Cluster = new TestClusterBuilder()
+                .AddClientBuilderConfigurator<ClientBuilderConfigurator>()
                 .AddSiloBuilderConfigurator<HostConfigurator>()
-                .AddSiloBuilderConfigurator<TestSiloConfigurator>()
+                .AddSiloBuilderConfigurator<SiloConfigurator>()
                 .Build();
 
             Cluster.Deploy();
@@ -43,7 +44,7 @@ namespace Outcompute.Trader.Trading.Binance.Tests.Fixtures
         }
     }
 
-    public class TestSiloConfigurator : ISiloConfigurator
+    public class SiloConfigurator : ISiloConfigurator
     {
         public void Configure(ISiloBuilder siloBuilder)
         {
@@ -54,6 +55,16 @@ namespace Outcompute.Trader.Trading.Binance.Tests.Fixtures
                     .AddInMemoryTradingRepository()
                     .AddInMemoryTradingService();
             });
+        }
+    }
+
+    public class ClientBuilderConfigurator : IClientBuilderConfigurator
+    {
+        public void Configure(IConfiguration configuration, IClientBuilder clientBuilder)
+        {
+            clientBuilder
+                .AddInMemoryTradingRepository()
+                .AddInMemoryTradingService();
         }
     }
 }

@@ -1,6 +1,5 @@
-﻿using Moq;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Outcompute.Trader.Trading.Algorithms;
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -18,7 +17,10 @@ namespace Outcompute.Trader.Trading.Tests
         public void CreatesAlgo()
         {
             // arrange
-            var provider = Mock.Of<IServiceProvider>();
+            var provider = new ServiceCollection()
+                .AddTradingServices()
+                .BuildServiceProvider();
+
             var factory = new AlgoFactory<MyAlgo>(provider);
 
             // act

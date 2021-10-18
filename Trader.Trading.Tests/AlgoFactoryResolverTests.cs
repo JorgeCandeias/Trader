@@ -17,9 +17,11 @@ namespace Outcompute.Trader.Trading.Tests
         public void Resolves()
         {
             // arrange
-            var services = new ServiceCollection();
-            services.AddAlgoType<MyAlgo>("MyAlgo");
-            var provider = services.BuildServiceProvider();
+            var provider = new ServiceCollection()
+                .AddTradingServices()
+                .AddAlgoType<MyAlgo>("MyAlgo")
+                .BuildServiceProvider();
+
             var resolver = new AlgoFactoryResolver(provider);
 
             // act

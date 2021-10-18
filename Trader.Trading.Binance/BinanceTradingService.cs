@@ -73,7 +73,7 @@ namespace Outcompute.Trader.Trading.Binance
             return _mapper.Map<ImmutableSortedTradeSet>(output);
         }
 
-        public async Task<ImmutableSortedOrderSet> GetOpenOrdersAsync(string symbol, CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyCollection<OrderQueryResult>> GetOpenOrdersAsync(string symbol, CancellationToken cancellationToken = default)
         {
             var model = new GetOpenOrders(symbol, null, _clock.UtcNow);
             var input = _mapper.Map<GetOpenOrdersRequestModel>(model);
@@ -97,7 +97,7 @@ namespace Outcompute.Trader.Trading.Binance
             return _mapper.Map<OrderQueryResult>(output);
         }
 
-        public async Task<ImmutableSortedOrderSet> GetAllOrdersAsync(string symbol, long? orderId, int? limit, CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyCollection<OrderQueryResult>> GetAllOrdersAsync(string symbol, long? orderId, int? limit, CancellationToken cancellationToken = default)
         {
             var model = new GetAllOrders(symbol, orderId, null, null, limit, null, _clock.UtcNow);
             var input = _mapper.Map<GetAllOrdersRequestModel>(model);

@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 {
+    [Reentrant]
     [StatelessWorker(1)]
     internal class BinanceKlineProviderGrain : Grain, IBinanceKlineProviderGrain
     {
@@ -177,7 +178,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             return Task.CompletedTask;
         }
 
-        public async ValueTask<IReadOnlyCollection<Kline>> GetKlinesAsync(DateTime start, DateTime end)
+        public async Task<IReadOnlyCollection<Kline>> GetKlinesAsync(DateTime start, DateTime end)
         {
             var builder = ImmutableSortedSet.CreateBuilder(Kline.KeyComparer);
 

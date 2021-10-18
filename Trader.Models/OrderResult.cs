@@ -1,8 +1,10 @@
-﻿using System;
+﻿using Orleans.Concurrency;
+using System;
 using System.Collections.Immutable;
 
 namespace Outcompute.Trader.Models
 {
+    [Immutable]
     public record OrderResult(
         string Symbol,
         long OrderId,

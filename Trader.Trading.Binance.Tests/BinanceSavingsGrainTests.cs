@@ -1,7 +1,9 @@
-﻿using Orleans;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Orleans;
 using Orleans.TestingHost;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Binance.Tests.Fixtures;
+using Outcompute.Trader.Trading.InMemory;
 using System;
 using System.Collections.Immutable;
 using System.Linq;
@@ -36,14 +38,15 @@ namespace Outcompute.Trader.Trading.Binance.Tests
                 .Select(x => (ProductId: $"P{x}", Quota: new LeftDailyRedemptionQuotaOnFlexibleProduct(asset, 1000000m, 1000000m, x)))
                 .ToImmutableList();
 
-            await _cluster.GrainFactory
-                .GetFakeTradingServiceGrain()
+            await _cluster
+                .ServiceProvider
+                .GetRequiredService<IInMemoryTradingService>()
                 .SetFlexibleProductPositionsAsync(positions);
 
             foreach (var (productId, quota) in quotas)
             {
-                await _cluster.GrainFactory
-                    .GetFakeTradingServiceGrain()
+                await _cluster.ServiceProvider
+                    .GetRequiredService<IInMemoryTradingService>()
                     .SetLeftDailyRedemptionQuotaOnFlexibleProductAsync(productId, FlexibleProductRedemptionType.Fast, quota);
             }
 

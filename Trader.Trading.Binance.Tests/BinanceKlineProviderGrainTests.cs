@@ -1,5 +1,7 @@
-﻿using Orleans;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Orleans;
 using Orleans.TestingHost;
+using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Binance.Tests.Fixtures;
 using System;
@@ -38,8 +40,9 @@ namespace Outcompute.Trader.Trading.Binance.Tests
                 })
                 .ToList();
 
-            await _cluster.GrainFactory
-                .GetFakeTradingRepositoryGrain()
+            await _cluster
+                .ServiceProvider
+                .GetRequiredService<ITradingRepository>()
                 .SetKlinesAsync(klines);
 
             // act

@@ -1,11 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Orleans;
 using Orleans.Hosting;
 using Orleans.TestingHost;
-using Outcompute.Trader.Data;
-using Outcompute.Trader.Trading.Binance.Tests.Fakes;
 using System;
 using System.Collections.Generic;
 
@@ -54,19 +51,8 @@ namespace Outcompute.Trader.Trading.Binance.Tests.Fixtures
             {
                 trader
                     .ConfigureApplicationParts(manager => manager.AddApplicationPart(typeof(ClusterFixture).Assembly).WithReferences())
-                    .AddBinanceTradingService(options =>
-                    {
-                        options.ApiKey = "<TEST>";
-                        options.SecretKey = "<TEST>";
-                        options.BaseApiAddress = new Uri("http://localhost/test");
-                        options.BaseWssAddress = new Uri("http://localhost/test");
-                    })
-                    .ConfigureServices(services =>
-                    {
-                        services
-                            .AddSingleton<ITradingRepository, FakeTradingRepository>()
-                            .AddSingleton<ITradingService, FakeTradingService>();
-                    });
+                    .AddInMemoryTradingRepository()
+                    .AddInMemoryTradingService();
             });
         }
     }

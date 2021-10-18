@@ -76,7 +76,7 @@ namespace Outcompute.Trader.Trading.Binance
             return WaitAndRetryForeverAsync(ct => _trader.GetAccountTradesAsync(symbol, fromId, limit, ct), cancellationToken);
         }
 
-        public Task<ImmutableSortedOrderSet> GetAllOrdersAsync(string symbol, long? orderId, int? limit, CancellationToken cancellationToken = default)
+        public Task<IReadOnlyCollection<OrderQueryResult>> GetAllOrdersAsync(string symbol, long? orderId, int? limit, CancellationToken cancellationToken = default)
         {
             return WaitAndRetryForeverAsync(ct => _trader.GetAllOrdersAsync(symbol, orderId, limit, ct), cancellationToken);
         }
@@ -106,7 +106,7 @@ namespace Outcompute.Trader.Trading.Binance
             return WaitAndRetryForeverAsync(ct => _trader.GetKlinesAsync(symbol, interval, startTime, endTime, limit, ct), cancellationToken);
         }
 
-        public Task<ImmutableSortedOrderSet> GetOpenOrdersAsync(string symbol, CancellationToken cancellationToken = default)
+        public Task<IReadOnlyCollection<OrderQueryResult>> GetOpenOrdersAsync(string symbol, CancellationToken cancellationToken = default)
         {
             return WaitAndRetryForeverAsync(ct => _trader.GetOpenOrdersAsync(symbol, ct), cancellationToken);
         }

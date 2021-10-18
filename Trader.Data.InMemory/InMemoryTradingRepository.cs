@@ -7,18 +7,36 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Binance.Tests.Fakes
+namespace Outcompute.Trader.Trading.Data.InMemory
 {
-    public class FakeTradingRepository : ITradingRepository
+    internal class InMemoryTradingRepository : ITradingRepository
     {
-        private readonly IFakeTradingRepositoryGrain _grain;
+        private readonly IInMemoryTradingRepositoryGrain _grain;
 
-        public FakeTradingRepository(IGrainFactory factory)
+        public InMemoryTradingRepository(IGrainFactory factory)
         {
             if (factory is null) throw new ArgumentNullException(nameof(factory));
 
-            _grain = factory.GetGrain<IFakeTradingRepositoryGrain>(Guid.Empty);
+            _grain = factory.GetGrain<IInMemoryTradingRepositoryGrain>(Guid.Empty);
         }
+
+        #region Orders
+
+        public Task<IEnumerable<OrderQueryResult>> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default)
+        {
+            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+
+            return _grain.GetOrdersAsync(symbol);
+        }
+
+        public Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders, CancellationToken cancellationToken = default)
+        {
+            if (orders is null) throw new ArgumentNullException(nameof(orders));
+
+            return _grain.SetOrdersAsync(orders);
+        }
+
+        #endregion Orders
 
         public Task<IEnumerable<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime startOpenTime, DateTime endOpenTime, CancellationToken cancellationToken = default)
         {
@@ -29,36 +47,37 @@ namespace Outcompute.Trader.Trading.Binance.Tests.Fakes
 
         public Task<long> GetLastPagedTradeIdAsync(string symbol, CancellationToken cancellationToken = default)
         {
+            // todo: remove
             throw new NotImplementedException();
         }
 
         public Task<long> GetMaxTradeIdAsync(string symbol, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
-        }
-
-        public Task<IEnumerable<OrderQueryResult>> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default)
-        {
+            // todo: remove
             throw new NotImplementedException();
         }
 
         public Task<MiniTicker> GetTickerAsync(string symbol, CancellationToken cancellationToken = default)
         {
+            // todo: refactor into try get ticker
             throw new NotImplementedException();
         }
 
         public Task<ImmutableSortedTradeSet> GetTradesAsync(string symbol, CancellationToken cancellationToken = default)
         {
+            // todo: refactor the result into IEnumerable
             throw new NotImplementedException();
         }
 
         public Task SetBalancesAsync(AccountInfo accountInfo, CancellationToken cancellationToken = default)
         {
+            // todo: remove
             throw new NotImplementedException();
         }
 
         public Task SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default)
         {
+            // todo: implement
             throw new NotImplementedException();
         }
 
@@ -71,31 +90,31 @@ namespace Outcompute.Trader.Trading.Binance.Tests.Fakes
 
         public Task SetLastPagedTradeIdAsync(string symbol, long tradeId, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
-        }
-
-        public Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders, CancellationToken cancellationToken = default)
-        {
+            // todo: remove
             throw new NotImplementedException();
         }
 
         public Task SetTickersAsync(IEnumerable<MiniTicker> tickers, CancellationToken cancellationToken = default)
         {
+            // todo: implement
             throw new NotImplementedException();
         }
 
         public Task SetTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default)
         {
+            // todo: remove
             throw new NotImplementedException();
         }
 
         public Task SetTradesAsync(IEnumerable<AccountTrade> trades, CancellationToken cancellationToken = default)
         {
+            // todo: implement
             throw new NotImplementedException();
         }
 
         public Task<Balance?> TryGetBalanceAsync(string asset, CancellationToken cancellationToken = default)
         {
+            // todo: implement
             throw new NotImplementedException();
         }
 

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Trading.Providers;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -53,7 +54,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                     .ConfigureAwait(false);
 
                 // keep the last order id
-                orderId = orders.Max!.OrderId;
+                orderId = orders.Max(x => x.OrderId);
 
                 // keep track for logging
                 count += orders.Count;

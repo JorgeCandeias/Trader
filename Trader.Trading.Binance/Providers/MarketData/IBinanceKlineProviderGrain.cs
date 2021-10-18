@@ -8,6 +8,6 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 {
     internal interface IBinanceKlineProviderGrain : IGrainWithStringKey
     {
-        ValueTask<IReadOnlyCollection<Kline>> GetKlinesAsync(DateTime start, DateTime end);
+        Task<IReadOnlyCollection<Kline>> GetKlinesAsync(DateTime start, DateTime end);
     }
 }

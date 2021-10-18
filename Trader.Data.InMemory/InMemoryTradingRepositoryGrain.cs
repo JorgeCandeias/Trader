@@ -1,4 +1,5 @@
 ﻿using Orleans;
+using Orleans.Concurrency;
 using Outcompute.Trader.Models;
 using System;
 using System.Collections.Generic;
@@ -6,11 +7,13 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Binance.Tests.Fakes
+namespace Outcompute.Trader.Trading.Data.InMemory
 {
-    internal class FakeTradingRepositoryGrain : Grain, IFakeTradingRepositoryGrain
+    [Reentrant]
+    internal class InMemoryTradingRepositoryGrain : Grain, IInMemoryTradingRepositoryGrain
     {
-        private readonly Dictionary<(string Symbol, KlineInterval Interval, DateTime OpenTime), Kline> _klines = new Dictionary<(string Symbol, KlineInterval Interval, DateTime OpenTime), Kline>();
+        private readonly Dictionary<string, ImmutableSortedSet<OrderQueryResult>.Builder> _orders = new();
+        private readonly Dictionary<(string Symbol, KlineInterval Interval, DateTime OpenTime), Kline> _klines = new();
 
         public Task<IEnumerable<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime startOpenTime, DateTime endOpenTime)
         {
@@ -45,6 +48,35 @@ namespace Outcompute.Trader.Trading.Binance.Tests.Fakes
             }
 
             return Task.FromResult<Kline?>(null);
+        }
+
+        public Task<IEnumerable<OrderQueryResult>> GetOrdersAsync(string symbol)
+        {
+            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+
+            var result = _orders.TryGetValue(symbol, out var orders)
+                ? orders.ToImmutable()
+                : ImmutableSortedSet<OrderQueryResult>.Empty;
+
+            return Task.FromResult<IEnumerable<OrderQueryResult>>(result);
+        }
+
+        public Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders)
+        {
+            if (orders is null) throw new ArgumentNullException(nameof(orders));
+
+            foreach (var order in orders)
+            {
+                if (!_orders.TryGetValue(order.Symbol, out var builder))
+                {
+                    _orders[order.Symbol] = builder = ImmutableSortedSet.CreateBuilder(OrderQueryResult.OrderIdComparer);
+                }
+
+                builder.Remove(order);
+                builder.Add(order);
+            }
+
+            return Task.CompletedTask;
         }
     }
 }

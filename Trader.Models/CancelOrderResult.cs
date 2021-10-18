@@ -1,10 +1,12 @@
-﻿using System;
+﻿using Orleans.Concurrency;
+using System;
 using System.Collections.Immutable;
 
 namespace Outcompute.Trader.Models
 {
     public record CancelOrderResult();
 
+    [Immutable]
     public record CancelStandardOrderResult(
         string Symbol,
         string OriginalClientOrderId,

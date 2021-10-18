@@ -9,48 +9,17 @@ namespace Outcompute.Trader.Data
 {
     public interface ITradingRepository
     {
-        [Obsolete("Remove")]
-        Task<long> GetLastPagedOrderIdAsync(string symbol, CancellationToken cancellationToken = default);
+        #region Orders
 
-        [Obsolete("Remove")]
-        Task SetLastPagedOrderIdAsync(string symbol, long orderId, CancellationToken cancellationToken = default);
+        Task<IEnumerable<OrderQueryResult>> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default);
+
+        Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders, CancellationToken cancellationToken = default);
+
+        #endregion Orders
 
         Task<long> GetLastPagedTradeIdAsync(string symbol, CancellationToken cancellationToken = default);
 
         Task SetLastPagedTradeIdAsync(string symbol, long tradeId, CancellationToken cancellationToken = default);
-
-        [Obsolete("Remove")]
-        Task<OrderQueryResult> GetOrderAsync(string symbol, long orderId, CancellationToken cancellationToken = default);
-
-        [Obsolete("Remove")]
-        Task<OrderQueryResult?> GetLatestOrderBySideAsync(string symbol, OrderSide side, CancellationToken cancellationToken = default);
-
-        [Obsolete("Remove")]
-        Task<ImmutableSortedOrderSet> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default);
-
-        [Obsolete("Remove")]
-        Task<ImmutableSortedOrderSet> GetSignificantCompletedOrdersAsync(string symbol, CancellationToken cancellationToken = default);
-
-        [Obsolete("Remove")]
-        Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders, CancellationToken cancellationToken = default);
-
-        [Obsolete("Remove")]
-        Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default);
-
-        [Obsolete("Remove")]
-        Task SetOrderAsync(CancelStandardOrderResult result, CancellationToken cancellationToken = default);
-
-        [Obsolete("Remove")]
-        Task SetOrderAsync(OrderResult result, decimal stopPrice = 0m, decimal icebergQuantity = 0m, decimal originalQuoteOrderQuantity = 0m, CancellationToken cancellationToken = default);
-
-        [Obsolete("Remove")]
-        Task<long> GetMinTransientOrderIdAsync(string symbol, CancellationToken cancellationToken = default);
-
-        [Obsolete("Remove")]
-        Task<ImmutableSortedOrderSet> GetTransientOrdersBySideAsync(string symbol, OrderSide orderSide, CancellationToken cancellationToken = default);
-
-        [Obsolete("Remove")]
-        Task<ImmutableSortedOrderSet> GetNonSignificantTransientOrdersBySideAsync(string symbol, OrderSide orderSide, CancellationToken cancellationToken = default);
 
         Task<long> GetMaxTradeIdAsync(string symbol, CancellationToken cancellationToken = default);
 

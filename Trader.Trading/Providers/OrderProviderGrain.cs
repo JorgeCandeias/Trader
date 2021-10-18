@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Orleans;
+using Orleans.Concurrency;
+using OrleansDashboard;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using System;
@@ -12,6 +14,7 @@ using static System.String;
 
 namespace Outcompute.Trader.Trading.Providers
 {
+    [Reentrant]
     internal class OrderProviderGrain : Grain, IOrderProviderGrain
     {
         private readonly ITradingRepository _repository;
@@ -76,12 +79,13 @@ namespace Outcompute.Trader.Trading.Providers
         /// <summary>
         /// Gets all cached orders.
         /// </summary>
-        public ValueTask<(Guid Version, int MaxSerial, IReadOnlyList<OrderQueryResult> Orders)> GetOrdersAsync()
+        public Task<(Guid Version, int MaxSerial, IReadOnlyList<OrderQueryResult> Orders)> GetOrdersAsync()
         {
-            return new ValueTask<(Guid, int, IReadOnlyList<OrderQueryResult>)>((_version, _serial, _orders.ToImmutable()));
+            return Task.FromResult<(Guid, int, IReadOnlyList<OrderQueryResult>)>((_version, _serial, _orders.ToImmutable()));
         }
 
-        public ValueTask<(Guid Version, int MaxSerial, IReadOnlyList<OrderQueryResult> Orders)> PollOrdersAsync(Guid version, int fromSerial)
+        [NoProfiling]
+        public Task<(Guid Version, int MaxSerial, IReadOnlyList<OrderQueryResult> Orders)> PollOrdersAsync(Guid version, int fromSerial)
         {
             // if the version is different then return all the orders plus the new version
             if (version != _version)
@@ -102,7 +106,7 @@ namespace Outcompute.Trader.Trading.Providers
                     }
                 }
 
-                return new ValueTask<(Guid, int, IReadOnlyList<OrderQueryResult>)>((_version, _serial, builder.ToImmutable()));
+                return Task.FromResult<(Guid, int, IReadOnlyList<OrderQueryResult>)>((_version, _serial, builder.ToImmutable()));
             }
 
             // otherwise track this poll request for future completion
@@ -112,8 +116,7 @@ namespace Outcompute.Trader.Trading.Providers
             }
 
             // let the client wait until we have data to fulfill this request or return empty on timeout
-            var wait = completion.Task.WithDefaultOnTimeout((_version, _serial, ImmutableList<OrderQueryResult>.Empty), _options.ReactivePollingTimeout, _lifetime.ApplicationStopping);
-            return new ValueTask<(Guid, int, IReadOnlyList<OrderQueryResult>)>(wait);
+            return completion.Task.WithDefaultOnTimeout((_version, _serial, ImmutableList<OrderQueryResult>.Empty), _options.ReactivePollingTimeout, _lifetime.ApplicationStopping);
         }
 
         /// <summary>
@@ -162,19 +165,19 @@ namespace Outcompute.Trader.Trading.Providers
         /// <summary>
         /// Saves the order to the cache and notifies all pending reactive pollers.
         /// </summary>
-        public ValueTask SetOrderAsync(OrderQueryResult order)
+        public Task SetOrderAsync(OrderQueryResult order)
         {
             SetOrderCore(order);
 
             Publish();
 
-            return ValueTask.CompletedTask;
+            return Task.CompletedTask;
         }
 
         /// <summary>
         /// Saves all orders to the cache and notifies all pending reactive pollers.
         /// </summary>
-        public ValueTask SetOrdersAsync(IReadOnlyCollection<OrderQueryResult> orders)
+        public Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders)
         {
             foreach (var item in orders)
             {
@@ -183,37 +186,22 @@ namespace Outcompute.Trader.Trading.Providers
 
             Publish();
 
-            return ValueTask.CompletedTask;
+            return Task.CompletedTask;
         }
 
-        public ValueTask<OrderQueryResult?> TryGetOrderAsync(long orderId)
+        public Task<OrderQueryResult?> TryGetOrderAsync(long orderId)
         {
             var order = _orders.TryGetValue(OrderQueryResult.Empty with { OrderId = orderId }, out var current) ? current : null;
 
-            return new ValueTask<OrderQueryResult?>(order);
+            return Task.FromResult(order);
         }
 
         private void SetOrderCore(OrderQueryResult item)
         {
-            // skip if the current item is newer or otherwise make room for the new item
-            if (_orders.TryGetValue(item, out var current))
+            // remove and unindex the old version
+            if (_orders.Remove(item) && _serialByOrder.Remove(item, out var serial) && _orderBySerial.Remove(serial))
             {
-                if (current.UpdateTime > item.UpdateTime)
-                {
-                    return;
-                }
-                else
-                {
-                    // remove the old version
-                    _orders.Remove(current);
-
-                    // unindex the old version
-                    if (_serialByOrder.TryGetValue(current, out var serial))
-                    {
-                        _orderBySerial.Remove(serial);
-                        _serialByOrder.Remove(current);
-                    }
-                }
+                // noop
             }
 
             // keep the new order

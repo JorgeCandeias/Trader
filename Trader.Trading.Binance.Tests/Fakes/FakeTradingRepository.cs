@@ -27,17 +27,7 @@ namespace Outcompute.Trader.Trading.Binance.Tests.Fakes
             return _grain.GetKlinesAsync(symbol, interval, startOpenTime, endOpenTime);
         }
 
-        public Task<long> GetLastPagedOrderIdAsync(string symbol, CancellationToken cancellationToken = default)
-        {
-            throw new NotImplementedException();
-        }
-
         public Task<long> GetLastPagedTradeIdAsync(string symbol, CancellationToken cancellationToken = default)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<OrderQueryResult?> GetLatestOrderBySideAsync(string symbol, OrderSide side, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
@@ -47,27 +37,7 @@ namespace Outcompute.Trader.Trading.Binance.Tests.Fakes
             throw new NotImplementedException();
         }
 
-        public Task<long> GetMinTransientOrderIdAsync(string symbol, CancellationToken cancellationToken = default)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<ImmutableSortedOrderSet> GetNonSignificantTransientOrdersBySideAsync(string symbol, OrderSide orderSide, CancellationToken cancellationToken = default)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<OrderQueryResult> GetOrderAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<ImmutableSortedOrderSet> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<ImmutableSortedOrderSet> GetSignificantCompletedOrdersAsync(string symbol, CancellationToken cancellationToken = default)
+        public Task<IEnumerable<OrderQueryResult>> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
@@ -78,11 +48,6 @@ namespace Outcompute.Trader.Trading.Binance.Tests.Fakes
         }
 
         public Task<ImmutableSortedTradeSet> GetTradesAsync(string symbol, CancellationToken cancellationToken = default)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<ImmutableSortedOrderSet> GetTransientOrdersBySideAsync(string symbol, OrderSide orderSide, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
@@ -104,27 +69,7 @@ namespace Outcompute.Trader.Trading.Binance.Tests.Fakes
             return _grain.SetKlinesAsync(items);
         }
 
-        public Task SetLastPagedOrderIdAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
-        {
-            throw new NotImplementedException();
-        }
-
         public Task SetLastPagedTradeIdAsync(string symbol, long tradeId, CancellationToken cancellationToken = default)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task SetOrderAsync(CancelStandardOrderResult result, CancellationToken cancellationToken = default)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task SetOrderAsync(OrderResult result, decimal stopPrice = 0, decimal icebergQuantity = 0, decimal originalQuoteOrderQuantity = 0, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }

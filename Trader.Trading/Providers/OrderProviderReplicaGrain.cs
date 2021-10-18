@@ -54,9 +54,36 @@ namespace Outcompute.Trader.Trading.Providers
             await base.OnActivateAsync();
         }
 
-        public ValueTask<IReadOnlyList<OrderQueryResult>> GetOrdersAsync()
+        public Task<OrderQueryResult?> TryGetOrderAsync(long orderId)
         {
-            return new ValueTask<IReadOnlyList<OrderQueryResult>>(_orders.ToImmutable());
+            var result = _orders.TryGetValue(OrderQueryResult.Empty with { OrderId = orderId }, out var order) ? order : null;
+
+            return Task.FromResult(result);
+        }
+
+        public Task<IReadOnlyList<OrderQueryResult>> GetOrdersAsync()
+        {
+            return Task.FromResult<IReadOnlyList<OrderQueryResult>>(_orders.ToImmutable());
+        }
+
+        public async Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders)
+        {
+            // let the main grain handle saving so it updates every other replica
+            await _factory.GetOrderProviderGrain(_symbol).SetOrdersAsync(orders);
+
+            // apply the orders to this replica now so they are consistent from the point of view of the algo calling this method
+            // the updated serial numbers will eventually come through as reactive caching calls resolve
+            Apply(orders);
+        }
+
+        public async Task SetOrderAsync(OrderQueryResult order)
+        {
+            // let the main grain handle saving so it updates every other replica
+            await _factory.GetOrderProviderGrain(_symbol).SetOrderAsync(order);
+
+            // apply the orders to this replica now so they are consistent from the point of view of the algo calling this method
+            // the updated serial numbers will eventually come through as reactive caching calls resolve
+            Apply(order);
         }
 
         private async Task LoadAsync()
@@ -64,7 +91,7 @@ namespace Outcompute.Trader.Trading.Providers
             // get all the orders
             var result = await _factory.GetOrderProviderGrain(_symbol).GetOrdersAsync();
 
-            Apply(result.Version, result.MaxSerial, result.Orders);
+            Apply(result.Orders);
         }
 
         private async Task TickUpdateAsync(object _)
@@ -77,19 +104,35 @@ namespace Outcompute.Trader.Trading.Providers
 
         private void Apply(Guid version, int serial, IEnumerable<OrderQueryResult> orders)
         {
-            // keep the new markers
-            _version = version;
-            _serial = serial;
+            Apply(version, serial);
 
-            // apply new orders
             foreach (var order in orders)
             {
-                // remove old order to allow an update
-                _orders.Remove(order);
-
-                // add new or updated order
-                _orders.Add(order);
+                Apply(order);
             }
+        }
+
+        private void Apply(Guid version, int serial)
+        {
+            _version = version;
+            _serial = serial;
+        }
+
+        private void Apply(IEnumerable<OrderQueryResult> orders)
+        {
+            foreach (var order in orders)
+            {
+                Apply(order);
+            }
+        }
+
+        private void Apply(OrderQueryResult order)
+        {
+            // remove old order to allow an update
+            _orders.Remove(order);
+
+            // add new or updated order
+            _orders.Add(order);
         }
     }
 }

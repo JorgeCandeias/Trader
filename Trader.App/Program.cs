@@ -42,11 +42,28 @@ namespace Outcompute.Trader.App
                     logging.ClearProviders();
                     logging.AddSerilog(new LoggerConfiguration()
                         .MinimumLevel.Information()
+
+                        // ignore excess chatter from microsoft components
                         .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
-                        .Filter.ByExcluding(x => x.Properties.TryGetValue("SourceContext", out var property) && property is ScalarValue scalar && scalar.Value.Equals("System.Net.Http.HttpClient.BinanceApiClient.ClientHandler") && x.Level < LogEventLevel.Warning)
-                        .Filter.ByExcluding(x => x.Properties.TryGetValue("SourceContext", out var property) && property is ScalarValue scalar && scalar.Value.Equals("System.Net.Http.HttpClient.BinanceApiClient.LogicalHandler") && x.Level < LogEventLevel.Warning)
-                        .Filter.ByExcluding(x => x.Properties.TryGetValue("SourceContext", out var property) && property is ScalarValue scalar && scalar.Value.Equals("Orleans.Runtime.SiloControl") && x.Level < LogEventLevel.Warning)
-                        .Filter.ByExcluding(x => x.Properties.TryGetValue("SourceContext", out var property) && property is ScalarValue scalar && scalar.Value.Equals("Orleans.Runtime.Management.ManagementGrain") && x.Level < LogEventLevel.Warning)
+                        .MinimumLevel.Override("System.Net.Http.HttpClient.BinanceApiClient.ClientHandler", LogEventLevel.Warning)
+                        .MinimumLevel.Override("System.Net.Http.HttpClient.BinanceApiClient.LogicalHandler", LogEventLevel.Warning)
+                        .MinimumLevel.Override("Orleans.Runtime.SiloControl", LogEventLevel.Warning)
+                        .MinimumLevel.Override("Orleans.Runtime.Management.ManagementGrain", LogEventLevel.Warning)
+
+                        // for now ignore orleans notifications about long-running interleaved methods
+                        // there is an issue on the orleans repo about adding a supported way to supress these messages for specific methods
+                        .Filter.ByExcluding(x =>
+                        {
+                            return x.Properties.TryGetValue("SourceContext", out var contextProperty) &&
+                                contextProperty is ScalarValue contextValue &&
+                                contextValue.Value.Equals("Orleans.Runtime.InsideRuntimeClient") &&
+                                x.Level == LogEventLevel.Information &&
+                                x.MessageTemplate.Text.Contains("Received status update for pending request, Request", StringComparison.Ordinal) &&
+                                x.Properties.TryGetValue("RequestMessage", out var messageProperty) &&
+                                messageProperty is ScalarValue messageValue &&
+                                messageValue.Value is string messageString &&
+                                messageString.StartsWith("IsAlwaysInterleave", StringComparison.Ordinal);
+                        })
                         .WriteTo.Console()
                         .CreateLogger(), true);
                 })

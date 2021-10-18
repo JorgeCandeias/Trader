@@ -9,15 +9,15 @@ namespace Outcompute.Trader.Trading.Providers
 {
     public interface IOrderProviderGrain : IGrainWithStringKey
     {
-        ValueTask SetOrderAsync(OrderQueryResult order);
+        Task SetOrderAsync(OrderQueryResult order);
 
-        ValueTask SetOrdersAsync(IReadOnlyCollection<OrderQueryResult> orders);
+        Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders);
 
-        ValueTask<OrderQueryResult?> TryGetOrderAsync(long orderId);
+        Task<OrderQueryResult?> TryGetOrderAsync(long orderId);
 
-        ValueTask<(Guid Version, int MaxSerial, IReadOnlyList<OrderQueryResult> Orders)> GetOrdersAsync();
+        Task<(Guid Version, int MaxSerial, IReadOnlyList<OrderQueryResult> Orders)> GetOrdersAsync();
 
         [AlwaysInterleave]
-        ValueTask<(Guid Version, int MaxSerial, IReadOnlyList<OrderQueryResult> Orders)> PollOrdersAsync(Guid version, int fromSerial);
+        Task<(Guid Version, int MaxSerial, IReadOnlyList<OrderQueryResult> Orders)> PollOrdersAsync(Guid version, int fromSerial);
     }
 }

@@ -17,6 +17,8 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<IOrderCodeGenerator, OrderCodeGenerator>()
                 .AddSingleton<IAlgoDependencyInfo, AlgoDependencyInfo>()
                 .AddSingleton<ISymbolProvider, SymbolProvider>()
+                .AddSingleton<IOrderProvider, OrderProvider>()
+                .AddHostedService<OrderProviderExtensionsHostedService>()
                 .AddScoped<AlgoContext>()
                 .AddScoped<IAlgoContext>(sp => sp.GetRequiredService<AlgoContext>())
                 .AddOptions<AlgoConfigurationMappingOptions>().ValidateDataAnnotations().Services

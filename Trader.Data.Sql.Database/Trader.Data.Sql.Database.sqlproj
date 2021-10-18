@@ -76,17 +76,10 @@
     <Build Include="Tables\Order.sql" />
     <Build Include="Tables\Trade.sql" />
     <Build Include="Procedures\GetOrders.sql" />
-    <Build Include="Tables\PagedOrder.sql" />
-    <Build Include="Procedures\GetPagedOrder.sql" />
-    <Build Include="Procedures\SetPagedOrder.sql" />
     <Build Include="Procedures\GetMaxTradeId.sql" />
-    <Build Include="Procedures\GetMinTransientOrderId.sql" />
     <Build Include="Procedures\GetTrades.sql" />
-    <Build Include="Procedures\GetTransientOrdersBySide.sql" />
-    <Build Include="Procedures\GetNonSignificantTransientOrdersBySide.sql" />
     <Build Include="Procedures\SetOrders.sql" />
     <Build Include="Types\OrderTableParameter.sql" />
-    <Build Include="Procedures\CancelOrder.sql" />
     <Build Include="Types\TradeTableParameter.sql" />
     <Build Include="Procedures\SetTrades.sql" />
     <Build Include="Tables\PagedTrade.sql" />
@@ -96,8 +89,6 @@
     <Build Include="Procedures\SetBalances.sql" />
     <Build Include="Procedures\GetBalance.sql" />
     <Build Include="Types\BalanceTableParameter.sql" />
-    <Build Include="Procedures\GetOrder.sql" />
-    <Build Include="Procedures\GetLatestOrderBySide.sql" />
     <Build Include="Tables\Symbol.sql" />
     <Build Include="Procedures\GetOrAddSymbol.sql" />
     <Build Include="Sequences\SymbolSequence.sql" />
@@ -106,7 +97,6 @@
     <Build Include="Types\TickerTableParameter.sql" />
     <Build Include="Procedures\SetTickers.sql" />
     <Build Include="Procedures\GetTicker.sql" />
-    <Build Include="Procedures\GetSignificantCompletedOrders.sql" />
     <Build Include="Tables\Kline.sql" />
     <Build Include="Types\KlineTableParameter.sql" />
     <Build Include="Procedures\SetKlines.sql" />

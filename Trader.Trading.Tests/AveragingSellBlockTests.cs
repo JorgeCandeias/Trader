@@ -5,10 +5,10 @@ using Moq;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Providers;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
@@ -92,10 +92,9 @@ namespace Outcompute.Trader.Trading.Tests
         public async Task HandlesNoTicker()
         {
             // arrange
-            var transient = ImmutableSortedOrderSet.Create(new[] { OrderQueryResult.Empty with { OrderId = 999, Side = OrderSide.Sell, Symbol = "ABCXYZ" } });
+            var data = new[] { OrderQueryResult.Empty with { OrderId = 999, Side = OrderSide.Sell, Symbol = "ABCXYZ" } };
 
-            var repository = Mock.Of<ITradingRepository>(x =>
-                x.GetTransientOrdersBySideAsync("ABCXYZ", OrderSide.Sell, CancellationToken.None) == Task.FromResult(transient));
+            var repository = Mock.Of<ITradingRepository>(x => x.GetOrdersAsync("ABCXYZ", CancellationToken.None) == Task.FromResult<IEnumerable<OrderQueryResult>>(data));
 
             var trader = Mock.Of<ITradingService>();
 
@@ -160,6 +159,13 @@ namespace Outcompute.Trader.Trading.Tests
                 OrderId = existing.OrderId,
                 Side = existing.Side
             };
+            var savedCancellation = OrderQueryResult.Empty with
+            {
+                Symbol = existing.Symbol,
+                OrderId = existing.OrderId,
+                Side = existing.Side,
+                Status = OrderStatus.Canceled
+            };
             var created = OrderResult.Empty with
             {
                 Symbol = symbol.Name,
@@ -171,6 +177,17 @@ namespace Outcompute.Trader.Trading.Tests
                 Price = 876,
                 ClientOrderId = "ABCXYZ87600000000"
             };
+            var savedCreated = OrderQueryResult.Empty with
+            {
+                Symbol = symbol.Name,
+                OrderId = created.OrderId,
+                Side = created.Side,
+                Type = created.Type,
+                TimeInForce = created.TimeInForce,
+                OriginalQuantity = created.OriginalQuantity,
+                Price = created.Price,
+                ClientOrderId = created.ClientOrderId
+            };
             var ticker = MiniTicker.Empty with { Symbol = symbol.Name, ClosePrice = 1000 };
 
             var repository = Mock.Of<ITradingRepository>();
@@ -179,14 +196,14 @@ namespace Outcompute.Trader.Trading.Tests
                 .Returns(Task.FromResult<Balance?>(balance))
                 .Verifiable();
             Mock.Get(repository)
-                .Setup(x => x.GetTransientOrdersBySideAsync(symbol.Name, OrderSide.Sell, CancellationToken.None))
-                .Returns(Task.FromResult(ImmutableSortedOrderSet.Create(new[] { existing })))
+                .Setup(x => x.GetOrdersAsync(symbol.Name, CancellationToken.None))
+                .Returns(Task.FromResult<IEnumerable<OrderQueryResult>>(new[] { existing }))
                 .Verifiable();
             Mock.Get(repository)
-                .Setup(x => x.SetOrderAsync(cancellation, CancellationToken.None))
+                .Setup(x => x.SetOrdersAsync(new[] { savedCancellation }, CancellationToken.None))
                 .Verifiable();
             Mock.Get(repository)
-                .Setup(x => x.SetOrderAsync(created, 0m, 0m, 0m, CancellationToken.None))
+                .Setup(x => x.SetOrdersAsync(new[] { savedCreated }, CancellationToken.None))
                 .Verifiable();
 
             var savings = Mock.Of<ISavingsProvider>();

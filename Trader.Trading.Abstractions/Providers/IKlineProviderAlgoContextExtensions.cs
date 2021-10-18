@@ -17,7 +17,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             return context.ServiceProvider.GetRequiredService<IKlineProvider>();
         }
 
-        public static ValueTask<IReadOnlyCollection<Kline>> GetKlinesAsync(this IAlgoContext context, string symbol, KlineInterval interval, DateTime start, DateTime end, CancellationToken cancellationToken = default)
+        public static Task<IReadOnlyCollection<Kline>> GetKlinesAsync(this IAlgoContext context, string symbol, KlineInterval interval, DateTime start, DateTime end, CancellationToken cancellationToken = default)
         {
             return context.GetKlineProvider().GetKlinesAsync(symbol, interval, start, end, cancellationToken);
         }

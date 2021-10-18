@@ -21,7 +21,7 @@ namespace Outcompute.Trader.Trading.Binance.Tests
             var start = DateTime.Today.AddHours(-1);
             var end = DateTime.Today;
             var kline = Kline.Empty with { Symbol = symbol, Interval = interval, OpenTime = start };
-            var grain = Mock.Of<IBinanceKlineProviderGrain>(x => x.GetKlinesAsync(start, end) == ValueTask.FromResult<IReadOnlyCollection<Kline>>(new[] { kline }));
+            var grain = Mock.Of<IBinanceKlineProviderGrain>(x => x.GetKlinesAsync(start, end) == Task.FromResult<IReadOnlyCollection<Kline>>(new[] { kline }));
             var factory = Mock.Of<IGrainFactory>(x => x.GetGrain<IBinanceKlineProviderGrain>($"{symbol}|{interval}", null) == grain);
             var provider = new BinanceKlineProvider(factory);
 

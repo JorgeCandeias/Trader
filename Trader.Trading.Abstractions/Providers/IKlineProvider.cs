@@ -13,6 +13,6 @@ namespace Outcompute.Trader.Trading.Providers
         /// Returns an empty or partial collection if no complete dataset exists.
         /// The result set is ordered by open time.
         /// </summary>
-        ValueTask<IReadOnlyCollection<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime start, DateTime end, CancellationToken cancellationToken = default);
+        Task<IReadOnlyCollection<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime start, DateTime end, CancellationToken cancellationToken = default);
     }
 }

@@ -18,6 +18,6 @@ namespace Outcompute.Trader.Trading.Providers
         Task<(Guid Version, int MaxSerial, IReadOnlyList<OrderQueryResult> Orders)> GetOrdersAsync();
 
         [AlwaysInterleave]
-        Task<(Guid Version, int MaxSerial, IReadOnlyList<OrderQueryResult> Orders)> PollOrdersAsync(Guid version, int fromSerial);
+        Task<(Guid Version, int MaxSerial, IReadOnlyList<OrderQueryResult> Orders)> PollOrdersAsync(Guid version, int fromSerial, GrainCancellationToken grainCancellationToken);
     }
 }

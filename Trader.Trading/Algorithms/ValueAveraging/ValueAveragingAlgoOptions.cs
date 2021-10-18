@@ -18,8 +18,12 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         public decimal TargetQuoteBalanceFractionPerBuy { get; set; } = 0.001m;
 
         [Required]
-        [Range(1, 2)]
-        public decimal ProfitMultipler { get; set; } = 1.1m;
+        [Range(1, 1000000)]
+        public decimal MinSellProfitRate { get; set; } = 1.01m;
+
+        [Required]
+        [Range(1, 1000000)]
+        public decimal TargetSellProfitRate { get; set; } = 1.10m;
 
         public decimal? MaxNotional { get; set; }
 

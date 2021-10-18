@@ -9,6 +9,7 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Threading.Tasks;
 using static System.String;
 
@@ -85,7 +86,7 @@ namespace Outcompute.Trader.Trading.Providers
         }
 
         [NoProfiling]
-        public Task<(Guid Version, int MaxSerial, IReadOnlyList<OrderQueryResult> Orders)> PollOrdersAsync(Guid version, int fromSerial)
+        public Task<(Guid Version, int MaxSerial, IReadOnlyList<OrderQueryResult> Orders)> PollOrdersAsync(Guid version, int fromSerial, GrainCancellationToken grainCancellationToken)
         {
             // if the version is different then return all the orders plus the new version
             if (version != _version)
@@ -116,7 +117,7 @@ namespace Outcompute.Trader.Trading.Providers
             }
 
             // let the client wait until we have data to fulfill this request or return empty on timeout
-            return completion.Task.WithDefaultOnTimeout((_version, _serial, ImmutableList<OrderQueryResult>.Empty), _options.ReactivePollingTimeout, _lifetime.ApplicationStopping);
+            return completion.Task.WithDefaultOnTimeout((_version, _serial, ImmutableList<OrderQueryResult>.Empty), _options.ReactivePollingTimeout, grainCancellationToken.CancellationToken);
         }
 
         /// <summary>
@@ -235,8 +236,13 @@ namespace Outcompute.Trader.Trading.Providers
                 }
             }
 
+            if (elected.Take(count).Select(x => x.OrderId).Distinct().Count() != count)
+            {
+                // noop
+            }
+
             // save the items
-            await _repository.SetOrdersAsync(elected.AsSegment(0, count), _lifetime.ApplicationStopping);
+            await _repository.SetOrdersAsync(elected.Take(count), _lifetime.ApplicationStopping);
 
             // mark the max serial as saved now
             _savedSerial = maxSerial;

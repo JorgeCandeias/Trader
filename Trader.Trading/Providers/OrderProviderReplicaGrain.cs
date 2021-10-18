@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Concurrency;
 using Outcompute.Trader.Models;
@@ -10,16 +11,19 @@ using static System.String;
 
 namespace Outcompute.Trader.Trading.Providers
 {
+    [Reentrant]
     [StatelessWorker(1)]
     internal class OrderProviderReplicaGrain : Grain, IOrderProviderReplicaGrain
     {
         private readonly ReactiveOptions _options;
         private readonly IGrainFactory _factory;
+        private readonly IHostApplicationLifetime _lifetime;
 
-        public OrderProviderReplicaGrain(IOptions<ReactiveOptions> options, IGrainFactory factory)
+        public OrderProviderReplicaGrain(IOptions<ReactiveOptions> options, IGrainFactory factory, IHostApplicationLifetime lifetime)
         {
             _options = options.Value;
             _factory = factory;
+            _lifetime = lifetime;
         }
 
         /// <summary>
@@ -97,7 +101,10 @@ namespace Outcompute.Trader.Trading.Providers
         private async Task TickUpdateAsync(object _)
         {
             // wait for new orders
-            var result = await _factory.GetOrderProviderGrain(_symbol).PollOrdersAsync(_version, _serial + 1);
+            using var gct = new GrainCancellationTokenSource();
+            using var reg = _lifetime.ApplicationStopping.Register(() => gct.Cancel());
+
+            var result = await _factory.GetOrderProviderGrain(_symbol).PollOrdersAsync(_version, _serial + 1, gct.Token);
 
             Apply(result.Version, result.MaxSerial, result.Orders);
         }

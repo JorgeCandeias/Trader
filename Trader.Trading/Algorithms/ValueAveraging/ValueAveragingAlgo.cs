@@ -111,7 +111,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
 
             if (TrySignalSellOrder())
             {
-                await _context.SetSignificantAveragingSellAsync(_context.Symbol, _ticker, _significant.Orders, _options.ProfitMultipler, _options.RedeemSavings, cancellationToken);
+                await _context.SetSignificantAveragingSellAsync(_context.Symbol, _ticker, _significant.Orders, _options.MinSellProfitRate, _options.RedeemSavings, cancellationToken);
             }
             else
             {
@@ -191,19 +191,25 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
 
         private bool TrySignalSellOrder()
         {
-            // evaluate the signal
-            var isRsiOrdered = _rsiA > _rsiB && _rsiB > _rsiC;
-            var isRsiSignaling = _rsiA > _options.RsiOversoldA && _rsiB > _options.RsiOversoldB && _rsiC > _options.RsiOversoldC;
-            var signal = isRsiOrdered && isRsiSignaling;
-
-            if (signal)
+            // evaluate target profit rate vs last buy order
+            if (_significant.Orders.Max?.Price * _options.TargetSellProfitRate <= _ticker.ClosePrice)
             {
-                _logger.LogInformation(
-                    "{Type} {Symbol} will signal a sell order for the current state (Ticker = {Ticker:F8}, SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}, RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8})",
-                    TypeName, _context.Symbol.Name, _ticker.ClosePrice, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC);
+                return true;
             }
 
-            return signal;
+            // evaluate indicators
+            var isRsiOrdered = _rsiA > _rsiB && _rsiB > _rsiC;
+            var isRsiSignaling = _rsiA > _options.RsiOversoldA && _rsiB > _options.RsiOversoldB && _rsiC > _options.RsiOversoldC;
+            if (isRsiOrdered && isRsiSignaling)
+            {
+                _logger.LogInformation(
+                    "{Type} {Symbol} signalling sell for current state (Ticker = {Ticker:F8}, SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}, RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8})",
+                    TypeName, _context.Symbol.Name, _ticker.ClosePrice, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC);
+
+                return true;
+            }
+
+            return false;
         }
     }
 }

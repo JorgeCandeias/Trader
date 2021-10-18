@@ -95,7 +95,7 @@ namespace Outcompute.Trader.Models
 
             public int GetHashCode([DisallowNull] OrderQueryResult obj)
             {
-                return obj.GetHashCode();
+                return obj.OrderId.GetHashCode();
             }
         }
     }

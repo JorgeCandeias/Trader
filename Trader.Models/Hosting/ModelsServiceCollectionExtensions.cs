@@ -1,5 +1,7 @@
 ﻿using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using static System.String;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -48,6 +50,29 @@ namespace Microsoft.Extensions.DependencyInjection
                         .ForCtorParam(nameof(OrderQueryResult.UpdateTime), x => x.MapFrom(y => y.TransactionTime))
                         .ForCtorParam(nameof(OrderQueryResult.IsWorking), x => x.MapFrom(_ => true))
                         .ForCtorParam(nameof(OrderQueryResult.OriginalQuoteOrderQuantity), x => x.MapFrom(y => y.QuoteOrderQuantity));
+
+                    options.CreateMap<OrderResult, OrderQueryResult>()
+                        .ForCtorParam(nameof(OrderQueryResult.StopPrice), x => x.MapFrom((source, context) => context.Items[nameof(OrderQueryResult.StopPrice)]))
+                        .ForCtorParam(nameof(OrderQueryResult.IcebergQuantity), x => x.MapFrom((source, context) => context.Items[nameof(OrderQueryResult.IcebergQuantity)]))
+                        .ForCtorParam(nameof(OrderQueryResult.Time), x => x.MapFrom(y => y.TransactionTime))
+                        .ForCtorParam(nameof(OrderQueryResult.UpdateTime), x => x.MapFrom(y => y.TransactionTime))
+                        .ForCtorParam(nameof(OrderQueryResult.IsWorking), x => x.MapFrom(_ => true))
+                        .ForCtorParam(nameof(OrderQueryResult.OriginalQuoteOrderQuantity), x => x.MapFrom((source, context) => context.Items[nameof(OrderQueryResult.OriginalQuoteOrderQuantity)]));
+
+                    options.CreateMap<AccountInfo, IEnumerable<Balance>>()
+                        .ConvertUsing(x => x.Balances.Select(y => new Balance(
+                            y.Asset,
+                            y.Free,
+                            y.Locked,
+                            x.UpdateTime)));
+
+                    options.CreateMap<CancelStandardOrderResult, OrderQueryResult>()
+                        .ForCtorParam(nameof(OrderQueryResult.StopPrice), x => x.MapFrom((source, context) => context.Items[nameof(OrderQueryResult.StopPrice)]))
+                        .ForCtorParam(nameof(OrderQueryResult.IcebergQuantity), x => x.MapFrom((source, context) => context.Items[nameof(OrderQueryResult.IcebergQuantity)]))
+                        .ForCtorParam(nameof(OrderQueryResult.Time), x => x.MapFrom((source, context) => context.Items[nameof(OrderQueryResult.Time)]))
+                        .ForCtorParam(nameof(OrderQueryResult.UpdateTime), x => x.MapFrom((source, context) => context.Items[nameof(OrderQueryResult.UpdateTime)]))
+                        .ForCtorParam(nameof(OrderQueryResult.IsWorking), x => x.MapFrom((source, context) => context.Items[nameof(OrderQueryResult.IsWorking)]))
+                        .ForCtorParam(nameof(OrderQueryResult.OriginalQuoteOrderQuantity), x => x.MapFrom((source, context) => context.Items[nameof(OrderQueryResult.OriginalQuoteOrderQuantity)]));
                 });
         }
     }

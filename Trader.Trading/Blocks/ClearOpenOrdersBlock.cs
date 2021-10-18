@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,15 +14,17 @@ namespace Outcompute.Trader.Trading.Algorithms
             if (context is null) throw new ArgumentNullException(nameof(context));
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
-            return ClearOpenOrdersInnerAsync(context, symbol, side, cancellationToken);
+            var trader = context.ServiceProvider.GetRequiredService<ITradingService>();
+            var orderProvider = context.ServiceProvider.GetRequiredService<IOrderProvider>();
+
+            return ClearOpenOrdersCoreAsync(symbol, side, trader, orderProvider, cancellationToken);
         }
 
-        private static async ValueTask ClearOpenOrdersInnerAsync(IAlgoContext context, Symbol symbol, OrderSide side, CancellationToken cancellationToken)
+        private static async ValueTask ClearOpenOrdersCoreAsync(Symbol symbol, OrderSide side, ITradingService trader, IOrderProvider orderProvider, CancellationToken cancellationToken)
         {
-            var repository = context.ServiceProvider.GetRequiredService<ITradingRepository>();
-            var trader = context.ServiceProvider.GetRequiredService<ITradingService>();
-
-            var orders = await repository.GetTransientOrdersBySideAsync(symbol.Name, side, cancellationToken).ConfigureAwait(false);
+            var orders = await orderProvider
+                .GetTransientOrdersBySideAsync(symbol.Name, side, cancellationToken)
+                .ConfigureAwait(false);
 
             foreach (var order in orders)
             {
@@ -30,7 +32,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                     .CancelOrderAsync(symbol.Name, order.OrderId, cancellationToken)
                     .ConfigureAwait(false);
 
-                await repository
+                await orderProvider
                     .SetOrderAsync(result, cancellationToken)
                     .ConfigureAwait(false);
             }

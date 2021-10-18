@@ -7,6 +7,7 @@ using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Providers;
 using Polly;
 using System;
 using System.Linq;
@@ -27,19 +28,21 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
         private readonly ISystemClock _clock;
         private readonly IMapper _mapper;
         private readonly IHostApplicationLifetime _lifetime;
+        private readonly IOrderProvider _orderProvider;
 
-        public BinanceUserDataGrain(IOptions<BinanceOptions> options, ILogger<BinanceUserDataGrain> logger, ITradingService trader, IUserDataStreamClientFactory streams, IOrderSynchronizer orders, ITradeSynchronizer trades, ITradingRepository repository, ISystemClock clock, IMapper mapper, IHostApplicationLifetime lifetime)
+        public BinanceUserDataGrain(IOptions<BinanceOptions> options, ILogger<BinanceUserDataGrain> logger, ITradingService trader, IUserDataStreamClientFactory streams, IOrderSynchronizer orders, ITradeSynchronizer trades, ITradingRepository repository, ISystemClock clock, IMapper mapper, IHostApplicationLifetime lifetime, IOrderProvider orderProvider)
         {
-            _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _trader = trader ?? throw new ArgumentNullException(nameof(trader));
-            _streams = streams ?? throw new ArgumentNullException(nameof(streams));
-            _orders = orders ?? throw new ArgumentNullException(nameof(orders));
-            _trades = trades ?? throw new ArgumentNullException(nameof(trades));
-            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
-            _lifetime = lifetime ?? throw new ArgumentNullException(nameof(lifetime));
+            _options = options.Value;
+            _logger = logger;
+            _trader = trader;
+            _streams = streams;
+            _orders = orders;
+            _trades = trades;
+            _repository = repository;
+            _clock = clock;
+            _mapper = mapper;
+            _lifetime = lifetime;
+            _orderProvider = orderProvider;
         }
 
         private static string Name => nameof(BinanceUserDataGrain);
@@ -298,7 +301,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
                     // now extract the order from this report
                     var order = _mapper.Map<OrderQueryResult>(report);
 
-                    await _repository.SetOrderAsync(order, _lifetime.ApplicationStopping);
+                    await _orderProvider.SetOrderAsync(order);
 
                     _logger.LogInformation(
                         "{Name} saved {Symbol} {Type} {Side} order {OrderId}",

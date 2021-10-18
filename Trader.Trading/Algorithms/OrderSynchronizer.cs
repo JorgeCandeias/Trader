@@ -1,7 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-using Outcompute.Trader.Core.Time;
-using Outcompute.Trader.Data;
-using System;
+using Outcompute.Trader.Trading.Providers;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,16 +9,14 @@ namespace Outcompute.Trader.Trading.Algorithms
     internal class OrderSynchronizer : IOrderSynchronizer
     {
         private readonly ILogger _logger;
-        private readonly ISystemClock _clock;
         private readonly ITradingService _trader;
-        private readonly ITradingRepository _repository;
+        private readonly IOrderProvider _orders;
 
-        public OrderSynchronizer(ILogger<OrderSynchronizer> logger, ISystemClock clock, ITradingService trader, ITradingRepository repository)
+        public OrderSynchronizer(ILogger<OrderSynchronizer> logger, ITradingService trader, IOrderProvider orders)
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-            _trader = trader ?? throw new ArgumentNullException(nameof(trader));
-            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+            _logger = logger;
+            _trader = trader;
+            _orders = orders;
         }
 
         public async Task SynchronizeOrdersAsync(string symbol, CancellationToken cancellationToken = default)
@@ -29,15 +25,15 @@ namespace Outcompute.Trader.Trading.Algorithms
             var count = 0;
 
             // start from the first known transient order if possible
-            var orderId = await _repository
+            var orderId = await _orders
                 .GetMinTransientOrderIdAsync(symbol, cancellationToken)
                 .ConfigureAwait(false) - 1;
 
             // otherwise start from the max paged order
             if (orderId < 1)
             {
-                orderId = await _repository
-                    .GetLastPagedOrderIdAsync(symbol, cancellationToken)
+                orderId = await _orders
+                    .GetMaxOrderIdAsync(symbol, cancellationToken)
                     .ConfigureAwait(false);
             }
 
@@ -52,8 +48,8 @@ namespace Outcompute.Trader.Trading.Algorithms
                 if (orders.Count is 0) break;
 
                 // persist only orders that have progressed - the repository will detect which ones have updated or not
-                await _repository
-                    .SetOrdersAsync(orders, cancellationToken)
+                await _orders
+                    .SetOrdersAsync(symbol, orders, cancellationToken)
                     .ConfigureAwait(false);
 
                 // keep the last order id
@@ -61,14 +57,6 @@ namespace Outcompute.Trader.Trading.Algorithms
 
                 // keep track for logging
                 count += orders.Count;
-            }
-
-            if (count > 0)
-            {
-                // save the last paged order to continue from there next time
-                await _repository
-                    .SetLastPagedOrderIdAsync(symbol, orderId, cancellationToken)
-                    .ConfigureAwait(false);
             }
 
             // log the activity only if necessary

@@ -3,6 +3,7 @@ using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
+using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -18,12 +19,14 @@ namespace Outcompute.Trader.Trading.Algorithms
         private readonly ILogger _logger;
         private readonly ITradingRepository _repository;
         private readonly ISystemClock _clock;
+        private readonly IOrderProvider _orders;
 
-        public SignificantOrderResolver(ILogger<SignificantOrderResolver> logger, ITradingRepository repository, ISystemClock clock)
+        public SignificantOrderResolver(ILogger<SignificantOrderResolver> logger, ITradingRepository repository, ISystemClock clock, IOrderProvider orders)
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _logger = logger;
+            _repository = repository;
+            _clock = clock;
+            _orders = orders;
         }
 
         private static string Name => nameof(SignificantOrderResolver);
@@ -52,7 +55,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public async ValueTask<SignificantResult> ResolveAsync(Symbol symbol, CancellationToken cancellationToken = default)
         {
-            var orders = await _repository
+            var orders = await _orders
                 .GetSignificantCompletedOrdersAsync(symbol.Name, cancellationToken)
                 .ConfigureAwait(false);
 
@@ -60,16 +63,17 @@ namespace Outcompute.Trader.Trading.Algorithms
                 .GetTradesAsync(symbol.Name, cancellationToken)
                 .ConfigureAwait(false);
 
-            return Resolve(symbol, orders, trades);
+            return ResolveCore(symbol, orders, trades);
         }
 
-        public SignificantResult Resolve(Symbol symbol, ImmutableSortedOrderSet orders, ImmutableSortedTradeSet trades)
+        private SignificantResult ResolveCore(Symbol symbol, IReadOnlyList<OrderQueryResult> orders, ImmutableSortedTradeSet trades)
         {
             var watch = Stopwatch.StartNew();
 
             var lookup = trades.ToLookup(x => x.OrderId);
 
             var details = new SortedSet<Map>(MapComparer.Instance);
+
             foreach (var order in orders)
             {
                 var quantity = 0m;

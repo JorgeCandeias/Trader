@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -18,12 +18,12 @@ namespace Outcompute.Trader.Trading.Algorithms
 
             var logger = context.ServiceProvider.GetRequiredService<ILogger<IAlgoContext>>();
             var trader = context.ServiceProvider.GetRequiredService<ITradingService>();
-            var repository = context.ServiceProvider.GetRequiredService<ITradingRepository>();
+            var orderProvider = context.ServiceProvider.GetRequiredService<IOrderProvider>();
 
-            return CancelOrderInnerAsync(symbol, orderId, logger, trader, repository, cancellationToken);
+            return CancelOrderInnerAsync(symbol, orderId, logger, trader, orderProvider, cancellationToken);
         }
 
-        private static async ValueTask<CancelStandardOrderResult> CancelOrderInnerAsync(string symbol, long orderId, ILogger logger, ITradingService trader, ITradingRepository repository, CancellationToken cancellationToken = default)
+        private static async ValueTask<CancelStandardOrderResult> CancelOrderInnerAsync(string symbol, long orderId, ILogger logger, ITradingService trader, IOrderProvider orderProvider, CancellationToken cancellationToken = default)
         {
             logger.LogStart(symbol, orderId);
 
@@ -33,7 +33,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 .CancelOrderAsync(symbol, orderId, cancellationToken)
                 .ConfigureAwait(false);
 
-            await repository
+            await orderProvider
                 .SetOrderAsync(order, cancellationToken)
                 .ConfigureAwait(false);
 

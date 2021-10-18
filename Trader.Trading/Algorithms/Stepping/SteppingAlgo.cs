@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms.Exceptions;
+using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,18 +20,16 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         private readonly ILogger _logger;
         private readonly IOptionsMonitor<SteppingAlgoOptions> _monitor;
 
-        private readonly ITradingService _trader;
-        private readonly ITradingRepository _repository;
         private readonly IOrderCodeGenerator _orderCodeGenerator;
+        private readonly IOrderProvider _orderProvider;
 
-        public SteppingAlgo(IAlgoContext context, ILogger<SteppingAlgo> logger, IOptionsMonitor<SteppingAlgoOptions> options, ITradingService trader, ITradingRepository repository, IOrderCodeGenerator orderCodeGenerator)
+        public SteppingAlgo(IAlgoContext context, ILogger<SteppingAlgo> logger, IOptionsMonitor<SteppingAlgoOptions> options, IOrderCodeGenerator orderCodeGenerator, IOrderProvider orderProvider)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _monitor = options ?? throw new ArgumentNullException(nameof(options));
-            _trader = trader ?? throw new ArgumentNullException(nameof(trader));
-            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-            _orderCodeGenerator = orderCodeGenerator ?? throw new ArgumentNullException(nameof(orderCodeGenerator));
+            _context = context;
+            _logger = logger;
+            _monitor = options;
+            _orderCodeGenerator = orderCodeGenerator;
+            _orderProvider = orderProvider;
         }
 
         private static string TypeName => nameof(SteppingAlgo);
@@ -260,9 +258,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             var tag = $"{_symbol.Name}{lowerPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal);
             var result = await _context.CreateOrderAsync(_symbol, OrderType.Limit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, lowerPrice, tag, cancellationToken);
 
-            // save this order to the repository now to tolerate slow binance api updates
-            await _repository.SetOrderAsync(result, 0m, 0m, 0m, cancellationToken);
-
             _logger.LogInformation(
                 "{Type} {Name} placed {OrderType} {OrderSide} for {Quantity} {Asset} at {Price} {Quote}",
                 TypeName, _context.Name, result.Type, result.Side, result.OriginalQuantity, _symbol.BaseAsset, result.Price, _symbol.QuoteAsset);
@@ -276,7 +271,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         private async Task<bool> TrySetBandSellOrdersAsync(CancellationToken cancellationToken = default)
         {
             // skip if we have reach the max sell orders
-            var orders = await _repository.GetTransientOrdersBySideAsync(_symbol.Name, OrderSide.Sell, cancellationToken);
+            var orders = await _orderProvider.GetTransientOrdersBySideAsync(_symbol.Name, OrderSide.Sell, cancellationToken);
 
             if (orders.Count >= _options.MaxActiveSellOrders)
             {
@@ -319,10 +314,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                     }
 
                     var tag = _orderCodeGenerator.GetSellClientOrderId(band.OpenOrderId);
-                    var result = await _trader.CreateOrderAsync(_symbol.Name, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, band.Quantity, null, band.ClosePrice, tag, null, null, cancellationToken);
 
-                    // save this order to the repository now to tolerate slow binance api updates
-                    await _repository.SetOrderAsync(result, 0m, 0m, 0m, cancellationToken);
+                    var result = await _context.CreateOrderAsync(_symbol, OrderType.Limit, OrderSide.Sell, TimeInForce.GoodTillCanceled, band.Quantity, band.ClosePrice, tag, cancellationToken);
 
                     band.CloseOrderId = result.OrderId;
 
@@ -343,7 +336,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         private async Task<bool> TryCancelRogueSellOrdersAsync(CancellationToken cancellationToken = default)
         {
             // get all transient sell orders
-            var orders = await _repository.GetTransientOrdersBySideAsync(_symbol.Name, OrderSide.Sell, cancellationToken);
+            var orders = await _orderProvider.GetTransientOrdersBySideAsync(_symbol.Name, OrderSide.Sell, cancellationToken);
 
             var fail = false;
 
@@ -351,11 +344,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             {
                 if (!_bands.Any(x => x.CloseOrderId == orderId))
                 {
-                    // close the rogue sell order
-                    var result = await _trader.CancelOrderAsync(_symbol.Name, orderId, cancellationToken);
-
-                    // save this order to the repository now to tolerate slow binance api updates
-                    await _repository.SetOrderAsync(result, cancellationToken);
+                    var result = await _context.CancelOrderAsync(_symbol.Name, orderId, cancellationToken);
 
                     _logger.LogWarning(
                         "{Type} {Name} cancelled sell order not associated with a band for {Quantity} {Asset} at {Price} {Quote}",
@@ -382,7 +371,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 .ToHashSet();
 
             // get all transient sell orders
-            var orders = await _repository.GetTransientOrdersBySideAsync(_symbol.Name, OrderSide.Sell, cancellationToken);
+            var orders = await _orderProvider.GetTransientOrdersBySideAsync(_symbol.Name, OrderSide.Sell, cancellationToken);
 
             // cancel all excess sell orders now
             var changed = false;
@@ -390,11 +379,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             {
                 if (!bands.Contains(orderId))
                 {
-                    // close the rogue sell order
-                    var result = await _trader.CancelOrderAsync(_symbol.Name, orderId, cancellationToken);
-
-                    // save this order to the repository now to tolerate slow binance api updates
-                    await _repository.SetOrderAsync(result, cancellationToken);
+                    var result = await _context.CancelOrderAsync(_symbol.Name, orderId, cancellationToken);
 
                     _logger.LogWarning(
                         "{Type} {Name} cancelled excess sell order for {Quantity} {Asset} at {Price} {Quote}",
@@ -423,17 +408,14 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                     TypeName, _context.Name, lowBuyPrice, _symbol.QuoteAsset, _ticker.ClosePrice, _symbol.QuoteAsset);
 
                 // cancel the lowest open buy order with a open price lower than the lower band to the current price
-                var orders = await _repository.GetTransientOrdersBySideAsync(_symbol.Name, OrderSide.Buy, cancellationToken);
+                var orders = await _orderProvider.GetTransientOrdersBySideAsync(_symbol.Name, OrderSide.Buy, cancellationToken);
 
                 var lowest = orders.FirstOrDefault(x => x.Side == OrderSide.Buy && x.Status.IsTransientStatus());
                 if (lowest is not null)
                 {
                     if (lowest.Price < lowBuyPrice)
                     {
-                        var cancelled = await _trader.CancelOrderAsync(_symbol.Name, lowest.OrderId, cancellationToken);
-
-                        // save this order to the repository now to tolerate slow binance api updates
-                        await _repository.SetOrderAsync(cancelled, cancellationToken);
+                        var cancelled = await _context.CancelOrderAsync(_symbol.Name, lowest.OrderId, cancellationToken);
 
                         _logger.LogInformation(
                             "{Type} {Name} cancelled low starting open order with price {Price} for {Quantity} units",
@@ -509,10 +491,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
                 // place a limit order at the current price
                 var tag = $"{_symbol.Name}{lowBuyPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal);
-                var result = await _trader.CreateOrderAsync(_symbol.Name, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, lowBuyPrice, tag, null, null, cancellationToken);
-
-                // save this order to the repository now to tolerate slow binance api updates
-                await _repository.SetOrderAsync(result, 0m, 0m, 0m, cancellationToken);
+                var result = await _context.CreateOrderAsync(_symbol, OrderType.Limit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, lowBuyPrice, tag, cancellationToken);
 
                 _logger.LogInformation(
                     "{Type} {Name} created {OrderSide} {OrderType} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",
@@ -570,7 +549,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             }
 
             // apply the non-significant open buy orders to the bands
-            var orders = await _repository.GetNonSignificantTransientOrdersBySideAsync(_symbol.Name, OrderSide.Buy, cancellationToken);
+            var orders = await _orderProvider.GetNonSignificantTransientOrdersBySideAsync(_symbol.Name, OrderSide.Buy, cancellationToken);
 
             foreach (var order in orders)
             {
@@ -663,7 +642,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             // apply open sell orders to the bands
             var used = new HashSet<Band>();
 
-            orders = await _repository.GetTransientOrdersBySideAsync(_symbol.Name, OrderSide.Sell, cancellationToken);
+            orders = await _orderProvider.GetTransientOrdersBySideAsync(_symbol.Name, OrderSide.Sell, cancellationToken);
 
             foreach (var order in orders)
             {

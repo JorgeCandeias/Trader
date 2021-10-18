@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
+using Outcompute.Trader.Trading.Providers;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,21 +13,22 @@ namespace Outcompute.Trader.Trading.Algorithms
     {
         private static string TypeName => nameof(GetOpenOrdersBlock);
 
-        public static ValueTask<ImmutableSortedOrderSet> GetOpenOrdersAsync(this IAlgoContext context, Symbol symbol, OrderSide side, CancellationToken cancellationToken = default)
+        public static ValueTask<IReadOnlyList<OrderQueryResult>> GetOpenOrdersAsync(this IAlgoContext context, Symbol symbol, OrderSide side, CancellationToken cancellationToken = default)
         {
             if (context is null) throw new ArgumentNullException(nameof(context));
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
-            return context.GetOpenOrdersInnerAsync(symbol, side, cancellationToken);
+            var logger = context.ServiceProvider.GetRequiredService<ILogger<IAlgoContext>>();
+            var orderProvider = context.ServiceProvider.GetRequiredService<IOrderProvider>();
+
+            return GetOpenOrdersInnerAsync(symbol, side, logger, orderProvider, cancellationToken);
         }
 
-        private static async ValueTask<ImmutableSortedOrderSet> GetOpenOrdersInnerAsync(this IAlgoContext context, Symbol symbol, OrderSide side, CancellationToken cancellationToken = default)
+        private static async ValueTask<IReadOnlyList<OrderQueryResult>> GetOpenOrdersInnerAsync(Symbol symbol, OrderSide side, ILogger logger, IOrderProvider orderProvider, CancellationToken cancellationToken)
         {
-            var logger = context.ServiceProvider.GetRequiredService<ILogger<IAlgoContext>>();
-            var repository = context.ServiceProvider.GetRequiredService<ITradingRepository>();
-
-            // todo: refactor this to call a local provider
-            var orders = await repository.GetTransientOrdersBySideAsync(symbol.Name, side, cancellationToken).ConfigureAwait(false);
+            var orders = await orderProvider
+                .GetTransientOrdersBySideAsync(symbol.Name, side, cancellationToken)
+                .ConfigureAwait(false);
 
             foreach (var order in orders)
             {

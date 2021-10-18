@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Diagnostics;
 using System.Threading;
@@ -20,12 +20,12 @@ namespace Outcompute.Trader.Trading.Algorithms
 
             var logger = context.ServiceProvider.GetRequiredService<ILogger<IAlgoContext>>();
             var trader = context.ServiceProvider.GetRequiredService<ITradingService>();
-            var repository = context.ServiceProvider.GetRequiredService<ITradingRepository>();
+            var orderProvider = context.ServiceProvider.GetRequiredService<IOrderProvider>();
 
-            return CreateOrderInnerAsync(symbol, type, side, timeInForce, quantity, price, tag, logger, trader, repository, cancellationToken);
+            return CreateOrderInnerAsync(symbol, type, side, timeInForce, quantity, price, tag, logger, trader, orderProvider, cancellationToken);
         }
 
-        private static async ValueTask<OrderResult> CreateOrderInnerAsync(Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag, ILogger logger, ITradingService trader, ITradingRepository repository, CancellationToken cancellationToken = default)
+        private static async ValueTask<OrderResult> CreateOrderInnerAsync(Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag, ILogger logger, ITradingService trader, IOrderProvider orderProvider, CancellationToken cancellationToken = default)
         {
             // if we got here then we can place the order
             var watch = Stopwatch.StartNew();
@@ -38,7 +38,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 .CreateOrderAsync(symbol.Name, side, type, timeInForce, quantity, null, price, tag, null, null, cancellationToken)
                 .ConfigureAwait(false);
 
-            await repository
+            await orderProvider
                 .SetOrderAsync(result, 0m, 0m, 0m, cancellationToken)
                 .ConfigureAwait(false);
 

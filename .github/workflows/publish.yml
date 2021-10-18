@@ -67,13 +67,21 @@ jobs:
         VERSION_FILE_PATH: Directory.Build.props
         VERSION_REGEX: ^\s*<Version>(.*)<\/Version>\s*$
         NUGET_KEY: ${{ secrets.NUGET_KEY }}
-        
 
     - name: Publish NuGet Trader.Data.Abstractions
       uses: brandedoutcast/publish-nuget@v2.5.5
       with:
         PROJECT_FILE_PATH: ./Trader.Data.Abstractions/Trader.Data.Abstractions.csproj
         PACKAGE_NAME: Outcompute.Trader.Data.Abstractions
+        VERSION_FILE_PATH: Directory.Build.props
+        VERSION_REGEX: ^\s*<Version>(.*)<\/Version>\s*$
+        NUGET_KEY: ${{ secrets.NUGET_KEY }}
+        
+    - name: Publish NuGet Trader.Data.InMemory
+      uses: brandedoutcast/publish-nuget@v2.5.5
+      with:
+        PROJECT_FILE_PATH: ./Trader.Data.InMemory/Trader.Data.InMemory.csproj
+        PACKAGE_NAME: Outcompute.Trader.Data.InMemory
         VERSION_FILE_PATH: Directory.Build.props
         VERSION_REGEX: ^\s*<Version>(.*)<\/Version>\s*$
         NUGET_KEY: ${{ secrets.NUGET_KEY }}
@@ -86,7 +94,6 @@ jobs:
         VERSION_FILE_PATH: Directory.Build.props
         VERSION_REGEX: ^\s*<Version>(.*)<\/Version>\s*$
         NUGET_KEY: ${{ secrets.NUGET_KEY }}
-        
 
     - name: Publish NuGet Trader.Hosting
       uses: brandedoutcast/publish-nuget@v2.5.5
@@ -138,6 +145,15 @@ jobs:
       with:
         PROJECT_FILE_PATH: ./Trader.Trading.Binance/Trader.Trading.Binance.csproj
         PACKAGE_NAME: Outcompute.Trader.Trading.Binance
+        VERSION_FILE_PATH: Directory.Build.props
+        VERSION_REGEX: ^\s*<Version>(.*)<\/Version>\s*$
+        NUGET_KEY: ${{ secrets.NUGET_KEY }}
+
+    - name: Publish NuGet Trader.Trading.InMemory
+      uses: brandedoutcast/publish-nuget@v2.5.5
+      with:
+        PROJECT_FILE_PATH: ./Trader.Trading.InMemory/Trader.Trading.InMemory.csproj
+        PACKAGE_NAME: Outcompute.Trader.Trading.InMemory
         VERSION_FILE_PATH: Directory.Build.props
         VERSION_REGEX: ^\s*<Version>(.*)<\/Version>\s*$
         NUGET_KEY: ${{ secrets.NUGET_KEY }}

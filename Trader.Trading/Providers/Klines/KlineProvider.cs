@@ -21,16 +21,6 @@ namespace Outcompute.Trader.Trading.Providers.Klines
             return _factory.GetKlineProviderReplicaGrain(symbol, interval).GetKlinesAsync();
         }
 
-        public Task SetKlineAsync(Kline kline, CancellationToken cancellationToken = default)
-        {
-            return _factory.GetKlineProviderReplicaGrain(kline.Symbol, kline.Interval).SetKlineAsync(kline);
-        }
-
-        public Task SetKlinesAsync(string symbol, KlineInterval interval, IEnumerable<Kline> items, CancellationToken cancellationToken = default)
-        {
-            return _factory.GetKlineProviderReplicaGrain(symbol, interval).SetKlinesAsync(items);
-        }
-
         public Task<Kline?> TryGetKlineAsync(string symbol, KlineInterval interval, DateTime openTime, CancellationToken cancellationToken = default)
         {
             return _factory.GetKlineProviderReplicaGrain(symbol, interval).TryGetKlineAsync(openTime);

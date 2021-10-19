@@ -9,16 +9,6 @@ namespace Outcompute.Trader.Trading.Providers
     public interface IKlineProvider
     {
         /// <summary>
-        /// Saves the specifed klines under the specified symbol and interval.
-        /// </summary>
-        Task SetKlinesAsync(string symbol, KlineInterval interval, IEnumerable<Kline> items, CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Saves the specified kline.
-        /// </summary>
-        Task SetKlineAsync(Kline kline, CancellationToken cancellationToken = default);
-
-        /// <summary>
         /// Returns all the cached klines.
         /// The result set is ordered by open time.
         /// </summary>

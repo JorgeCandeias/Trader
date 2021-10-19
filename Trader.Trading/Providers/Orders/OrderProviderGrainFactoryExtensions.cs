@@ -2,7 +2,7 @@
 
 namespace Orleans
 {
-    internal static class IOrderProviderGrainFactoryExtensions
+    internal static class OrderProviderGrainFactoryExtensions
     {
         public static IOrderProviderGrain GetOrderProviderGrain(this IGrainFactory factory, string symbol)
         {

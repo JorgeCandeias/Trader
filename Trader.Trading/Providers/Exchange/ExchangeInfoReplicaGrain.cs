@@ -1,4 +1,5 @@
-﻿using Orleans;
+﻿using Microsoft.Extensions.Options;
+using Orleans;
 using Orleans.Concurrency;
 using Outcompute.Trader.Models;
 using System;
@@ -7,16 +8,19 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Exchange
+namespace Outcompute.Trader.Trading.Providers.Exchange
 {
+    [Reentrant]
     [StatelessWorker(1)]
     internal class ExchangeInfoReplicaGrain : Grain, IExchangeInfoReplicaGrain
     {
+        private readonly ExchangeInfoOptions _options;
         private readonly IGrainFactory _factory;
 
-        public ExchangeInfoReplicaGrain(IGrainFactory factory)
+        public ExchangeInfoReplicaGrain(IOptions<ExchangeInfoOptions> options, IGrainFactory factory)
         {
-            _factory = factory ?? throw new ArgumentNullException(nameof(factory));
+            _options = options.Value;
+            _factory = factory;
         }
 
         private ExchangeInfo _info = ExchangeInfo.Empty;
@@ -27,24 +31,21 @@ namespace Outcompute.Trader.Trading.Exchange
         {
             await RefreshAsync();
 
-            RegisterTimer(TickTryRefreshAsync, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+            RegisterTimer(TickTryRefreshAsync, null, _options.PropagationPeriod, _options.PropagationPeriod);
 
             await base.OnActivateAsync();
         }
 
-        public ValueTask<ExchangeInfo> GetExchangeInfoAsync()
+        public Task<ExchangeInfo> GetExchangeInfoAsync()
         {
-            return new ValueTask<ExchangeInfo>(_info);
+            return Task.FromResult(_info);
         }
 
-        public ValueTask<Symbol?> TryGetSymbolAsync(string name)
+        public Task<Symbol?> TryGetSymbolAsync(string name)
         {
-            if (_symbols.TryGetValue(name, out var symbol))
-            {
-                return new ValueTask<Symbol?>(symbol);
-            }
+            var symbol = _symbols.TryGetValue(name, out var value) ? value : null;
 
-            return new ValueTask<Symbol?>((Symbol?)null);
+            return Task.FromResult(symbol);
         }
 
         private async Task RefreshAsync()
@@ -56,11 +57,11 @@ namespace Outcompute.Trader.Trading.Exchange
 
         private async Task TickTryRefreshAsync(object _)
         {
-            var result = await _factory.GetExchangeInfoGrain().TryGetNewExchangeInfoAsync(_version);
+            var result = await _factory.GetExchangeInfoGrain().TryGetExchangeInfoAsync(_version);
 
-            if (result.Info is not null)
+            if (result.Value is not null)
             {
-                _info = result.Info;
+                _info = result.Value;
                 _version = result.Version;
 
                 Index();

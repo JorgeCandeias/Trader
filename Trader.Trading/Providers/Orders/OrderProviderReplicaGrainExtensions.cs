@@ -3,7 +3,7 @@ using System;
 
 namespace Orleans
 {
-    internal static class IOrderProviderReplicaGrainExtensions
+    internal static class OrderProviderReplicaGrainExtensions
     {
         public static IOrderProviderReplicaGrain GetOrderProviderReplicaGrain(this IGrainFactory factory, string symbol)
         {

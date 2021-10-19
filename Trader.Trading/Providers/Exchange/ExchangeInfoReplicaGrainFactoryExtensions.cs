@@ -1,9 +1,9 @@
-﻿using Outcompute.Trader.Trading.Exchange;
+﻿using Outcompute.Trader.Trading.Providers.Exchange;
 using System;
 
 namespace Orleans
 {
-    public static class IExchangeInfoReplicaGrainFactoryExtensions
+    internal static class ExchangeInfoReplicaGrainFactoryExtensions
     {
         public static IExchangeInfoReplicaGrain GetExchangeInfoReplicaGrain(this IGrainFactory factory)
         {

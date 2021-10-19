@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Providers.Orders
 {
-    public static class IOrderProviderExtensions
+    public static class OrderProviderExtensions
     {
         internal static IMapper Mapper { get; set; } = null!;
         internal static IGrainFactory GrainFactory { get; set; } = null!;

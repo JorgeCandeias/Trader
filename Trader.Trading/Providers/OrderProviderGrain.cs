@@ -86,7 +86,7 @@ namespace Outcompute.Trader.Trading.Providers
         }
 
         [NoProfiling]
-        public Task<(Guid Version, int MaxSerial, IReadOnlyList<OrderQueryResult> Orders)> PollOrdersAsync(Guid version, int fromSerial, GrainCancellationToken grainCancellationToken)
+        public Task<(Guid Version, int MaxSerial, IReadOnlyList<OrderQueryResult> Orders)> PollOrdersAsync(Guid version, int fromSerial)
         {
             // if the version is different then return all the orders plus the new version
             if (version != _version)
@@ -117,7 +117,7 @@ namespace Outcompute.Trader.Trading.Providers
             }
 
             // let the client wait until we have data to fulfill this request or return empty on timeout
-            return completion.Task.WithDefaultOnTimeout((_version, _serial, ImmutableList<OrderQueryResult>.Empty), _options.ReactivePollingTimeout, grainCancellationToken.CancellationToken);
+            return completion.Task.WithDefaultOnTimeout((_version, _serial, ImmutableList<OrderQueryResult>.Empty), _options.ReactivePollingTimeout);
         }
 
         /// <summary>

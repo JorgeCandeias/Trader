@@ -100,13 +100,20 @@ namespace Outcompute.Trader.Trading.Providers
 
         private async Task TickUpdateAsync(object _)
         {
+            // break early on application shutdown
+            if (_lifetime.ApplicationStopping.IsCancellationRequested) return;
+
             // wait for new orders
-            using var gct = new GrainCancellationTokenSource();
-            using var reg = _lifetime.ApplicationStopping.Register(() => gct.Cancel());
+            try
+            {
+                var result = await _factory.GetOrderProviderGrain(_symbol).PollOrdersAsync(_version, _serial + 1);
 
-            var result = await _factory.GetOrderProviderGrain(_symbol).PollOrdersAsync(_version, _serial + 1, gct.Token);
-
-            Apply(result.Version, result.MaxSerial, result.Orders);
+                Apply(result.Version, result.MaxSerial, result.Orders);
+            }
+            catch (OperationCanceledException)
+            {
+                // noop - happens at target shutdown
+            }
         }
 
         private void Apply(Guid version, int serial, IEnumerable<OrderQueryResult> orders)

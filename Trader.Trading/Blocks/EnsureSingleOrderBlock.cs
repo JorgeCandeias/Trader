@@ -13,7 +13,7 @@ namespace Outcompute.Trader.Trading.Algorithms
     {
         private static string TypeName => nameof(EnsureSingleOrderBlock);
 
-        public static ValueTask<bool> EnsureSingleOrderAsync(this IAlgoContext context, Symbol symbol, OrderSide side, OrderType type, decimal quantity, decimal price, bool redeemSavings, CancellationToken cancellationToken = default)
+        public static ValueTask<bool> EnsureSingleOrderAsync(this IAlgoContext context, Symbol symbol, OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings, CancellationToken cancellationToken = default)
         {
             if (context is null) throw new ArgumentNullException(nameof(context));
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
@@ -21,10 +21,10 @@ namespace Outcompute.Trader.Trading.Algorithms
             var logger = context.ServiceProvider.GetRequiredService<ILogger<IAlgoContext>>();
             var savingsOptions = context.ServiceProvider.GetRequiredService<IOptions<SavingsOptions>>().Value;
 
-            return context.EnsureSingleOrderInnerAsync(symbol, side, type, quantity, price, redeemSavings, savingsOptions, logger, cancellationToken);
+            return context.EnsureSingleOrderInnerAsync(symbol, side, type, timeInForce, quantity, price, redeemSavings, savingsOptions, logger, cancellationToken);
         }
 
-        private static async ValueTask<bool> EnsureSingleOrderInnerAsync(this IAlgoContext context, Symbol symbol, OrderSide side, OrderType type, decimal quantity, decimal price, bool redeemSavings, SavingsOptions savingsOptions, ILogger logger, CancellationToken cancellationToken = default)
+        private static async ValueTask<bool> EnsureSingleOrderInnerAsync(this IAlgoContext context, Symbol symbol, OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings, SavingsOptions savingsOptions, ILogger logger, CancellationToken cancellationToken = default)
         {
             // get current open orders
             var orders = await context
@@ -108,7 +108,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 
             // if we got here then we can place the order
             await context
-                .CreateOrderAsync(symbol, type, side, TimeInForce.GoodTillCanceled, quantity, price, $"{symbol.Name}{price:F8}".Replace(".", "", StringComparison.Ordinal), cancellationToken)
+                .CreateOrderAsync(symbol, type, side, timeInForce, quantity, price, $"{symbol.Name}{price:F8}".Replace(".", "", StringComparison.Ordinal), cancellationToken)
                 .ConfigureAwait(false);
 
             return true;

@@ -49,7 +49,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             else
             {
                 await context
-                    .EnsureSingleOrderAsync(symbol, OrderSide.Sell, OrderType.Limit, desired.Quantity, desired.Price, redeemSavings, cancellationToken)
+                    .EnsureSingleOrderAsync(symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, desired.Quantity, desired.Price, redeemSavings, cancellationToken)
                     .ConfigureAwait(false);
             }
         }

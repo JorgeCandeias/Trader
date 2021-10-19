@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Hosting;
+using Orleans;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,9 +11,10 @@ namespace Outcompute.Trader.Trading.Providers
     /// </summary>
     internal class OrderProviderExtensionsHostedService : IHostedService
     {
-        public OrderProviderExtensionsHostedService(IMapper mapper)
+        public OrderProviderExtensionsHostedService(IMapper mapper, IGrainFactory factory)
         {
             IOrderProviderExtensions.Mapper = mapper;
+            IOrderProviderExtensions.GrainFactory = factory;
         }
 
         public Task StartAsync(CancellationToken cancellationToken) => Task.CompletedTask;

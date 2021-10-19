@@ -152,15 +152,20 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
             // break on price not low enough from previous significant buy
             if (_significant.Orders.Count > 0)
             {
-                var minPrice = _significant.Orders.Min(x => x.Price);
-                var lowPrice = minPrice * _options.PullbackRatio;
-                if (_ticker.ClosePrice > lowPrice)
+                // ignore leftovers - only apply this rule if the significant total is above the minimum notional
+                var total = _significant.Orders.Sum(x => x.ExecutedQuantity * x.Price);
+                if (total >= _context.Symbol.Filters.MinNotional.MinNotional)
                 {
-                    _logger.LogInformation(
-                        "{Type} {Symbol} detected ticker of {Ticker:F8} is above the low price of {LowPrice:F8} calculated as {PullBackRatio:F8} of the min significant buy price of {MinPrice:F8} and will not signal a buy order",
-                        TypeName, _context.Symbol.Name, _ticker.ClosePrice, lowPrice, _options.PullbackRatio, minPrice);
+                    var minPrice = _significant.Orders.Max!.Price;
+                    var lowPrice = minPrice * _options.PullbackRatio;
+                    if (_ticker.ClosePrice > lowPrice)
+                    {
+                        _logger.LogInformation(
+                            "{Type} {Symbol} detected ticker of {Ticker:F8} is above the low price of {LowPrice:F8} calculated as {PullBackRatio:F8} of the min significant buy price of {MinPrice:F8} and will not signal a buy order",
+                            TypeName, _context.Symbol.Name, _ticker.ClosePrice, lowPrice, _options.PullbackRatio, minPrice);
 
-                    return false;
+                        return false;
+                    }
                 }
             }
 

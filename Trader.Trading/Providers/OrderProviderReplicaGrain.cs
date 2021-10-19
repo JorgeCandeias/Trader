@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Concurrency;
 using Outcompute.Trader.Models;
@@ -15,13 +14,11 @@ namespace Outcompute.Trader.Trading.Providers
     [StatelessWorker(1)]
     internal class OrderProviderReplicaGrain : Grain, IOrderProviderReplicaGrain
     {
-        private readonly ReactiveOptions _options;
         private readonly IGrainFactory _factory;
         private readonly IHostApplicationLifetime _lifetime;
 
-        public OrderProviderReplicaGrain(IOptions<ReactiveOptions> options, IGrainFactory factory, IHostApplicationLifetime lifetime)
+        public OrderProviderReplicaGrain(IGrainFactory factory, IHostApplicationLifetime lifetime)
         {
-            _options = options.Value;
             _factory = factory;
             _lifetime = lifetime;
         }

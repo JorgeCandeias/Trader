@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Orleans;
+using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using System;
@@ -17,12 +18,14 @@ namespace Outcompute.Trader.Trading.Providers.Klines
         private readonly KlineProviderOptions _options;
         private readonly ITradingRepository _repository;
         private readonly IHostApplicationLifetime _lifetime;
+        private readonly ISystemClock _clock;
 
-        public KlineProviderGrain(IOptions<KlineProviderOptions> options, ITradingRepository repository, IHostApplicationLifetime lifetime)
+        public KlineProviderGrain(IOptions<KlineProviderOptions> options, ITradingRepository repository, IHostApplicationLifetime lifetime, ISystemClock clock)
         {
             _options = options.Value;
             _repository = repository;
             _lifetime = lifetime;
+            _clock = clock;
         }
 
         /// <summary>
@@ -218,7 +221,9 @@ namespace Outcompute.Trader.Trading.Providers.Klines
         /// </summary>
         private async Task LoadAsync()
         {
-            var orders = await _repository.GetKlinesAsync(_symbol, _interval, DateTime.MinValue, DateTime.MaxValue, _lifetime.ApplicationStopping);
+            var end = _clock.UtcNow;
+            var start = end.Subtract(_interval, _options.MaxCachedKlines + 1);
+            var orders = await _repository.GetKlinesAsync(_symbol, _interval, start, end, _lifetime.ApplicationStopping);
 
             await SetKlinesAsync(orders);
         }

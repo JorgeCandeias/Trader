@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Concurrency;
 using Outcompute.Trader.Data;
@@ -19,13 +18,11 @@ namespace Outcompute.Trader.Trading.Providers.Orders
     {
         private readonly ITradingRepository _repository;
         private readonly IHostApplicationLifetime _lifetime;
-        private readonly ReactiveOptions _options;
 
-        public OrderProviderGrain(ITradingRepository repository, IHostApplicationLifetime lifetime, IOptions<ReactiveOptions> options)
+        public OrderProviderGrain(ITradingRepository repository, IHostApplicationLifetime lifetime)
         {
             _repository = repository;
             _lifetime = lifetime;
-            _options = options.Value;
         }
 
         private string _symbol = Empty;
@@ -36,12 +33,12 @@ namespace Outcompute.Trader.Trading.Providers.Orders
         private readonly ImmutableSortedSet<OrderQueryResult>.Builder _orders = ImmutableSortedSet.CreateBuilder(OrderQueryResult.OrderIdComparer);
 
         /// <summary>
-        /// An instance version that helps reset reactive caching clients upon reactivation of this grain.
+        /// An instance version that helps reset replicas upon reactivation of this grain.
         /// </summary>
         private readonly Guid _version = Guid.NewGuid();
 
         /// <summary>
-        /// Helps tag all incoming orders so we push minimal diffs to reactive clients.
+        /// Helps tag all incoming orders so we push minimal diffs to replicas.
         /// </summary>
         private int _serial;
 

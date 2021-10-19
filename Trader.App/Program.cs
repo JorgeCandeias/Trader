@@ -10,6 +10,7 @@ using Orleans.Statistics;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Providers;
 using Serilog;
 using Serilog.Events;
 using System;
@@ -50,20 +51,6 @@ namespace Outcompute.Trader.App
                         .MinimumLevel.Override("Orleans.Runtime.SiloControl", LogEventLevel.Warning)
                         .MinimumLevel.Override("Orleans.Runtime.Management.ManagementGrain", LogEventLevel.Warning)
 
-                        // for now ignore orleans notifications about long-running interleaved methods
-                        // there is an issue on the orleans repo about adding a supported way to supress these messages for specific methods
-                        .Filter.ByExcluding(x =>
-                        {
-                            return x.Properties.TryGetValue("SourceContext", out var contextProperty) &&
-                                contextProperty is ScalarValue contextValue &&
-                                contextValue.Value.Equals("Orleans.Runtime.InsideRuntimeClient") &&
-                                x.Level == LogEventLevel.Information &&
-                                x.MessageTemplate.Text.Contains("Received status update for pending request, Request", StringComparison.Ordinal) &&
-                                x.Properties.TryGetValue("RequestMessage", out var messageProperty) &&
-                                messageProperty is ScalarValue messageValue &&
-                                messageValue.Value is string messageString &&
-                                messageString.StartsWith("IsAlwaysInterleave", StringComparison.Ordinal);
-                        })
                         .WriteTo.Console()
                         .CreateLogger(), true);
                 })

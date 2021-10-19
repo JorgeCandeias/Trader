@@ -6,6 +6,7 @@ using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Buffers;
 using System.Collections.Concurrent;
@@ -27,21 +28,22 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         private readonly IMapper _mapper;
         private readonly ISystemClock _clock;
         private readonly IHostApplicationLifetime _lifetime;
+        private readonly IKlinePublisher _klinePublisher;
 
         private readonly HashSet<string> _tickerSymbols;
         private readonly Dictionary<(string Symbol, KlineInterval Interval), int> _klineWindows;
 
-        public BinanceMarketDataGrain(ILogger<BinanceMarketDataGrain> logger, IMarketDataStreamClientFactory factory, ITradingRepository repository, ITradingService trader, IMapper mapper, ISystemClock clock, IAlgoDependencyInfo dependencies, IHostApplicationLifetime lifetime)
+        public BinanceMarketDataGrain(ILogger<BinanceMarketDataGrain> logger, IMarketDataStreamClientFactory factory, ITradingRepository repository, ITradingService trader, IMapper mapper, ISystemClock clock, IAlgoDependencyInfo dependencies, IHostApplicationLifetime lifetime, IKlinePublisher klinePublisher)
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _factory = factory ?? throw new ArgumentNullException(nameof(factory));
-            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-            _trader = trader ?? throw new ArgumentNullException(nameof(trader));
-            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-            _lifetime = lifetime ?? throw new ArgumentNullException(nameof(lifetime));
+            _logger = logger;
+            _factory = factory;
+            _repository = repository;
+            _trader = trader;
+            _mapper = mapper;
+            _clock = clock;
+            _lifetime = lifetime;
+            _klinePublisher = klinePublisher;
 
-            _ = dependencies ?? throw new ArgumentNullException(nameof(dependencies));
             _tickerSymbols = dependencies.GetTickers().ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             _klineWindows = dependencies
@@ -64,11 +66,6 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         private readonly ConcurrentDictionary<string, (MiniTicker Ticker, bool Saved)> _tickers = new();
 
         /// <summary>
-        /// Conflates the incoming klines from the background stream so the repository has a chance to keep up.
-        /// </summary>
-        private readonly ConcurrentDictionary<(string Symbol, KlineInterval Interval, DateTime OpenTime), (Kline Kline, bool Saved)> _klines = new();
-
-        /// <summary>
         /// Keeps track of readyness state.
         /// </summary>
         private bool _ready;
@@ -85,13 +82,6 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             if (_tickerSymbols.Count > 0)
             {
                 RegisterTimer(TickSaveTickersAsync, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
-            }
-
-            // if there are klines to manage then ensure we keep saving them to the repository
-            if (_klineWindows.Count > 0)
-            {
-                RegisterTimer(TickSaveKlinesAsync, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
-                RegisterTimer(TickClearKlinesAsync, null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
             }
 
             return base.OnActivateAsync();
@@ -166,7 +156,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 
                         if (message.Kline is not null && _klineWindows.ContainsKey((message.Kline.Symbol, message.Kline.Interval)))
                         {
-                            SetKline(message.Kline);
+                            _klinePublisher.Publish(message.Kline);
                         }
                     }
                 }, linkedCancellation.Token);
@@ -265,7 +255,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                     // save all the klines in the page
                     foreach (var kline in klines)
                     {
-                        SetKline(kline);
+                        _klinePublisher.Publish(kline);
                     }
 
                     _logger.LogInformation(
@@ -348,86 +338,6 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             ArrayPool<MiniTicker>.Shared.Return(buffer);
         }
 
-        /// <summary>
-        /// Saves conflated klines to the repository.
-        /// </summary>
-        private async Task TickSaveKlinesAsync(object _)
-        {
-            // avoid ticking on application shutdown
-            if (_lifetime.ApplicationStopping.IsCancellationRequested) return;
-
-            var buffer = ArrayPool<Kline>.Shared.Rent(_klines.Count);
-            var count = 0;
-
-            // stage the unsaved klines from the concurrent conflation
-            foreach (var item in _klines.Select(x => x.Value))
-            {
-                // break if the buffer is full
-                if (count >= buffer.Length) break;
-
-                // skip saved items
-                if (item.Saved) continue;
-
-                // stage unsaved items
-                buffer[count++] = item.Kline;
-            }
-
-            // save all klines to the repository
-            if (count > 0)
-            {
-                await _repository.SetKlinesAsync(buffer.Take(count), _lifetime.ApplicationStopping);
-
-                // mark unsaved klines as saved to avoid saving them again
-                for (var i = 0; i < count; i++)
-                {
-                    var kline = buffer[i];
-
-                    // only mark the kline saved if it hasn't been removed by the clearing timer
-                    _klines.TryUpdate((kline.Symbol, kline.Interval, kline.OpenTime), (kline, true), (kline, false));
-                }
-            }
-
-            ArrayPool<Kline>.Shared.Return(buffer);
-        }
-
-        /// <summary>
-        /// Clears old klines from memory.
-        /// </summary>
-        private Task TickClearKlinesAsync(object _)
-        {
-            // avoid ticking on application shutdown
-            if (_lifetime.ApplicationStopping.IsCancellationRequested) return Task.CompletedTask;
-
-            var buffer = ArrayPool<Kline>.Shared.Rent(_klines.Count);
-            var count = 0;
-
-            // elect expired saved klines for removal
-            var now = _clock.UtcNow;
-            foreach (var item in _klines)
-            {
-                // protect against concurrent dictionary size increasing during enumeration
-                if (count >= buffer.Length) break;
-
-                // attempt to elect the item for removal
-                if (_klineWindows.TryGetValue((item.Key.Symbol, item.Key.Interval), out var periods) && item.Key.OpenTime < now.Subtract(item.Key.Interval, periods) && item.Value.Saved)
-                {
-                    buffer[count++] = item.Value.Kline;
-                }
-            }
-
-            // safely remove the elected items
-            for (var i = 0; i < count; i++)
-            {
-                var item = buffer[i];
-
-                _klines.TryRemove(new KeyValuePair<(string, KlineInterval, DateTime), (Kline, bool)>((item.Symbol, item.Interval, item.OpenTime), (item, true)));
-            }
-
-            ArrayPool<Kline>.Shared.Return(buffer);
-
-            return Task.CompletedTask;
-        }
-
         public Task<bool> IsReadyAsync() => Task.FromResult(_ready);
 
         public ValueTask<MiniTicker?> TryGetTickerAsync(string symbol)
@@ -442,19 +352,6 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             {
                 return ValueTask.FromResult<MiniTicker?>(null);
             }
-        }
-
-        /// <summary>
-        /// Adds the specified kline to the cache.
-        /// </summary>
-        private void SetKline(Kline kline)
-        {
-            // keep the kline if brand new or newer than existing one
-            _klines.AddOrUpdate(
-                (kline.Symbol, kline.Interval, kline.OpenTime),
-                (key, arg) => arg,
-                (key, current, arg) => arg.kline.EventTime > current.Kline.EventTime ? arg : current,
-                (kline, false));
         }
 
         /// <summary>

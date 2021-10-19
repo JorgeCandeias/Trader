@@ -2,6 +2,7 @@
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Providers;
 using Outcompute.Trader.Trading.Providers.Exchange;
+using Outcompute.Trader.Trading.Providers.Klines;
 using Outcompute.Trader.Trading.Providers.Orders;
 using Outcompute.Trader.Trading.Readyness;
 
@@ -22,6 +23,10 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<IAlgoDependencyInfo, AlgoDependencyInfo>()
                 .AddOptions<AlgoConfigurationMappingOptions>().ValidateDataAnnotations().Services
                 .AddOptions<SavingsOptions>().ValidateDataAnnotations().Services
+
+                // kline provider
+                .AddSingleton<IKlineProvider, KlineProvider>()
+                .AddSingleton<IKlinePublisher, KlinePublisher>()
 
                 // order provider
                 .AddSingleton<IOrderProvider, OrderProvider>()

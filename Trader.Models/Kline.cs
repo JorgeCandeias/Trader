@@ -1,6 +1,7 @@
 ﻿using Orleans.Concurrency;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Outcompute.Trader.Models
 {
@@ -25,6 +26,10 @@ namespace Outcompute.Trader.Models
         decimal TakerBuyQuoteAssetVolume)
     {
         public static IComparer<Kline> OpenTimeComparer { get; } = new OpenTimeComparerInternal();
+
+        public static IEqualityComparer<Kline> OpenTimeEqualityComparer { get; } = new OpenTimeEqualityComparerInternal();
+
+        public static IComparer<Kline> KeyComparer { get; } = new KeyComparerInternal();
 
         private sealed class OpenTimeComparerInternal : Comparer<Kline>
         {
@@ -55,7 +60,27 @@ namespace Outcompute.Trader.Models
             }
         }
 
-        public static IComparer<Kline> KeyComparer { get; } = new KeyComparerInternal();
+        private sealed class OpenTimeEqualityComparerInternal : EqualityComparer<Kline>
+        {
+            public override bool Equals(Kline? x, Kline? y)
+            {
+                if (x is null)
+                {
+                    return y is null;
+                }
+                else
+                {
+                    return y is not null && EqualityComparer<DateTime>.Default.Equals(x.OpenTime, y.OpenTime);
+                }
+            }
+
+            public override int GetHashCode([DisallowNull] Kline obj)
+            {
+                if (obj is null) throw new ArgumentNullException(nameof(obj));
+
+                return obj.OpenTime.GetHashCode();
+            }
+        }
 
         private sealed class KeyComparerInternal : Comparer<Kline>
         {

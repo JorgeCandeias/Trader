@@ -26,6 +26,8 @@ namespace Outcompute.Trader.Trading.Providers.Klines
             _logger = logger;
             _lifetime = lifetime;
             _factory = factory;
+
+            _channelFactoryDelegate = ChannelFactory;
         }
 
         /// <summary>
@@ -33,25 +35,43 @@ namespace Outcompute.Trader.Trading.Providers.Klines
         /// </summary>
         private readonly ConcurrentDictionary<(string Symbol, KlineInterval Interval), (Channel<Kline> Channel, Task Consumer)> _channels = new();
 
+        /// <summary>
+        /// Creates a channel and consuming task for the specified parameters.
+        /// This method is designed as a factory method for a concurrent dictionary.
+        /// </summary>
+        private (Channel<Kline> Channel, Task Consumer) ChannelFactory((string Symbol, KlineInterval Interval) key)
+        {
+            var channel = Channel.CreateUnbounded<Kline>(new UnboundedChannelOptions
+            {
+                AllowSynchronousContinuations = false,
+                SingleReader = true,
+                SingleWriter = false
+            });
+
+            var task = ConsumeTask(key.Symbol, key.Interval, channel);
+
+            return (channel, task);
+        }
+
+        /// <summary>
+        /// Caches the <see cref="ChannelFactory((string Symbol, KlineInterval Interval))"/> delegate to avoid allocating on every call to <see cref="EnsureChannel(string, KlineInterval)"/>.
+        /// </summary>
+        private readonly Func<(string Symbol, KlineInterval Interval), (Channel<Kline> Channel, Task Consumer)> _channelFactoryDelegate;
+
+        /// <summary>
+        /// Ensures the channel and consuming task for the specified parameters exists.
+        /// If they do not yet exist then creates them.
+        /// </summary>
         private Channel<Kline> EnsureChannel(string symbol, KlineInterval interval)
         {
-            var result = _channels.GetOrAdd((symbol, interval), _ =>
-            {
-                var channel = Channel.CreateUnbounded<Kline>(new UnboundedChannelOptions
-                {
-                    AllowSynchronousContinuations = false,
-                    SingleReader = true,
-                    SingleWriter = false
-                });
-
-                var task = ConsumeTask(symbol, interval, channel);
-
-                return (channel, task);
-            });
+            var result = _channels.GetOrAdd((symbol, interval), _channelFactoryDelegate);
 
             return result.Channel;
         }
 
+        /// <summary>
+        /// Consumes klines from the specified channel and pushes them to the specified partition grain.
+        /// </summary>
         private async Task ConsumeTask(string symbol, KlineInterval interval, Channel<Kline> channel)
         {
             while (await channel.Reader

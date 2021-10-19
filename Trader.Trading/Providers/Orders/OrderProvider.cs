@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Providers
+namespace Outcompute.Trader.Trading.Providers.Orders
 {
     internal class OrderProvider : IOrderProvider
     {

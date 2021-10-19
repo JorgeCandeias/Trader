@@ -4,6 +4,7 @@ using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Providers;
+using Outcompute.Trader.Trading.Providers.Orders;
 using System;
 using System.Buffers;
 using System.Collections.Generic;

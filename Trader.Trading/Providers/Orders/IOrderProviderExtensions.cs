@@ -8,7 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Providers
+namespace Outcompute.Trader.Trading.Providers.Orders
 {
     public static class IOrderProviderExtensions
     {

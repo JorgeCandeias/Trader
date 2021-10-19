@@ -12,7 +12,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using static System.String;
 
-namespace Outcompute.Trader.Trading.Providers
+namespace Outcompute.Trader.Trading.Providers.Orders
 {
     [Reentrant]
     internal class OrderProviderGrain : Grain, IOrderProviderGrain

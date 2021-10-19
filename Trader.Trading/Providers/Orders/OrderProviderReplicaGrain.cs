@@ -8,7 +8,7 @@ using System.Collections.Immutable;
 using System.Threading.Tasks;
 using static System.String;
 
-namespace Outcompute.Trader.Trading.Providers
+namespace Outcompute.Trader.Trading.Providers.Orders
 {
     [Reentrant]
     [StatelessWorker(1)]

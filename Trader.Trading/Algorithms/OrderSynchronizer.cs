@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Trading.Providers;
+using Outcompute.Trader.Trading.Providers.Orders;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;

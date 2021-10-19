@@ -4,7 +4,7 @@ using Orleans;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Providers
+namespace Outcompute.Trader.Trading.Providers.Orders
 {
     /// <summary>
     /// This hosted service makes services available to <see cref="IOrderProviderExtensions"/>.

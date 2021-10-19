@@ -1,8 +1,8 @@
 ﻿using Orleans;
-using Orleans.Concurrency;
 using Outcompute.Trader.Models;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Providers
@@ -15,9 +15,8 @@ namespace Outcompute.Trader.Trading.Providers
 
         Task<OrderQueryResult?> TryGetOrderAsync(long orderId);
 
-        Task<(Guid Version, int MaxSerial, IReadOnlyList<OrderQueryResult> Orders)> GetOrdersAsync();
+        Task<(Guid Version, int MaxSerial, ImmutableSortedSet<OrderQueryResult> Orders)> GetOrdersAsync();
 
-        [AlwaysInterleave]
-        Task<(Guid Version, int MaxSerial, IReadOnlyList<OrderQueryResult> Orders)> PollOrdersAsync(Guid version, int fromSerial);
+        Task<(Guid Version, int MaxSerial, ImmutableSortedSet<OrderQueryResult> Orders)> GetOrdersAsync(Guid version, int fromSerial);
     }
 }

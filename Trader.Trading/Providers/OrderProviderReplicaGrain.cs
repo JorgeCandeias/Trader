@@ -47,27 +47,32 @@ namespace Outcompute.Trader.Trading.Providers
         /// </summary>
         private readonly ImmutableSortedSet<OrderQueryResult>.Builder _orders = ImmutableSortedSet.CreateBuilder(OrderQueryResult.OrderIdComparer);
 
+        /// <summary>
+        /// Indexes orders by order id to speed up requests for a single order.
+        /// </summary>
+        private readonly Dictionary<long, OrderQueryResult> _orderByOrderId = new();
+
         public override async Task OnActivateAsync()
         {
             _symbol = this.GetPrimaryKeyString();
 
             await LoadAsync();
 
-            RegisterTimer(TickUpdateAsync, null, _options.ReactiveTickDelay, _options.ReactiveTickDelay);
+            RegisterTimer(TickUpdateAsync, null, TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100));
 
             await base.OnActivateAsync();
         }
 
         public Task<OrderQueryResult?> TryGetOrderAsync(long orderId)
         {
-            var result = _orders.TryGetValue(OrderQueryResult.Empty with { OrderId = orderId }, out var order) ? order : null;
+            var order = _orderByOrderId.TryGetValue(orderId, out var current) ? current : null;
 
-            return Task.FromResult(result);
+            return Task.FromResult(order);
         }
 
-        public Task<IReadOnlyList<OrderQueryResult>> GetOrdersAsync()
+        public Task<ImmutableSortedSet<OrderQueryResult>> GetOrdersAsync()
         {
-            return Task.FromResult<IReadOnlyList<OrderQueryResult>>(_orders.ToImmutable());
+            return Task.FromResult(_orders.ToImmutable());
         }
 
         public async Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders)
@@ -98,15 +103,21 @@ namespace Outcompute.Trader.Trading.Providers
             Apply(result.Orders);
         }
 
-        private async Task TickUpdateAsync(object _)
+        private Task TickUpdateAsync(object _)
         {
-            // break early on application shutdown
-            if (_lifetime.ApplicationStopping.IsCancellationRequested) return;
+            // perform sync checks
+            if (_lifetime.ApplicationStopping.IsCancellationRequested) return Task.CompletedTask;
 
+            // go on the async path
+            return TickUpdateCoreAsync();
+        }
+
+        private async Task TickUpdateCoreAsync()
+        {
             // wait for new orders
             try
             {
-                var result = await _factory.GetOrderProviderGrain(_symbol).PollOrdersAsync(_version, _serial + 1);
+                var result = await _factory.GetOrderProviderGrain(_symbol).GetOrdersAsync(_version, _serial + 1);
 
                 Apply(result.Version, result.MaxSerial, result.Orders);
             }
@@ -143,10 +154,16 @@ namespace Outcompute.Trader.Trading.Providers
         private void Apply(OrderQueryResult order)
         {
             // remove old order to allow an update
-            _orders.Remove(order);
+            if (_orders.Remove(order) && !_orderByOrderId.Remove(order.OrderId))
+            {
+                throw new InvalidOperationException($"Failed to unindex order '{order.OrderId}'");
+            }
 
             // add new or updated order
             _orders.Add(order);
+
+            // index the order
+            _orderByOrderId[order.OrderId] = order;
         }
     }
 }

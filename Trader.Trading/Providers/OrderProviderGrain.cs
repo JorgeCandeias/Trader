@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Concurrency;
-using OrleansDashboard;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using System;
@@ -37,11 +36,6 @@ namespace Outcompute.Trader.Trading.Providers
         private readonly ImmutableSortedSet<OrderQueryResult>.Builder _orders = ImmutableSortedSet.CreateBuilder(OrderQueryResult.OrderIdComparer);
 
         /// <summary>
-        /// Tracks active reactive caching collection requests.
-        /// </summary>
-        private readonly Dictionary<int, TaskCompletionSource<(Guid Version, int MaxSerial, IReadOnlyList<OrderQueryResult> Orders)>> _requests = new();
-
-        /// <summary>
         /// An instance version that helps reset reactive caching clients upon reactivation of this grain.
         /// </summary>
         private readonly Guid _version = Guid.NewGuid();
@@ -62,9 +56,14 @@ namespace Outcompute.Trader.Trading.Providers
         private readonly Dictionary<OrderQueryResult, int> _serialByOrder = new(OrderQueryResult.OrderIdEqualityComparer);
 
         /// <summary>
-        /// Indexes all orders by their latest serial number to speed up fulfilling active caching requests.
+        /// Indexes orders by their latest serial number to speed up update requests.
         /// </summary>
         private readonly Dictionary<int, OrderQueryResult> _orderBySerial = new();
+
+        /// <summary>
+        /// Indexes orders by their order id to speed up requests for a single order.
+        /// </summary>
+        private readonly Dictionary<long, OrderQueryResult> _orderByOrderId = new();
 
         public override async Task OnActivateAsync()
         {
@@ -80,87 +79,39 @@ namespace Outcompute.Trader.Trading.Providers
         /// <summary>
         /// Gets all cached orders.
         /// </summary>
-        public Task<(Guid Version, int MaxSerial, IReadOnlyList<OrderQueryResult> Orders)> GetOrdersAsync()
+        public Task<(Guid Version, int MaxSerial, ImmutableSortedSet<OrderQueryResult> Orders)> GetOrdersAsync()
         {
-            return Task.FromResult<(Guid, int, IReadOnlyList<OrderQueryResult>)>((_version, _serial, _orders.ToImmutable()));
+            return Task.FromResult((_version, _serial, _orders.ToImmutable()));
         }
 
-        [NoProfiling]
-        public Task<(Guid Version, int MaxSerial, IReadOnlyList<OrderQueryResult> Orders)> PollOrdersAsync(Guid version, int fromSerial)
+        /// <summary>
+        /// Gets the cached orders from and including the specified serial.
+        /// If the specified version is different from the current version then returns all orders along with the current version.
+        /// </summary>
+        public Task<(Guid Version, int MaxSerial, ImmutableSortedSet<OrderQueryResult> Orders)> GetOrdersAsync(Guid version, int fromSerial)
         {
-            // if the version is different then return all the orders plus the new version
+            // if the version is different then return all the orders
             if (version != _version)
             {
                 return GetOrdersAsync();
             }
 
-            // attempt to fulfill the request right now
-            if (fromSerial <= _serial)
+            // if there is nothing to return then return an empty collection
+            if (fromSerial > _serial)
             {
-                var builder = ImmutableList.CreateBuilder<OrderQueryResult>();
+                return Task.FromResult((_version, _serial, ImmutableSortedSet<OrderQueryResult>.Empty));
+            }
 
-                for (var serial = fromSerial; serial <= _serial; serial++)
+            // otherwise return all new orders
+            var builder = ImmutableSortedSet.CreateBuilder(OrderQueryResult.OrderIdComparer);
+            for (var serial = fromSerial; serial <= _serial; serial++)
+            {
+                if (_orderBySerial.TryGetValue(serial, out var order))
                 {
-                    if (_orderBySerial.TryGetValue(serial, out var order))
-                    {
-                        builder.Add(order);
-                    }
+                    builder.Add(order);
                 }
-
-                return Task.FromResult<(Guid, int, IReadOnlyList<OrderQueryResult>)>((_version, _serial, builder.ToImmutable()));
             }
-
-            // otherwise track this poll request for future completion
-            if (!_requests.TryGetValue(fromSerial, out var completion))
-            {
-                _requests[fromSerial] = completion = new TaskCompletionSource<(Guid, int, IReadOnlyList<OrderQueryResult> Orders)>();
-            }
-
-            // let the client wait until we have data to fulfill this request or return empty on timeout
-            return completion.Task.WithDefaultOnTimeout((_version, _serial, ImmutableList<OrderQueryResult>.Empty), _options.ReactivePollingTimeout);
-        }
-
-        /// <summary>
-        /// Publishes new orders to the reactive caching requests that are waiting for them.
-        /// </summary>
-        private void Publish()
-        {
-            // break early if there is nothing to fulfill
-            if (_requests.Count is 0) return;
-
-            // track completed requests for removal
-            var completed = ArrayPool<int>.Shared.Rent(_requests.Count);
-            var count = 0;
-
-            // attempt to fulfill all requests
-            foreach (var request in _requests)
-            {
-                // skip if the request cannot be fulfilled yet
-                if (request.Key > _serial) continue;
-
-                // fullfill the request
-                var builder = ImmutableList.CreateBuilder<OrderQueryResult>();
-                for (var serial = request.Key; serial <= _serial; serial++)
-                {
-                    if (_orderBySerial.TryGetValue(serial, out var order))
-                    {
-                        builder.Add(order);
-                    }
-                }
-                request.Value.SetResult((_version, _serial, builder.ToImmutable()));
-
-                // elect the request for removal
-                completed[count++] = request.Key;
-            }
-
-            // remove completed requests
-            for (var i = 0; i < count; i++)
-            {
-                _requests.Remove(completed[i]);
-            }
-
-            // cleanup
-            ArrayPool<int>.Shared.Return(completed);
+            return Task.FromResult((_version, _serial, builder.ToImmutable()));
         }
 
         /// <summary>
@@ -169,8 +120,6 @@ namespace Outcompute.Trader.Trading.Providers
         public Task SetOrderAsync(OrderQueryResult order)
         {
             SetOrderCore(order);
-
-            Publish();
 
             return Task.CompletedTask;
         }
@@ -185,14 +134,12 @@ namespace Outcompute.Trader.Trading.Providers
                 SetOrderCore(item);
             }
 
-            Publish();
-
             return Task.CompletedTask;
         }
 
         public Task<OrderQueryResult?> TryGetOrderAsync(long orderId)
         {
-            var order = _orders.TryGetValue(OrderQueryResult.Empty with { OrderId = orderId }, out var current) ? current : null;
+            var order = _orderByOrderId.TryGetValue(orderId, out var current) ? current : null;
 
             return Task.FromResult(order);
         }
@@ -200,27 +147,34 @@ namespace Outcompute.Trader.Trading.Providers
         private void SetOrderCore(OrderQueryResult item)
         {
             // remove and unindex the old version
-            if (_orders.Remove(item) && _serialByOrder.Remove(item, out var serial) && _orderBySerial.Remove(serial))
+            if (_orders.Remove(item) && !(_orderByOrderId.Remove(item.OrderId, out _) && _serialByOrder.Remove(item, out var serial) && _orderBySerial.Remove(serial)))
             {
-                // noop
+                throw new InvalidOperationException($"Failed to unindex order '{item.OrderId}'");
             }
 
             // keep the new order
             _orders.Add(item);
 
             // index the new order
+            _orderByOrderId[item.OrderId] = item;
             _serialByOrder[item] = ++_serial;
             _orderBySerial[_serial] = item;
+        }
+
+        private Task TickSaveOrdersAsync(object _)
+        {
+            // break early if there is nothing to save
+            if (_savedSerial == _serial) return Task.CompletedTask;
+
+            // go on the async path only if there are orders to save
+            return TickSaveOrdersCoreAsync();
         }
 
         /// <summary>
         /// Saves all unsaved orders from the cache to the repository.
         /// </summary>
-        private async Task TickSaveOrdersAsync(object _)
+        private async Task TickSaveOrdersCoreAsync()
         {
-            // break early if there is nothing to save
-            if (_savedSerial == _serial) return;
-
             // pin the current serial as it can change by interleaving tasks
             var maxSerial = _serial;
 
@@ -234,11 +188,6 @@ namespace Outcompute.Trader.Trading.Providers
                 {
                     elected[count++] = order;
                 }
-            }
-
-            if (elected.Take(count).Select(x => x.OrderId).Distinct().Count() != count)
-            {
-                // noop
             }
 
             // save the items

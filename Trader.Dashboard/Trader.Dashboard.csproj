@@ -10,7 +10,7 @@
 		<EnableNETAnalyzers>true</EnableNETAnalyzers>
 		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
 		<IsPackable>true</IsPackable>
-		<Description>An admin dashboard for Outcompute Trader, a high-frequency trading framework.</Description>
+		<Description>An admin dashboard for Outcompute Trader, an algorithmic trading framework.</Description>
 	</PropertyGroup>
 
 	<ItemGroup>

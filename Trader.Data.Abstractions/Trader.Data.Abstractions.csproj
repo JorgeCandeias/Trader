@@ -9,7 +9,7 @@
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     <AssemblyName>Outcompute.Trader.Data.Abstractions</AssemblyName>
-    <Description>Repository abstractions library of Outcompute Trader, a high-frequency trading framework.</Description>
+    <Description>Repository abstractions library of Outcompute Trader, an algorithmic trading framework.</Description>
   </PropertyGroup>
 
   <ItemGroup>

@@ -9,7 +9,7 @@
 		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
 		<AssemblyName>Outcompute.Trader.Trading</AssemblyName>
 		<RootNamespace>Outcompute.Trader.Trading</RootNamespace>
-		<Description>Trading library of Outcompute Trader, a high-frequency trading framework.</Description>
+		<Description>Trading library of Outcompute Trader, an algorithmic trading framework.</Description>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

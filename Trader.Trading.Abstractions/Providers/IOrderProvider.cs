@@ -8,11 +8,6 @@ namespace Outcompute.Trader.Trading.Providers
     public interface IOrderProvider
     {
         /// <summary>
-        /// Saves the specifed orders under the specified symbol.
-        /// </summary>
-        Task SetOrdersAsync(string symbol, IEnumerable<OrderQueryResult> items, CancellationToken cancellationToken = default);
-
-        /// <summary>
         /// Saves the specified order.
         /// </summary>
         Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default);

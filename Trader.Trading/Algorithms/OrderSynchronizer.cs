@@ -50,9 +50,10 @@ namespace Outcompute.Trader.Trading.Algorithms
                 if (orders.Count is 0) break;
 
                 // persist only orders that have progressed - the repository will detect which ones have updated or not
-                await _orders
-                    .SetOrdersAsync(symbol, orders, cancellationToken)
-                    .ConfigureAwait(false);
+                foreach (var order in orders)
+                {
+                    await _orders.SetOrderAsync(order, cancellationToken).ConfigureAwait(false);
+                }
 
                 // keep the last order id
                 orderId = orders.Max(x => x.OrderId);

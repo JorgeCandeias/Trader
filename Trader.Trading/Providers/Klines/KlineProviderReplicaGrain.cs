@@ -87,9 +87,7 @@ namespace Outcompute.Trader.Trading.Providers.Klines
             _periods = _dependencies
                 .GetKlines(_symbol, _interval)
                 .Select(x => x.Periods)
-
                 .DefaultIfEmpty(0)
-
                 .Max();
 
             await SubscribeAsync();

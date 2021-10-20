@@ -20,11 +20,6 @@ namespace Outcompute.Trader.Trading.Providers.Orders
             return await _factory.GetOrderProviderReplicaGrain(symbol).GetOrdersAsync();
         }
 
-        public Task SetOrdersAsync(string symbol, IEnumerable<OrderQueryResult> items, CancellationToken cancellationToken = default)
-        {
-            return _factory.GetOrderProviderReplicaGrain(symbol).SetOrdersAsync(items);
-        }
-
         public Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default)
         {
             return _factory.GetOrderProviderReplicaGrain(order.Symbol).SetOrderAsync(order);

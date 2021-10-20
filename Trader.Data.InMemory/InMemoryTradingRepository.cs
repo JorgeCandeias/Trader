@@ -36,6 +36,13 @@ namespace Outcompute.Trader.Trading.Data.InMemory
             return _grain.SetOrdersAsync(orders);
         }
 
+        public Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default)
+        {
+            if (order is null) throw new ArgumentNullException(nameof(order));
+
+            return _grain.SetOrderAsync(order);
+        }
+
         #endregion Orders
 
         #region Klines

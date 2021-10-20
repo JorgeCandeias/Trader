@@ -19,5 +19,7 @@ namespace Outcompute.Trader.Trading.Data.InMemory
         Task<IEnumerable<OrderQueryResult>> GetOrdersAsync(string symbol);
 
         Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders);
+
+        Task SetOrderAsync(OrderQueryResult order);
     }
 }

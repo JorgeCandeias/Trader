@@ -15,6 +15,8 @@ namespace Outcompute.Trader.Data
 
         Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders, CancellationToken cancellationToken = default);
 
+        Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default);
+
         #endregion Orders
 
         #region Klines

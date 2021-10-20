@@ -102,6 +102,7 @@
     <Build Include="Procedures\SetKlines.sql" />
     <Build Include="Procedures\GetKlines.sql" />
     <Build Include="Procedures\SetKline.sql" />
+    <Build Include="Procedures\SetOrder.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Scripts\Script.PostDeployment.sql" />

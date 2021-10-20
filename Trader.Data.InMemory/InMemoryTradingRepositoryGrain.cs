@@ -76,16 +76,30 @@ namespace Outcompute.Trader.Trading.Data.InMemory
 
             foreach (var order in orders)
             {
-                if (!_orders.TryGetValue(order.Symbol, out var builder))
-                {
-                    _orders[order.Symbol] = builder = ImmutableSortedSet.CreateBuilder(OrderQueryResult.OrderIdComparer);
-                }
-
-                builder.Remove(order);
-                builder.Add(order);
+                SetOrderCore(order);
             }
 
             return Task.CompletedTask;
+        }
+
+        public Task SetOrderAsync(OrderQueryResult order)
+        {
+            if (order is null) throw new ArgumentNullException(nameof(order));
+
+            SetOrderCore(order);
+
+            return Task.CompletedTask;
+        }
+
+        private void SetOrderCore(OrderQueryResult order)
+        {
+            if (!_orders.TryGetValue(order.Symbol, out var builder))
+            {
+                _orders[order.Symbol] = builder = ImmutableSortedSet.CreateBuilder(OrderQueryResult.OrderIdComparer);
+            }
+
+            builder.Remove(order);
+            builder.Add(order);
         }
     }
 }

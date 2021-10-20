@@ -138,10 +138,40 @@ namespace Outcompute.Trader.Data.Sql
                 .ConfigureAwait(false);
         }
 
-        public async Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders, CancellationToken cancellationToken = default)
+        public Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default)
         {
-            _ = orders ?? throw new ArgumentNullException(nameof(orders));
+            if (order is null) throw new ArgumentNullException(nameof(order));
 
+            return SetOrderCoreAsync(order, cancellationToken);
+        }
+
+        private async Task SetOrderCoreAsync(OrderQueryResult order, CancellationToken cancellationToken = default)
+        {
+            var entity = _mapper.Map<OrderEntity>(order);
+
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            await connection
+                .ExecuteAsync(new CommandDefinition(
+                    "[dbo].[SetOrder]",
+                    entity,
+                    null,
+                    _options.CommandTimeoutAsInteger,
+                    CommandType.StoredProcedure,
+                    CommandFlags.Buffered,
+                    cancellationToken))
+                .ConfigureAwait(false);
+        }
+
+        public Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders, CancellationToken cancellationToken = default)
+        {
+            if (orders is null) throw new ArgumentNullException(nameof(orders));
+
+            return SetOrdersCoreAsync(orders, cancellationToken);
+        }
+
+        private async Task SetOrdersCoreAsync(IEnumerable<OrderQueryResult> orders, CancellationToken cancellationToken = default)
+        {
             // get the cached ids for the incoming symbols
             var ids = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             foreach (var symbol in orders.Select(x => x.Symbol))

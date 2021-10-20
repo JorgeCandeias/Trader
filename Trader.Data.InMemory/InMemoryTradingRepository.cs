@@ -38,12 +38,37 @@ namespace Outcompute.Trader.Trading.Data.InMemory
 
         #endregion Orders
 
+        #region Klines
+
         public Task<IEnumerable<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime startOpenTime, DateTime endOpenTime, CancellationToken cancellationToken = default)
         {
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
             return _grain.GetKlinesAsync(symbol, interval, startOpenTime, endOpenTime);
         }
+
+        public Task SetKlinesAsync(IEnumerable<Kline> items, CancellationToken cancellationToken = default)
+        {
+            if (items is null) throw new ArgumentNullException(nameof(items));
+
+            return _grain.SetKlinesAsync(items);
+        }
+
+        public Task<Kline?> TryGetKlineAsync(string symbol, KlineInterval interval, DateTime openTime, CancellationToken cancellationToken = default)
+        {
+            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+
+            return _grain.TryGetKlineAsync(symbol, interval, openTime);
+        }
+
+        public Task SetKlineAsync(Kline item, CancellationToken cancellationToken = default)
+        {
+            if (item is null) throw new ArgumentNullException(nameof(item));
+
+            return _grain.SetKlineAsync(item);
+        }
+
+        #endregion Klines
 
         public Task<long> GetLastPagedTradeIdAsync(string symbol, CancellationToken cancellationToken = default)
         {
@@ -81,13 +106,6 @@ namespace Outcompute.Trader.Trading.Data.InMemory
             throw new NotImplementedException();
         }
 
-        public Task SetKlinesAsync(IEnumerable<Kline> items, CancellationToken cancellationToken = default)
-        {
-            if (items is null) throw new ArgumentNullException(nameof(items));
-
-            return _grain.SetKlinesAsync(items);
-        }
-
         public Task SetLastPagedTradeIdAsync(string symbol, long tradeId, CancellationToken cancellationToken = default)
         {
             // todo: remove
@@ -116,13 +134,6 @@ namespace Outcompute.Trader.Trading.Data.InMemory
         {
             // todo: implement
             throw new NotImplementedException();
-        }
-
-        public Task<Kline?> TryGetKlineAsync(string symbol, KlineInterval interval, DateTime openTime, CancellationToken cancellationToken = default)
-        {
-            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
-
-            return _grain.TryGetKlineAsync(symbol, interval, openTime);
         }
     }
 }

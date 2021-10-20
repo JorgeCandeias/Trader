@@ -422,10 +422,49 @@ namespace Outcompute.Trader.Data.Sql
             return _mapper.Map<MiniTicker>(entity);
         }
 
-        public async Task SetKlinesAsync(IEnumerable<Kline> items, CancellationToken cancellationToken = default)
+        public Task SetKlineAsync(Kline item, CancellationToken cancellationToken = default)
         {
-            _ = items ?? throw new ArgumentNullException(nameof(items));
+            if (item is null) throw new ArgumentNullException(nameof(item));
 
+            return SetKlineCoreAsync(item, cancellationToken);
+        }
+
+        private async Task SetKlineCoreAsync(Kline item, CancellationToken cancellationToken = default)
+        {
+            var symbolId = await GetOrAddSymbolAsync(item.Symbol, cancellationToken).ConfigureAwait(false);
+
+            var entity = _mapper.Map<KlineEntity>(item, options =>
+            {
+                options.Items[nameof(KlineEntity.SymbolId)] = symbolId;
+            });
+
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            await _retryPolicy
+                .ExecuteAsync(ct => connection
+                    .ExecuteAsync(
+                        new CommandDefinition(
+                            "[dbo].[SetKline]",
+                            entity,
+                            null,
+                            _options.CommandTimeoutAsInteger,
+                            CommandType.StoredProcedure,
+                            CommandFlags.Buffered,
+                        ct)),
+                        cancellationToken,
+                        false)
+                .ConfigureAwait(false);
+        }
+
+        public Task SetKlinesAsync(IEnumerable<Kline> items, CancellationToken cancellationToken = default)
+        {
+            if (items is null) throw new ArgumentNullException(nameof(items));
+
+            return SetKlinesCoreAsync(items, cancellationToken);
+        }
+
+        private async Task SetKlinesCoreAsync(IEnumerable<Kline> items, CancellationToken cancellationToken = default)
+        {
             // get the cached ids for the incoming symbols
             var symbolIds = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             foreach (var symbol in items.Select(x => x.Symbol))

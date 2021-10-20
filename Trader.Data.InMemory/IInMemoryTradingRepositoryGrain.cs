@@ -14,6 +14,8 @@ namespace Outcompute.Trader.Trading.Data.InMemory
 
         Task<Kline?> TryGetKlineAsync(string symbol, KlineInterval interval, DateTime openTime);
 
+        Task SetKlineAsync(Kline item);
+
         Task<IEnumerable<OrderQueryResult>> GetOrdersAsync(string symbol);
 
         Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders);

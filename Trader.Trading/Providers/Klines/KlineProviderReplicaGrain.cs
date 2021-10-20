@@ -1,51 +1,65 @@
 ﻿using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Concurrency;
+using Orleans.Placement;
+using Orleans.Runtime;
+using Orleans.Streams;
+using Outcompute.Trader.Core.Time;
+using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Algorithms;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Threading.Tasks;
-using static System.String;
 
 namespace Outcompute.Trader.Trading.Providers.Klines
 {
     [Reentrant]
-    [StatelessWorker(1)]
+    [PreferLocalPlacement]
     internal class KlineProviderReplicaGrain : Grain, IKlineProviderReplicaGrain
     {
-        private readonly KlineProviderOptions _options;
-        private readonly IGrainFactory _factory;
+        private readonly TraderStreamOptions _options;
+        private readonly ILogger _logger;
+        private readonly ILocalSiloDetails _details;
+        private readonly ITradingRepository _repository;
+        private readonly IAlgoDependencyInfo _dependencies;
+        private readonly ISystemClock _clock;
         private readonly IHostApplicationLifetime _lifetime;
 
-        public KlineProviderReplicaGrain(IOptions<KlineProviderOptions> options, IGrainFactory factory, IHostApplicationLifetime lifetime)
+        public KlineProviderReplicaGrain(IOptions<TraderStreamOptions> options, ILogger<KlineProviderReplicaGrain> logger, ILocalSiloDetails details, ITradingRepository repository, IAlgoDependencyInfo dependencies, ISystemClock clock, IHostApplicationLifetime lifetime)
         {
             _options = options.Value;
-            _factory = factory;
+            _logger = logger;
+            _details = details;
+            _repository = repository;
+            _dependencies = dependencies;
+            _clock = clock;
             _lifetime = lifetime;
         }
 
         /// <summary>
+        /// The target silo address of this replica.
+        /// </summary>
+        private SiloAddress _address = null!;
+
+        /// <summary>
         /// The symbol that this grain is responsible for.
         /// </summary>
-        private string _symbol = Empty;
+        private string _symbol = null!;
 
         /// <summary>
         /// The interval that this grain instance is reponsible for.
         /// </summary>
-        private KlineInterval _interval = KlineInterval.None;
+        private KlineInterval _interval;
 
         /// <summary>
-        /// The serial version of this grain.
-        /// Helps detect serial resets from the source grain.
+        /// Maximum cached periods needed by algos.
         /// </summary>
-        private Guid _version;
-
-        /// <summary>
-        /// The last known change serial.
-        /// </summary>
-        private int _serial;
+        private int _periods;
 
         /// <summary>
         /// Holds the kline cache in a form that is mutable but still convertible to immutable upon request with low overhead.
@@ -59,15 +73,37 @@ namespace Outcompute.Trader.Trading.Providers.Klines
 
         public override async Task OnActivateAsync()
         {
-            var keys = this.GetPrimaryKeyString().Split('|');
-            _symbol = keys[0];
-            _interval = Enum.Parse<KlineInterval>(keys[1], false);
+            (_address, _symbol, _interval) = this.GetPrimaryKeys();
+
+            if (_address != _details.SiloAddress)
+            {
+                _logger.LogWarning(
+                    "{Name} {Symbol} {Interval} instance for silo '{Address}' activated in wrong silo '{SiloAddress}' and will deactivate to allow relocation",
+                    nameof(KlineProviderReplicaGrain), _symbol, _interval, _address, _details.SiloAddress);
+
+                RegisterTimer(_ => { DeactivateOnIdle(); return Task.CompletedTask; }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+            }
+
+            _periods = _dependencies
+                .GetKlines(_symbol, _interval)
+                .Select(x => x.Periods)
+
+                .DefaultIfEmpty(0)
+
+                .Max();
+
+            await SubscribeAsync();
 
             await LoadAsync();
 
-            RegisterTimer(TickUpdateAsync, null, _options.PropagationPeriod, _options.PropagationPeriod);
-
             await base.OnActivateAsync();
+        }
+
+        public override async Task OnDeactivateAsync()
+        {
+            await UnsubscribeAsync();
+
+            await base.OnDeactivateAsync();
         }
 
         public Task<Kline?> TryGetKlineAsync(DateTime openTime)
@@ -82,75 +118,50 @@ namespace Outcompute.Trader.Trading.Providers.Klines
             return Task.FromResult<IReadOnlyList<Kline>>(_klines.ToImmutable());
         }
 
-        public async Task SetKlinesAsync(IEnumerable<Kline> klines)
-        {
-            // let the main grain handle saving so it updates every other replica
-            await _factory.GetKlineProviderGrain(_symbol, _interval).SetKlinesAsync(klines);
+        #region Streaming
 
-            // apply the klines to this replica now so they are consistent from the point of view of the algo calling this method
-            // the updated serial numbers will eventually come through as reactive caching calls resolve
-            Apply(klines);
+        private async Task SubscribeAsync()
+        {
+            var stream = GetStreamProvider(_options.StreamProviderName).GetKlineStream(_symbol, _interval);
+            var subs = await stream.GetAllSubscriptionHandles();
+
+            if (subs.Count > 0)
+            {
+                await subs[0].ResumeAsync(OnNextAsync);
+                foreach (var sub in subs.Skip(1))
+                {
+                    await sub.UnsubscribeAsync();
+                }
+                return;
+            }
+
+            await stream.SubscribeAsync(OnNextAsync);
         }
 
-        public async Task SetKlineAsync(Kline kline)
+        private async Task UnsubscribeAsync()
         {
-            // let the main grain handle saving so it updates every other replica
-            await _factory.GetKlineProviderGrain(_symbol, _interval).SetKlineAsync(kline);
+            var stream = GetStreamProvider(_options.StreamProviderName).GetKlineStream(_symbol, _interval);
 
-            // apply the klines to this replica now so they are consistent from the point of view of the algo calling this method
-            // the updated serial numbers will eventually come through as reactive caching calls resolve
-            Apply(kline);
+            foreach (var sub in await stream.GetAllSubscriptionHandles())
+            {
+                await sub.UnsubscribeAsync();
+            }
         }
+
+        public Task OnNextAsync(Kline item, StreamSequenceToken? token = null)
+        {
+            Apply(item);
+
+            return Task.CompletedTask;
+        }
+
+        #endregion Streaming
 
         private async Task LoadAsync()
         {
-            var result = await _factory.GetKlineProviderGrain(_symbol, _interval).GetKlinesAsync();
+            var result = await _repository.GetKlinesAsync(_symbol, _interval, _clock.UtcNow.Subtract(_interval, _periods + 1), _clock.UtcNow);
 
-            Apply(result.Klines);
-        }
-
-        private Task TickUpdateAsync(object _)
-        {
-            // perform sync checks
-            if (_lifetime.ApplicationStopping.IsCancellationRequested) return Task.CompletedTask;
-
-            // go on the async path
-            return TickUpdateCoreAsync();
-        }
-
-        private async Task TickUpdateCoreAsync()
-        {
-            try
-            {
-                var result = await _factory.GetKlineProviderGrain(_symbol, _interval).TryGetKlinesAsync(_version, _serial + 1);
-
-                Apply(result.Version, result.MaxSerial, result.Klines);
-            }
-            catch (OperationCanceledException)
-            {
-                // noop - happens at target shutdown
-            }
-        }
-
-        private void Apply(Guid version, int serial, IEnumerable<Kline> klines)
-        {
-            Apply(version, serial);
-
-            foreach (var kline in klines)
-            {
-                Apply(kline);
-            }
-        }
-
-        private void Apply(Guid version, int serial)
-        {
-            _version = version;
-            _serial = serial;
-        }
-
-        private void Apply(IEnumerable<Kline> klines)
-        {
-            foreach (var kline in klines)
+            foreach (var kline in result)
             {
                 Apply(kline);
             }

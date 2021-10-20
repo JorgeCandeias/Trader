@@ -10,10 +10,6 @@ namespace Outcompute.Trader.Trading.Providers.Klines
     {
         Task<IReadOnlyList<Kline>> GetKlinesAsync();
 
-        Task SetKlinesAsync(IEnumerable<Kline> klines);
-
-        Task SetKlineAsync(Kline kline);
-
         Task<Kline?> TryGetKlineAsync(DateTime openTime);
     }
 }

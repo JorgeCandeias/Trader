@@ -78,6 +78,11 @@ namespace Outcompute.Trader.App
                         options.Invariant = "Microsoft.Data.SqlClient";
                         options.ConnectionString = context.Configuration.GetConnectionString("Trader");
                     });
+                    orleans.AddAdoNetGrainStorage("PubSubStore", options =>
+                    {
+                        options.Invariant = "Microsoft.Data.SqlClient";
+                        options.ConnectionString = context.Configuration.GetConnectionString("Trader");
+                    });
                     orleans.UseDashboard(options =>
                     {
                         options.Port = 6001;

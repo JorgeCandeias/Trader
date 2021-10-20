@@ -17,6 +17,18 @@ namespace Outcompute.Trader.Data
 
         #endregion Orders
 
+        #region Klines
+
+        Task SetKlineAsync(Kline item, CancellationToken cancellationToken = default);
+
+        Task SetKlinesAsync(IEnumerable<Kline> items, CancellationToken cancellationToken = default);
+
+        Task<IEnumerable<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime startOpenTime, DateTime endOpenTime, CancellationToken cancellationToken = default);
+
+        Task<Kline?> TryGetKlineAsync(string symbol, KlineInterval interval, DateTime openTime, CancellationToken cancellationToken = default);
+
+        #endregion Klines
+
         Task<long> GetLastPagedTradeIdAsync(string symbol, CancellationToken cancellationToken = default);
 
         Task SetLastPagedTradeIdAsync(string symbol, long tradeId, CancellationToken cancellationToken = default);
@@ -38,11 +50,5 @@ namespace Outcompute.Trader.Data
         Task SetTickersAsync(IEnumerable<MiniTicker> tickers, CancellationToken cancellationToken = default);
 
         Task<MiniTicker> GetTickerAsync(string symbol, CancellationToken cancellationToken = default);
-
-        Task SetKlinesAsync(IEnumerable<Kline> items, CancellationToken cancellationToken = default);
-
-        Task<IEnumerable<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime startOpenTime, DateTime endOpenTime, CancellationToken cancellationToken = default);
-
-        Task<Kline?> TryGetKlineAsync(string symbol, KlineInterval interval, DateTime openTime, CancellationToken cancellationToken = default);
     }
 }

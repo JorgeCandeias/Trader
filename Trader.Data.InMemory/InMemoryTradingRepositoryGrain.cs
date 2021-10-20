@@ -50,6 +50,15 @@ namespace Outcompute.Trader.Trading.Data.InMemory
             return Task.FromResult<Kline?>(null);
         }
 
+        public Task SetKlineAsync(Kline item)
+        {
+            if (item is null) throw new ArgumentNullException(nameof(item));
+
+            _klines[(item.Symbol, item.Interval, item.OpenTime)] = item;
+
+            return Task.CompletedTask;
+        }
+
         public Task<IEnumerable<OrderQueryResult>> GetOrdersAsync(string symbol)
         {
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));

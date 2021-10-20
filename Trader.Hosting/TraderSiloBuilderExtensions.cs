@@ -1,8 +1,11 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Orleans.Streams;
+using Outcompute.Trader.Trading;
 using System;
 
 namespace Orleans.Hosting
 {
+    // todo: refactor all this into add methods on the silo builder
     public static class TraderSiloBuilderExtensions
     {
         public static ISiloBuilder UseTrader(this ISiloBuilder builder, Action<ISiloBuilder> configure)
@@ -25,6 +28,10 @@ namespace Orleans.Hosting
 
             // perform one-time actions
             builder
+                .AddSimpleMessageStreamProvider(TraderStreamOptions.DefaultStreamProviderName, options =>
+                {
+                    options.PubSubType = StreamPubSubType.ExplicitGrainBasedOnly;
+                })
                 .ConfigureApplicationParts(manager => manager.AddApplicationPart(typeof(TraderSiloBuilderExtensions).Assembly).WithReferences())
                 .UseGrainWatchdog()
                 .ConfigureServices((context, services) =>

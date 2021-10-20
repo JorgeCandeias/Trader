@@ -37,6 +37,9 @@ namespace Outcompute.Trader.Data.Sql
 
             CreateMap<Kline, KlineTableParameterEntity>()
                 .ForCtorParam(nameof(KlineTableParameterEntity.SymbolId), x => x.MapFrom((source, context) => ((IDictionary<string, int>)context.Items[nameof(KlineTableParameterEntity.SymbolId)])[source.Symbol]));
+
+            CreateMap<Kline, KlineEntity>()
+                .ForCtorParam(nameof(KlineEntity.SymbolId), x => x.MapFrom((source, context) => context.Items[nameof(KlineEntity.SymbolId)]));
         }
     }
 }

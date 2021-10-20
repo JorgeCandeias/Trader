@@ -1,4 +1,5 @@
-﻿using Outcompute.Trader.Trading;
+﻿using Microsoft.Extensions.Hosting;
+using Outcompute.Trader.Trading;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Providers;
 using Outcompute.Trader.Trading.Providers.Exchange;
@@ -23,10 +24,13 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<IAlgoDependencyInfo, AlgoDependencyInfo>()
                 .AddOptions<AlgoConfigurationMappingOptions>().ValidateDataAnnotations().Services
                 .AddOptions<SavingsOptions>().ValidateDataAnnotations().Services
+                .AddOptions<TraderStreamOptions>().ValidateDataAnnotations().Services
 
                 // kline provider
                 .AddSingleton<IKlineProvider, KlineProvider>()
-                .AddSingleton<IKlinePublisher, KlinePublisher>()
+                .AddSingleton<KlinePublisher>()
+                .AddSingleton<IKlinePublisher>(sp => sp.GetRequiredService<KlinePublisher>())
+                .AddSingleton<IHostedService>(sp => sp.GetRequiredService<KlinePublisher>())
 
                 // order provider
                 .AddSingleton<IOrderProvider, OrderProvider>()

@@ -156,7 +156,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 
                         if (message.Kline is not null && _klineWindows.ContainsKey((message.Kline.Symbol, message.Kline.Interval)))
                         {
-                            _klinePublisher.Publish(message.Kline);
+                            await _klinePublisher.PublishAsync(message.Kline);
                         }
                     }
                 }, linkedCancellation.Token);
@@ -255,7 +255,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                     // save all the klines in the page
                     foreach (var kline in klines)
                     {
-                        _klinePublisher.Publish(kline);
+                        await _klinePublisher.PublishAsync(kline);
                     }
 
                     _logger.LogInformation(

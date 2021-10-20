@@ -218,19 +218,6 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                 // define the required window
                 var start = end.Subtract(item.Key.Interval, item.Value).AdjustToNext(item.Key.Interval);
 
-                // discover the first kline missing
-                var missing = await TryGetFirstMissingKlineAsync(item.Key.Symbol, item.Key.Interval, start, end, cancellationToken);
-
-                // skip this dependency if we already have all the data
-                if (missing is null)
-                {
-                    continue;
-                }
-                else
-                {
-                    start = missing.Value;
-                }
-
                 // start syncing from the first missing kline
                 var current = start;
                 var total = 0;
@@ -255,7 +242,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                     // save all the klines in the page
                     foreach (var kline in klines)
                     {
-                        await _klinePublisher.PublishAsync(kline);
+                        await _klinePublisher.PublishAsync(kline, cancellationToken);
                     }
 
                     _logger.LogInformation(
@@ -272,24 +259,6 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             }
 
             _logger.LogInformation("{Name} synced klines for {Symbols} in {ElapsedMs}ms...", TypeName, _klineWindows.Select(x => x.Key.Symbol), watch.ElapsedMilliseconds);
-        }
-
-        private async Task<DateTime?> TryGetFirstMissingKlineAsync(string symbol, KlineInterval interval, DateTime start, DateTime end, CancellationToken cancellationToken)
-        {
-            // load existing klines from repository
-            var saved = await _repository.GetKlinesAsync(symbol, interval, start, end, cancellationToken);
-            var times = saved.Where(x => x.IsClosed).Select(x => x.OpenTime).ToHashSet();
-
-            // discover the first kline missing
-            foreach (var time in interval.Range(start, end))
-            {
-                if (!times.Contains(time))
-                {
-                    return time;
-                }
-            }
-
-            return null;
         }
 
         /// <summary>

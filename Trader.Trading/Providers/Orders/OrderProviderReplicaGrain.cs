@@ -1,47 +1,43 @@
-﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Hosting;
 using Orleans;
 using Orleans.Concurrency;
-using Orleans.Placement;
-using Orleans.Runtime;
-using Orleans.Streams;
-using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using System.Threading.Tasks;
 using static System.String;
 
 namespace Outcompute.Trader.Trading.Providers.Orders
 {
     [Reentrant]
-    [PreferLocalPlacement]
+    [StatelessWorker(1)]
     internal class OrderProviderReplicaGrain : Grain, IOrderProviderReplicaGrain
     {
-        private readonly TraderStreamOptions _options;
-        private readonly ILogger _logger;
-        private readonly ILocalSiloDetails _details;
-        private readonly ITradingRepository _repository;
+        private readonly IGrainFactory _factory;
+        private readonly IHostApplicationLifetime _lifetime;
 
-        public OrderProviderReplicaGrain(IOptions<TraderStreamOptions> options, ILogger<OrderProviderReplicaGrain> logger, ILocalSiloDetails details, ITradingRepository repository)
+        public OrderProviderReplicaGrain(IGrainFactory factory, IHostApplicationLifetime lifetime)
         {
-            _options = options.Value;
-            _logger = logger;
-            _details = details;
-            _repository = repository;
+            _factory = factory;
+            _lifetime = lifetime;
         }
-
-        /// <summary>
-        /// The target silo address of this replica.
-        /// </summary>
-        private SiloAddress _address = null!;
 
         /// <summary>
         /// The symbol that this grain holds orders for.
         /// </summary>
         private string _symbol = Empty;
+
+        /// <summary>
+        /// The serial version of this grain.
+        /// Helps detect serial resets from the source grain.
+        /// </summary>
+        private Guid _version;
+
+        /// <summary>
+        /// The last known change serial.
+        /// </summary>
+        private int _serial;
 
         /// <summary>
         /// Holds the order cache in a form that is mutable but still convertible to immutable upon request with low overhead.
@@ -53,38 +49,15 @@ namespace Outcompute.Trader.Trading.Providers.Orders
         /// </summary>
         private readonly Dictionary<long, OrderQueryResult> _orderByOrderId = new();
 
-        /// <summary>
-        /// The order stream for broadcasting orders to all replicas.
-        /// </summary>
-        private IAsyncStream<OrderQueryResult> _stream = null!;
-
         public override async Task OnActivateAsync()
         {
-            (_address, _symbol) = this.GetPrimaryKeys();
-
-            if (_address != _details.SiloAddress)
-            {
-                _logger.LogWarning(
-                    "{Name} {Symbol} instance for silo '{Address}' activated in wrong silo '{SiloAddress}' and will deactivate to allow relocation",
-                    nameof(OrderProviderReplicaGrain), _symbol, _address, _details.SiloAddress);
-
-                RegisterTimer(_ => { DeactivateOnIdle(); return Task.CompletedTask; }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
-            }
-
-            _stream = GetStreamProvider(_options.StreamProviderName).GetOrderStream(_symbol);
-
-            await SubscribeAsync();
+            _symbol = this.GetPrimaryKeyString();
 
             await LoadAsync();
 
+            RegisterTimer(TickUpdateAsync, null, TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100));
+
             await base.OnActivateAsync();
-        }
-
-        public override async Task OnDeactivateAsync()
-        {
-            await UnsubscribeAsync();
-
-            await base.OnDeactivateAsync();
         }
 
         public Task<OrderQueryResult?> TryGetOrderAsync(long orderId)
@@ -99,29 +72,66 @@ namespace Outcompute.Trader.Trading.Providers.Orders
             return Task.FromResult(_orders.ToImmutable());
         }
 
-        public Task SetOrderAsync(OrderQueryResult order)
+        public async Task SetOrderAsync(OrderQueryResult order)
         {
-            if (order is null) throw new ArgumentNullException(nameof(order));
+            // let the main grain handle saving so it updates every other replica
+            await _factory.GetOrderProviderGrain(_symbol).SetOrderAsync(order);
 
-            return SetOrderCoreAsync(order);
-        }
-
-        private async Task SetOrderCoreAsync(OrderQueryResult order)
-        {
-            // persist the order asap
-            await _repository.SetOrderAsync(order);
-
-            // propagate the order to other replicas (and self eventually)
-            await _stream.OnNextAsync(order);
-
-            // apply the order to this replica now so it is consistent from the point of view of the algo calling this method
+            // apply the orders to this replica now so they are consistent from the point of view of the algo calling this method
+            // the updated serial numbers will eventually come through as reactive caching calls resolve
             Apply(order);
         }
 
         private async Task LoadAsync()
         {
-            var orders = await _repository.GetOrdersAsync(_symbol);
+            // get all the orders
+            var result = await _factory.GetOrderProviderGrain(_symbol).GetOrdersAsync();
 
+            Apply(result.Orders);
+        }
+
+        private Task TickUpdateAsync(object _)
+        {
+            // perform sync checks
+            if (_lifetime.ApplicationStopping.IsCancellationRequested) return Task.CompletedTask;
+
+            // go on the async path
+            return TickUpdateCoreAsync();
+        }
+
+        private async Task TickUpdateCoreAsync()
+        {
+            // wait for new orders
+            try
+            {
+                var result = await _factory.GetOrderProviderGrain(_symbol).GetOrdersAsync(_version, _serial + 1);
+
+                Apply(result.Version, result.MaxSerial, result.Orders);
+            }
+            catch (OperationCanceledException)
+            {
+                // noop - happens at target shutdown
+            }
+        }
+
+        private void Apply(Guid version, int serial, IEnumerable<OrderQueryResult> orders)
+        {
+            Apply(version, serial);
+
+            foreach (var order in orders)
+            {
+                Apply(order);
+            }
+        }
+
+        private void Apply(Guid version, int serial)
+        {
+            _version = version;
+            _serial = serial;
+        }
+
+        private void Apply(IEnumerable<OrderQueryResult> orders)
+        {
             foreach (var order in orders)
             {
                 Apply(order);
@@ -142,41 +152,5 @@ namespace Outcompute.Trader.Trading.Providers.Orders
             // index the order
             _orderByOrderId[order.OrderId] = order;
         }
-
-        #region Streaming
-
-        private async Task SubscribeAsync()
-        {
-            var subs = await _stream.GetAllSubscriptionHandles();
-
-            if (subs.Count > 0)
-            {
-                await subs[0].ResumeAsync(OnNextAsync);
-                foreach (var sub in subs.Skip(1))
-                {
-                    await sub.UnsubscribeAsync();
-                }
-                return;
-            }
-
-            await _stream.SubscribeAsync(OnNextAsync);
-        }
-
-        private async Task UnsubscribeAsync()
-        {
-            foreach (var sub in await _stream.GetAllSubscriptionHandles())
-            {
-                await sub.UnsubscribeAsync();
-            }
-        }
-
-        public Task OnNextAsync(OrderQueryResult order, StreamSequenceToken? token = null)
-        {
-            Apply(order);
-
-            return Task.CompletedTask;
-        }
-
-        #endregion Streaming
     }
 }

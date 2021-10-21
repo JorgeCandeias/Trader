@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using Orleans;
-using Orleans.Runtime;
 using Outcompute.Trader.Models;
 using System;
 using System.Collections.Generic;
@@ -15,7 +14,6 @@ namespace Outcompute.Trader.Trading.Providers.Orders
     {
         internal static IMapper Mapper { get; set; } = null!;
         internal static IGrainFactory GrainFactory { get; set; } = null!;
-        internal static ILocalSiloDetails LocalSiloDetails { get; set; } = null!;
 
         public static Task<long> GetMaxOrderIdAsync(this IOrderProvider provider, string symbol, CancellationToken cancellationToken = default)
         {
@@ -123,7 +121,7 @@ namespace Outcompute.Trader.Trading.Providers.Orders
         private static async Task SetOrderCoreAsync(this IOrderProvider provider, CancelStandardOrderResult order, CancellationToken cancellationToken = default)
         {
             var original = await GrainFactory
-                .GetOrderProviderReplicaGrain(LocalSiloDetails.SiloAddress, order.Symbol)
+                .GetOrderProviderReplicaGrain(order.Symbol)
                 .TryGetOrderAsync(order.OrderId)
                 .ConfigureAwait(false);
 

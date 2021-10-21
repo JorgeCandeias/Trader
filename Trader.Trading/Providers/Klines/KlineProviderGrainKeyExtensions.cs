@@ -4,9 +4,9 @@ using System;
 
 namespace Outcompute.Trader.Trading.Providers.Klines
 {
-    internal static class KlineProviderReplicaGrainKeyExtensions
+    internal static class KlineProviderGrainKeyExtensions
     {
-        public static (string Symbol, KlineInterval Interval) GetPrimaryKeys(this IKlineProviderReplicaGrain grain)
+        public static (string Symbol, KlineInterval Interval) GetPrimaryKeys(this IKlineProviderGrain grain)
         {
             if (grain is null) throw new ArgumentNullException(nameof(grain));
 

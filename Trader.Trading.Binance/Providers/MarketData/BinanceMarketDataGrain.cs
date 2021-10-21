@@ -16,6 +16,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 
 namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 {
@@ -28,12 +29,12 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         private readonly IMapper _mapper;
         private readonly ISystemClock _clock;
         private readonly IHostApplicationLifetime _lifetime;
-        private readonly IKlinePublisher _klinePublisher;
+        private readonly IKlineProvider _provider;
 
         private readonly HashSet<string> _tickerSymbols;
         private readonly Dictionary<(string Symbol, KlineInterval Interval), int> _klineWindows;
 
-        public BinanceMarketDataGrain(ILogger<BinanceMarketDataGrain> logger, IMarketDataStreamClientFactory factory, ITradingRepository repository, ITradingService trader, IMapper mapper, ISystemClock clock, IAlgoDependencyInfo dependencies, IHostApplicationLifetime lifetime, IKlinePublisher klinePublisher)
+        public BinanceMarketDataGrain(ILogger<BinanceMarketDataGrain> logger, IMarketDataStreamClientFactory factory, ITradingRepository repository, ITradingService trader, IMapper mapper, ISystemClock clock, IAlgoDependencyInfo dependencies, IHostApplicationLifetime lifetime, IKlineProvider provider)
         {
             _logger = logger;
             _factory = factory;
@@ -42,7 +43,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             _mapper = mapper;
             _clock = clock;
             _lifetime = lifetime;
-            _klinePublisher = klinePublisher;
+            _provider = provider;
 
             _tickerSymbols = dependencies.GetTickers().ToHashSet(StringComparer.OrdinalIgnoreCase);
 
@@ -117,6 +118,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         }
 
         [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "N/A")]
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Worker Task")]
         private async Task ExecuteStreamAsync()
         {
             try
@@ -140,6 +142,22 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                 // we use the activation scheduler for this background task so that we can access grain state in a concurrency safe manner
                 var streamTask = Task.Run(async () =>
                 {
+                    // this worker action pushes incoming klines to the system in the background so we dont hold up the binance stream
+                    var pusher = new ActionBlock<Kline>(async item =>
+                    {
+                        try
+                        {
+                            await _provider.SetKlineAsync(item, linkedCancellation.Token);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "{Name} failed to push kline {Kline}", TypeName, item);
+                        }
+                    }, new ExecutionDataflowBlockOptions
+                    {
+                        MaxDegreeOfParallelism = Environment.ProcessorCount * 2
+                    });
+
                     while (!linkedCancellation.Token.IsCancellationRequested)
                     {
                         var message = await client.ReceiveAsync(linkedCancellation.Token);
@@ -156,7 +174,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 
                         if (message.Kline is not null && _klineWindows.ContainsKey((message.Kline.Symbol, message.Kline.Interval)))
                         {
-                            await _klinePublisher.PublishAsync(message.Kline);
+                            pusher.Post(message.Kline);
                         }
                     }
                 }, linkedCancellation.Token);
@@ -213,6 +231,10 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 
             var end = _clock.UtcNow;
 
+            // batches saving work in the background so we can keep pulling data without waiting
+            var saver = new ActionBlock<(string Symbol, KlineInterval Interval, IEnumerable<Kline> Items)>(work => _provider.SetKlinesAsync(work.Symbol, work.Interval, work.Items));
+
+            // pull everything now
             foreach (var item in _klineWindows)
             {
                 // define the required window
@@ -239,11 +261,8 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                         total += klines.Count;
                     }
 
-                    // save all the klines in the page
-                    foreach (var kline in klines)
-                    {
-                        await _klinePublisher.PublishAsync(kline, cancellationToken);
-                    }
+                    // queue the page for saving
+                    saver.Post((item.Key.Symbol, item.Key.Interval, klines));
 
                     _logger.LogInformation(
                         "{Name} paged {Count} klines for {Symbol} {Interval} between {Start} and {End} for a total of {Total} klines",
@@ -257,6 +276,10 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                     current = klines.Max(x => x.OpenTime).AddMilliseconds(1);
                 }
             }
+
+            // wait for background saving to complete now
+            saver.Complete();
+            await saver.Completion;
 
             _logger.LogInformation("{Name} synced klines for {Symbols} in {ElapsedMs}ms...", TypeName, _klineWindows.Select(x => x.Key.Symbol), watch.ElapsedMilliseconds);
         }

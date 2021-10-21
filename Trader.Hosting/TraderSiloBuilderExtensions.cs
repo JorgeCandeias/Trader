@@ -28,10 +28,6 @@ namespace Orleans.Hosting
 
             // perform one-time actions
             builder
-                .AddSimpleMessageStreamProvider(TraderStreamOptions.DefaultStreamProviderName, options =>
-                {
-                    options.PubSubType = StreamPubSubType.ExplicitGrainBasedOnly;
-                })
                 .ConfigureApplicationParts(manager => manager.AddApplicationPart(typeof(TraderSiloBuilderExtensions).Assembly).WithReferences())
                 .UseGrainWatchdog()
                 .ConfigureServices((context, services) =>

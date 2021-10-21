@@ -6,16 +6,16 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Providers.Klines
 {
-    public interface IKlineProviderReplicaGrain : IGrainWithStringKey
+    internal interface IKlineProviderGrain : IGrainWithStringKey
     {
-        Task<IReadOnlyList<Kline>> GetKlinesAsync();
+        Task<KlineResult> GetKlinesAsync();
+
+        Task<KlineResult?> TryGetKlinesAsync(Guid version, int fromSerial);
 
         Task<Kline?> TryGetKlineAsync(DateTime openTime);
 
         Task SetKlineAsync(Kline item);
 
         Task SetKlinesAsync(IEnumerable<Kline> items);
-
-        Task<DateTime?> TryGetLastOpenTimeAsync();
     }
 }

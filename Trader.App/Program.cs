@@ -51,6 +51,18 @@ namespace Outcompute.Trader.App
                         .MinimumLevel.Override("Orleans.Runtime.SiloControl", LogEventLevel.Warning)
                         .MinimumLevel.Override("Orleans.Runtime.Management.ManagementGrain", LogEventLevel.Warning)
 
+                        // filter kline reactive caching monitoring messages until https://github.com/dotnet/orleans/issues/7330 is resolved
+                        .Filter.ByExcluding(x =>
+                        {
+                            return x.Properties.TryGetValue("SourceContext", out var context)
+                                && context is ScalarValue scalarContext
+                                && scalarContext.Value.Equals("Orleans.Runtime.InsideRuntimeClient")
+                                && x.Properties.TryGetValue("RequestMessage", out var message)
+                                && message is ScalarValue scalarMessage
+                                && scalarMessage.Value is string stringMessage
+                                && stringMessage.Contains("InvokeMethodRequest Outcompute.Trader.Trading.Providers.Klines.IKlineProviderGrain:TryGetKlinesAsync", StringComparison.Ordinal);
+                        })
+
                         .WriteTo.Console()
                         .CreateLogger(), true);
                 })

@@ -1,13 +1,7 @@
 ﻿using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Concurrency;
-using Orleans.Placement;
-using Orleans.Runtime;
-using Orleans.Streams;
-using Outcompute.Trader.Core.Time;
-using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using System;
@@ -19,32 +13,23 @@ using System.Threading.Tasks;
 namespace Outcompute.Trader.Trading.Providers.Klines
 {
     [Reentrant]
-    [PreferLocalPlacement]
+    [StatelessWorker(1)]
     internal class KlineProviderReplicaGrain : Grain, IKlineProviderReplicaGrain
     {
-        private readonly TraderStreamOptions _options;
-        private readonly ILogger _logger;
-        private readonly ILocalSiloDetails _details;
-        private readonly ITradingRepository _repository;
+        private readonly KlineProviderOptions _options;
+        private readonly ReactiveOptions _reactive;
         private readonly IAlgoDependencyInfo _dependencies;
-        private readonly ISystemClock _clock;
         private readonly IHostApplicationLifetime _lifetime;
+        private readonly IGrainFactory _factory;
 
-        public KlineProviderReplicaGrain(IOptions<TraderStreamOptions> options, ILogger<KlineProviderReplicaGrain> logger, ILocalSiloDetails details, ITradingRepository repository, IAlgoDependencyInfo dependencies, ISystemClock clock, IHostApplicationLifetime lifetime)
+        public KlineProviderReplicaGrain(IOptions<KlineProviderOptions> options, IOptions<ReactiveOptions> reactive, IAlgoDependencyInfo dependencies, IHostApplicationLifetime lifetime, IGrainFactory factory)
         {
             _options = options.Value;
-            _logger = logger;
-            _details = details;
-            _repository = repository;
+            _reactive = reactive.Value;
             _dependencies = dependencies;
-            _clock = clock;
             _lifetime = lifetime;
+            _factory = factory;
         }
-
-        /// <summary>
-        /// The target silo address of this replica.
-        /// </summary>
-        private SiloAddress _address = null!;
 
         /// <summary>
         /// The symbol that this grain is responsible for.
@@ -55,6 +40,16 @@ namespace Outcompute.Trader.Trading.Providers.Klines
         /// The interval that this grain instance is reponsible for.
         /// </summary>
         private KlineInterval _interval;
+
+        /// <summary>
+        /// The current version.
+        /// </summary>
+        private Guid _version;
+
+        /// <summary>
+        /// The current change serial number;
+        /// </summary>
+        private int _serial;
 
         /// <summary>
         /// Maximum cached periods needed by algos.
@@ -73,16 +68,7 @@ namespace Outcompute.Trader.Trading.Providers.Klines
 
         public override async Task OnActivateAsync()
         {
-            (_address, _symbol, _interval) = this.GetPrimaryKeys();
-
-            if (_address != _details.SiloAddress)
-            {
-                _logger.LogWarning(
-                    "{Name} {Symbol} {Interval} instance for silo '{Address}' activated in wrong silo '{SiloAddress}' and will deactivate to allow relocation",
-                    nameof(KlineProviderReplicaGrain), _symbol, _interval, _address, _details.SiloAddress);
-
-                RegisterTimer(_ => { DeactivateOnIdle(); return Task.CompletedTask; }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
-            }
+            (_symbol, _interval) = this.GetPrimaryKeys();
 
             _periods = _dependencies
                 .GetKlines(_symbol, _interval)
@@ -90,18 +76,13 @@ namespace Outcompute.Trader.Trading.Providers.Klines
                 .DefaultIfEmpty(0)
                 .Max();
 
-            await SubscribeAsync();
-
             await LoadAsync();
 
+            RegisterTimer(_ => PollAsync(), null, _reactive.ReactiveRecoveryDelay, _reactive.ReactiveRecoveryDelay);
+
+            RegisterTimer(_ => ClearAsync(), null, _options.CleanupPeriod, _options.CleanupPeriod);
+
             await base.OnActivateAsync();
-        }
-
-        public override async Task OnDeactivateAsync()
-        {
-            await UnsubscribeAsync();
-
-            await base.OnDeactivateAsync();
         }
 
         public Task<Kline?> TryGetKlineAsync(DateTime openTime)
@@ -116,68 +97,108 @@ namespace Outcompute.Trader.Trading.Providers.Klines
             return Task.FromResult<IReadOnlyList<Kline>>(_klines.ToImmutable());
         }
 
-        #region Streaming
-
-        private async Task SubscribeAsync()
+        public async Task SetKlineAsync(Kline item)
         {
-            var stream = GetStreamProvider(_options.StreamProviderName).GetKlineStream(_symbol, _interval);
-            var subs = await stream.GetAllSubscriptionHandles();
+            await GrainFactory.GetKlineProviderGrain(_symbol, _interval).SetKlineAsync(item);
 
-            if (subs.Count > 0)
-            {
-                await subs[0].ResumeAsync(OnNextAsync);
-                foreach (var sub in subs.Skip(1))
-                {
-                    await sub.UnsubscribeAsync();
-                }
-                return;
-            }
-
-            await stream.SubscribeAsync(OnNextAsync);
-        }
-
-        private async Task UnsubscribeAsync()
-        {
-            var stream = GetStreamProvider(_options.StreamProviderName).GetKlineStream(_symbol, _interval);
-
-            foreach (var sub in await stream.GetAllSubscriptionHandles())
-            {
-                await sub.UnsubscribeAsync();
-            }
-        }
-
-        public Task OnNextAsync(Kline item, StreamSequenceToken? token = null)
-        {
             Apply(item);
-
-            return Task.CompletedTask;
         }
 
-        #endregion Streaming
+        public async Task SetKlinesAsync(IEnumerable<Kline> items)
+        {
+            await GrainFactory.GetKlineProviderGrain(_symbol, _interval).SetKlinesAsync(items);
+
+            foreach (var item in items)
+            {
+                Apply(item);
+            }
+        }
+
+        public Task<DateTime?> TryGetLastOpenTimeAsync()
+        {
+            return Task.FromResult(_klines.Max?.OpenTime);
+        }
 
         private async Task LoadAsync()
         {
-            var result = await _repository.GetKlinesAsync(_symbol, _interval, _clock.UtcNow.Subtract(_interval, _periods + 1), _clock.UtcNow);
+            var result = await GrainFactory.GetKlineProviderGrain(_symbol, _interval).GetKlinesAsync();
 
-            foreach (var kline in result)
+            _version = result.Version;
+            _serial = result.Serial;
+
+            foreach (var kline in result.Klines)
             {
                 Apply(kline);
             }
         }
 
-        private void Apply(Kline kline)
+        private void Apply(Kline item)
         {
             // remove old item to allow an update
-            if (_klines.Remove(kline) && !_klineByOpenTime.Remove(kline.OpenTime))
-            {
-                throw new InvalidOperationException($"Failed to unindex kline ('{kline.Symbol}','{kline.Interval}','{kline.OpenTime}')");
-            }
+            Remove(item);
 
             // add new or updated item
-            _klines.Add(kline);
+            _klines.Add(item);
 
             // index the item
-            _klineByOpenTime[kline.OpenTime] = kline;
+            Index(item);
+        }
+
+        private void Remove(Kline item)
+        {
+            if (_klines.Remove(item) && !Unindex(item))
+            {
+                throw new InvalidOperationException($"Failed to unindex kline ('{item.Symbol}','{item.Interval}','{item.OpenTime}')");
+            }
+        }
+
+        private void Index(Kline item)
+        {
+            _klineByOpenTime[item.OpenTime] = item;
+        }
+
+        private bool Unindex(Kline item)
+        {
+            return _klineByOpenTime.Remove(item.OpenTime);
+        }
+
+        private async Task PollAsync()
+        {
+            while (!_lifetime.ApplicationStopping.IsCancellationRequested)
+            {
+                try
+                {
+                    var result = await GrainFactory
+                        .GetKlineProviderGrain(_symbol, _interval)
+                        .TryGetKlinesAsync(_version, _serial + 1);
+
+                    if (result.HasValue)
+                    {
+                        _version = result.Value.Version;
+                        _serial = result.Value.Serial;
+
+                        foreach (var item in result.Value.Klines)
+                        {
+                            Apply(item);
+                        }
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    // throw on target shutdown - allow time for recovery
+                    await Task.Delay(_reactive.ReactiveRecoveryDelay, _lifetime.ApplicationStopping);
+                }
+            }
+        }
+
+        private Task ClearAsync()
+        {
+            while (_klines.Count > 0 && _klines.Count > _periods)
+            {
+                Remove(_klines.Min!);
+            }
+
+            return Task.CompletedTask;
         }
     }
 }

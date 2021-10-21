@@ -18,5 +18,20 @@ namespace Outcompute.Trader.Trading.Providers
         /// Gets the kline for the specified parameters.
         /// </summary>
         Task<Kline?> TryGetKlineAsync(string symbol, KlineInterval interval, DateTime openTime, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Publishes the specified kline.
+        /// </summary>
+        Task SetKlineAsync(Kline item, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Publishes the specified klines.
+        /// </summary>
+        Task SetKlinesAsync(string symbol, KlineInterval interval, IEnumerable<Kline> items, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Gets the last persisted open time for the specified parameters.
+        /// </summary>
+        Task<DateTime?> TryGetLastOpenTimeAsync(string symbol, KlineInterval interval, CancellationToken cancellationToken = default);
     }
 }

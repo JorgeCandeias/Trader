@@ -157,15 +157,8 @@ namespace Outcompute.Trader.Trading.Providers.Orders
                 }
                 catch (OperationCanceledException)
                 {
-                    // throw on target shutdown - allow time for recovery unless this silo is shutting down too
-                    if (_lifetime.ApplicationStopping.IsCancellationRequested)
-                    {
-                        return;
-                    }
-                    else
-                    {
-                        await Task.Delay(_reactive.ReactiveRecoveryDelay, _lifetime.ApplicationStopping);
-                    }
+                    // throw on target shutdown
+                    return;
                 }
             }
         }

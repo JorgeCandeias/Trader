@@ -220,7 +220,7 @@ namespace Outcompute.Trader.Data.Sql
 
         public Task SetTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default)
         {
-            _ = trade ?? throw new ArgumentNullException(nameof(trade));
+            if (trade is null) throw new ArgumentNullException(nameof(trade));
 
             return SetTradesAsync(Enumerable.Repeat(trade, 1), cancellationToken);
         }

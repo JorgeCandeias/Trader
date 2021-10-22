@@ -2,6 +2,7 @@
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
 using Outcompute.Trader.Trading.Providers.Orders;
+using Outcompute.Trader.Trading.Providers.Trades;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;

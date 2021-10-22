@@ -5,6 +5,7 @@ using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms.Exceptions;
 using Outcompute.Trader.Trading.Providers;
 using Outcompute.Trader.Trading.Providers.Orders;
+using Outcompute.Trader.Trading.Providers.Trades;
 using System;
 using System.Collections.Generic;
 using System.Linq;

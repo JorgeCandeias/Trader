@@ -102,16 +102,18 @@ namespace Outcompute.Trader.Trading.Data.InMemory
 
         #endregion Trades
 
+        #region Balances
+
         public Task SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default)
         {
-            // todo: implement
-            throw new NotImplementedException();
+            return _grain.SetBalancesAsync(balances);
         }
 
         public Task<Balance?> TryGetBalanceAsync(string asset, CancellationToken cancellationToken = default)
         {
-            // todo: implement
-            throw new NotImplementedException();
+            return _grain.TryGetBalanceAsync(asset);
         }
+
+        #endregion Balances
     }
 }

@@ -29,5 +29,9 @@ namespace Outcompute.Trader.Trading.Data.InMemory
         Task SetTradeAsync(AccountTrade trade);
 
         Task SetTradesAsync(IEnumerable<AccountTrade> trades);
+
+        Task SetBalancesAsync(IEnumerable<Balance> balances);
+
+        Task<Balance?> TryGetBalanceAsync(string asset);
     }
 }

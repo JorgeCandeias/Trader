@@ -16,6 +16,7 @@ namespace Outcompute.Trader.Trading.Data.InMemory
         private readonly Dictionary<(string Symbol, KlineInterval Interval, DateTime OpenTime), Kline> _klines = new();
         private readonly Dictionary<string, MiniTicker> _tickers = new();
         private readonly Dictionary<string, ImmutableSortedSet<AccountTrade>.Builder> _trades = new();
+        private readonly Dictionary<string, Balance> _balances = new();
 
         public Task<IEnumerable<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime startOpenTime, DateTime endOpenTime)
         {
@@ -170,6 +171,27 @@ namespace Outcompute.Trader.Trading.Data.InMemory
             }
 
             return Task.CompletedTask;
+        }
+
+        public Task SetBalancesAsync(IEnumerable<Balance> balances)
+        {
+            if (balances is null) throw new ArgumentNullException(nameof(balances));
+
+            foreach (var balance in balances)
+            {
+                _balances[balance.Asset] = balance;
+            }
+
+            return Task.CompletedTask;
+        }
+
+        public Task<Balance?> TryGetBalanceAsync(string asset)
+        {
+            if (asset is null) throw new ArgumentNullException(nameof(asset));
+
+            var balance = _balances.TryGetValue(asset, out var value) ? value : null;
+
+            return Task.FromResult(balance);
         }
     }
 }

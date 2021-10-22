@@ -45,13 +45,17 @@ namespace Outcompute.Trader.Data
 
         #endregion Balances
 
+        #region Trades
+
+        Task SetTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default);
+
+        #endregion Trades
+
         Task<long> GetLastPagedTradeIdAsync(string symbol, CancellationToken cancellationToken = default);
 
         Task SetLastPagedTradeIdAsync(string symbol, long tradeId, CancellationToken cancellationToken = default);
 
         Task<long> GetMaxTradeIdAsync(string symbol, CancellationToken cancellationToken = default);
-
-        Task SetTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default);
 
         Task SetTradesAsync(IEnumerable<AccountTrade> trades, CancellationToken cancellationToken = default);
 

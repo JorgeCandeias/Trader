@@ -15,6 +15,7 @@ namespace Outcompute.Trader.Trading.Data.InMemory
         private readonly Dictionary<string, ImmutableSortedSet<OrderQueryResult>.Builder> _orders = new();
         private readonly Dictionary<(string Symbol, KlineInterval Interval, DateTime OpenTime), Kline> _klines = new();
         private readonly Dictionary<string, MiniTicker> _tickers = new();
+        private readonly Dictionary<string, ImmutableSortedSet<AccountTrade>.Builder> _trades = new();
 
         public Task<IEnumerable<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime startOpenTime, DateTime endOpenTime)
         {
@@ -124,6 +125,51 @@ namespace Outcompute.Trader.Trading.Data.InMemory
             var ticker = _tickers.TryGetValue(symbol, out var value) ? value : null;
 
             return Task.FromResult(ticker);
+        }
+
+        public Task<IEnumerable<AccountTrade>> GetTradesAsync(string symbol)
+        {
+            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+
+            if (_trades.TryGetValue(symbol, out var builder))
+            {
+                return Task.FromResult<IEnumerable<AccountTrade>>(builder.ToImmutable());
+            }
+
+            return Task.FromResult(Enumerable.Empty<AccountTrade>());
+        }
+
+        public Task SetTradeAsync(AccountTrade trade)
+        {
+            if (trade is null) throw new ArgumentNullException(nameof(trade));
+
+            if (!_trades.TryGetValue(trade.Symbol, out var lookup))
+            {
+                _trades[trade.Symbol] = lookup = ImmutableSortedSet.CreateBuilder(AccountTrade.TradeIdComparer);
+            }
+
+            lookup.Remove(trade);
+            lookup.Add(trade);
+
+            return Task.CompletedTask;
+        }
+
+        public Task SetTradesAsync(IEnumerable<AccountTrade> trades)
+        {
+            if (trades is null) throw new ArgumentNullException(nameof(trades));
+
+            foreach (var trade in trades)
+            {
+                if (!_trades.TryGetValue(trade.Symbol, out var lookup))
+                {
+                    _trades[trade.Symbol] = lookup = ImmutableSortedSet.CreateBuilder(AccountTrade.TradeIdComparer);
+                }
+
+                lookup.Remove(trade);
+                lookup.Add(trade);
+            }
+
+            return Task.CompletedTask;
         }
     }
 }

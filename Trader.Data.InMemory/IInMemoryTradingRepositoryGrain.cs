@@ -23,5 +23,11 @@ namespace Outcompute.Trader.Trading.Data.InMemory
         Task SetTickerAsync(MiniTicker ticker);
 
         Task<MiniTicker?> TryGetTickerAsync(string symbol);
+
+        Task<IEnumerable<AccountTrade>> GetTradesAsync(string symbol);
+
+        Task SetTradeAsync(AccountTrade trade);
+
+        Task SetTradesAsync(IEnumerable<AccountTrade> trades);
     }
 }

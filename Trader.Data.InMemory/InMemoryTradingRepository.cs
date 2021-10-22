@@ -83,25 +83,26 @@ namespace Outcompute.Trader.Trading.Data.InMemory
 
         #endregion Tickers
 
+        #region Trades
+
         public Task<IEnumerable<AccountTrade>> GetTradesAsync(string symbol, CancellationToken cancellationToken = default)
         {
-            // todo: refactor the result into IEnumerable
-            throw new NotImplementedException();
-        }
-
-        public Task SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default)
-        {
-            // todo: implement
-            throw new NotImplementedException();
+            return _grain.GetTradesAsync(symbol);
         }
 
         public Task SetTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default)
         {
-            // todo: remove
-            throw new NotImplementedException();
+            return _grain.SetTradeAsync(trade);
         }
 
         public Task SetTradesAsync(IEnumerable<AccountTrade> trades, CancellationToken cancellationToken = default)
+        {
+            return _grain.SetTradesAsync(trades);
+        }
+
+        #endregion Trades
+
+        public Task SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default)
         {
             // todo: implement
             throw new NotImplementedException();

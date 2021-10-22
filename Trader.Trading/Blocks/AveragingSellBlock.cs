@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
 using System;
@@ -39,21 +38,12 @@ namespace Outcompute.Trader.Trading.Algorithms
         private static async ValueTask SetAveragingSellInnerAsync(IAlgoContext context, Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, CancellationToken cancellationToken)
         {
             // resolve services
-            var repository = context.ServiceProvider.GetRequiredService<ITradingRepository>();
-            var savingsProvider = context.ServiceProvider.GetRequiredService<ISavingsProvider>();
-            var tickerProvider = context.ServiceProvider.GetRequiredService<ITickerProvider>();
             var logger = context.ServiceProvider.GetRequiredService<ILogger<IAlgoContext>>();
 
-            // get the current balance
-            var balance = await repository.TryGetBalanceAsync(symbol.BaseAsset, cancellationToken).ConfigureAwait(false)
-                ?? Balance.Zero(symbol.BaseAsset);
-
-            // get all savings if applicable
-            var savings = (redeemSavings ? await savingsProvider.TryGetPositionAsync(symbol.BaseAsset, cancellationToken).ConfigureAwait(false) : null)
-                ?? SavingsPosition.Zero(symbol.BaseAsset);
-
-            // get the current ticker for the symbol
-            var ticker = await tickerProvider.TryGetTickerAsync(symbol.Name, cancellationToken).ConfigureAwait(false);
+            // get required data
+            var balance = await context.GetBalanceProvider().GetBalanceOrZeroAsync(symbol.BaseAsset, cancellationToken).ConfigureAwait(false);
+            var savings = await context.GetSavingsProvider().GetPositionOrZeroAsync(symbol.BaseAsset, cancellationToken).ConfigureAwait(false);
+            var ticker = await context.GetTickerProvider().GetRequiredTickerAsync(symbol.Name, cancellationToken).ConfigureAwait(false);
 
             // calculate the desired sell
             var desired = CalculateDesiredSell(logger, symbol, profitMultiplier, orders, balance, savings, ticker);
@@ -61,30 +51,16 @@ namespace Outcompute.Trader.Trading.Algorithms
             // apply the desired sell
             if (desired == DesiredSell.None)
             {
-                await context
-                    .ClearOpenOrdersAsync(symbol, OrderSide.Sell, cancellationToken)
-                    .ConfigureAwait(false);
+                await context.ClearOpenOrdersAsync(symbol, OrderSide.Sell, cancellationToken).ConfigureAwait(false);
             }
             else
             {
-                await context
-                    .EnsureSingleOrderAsync(symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, desired.Quantity, desired.Price, redeemSavings, cancellationToken)
-                    .ConfigureAwait(false);
+                await context.EnsureSingleOrderAsync(symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, desired.Quantity, desired.Price, redeemSavings, cancellationToken).ConfigureAwait(false);
             }
         }
 
-        private static DesiredSell CalculateDesiredSell(ILogger logger, Symbol symbol, decimal profitMultiplier, IReadOnlyCollection<OrderQueryResult> orders, Balance balance, SavingsPosition savings, MiniTicker? ticker)
+        private static DesiredSell CalculateDesiredSell(ILogger logger, Symbol symbol, decimal profitMultiplier, IReadOnlyCollection<OrderQueryResult> orders, Balance balance, SavingsPosition savings, MiniTicker ticker)
         {
-            // skip if there is no ticker information
-            if (ticker is null)
-            {
-                logger.LogWarning(
-                    "{Type} cannot evaluate desired sell for symbol {Symbol} because no ticker information is yet available",
-                    TypeName, symbol.Name);
-
-                return DesiredSell.None;
-            }
-
             // skip if there is nothing to sell
             if (orders.Count == 0)
             {

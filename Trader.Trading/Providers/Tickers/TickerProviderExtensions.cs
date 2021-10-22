@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Providers.Tickers
+namespace Outcompute.Trader.Trading.Providers
 {
     public static class TickerProviderExtensions
     {

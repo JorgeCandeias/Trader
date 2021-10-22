@@ -1,5 +1,4 @@
 ﻿using Outcompute.Trader.Trading.Providers.Orders;
-using Outcompute.Trader.Trading.Providers.Tickers;
 using System;
 
 namespace Orleans

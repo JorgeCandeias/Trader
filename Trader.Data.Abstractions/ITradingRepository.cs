@@ -37,6 +37,16 @@ namespace Outcompute.Trader.Data
 
         #endregion Tickers
 
+        #region Balances
+
+        Task SetBalancesAsync(AccountInfo accountInfo, CancellationToken cancellationToken = default);
+
+        Task SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default);
+
+        Task<Balance?> TryGetBalanceAsync(string asset, CancellationToken cancellationToken = default);
+
+        #endregion Balances
+
         Task<long> GetLastPagedTradeIdAsync(string symbol, CancellationToken cancellationToken = default);
 
         Task SetLastPagedTradeIdAsync(string symbol, long tradeId, CancellationToken cancellationToken = default);
@@ -48,11 +58,5 @@ namespace Outcompute.Trader.Data
         Task SetTradesAsync(IEnumerable<AccountTrade> trades, CancellationToken cancellationToken = default);
 
         Task<ImmutableSortedTradeSet> GetTradesAsync(string symbol, CancellationToken cancellationToken = default);
-
-        Task SetBalancesAsync(AccountInfo accountInfo, CancellationToken cancellationToken = default);
-
-        Task SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default);
-
-        Task<Balance?> TryGetBalanceAsync(string asset, CancellationToken cancellationToken = default);
     }
 }

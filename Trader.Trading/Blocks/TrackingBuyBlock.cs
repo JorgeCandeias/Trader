@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using System;
 using System.Collections.Generic;
@@ -26,15 +25,10 @@ namespace Outcompute.Trader.Trading.Algorithms
         private static async ValueTask<bool> SetTrackingBuyInnerAsync(IAlgoContext context, Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, CancellationToken cancellationToken)
         {
             var logger = context.ServiceProvider.GetRequiredService<ILogger<IAlgoContext>>();
-            var repository = context.ServiceProvider.GetRequiredService<ITradingRepository>();
 
             var ticker = await context.GetRequiredTickerAsync(symbol.Name, cancellationToken).ConfigureAwait(false);
             var orders = await context.GetOpenOrdersAsync(symbol, OrderSide.Buy, cancellationToken).ConfigureAwait(false);
-
-            // get the account free quote balance
-            var balance = await repository
-                .TryGetBalanceAsync(symbol.QuoteAsset, cancellationToken)
-                .ConfigureAwait(false);
+            var balance = await context.GetBalanceProvider().TryGetBalanceAsync(symbol.QuoteAsset, cancellationToken).ConfigureAwait(false);
 
             if (balance is null)
             {

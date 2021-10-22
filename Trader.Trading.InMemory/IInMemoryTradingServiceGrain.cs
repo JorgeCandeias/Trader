@@ -21,14 +21,14 @@ namespace Outcompute.Trader.Trading.InMemory
 
         #endregion Orders
 
-        Task<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionsAsync(string asset);
+        Task<IReadOnlyCollection<SavingsPosition>> GetFlexibleProductPositionsAsync(string asset);
 
-        Task SetFlexibleProductPositionsAsync(IEnumerable<FlexibleProductPosition> items);
+        Task SetFlexibleProductPositionsAsync(IEnumerable<SavingsPosition> items);
 
-        Task<LeftDailyRedemptionQuotaOnFlexibleProduct?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(
+        Task<SavingsQuota?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(
             string productId,
-            FlexibleProductRedemptionType type);
+            SavingsRedemptionType type);
 
-        Task SetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string productId, FlexibleProductRedemptionType type, LeftDailyRedemptionQuotaOnFlexibleProduct item);
+        Task SetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string productId, SavingsRedemptionType type, SavingsQuota item);
     }
 }

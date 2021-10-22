@@ -3,13 +3,13 @@
 namespace Outcompute.Trader.Models
 {
     [Immutable]
-    public record LeftDailyRedemptionQuotaOnFlexibleProduct(
+    public record SavingsQuota(
         string Asset,
         decimal DailyQuota,
         decimal LeftQuota,
         decimal MinRedemptionAmount)
     {
-        public static LeftDailyRedemptionQuotaOnFlexibleProduct Empty { get; } = new LeftDailyRedemptionQuotaOnFlexibleProduct(
+        public static SavingsQuota Empty { get; } = new SavingsQuota(
             string.Empty,
             0m,
             0m,

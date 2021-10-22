@@ -6,8 +6,8 @@ namespace Outcompute.Trader.Trading.InMemory
 {
     public interface IInMemoryTradingService : ITradingService
     {
-        public Task SetFlexibleProductPositionsAsync(IEnumerable<FlexibleProductPosition> items);
+        public Task SetFlexibleProductPositionsAsync(IEnumerable<SavingsPosition> items);
 
-        public Task SetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string productId, FlexibleProductRedemptionType type, LeftDailyRedemptionQuotaOnFlexibleProduct item);
+        public Task SetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string productId, SavingsRedemptionType type, SavingsQuota item);
     }
 }

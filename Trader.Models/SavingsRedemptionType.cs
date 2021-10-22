@@ -1,6 +1,6 @@
 ﻿namespace Outcompute.Trader.Models
 {
-    public enum FlexibleProductRedemptionType
+    public enum SavingsRedemptionType
     {
         None,
         Fast,

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Orleans;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
@@ -6,33 +7,33 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Binance.Providers.Savings
+namespace Outcompute.Trader.Trading.Providers.Savings
 {
-    internal class BinanceSavingsGrain : Grain, IBinanceSavingsGrain
+    internal class SavingsGrain : Grain, ISavingsGrain
     {
-        private readonly BinanceOptions _options;
+        private readonly SavingsProviderOptions _options;
         private readonly ISystemClock _clock;
         private readonly ITradingService _trader;
+        private readonly IHostApplicationLifetime _lifetime;
 
-        public BinanceSavingsGrain(IOptions<BinanceOptions> options, ISystemClock clock, ITradingService trader)
+        public SavingsGrain(IOptions<SavingsProviderOptions> options, ISystemClock clock, ITradingService trader, IHostApplicationLifetime lifetime)
         {
             _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
+            _lifetime = lifetime ?? throw new ArgumentNullException(nameof(lifetime));
         }
 
         private string _asset = string.Empty;
 
-        private readonly CancellationTokenSource _cancellation = new();
-        private readonly FlexibleProductRedemptionType[] _redemptionTypes = new[] { FlexibleProductRedemptionType.Fast };
+        private readonly SavingsRedemptionType[] _redemptionTypes = new[] { SavingsRedemptionType.Fast };
 
         #region Cache
 
-        private ImmutableList<FlexibleProductPosition> _positions = ImmutableList<FlexibleProductPosition>.Empty;
-        private readonly Dictionary<(string ProductId, FlexibleProductRedemptionType Type), LeftDailyRedemptionQuotaOnFlexibleProduct> _quotas = new();
+        private ImmutableList<SavingsPosition> _positions = ImmutableList<SavingsPosition>.Empty;
+        private readonly Dictionary<(string ProductId, SavingsRedemptionType Type), SavingsQuota> _quotas = new();
 
         private DateTime _expiration = DateTime.MinValue;
 
@@ -43,13 +44,6 @@ namespace Outcompute.Trader.Trading.Binance.Providers.Savings
             _asset = this.GetPrimaryKeyString();
 
             await base.OnActivateAsync();
-        }
-
-        public override Task OnDeactivateAsync()
-        {
-            _cancellation.Cancel();
-
-            return base.OnDeactivateAsync();
         }
 
         private async ValueTask EnsureUpdatedAsync()
@@ -64,7 +58,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.Savings
         private void Invalidate()
         {
             _expiration = DateTime.MinValue;
-            _positions = ImmutableList<FlexibleProductPosition>.Empty;
+            _positions = ImmutableList<SavingsPosition>.Empty;
             _quotas.Clear();
         }
 
@@ -72,7 +66,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.Savings
         {
             var result = await _trader
                 .WithBackoff()
-                .GetFlexibleProductPositionsAsync(_asset, _cancellation.Token);
+                .GetFlexibleProductPositionsAsync(_asset, _lifetime.ApplicationStopping);
 
             _positions = result.ToImmutableList();
 
@@ -82,7 +76,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.Savings
                 {
                     var quota = await _trader
                         .WithBackoff()
-                        .TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(productId, type, _cancellation.Token);
+                        .TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(productId, type, _lifetime.ApplicationStopping);
 
                     if (quota is not null)
                     {
@@ -92,28 +86,21 @@ namespace Outcompute.Trader.Trading.Binance.Providers.Savings
             }
         }
 
-        public async ValueTask<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionsAsync()
-        {
-            await EnsureUpdatedAsync();
-
-            return _positions;
-        }
-
-        public async ValueTask<FlexibleProductPosition?> TryGetFirstFlexibleProductPositionAsync()
+        public async Task<SavingsPosition?> TryGetPositionAsync()
         {
             await EnsureUpdatedAsync();
 
             return _positions.Count > 0 ? _positions[0] : null;
         }
 
-        public async ValueTask<LeftDailyRedemptionQuotaOnFlexibleProduct?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string productId, FlexibleProductRedemptionType type)
+        public async Task<SavingsQuota?> TryGetQuotaAsync(string productId, SavingsRedemptionType type)
         {
             await EnsureUpdatedAsync();
 
             return _quotas.TryGetValue((productId, type), out var value) ? value : null;
         }
 
-        public async ValueTask RedeemFlexibleProductAsync(string productId, decimal amount, FlexibleProductRedemptionType type)
+        public async Task RedeemAsync(string productId, decimal amount, SavingsRedemptionType type)
         {
             await _trader.RedeemFlexibleProductAsync(productId, amount, type);
 

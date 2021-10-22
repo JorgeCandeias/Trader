@@ -3,8 +3,8 @@
 namespace Outcompute.Trader.Models
 {
     public record GetFlexibleProduct(
-        FlexibleProductStatus Status,
-        FlexibleProductFeatured Featured,
+        SavingsStatus Status,
+        SavingsFeatured Featured,
         long? Current,
         long? Size,
         TimeSpan? ReceiveWindow,

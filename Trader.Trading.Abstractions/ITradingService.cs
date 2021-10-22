@@ -36,29 +36,29 @@ namespace Outcompute.Trader.Trading
 
         Task<IReadOnlyCollection<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime startTime, DateTime endTime, int limit, CancellationToken cancellationToken = default);
 
-        Task<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionsAsync(
+        Task<IReadOnlyCollection<SavingsPosition>> GetFlexibleProductPositionsAsync(
             string asset,
             CancellationToken cancellationToken = default);
 
-        Task<LeftDailyRedemptionQuotaOnFlexibleProduct?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(
+        Task<SavingsQuota?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(
             string productId,
-            FlexibleProductRedemptionType type,
+            SavingsRedemptionType type,
             CancellationToken cancellationToken = default);
 
         Task RedeemFlexibleProductAsync(
             string productId,
             decimal amount,
-            FlexibleProductRedemptionType type,
+            SavingsRedemptionType type,
             CancellationToken cancellationToken = default);
 
-        Task<IReadOnlyCollection<FlexibleProduct>> GetFlexibleProductListAsync(
-           FlexibleProductStatus status,
-           FlexibleProductFeatured featured,
+        Task<IReadOnlyCollection<SavingsProduct>> GetFlexibleProductListAsync(
+           SavingsStatus status,
+           SavingsFeatured featured,
            long? current,
            long? size,
            CancellationToken cancellationToken = default);
 
-        IReadOnlyCollection<FlexibleProduct> GetCachedFlexibleProductsByAsset(string asset);
+        IReadOnlyCollection<SavingsProduct> GetCachedFlexibleProductsByAsset(string asset);
 
         Task<string> CreateUserDataStreamAsync(CancellationToken cancellationToken = default);
 

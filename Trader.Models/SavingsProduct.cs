@@ -1,6 +1,6 @@
 ﻿namespace Outcompute.Trader.Models
 {
-    public record FlexibleProduct(
+    public record SavingsProduct(
         string Asset,
         decimal AvgAnnualInterestRate,
         bool CanPurchase,

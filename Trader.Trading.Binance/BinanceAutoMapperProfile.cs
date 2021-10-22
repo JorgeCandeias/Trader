@@ -30,9 +30,9 @@ namespace Outcompute.Trader.Trading.Binance
             CreateMap<string, ExecutionType>().ConvertUsing<ExecutionTypeConverter>();
             CreateMap<string, TimeZoneInfo>().ConvertUsing<TimeZoneInfoConverter>();
             CreateMap<string, KlineInterval>().ConvertUsing<KlineIntervalConverter>();
-            CreateMap<string, FlexibleProductRedemptionType>().ConvertUsing<FlexibleProductRedemptionTypeConverter>();
-            CreateMap<string, FlexibleProductStatus>().ConvertUsing<FlexibleProductStatusConverter>();
-            CreateMap<string, FlexibleProductFeatured>().ConvertUsing<FlexibleProductFeaturedConverter>();
+            CreateMap<string, SavingsRedemptionType>().ConvertUsing<SavingsRedemptionTypeConverter>();
+            CreateMap<string, SavingsStatus>().ConvertUsing<SavingsStatusConverter>();
+            CreateMap<string, SavingsFeatured>().ConvertUsing<SavingsFeaturedConverter>();
             CreateMap<long, TimeSpan>().ConvertUsing<TimeSpanConverter>();
             CreateMap<decimal[], Bid>().ConvertUsing(x => new Bid(x[0], x[1]));
             CreateMap<decimal[], Ask>().ConvertUsing(x => new Ask(x[0], x[1]));
@@ -50,9 +50,9 @@ namespace Outcompute.Trader.Trading.Binance
             CreateMap<OcoOrderStatus, string>().ConvertUsing<OcoOrderStatusConverter>();
             CreateMap<AccountType, string>().ConvertUsing<AccountTypeConverter>();
             CreateMap<ExecutionType, string>().ConvertUsing<ExecutionTypeConverter>();
-            CreateMap<FlexibleProductRedemptionType, string>().ConvertUsing<FlexibleProductRedemptionTypeConverter>();
-            CreateMap<FlexibleProductStatus, string>().ConvertUsing<FlexibleProductStatusConverter>();
-            CreateMap<FlexibleProductFeatured, string>().ConvertUsing<FlexibleProductFeaturedConverter>();
+            CreateMap<SavingsRedemptionType, string>().ConvertUsing<SavingsRedemptionTypeConverter>();
+            CreateMap<SavingsStatus, string>().ConvertUsing<SavingsStatusConverter>();
+            CreateMap<SavingsFeatured, string>().ConvertUsing<SavingsFeaturedConverter>();
 
             // simple model mappings
             CreateMap<ExchangeInfoModel, ExchangeInfo>();
@@ -195,12 +195,12 @@ namespace Outcompute.Trader.Trading.Binance
             CreateMap<GetFlexibleProductPosition, FlexibleProductPositionRequestModel>()
                 .ForCtorParam(nameof(FlexibleProductPositionRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
 
-            CreateMap<FlexibleProductPositionResponseModel, FlexibleProductPosition>();
+            CreateMap<FlexibleProductPositionResponseModel, SavingsPosition>();
 
             CreateMap<GetLeftDailyRedemptionQuotaOnFlexibleProduct, LeftDailyRedemptionQuotaOnFlexibleProductRequestModel>()
                 .ForCtorParam(nameof(LeftDailyRedemptionQuotaOnFlexibleProductRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
 
-            CreateMap<LeftDailyRedemptionQuotaOnFlexibleProductResponseModel, LeftDailyRedemptionQuotaOnFlexibleProduct>();
+            CreateMap<LeftDailyRedemptionQuotaOnFlexibleProductResponseModel, SavingsQuota>();
 
             CreateMap<RedeemFlexibleProduct, FlexibleProductRedemptionRequestModel>()
                 .ForCtorParam(nameof(FlexibleProductRedemptionRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
@@ -208,7 +208,7 @@ namespace Outcompute.Trader.Trading.Binance
             CreateMap<GetFlexibleProduct, FlexibleProductRequestModel>()
                 .ForCtorParam(nameof(FlexibleProductRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
 
-            CreateMap<FlexibleProductResponseModel, FlexibleProduct>();
+            CreateMap<FlexibleProductResponseModel, SavingsProduct>();
 
             // open converters
             CreateMap(typeof(IEnumerable<>), typeof(ImmutableList<>)).ConvertUsing(typeof(ImmutableListConverter<,>));

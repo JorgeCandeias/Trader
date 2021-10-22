@@ -21,8 +21,8 @@ namespace Outcompute.Trader.Trading.InMemory
             _clock = clock;
         }
 
-        private readonly Dictionary<string, Dictionary<string, FlexibleProductPosition>> _positions = new();
-        private readonly Dictionary<(string, FlexibleProductRedemptionType), LeftDailyRedemptionQuotaOnFlexibleProduct> _quotas = new();
+        private readonly Dictionary<string, Dictionary<string, SavingsPosition>> _positions = new();
+        private readonly Dictionary<(string, SavingsRedemptionType), SavingsQuota> _quotas = new();
         private readonly Dictionary<string, Dictionary<long, OrderQueryResult>> _orders = new();
         private readonly Dictionary<string, long> _orderIds = new();
 
@@ -165,32 +165,32 @@ namespace Outcompute.Trader.Trading.InMemory
 
         #endregion Orders
 
-        public Task<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionsAsync(string asset)
+        public Task<IReadOnlyCollection<SavingsPosition>> GetFlexibleProductPositionsAsync(string asset)
         {
             if (asset is null) throw new ArgumentNullException(nameof(asset));
 
             var result = _positions.TryGetValue(asset, out var items)
                 ? items.Values.ToImmutableList()
-                : ImmutableList<FlexibleProductPosition>.Empty;
+                : ImmutableList<SavingsPosition>.Empty;
 
-            return Task.FromResult<IReadOnlyCollection<FlexibleProductPosition>>(result);
+            return Task.FromResult<IReadOnlyCollection<SavingsPosition>>(result);
         }
 
-        public Task SetFlexibleProductPositionsAsync(IEnumerable<FlexibleProductPosition> items)
+        public Task SetFlexibleProductPositionsAsync(IEnumerable<SavingsPosition> items)
         {
             if (items is null) throw new ArgumentNullException(nameof(items));
 
             foreach (var item in items)
             {
-                _positions.GetOrCreate(item.Asset, () => new Dictionary<string, FlexibleProductPosition>())[item.ProductId] = item;
+                _positions.GetOrCreate(item.Asset, () => new Dictionary<string, SavingsPosition>())[item.ProductId] = item;
             }
 
             return Task.CompletedTask;
         }
 
-        public Task<LeftDailyRedemptionQuotaOnFlexibleProduct?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(
+        public Task<SavingsQuota?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(
             string productId,
-            FlexibleProductRedemptionType type)
+            SavingsRedemptionType type)
         {
             if (productId is null) throw new ArgumentNullException(nameof(productId));
 
@@ -199,7 +199,7 @@ namespace Outcompute.Trader.Trading.InMemory
             return Task.FromResult(result);
         }
 
-        public Task SetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string productId, FlexibleProductRedemptionType type, LeftDailyRedemptionQuotaOnFlexibleProduct item)
+        public Task SetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string productId, SavingsRedemptionType type, SavingsQuota item)
         {
             if (productId is null) throw new ArgumentNullException(nameof(productId));
             if (item is null) throw new ArgumentNullException(nameof(item));

@@ -35,7 +35,7 @@ namespace Outcompute.Trader.Trading.Binance
 
         private static string Name => nameof(BinanceTradingService);
 
-        private ImmutableDictionary<string, ImmutableList<FlexibleProduct>> _flexibleProducts = ImmutableDictionary<string, ImmutableList<FlexibleProduct>>.Empty;
+        private ImmutableDictionary<string, ImmutableList<SavingsProduct>> _flexibleProducts = ImmutableDictionary<string, ImmutableList<SavingsProduct>>.Empty;
 
         public ITradingService WithBackoff()
         {
@@ -176,7 +176,7 @@ namespace Outcompute.Trader.Trading.Binance
             });
         }
 
-        public async Task<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionsAsync(
+        public async Task<IReadOnlyCollection<SavingsPosition>> GetFlexibleProductPositionsAsync(
             string asset,
             CancellationToken cancellationToken = default)
         {
@@ -188,12 +188,12 @@ namespace Outcompute.Trader.Trading.Binance
                 .GetFlexibleProductPositionAsync(input, cancellationToken)
                 .ConfigureAwait(false);
 
-            return _mapper.Map<IReadOnlyCollection<FlexibleProductPosition>>(output);
+            return _mapper.Map<IReadOnlyCollection<SavingsPosition>>(output);
         }
 
-        public async Task<LeftDailyRedemptionQuotaOnFlexibleProduct?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(
+        public async Task<SavingsQuota?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(
             string productId,
-            FlexibleProductRedemptionType type,
+            SavingsRedemptionType type,
             CancellationToken cancellationToken = default)
         {
             var model = new GetLeftDailyRedemptionQuotaOnFlexibleProduct(productId, type, null, _clock.UtcNow);
@@ -204,13 +204,13 @@ namespace Outcompute.Trader.Trading.Binance
                 .GetLeftDailyRedemptionQuotaOnFlexibleProductAsync(input, cancellationToken)
                 .ConfigureAwait(false);
 
-            return _mapper.Map<LeftDailyRedemptionQuotaOnFlexibleProduct>(output);
+            return _mapper.Map<SavingsQuota>(output);
         }
 
         public async Task RedeemFlexibleProductAsync(
             string productId,
             decimal amount,
-            FlexibleProductRedemptionType type,
+            SavingsRedemptionType type,
             CancellationToken cancellationToken = default)
         {
             var model = new RedeemFlexibleProduct(productId, amount, type, null, _clock.UtcNow);
@@ -222,9 +222,9 @@ namespace Outcompute.Trader.Trading.Binance
                 .ConfigureAwait(false);
         }
 
-        public async Task<IReadOnlyCollection<FlexibleProduct>> GetFlexibleProductListAsync(
-            FlexibleProductStatus status,
-            FlexibleProductFeatured featured,
+        public async Task<IReadOnlyCollection<SavingsProduct>> GetFlexibleProductListAsync(
+            SavingsStatus status,
+            SavingsFeatured featured,
             long? current,
             long? size,
             CancellationToken cancellationToken = default)
@@ -237,17 +237,17 @@ namespace Outcompute.Trader.Trading.Binance
                 .GetFlexibleProductListAsync(input, cancellationToken)
                 .ConfigureAwait(false);
 
-            return _mapper.Map<IReadOnlyCollection<FlexibleProduct>>(output);
+            return _mapper.Map<IReadOnlyCollection<SavingsProduct>>(output);
         }
 
-        public IReadOnlyCollection<FlexibleProduct> GetCachedFlexibleProductsByAsset(string asset)
+        public IReadOnlyCollection<SavingsProduct> GetCachedFlexibleProductsByAsset(string asset)
         {
             if (_flexibleProducts.TryGetValue(asset, out var value))
             {
                 return value;
             }
 
-            return ImmutableList<FlexibleProduct>.Empty;
+            return ImmutableList<SavingsProduct>.Empty;
         }
 
         public async Task<string> CreateUserDataStreamAsync(CancellationToken cancellationToken = default)
@@ -323,11 +323,11 @@ namespace Outcompute.Trader.Trading.Binance
             _logger.LogInformation("{Name} querying flexible products...", Name);
 
             var page = 0;
-            var list = new List<FlexibleProduct>();
+            var list = new List<SavingsProduct>();
 
             while (true)
             {
-                var result = await GetFlexibleProductListAsync(FlexibleProductStatus.All, FlexibleProductFeatured.All, ++page, 100, cancellationToken)
+                var result = await GetFlexibleProductListAsync(SavingsStatus.All, SavingsFeatured.All, ++page, 100, cancellationToken)
                     .ConfigureAwait(false);
 
                 // stop if there are no more items to get

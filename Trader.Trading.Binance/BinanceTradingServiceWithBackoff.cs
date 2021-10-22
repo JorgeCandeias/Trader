@@ -81,7 +81,7 @@ namespace Outcompute.Trader.Trading.Binance
             return WaitAndRetryForeverAsync(ct => _trader.GetAllOrdersAsync(symbol, orderId, limit, ct), cancellationToken);
         }
 
-        public IReadOnlyCollection<FlexibleProduct> GetCachedFlexibleProductsByAsset(string asset)
+        public IReadOnlyCollection<SavingsProduct> GetCachedFlexibleProductsByAsset(string asset)
         {
             return _trader.GetCachedFlexibleProductsByAsset(asset);
         }
@@ -91,12 +91,12 @@ namespace Outcompute.Trader.Trading.Binance
             return WaitAndRetryForeverAsync(ct => _trader.GetExchangeInfoAsync(ct), cancellationToken);
         }
 
-        public Task<IReadOnlyCollection<FlexibleProduct>> GetFlexibleProductListAsync(FlexibleProductStatus status, FlexibleProductFeatured featured, long? current, long? size, CancellationToken cancellationToken = default)
+        public Task<IReadOnlyCollection<SavingsProduct>> GetFlexibleProductListAsync(SavingsStatus status, SavingsFeatured featured, long? current, long? size, CancellationToken cancellationToken = default)
         {
             return WaitAndRetryForeverAsync(ct => _trader.GetFlexibleProductListAsync(status, featured, current, size, ct), cancellationToken);
         }
 
-        public Task<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionsAsync(string asset, CancellationToken cancellationToken = default)
+        public Task<IReadOnlyCollection<SavingsPosition>> GetFlexibleProductPositionsAsync(string asset, CancellationToken cancellationToken = default)
         {
             return WaitAndRetryForeverAsync(ct => _trader.GetFlexibleProductPositionsAsync(asset, ct), cancellationToken);
         }
@@ -126,12 +126,12 @@ namespace Outcompute.Trader.Trading.Binance
             return WaitAndRetryForeverAsync(ct => _trader.PingUserDataStreamAsync(listenKey, ct), cancellationToken);
         }
 
-        public Task RedeemFlexibleProductAsync(string productId, decimal amount, FlexibleProductRedemptionType type, CancellationToken cancellationToken = default)
+        public Task RedeemFlexibleProductAsync(string productId, decimal amount, SavingsRedemptionType type, CancellationToken cancellationToken = default)
         {
             return WaitAndRetryForeverAsync(ct => _trader.RedeemFlexibleProductAsync(productId, amount, type, ct), cancellationToken);
         }
 
-        public Task<LeftDailyRedemptionQuotaOnFlexibleProduct?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string productId, FlexibleProductRedemptionType type, CancellationToken cancellationToken = default)
+        public Task<SavingsQuota?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string productId, SavingsRedemptionType type, CancellationToken cancellationToken = default)
         {
             return WaitAndRetryForeverAsync(ct => _trader.TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(productId, type, ct), cancellationToken);
         }

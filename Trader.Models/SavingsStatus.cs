@@ -1,9 +1,8 @@
 ﻿namespace Outcompute.Trader.Models
 {
-    public enum FlexibleProductStatus
+    public enum SavingsStatus
     {
         None,
-
         All,
         Subscribable,
         Unsubscribable

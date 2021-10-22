@@ -26,8 +26,8 @@ namespace Outcompute.Trader.Trading.Algorithms
             var savingsProvider = context.ServiceProvider.GetRequiredService<ISavingsProvider>();
 
             // get the current savings for this asset
-            var savings = await savingsProvider.TryGetFirstFlexibleProductPositionAsync(asset, cancellationToken).ConfigureAwait(false)
-                ?? FlexibleProductPosition.Zero(asset);
+            var savings = await savingsProvider.TryGetPositionAsync(asset, cancellationToken).ConfigureAwait(false)
+                ?? SavingsPosition.Zero(asset);
 
             // check if we can redeem at all - we cant redeem during maintenance windows etc
             if (!savings.CanRedeem)
@@ -58,7 +58,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             }
 
             var quota = await savingsProvider
-                .TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(savings.Asset, savings.ProductId, FlexibleProductRedemptionType.Fast, cancellationToken)
+                .TryGetQuotaAsync(savings.Asset, savings.ProductId, SavingsRedemptionType.Fast, cancellationToken)
                 .ConfigureAwait(false);
 
             // stop if there is no savings product
@@ -99,7 +99,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 TypeName, amount, asset);
 
             await savingsProvider
-                .RedeemFlexibleProductAsync(savings.Asset, savings.ProductId, amount, FlexibleProductRedemptionType.Fast, cancellationToken)
+                .RedeemAsync(savings.Asset, savings.ProductId, amount, SavingsRedemptionType.Fast, cancellationToken)
                 .ConfigureAwait(false);
 
             // let the algo cycle to allow time for the redeemption to process

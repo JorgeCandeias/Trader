@@ -62,10 +62,6 @@ namespace Outcompute.Trader.Trading.Binance
 
         [Required]
         [Range(typeof(TimeSpan), "0.00:00:00.001", "1.00:00:00.000")]
-        public TimeSpan SavingsCacheWindow { get; set; } = TimeSpan.FromMinutes(5);
-
-        [Required]
-        [Range(typeof(TimeSpan), "0.00:00:00.001", "1.00:00:00.000")]
         public TimeSpan ReactivePollingDelay { get; set; } = TimeSpan.FromSeconds(10);
 
         /// <summary>

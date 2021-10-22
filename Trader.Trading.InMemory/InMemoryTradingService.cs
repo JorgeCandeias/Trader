@@ -71,7 +71,7 @@ namespace Outcompute.Trader.Trading.InMemory
             throw new NotImplementedException();
         }
 
-        public IReadOnlyCollection<FlexibleProduct> GetCachedFlexibleProductsByAsset(string asset)
+        public IReadOnlyCollection<SavingsProduct> GetCachedFlexibleProductsByAsset(string asset)
         {
             throw new NotImplementedException();
         }
@@ -81,12 +81,12 @@ namespace Outcompute.Trader.Trading.InMemory
             throw new NotImplementedException();
         }
 
-        public Task<IReadOnlyCollection<FlexibleProduct>> GetFlexibleProductListAsync(FlexibleProductStatus status, FlexibleProductFeatured featured, long? current, long? size, CancellationToken cancellationToken = default)
+        public Task<IReadOnlyCollection<SavingsProduct>> GetFlexibleProductListAsync(SavingsStatus status, SavingsFeatured featured, long? current, long? size, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
 
-        public Task<IReadOnlyCollection<FlexibleProductPosition>> GetFlexibleProductPositionsAsync(string asset, CancellationToken cancellationToken = default)
+        public Task<IReadOnlyCollection<SavingsPosition>> GetFlexibleProductPositionsAsync(string asset, CancellationToken cancellationToken = default)
         {
             return _grain.GetFlexibleProductPositionsAsync(asset);
         }
@@ -106,19 +106,19 @@ namespace Outcompute.Trader.Trading.InMemory
             throw new NotImplementedException();
         }
 
-        public Task RedeemFlexibleProductAsync(string productId, decimal amount, FlexibleProductRedemptionType type, CancellationToken cancellationToken = default)
+        public Task RedeemFlexibleProductAsync(string productId, decimal amount, SavingsRedemptionType type, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
 
-        public Task SetFlexibleProductPositionsAsync(IEnumerable<FlexibleProductPosition> items)
+        public Task SetFlexibleProductPositionsAsync(IEnumerable<SavingsPosition> items)
         {
             if (items is null) throw new ArgumentNullException(nameof(items));
 
             return _grain.SetFlexibleProductPositionsAsync(items);
         }
 
-        public Task SetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string productId, FlexibleProductRedemptionType type, LeftDailyRedemptionQuotaOnFlexibleProduct item)
+        public Task SetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string productId, SavingsRedemptionType type, SavingsQuota item)
         {
             if (productId is null) throw new ArgumentNullException(nameof(productId));
             if (item is null) throw new ArgumentNullException(nameof(item));
@@ -126,7 +126,7 @@ namespace Outcompute.Trader.Trading.InMemory
             return _grain.SetLeftDailyRedemptionQuotaOnFlexibleProductAsync(productId, type, item);
         }
 
-        public Task<LeftDailyRedemptionQuotaOnFlexibleProduct?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string productId, FlexibleProductRedemptionType type, CancellationToken cancellationToken = default)
+        public Task<SavingsQuota?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string productId, SavingsRedemptionType type, CancellationToken cancellationToken = default)
         {
             return _grain.TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(productId, type);
         }

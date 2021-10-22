@@ -49,8 +49,8 @@ namespace Outcompute.Trader.Trading.Algorithms
                 ?? Balance.Zero(symbol.BaseAsset);
 
             // get all savings if applicable
-            var savings = (redeemSavings ? await savingsProvider.TryGetFirstFlexibleProductPositionAsync(symbol.BaseAsset, cancellationToken).ConfigureAwait(false) : null)
-                ?? FlexibleProductPosition.Zero(symbol.BaseAsset);
+            var savings = (redeemSavings ? await savingsProvider.TryGetPositionAsync(symbol.BaseAsset, cancellationToken).ConfigureAwait(false) : null)
+                ?? SavingsPosition.Zero(symbol.BaseAsset);
 
             // get the current ticker for the symbol
             var ticker = await tickerProvider.TryGetTickerAsync(symbol.Name, cancellationToken).ConfigureAwait(false);
@@ -73,7 +73,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             }
         }
 
-        private static DesiredSell CalculateDesiredSell(ILogger logger, Symbol symbol, decimal profitMultiplier, IReadOnlyCollection<OrderQueryResult> orders, Balance balance, FlexibleProductPosition savings, MiniTicker? ticker)
+        private static DesiredSell CalculateDesiredSell(ILogger logger, Symbol symbol, decimal profitMultiplier, IReadOnlyCollection<OrderQueryResult> orders, Balance balance, SavingsPosition savings, MiniTicker? ticker)
         {
             // skip if there is no ticker information
             if (ticker is null)

@@ -8,10 +8,8 @@ using Outcompute.Trader.Trading.Binance;
 using Outcompute.Trader.Trading.Binance.Converters;
 using Outcompute.Trader.Trading.Binance.Handlers;
 using Outcompute.Trader.Trading.Binance.Providers.MarketData;
-using Outcompute.Trader.Trading.Binance.Providers.Savings;
 using Outcompute.Trader.Trading.Binance.Providers.UserData;
 using Outcompute.Trader.Trading.Binance.Signing;
-using Outcompute.Trader.Trading.Providers;
 using System;
 
 namespace Orleans.Hosting
@@ -50,7 +48,6 @@ namespace Orleans.Hosting
                         .AddSingleton<ISigner, Signer>()
                         .AddSingleton<IUserDataStreamClientFactory, BinanceUserDataStreamWssClientFactory>()
                         .AddSingleton<IMarketDataStreamClientFactory, BinanceMarketDataStreamWssClientFactory>()
-                        .AddSingleton<ISavingsProvider, BinanceSavingsProvider>()
 
                         // add typed http client
                         .AddHttpClient<BinanceApiClient>((p, x) =>
@@ -94,9 +91,9 @@ namespace Orleans.Hosting
                         .AddSingleton<ExecutionTypeConverter>()
                         .AddSingleton<MarketDataStreamMessageConverter>()
                         .AddSingleton<KlineIntervalConverter>()
-                        .AddSingleton<FlexibleProductRedemptionTypeConverter>()
-                        .AddSingleton<FlexibleProductStatusConverter>()
-                        .AddSingleton<FlexibleProductFeaturedConverter>()
+                        .AddSingleton<SavingsRedemptionTypeConverter>()
+                        .AddSingleton<SavingsStatusConverter>()
+                        .AddSingleton<SavingsFeaturedConverter>()
                         .AddSingleton(typeof(ImmutableListConverter<,>)) // todo: move this to the shared model converters
 
                         // add watchdog entries

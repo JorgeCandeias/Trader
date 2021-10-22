@@ -23,14 +23,14 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
         private readonly ILogger _logger;
         private readonly ITradingService _trader;
         private readonly IUserDataStreamClientFactory _streams;
-        private readonly IOrderSynchronizer _orders;
-        private readonly ITradeSynchronizer _trades;
+        private readonly IOrderSynchronizer _orderSynchronizer;
+        private readonly ITradeSynchronizer _tradeSynchronizer;
         private readonly ISystemClock _clock;
         private readonly IMapper _mapper;
         private readonly IHostApplicationLifetime _lifetime;
-        private readonly IOrderProvider _orderProvider;
+        private readonly IOrderProvider _orders;
         private readonly IBalanceProvider _balances;
-        private readonly ITradeProvider _tradeProvider;
+        private readonly ITradeProvider _trades;
 
         public BinanceUserDataGrain(IOptions<BinanceOptions> options, ILogger<BinanceUserDataGrain> logger, ITradingService trader, IUserDataStreamClientFactory streams, IOrderSynchronizer orders, ITradeSynchronizer trades, ISystemClock clock, IMapper mapper, IHostApplicationLifetime lifetime, IOrderProvider orderProvider, IBalanceProvider balances, ITradeProvider tradeProvider)
         {
@@ -38,14 +38,14 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
             _logger = logger;
             _trader = trader;
             _streams = streams;
-            _orders = orders;
-            _trades = trades;
+            _orderSynchronizer = orders;
+            _tradeSynchronizer = trades;
             _clock = clock;
             _mapper = mapper;
             _lifetime = lifetime;
-            _orderProvider = orderProvider;
+            _orders = orderProvider;
             _balances = balances;
-            _tradeProvider = tradeProvider;
+            _trades = tradeProvider;
         }
 
         private static string Name => nameof(BinanceUserDataGrain);
@@ -146,7 +146,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
             {
                 var trade = _mapper.Map<AccountTrade>(message);
 
-                await _tradeProvider
+                await _trades
                     .SetTradeAsync(trade, _lifetime.ApplicationStopping)
                     .ConfigureAwait(false);
 
@@ -158,7 +158,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
             // now extract the order from this report
             var order = _mapper.Map<OrderQueryResult>(message);
 
-            await _orderProvider.SetOrderAsync(order);
+            await _orders.SetOrderAsync(order);
 
             _logger.LogInformation(
                 "{Name} saved {Symbol} {Type} {Side} order {OrderId}",
@@ -266,7 +266,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 
                                 return Task.CompletedTask;
                             })
-                        .ExecuteAsync(ct => _orders.SynchronizeOrdersAsync(symbol, ct), _lifetime.ApplicationStopping, true);
+                        .ExecuteAsync(ct => _orderSynchronizer.SynchronizeOrdersAsync(symbol, ct), _lifetime.ApplicationStopping, true);
                 }
 
                 // sync trades for all symbols
@@ -284,7 +284,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 
                                 return Task.CompletedTask;
                             })
-                        .ExecuteAsync(ct => _trades.SynchronizeTradesAsync(symbol, ct), _lifetime.ApplicationStopping, true);
+                        .ExecuteAsync(ct => _tradeSynchronizer.SynchronizeTradesAsync(symbol, ct), _lifetime.ApplicationStopping, true);
                 }
 
                 // signal that everything is ready

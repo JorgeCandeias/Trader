@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.ProfitAggregator
 {
-    // todo: implement local aggregator pattern
     internal class ProfitAggregatorGrain : Grain, IProfitAggregatorGrain
     {
         private readonly Dictionary<string, Profit> _profits = new();

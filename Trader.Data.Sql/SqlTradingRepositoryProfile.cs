@@ -30,9 +30,6 @@ namespace Outcompute.Trader.Data.Sql
             CreateMap<Balance, BalanceEntity>()
                 .ReverseMap();
 
-            CreateMap<MiniTicker, TickerTableParameterEntity>()
-                .ForCtorParam(nameof(TickerTableParameterEntity.SymbolId), x => x.MapFrom((source, context) => ((IDictionary<string, int>)context.Items[nameof(TickerTableParameterEntity.SymbolId)])[source.Symbol]));
-
             CreateMap<MiniTicker, TickerEntity>()
                 .ReverseMap();
 

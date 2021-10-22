@@ -95,7 +95,6 @@
     <Build Include="Sequences\OrderSequence.sql" />
     <Build Include="Tables\Ticker.sql" />
     <Build Include="Types\TickerTableParameter.sql" />
-    <Build Include="Procedures\SetTickers.sql" />
     <Build Include="Procedures\GetTicker.sql" />
     <Build Include="Tables\Kline.sql" />
     <Build Include="Types\KlineTableParameter.sql" />

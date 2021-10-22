@@ -1,10 +1,12 @@
 ﻿using Microsoft.Extensions.Logging;
-using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
-using System;
+using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Providers;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
@@ -13,14 +15,14 @@ namespace Outcompute.Trader.Trading.Algorithms
         private readonly ILogger _logger;
         private readonly ITradingRepository _repository;
         private readonly ITradingService _trader;
-        private readonly ISystemClock _clock;
+        private readonly ITradeProvider _provider;
 
-        public TradeSynchronizer(ILogger<TradeSynchronizer> logger, ITradingRepository repository, ITradingService trader, ISystemClock clock)
+        public TradeSynchronizer(ILogger<TradeSynchronizer> logger, ITradingRepository repository, ITradingService trader, ITradeProvider provider)
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-            _trader = trader ?? throw new ArgumentNullException(nameof(trader));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _logger = logger;
+            _repository = repository;
+            _trader = trader;
+            _provider = provider;
         }
 
         public async Task SynchronizeTradesAsync(string symbol, CancellationToken cancellationToken = default)
@@ -31,6 +33,9 @@ namespace Outcompute.Trader.Trading.Algorithms
             var tradeId = await _repository
                 .GetLastPagedTradeIdAsync(symbol, cancellationToken)
                 .ConfigureAwait(false);
+
+            // save all trades in the background so we can keep pulling trades
+            var worker = new ActionBlock<IEnumerable<AccountTrade>>(work => _provider.SetTradesAsync(symbol, work, cancellationToken));
 
             // pull all trades
             var count = 0;
@@ -45,9 +50,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 if (trades.Count is 0) break;
 
                 // persist all new trades in this page
-                await _repository
-                    .SetTradesAsync(trades, cancellationToken)
-                    .ConfigureAwait(false);
+                worker.Post(trades);
 
                 // keep the last trade
                 tradeId = trades.Max!.Id;
@@ -64,6 +67,9 @@ namespace Outcompute.Trader.Trading.Algorithms
                     .SetLastPagedTradeIdAsync(symbol, tradeId, cancellationToken)
                     .ConfigureAwait(false);
             }
+
+            worker.Complete();
+            await worker.Completion;
 
             _logger.LogInformation(
                 "{Name} {Symbol} pulled {Count} trades up to TradeId {MaxTradeId} in {ElapsedMs}ms",

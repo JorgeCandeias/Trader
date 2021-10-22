@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
 using Outcompute.Trader.Core.Time;
-using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Providers;
@@ -26,7 +25,6 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
         private readonly IUserDataStreamClientFactory _streams;
         private readonly IOrderSynchronizer _orders;
         private readonly ITradeSynchronizer _trades;
-        private readonly ITradingRepository _repository;
         private readonly ISystemClock _clock;
         private readonly IMapper _mapper;
         private readonly IHostApplicationLifetime _lifetime;
@@ -34,7 +32,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
         private readonly IBalanceProvider _balances;
         private readonly ITradeProvider _tradeProvider;
 
-        public BinanceUserDataGrain(IOptions<BinanceOptions> options, ILogger<BinanceUserDataGrain> logger, ITradingService trader, IUserDataStreamClientFactory streams, IOrderSynchronizer orders, ITradeSynchronizer trades, ITradingRepository repository, ISystemClock clock, IMapper mapper, IHostApplicationLifetime lifetime, IOrderProvider orderProvider, IBalanceProvider balances, ITradeProvider tradeProvider)
+        public BinanceUserDataGrain(IOptions<BinanceOptions> options, ILogger<BinanceUserDataGrain> logger, ITradingService trader, IUserDataStreamClientFactory streams, IOrderSynchronizer orders, ITradeSynchronizer trades, ISystemClock clock, IMapper mapper, IHostApplicationLifetime lifetime, IOrderProvider orderProvider, IBalanceProvider balances, ITradeProvider tradeProvider)
         {
             _options = options.Value;
             _logger = logger;
@@ -42,7 +40,6 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
             _streams = streams;
             _orders = orders;
             _trades = trades;
-            _repository = repository;
             _clock = clock;
             _mapper = mapper;
             _lifetime = lifetime;

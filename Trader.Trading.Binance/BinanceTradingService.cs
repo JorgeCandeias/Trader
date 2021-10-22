@@ -281,7 +281,6 @@ namespace Outcompute.Trader.Trading.Binance
                 .ConfigureAwait(false);
         }
 
-        // todo: refactor this into a grain and remove this service as a hosted service
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             await SyncLimitsAsync(cancellationToken).ConfigureAwait(false);

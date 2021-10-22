@@ -11,27 +11,6 @@ namespace Outcompute.Trader.Trading.Algorithms
     {
         /// <summary>
         /// Gets the balance for the specified <paramref name="asset"/>.
-        /// Returns null if no balance is found.
-        /// </summary>
-        public static ValueTask<Balance?> TryGetBalanceAsync(this IAlgoContext context, string asset, CancellationToken cancellationToken = default)
-        {
-            if (context is null) throw new ArgumentNullException(nameof(context));
-            if (asset is null) throw new ArgumentNullException(nameof(asset));
-
-            var repository = context.ServiceProvider.GetRequiredService<ITradingRepository>();
-
-            return TryGetBalanceInnerAsync(asset, repository, cancellationToken);
-        }
-
-        private static async ValueTask<Balance?> TryGetBalanceInnerAsync(string asset, ITradingRepository repository, CancellationToken cancellationToken = default)
-        {
-            return await repository
-                .TryGetBalanceAsync(asset, cancellationToken)
-                .ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Gets the balance for the specified <paramref name="asset"/>.
         /// Throws <see cref="InvalidOperationException"/> if no balance is found.
         /// </summary>
         public static ValueTask<Balance> GetRequiredBalanceAsync(this IAlgoContext context, string asset, CancellationToken cancellationToken = default)

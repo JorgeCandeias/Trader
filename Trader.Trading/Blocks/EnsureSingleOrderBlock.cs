@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Exceptions;
+using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -55,10 +56,8 @@ namespace Outcompute.Trader.Trading.Algorithms
                 OrderSide.Sell => symbol.BaseAsset,
                 _ => throw new ArgumentOutOfRangeException(nameof(side))
             };
-            var balance = await context
-                .TryGetBalanceAsync(sourceAsset, cancellationToken)
-                .ConfigureAwait(false)
-                ?? throw new AlgorithmException($"Could not get balance for asset '{sourceAsset}'");
+
+            var balance = await context.GetBalanceProvider().GetRequiredBalanceAsync(sourceAsset, cancellationToken).ConfigureAwait(false);
 
             // get the quantity for the affected asset
             var sourceQuantity = side switch

@@ -53,11 +53,5 @@ namespace Outcompute.Trader.Data
         Task<IEnumerable<AccountTrade>> GetTradesAsync(string symbol, CancellationToken cancellationToken = default);
 
         #endregion Trades
-
-        Task<long> GetLastPagedTradeIdAsync(string symbol, CancellationToken cancellationToken = default);
-
-        Task SetLastPagedTradeIdAsync(string symbol, long tradeId, CancellationToken cancellationToken = default);
-
-        Task<long> GetMaxTradeIdAsync(string symbol, CancellationToken cancellationToken = default);
     }
 }

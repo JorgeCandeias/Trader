@@ -1,6 +1,26 @@
-﻿namespace Outcompute.Trader.Trading.Providers.Trades
+﻿using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Outcompute.Trader.Trading.Providers
 {
     public static class TradeProviderExtensions
     {
+        public static Task<long?> TryGetLastTradeIdAsync(this ITradeProvider provider, string symbol, CancellationToken cancellationToken = default)
+        {
+            if (provider is null) throw new ArgumentNullException(nameof(provider));
+            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+
+            return provider.TryGetLastTradeIdCoreAsync(symbol, cancellationToken);
+        }
+
+        private static async Task<long?> TryGetLastTradeIdCoreAsync(this ITradeProvider provider, string symbol, CancellationToken cancellationToken = default)
+        {
+            var trades = await provider
+                .GetTradesAsync(symbol, cancellationToken)
+                .ConfigureAwait(false);
+
+            return trades.Count > 0 ? trades[trades.Count - 1].Id : null;
+        }
     }
 }

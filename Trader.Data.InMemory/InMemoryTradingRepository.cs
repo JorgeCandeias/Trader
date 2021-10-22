@@ -83,18 +83,6 @@ namespace Outcompute.Trader.Trading.Data.InMemory
 
         #endregion Tickers
 
-        public Task<long> GetLastPagedTradeIdAsync(string symbol, CancellationToken cancellationToken = default)
-        {
-            // todo: remove
-            throw new NotImplementedException();
-        }
-
-        public Task<long> GetMaxTradeIdAsync(string symbol, CancellationToken cancellationToken = default)
-        {
-            // todo: remove
-            throw new NotImplementedException();
-        }
-
         public Task<IEnumerable<AccountTrade>> GetTradesAsync(string symbol, CancellationToken cancellationToken = default)
         {
             // todo: refactor the result into IEnumerable
@@ -104,12 +92,6 @@ namespace Outcompute.Trader.Trading.Data.InMemory
         public Task SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default)
         {
             // todo: implement
-            throw new NotImplementedException();
-        }
-
-        public Task SetLastPagedTradeIdAsync(string symbol, long tradeId, CancellationToken cancellationToken = default)
-        {
-            // todo: remove
             throw new NotImplementedException();
         }
 

@@ -76,15 +76,11 @@
     <Build Include="Tables\Order.sql" />
     <Build Include="Tables\Trade.sql" />
     <Build Include="Procedures\GetOrders.sql" />
-    <Build Include="Procedures\GetMaxTradeId.sql" />
     <Build Include="Procedures\GetTrades.sql" />
     <Build Include="Procedures\SetOrders.sql" />
     <Build Include="Types\OrderTableParameter.sql" />
     <Build Include="Types\TradeTableParameter.sql" />
     <Build Include="Procedures\SetTrades.sql" />
-    <Build Include="Tables\PagedTrade.sql" />
-    <Build Include="Procedures\SetPagedTrade.sql" />
-    <Build Include="Procedures\GetPagedTrade.sql" />
     <Build Include="Tables\Balance.sql" />
     <Build Include="Procedures\SetBalances.sql" />
     <Build Include="Procedures\GetBalance.sql" />

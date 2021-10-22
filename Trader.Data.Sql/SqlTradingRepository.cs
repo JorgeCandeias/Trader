@@ -46,28 +46,6 @@ namespace Outcompute.Trader.Data.Sql
 
         private readonly ConcurrentDictionary<string, int> _symbolLookup = new(StringComparer.OrdinalIgnoreCase);
 
-        public async Task<long> GetMaxTradeIdAsync(string symbol, CancellationToken cancellationToken = default)
-        {
-            _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
-
-            using var connection = new SqlConnection(_options.ConnectionString);
-
-            return await connection
-                .ExecuteScalarAsync<long>(
-                    new CommandDefinition(
-                        "[dbo].[GetMaxTradeId]",
-                        new
-                        {
-                            Symbol = symbol
-                        },
-                        null,
-                        _options.CommandTimeoutAsInteger,
-                        CommandType.StoredProcedure,
-                        CommandFlags.Buffered,
-                    cancellationToken))
-                .ConfigureAwait(false);
-        }
-
         public async Task<IEnumerable<OrderQueryResult>> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default)
         {
             _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
@@ -90,51 +68,6 @@ namespace Outcompute.Trader.Data.Sql
                 .ConfigureAwait(false);
 
             return _mapper.Map<IEnumerable<OrderQueryResult>>(entities);
-        }
-
-        public async Task<long> GetLastPagedTradeIdAsync(string symbol, CancellationToken cancellationToken = default)
-        {
-            _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
-
-            using var connection = new SqlConnection(_options.ConnectionString);
-
-            return await connection
-                .ExecuteScalarAsync<long>(
-                    new CommandDefinition(
-                        "[dbo].[GetPagedTrade]",
-                        new
-                        {
-                            Symbol = symbol
-                        },
-                        null,
-                        _options.CommandTimeoutAsInteger,
-                        CommandType.StoredProcedure,
-                        CommandFlags.Buffered,
-                    cancellationToken))
-                .ConfigureAwait(false);
-        }
-
-        public async Task SetLastPagedTradeIdAsync(string symbol, long tradeId, CancellationToken cancellationToken = default)
-        {
-            _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
-
-            using var connection = new SqlConnection(_options.ConnectionString);
-
-            await connection
-                .ExecuteAsync(
-                    new CommandDefinition(
-                        "[dbo].[SetPagedTrade]",
-                        new
-                        {
-                            Symbol = symbol,
-                            TradeId = tradeId
-                        },
-                        null,
-                        _options.CommandTimeoutAsInteger,
-                        CommandType.StoredProcedure,
-                        CommandFlags.Buffered,
-                    cancellationToken))
-                .ConfigureAwait(false);
         }
 
         public Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default)

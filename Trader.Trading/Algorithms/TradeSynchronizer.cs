@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
 using System.Collections.Generic;
@@ -13,14 +12,12 @@ namespace Outcompute.Trader.Trading.Algorithms
     internal class TradeSynchronizer : ITradeSynchronizer
     {
         private readonly ILogger _logger;
-        private readonly ITradingRepository _repository;
         private readonly ITradingService _trader;
         private readonly ITradeProvider _provider;
 
-        public TradeSynchronizer(ILogger<TradeSynchronizer> logger, ITradingRepository repository, ITradingService trader, ITradeProvider provider)
+        public TradeSynchronizer(ILogger<TradeSynchronizer> logger, ITradingService trader, ITradeProvider provider)
         {
             _logger = logger;
-            _repository = repository;
             _trader = trader;
             _provider = provider;
         }
@@ -29,10 +26,8 @@ namespace Outcompute.Trader.Trading.Algorithms
         {
             var watch = Stopwatch.StartNew();
 
-            // start from the max paged trade
-            var tradeId = await _repository
-                .GetLastPagedTradeIdAsync(symbol, cancellationToken)
-                .ConfigureAwait(false);
+            // start from the last trade if possible
+            var tradeId = await _provider.TryGetLastTradeIdAsync(symbol, cancellationToken).ConfigureAwait(false) ?? 0;
 
             // save all trades in the background so we can keep pulling trades
             var worker = new ActionBlock<IEnumerable<AccountTrade>>(work => _provider.SetTradesAsync(symbol, work, cancellationToken));
@@ -57,15 +52,6 @@ namespace Outcompute.Trader.Trading.Algorithms
 
                 // keep track for logging
                 count += trades.Count;
-            }
-
-            // log the activity only if necessary
-            if (count > 0)
-            {
-                // save the last paged trade to continue from there next time
-                await _repository
-                    .SetLastPagedTradeIdAsync(symbol, tradeId, cancellationToken)
-                    .ConfigureAwait(false);
             }
 
             worker.Complete();

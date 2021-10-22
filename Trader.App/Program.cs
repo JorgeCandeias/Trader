@@ -56,14 +56,15 @@ namespace Outcompute.Trader.App
                         {
                             return x.Properties.TryGetValue("SourceContext", out var context)
                                 && context is ScalarValue scalarContext
-                                && scalarContext.Value.Equals("Orleans.Runtime.InsideRuntimeClient")
+                                && (scalarContext.Value.Equals("Orleans.Runtime.InsideRuntimeClient") || scalarContext.Value.Equals("Orleans.Runtime.OutsideRuntimeClient"))
                                 && x.Properties.TryGetValue("RequestMessage", out var message)
                                 && message is ScalarValue scalarMessage
                                 && scalarMessage.Value is string stringMessage
                                 && (stringMessage.Contains("InvokeMethodRequest Outcompute.Trader.Trading.Providers.Klines.IKlineProviderGrain:TryWaitForKlinesAsync", StringComparison.Ordinal)
                                 || stringMessage.Contains("InvokeMethodRequest Outcompute.Trader.Trading.Providers.Orders.IOrderProviderGrain:TryWaitForOrdersAsync", StringComparison.Ordinal)
                                 || stringMessage.Contains("InvokeMethodRequest Outcompute.Trader.Trading.Providers.Tickers.ITickerProviderGrain:TryWaitForTickerAsync", StringComparison.Ordinal)
-                                || stringMessage.Contains("InvokeMethodRequest Outcompute.Trader.Trading.Providers.Balances.IBalanceProviderGrain:TryWaitForBalanceAsync", StringComparison.Ordinal));
+                                || stringMessage.Contains("InvokeMethodRequest Outcompute.Trader.Trading.Providers.Balances.IBalanceProviderGrain:TryWaitForBalanceAsync", StringComparison.Ordinal)
+                                || stringMessage.Contains("InvokeMethodRequest Outcompute.Trader.Trading.Providers.Trades.ITradeProviderGrain:TryWaitForTradesAsync", StringComparison.Ordinal));
                         })
 
                         .WriteTo.Console()

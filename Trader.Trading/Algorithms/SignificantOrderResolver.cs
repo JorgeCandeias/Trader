@@ -21,7 +21,7 @@ namespace Outcompute.Trader.Trading.Algorithms
         private readonly IOrderProvider _orders;
         private readonly ITradeProvider _trades;
 
-        public SignificantOrderResolver(ILogger<SignificantOrderResolver> logger, SystemClock clock, IOrderProvider orders, ITradeProvider trades)
+        public SignificantOrderResolver(ILogger<SignificantOrderResolver> logger, ISystemClock clock, IOrderProvider orders, ITradeProvider trades)
         {
             _logger = logger;
             _clock = clock;

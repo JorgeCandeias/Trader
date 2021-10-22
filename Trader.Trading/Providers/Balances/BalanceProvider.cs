@@ -37,7 +37,7 @@ namespace Outcompute.Trader.Trading.Providers.Balances
 
             async Task SetBalancesCoreAsync(IEnumerable<Balance> balances)
             {
-                await _repository.SetBalancesAsync(balances).ConfigureAwait(false);
+                await _repository.SetBalancesAsync(balances, cancellationToken).ConfigureAwait(false);
 
                 foreach (var balance in balances)
                 {

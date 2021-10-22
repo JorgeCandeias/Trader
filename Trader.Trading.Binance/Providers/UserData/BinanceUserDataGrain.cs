@@ -124,7 +124,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
         {
             var balances = message.Balances.Select(x => new Balance(x.Asset, x.Free, x.Locked, message.LastAccountUpdateTime));
 
-            await _repository.SetBalancesAsync(balances, _lifetime.ApplicationStopping);
+            await _balances.SetBalancesAsync(balances, _lifetime.ApplicationStopping);
 
             _logger.LogInformation("{Name} saved balances for {Assets}", Name, message.Balances.Select(x => x.Asset));
         }

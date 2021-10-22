@@ -140,21 +140,25 @@ namespace Outcompute.Trader.Trading.Providers.Orders
         /// <summary>
         /// Saves the order to the cache and notifies all pending reactive pollers.
         /// </summary>
-        public async Task SetOrderAsync(OrderQueryResult item)
+        public Task SetOrderAsync(OrderQueryResult item)
         {
-            await _repository.SetOrderAsync(item);
+            if (item is null) throw new ArgumentNullException(nameof(item));
 
             Apply(item);
+
+            return Task.CompletedTask;
         }
 
-        public async Task SetOrdersAsync(IEnumerable<OrderQueryResult> items)
+        public Task SetOrdersAsync(IEnumerable<OrderQueryResult> items)
         {
-            await _repository.SetOrdersAsync(items);
+            if (items is null) throw new ArgumentNullException(nameof(items));
 
             foreach (var item in items)
             {
                 Apply(item);
             }
+
+            return Task.CompletedTask;
         }
 
         private void Apply(OrderQueryResult item)

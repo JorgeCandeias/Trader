@@ -74,14 +74,28 @@ namespace Outcompute.Trader.Trading.Providers.Orders
             return Task.FromResult<IReadOnlyList<OrderQueryResult>>(_orders.ToImmutable());
         }
 
-        public async Task SetOrderAsync(OrderQueryResult item)
+        public Task SetOrderAsync(OrderQueryResult item)
+        {
+            if (item is null) throw new ArgumentNullException(nameof(item));
+
+            return SetOrderCoreAsync(item);
+        }
+
+        private async Task SetOrderCoreAsync(OrderQueryResult item)
         {
             await _factory.GetOrderProviderGrain(_symbol).SetOrderAsync(item);
 
             Apply(item);
         }
 
-        public async Task SetOrdersAsync(IEnumerable<OrderQueryResult> items)
+        public Task SetOrdersAsync(IEnumerable<OrderQueryResult> items)
+        {
+            if (items is null) throw new ArgumentNullException(nameof(items));
+
+            return SetOrdersCoreAsync(items);
+        }
+
+        private async Task SetOrdersCoreAsync(IEnumerable<OrderQueryResult> items)
         {
             await _factory.GetOrderProviderGrain(_symbol).SetOrdersAsync(items);
 

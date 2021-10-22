@@ -386,48 +386,6 @@ namespace Outcompute.Trader.Data.Sql
             return id;
         }
 
-        public async Task SetTickersAsync(IEnumerable<MiniTicker> tickers, CancellationToken cancellationToken = default)
-        {
-            _ = tickers ?? throw new ArgumentNullException(nameof(tickers));
-
-            // get the cached ids for the incoming symbols
-            var symbolIds = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
-            foreach (var symbol in tickers.Select(x => x.Symbol))
-            {
-                // check the local fast dictionary
-                if (!symbolIds.ContainsKey(symbol))
-                {
-                    // defer to the slower shared dictionary and database
-                    symbolIds.Add(symbol, await GetOrAddSymbolAsync(symbol, cancellationToken).ConfigureAwait(false));
-                }
-            }
-
-            var entities = _mapper.Map<IEnumerable<TickerTableParameterEntity>>(tickers, options =>
-            {
-                options.Items[nameof(TickerTableParameterEntity.SymbolId)] = symbolIds;
-            });
-
-            using var connection = new SqlConnection(_options.ConnectionString);
-
-            await _retryPolicy
-                .ExecuteAsync(ct => connection
-                    .ExecuteAsync(
-                        new CommandDefinition(
-                            "[dbo].[SetTickers]",
-                            new
-                            {
-                                Tickers = entities.AsSqlDataRecords().AsTableValuedParameter("[dbo].[TickerTableParameter]")
-                            },
-                            null,
-                            _options.CommandTimeoutAsInteger,
-                            CommandType.StoredProcedure,
-                            CommandFlags.Buffered,
-                        ct)),
-                        cancellationToken,
-                        false)
-                .ConfigureAwait(false);
-        }
-
         public Task<MiniTicker?> TryGetTickerAsync(string symbol, CancellationToken cancellationToken = default)
         {
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));

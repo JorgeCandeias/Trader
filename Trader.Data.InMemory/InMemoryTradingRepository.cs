@@ -77,11 +77,6 @@ namespace Outcompute.Trader.Trading.Data.InMemory
             return _grain.TryGetTickerAsync(symbol);
         }
 
-        public Task SetTickersAsync(IEnumerable<MiniTicker> tickers, CancellationToken cancellationToken = default)
-        {
-            return _grain.SetTickersAsync(tickers);
-        }
-
         public Task SetTickerAsync(MiniTicker ticker, CancellationToken cancellationToken = default)
         {
             return _grain.SetTickerAsync(ticker);

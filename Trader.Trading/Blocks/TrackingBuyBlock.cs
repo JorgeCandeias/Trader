@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -16,33 +15,20 @@ namespace Outcompute.Trader.Trading.Algorithms
     {
         private static string TypeName => nameof(TrackingBuyBlock);
 
-        public static ValueTask<bool> SetTrackingBuyAsync(this IAlgoContext context, Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings, CancellationToken cancellationToken = default)
+        public static ValueTask<bool> SetTrackingBuyAsync(this IAlgoContext context, Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, CancellationToken cancellationToken = default)
         {
             if (context is null) throw new ArgumentNullException(nameof(context));
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
-            return SetTrackingBuyInnerAsync(context, symbol, pullbackRatio, targetQuoteBalanceFractionPerBuy, maxNotional, redeemSavings, cancellationToken);
+            return SetTrackingBuyInnerAsync(context, symbol, pullbackRatio, targetQuoteBalanceFractionPerBuy, maxNotional, cancellationToken);
         }
 
-        private static async ValueTask<bool> SetTrackingBuyInnerAsync(IAlgoContext context, Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings, CancellationToken cancellationToken)
+        private static async ValueTask<bool> SetTrackingBuyInnerAsync(IAlgoContext context, Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, CancellationToken cancellationToken)
         {
             var logger = context.ServiceProvider.GetRequiredService<ILogger<IAlgoContext>>();
-            var tickerProvider = context.ServiceProvider.GetRequiredService<ITickerProvider>();
             var repository = context.ServiceProvider.GetRequiredService<ITradingRepository>();
 
-            // get the current ticker for the symbol
-            var ticker = await tickerProvider.TryGetTickerAsync(symbol.Name, cancellationToken).ConfigureAwait(false);
-
-            if (ticker is null)
-            {
-                logger.LogWarning(
-                    "{Type} cannot evaluate desired sell for symbol {Symbol} because no ticker information is yet available",
-                    TypeName, symbol.Name);
-
-                return false;
-            }
-
-            // sync data from the exchange
+            var ticker = await context.GetRequiredTickerAsync(symbol.Name, cancellationToken).ConfigureAwait(false);
             var orders = await context.GetOpenOrdersAsync(symbol, OrderSide.Buy, cancellationToken).ConfigureAwait(false);
 
             // get the account free quote balance

@@ -91,7 +91,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
         private async Task ApplyAccountInfoAsync(CancellationToken cancellationToken)
         {
-            var assetBalance = await _context.GetRequiredBalanceAsync(_symbol.BaseAsset, cancellationToken);
+            var assetBalance = await _context.GetBalanceProvider().GetRequiredBalanceAsync(_symbol.BaseAsset, cancellationToken);
 
             _balances.Asset.Free = assetBalance.Free;
             _balances.Asset.Locked = assetBalance.Locked;
@@ -100,7 +100,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 "{Type} {Name} reports balance for base asset {Asset} is (Free = {Free}, Locked = {Locked}, Total = {Total})",
                 TypeName, _context.Name, _symbol.BaseAsset, _balances.Asset.Free, _balances.Asset.Locked, _balances.Asset.Total);
 
-            var quoteBalance = await _context.GetRequiredBalanceAsync(_symbol.QuoteAsset, cancellationToken);
+            var quoteBalance = await _context.GetBalanceProvider().GetRequiredBalanceAsync(_symbol.QuoteAsset, cancellationToken);
 
             _balances.Quote.Free = quoteBalance.Free;
             _balances.Quote.Locked = quoteBalance.Locked;

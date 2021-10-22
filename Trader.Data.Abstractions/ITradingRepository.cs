@@ -51,6 +51,8 @@ namespace Outcompute.Trader.Data
 
         Task SetTickersAsync(IEnumerable<MiniTicker> tickers, CancellationToken cancellationToken = default);
 
-        Task<MiniTicker> GetTickerAsync(string symbol, CancellationToken cancellationToken = default);
+        Task SetTickerAsync(MiniTicker ticker, CancellationToken cancellationToken = default);
+
+        Task<MiniTicker?> TryGetTickerAsync(string symbol, CancellationToken cancellationToken = default);
     }
 }

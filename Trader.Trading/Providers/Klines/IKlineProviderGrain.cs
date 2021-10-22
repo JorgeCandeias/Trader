@@ -10,7 +10,7 @@ namespace Outcompute.Trader.Trading.Providers.Klines
     {
         Task<ReactiveResult> GetKlinesAsync();
 
-        Task<ReactiveResult?> TryGetKlinesAsync(Guid version, int fromSerial);
+        Task<ReactiveResult?> TryWaitForKlinesAsync(Guid version, int fromSerial);
 
         Task<Kline?> TryGetKlineAsync(DateTime openTime);
 

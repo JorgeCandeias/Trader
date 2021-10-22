@@ -4,6 +4,7 @@ using Outcompute.Trader.Trading.Providers;
 using Outcompute.Trader.Trading.Providers.Exchange;
 using Outcompute.Trader.Trading.Providers.Klines;
 using Outcompute.Trader.Trading.Providers.Orders;
+using Outcompute.Trader.Trading.Providers.Tickers;
 using Outcompute.Trader.Trading.Readyness;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -33,6 +34,9 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<IOrderProvider, OrderProvider>()
                 .AddHostedService<OrderProviderExtensionsHostedService>()
                 .AddOptions<OrderProviderOptions>().ValidateDataAnnotations().Services
+
+                // ticker provider
+                .AddSingleton<ITickerProvider, TickerProvider>()
 
                 // algo context
                 .AddScoped<AlgoContext>()

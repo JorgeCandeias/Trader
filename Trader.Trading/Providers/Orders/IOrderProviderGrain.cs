@@ -10,7 +10,7 @@ namespace Outcompute.Trader.Trading.Providers.Orders
     {
         Task<ReactiveResult> GetOrdersAsync();
 
-        Task<ReactiveResult?> TryGetOrdersAsync(Guid version, int fromSerial);
+        Task<ReactiveResult?> TryWaitForOrdersAsync(Guid version, int fromSerial);
 
         Task<OrderQueryResult?> TryGetOrderAsync(long orderId);
 

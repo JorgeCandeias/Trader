@@ -96,7 +96,7 @@ namespace Outcompute.Trader.Trading.Providers.Orders
         /// If the specified version is different from the current version then returns all orders along with the current version.
         /// </summary>
         [NoProfiling]
-        public Task<ReactiveResult?> TryGetOrdersAsync(Guid version, int fromSerial)
+        public Task<ReactiveResult?> TryWaitForOrdersAsync(Guid version, int fromSerial)
         {
             // if the versions differ then return the entire data set
             if (version != _version)

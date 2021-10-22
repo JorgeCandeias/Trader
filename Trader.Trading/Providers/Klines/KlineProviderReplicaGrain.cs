@@ -170,7 +170,7 @@ namespace Outcompute.Trader.Trading.Providers.Klines
                 {
                     var result = await GrainFactory
                         .GetKlineProviderGrain(_symbol, _interval)
-                        .TryGetKlinesAsync(_version, _serial + 1);
+                        .TryWaitForKlinesAsync(_version, _serial + 1);
 
                     if (result.HasValue)
                     {

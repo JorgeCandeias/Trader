@@ -77,6 +77,25 @@ namespace Outcompute.Trader.Trading.Data.InMemory
 
         #endregion Klines
 
+        #region Tickers
+
+        public Task<MiniTicker?> TryGetTickerAsync(string symbol, CancellationToken cancellationToken = default)
+        {
+            return _grain.TryGetTickerAsync(symbol);
+        }
+
+        public Task SetTickersAsync(IEnumerable<MiniTicker> tickers, CancellationToken cancellationToken = default)
+        {
+            return _grain.SetTickersAsync(tickers);
+        }
+
+        public Task SetTickerAsync(MiniTicker ticker, CancellationToken cancellationToken = default)
+        {
+            return _grain.SetTickerAsync(ticker);
+        }
+
+        #endregion Tickers
+
         public Task<long> GetLastPagedTradeIdAsync(string symbol, CancellationToken cancellationToken = default)
         {
             // todo: remove
@@ -86,12 +105,6 @@ namespace Outcompute.Trader.Trading.Data.InMemory
         public Task<long> GetMaxTradeIdAsync(string symbol, CancellationToken cancellationToken = default)
         {
             // todo: remove
-            throw new NotImplementedException();
-        }
-
-        public Task<MiniTicker> GetTickerAsync(string symbol, CancellationToken cancellationToken = default)
-        {
-            // todo: refactor into try get ticker
             throw new NotImplementedException();
         }
 
@@ -116,12 +129,6 @@ namespace Outcompute.Trader.Trading.Data.InMemory
         public Task SetLastPagedTradeIdAsync(string symbol, long tradeId, CancellationToken cancellationToken = default)
         {
             // todo: remove
-            throw new NotImplementedException();
-        }
-
-        public Task SetTickersAsync(IEnumerable<MiniTicker> tickers, CancellationToken cancellationToken = default)
-        {
-            // todo: implement
             throw new NotImplementedException();
         }
 

@@ -142,7 +142,7 @@ namespace Outcompute.Trader.Trading.Providers.Orders
                 {
                     var result = await _factory
                         .GetOrderProviderGrain(_symbol)
-                        .TryGetOrdersAsync(_version, _serial + 1);
+                        .TryWaitForOrdersAsync(_version, _serial + 1);
 
                     if (result.HasValue)
                     {

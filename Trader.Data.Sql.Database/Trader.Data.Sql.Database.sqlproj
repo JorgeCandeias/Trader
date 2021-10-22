@@ -103,6 +103,7 @@
     <Build Include="Procedures\GetKlines.sql" />
     <Build Include="Procedures\SetKline.sql" />
     <Build Include="Procedures\SetOrder.sql" />
+    <Build Include="Procedures\SetTicker.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Scripts\Script.PostDeployment.sql" />

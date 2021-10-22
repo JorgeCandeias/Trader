@@ -60,8 +60,9 @@ namespace Outcompute.Trader.App
                                 && x.Properties.TryGetValue("RequestMessage", out var message)
                                 && message is ScalarValue scalarMessage
                                 && scalarMessage.Value is string stringMessage
-                                && (stringMessage.Contains("InvokeMethodRequest Outcompute.Trader.Trading.Providers.Klines.IKlineProviderGrain:TryGetKlinesAsync", StringComparison.Ordinal)
-                                || stringMessage.Contains("InvokeMethodRequest Outcompute.Trader.Trading.Providers.Orders.IOrderProviderGrain:TryGetOrdersAsync", StringComparison.Ordinal));
+                                && (stringMessage.Contains("InvokeMethodRequest Outcompute.Trader.Trading.Providers.Klines.IKlineProviderGrain:TryWaitForKlinesAsync", StringComparison.Ordinal)
+                                || stringMessage.Contains("InvokeMethodRequest Outcompute.Trader.Trading.Providers.Orders.IOrderProviderGrain:TryWaitForOrdersAsync", StringComparison.Ordinal)
+                                || stringMessage.Contains("InvokeMethodRequest Outcompute.Trader.Trading.Providers.Tickers.ITickerProviderGrain:TryWaitForTickerAsync", StringComparison.Ordinal));
                         })
 
                         .WriteTo.Console()

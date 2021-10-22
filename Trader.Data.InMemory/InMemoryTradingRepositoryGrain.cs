@@ -14,6 +14,7 @@ namespace Outcompute.Trader.Trading.Data.InMemory
     {
         private readonly Dictionary<string, ImmutableSortedSet<OrderQueryResult>.Builder> _orders = new();
         private readonly Dictionary<(string Symbol, KlineInterval Interval, DateTime OpenTime), Kline> _klines = new();
+        private readonly Dictionary<string, MiniTicker> _tickers = new();
 
         public Task<IEnumerable<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime startOpenTime, DateTime endOpenTime)
         {
@@ -100,6 +101,41 @@ namespace Outcompute.Trader.Trading.Data.InMemory
 
             builder.Remove(order);
             builder.Add(order);
+        }
+
+        public Task SetTickerAsync(MiniTicker ticker)
+        {
+            if (ticker is null) throw new ArgumentNullException(nameof(ticker));
+
+            SetTickerCore(ticker);
+
+            return Task.CompletedTask;
+        }
+
+        public Task SetTickersAsync(IEnumerable<MiniTicker> tickers)
+        {
+            if (tickers is null) throw new ArgumentNullException(nameof(tickers));
+
+            foreach (var ticker in tickers)
+            {
+                SetTickerCore(ticker);
+            }
+
+            return Task.CompletedTask;
+        }
+
+        private void SetTickerCore(MiniTicker ticker)
+        {
+            _tickers[ticker.Symbol] = ticker;
+        }
+
+        public Task<MiniTicker?> TryGetTickerAsync(string symbol)
+        {
+            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+
+            var ticker = _tickers.TryGetValue(symbol, out var value) ? value : null;
+
+            return Task.FromResult(ticker);
         }
     }
 }

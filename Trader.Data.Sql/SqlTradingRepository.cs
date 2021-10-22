@@ -428,28 +428,33 @@ namespace Outcompute.Trader.Data.Sql
                 .ConfigureAwait(false);
         }
 
-        public async Task<MiniTicker> GetTickerAsync(string symbol, CancellationToken cancellationToken = default)
+        public Task<MiniTicker?> TryGetTickerAsync(string symbol, CancellationToken cancellationToken = default)
         {
-            _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
+            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
-            using var connection = new SqlConnection(_options.ConnectionString);
+            return TryGetTickerCoreAsync(symbol, cancellationToken);
 
-            var entity = await connection
-                .QuerySingleOrDefaultAsync<TickerEntity>(
-                    new CommandDefinition(
-                        "[dbo].[GetTicker]",
-                        new
-                        {
-                            Symbol = symbol
-                        },
-                        null,
-                        _options.CommandTimeoutAsInteger,
-                        CommandType.StoredProcedure,
-                        CommandFlags.Buffered,
-                        cancellationToken))
-                .ConfigureAwait(false);
+            async Task<MiniTicker?> TryGetTickerCoreAsync(string symbol, CancellationToken cancellationToken = default)
+            {
+                using var connection = new SqlConnection(_options.ConnectionString);
 
-            return _mapper.Map<MiniTicker>(entity);
+                var entity = await connection
+                    .QuerySingleOrDefaultAsync<TickerEntity>(
+                        new CommandDefinition(
+                            "[dbo].[GetTicker]",
+                            new
+                            {
+                                Symbol = symbol
+                            },
+                            null,
+                            _options.CommandTimeoutAsInteger,
+                            CommandType.StoredProcedure,
+                            CommandFlags.Buffered,
+                            cancellationToken))
+                    .ConfigureAwait(false);
+
+                return _mapper.Map<MiniTicker>(entity);
+            }
         }
 
         public Task SetKlineAsync(Kline item, CancellationToken cancellationToken = default)
@@ -561,7 +566,37 @@ namespace Outcompute.Trader.Data.Sql
         public async Task<Kline?> TryGetKlineAsync(string symbol, KlineInterval interval, DateTime openTime, CancellationToken cancellationToken = default)
         {
             var results = await GetKlinesAsync(symbol, interval, openTime, openTime, cancellationToken).ConfigureAwait(false);
+
             return results.SingleOrDefault();
+        }
+
+        public Task SetTickerAsync(MiniTicker ticker, CancellationToken cancellationToken = default)
+        {
+            if (ticker is null) throw new ArgumentNullException(nameof(ticker));
+
+            return SetTickerCoreAsync(ticker, cancellationToken);
+
+            async Task SetTickerCoreAsync(MiniTicker ticker, CancellationToken cancellationToken = default)
+            {
+                var entity = _mapper.Map<TickerEntity>(ticker);
+
+                using var connection = new SqlConnection(_options.ConnectionString);
+
+                await _retryPolicy
+                    .ExecuteAsync(ct => connection
+                        .ExecuteAsync(
+                            new CommandDefinition(
+                                "[dbo].[SetTicker]",
+                                entity,
+                                null,
+                                _options.CommandTimeoutAsInteger,
+                                CommandType.StoredProcedure,
+                                CommandFlags.Buffered,
+                            ct)),
+                            cancellationToken,
+                            false)
+                    .ConfigureAwait(false);
+            }
         }
     }
 }

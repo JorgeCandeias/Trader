@@ -112,7 +112,7 @@ namespace Outcompute.Trader.Trading.Providers.Klines
         }
 
         [NoProfiling]
-        public Task<ReactiveResult?> TryGetKlinesAsync(Guid version, int fromSerial)
+        public Task<ReactiveResult?> TryWaitForKlinesAsync(Guid version, int fromSerial)
         {
             // if the versions differ then return the entire data set
             if (version != _version)

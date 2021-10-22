@@ -8,9 +8,19 @@ namespace Outcompute.Trader.Trading.Providers
     public interface IOrderProvider
     {
         /// <summary>
-        /// Publishes the specified orders.
+        /// Publishes the specified order.
         /// </summary>
         Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Publishes the specified order.
+        /// </summary>
+        Task SetOrderAsync(OrderResult order, decimal stopPrice = 0m, decimal icebergQuantity = 0m, decimal originalQuoteOrderQuantity = 0m, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Publishes the specified order.
+        /// </summary>
+        Task SetOrderAsync(CancelStandardOrderResult order, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Publishers the specified orders.

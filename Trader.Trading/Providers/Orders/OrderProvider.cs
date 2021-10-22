@@ -1,4 +1,5 @@
-﻿using Orleans;
+﻿using AutoMapper;
+using Orleans;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using System;
@@ -12,11 +13,13 @@ namespace Outcompute.Trader.Trading.Providers.Orders
     {
         private readonly IGrainFactory _factory;
         private readonly ITradingRepository _repository;
+        private readonly IMapper _mapper;
 
-        public OrderProvider(IGrainFactory factory, ITradingRepository repository)
+        public OrderProvider(IGrainFactory factory, ITradingRepository repository, IMapper mapper)
         {
             _factory = factory;
             _repository = repository;
+            _mapper = mapper;
         }
 
         public async Task<IReadOnlyList<OrderQueryResult>> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default)
@@ -70,6 +73,52 @@ namespace Outcompute.Trader.Trading.Providers.Orders
                 .GetOrderProviderReplicaGrain(symbol)
                 .SetOrdersAsync(items)
                 .ConfigureAwait(false);
+        }
+
+        public Task SetOrderAsync(OrderResult order, decimal stopPrice = 0m, decimal icebergQuantity = 0m, decimal originalQuoteOrderQuantity = 0m, CancellationToken cancellationToken = default)
+        {
+            if (order is null) throw new ArgumentNullException(nameof(order));
+
+            var mapped = _mapper.Map<OrderQueryResult>(order, options =>
+            {
+                options.Items[nameof(OrderQueryResult.StopPrice)] = stopPrice;
+                options.Items[nameof(OrderQueryResult.IcebergQuantity)] = icebergQuantity;
+                options.Items[nameof(OrderQueryResult.OriginalQuoteOrderQuantity)] = originalQuoteOrderQuantity;
+            });
+
+            return SetOrderAsync(mapped, cancellationToken);
+        }
+
+        public Task SetOrderAsync(CancelStandardOrderResult order, CancellationToken cancellationToken = default)
+        {
+            if (order is null) throw new ArgumentNullException(nameof(order));
+
+            return SetOrderCoreAsync(order, cancellationToken);
+        }
+
+        private async Task SetOrderCoreAsync(CancelStandardOrderResult order, CancellationToken cancellationToken = default)
+        {
+            var original = await _factory
+                .GetOrderProviderReplicaGrain(order.Symbol)
+                .TryGetOrderAsync(order.OrderId)
+                .ConfigureAwait(false);
+
+            if (original is null)
+            {
+                throw new InvalidOperationException($"Unable to cancel order '{order.OrderId}' because its original could not be found");
+            }
+
+            var mapped = _mapper.Map<OrderQueryResult>(order, options =>
+            {
+                options.Items[nameof(OrderQueryResult.StopPrice)] = original.StopPrice;
+                options.Items[nameof(OrderQueryResult.IcebergQuantity)] = original.IcebergQuantity;
+                options.Items[nameof(OrderQueryResult.Time)] = original.Time;
+                options.Items[nameof(OrderQueryResult.UpdateTime)] = original.UpdateTime;
+                options.Items[nameof(OrderQueryResult.IsWorking)] = original.IsWorking;
+                options.Items[nameof(OrderQueryResult.OriginalQuoteOrderQuantity)] = original.OriginalQuoteOrderQuantity;
+            });
+
+            await SetOrderAsync(mapped, cancellationToken).ConfigureAwait(false);
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Orleans;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
@@ -19,6 +20,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 {
     internal class BinanceMarketDataGrain : Grain, IBinanceMarketDataGrain
     {
+        private readonly BinanceOptions _options;
         private readonly ILogger _logger;
         private readonly IMarketDataStreamClientFactory _factory;
         private readonly ITradingService _trader;
@@ -31,8 +33,9 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         private readonly HashSet<string> _tickerSymbols;
         private readonly Dictionary<(string Symbol, KlineInterval Interval), int> _klineWindows;
 
-        public BinanceMarketDataGrain(ILogger<BinanceMarketDataGrain> logger, IMarketDataStreamClientFactory factory, ITradingService trader, IMapper mapper, ISystemClock clock, IAlgoDependencyInfo dependencies, IHostApplicationLifetime lifetime, IKlineProvider provider, ITickerProvider tickers)
+        public BinanceMarketDataGrain(IOptions<BinanceOptions> options, ILogger<BinanceMarketDataGrain> logger, IMarketDataStreamClientFactory factory, ITradingService trader, IMapper mapper, ISystemClock clock, IAlgoDependencyInfo dependencies, IHostApplicationLifetime lifetime, IKlineProvider provider, ITickerProvider tickers)
         {
+            _options = options.Value;
             _logger = logger;
             _factory = factory;
             _trader = trader;
@@ -112,8 +115,8 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             try
             {
                 // this helps cancel every local step upon stream failure at any point
-                using var localCancellation = new CancellationTokenSource();
-                using var linkedCancellation = CancellationTokenSource.CreateLinkedTokenSource(localCancellation.Token, _lifetime.ApplicationStopping);
+                using var resetCancellation = new CancellationTokenSource(_options.MarketDataStreamResetPeriod);
+                using var linkedCancellation = CancellationTokenSource.CreateLinkedTokenSource(resetCancellation.Token, _lifetime.ApplicationStopping);
 
                 // create a client for the streams we want
                 var streams = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -151,7 +154,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                     {
                         try
                         {
-                            await _tickers.SetTickerAsync(item, _lifetime.ApplicationStopping);
+                            await _tickers.SetTickerAsync(item, linkedCancellation.Token);
                         }
                         catch (Exception ex)
                         {

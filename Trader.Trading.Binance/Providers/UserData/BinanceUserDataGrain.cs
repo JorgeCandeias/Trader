@@ -12,6 +12,7 @@ using Polly;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
@@ -222,19 +223,23 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
                 // this worker will process and publish messages in the background so we dont hold up the binance stream
                 var worker = new ActionBlock<UserDataStreamMessage>(HandleMessageAsync, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = Environment.ProcessorCount });
 
+                // this token will reset the stream on a schedule to compensate for binance misbehaving
+                using var reset = new CancellationTokenSource(_options.UserDataStreamResetPeriod);
+                using var linked = CancellationTokenSource.CreateLinkedTokenSource(reset.Token, _lifetime.ApplicationStopping);
+
                 // start streaming in the background while we sync from the api
                 var streamTask = Task.Run(async () =>
                 {
-                    while (!_lifetime.ApplicationStopping.IsCancellationRequested)
+                    while (!linked.Token.IsCancellationRequested)
                     {
                         if (_clock.UtcNow >= _nextPingTime)
                         {
-                            await _trader.PingUserDataStreamAsync(_listenKey, _lifetime.ApplicationStopping);
+                            await _trader.PingUserDataStreamAsync(_listenKey, linked.Token);
 
                             BumpPingTime();
                         }
 
-                        var message = await client.ReceiveAsync(_lifetime.ApplicationStopping);
+                        var message = await client.ReceiveAsync(linked.Token);
 
                         worker.Post(message);
                     }

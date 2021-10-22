@@ -10,8 +10,8 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         public decimal PullbackRatio { get; set; } = 0.90m;
 
         [Required]
-        [Range(0.01, 0.99)]
-        public decimal BuyOrderSafetyRatio { get; set; } = 0.99m;
+        [Range(0.01, 1.00)]
+        public decimal BuyOrderSafetyRatio { get; set; } = 0.999m;
 
         [Required]
         [Range(0.001, 1)]

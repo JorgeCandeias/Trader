@@ -292,15 +292,6 @@ namespace Outcompute.Trader.Data.Sql
             return _mapper.Map<ImmutableSortedTradeSet>(result);
         }
 
-        public Task SetBalancesAsync(AccountInfo accountInfo, CancellationToken cancellationToken = default)
-        {
-            _ = accountInfo ?? throw new ArgumentNullException(nameof(accountInfo));
-
-            var balances = _mapper.Map<IEnumerable<Balance>>(accountInfo);
-
-            return SetBalancesAsync(balances, cancellationToken);
-        }
-
         public async Task SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default)
         {
             _ = balances ?? throw new ArgumentNullException(nameof(balances));

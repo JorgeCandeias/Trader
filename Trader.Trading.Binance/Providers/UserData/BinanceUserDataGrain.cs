@@ -30,8 +30,9 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
         private readonly IMapper _mapper;
         private readonly IHostApplicationLifetime _lifetime;
         private readonly IOrderProvider _orderProvider;
+        private readonly IBalanceProvider _balances;
 
-        public BinanceUserDataGrain(IOptions<BinanceOptions> options, ILogger<BinanceUserDataGrain> logger, ITradingService trader, IUserDataStreamClientFactory streams, IOrderSynchronizer orders, ITradeSynchronizer trades, ITradingRepository repository, ISystemClock clock, IMapper mapper, IHostApplicationLifetime lifetime, IOrderProvider orderProvider)
+        public BinanceUserDataGrain(IOptions<BinanceOptions> options, ILogger<BinanceUserDataGrain> logger, ITradingService trader, IUserDataStreamClientFactory streams, IOrderSynchronizer orders, ITradeSynchronizer trades, ITradingRepository repository, ISystemClock clock, IMapper mapper, IHostApplicationLifetime lifetime, IOrderProvider orderProvider, IBalanceProvider balances)
         {
             _options = options.Value;
             _logger = logger;
@@ -44,6 +45,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
             _mapper = mapper;
             _lifetime = lifetime;
             _orderProvider = orderProvider;
+            _balances = balances;
         }
 
         private static string Name => nameof(BinanceUserDataGrain);
@@ -241,7 +243,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
                 // sync asset balances
                 var accountInfo = await _trader.GetAccountInfoAsync(_lifetime.ApplicationStopping);
 
-                await _repository.SetBalancesAsync(accountInfo, _lifetime.ApplicationStopping);
+                await _balances.SetBalancesAsync(accountInfo, _lifetime.ApplicationStopping);
 
                 // sync orders for all symbols
                 foreach (var symbol in _options.UserDataStreamSymbols)

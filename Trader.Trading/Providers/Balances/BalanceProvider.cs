@@ -1,4 +1,5 @@
-﻿using Orleans;
+﻿using AutoMapper;
+using Orleans;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using System;
@@ -12,11 +13,13 @@ namespace Outcompute.Trader.Trading.Providers.Balances
     {
         private readonly IGrainFactory _factory;
         private readonly ITradingRepository _repository;
+        private readonly IMapper _mapper;
 
-        public BalanceProvider(IGrainFactory factory, ITradingRepository repository)
+        public BalanceProvider(IGrainFactory factory, ITradingRepository repository, IMapper mapper)
         {
             _factory = factory;
             _repository = repository;
+            _mapper = mapper;
         }
 
         public Task<Balance?> TryGetBalanceAsync(string asset, CancellationToken cancellationToken = default)
@@ -41,6 +44,15 @@ namespace Outcompute.Trader.Trading.Providers.Balances
                     await _factory.GetBalanceProviderGrain(balance.Asset).SetBalanceAsync(balance).ConfigureAwait(false);
                 }
             }
+        }
+
+        public Task SetBalancesAsync(AccountInfo accountInfo, CancellationToken cancellationToken = default)
+        {
+            if (accountInfo is null) throw new ArgumentNullException(nameof(accountInfo));
+
+            var balances = _mapper.Map<IEnumerable<Balance>>(accountInfo);
+
+            return SetBalancesAsync(balances, cancellationToken);
         }
     }
 }

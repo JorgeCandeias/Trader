@@ -102,12 +102,6 @@ namespace Outcompute.Trader.Trading.Data.InMemory
             throw new NotImplementedException();
         }
 
-        public Task SetBalancesAsync(AccountInfo accountInfo, CancellationToken cancellationToken = default)
-        {
-            // todo: remove
-            throw new NotImplementedException();
-        }
-
         public Task SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default)
         {
             // todo: implement

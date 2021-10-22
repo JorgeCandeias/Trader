@@ -39,8 +39,6 @@ namespace Outcompute.Trader.Data
 
         #region Balances
 
-        Task SetBalancesAsync(AccountInfo accountInfo, CancellationToken cancellationToken = default);
-
         Task SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default);
 
         Task<Balance?> TryGetBalanceAsync(string asset, CancellationToken cancellationToken = default);

@@ -1,18 +1,16 @@
 ﻿using AutoMapper;
+using Outcompute.Trader.Models;
 using System;
 using System.Collections.Immutable;
 using System.Globalization;
 using System.Linq;
 using System.Text.Json;
-using Outcompute.Trader.Models;
 using static System.String;
 
 namespace Outcompute.Trader.Trading.Binance.Converters
 {
     internal class UserDataStreamMessageConverter : ITypeConverter<Memory<byte>, UserDataStreamMessage>
     {
-        // todo: refactor this code to use the new json element extensions
-        // todo: refactor the elseifs out
         public UserDataStreamMessage Convert(Memory<byte> source, UserDataStreamMessage destination, ResolutionContext context)
         {
             using var document = JsonDocument.Parse(source);

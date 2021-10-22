@@ -7,6 +7,7 @@ using Outcompute.Trader.Trading.Providers.Klines;
 using Outcompute.Trader.Trading.Providers.Orders;
 using Outcompute.Trader.Trading.Providers.Savings;
 using Outcompute.Trader.Trading.Providers.Tickers;
+using Outcompute.Trader.Trading.Providers.Trades;
 using Outcompute.Trader.Trading.Readyness;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -44,6 +45,10 @@ namespace Microsoft.Extensions.DependencyInjection
 
                 // balance provider
                 .AddSingleton<IBalanceProvider, BalanceProvider>()
+
+                // trade provider
+                .AddSingleton<ITradeProvider, TradeProvider>()
+                .AddOptions<TradeProviderOptions>().ValidateDataAnnotations().Services
 
                 // algo context
                 .AddScoped<AlgoContext>()

@@ -563,13 +563,6 @@ namespace Outcompute.Trader.Data.Sql
                 .ConfigureAwait(false);
         }
 
-        public async Task<Kline?> TryGetKlineAsync(string symbol, KlineInterval interval, DateTime openTime, CancellationToken cancellationToken = default)
-        {
-            var results = await GetKlinesAsync(symbol, interval, openTime, openTime, cancellationToken).ConfigureAwait(false);
-
-            return results.SingleOrDefault();
-        }
-
         public Task SetTickerAsync(MiniTicker ticker, CancellationToken cancellationToken = default)
         {
             if (ticker is null) throw new ArgumentNullException(nameof(ticker));

@@ -61,13 +61,6 @@ namespace Outcompute.Trader.Trading.Data.InMemory
             return _grain.SetKlinesAsync(items);
         }
 
-        public Task<Kline?> TryGetKlineAsync(string symbol, KlineInterval interval, DateTime openTime, CancellationToken cancellationToken = default)
-        {
-            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
-
-            return _grain.TryGetKlineAsync(symbol, interval, openTime);
-        }
-
         public Task SetKlineAsync(Kline item, CancellationToken cancellationToken = default)
         {
             if (item is null) throw new ArgumentNullException(nameof(item));

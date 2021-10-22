@@ -39,18 +39,6 @@ namespace Outcompute.Trader.Trading.Data.InMemory
             return Task.CompletedTask;
         }
 
-        public Task<Kline?> TryGetKlineAsync(string symbol, KlineInterval interval, DateTime openTime)
-        {
-            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
-
-            if (_klines.TryGetValue((symbol, interval, openTime), out var value))
-            {
-                return Task.FromResult<Kline?>(value);
-            }
-
-            return Task.FromResult<Kline?>(null);
-        }
-
         public Task SetKlineAsync(Kline item)
         {
             if (item is null) throw new ArgumentNullException(nameof(item));

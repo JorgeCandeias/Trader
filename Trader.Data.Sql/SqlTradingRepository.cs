@@ -5,7 +5,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Outcompute.Trader.Data.Sql.Models;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
 using Polly;
 using Polly.Retry;
 using System;
@@ -268,7 +267,7 @@ namespace Outcompute.Trader.Data.Sql
                 .ConfigureAwait(false);
         }
 
-        public async Task<ImmutableSortedTradeSet> GetTradesAsync(string symbol, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<AccountTrade>> GetTradesAsync(string symbol, CancellationToken cancellationToken = default)
         {
             _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
 
@@ -289,7 +288,7 @@ namespace Outcompute.Trader.Data.Sql
                     cancellationToken))
                 .ConfigureAwait(false);
 
-            return _mapper.Map<ImmutableSortedTradeSet>(result);
+            return _mapper.Map<IEnumerable<AccountTrade>>(result);
         }
 
         public async Task SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default)

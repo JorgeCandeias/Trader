@@ -5,7 +5,6 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Providers;
 using Outcompute.Trader.Trading.Providers.Orders;
-using Outcompute.Trader.Trading.Providers.Trades;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -68,7 +67,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             return ResolveCore(symbol, orders, trades);
         }
 
-        private SignificantResult ResolveCore(Symbol symbol, IReadOnlyList<OrderQueryResult> orders, ImmutableSortedTradeSet trades)
+        private SignificantResult ResolveCore(Symbol symbol, IReadOnlyList<OrderQueryResult> orders, IEnumerable<AccountTrade> trades)
         {
             var watch = Stopwatch.StartNew();
 

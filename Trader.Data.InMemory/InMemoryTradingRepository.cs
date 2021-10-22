@@ -1,7 +1,6 @@
 ﻿using Orleans;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -96,7 +95,7 @@ namespace Outcompute.Trader.Trading.Data.InMemory
             throw new NotImplementedException();
         }
 
-        public Task<ImmutableSortedTradeSet> GetTradesAsync(string symbol, CancellationToken cancellationToken = default)
+        public Task<IEnumerable<AccountTrade>> GetTradesAsync(string symbol, CancellationToken cancellationToken = default)
         {
             // todo: refactor the result into IEnumerable
             throw new NotImplementedException();

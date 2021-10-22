@@ -1,5 +1,4 @@
 ﻿using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -51,6 +50,8 @@ namespace Outcompute.Trader.Data
 
         Task SetTradesAsync(IEnumerable<AccountTrade> trades, CancellationToken cancellationToken = default);
 
+        Task<IEnumerable<AccountTrade>> GetTradesAsync(string symbol, CancellationToken cancellationToken = default);
+
         #endregion Trades
 
         Task<long> GetLastPagedTradeIdAsync(string symbol, CancellationToken cancellationToken = default);
@@ -58,7 +59,5 @@ namespace Outcompute.Trader.Data
         Task SetLastPagedTradeIdAsync(string symbol, long tradeId, CancellationToken cancellationToken = default);
 
         Task<long> GetMaxTradeIdAsync(string symbol, CancellationToken cancellationToken = default);
-
-        Task<ImmutableSortedTradeSet> GetTradesAsync(string symbol, CancellationToken cancellationToken = default);
     }
 }

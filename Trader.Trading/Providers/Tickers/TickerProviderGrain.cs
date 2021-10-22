@@ -90,11 +90,13 @@ namespace Outcompute.Trader.Trading.Providers.Tickers
             return SetTickerCoreAsync(item);
         }
 
-        private async Task SetTickerCoreAsync(MiniTicker item)
+        private Task SetTickerCoreAsync(MiniTicker item)
         {
-            await _repository.SetTickerAsync(item, _lifetime.ApplicationStopping);
+            if (item is null) throw new ArgumentNullException(nameof(item));
 
             Apply(item);
+
+            return Task.CompletedTask;
         }
 
         private void Apply(MiniTicker? item)

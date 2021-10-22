@@ -4,17 +4,17 @@ using System.Collections.Generic;
 
 namespace Outcompute.Trader.Trading.Providers.Klines
 {
-    internal readonly struct KlineResult
+    internal readonly struct ReactiveResult
     {
-        public KlineResult(Guid version, int serial, IReadOnlyList<Kline> klines)
+        public ReactiveResult(Guid version, int serial, IReadOnlyList<Kline> items)
         {
             Version = version;
             Serial = serial;
-            Klines = klines;
+            Items = items;
         }
 
         public Guid Version { get; }
         public int Serial { get; }
-        public IReadOnlyList<Kline> Klines { get; }
+        public IReadOnlyList<Kline> Items { get; }
     }
 }

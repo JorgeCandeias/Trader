@@ -1,16 +1,18 @@
 ﻿using Orleans;
 using Outcompute.Trader.Models;
-using System.Collections.Immutable;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Providers.Orders
 {
     public interface IOrderProviderReplicaGrain : IGrainWithStringKey
     {
-        Task<ImmutableSortedSet<OrderQueryResult>> GetOrdersAsync();
-
-        Task SetOrderAsync(OrderQueryResult order);
+        Task<IReadOnlyList<OrderQueryResult>> GetOrdersAsync();
 
         Task<OrderQueryResult?> TryGetOrderAsync(long orderId);
+
+        Task SetOrderAsync(OrderQueryResult item);
+
+        Task SetOrdersAsync(IEnumerable<OrderQueryResult> items);
     }
 }

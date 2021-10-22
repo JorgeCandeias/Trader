@@ -15,90 +15,95 @@ namespace Outcompute.Trader.Trading.Providers.Orders
         internal static IMapper Mapper { get; set; } = null!;
         internal static IGrainFactory GrainFactory { get; set; } = null!;
 
-        public static Task<long> GetMaxOrderIdAsync(this IOrderProvider provider, string symbol, CancellationToken cancellationToken = default)
+        public static Task<long?> TryGetMaxOrderIdAsync(this IOrderProvider provider, string symbol, CancellationToken cancellationToken = default)
         {
-            _ = provider ?? throw new ArgumentNullException(nameof(provider));
+            if (provider is null) throw new ArgumentNullException(nameof(provider));
 
-            return provider.GetMaxOrderIdCoreAsync(symbol, cancellationToken);
+            return TryGetMaxOrderIdCoreAsync(provider, symbol, cancellationToken);
+
+            static async Task<long?> TryGetMaxOrderIdCoreAsync(IOrderProvider provider, string symbol, CancellationToken cancellationToken = default)
+            {
+                var orders = await provider.GetOrdersAsync(symbol, cancellationToken).ConfigureAwait(false);
+
+                return orders
+                    .Select(x => (long?)x.OrderId)
+                    .LastOrDefault();
+            }
         }
 
-        private static async Task<long> GetMaxOrderIdCoreAsync(this IOrderProvider provider, string symbol, CancellationToken cancellationToken = default)
+        public static Task<long?> TryGetMinTransientOrderIdAsync(this IOrderProvider provider, string symbol, CancellationToken cancellationToken = default)
         {
-            var orders = await provider.GetOrdersAsync(symbol, cancellationToken).ConfigureAwait(false);
+            if (provider is null) throw new ArgumentNullException(nameof(provider));
 
-            return orders
-                .Select(x => x.OrderId)
-                .LastOrDefault();
-        }
+            return GetMinTransientOrderIdCoreAsync(provider, symbol, cancellationToken);
 
-        public static Task<long> GetMinTransientOrderIdAsync(this IOrderProvider provider, string symbol, CancellationToken cancellationToken = default)
-        {
-            _ = provider ?? throw new ArgumentNullException(nameof(provider));
+            static async Task<long?> GetMinTransientOrderIdCoreAsync(IOrderProvider provider, string symbol, CancellationToken cancellationToken = default)
+            {
+                var orders = await provider.GetOrdersAsync(symbol, cancellationToken).ConfigureAwait(false);
 
-            return provider.GetMinTransientOrderIdCoreAsync(symbol, cancellationToken);
-        }
+                foreach (var item in orders)
+                {
+                    if (item.Status.IsTransientStatus())
+                    {
+                        return item.OrderId;
+                    }
+                }
 
-        private static async Task<long> GetMinTransientOrderIdCoreAsync(this IOrderProvider provider, string symbol, CancellationToken cancellationToken = default)
-        {
-            var orders = await provider.GetOrdersAsync(symbol, cancellationToken).ConfigureAwait(false);
-
-            return orders
-                .Where(x => x.Status.IsTransientStatus())
-                .Select(x => x.OrderId)
-                .FirstOrDefault();
+                return null;
+            }
         }
 
         public static Task<IReadOnlyList<OrderQueryResult>> GetNonSignificantTransientOrdersBySideAsync(this IOrderProvider provider, string symbol, OrderSide orderSide, CancellationToken cancellationToken = default)
         {
-            _ = provider ?? throw new ArgumentNullException(nameof(provider));
+            if (provider is null) throw new ArgumentNullException(nameof(provider));
 
-            return provider.GetNonSignificantTransientOrdersBySideCoreAsync(symbol, orderSide, cancellationToken);
-        }
+            return GetNonSignificantTransientOrdersBySideCoreAsync(provider, symbol, orderSide, cancellationToken);
 
-        private static async Task<IReadOnlyList<OrderQueryResult>> GetNonSignificantTransientOrdersBySideCoreAsync(this IOrderProvider provider, string symbol, OrderSide orderSide, CancellationToken cancellationToken = default)
-        {
-            var orders = await provider.GetOrdersAsync(symbol, cancellationToken).ConfigureAwait(false);
+            static async Task<IReadOnlyList<OrderQueryResult>> GetNonSignificantTransientOrdersBySideCoreAsync(IOrderProvider provider, string symbol, OrderSide orderSide, CancellationToken cancellationToken = default)
+            {
+                var orders = await provider.GetOrdersAsync(symbol, cancellationToken).ConfigureAwait(false);
 
-            return orders
-                .Where(x => x.Side == orderSide && x.ExecutedQuantity <= 0m && x.Status.IsTransientStatus())
-                .ToImmutableList();
+                return orders
+                    .Where(x => x.Side == orderSide && x.ExecutedQuantity <= 0m && x.Status.IsTransientStatus())
+                    .ToImmutableList();
+            }
         }
 
         public static Task<IReadOnlyList<OrderQueryResult>> GetSignificantCompletedOrdersAsync(this IOrderProvider provider, string symbol, CancellationToken cancellationToken = default)
         {
-            _ = provider ?? throw new ArgumentNullException(nameof(provider));
+            if (provider is null) throw new ArgumentNullException(nameof(provider));
 
-            return provider.GetSignificantCompletedOrdersCoreAsync(symbol, cancellationToken);
-        }
+            return GetSignificantCompletedOrdersCoreAsync(provider, symbol, cancellationToken);
 
-        private static async Task<IReadOnlyList<OrderQueryResult>> GetSignificantCompletedOrdersCoreAsync(this IOrderProvider provider, string symbol, CancellationToken cancellationToken = default)
-        {
-            var orders = await provider.GetOrdersAsync(symbol, cancellationToken).ConfigureAwait(false);
+            static async Task<IReadOnlyList<OrderQueryResult>> GetSignificantCompletedOrdersCoreAsync(IOrderProvider provider, string symbol, CancellationToken cancellationToken = default)
+            {
+                var orders = await provider.GetOrdersAsync(symbol, cancellationToken).ConfigureAwait(false);
 
-            return orders
-                .Where(x => x.ExecutedQuantity > 0 && x.Status.IsCompletedStatus())
-                .ToImmutableList();
+                return orders
+                    .Where(x => x.ExecutedQuantity > 0 && x.Status.IsCompletedStatus())
+                    .ToImmutableList();
+            }
         }
 
         public static Task<IReadOnlyList<OrderQueryResult>> GetTransientOrdersBySideAsync(this IOrderProvider provider, string symbol, OrderSide orderSide, CancellationToken cancellationToken = default)
         {
-            _ = provider ?? throw new ArgumentNullException(nameof(provider));
+            if (provider is null) throw new ArgumentNullException(nameof(provider));
 
-            return provider.GetTransientOrdersBySideCoreAsync(symbol, orderSide, cancellationToken);
-        }
+            return GetTransientOrdersBySideCoreAsync(provider, symbol, orderSide, cancellationToken);
 
-        private static async Task<IReadOnlyList<OrderQueryResult>> GetTransientOrdersBySideCoreAsync(this IOrderProvider provider, string symbol, OrderSide orderSide, CancellationToken cancellationToken = default)
-        {
-            var orders = await provider.GetOrdersAsync(symbol, cancellationToken).ConfigureAwait(false);
+            static async Task<IReadOnlyList<OrderQueryResult>> GetTransientOrdersBySideCoreAsync(IOrderProvider provider, string symbol, OrderSide orderSide, CancellationToken cancellationToken = default)
+            {
+                var orders = await provider.GetOrdersAsync(symbol, cancellationToken).ConfigureAwait(false);
 
-            return orders
-                .Where(x => x.Side == orderSide && x.Status.IsTransientStatus())
-                .ToImmutableList();
+                return orders
+                    .Where(x => x.Side == orderSide && x.Status.IsTransientStatus())
+                    .ToImmutableList();
+            }
         }
 
         public static Task SetOrderAsync(this IOrderProvider provider, OrderResult order, decimal stopPrice = 0m, decimal icebergQuantity = 0m, decimal originalQuoteOrderQuantity = 0m, CancellationToken cancellationToken = default)
         {
-            _ = provider ?? throw new ArgumentNullException(nameof(provider));
+            if (provider is null) throw new ArgumentNullException(nameof(provider));
 
             var mapped = Mapper.Map<OrderQueryResult>(order, options =>
             {
@@ -112,37 +117,37 @@ namespace Outcompute.Trader.Trading.Providers.Orders
 
         public static Task SetOrderAsync(this IOrderProvider provider, CancelStandardOrderResult order, CancellationToken cancellationToken = default)
         {
-            _ = provider ?? throw new ArgumentNullException(nameof(provider));
-            _ = order ?? throw new ArgumentNullException(nameof(order));
+            if (provider is null) throw new ArgumentNullException(nameof(provider));
+            if (order is null) throw new ArgumentNullException(nameof(order));
 
-            return provider.SetOrderCoreAsync(order, cancellationToken);
-        }
+            return SetOrderCoreAsync(provider, order, cancellationToken);
 
-        private static async Task SetOrderCoreAsync(this IOrderProvider provider, CancelStandardOrderResult order, CancellationToken cancellationToken = default)
-        {
-            var original = await GrainFactory
-                .GetOrderProviderReplicaGrain(order.Symbol)
-                .TryGetOrderAsync(order.OrderId)
-                .ConfigureAwait(false);
-
-            if (original is null)
+            static async Task SetOrderCoreAsync(IOrderProvider provider, CancelStandardOrderResult order, CancellationToken cancellationToken = default)
             {
-                throw new InvalidOperationException($"Unable to cancel order '{order.OrderId}' because its original could not be found");
+                var original = await GrainFactory
+                    .GetOrderProviderReplicaGrain(order.Symbol)
+                    .TryGetOrderAsync(order.OrderId)
+                    .ConfigureAwait(false);
+
+                if (original is null)
+                {
+                    throw new InvalidOperationException($"Unable to cancel order '{order.OrderId}' because its original could not be found");
+                }
+
+                var mapped = Mapper.Map<OrderQueryResult>(order, options =>
+                {
+                    options.Items[nameof(OrderQueryResult.StopPrice)] = original.StopPrice;
+                    options.Items[nameof(OrderQueryResult.IcebergQuantity)] = original.IcebergQuantity;
+                    options.Items[nameof(OrderQueryResult.Time)] = original.Time;
+                    options.Items[nameof(OrderQueryResult.UpdateTime)] = original.UpdateTime;
+                    options.Items[nameof(OrderQueryResult.IsWorking)] = original.IsWorking;
+                    options.Items[nameof(OrderQueryResult.OriginalQuoteOrderQuantity)] = original.OriginalQuoteOrderQuantity;
+                });
+
+                await provider
+                    .SetOrderAsync(mapped, cancellationToken)
+                    .ConfigureAwait(false);
             }
-
-            var mapped = Mapper.Map<OrderQueryResult>(order, options =>
-            {
-                options.Items[nameof(OrderQueryResult.StopPrice)] = original.StopPrice;
-                options.Items[nameof(OrderQueryResult.IcebergQuantity)] = original.IcebergQuantity;
-                options.Items[nameof(OrderQueryResult.Time)] = original.Time;
-                options.Items[nameof(OrderQueryResult.UpdateTime)] = original.UpdateTime;
-                options.Items[nameof(OrderQueryResult.IsWorking)] = original.IsWorking;
-                options.Items[nameof(OrderQueryResult.OriginalQuoteOrderQuantity)] = original.OriginalQuoteOrderQuantity;
-            });
-
-            await provider
-                .SetOrderAsync(mapped, cancellationToken)
-                .ConfigureAwait(false);
         }
     }
 }

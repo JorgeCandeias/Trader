@@ -1,5 +1,6 @@
 ﻿using Orleans;
 using Outcompute.Trader.Models;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,6 +29,19 @@ namespace Outcompute.Trader.Trading.Providers.Orders
         public Task<OrderQueryResult?> TryGetOrderAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
         {
             return _factory.GetOrderProviderReplicaGrain(symbol).TryGetOrderAsync(orderId);
+        }
+
+        public Task SetOrdersAsync(string symbol, IEnumerable<OrderQueryResult> items, CancellationToken cancellationToken = default)
+        {
+            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+            if (items is null) throw new ArgumentNullException(nameof(items));
+
+            foreach (var item in items)
+            {
+                if (item.Symbol != symbol) throw new ArgumentOutOfRangeException(nameof(items), $"Order has symbol '{item.Symbol}' different from partition symbol '{symbol}'");
+            }
+
+            return _factory.GetOrderProviderReplicaGrain(symbol).SetOrdersAsync(items);
         }
     }
 }

@@ -32,6 +32,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 // order provider
                 .AddSingleton<IOrderProvider, OrderProvider>()
                 .AddHostedService<OrderProviderExtensionsHostedService>()
+                .AddOptions<OrderProviderOptions>().ValidateDataAnnotations().Services
 
                 // algo context
                 .AddScoped<AlgoContext>()

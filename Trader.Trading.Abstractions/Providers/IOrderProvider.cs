@@ -8,9 +8,14 @@ namespace Outcompute.Trader.Trading.Providers
     public interface IOrderProvider
     {
         /// <summary>
-        /// Saves the specified order.
+        /// Publishes the specified orders.
         /// </summary>
         Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Publishers the specified orders.
+        /// </summary>
+        Task SetOrdersAsync(string symbol, IEnumerable<OrderQueryResult> items, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets all orders for the specified symbol sorted by <see cref="OrderQueryResult.OrderId"/>.

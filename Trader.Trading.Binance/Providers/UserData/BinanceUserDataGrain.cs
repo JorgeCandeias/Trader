@@ -10,9 +10,10 @@ using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Providers;
 using Polly;
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Threading.Channels;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 
 namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 {
@@ -48,10 +49,8 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
         private static string Name => nameof(BinanceUserDataGrain);
 
         private string? _listenKey;
-        private DateTime _nextPingTime;
 
-        private readonly Channel<OutboundAccountPositionUserDataStreamMessage> _balancesChannel = Channel.CreateUnbounded<OutboundAccountPositionUserDataStreamMessage>();
-        private readonly Channel<ExecutionReportUserDataStreamMessage> _executionChannel = Channel.CreateUnbounded<ExecutionReportUserDataStreamMessage>();
+        private DateTime _nextPingTime;
 
         private bool _ready;
 
@@ -63,10 +62,6 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
         public override Task OnActivateAsync()
         {
             RegisterTimer(_ => TickEnsureWorkAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
-
-            RegisterTimer(_ => TickSaveBalancesAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
-
-            RegisterTimer(_ => TickSaveExecutionsAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
 
             _logger.LogInformation("{Name} started", Name);
 
@@ -123,6 +118,81 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
             _nextPingTime = _clock.UtcNow.Add(_options.UserDataStreamPingPeriod);
         }
 
+        private async Task HandleBalanceMessageAsync(OutboundAccountPositionUserDataStreamMessage message)
+        {
+            var balances = message.Balances.Select(x => new Balance(x.Asset, x.Free, x.Locked, message.LastAccountUpdateTime));
+
+            await _repository.SetBalancesAsync(balances, _lifetime.ApplicationStopping);
+
+            _logger.LogInformation("{Name} saved balances for {Assets}", Name, message.Balances.Select(x => x.Asset));
+        }
+
+        private async Task HandleReportMessageAsync(ExecutionReportUserDataStreamMessage message)
+        {
+            if (!_options.UserDataStreamSymbols.Contains(message.Symbol))
+            {
+                _logger.LogWarning(
+                    "{Name} ignoring {MessageType} for unknown symbol {Symbol}",
+                    Name, nameof(ExecutionReportUserDataStreamMessage), message.Symbol);
+
+                return;
+            }
+
+            // first extract the trade from this report if any
+            // this must be persisted before the order so concurrent algos can pick up consistent data based on the order
+            if (message.ExecutionType == ExecutionType.Trade)
+            {
+                var trade = _mapper.Map<AccountTrade>(message);
+
+                await _repository.SetTradeAsync(trade, _lifetime.ApplicationStopping);
+
+                _logger.LogInformation(
+                    "{Name} saved {Symbol} {Side} trade {TradeId}",
+                    Name, message.Symbol, message.OrderSide, message.TradeId);
+            }
+
+            // now extract the order from this report
+            var order = _mapper.Map<OrderQueryResult>(message);
+
+            await _orderProvider.SetOrderAsync(order);
+
+            _logger.LogInformation(
+                "{Name} saved {Symbol} {Type} {Side} order {OrderId}",
+                Name, message.Symbol, message.OrderType, message.OrderSide, message.OrderId);
+        }
+
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Worker")]
+        private Task HandleMessageAsync(UserDataStreamMessage message)
+        {
+            try
+            {
+                switch (message)
+                {
+                    case OutboundAccountPositionUserDataStreamMessage balanceMessage:
+                        return HandleBalanceMessageAsync(balanceMessage);
+
+                    case BalanceUpdateUserDataStreamMessage updateMessage:
+                        break;
+
+                    case ExecutionReportUserDataStreamMessage reportMessage:
+                        return HandleReportMessageAsync(reportMessage);
+
+                    case ListStatusUserDataStreamMessage listMessage:
+                        break;
+
+                    default:
+                        _logger.LogWarning("{Name} received unknown message {Message}", Name, message);
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "{Name} failed to publish {Message}", Name, message);
+            }
+
+            return Task.CompletedTask;
+        }
+
         private async Task ExecuteLongAsync()
         {
             try
@@ -143,6 +213,9 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 
                 _logger.LogInformation("{Name} connected user stream with key {ListenKey}", Name, _listenKey);
 
+                // this worker will process and publish messages in the background so we dont hold up the binance stream
+                var worker = new ActionBlock<UserDataStreamMessage>(HandleMessageAsync, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = Environment.ProcessorCount });
+
                 // start streaming in the background while we sync from the api
                 var streamTask = Task.Run(async () =>
                 {
@@ -157,33 +230,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 
                         var message = await client.ReceiveAsync(_lifetime.ApplicationStopping);
 
-                        switch (message)
-                        {
-                            case OutboundAccountPositionUserDataStreamMessage balance:
-
-                                await _balancesChannel.Writer.WriteAsync(balance, _lifetime.ApplicationStopping);
-
-                                break;
-
-                            case BalanceUpdateUserDataStreamMessage update:
-
-                                // noop
-
-                                break;
-
-                            case ExecutionReportUserDataStreamMessage report:
-
-                                await _executionChannel.Writer.WriteAsync(report, _lifetime.ApplicationStopping);
-
-                                break;
-
-                            case ListStatusUserDataStreamMessage list:
-                                break;
-
-                            default:
-                                _logger.LogWarning("{Name} received unknown message {Message}", Name, message);
-                                break;
-                        }
+                        worker.Post(message);
                     }
                 }, _lifetime.ApplicationStopping);
 
@@ -242,71 +289,6 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
             {
                 // if the stream collapses at any point then update the readyness state
                 _ready = false;
-            }
-        }
-
-        private async Task TickSaveBalancesAsync()
-        {
-            while (!_lifetime.ApplicationStopping.IsCancellationRequested)
-            {
-                if (!await _balancesChannel.Reader.WaitToReadAsync(_lifetime.ApplicationStopping))
-                {
-                    return;
-                }
-
-                while (_balancesChannel.Reader.TryRead(out var message))
-                {
-                    var balances = message.Balances.Select(x => new Balance(x.Asset, x.Free, x.Locked, message.LastAccountUpdateTime));
-
-                    await _repository.SetBalancesAsync(balances, _lifetime.ApplicationStopping);
-
-                    _logger.LogInformation("{Name} saved balances for {Assets}", Name, message.Balances.Select(x => x.Asset));
-                }
-            }
-        }
-
-        private async Task TickSaveExecutionsAsync()
-        {
-            while (!_lifetime.ApplicationStopping.IsCancellationRequested)
-            {
-                if (!await _executionChannel.Reader.WaitToReadAsync(_lifetime.ApplicationStopping))
-                {
-                    return;
-                }
-
-                while (_executionChannel.Reader.TryRead(out var report))
-                {
-                    if (!_options.UserDataStreamSymbols.Contains(report.Symbol))
-                    {
-                        _logger.LogWarning(
-                            "{Name} ignoring {MessageType} for unknown symbol {Symbol}",
-                            Name, nameof(ExecutionReportUserDataStreamMessage), report.Symbol);
-
-                        break;
-                    }
-
-                    // first extract the trade from this report if any
-                    // this must be persisted before the order so concurrent algos can pick up consistent data based on the order
-                    if (report.ExecutionType == ExecutionType.Trade)
-                    {
-                        var trade = _mapper.Map<AccountTrade>(report);
-
-                        await _repository.SetTradeAsync(trade, _lifetime.ApplicationStopping);
-
-                        _logger.LogInformation(
-                            "{Name} saved {Symbol} {Side} trade {TradeId}",
-                            Name, report.Symbol, report.OrderSide, report.TradeId);
-                    }
-
-                    // now extract the order from this report
-                    var order = _mapper.Map<OrderQueryResult>(report);
-
-                    await _orderProvider.SetOrderAsync(order);
-
-                    _logger.LogInformation(
-                        "{Name} saved {Symbol} {Type} {Side} order {OrderId}",
-                        Name, report.Symbol, report.OrderType, report.OrderSide, report.OrderId);
-                }
             }
         }
     }

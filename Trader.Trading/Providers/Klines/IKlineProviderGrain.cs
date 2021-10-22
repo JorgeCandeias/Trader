@@ -8,9 +8,9 @@ namespace Outcompute.Trader.Trading.Providers.Klines
 {
     internal interface IKlineProviderGrain : IGrainWithStringKey
     {
-        Task<KlineResult> GetKlinesAsync();
+        Task<ReactiveResult> GetKlinesAsync();
 
-        Task<KlineResult?> TryGetKlinesAsync(Guid version, int fromSerial);
+        Task<ReactiveResult?> TryGetKlinesAsync(Guid version, int fromSerial);
 
         Task<Kline?> TryGetKlineAsync(DateTime openTime);
 

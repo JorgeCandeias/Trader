@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Concurrency;
 using Outcompute.Trader.Models;
@@ -6,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Threading.Tasks;
-using static System.String;
 
 namespace Outcompute.Trader.Trading.Providers.Orders
 {
@@ -14,11 +14,13 @@ namespace Outcompute.Trader.Trading.Providers.Orders
     [StatelessWorker(1)]
     internal class OrderProviderReplicaGrain : Grain, IOrderProviderReplicaGrain
     {
+        private readonly ReactiveOptions _reactive;
         private readonly IGrainFactory _factory;
         private readonly IHostApplicationLifetime _lifetime;
 
-        public OrderProviderReplicaGrain(IGrainFactory factory, IHostApplicationLifetime lifetime)
+        public OrderProviderReplicaGrain(IOptions<ReactiveOptions> reactive, IGrainFactory factory, IHostApplicationLifetime lifetime)
         {
+            _reactive = reactive.Value;
             _factory = factory;
             _lifetime = lifetime;
         }
@@ -26,7 +28,7 @@ namespace Outcompute.Trader.Trading.Providers.Orders
         /// <summary>
         /// The symbol that this grain holds orders for.
         /// </summary>
-        private string _symbol = Empty;
+        private string _symbol = null!;
 
         /// <summary>
         /// The serial version of this grain.
@@ -55,7 +57,7 @@ namespace Outcompute.Trader.Trading.Providers.Orders
 
             await LoadAsync();
 
-            RegisterTimer(TickUpdateAsync, null, TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(100));
+            RegisterTimer(_ => PollAsync(), null, _reactive.ReactiveRecoveryDelay, _reactive.ReactiveRecoveryDelay);
 
             await base.OnActivateAsync();
         }
@@ -67,90 +69,105 @@ namespace Outcompute.Trader.Trading.Providers.Orders
             return Task.FromResult(order);
         }
 
-        public Task<ImmutableSortedSet<OrderQueryResult>> GetOrdersAsync()
+        public Task<IReadOnlyList<OrderQueryResult>> GetOrdersAsync()
         {
-            return Task.FromResult(_orders.ToImmutable());
+            return Task.FromResult<IReadOnlyList<OrderQueryResult>>(_orders.ToImmutable());
         }
 
-        public async Task SetOrderAsync(OrderQueryResult order)
+        public async Task SetOrderAsync(OrderQueryResult item)
         {
-            // let the main grain handle saving so it updates every other replica
-            await _factory.GetOrderProviderGrain(_symbol).SetOrderAsync(order);
+            await _factory.GetOrderProviderGrain(_symbol).SetOrderAsync(item);
 
-            // apply the orders to this replica now so they are consistent from the point of view of the algo calling this method
-            // the updated serial numbers will eventually come through as reactive caching calls resolve
-            Apply(order);
+            Apply(item);
+        }
+
+        public async Task SetOrdersAsync(IEnumerable<OrderQueryResult> items)
+        {
+            await _factory.GetOrderProviderGrain(_symbol).SetOrdersAsync(items);
+
+            foreach (var item in items)
+            {
+                Apply(item);
+            }
         }
 
         private async Task LoadAsync()
         {
-            // get all the orders
             var result = await _factory.GetOrderProviderGrain(_symbol).GetOrdersAsync();
 
-            Apply(result.Orders);
-        }
+            _version = result.Version;
+            _serial = result.Serial;
 
-        private Task TickUpdateAsync(object _)
-        {
-            // perform sync checks
-            if (_lifetime.ApplicationStopping.IsCancellationRequested) return Task.CompletedTask;
-
-            // go on the async path
-            return TickUpdateCoreAsync();
-        }
-
-        private async Task TickUpdateCoreAsync()
-        {
-            // wait for new orders
-            try
+            foreach (var item in result.Items)
             {
-                var result = await _factory.GetOrderProviderGrain(_symbol).GetOrdersAsync(_version, _serial + 1);
-
-                Apply(result.Version, result.MaxSerial, result.Orders);
-            }
-            catch (OperationCanceledException)
-            {
-                // noop - happens at target shutdown
+                Apply(item);
             }
         }
 
-        private void Apply(Guid version, int serial, IEnumerable<OrderQueryResult> orders)
+        private void Apply(OrderQueryResult item)
         {
-            Apply(version, serial);
+            // remove old item to allow an update
+            Remove(item);
 
-            foreach (var order in orders)
+            // add new or updated item
+            _orders.Add(item);
+
+            // index the item
+            Index(item);
+        }
+
+        private void Remove(OrderQueryResult item)
+        {
+            if (_orders.Remove(item) && !Unindex(item))
             {
-                Apply(order);
+                throw new InvalidOperationException($"Failed to unindex order ('{item.Symbol}','{item.OrderId}')");
             }
         }
 
-        private void Apply(Guid version, int serial)
+        private void Index(OrderQueryResult item)
         {
-            _version = version;
-            _serial = serial;
+            _orderByOrderId[item.OrderId] = item;
         }
 
-        private void Apply(IEnumerable<OrderQueryResult> orders)
+        private bool Unindex(OrderQueryResult item)
         {
-            foreach (var order in orders)
-            {
-                Apply(order);
-            }
+            return _orderByOrderId.Remove(item.OrderId);
         }
 
-        private void Apply(OrderQueryResult order)
+        private async Task PollAsync()
         {
-            // remove old order to allow an update
-            if (_orders.Remove(order) && !_orderByOrderId.Remove(order.OrderId))
+            while (!_lifetime.ApplicationStopping.IsCancellationRequested)
             {
-                throw new InvalidOperationException($"Failed to unindex order '{order.OrderId}'");
+                try
+                {
+                    var result = await _factory
+                        .GetOrderProviderGrain(_symbol)
+                        .TryGetOrdersAsync(_version, _serial + 1);
+
+                    if (result.HasValue)
+                    {
+                        _version = result.Value.Version;
+                        _serial = result.Value.Serial;
+
+                        foreach (var item in result.Value.Items)
+                        {
+                            Apply(item);
+                        }
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    // throw on target shutdown - allow time for recovery unless this silo is shutting down too
+                    if (_lifetime.ApplicationStopping.IsCancellationRequested)
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        await Task.Delay(_reactive.ReactiveRecoveryDelay, _lifetime.ApplicationStopping);
+                    }
+                }
             }
-
-            // add new or updated order
-            _orders.Add(order);
-
-            // index the order
-            _orderByOrderId[order.OrderId] = order;
         }
     }
 }

@@ -82,7 +82,7 @@ namespace Outcompute.Trader.Trading.Providers.Klines
         /// <summary>
         /// Tracks all reactive caching requests.
         /// </summary>
-        private readonly Dictionary<(Guid Version, int FromSerial), TaskCompletionSource<KlineResult?>> _completions = new();
+        private readonly Dictionary<(Guid Version, int FromSerial), TaskCompletionSource<ReactiveResult?>> _completions = new();
 
         public override async Task OnActivateAsync()
         {
@@ -106,18 +106,18 @@ namespace Outcompute.Trader.Trading.Providers.Klines
             return Task.FromResult(kline);
         }
 
-        public Task<KlineResult> GetKlinesAsync()
+        public Task<ReactiveResult> GetKlinesAsync()
         {
-            return Task.FromResult(new KlineResult(_version, _serial, _klines.ToImmutable()));
+            return Task.FromResult(new ReactiveResult(_version, _serial, _klines.ToImmutable()));
         }
 
         [NoProfiling]
-        public Task<KlineResult?> TryGetKlinesAsync(Guid version, int fromSerial)
+        public Task<ReactiveResult?> TryGetKlinesAsync(Guid version, int fromSerial)
         {
             // if the versions differ then return the entire data set
             if (version != _version)
             {
-                return Task.FromResult<KlineResult?>(new KlineResult(_version, _serial, _klines.ToImmutable()));
+                return Task.FromResult<ReactiveResult?>(new ReactiveResult(_version, _serial, _klines.ToImmutable()));
             }
 
             // fulfill the request now if possible
@@ -133,7 +133,7 @@ namespace Outcompute.Trader.Trading.Providers.Klines
                     }
                 }
 
-                return Task.FromResult<KlineResult?>(new KlineResult(_version, _serial, builder.ToImmutable()));
+                return Task.FromResult<ReactiveResult?>(new ReactiveResult(_version, _serial, builder.ToImmutable()));
             }
 
             // otherwise let the request wait for more data
@@ -222,7 +222,7 @@ namespace Outcompute.Trader.Trading.Providers.Klines
                     if (key.Version != _version)
                     {
                         // complete on data reset
-                        completion.SetResult(new KlineResult(_version, _serial, _klines.ToImmutable()));
+                        completion.SetResult(new ReactiveResult(_version, _serial, _klines.ToImmutable()));
                     }
                     else
                     {
@@ -237,7 +237,7 @@ namespace Outcompute.Trader.Trading.Providers.Klines
                             }
                         }
 
-                        completion.SetResult(new KlineResult(_version, _serial, builder.ToImmutable()));
+                        completion.SetResult(new ReactiveResult(_version, _serial, builder.ToImmutable()));
                     }
                 }
             }
@@ -246,11 +246,11 @@ namespace Outcompute.Trader.Trading.Providers.Klines
             ArrayPool<(Guid, int)>.Shared.Return(elected);
         }
 
-        private Task<KlineResult?> GetOrCreateCompletionTask(Guid version, int fromSerial)
+        private Task<ReactiveResult?> GetOrCreateCompletionTask(Guid version, int fromSerial)
         {
             if (!_completions.TryGetValue((version, fromSerial), out var completion))
             {
-                _completions[(version, fromSerial)] = completion = new TaskCompletionSource<KlineResult?>();
+                _completions[(version, fromSerial)] = completion = new TaskCompletionSource<ReactiveResult?>();
             }
 
             return completion.Task;

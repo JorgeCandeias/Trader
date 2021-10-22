@@ -1,10 +1,13 @@
 ﻿using Microsoft.Extensions.Logging;
+using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
 using Outcompute.Trader.Trading.Providers.Orders;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
@@ -26,18 +29,26 @@ namespace Outcompute.Trader.Trading.Algorithms
             var watch = Stopwatch.StartNew();
             var count = 0;
 
-            // start from the first known transient order if possible
-            var orderId = await _orders
-                .GetMinTransientOrderIdAsync(symbol, cancellationToken)
-                .ConfigureAwait(false) - 1;
+            // attempt to start from the first known transient order
+            var orderId = await _orders.TryGetMinTransientOrderIdAsync(symbol, cancellationToken).ConfigureAwait(false);
 
-            // otherwise start from the max paged order
-            if (orderId < 1)
+            // otherwise attempt to start from the last known order
+            if (!orderId.HasValue)
             {
-                orderId = await _orders
-                    .GetMaxOrderIdAsync(symbol, cancellationToken)
-                    .ConfigureAwait(false);
+                orderId = await _orders.TryGetMaxOrderIdAsync(symbol, cancellationToken).ConfigureAwait(false);
             }
+
+            // otherwise start from scratch
+            if (!orderId.HasValue)
+            {
+                orderId = 0;
+            }
+
+            // this worker will publish incoming orders in the background
+            var worker = new ActionBlock<(string Symbol, IEnumerable<OrderQueryResult> Items)>(work =>
+            {
+                return _orders.SetOrdersAsync(work.Symbol, work.Items, cancellationToken);
+            });
 
             // pull all new or updated orders page by page
             while (!cancellationToken.IsCancellationRequested)
@@ -49,11 +60,8 @@ namespace Outcompute.Trader.Trading.Algorithms
                 // break if we got all orders
                 if (orders.Count is 0) break;
 
-                // persist only orders that have progressed - the repository will detect which ones have updated or not
-                foreach (var order in orders)
-                {
-                    await _orders.SetOrderAsync(order, cancellationToken).ConfigureAwait(false);
-                }
+                // push the orders to the worker for publishing
+                worker.Post((symbol, orders));
 
                 // keep the last order id
                 orderId = orders.Max(x => x.OrderId);
@@ -61,6 +69,10 @@ namespace Outcompute.Trader.Trading.Algorithms
                 // keep track for logging
                 count += orders.Count;
             }
+
+            // wait for publishing to complete
+            worker.Complete();
+            await worker.Completion.ConfigureAwait(false);
 
             // log the activity only if necessary
             _logger.LogInformation(

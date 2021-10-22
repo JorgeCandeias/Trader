@@ -99,14 +99,14 @@ namespace Outcompute.Trader.Trading.Providers.Klines
 
         public async Task SetKlineAsync(Kline item)
         {
-            await GrainFactory.GetKlineProviderGrain(_symbol, _interval).SetKlineAsync(item);
+            await _factory.GetKlineProviderGrain(_symbol, _interval).SetKlineAsync(item);
 
             Apply(item);
         }
 
         public async Task SetKlinesAsync(IEnumerable<Kline> items)
         {
-            await GrainFactory.GetKlineProviderGrain(_symbol, _interval).SetKlinesAsync(items);
+            await _factory.GetKlineProviderGrain(_symbol, _interval).SetKlinesAsync(items);
 
             foreach (var item in items)
             {
@@ -121,14 +121,14 @@ namespace Outcompute.Trader.Trading.Providers.Klines
 
         private async Task LoadAsync()
         {
-            var result = await GrainFactory.GetKlineProviderGrain(_symbol, _interval).GetKlinesAsync();
+            var result = await _factory.GetKlineProviderGrain(_symbol, _interval).GetKlinesAsync();
 
             _version = result.Version;
             _serial = result.Serial;
 
-            foreach (var kline in result.Klines)
+            foreach (var item in result.Items)
             {
-                Apply(kline);
+                Apply(item);
             }
         }
 
@@ -177,7 +177,7 @@ namespace Outcompute.Trader.Trading.Providers.Klines
                         _version = result.Value.Version;
                         _serial = result.Value.Serial;
 
-                        foreach (var item in result.Value.Klines)
+                        foreach (var item in result.Value.Items)
                         {
                             Apply(item);
                         }
@@ -185,8 +185,15 @@ namespace Outcompute.Trader.Trading.Providers.Klines
                 }
                 catch (OperationCanceledException)
                 {
-                    // throw on target shutdown - allow time for recovery
-                    await Task.Delay(_reactive.ReactiveRecoveryDelay, _lifetime.ApplicationStopping);
+                    // throw on target shutdown - allow time for recovery unless this silo is shutting down too
+                    if (_lifetime.ApplicationStopping.IsCancellationRequested)
+                    {
+                        return;
+                    }
+                    else
+                    {
+                        await Task.Delay(_reactive.ReactiveRecoveryDelay, _lifetime.ApplicationStopping);
+                    }
                 }
             }
         }

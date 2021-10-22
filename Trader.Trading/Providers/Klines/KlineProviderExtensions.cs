@@ -15,16 +15,16 @@ namespace Outcompute.Trader.Trading.Providers
             if (provider is null) throw new ArgumentNullException(nameof(provider));
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
-            return provider.GetKlinesCoreAsync(symbol, interval, start, end, cancellationToken);
-        }
+            return GetKlinesCoreAsync(provider, symbol, interval, start, end, cancellationToken);
 
-        private static async Task<IReadOnlyList<Kline>> GetKlinesCoreAsync(this IKlineProvider provider, string symbol, KlineInterval interval, DateTime start, DateTime end, CancellationToken cancellationToken)
-        {
-            var result = await provider
-                .GetKlinesAsync(symbol, interval, cancellationToken)
-                .ConfigureAwait(false);
+            static async Task<IReadOnlyList<Kline>> GetKlinesCoreAsync(IKlineProvider provider, string symbol, KlineInterval interval, DateTime start, DateTime end, CancellationToken cancellationToken)
+            {
+                var result = await provider
+                    .GetKlinesAsync(symbol, interval, cancellationToken)
+                    .ConfigureAwait(false);
 
-            return result.Where(x => x.OpenTime >= start && x.OpenTime <= end).ToImmutableList();
+                return result.Where(x => x.OpenTime >= start && x.OpenTime <= end).ToImmutableList();
+            }
         }
     }
 }

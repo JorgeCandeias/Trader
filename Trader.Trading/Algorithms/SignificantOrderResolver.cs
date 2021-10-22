@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Core.Time;
-using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Providers;
@@ -18,16 +17,16 @@ namespace Outcompute.Trader.Trading.Algorithms
     internal class SignificantOrderResolver : ISignificantOrderResolver
     {
         private readonly ILogger _logger;
-        private readonly ITradingRepository _repository;
         private readonly ISystemClock _clock;
         private readonly IOrderProvider _orders;
+        private readonly ITradeProvider _trades;
 
-        public SignificantOrderResolver(ILogger<SignificantOrderResolver> logger, ITradingRepository repository, ISystemClock clock, IOrderProvider orders)
+        public SignificantOrderResolver(ILogger<SignificantOrderResolver> logger, SystemClock clock, IOrderProvider orders, ITradeProvider trades)
         {
             _logger = logger;
-            _repository = repository;
             _clock = clock;
             _orders = orders;
+            _trades = trades;
         }
 
         private static string Name => nameof(SignificantOrderResolver);
@@ -60,7 +59,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 .GetSignificantCompletedOrdersAsync(symbol.Name, cancellationToken)
                 .ConfigureAwait(false);
 
-            var trades = await _repository
+            var trades = await _trades
                 .GetTradesAsync(symbol.Name, cancellationToken)
                 .ConfigureAwait(false);
 

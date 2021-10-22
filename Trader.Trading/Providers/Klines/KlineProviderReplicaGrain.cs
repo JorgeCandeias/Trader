@@ -97,7 +97,14 @@ namespace Outcompute.Trader.Trading.Providers.Klines
             return Task.FromResult<IReadOnlyList<Kline>>(_klines.ToImmutable());
         }
 
-        public async Task SetKlineAsync(Kline item)
+        public Task SetKlineAsync(Kline item)
+        {
+            if (item is null) throw new ArgumentNullException(nameof(item));
+
+            return SetKlineCoreAsync(item);
+        }
+
+        private async Task SetKlineCoreAsync(Kline item)
         {
             await _factory.GetKlineProviderGrain(_symbol, _interval).SetKlineAsync(item);
 

@@ -150,21 +150,23 @@ namespace Outcompute.Trader.Trading.Providers.Klines
             }
         }
 
-        public async Task SetKlineAsync(Kline item)
+        public Task SetKlineAsync(Kline item)
         {
-            await _repository.SetKlineAsync(item);
-
             Apply(item);
+
+            return Task.CompletedTask;
         }
 
-        public async Task SetKlinesAsync(IEnumerable<Kline> items)
+        public Task SetKlinesAsync(IEnumerable<Kline> items)
         {
-            await _repository.SetKlinesAsync(items);
+            if (items is null) throw new ArgumentNullException(nameof(items));
 
             foreach (var item in items)
             {
                 Apply(item);
             }
+
+            return Task.CompletedTask;
         }
 
         private void Apply(Kline item)

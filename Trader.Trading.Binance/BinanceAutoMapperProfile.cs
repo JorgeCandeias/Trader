@@ -3,7 +3,6 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Binance.Converters;
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Text.Json;
 
 namespace Outcompute.Trader.Trading.Binance
@@ -209,9 +208,6 @@ namespace Outcompute.Trader.Trading.Binance
                 .ForCtorParam(nameof(FlexibleProductRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
 
             CreateMap<FlexibleProductResponseModel, SavingsProduct>();
-
-            // open converters
-            CreateMap(typeof(IEnumerable<>), typeof(ImmutableList<>)).ConvertUsing(typeof(ImmutableListConverter<,>));
 
             // convert payloads from the user data stream
             CreateMap<Memory<byte>, UserDataStreamMessage>().ConvertUsing<UserDataStreamMessageConverter>();

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 
-namespace Outcompute.Trader.Trading.Binance.Converters
+namespace Outcompute.Trader.Models.Collections
 {
     internal class ImmutableListConverter<TSource, TDestination> : ITypeConverter<IEnumerable<TSource>, ImmutableList<TDestination>>
     {

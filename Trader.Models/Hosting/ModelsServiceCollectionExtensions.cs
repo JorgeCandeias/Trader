@@ -1,6 +1,7 @@
 ﻿using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using static System.String;
 
@@ -16,10 +17,13 @@ namespace Microsoft.Extensions.DependencyInjection
             return services
                 .AddSingleton(typeof(ImmutableSortedOrderSetConverter<>))
                 .AddSingleton(typeof(ImmutableSortedTradeSetConverter<>))
+                .AddSingleton(typeof(ImmutableListConverter<,>))
                 .AddAutoMapper(options =>
                 {
                     options.AddProfile<ImmutableSortedOrderSetProfile>();
                     options.AddProfile<ImmutableSortedTradeSetProfile>();
+
+                    options.CreateMap(typeof(IEnumerable<>), typeof(ImmutableList<>)).ConvertUsing(typeof(ImmutableListConverter<,>));
 
                     options.CreateMap<Ticker, MiniTicker>()
                         .ForCtorParam(nameof(MiniTicker.EventTime), x => x.MapFrom(y => y.CloseTime))

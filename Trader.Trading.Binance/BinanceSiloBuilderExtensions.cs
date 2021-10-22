@@ -94,7 +94,6 @@ namespace Orleans.Hosting
                         .AddSingleton<SavingsRedemptionTypeConverter>()
                         .AddSingleton<SavingsStatusConverter>()
                         .AddSingleton<SavingsFeaturedConverter>()
-                        .AddSingleton(typeof(ImmutableListConverter<,>)) // todo: move this to the shared model converters
 
                         // add watchdog entries
                         .AddGrainWatchdogEntry(factory => factory.GetBinanceMarketDataGrain())

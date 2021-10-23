@@ -1,9 +1,12 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Orleans;
 using Orleans.Hosting;
 using Orleans.TestingHost;
 using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Providers;
+using Outcompute.Trader.Trading.Providers.Balances;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -18,6 +21,7 @@ namespace Outcompute.Trader.Trading.Tests.Fixtures
             Cluster = new TestClusterBuilder()
                 .AddSiloBuilderConfigurator<HostConfigurator>()
                 .AddSiloBuilderConfigurator<TestSiloConfigurator>()
+                .AddClientBuilderConfigurator<ClientConfigurator>()
                 .Build();
 
             Cluster.Deploy();
@@ -60,6 +64,21 @@ namespace Outcompute.Trader.Trading.Tests.Fixtures
                         services
                             .AddAlgoType<TestAlgo, TestAlgoOptions>("Test");
                     });
+        }
+    }
+
+    public class ClientConfigurator : IClientBuilderConfigurator
+    {
+        public void Configure(IConfiguration configuration, IClientBuilder clientBuilder)
+        {
+            clientBuilder
+                .AddInMemoryTradingRepository()
+                .ConfigureServices(services =>
+                {
+                    services
+                        .AddModelAutoMapperProfiles()
+                        .AddSingleton<IBalanceProvider, BalanceProvider>();
+                });
         }
     }
 

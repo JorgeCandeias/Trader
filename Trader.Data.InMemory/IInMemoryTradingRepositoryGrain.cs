@@ -1,22 +1,21 @@
 ﻿using Orleans;
 using Outcompute.Trader.Models;
-using System;
-using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Data.InMemory
 {
     internal interface IInMemoryTradingRepositoryGrain : IGrainWithGuidKey
     {
-        Task<IEnumerable<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime startOpenTime, DateTime endOpenTime);
+        Task<ImmutableSortedSet<Kline>> GetKlinesAsync(string symbol, KlineInterval interval);
 
-        Task SetKlinesAsync(IEnumerable<Kline> items);
+        Task SetKlinesAsync(ImmutableList<Kline> items);
 
         Task SetKlineAsync(Kline item);
 
-        Task<IEnumerable<OrderQueryResult>> GetOrdersAsync(string symbol);
+        Task<ImmutableSortedSet<OrderQueryResult>> GetOrdersAsync(string symbol);
 
-        Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders);
+        Task SetOrdersAsync(ImmutableList<OrderQueryResult> orders);
 
         Task SetOrderAsync(OrderQueryResult order);
 
@@ -24,13 +23,13 @@ namespace Outcompute.Trader.Trading.Data.InMemory
 
         Task<MiniTicker?> TryGetTickerAsync(string symbol);
 
-        Task<IEnumerable<AccountTrade>> GetTradesAsync(string symbol);
+        Task<ImmutableSortedSet<AccountTrade>> GetTradesAsync(string symbol);
 
         Task SetTradeAsync(AccountTrade trade);
 
-        Task SetTradesAsync(IEnumerable<AccountTrade> trades);
+        Task SetTradesAsync(ImmutableList<AccountTrade> trades);
 
-        Task SetBalancesAsync(IEnumerable<Balance> balances);
+        Task SetBalancesAsync(ImmutableList<Balance> balances);
 
         Task<Balance?> TryGetBalanceAsync(string asset);
     }

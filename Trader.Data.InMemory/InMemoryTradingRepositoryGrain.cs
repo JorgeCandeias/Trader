@@ -4,7 +4,6 @@ using Outcompute.Trader.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Data.InMemory
@@ -12,30 +11,40 @@ namespace Outcompute.Trader.Trading.Data.InMemory
     [Reentrant]
     internal class InMemoryTradingRepositoryGrain : Grain, IInMemoryTradingRepositoryGrain
     {
-        private readonly Dictionary<string, ImmutableSortedSet<OrderQueryResult>.Builder> _orders = new();
-        private readonly Dictionary<(string Symbol, KlineInterval Interval, DateTime OpenTime), Kline> _klines = new();
         private readonly Dictionary<string, MiniTicker> _tickers = new();
-        private readonly Dictionary<string, ImmutableSortedSet<AccountTrade>.Builder> _trades = new();
+
         private readonly Dictionary<string, Balance> _balances = new();
 
-        public Task<IEnumerable<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime startOpenTime, DateTime endOpenTime)
+        private readonly Dictionary<(string Symbol, KlineInterval Interval), ImmutableSortedSet<Kline>.Builder> _klines = new();
+
+        private readonly Dictionary<string, ImmutableSortedSet<AccountTrade>.Builder> _trades = new();
+
+        private readonly Dictionary<string, ImmutableSortedSet<OrderQueryResult>.Builder> _orders = new();
+
+        public Task<ImmutableSortedSet<Kline>> GetKlinesAsync(string symbol, KlineInterval interval)
         {
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
-            var result = _klines.Values
-                .Where(x => x.Symbol == symbol && x.Interval == interval && x.OpenTime >= startOpenTime && x.OpenTime <= endOpenTime)
-                .ToImmutableList();
+            var result = _klines.TryGetValue((symbol, interval), out var builder)
+                ? builder.ToImmutable()
+                : ImmutableSortedSet<Kline>.Empty.WithComparer(Kline.KeyComparer);
 
-            return Task.FromResult<IEnumerable<Kline>>(result);
+            return Task.FromResult(result);
         }
 
-        public Task SetKlinesAsync(IEnumerable<Kline> items)
+        public Task SetKlinesAsync(ImmutableList<Kline> items)
         {
             if (items is null) throw new ArgumentNullException(nameof(items));
 
             foreach (var item in items)
             {
-                _klines[(item.Symbol, item.Interval, item.OpenTime)] = item;
+                if (!_klines.TryGetValue((item.Symbol, item.Interval), out var builder))
+                {
+                    _klines[(item.Symbol, item.Interval)] = builder = ImmutableSortedSet.CreateBuilder(Kline.KeyComparer);
+                }
+
+                builder.Remove(item);
+                builder.Add(item);
             }
 
             return Task.CompletedTask;
@@ -45,23 +54,29 @@ namespace Outcompute.Trader.Trading.Data.InMemory
         {
             if (item is null) throw new ArgumentNullException(nameof(item));
 
-            _klines[(item.Symbol, item.Interval, item.OpenTime)] = item;
+            if (!_klines.TryGetValue((item.Symbol, item.Interval), out var builder))
+            {
+                _klines[(item.Symbol, item.Interval)] = builder = ImmutableSortedSet.CreateBuilder(Kline.KeyComparer);
+            }
+
+            builder.Remove(item);
+            builder.Add(item);
 
             return Task.CompletedTask;
         }
 
-        public Task<IEnumerable<OrderQueryResult>> GetOrdersAsync(string symbol)
+        public Task<ImmutableSortedSet<OrderQueryResult>> GetOrdersAsync(string symbol)
         {
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
             var result = _orders.TryGetValue(symbol, out var orders)
                 ? orders.ToImmutable()
-                : ImmutableSortedSet<OrderQueryResult>.Empty;
+                : ImmutableSortedSet<OrderQueryResult>.Empty.WithComparer(OrderQueryResult.KeyComparer);
 
-            return Task.FromResult<IEnumerable<OrderQueryResult>>(result);
+            return Task.FromResult(result);
         }
 
-        public Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders)
+        public Task SetOrdersAsync(ImmutableList<OrderQueryResult> orders)
         {
             if (orders is null) throw new ArgumentNullException(nameof(orders));
 
@@ -86,7 +101,7 @@ namespace Outcompute.Trader.Trading.Data.InMemory
         {
             if (!_orders.TryGetValue(order.Symbol, out var builder))
             {
-                _orders[order.Symbol] = builder = ImmutableSortedSet.CreateBuilder(OrderQueryResult.OrderIdComparer);
+                _orders[order.Symbol] = builder = ImmutableSortedSet.CreateBuilder(OrderQueryResult.KeyComparer);
             }
 
             builder.Remove(order);
@@ -102,7 +117,7 @@ namespace Outcompute.Trader.Trading.Data.InMemory
             return Task.CompletedTask;
         }
 
-        public Task SetTickersAsync(IEnumerable<MiniTicker> tickers)
+        public Task SetTickersAsync(ImmutableList<MiniTicker> tickers)
         {
             if (tickers is null) throw new ArgumentNullException(nameof(tickers));
 
@@ -128,16 +143,15 @@ namespace Outcompute.Trader.Trading.Data.InMemory
             return Task.FromResult(ticker);
         }
 
-        public Task<IEnumerable<AccountTrade>> GetTradesAsync(string symbol)
+        public Task<ImmutableSortedSet<AccountTrade>> GetTradesAsync(string symbol)
         {
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
-            if (_trades.TryGetValue(symbol, out var builder))
-            {
-                return Task.FromResult<IEnumerable<AccountTrade>>(builder.ToImmutable());
-            }
+            var result = _trades.TryGetValue(symbol, out var builder)
+                ? builder.ToImmutable()
+                : ImmutableSortedSet<AccountTrade>.Empty.WithComparer(AccountTrade.KeyComparer);
 
-            return Task.FromResult(Enumerable.Empty<AccountTrade>());
+            return Task.FromResult(result);
         }
 
         public Task SetTradeAsync(AccountTrade trade)
@@ -146,7 +160,7 @@ namespace Outcompute.Trader.Trading.Data.InMemory
 
             if (!_trades.TryGetValue(trade.Symbol, out var lookup))
             {
-                _trades[trade.Symbol] = lookup = ImmutableSortedSet.CreateBuilder(AccountTrade.TradeIdComparer);
+                _trades[trade.Symbol] = lookup = ImmutableSortedSet.CreateBuilder(AccountTrade.KeyComparer);
             }
 
             lookup.Remove(trade);
@@ -155,7 +169,7 @@ namespace Outcompute.Trader.Trading.Data.InMemory
             return Task.CompletedTask;
         }
 
-        public Task SetTradesAsync(IEnumerable<AccountTrade> trades)
+        public Task SetTradesAsync(ImmutableList<AccountTrade> trades)
         {
             if (trades is null) throw new ArgumentNullException(nameof(trades));
 
@@ -163,7 +177,7 @@ namespace Outcompute.Trader.Trading.Data.InMemory
             {
                 if (!_trades.TryGetValue(trade.Symbol, out var lookup))
                 {
-                    _trades[trade.Symbol] = lookup = ImmutableSortedSet.CreateBuilder(AccountTrade.TradeIdComparer);
+                    _trades[trade.Symbol] = lookup = ImmutableSortedSet.CreateBuilder(AccountTrade.KeyComparer);
                 }
 
                 lookup.Remove(trade);
@@ -173,7 +187,7 @@ namespace Outcompute.Trader.Trading.Data.InMemory
             return Task.CompletedTask;
         }
 
-        public Task SetBalancesAsync(IEnumerable<Balance> balances)
+        public Task SetBalancesAsync(ImmutableList<Balance> balances)
         {
             if (balances is null) throw new ArgumentNullException(nameof(balances));
 

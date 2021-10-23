@@ -3,7 +3,7 @@ using Orleans;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Data.InMemory;
 using System;
-using System.Linq;
+using System.Collections.Immutable;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -17,8 +17,9 @@ namespace Trader.Trading.InMemory.Tests
             // arrange
             var symbol = "ABCXYZ";
             var order = OrderQueryResult.Empty with { Symbol = symbol, OrderId = 123 };
+            var orders = ImmutableSortedSet.Create(OrderQueryResult.KeyComparer, order);
             var factory = Mock.Of<IGrainFactory>(x =>
-                x.GetGrain<IInMemoryTradingRepositoryGrain>(Guid.Empty, null).GetOrdersAsync(symbol) == Task.FromResult(Enumerable.Repeat(order, 1)));
+                x.GetGrain<IInMemoryTradingRepositoryGrain>(Guid.Empty, null).GetOrdersAsync(symbol) == Task.FromResult(orders));
             var repository = new InMemoryTradingRepository(factory);
 
             // act
@@ -34,7 +35,7 @@ namespace Trader.Trading.InMemory.Tests
             // arrange
             var symbol = "ABCXYZ";
             var order = OrderQueryResult.Empty with { Symbol = symbol, OrderId = 123 };
-            var orders = new[] { order };
+            var orders = ImmutableList.Create(order);
             var factory = Mock.Of<IGrainFactory>();
             Mock.Get(factory)
                 .Setup(x => x.GetGrain<IInMemoryTradingRepositoryGrain>(Guid.Empty, null).SetOrdersAsync(orders))
@@ -76,8 +77,9 @@ namespace Trader.Trading.InMemory.Tests
             var start = DateTime.Today.Subtract(TimeSpan.FromDays(10));
             var end = DateTime.Today;
             var kline = Kline.Empty with { Symbol = symbol, Interval = interval, OpenTime = DateTime.Today };
+            var klines = ImmutableSortedSet.Create(Kline.KeyComparer, kline);
             var factory = Mock.Of<IGrainFactory>(x =>
-                x.GetGrain<IInMemoryTradingRepositoryGrain>(Guid.Empty, null).GetKlinesAsync(symbol, interval, start, end) == Task.FromResult(Enumerable.Repeat(kline, 1)));
+                x.GetGrain<IInMemoryTradingRepositoryGrain>(Guid.Empty, null).GetKlinesAsync(symbol, interval) == Task.FromResult(klines));
             var repository = new InMemoryTradingRepository(factory);
 
             // act
@@ -94,7 +96,7 @@ namespace Trader.Trading.InMemory.Tests
             var symbol = "ABCXYZ";
             var interval = KlineInterval.Hours1;
             var kline = Kline.Empty with { Symbol = symbol, Interval = interval, OpenTime = DateTime.Today };
-            var klines = new[] { kline };
+            var klines = ImmutableList.Create(kline);
             var factory = Mock.Of<IGrainFactory>();
             Mock.Get(factory)
                 .Setup(x => x.GetGrain<IInMemoryTradingRepositoryGrain>(Guid.Empty, null).SetKlinesAsync(klines))
@@ -170,8 +172,9 @@ namespace Trader.Trading.InMemory.Tests
             // arrange
             var symbol = "ABCXYZ";
             var trade = AccountTrade.Empty with { Symbol = symbol, Id = 123 };
+            var trades = ImmutableSortedSet.Create(AccountTrade.KeyComparer, trade);
             var factory = Mock.Of<IGrainFactory>(x =>
-                x.GetGrain<IInMemoryTradingRepositoryGrain>(Guid.Empty, null).GetTradesAsync(symbol) == Task.FromResult(Enumerable.Repeat(trade, 1)));
+                x.GetGrain<IInMemoryTradingRepositoryGrain>(Guid.Empty, null).GetTradesAsync(symbol) == Task.FromResult(trades));
             var repository = new InMemoryTradingRepository(factory);
 
             // act
@@ -206,7 +209,7 @@ namespace Trader.Trading.InMemory.Tests
             // arrange
             var symbol = "ABCXYZ";
             var trade = AccountTrade.Empty with { Symbol = symbol, Id = 123 };
-            var trades = new[] { trade };
+            var trades = ImmutableList.Create(trade);
             var factory = Mock.Of<IGrainFactory>();
             Mock.Get(factory)
                 .Setup(x => x.GetGrain<IInMemoryTradingRepositoryGrain>(Guid.Empty, null).SetTradesAsync(trades))
@@ -226,7 +229,7 @@ namespace Trader.Trading.InMemory.Tests
             // arrange
             var asset = "ABC";
             var balance = Balance.Zero(asset);
-            var balances = new[] { balance };
+            var balances = ImmutableList.Create(balance);
             var factory = Mock.Of<IGrainFactory>();
             Mock.Get(factory)
                 .Setup(x => x.GetGrain<IInMemoryTradingRepositoryGrain>(Guid.Empty, null).SetBalancesAsync(balances))

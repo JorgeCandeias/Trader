@@ -46,9 +46,43 @@ namespace Outcompute.Trader.Models
             false,
             0);
 
+        public static IComparer<OrderQueryResult> KeyComparer { get; } = new KeyComparerInternal();
+
         public static IComparer<OrderQueryResult> OrderIdComparer { get; } = new OrderIdComparerInternal();
 
         public static IEqualityComparer<OrderQueryResult> OrderIdEqualityComparer { get; } = new OrderIdEqualityComparerInternal();
+
+        private sealed class KeyComparerInternal : IComparer<OrderQueryResult>
+        {
+            public int Compare(OrderQueryResult? x, OrderQueryResult? y)
+            {
+                if (x is null)
+                {
+                    if (y is null)
+                    {
+                        return 0;
+                    }
+                    else
+                    {
+                        return 1;
+                    }
+                }
+                else
+                {
+                    if (y is null)
+                    {
+                        return -1;
+                    }
+                    else
+                    {
+                        var bySymbol = Comparer<string>.Default.Compare(x.Symbol, y.Symbol);
+                        if (bySymbol != 0) return bySymbol;
+
+                        return Comparer<long>.Default.Compare(x.OrderId, y.OrderId);
+                    }
+                }
+            }
+        }
 
         private sealed class OrderIdComparerInternal : IComparer<OrderQueryResult>
         {

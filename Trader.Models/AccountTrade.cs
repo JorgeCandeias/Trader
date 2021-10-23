@@ -23,9 +23,43 @@ namespace Outcompute.Trader.Models
     {
         public static AccountTrade Empty { get; } = new AccountTrade(string.Empty, 0, 0, 0, 0, 0, 0, 0, string.Empty, DateTime.MinValue, false, false, false);
 
+        public static IComparer<AccountTrade> KeyComparer { get; } = new KeyComparerInternal();
+
         public static IComparer<AccountTrade> TradeIdComparer { get; } = new TradeIdComparerInternal();
 
         public static IEqualityComparer<AccountTrade> TradeIdEqualityComparer { get; } = new TradeIdEqualityComparerInternal();
+
+        private sealed class KeyComparerInternal : Comparer<AccountTrade>
+        {
+            public override int Compare(AccountTrade? x, AccountTrade? y)
+            {
+                if (x is null)
+                {
+                    if (y is null)
+                    {
+                        return 0;
+                    }
+                    else
+                    {
+                        return 1;
+                    }
+                }
+                else
+                {
+                    if (y is null)
+                    {
+                        return -1;
+                    }
+                    else
+                    {
+                        var bySymbol = Comparer<string>.Default.Compare(x.Symbol, y.Symbol);
+                        if (bySymbol != 0) return bySymbol;
+
+                        return Comparer<long>.Default.Compare(x.Id, y.Id);
+                    }
+                }
+            }
+        }
 
         private sealed class TradeIdComparerInternal : Comparer<AccountTrade>
         {

@@ -3,6 +3,8 @@ using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -23,14 +25,19 @@ namespace Outcompute.Trader.Trading.Data.InMemory
         {
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
-            return _grain.GetOrdersAsync(symbol);
+            return GetOrdersCoreAsync(symbol);
+        }
+
+        private async Task<IEnumerable<OrderQueryResult>> GetOrdersCoreAsync(string symbol)
+        {
+            return await _grain.GetOrdersAsync(symbol).ConfigureAwait(false);
         }
 
         public Task SetOrdersAsync(IEnumerable<OrderQueryResult> orders, CancellationToken cancellationToken = default)
         {
             if (orders is null) throw new ArgumentNullException(nameof(orders));
 
-            return _grain.SetOrdersAsync(orders);
+            return _grain.SetOrdersAsync(orders.ToImmutableList());
         }
 
         public Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default)
@@ -48,14 +55,23 @@ namespace Outcompute.Trader.Trading.Data.InMemory
         {
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
-            return _grain.GetKlinesAsync(symbol, interval, startOpenTime, endOpenTime);
+            return GetKlinesCoreAsync(symbol, interval, startOpenTime, endOpenTime);
+        }
+
+        private async Task<IEnumerable<Kline>> GetKlinesCoreAsync(string symbol, KlineInterval interval, DateTime startOpenTime, DateTime endOpenTime)
+        {
+            var result = await _grain.GetKlinesAsync(symbol, interval).ConfigureAwait(false);
+
+            return result
+                .Where(x => x.OpenTime >= startOpenTime && x.OpenTime <= endOpenTime)
+                .ToImmutableSortedSet(Kline.KeyComparer);
         }
 
         public Task SetKlinesAsync(IEnumerable<Kline> items, CancellationToken cancellationToken = default)
         {
             if (items is null) throw new ArgumentNullException(nameof(items));
 
-            return _grain.SetKlinesAsync(items);
+            return _grain.SetKlinesAsync(items.ToImmutableList());
         }
 
         public Task SetKlineAsync(Kline item, CancellationToken cancellationToken = default)
@@ -71,6 +87,8 @@ namespace Outcompute.Trader.Trading.Data.InMemory
 
         public Task<MiniTicker?> TryGetTickerAsync(string symbol, CancellationToken cancellationToken = default)
         {
+            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+
             return _grain.TryGetTickerAsync(symbol);
         }
 
@@ -85,7 +103,14 @@ namespace Outcompute.Trader.Trading.Data.InMemory
 
         public Task<IEnumerable<AccountTrade>> GetTradesAsync(string symbol, CancellationToken cancellationToken = default)
         {
-            return _grain.GetTradesAsync(symbol);
+            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+
+            return GetTradesCoreAsync(symbol);
+        }
+
+        private async Task<IEnumerable<AccountTrade>> GetTradesCoreAsync(string symbol)
+        {
+            return await _grain.GetTradesAsync(symbol).ConfigureAwait(false);
         }
 
         public Task SetTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default)
@@ -95,7 +120,9 @@ namespace Outcompute.Trader.Trading.Data.InMemory
 
         public Task SetTradesAsync(IEnumerable<AccountTrade> trades, CancellationToken cancellationToken = default)
         {
-            return _grain.SetTradesAsync(trades);
+            if (trades is null) throw new ArgumentNullException(nameof(trades));
+
+            return _grain.SetTradesAsync(trades.ToImmutableList());
         }
 
         #endregion Trades
@@ -104,7 +131,9 @@ namespace Outcompute.Trader.Trading.Data.InMemory
 
         public Task SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default)
         {
-            return _grain.SetBalancesAsync(balances);
+            if (balances is null) throw new ArgumentNullException(nameof(balances));
+
+            return _grain.SetBalancesAsync(balances.ToImmutableList());
         }
 
         public Task<Balance?> TryGetBalanceAsync(string asset, CancellationToken cancellationToken = default)

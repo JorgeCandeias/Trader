@@ -1,5 +1,4 @@
 ﻿using Outcompute.Trader.Trading.Providers.Orders;
-using Outcompute.Trader.Trading.Providers.Trades;
 using System;
 
 namespace Orleans
@@ -9,6 +8,7 @@ namespace Orleans
         public static IOrderProviderReplicaGrain GetOrderProviderReplicaGrain(this IGrainFactory factory, string symbol)
         {
             if (factory is null) throw new ArgumentNullException(nameof(factory));
+            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
             return factory.GetGrain<IOrderProviderReplicaGrain>(symbol);
         }

@@ -8,5 +8,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
     {
         /// <inheritdoc cref="IReadynessProvider.IsReadyAsync(System.Threading.CancellationToken)"/>
         Task<bool> IsReadyAsync();
+
+        Task PingAsync();
     }
 }

@@ -9,5 +9,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
         /// Returns <see cref="true"/> if the stream is synchronized, otherwise <see cref="false"/>.
         /// </summary>
         ValueTask<bool> IsReadyAsync();
+
+        Task PingAsync();
     }
 }

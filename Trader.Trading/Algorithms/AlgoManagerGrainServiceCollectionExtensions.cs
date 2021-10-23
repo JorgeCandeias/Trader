@@ -8,7 +8,7 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddAlgoManagerGrain(this IServiceCollection services)
         {
             return services
-                .AddGrainWatchdogEntry(factory => factory.GetAlgoManagerGrain())
+                .AddWatchdogEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetAlgoManagerGrain().PingAsync())
                 .ConfigureOptions<AlgoManagerGrainOptionsConfigurator>()
                 .AddOptions<AlgoManagerGrainOptions>()
                 .ValidateDataAnnotations()

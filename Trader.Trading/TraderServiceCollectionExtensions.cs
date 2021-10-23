@@ -19,6 +19,7 @@ namespace Microsoft.Extensions.DependencyInjection
             return services
 
                 // assorted services
+                .AddWatchdogService()
                 .AddSingleton<IReadynessProvider, ReadynessProvider>()
                 .AddSingleton<ISignificantOrderResolver, SignificantOrderResolver>()
                 .AddSingleton<IOrderSynchronizer, OrderSynchronizer>()

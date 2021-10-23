@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Outcompute.Trader.Trading.Watchdog
 {
-    public class GrainWatchdogOptions
+    public class WatchdogOptions
     {
         [Required]
         [Range(typeof(TimeSpan), "0.00:00:01.000", "1.00:00:00.000")]

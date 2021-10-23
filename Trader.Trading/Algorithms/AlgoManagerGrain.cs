@@ -118,5 +118,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             }
             return Task.FromResult<IReadOnlyCollection<AlgoInfo>>(builder.ToImmutable());
         }
+
+        public Task PingAsync() => Task.CompletedTask;
     }
 }

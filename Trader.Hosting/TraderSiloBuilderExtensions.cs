@@ -8,7 +8,6 @@ namespace Orleans.Hosting
         {
             return builder
                 .ConfigureApplicationParts(manager => manager.AddApplicationPart(typeof(TraderSiloBuilderExtensions).Assembly).WithReferences())
-                .UseGrainWatchdog()
                 .ConfigureServices((context, services) =>
                 {
                     services

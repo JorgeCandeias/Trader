@@ -304,5 +304,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
                 _ready = false;
             }
         }
+
+        public Task PingAsync() => Task.CompletedTask;
     }
 }

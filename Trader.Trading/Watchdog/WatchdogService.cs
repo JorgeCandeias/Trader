@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Orleans;
 using Orleans.Core;
 using Orleans.Runtime;
 using Outcompute.Trader.Core.Randomizers;
@@ -14,46 +13,35 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Watchdog
 {
-    internal class GrainWatchdog : BackgroundService
+    internal class WatchdogService : BackgroundService
     {
-        private readonly GrainWatchdogOptions _options;
+        private readonly WatchdogOptions _options;
         private readonly ILogger _logger;
-        private readonly IEnumerable<IGrainWatchdogEntry> _entries;
+        private readonly IWatchdogEntry[] _entries;
         private readonly IHostApplicationLifetime _lifetime;
         private readonly ISiloStatusOracle _oracle;
         private readonly IRandomGenerator _random;
-        private readonly IGrainFactory _factory;
+        private readonly IServiceProvider _provider;
 
-        public GrainWatchdog(IOptions<GrainWatchdogOptions> options, ILogger<GrainWatchdog> logger, IEnumerable<IGrainWatchdogEntry> entries, IHostApplicationLifetime lifetime, ISiloStatusOracle oracle, IRandomGenerator random, IGrainFactory factory)
+        public WatchdogService(IOptions<WatchdogOptions> options, ILogger<WatchdogService> logger, IWatchdogEntry[] entries, IHostApplicationLifetime lifetime, ISiloStatusOracle oracle, IRandomGenerator random, IServiceProvider provider)
         {
-            _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _entries = entries ?? throw new ArgumentNullException(nameof(entries));
-            _lifetime = lifetime ?? throw new ArgumentNullException(nameof(lifetime));
-            _oracle = oracle ?? throw new ArgumentNullException(nameof(oracle));
-            _random = random ?? throw new ArgumentNullException(nameof(random));
-            _factory = factory ?? throw new ArgumentNullException(nameof(factory));
+            _options = options.Value;
+            _logger = logger;
+            _entries = entries;
+            _lifetime = lifetime;
+            _oracle = oracle;
+            _random = random;
+            _provider = provider;
         }
 
-        private readonly List<IWatchdogGrainExtension> _extensions = new();
-        private readonly List<IGrainIdentity> _identities = new();
         private readonly ActiveSiloCounter _activeSiloCounter = new();
 
         public override Task StartAsync(CancellationToken cancellationToken)
         {
-            // cache the extension proxies to avoid redundant garbage during execution
-            foreach (var entry in _entries)
-            {
-                var grain = entry.GetGrain(_factory);
-
-                _extensions.Add(grain.AsReference<IWatchdogGrainExtension>());
-                _identities.Add(grain.GetGrainIdentity());
-            }
-
             // keep track of the silo count to sparse the pings when the cluster grows
             if (!_oracle.SubscribeToSiloStatusEvents(_activeSiloCounter))
             {
-                throw new GrainWatchdogException("Could not subscribe to silo status events");
+                throw new WatchdogException("Could not subscribe to silo status events");
             }
 
             // seed the counter with the current silo statuses
@@ -75,32 +63,28 @@ namespace Outcompute.Trader.Trading.Watchdog
             // keep pinging all targets
             while (!stoppingToken.IsCancellationRequested)
             {
-                _logger.PingingTargets(_extensions.Count);
+                _logger.PingingTargets(_entries.Length);
 
-                var buffer = ArrayPool<Task>.Shared.Rent(_extensions.Count);
+                var buffer = ArrayPool<Task>.Shared.Rent(_entries.Length);
 
-                for (var i = 0; i < _extensions.Count; i++)
+                for (var i = 0; i < _entries.Length; i++)
                 {
-                    _logger.PingingTarget(_identities[i]);
-
-                    buffer[i] = _extensions[i].PingAsync();
+                    buffer[i] = _entries[i].ExecuteAsync(_provider, stoppingToken);
                 }
 
-                for (var i = 0; i < _extensions.Count; i++)
+                for (var i = 0; i < _entries.Length; i++)
                 {
                     try
                     {
                         await buffer[i].ConfigureAwait(false);
-
-                        _logger.PingedTarget(_identities[i]);
                     }
                     catch (Exception ex)
                     {
-                        _logger.PingTargetFailed(_identities[i], ex);
+                        _logger.PingTargetFailed(ex);
                     }
                 }
 
-                ArrayPool<Task>.Shared.Return(buffer, true);
+                ArrayPool<Task>.Shared.Return(buffer);
 
                 await DelayTickAsync(stoppingToken).ConfigureAwait(false);
             }
@@ -165,7 +149,7 @@ namespace Outcompute.Trader.Trading.Watchdog
 
         public static void Started(this ILogger logger)
         {
-            _started(logger, nameof(GrainWatchdog), null!);
+            _started(logger, nameof(WatchdogService), null!);
         }
 
         private static readonly Action<ILogger, string, Exception> _stopped = LoggerMessage.Define<string>(
@@ -175,7 +159,7 @@ namespace Outcompute.Trader.Trading.Watchdog
 
         public static void Stopped(this ILogger logger)
         {
-            _stopped(logger, nameof(GrainWatchdog), null!);
+            _stopped(logger, nameof(WatchdogService), null!);
         }
 
         private static readonly Action<ILogger, string, int, Exception> _pingingTargets = LoggerMessage.Define<string, int>(
@@ -185,7 +169,7 @@ namespace Outcompute.Trader.Trading.Watchdog
 
         public static void PingingTargets(this ILogger logger, int count)
         {
-            _pingingTargets(logger, nameof(GrainWatchdog), count, null!);
+            _pingingTargets(logger, nameof(WatchdogService), count, null!);
         }
 
         private static readonly Action<ILogger, string, IGrainIdentity, Exception> _pingingTarget = LoggerMessage.Define<string, IGrainIdentity>(
@@ -195,7 +179,7 @@ namespace Outcompute.Trader.Trading.Watchdog
 
         public static void PingingTarget(this ILogger logger, IGrainIdentity identity)
         {
-            _pingingTarget(logger, nameof(GrainWatchdog), identity, null!);
+            _pingingTarget(logger, nameof(WatchdogService), identity, null!);
         }
 
         private static readonly Action<ILogger, string, IGrainIdentity, Exception> _pingedTarget = LoggerMessage.Define<string, IGrainIdentity>(
@@ -205,17 +189,17 @@ namespace Outcompute.Trader.Trading.Watchdog
 
         public static void PingedTarget(this ILogger logger, IGrainIdentity identity)
         {
-            _pingedTarget(logger, nameof(GrainWatchdog), identity, null!);
+            _pingedTarget(logger, nameof(WatchdogService), identity, null!);
         }
 
-        private static readonly Action<ILogger, string, IGrainIdentity, Exception> _pingTargetFailed = LoggerMessage.Define<string, IGrainIdentity>(
+        private static readonly Action<ILogger, string, Exception> _pingTargetFailed = LoggerMessage.Define<string>(
             LogLevel.Error,
             new EventId(0, nameof(PingTargetFailed)),
-            "{Service} failed to ping target entry with identity {Identity}");
+            "{Service} failed to ping target entry");
 
-        public static void PingTargetFailed(this ILogger logger, IGrainIdentity identity, Exception exception)
+        public static void PingTargetFailed(this ILogger logger, Exception exception)
         {
-            _pingTargetFailed(logger, nameof(GrainWatchdog), identity, exception);
+            _pingTargetFailed(logger, nameof(WatchdogService), exception);
         }
     }
 }

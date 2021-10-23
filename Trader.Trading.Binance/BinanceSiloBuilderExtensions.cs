@@ -96,8 +96,8 @@ namespace Orleans.Hosting
                         .AddSingleton<SavingsFeaturedConverter>()
 
                         // add watchdog entries
-                        .AddGrainWatchdogEntry(factory => factory.GetBinanceMarketDataGrain())
-                        .AddGrainWatchdogEntry(factory => factory.GetBinanceUserDataGrain())
+                        .AddWatchdogEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetBinanceMarketDataGrain().PingAsync())
+                        .AddWatchdogEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetBinanceUserDataGrain().PingAsync())
 
                         // add readyness entries
                         .AddReadynessEntry(sp => sp.GetRequiredService<IGrainFactory>().GetBinanceUserDataReadynessGrain().IsReadyAsync())

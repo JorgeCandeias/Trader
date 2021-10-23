@@ -298,5 +298,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 
             _logger.LogInformation("{Name} synced klines for {Symbols} in {ElapsedMs}ms...", TypeName, _klineWindows.Select(x => x.Key.Symbol), watch.ElapsedMilliseconds);
         }
+
+        public Task PingAsync() => Task.CompletedTask;
     }
 }

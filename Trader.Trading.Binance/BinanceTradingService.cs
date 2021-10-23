@@ -25,12 +25,12 @@ namespace Outcompute.Trader.Trading.Binance
 
         public BinanceTradingService(ILogger<BinanceTradingService> logger, BinanceApiClient client, BinanceUsageContext usage, IMapper mapper, ISystemClock clock, IServiceProvider provider)
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _client = client ?? throw new ArgumentNullException(nameof(client));
-            _usage = usage ?? throw new ArgumentNullException(nameof(usage));
-            _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-            _provider = provider ?? throw new ArgumentNullException(nameof(provider));
+            _logger = logger;
+            _client = client;
+            _usage = usage;
+            _mapper = mapper;
+            _clock = clock;
+            _provider = provider;
         }
 
         private static string Name => nameof(BinanceTradingService);

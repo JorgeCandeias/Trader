@@ -99,27 +99,25 @@ namespace Outcompute.Trader.App
                         options.Port = 6001;
                     });
 
-                    orleans.UseTrader(trader =>
-                    {
-                        trader
-                            .AddBinanceTradingService(options =>
-                            {
-                                context.Configuration.Bind("Binance", options);
-                            })
-                            .ConfigureServices((context, services) =>
-                            {
-                                services
-                                    .AddSqlTradingRepository(options =>
-                                     {
-                                         options.ConnectionString = context.Configuration.GetConnectionString("Trader");
-                                     })
-                                    .AddTraderDashboard(options =>
-                                    {
-                                        options.Port = 6002;
-                                    })
-                                    .AddAlgoType<TestAlgo, TestAlgoOptions>("Test");
-                            });
-                    });
+                    orleans
+                        .AddTrader()
+                        .AddBinanceTradingService(options =>
+                        {
+                            context.Configuration.Bind("Binance", options);
+                        })
+                        .ConfigureServices((context, services) =>
+                        {
+                            services
+                                .AddSqlTradingRepository(options =>
+                                {
+                                    options.ConnectionString = context.Configuration.GetConnectionString("Trader");
+                                })
+                                .AddTraderDashboard(options =>
+                                {
+                                    options.Port = 6002;
+                                })
+                                .AddAlgoType<TestAlgo, TestAlgoOptions>("Test");
+                        });
                 })
                 .RunConsoleAsync();
         }

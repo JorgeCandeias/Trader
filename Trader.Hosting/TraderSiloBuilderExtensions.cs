@@ -1,31 +1,12 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using System;
 
 namespace Orleans.Hosting
 {
-    // todo: refactor all this into add methods on the silo builder
     public static class TraderSiloBuilderExtensions
     {
-        public static ISiloBuilder UseTrader(this ISiloBuilder builder, Action<ISiloBuilder> configure)
+        public static ISiloBuilder AddTrader(this ISiloBuilder builder)
         {
-            if (builder is null) throw new ArgumentNullException(nameof(builder));
-            if (configure is null) throw new ArgumentNullException(nameof(configure));
-
-            builder.TryUseTraderCore();
-
-            configure(builder);
-
-            return builder;
-        }
-
-        internal static void TryUseTraderCore(this ISiloBuilder builder)
-        {
-            if (builder is null) throw new ArgumentNullException(nameof(builder));
-
-            if (builder.Properties.ContainsKey(nameof(TryUseTraderCore))) return;
-
-            // perform one-time actions
-            builder
+            return builder
                 .ConfigureApplicationParts(manager => manager.AddApplicationPart(typeof(TraderSiloBuilderExtensions).Assembly).WithReferences())
                 .UseGrainWatchdog()
                 .ConfigureServices((context, services) =>
@@ -44,8 +25,6 @@ namespace Orleans.Hosting
                         .AddAlgoManagerGrain()
                         .AddAlgoHostGrain();
                 });
-
-            builder.Properties[nameof(TryUseTraderCore)] = true;
         }
     }
 }

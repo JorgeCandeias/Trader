@@ -48,13 +48,11 @@ namespace Outcompute.Trader.Trading.Binance.Tests.Fixtures
     {
         public void Configure(ISiloBuilder siloBuilder)
         {
-            siloBuilder.UseTrader(trader =>
-            {
-                trader
-                    .ConfigureApplicationParts(manager => manager.AddApplicationPart(typeof(ClusterFixture).Assembly).WithReferences())
+            siloBuilder
+                .AddTrader()
+                .ConfigureApplicationParts(manager => manager.AddApplicationPart(typeof(ClusterFixture).Assembly).WithReferences())
                     .AddInMemoryTradingRepository()
                     .AddInMemoryTradingService();
-            });
         }
     }
 

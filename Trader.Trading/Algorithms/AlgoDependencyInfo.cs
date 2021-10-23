@@ -44,5 +44,19 @@ namespace Outcompute.Trader.Trading.Algorithms
                 .Select(x => new KlineDependency(x.Symbol, x.Interval, x.Periods))
                 .Distinct();
         }
+
+        public IEnumerable<string> GetSymbols()
+        {
+            var options = _options.CurrentValue;
+
+            var fromSymbols = options.Algos
+                .Select(x => x.Value.Symbol)
+                .Where(x => x is not null);
+
+            var fromBalances = options.Algos
+                .SelectMany(x => x.Value.DependsOn.Balances);
+
+            return fromSymbols.Concat(fromBalances).Distinct();
+        }
     }
 }

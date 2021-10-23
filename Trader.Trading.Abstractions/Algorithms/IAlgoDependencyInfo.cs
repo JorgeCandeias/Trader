@@ -5,6 +5,8 @@ namespace Outcompute.Trader.Trading.Algorithms
 {
     public interface IAlgoDependencyInfo
     {
+        IEnumerable<string> GetSymbols();
+
         IEnumerable<string> GetTickers();
 
         IEnumerable<KlineDependency> GetKlines();

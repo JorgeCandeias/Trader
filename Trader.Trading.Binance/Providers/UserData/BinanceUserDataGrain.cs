@@ -9,6 +9,7 @@ using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Providers;
 using Polly;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
@@ -32,7 +33,9 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
         private readonly IBalanceProvider _balances;
         private readonly ITradeProvider _trades;
 
-        public BinanceUserDataGrain(IOptions<BinanceOptions> options, ILogger<BinanceUserDataGrain> logger, ITradingService trader, IUserDataStreamClientFactory streams, IOrderSynchronizer orders, ITradeSynchronizer trades, ISystemClock clock, IMapper mapper, IHostApplicationLifetime lifetime, IOrderProvider orderProvider, IBalanceProvider balances, ITradeProvider tradeProvider)
+        private readonly HashSet<string> _symbols;
+
+        public BinanceUserDataGrain(IOptions<BinanceOptions> options, ILogger<BinanceUserDataGrain> logger, ITradingService trader, IUserDataStreamClientFactory streams, IOrderSynchronizer orders, ITradeSynchronizer trades, ISystemClock clock, IMapper mapper, IHostApplicationLifetime lifetime, IOrderProvider orderProvider, IBalanceProvider balances, ITradeProvider tradeProvider, IAlgoDependencyInfo dependencies)
         {
             _options = options.Value;
             _logger = logger;
@@ -46,6 +49,8 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
             _orders = orderProvider;
             _balances = balances;
             _trades = tradeProvider;
+
+            _symbols = dependencies.GetSymbols().ToHashSet();
         }
 
         private static string Name => nameof(BinanceUserDataGrain);
@@ -131,7 +136,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 
         private async Task HandleReportMessageAsync(ExecutionReportUserDataStreamMessage message)
         {
-            if (!_options.UserDataStreamSymbols.Contains(message.Symbol))
+            if (!_symbols.Contains(message.Symbol))
             {
                 _logger.LogWarning(
                     "{Name} ignoring {MessageType} for unknown symbol {Symbol}",
@@ -252,7 +257,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
                 await _balances.SetBalancesAsync(accountInfo, _lifetime.ApplicationStopping);
 
                 // sync orders for all symbols
-                foreach (var symbol in _options.UserDataStreamSymbols)
+                foreach (var symbol in _symbols)
                 {
                     await Policy
                         .Handle<BinanceTooManyRequestsException>()
@@ -270,7 +275,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
                 }
 
                 // sync trades for all symbols
-                foreach (var symbol in _options.UserDataStreamSymbols)
+                foreach (var symbol in _symbols)
                 {
                     await Policy
                         .Handle<BinanceTooManyRequestsException>()

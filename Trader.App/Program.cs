@@ -16,7 +16,6 @@ using Serilog.Events;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
@@ -106,14 +105,6 @@ namespace Outcompute.Trader.App
                             .AddBinanceTradingService(options =>
                             {
                                 context.Configuration.Bind("Binance", options);
-
-                                options.UserDataStreamSymbols.UnionWith(context
-                                    .Configuration
-                                    .GetSection("Trader:Algos")
-                                    .GetChildren()
-                                    .Select(x => x.GetSection("Options"))
-                                    .Select(x => x["Symbol"])
-                                    .Where(x => x is not null));
                             })
                             .ConfigureServices((context, services) =>
                             {

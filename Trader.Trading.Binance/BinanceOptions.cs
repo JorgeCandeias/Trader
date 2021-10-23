@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace Outcompute.Trader.Trading.Binance
@@ -52,9 +51,6 @@ namespace Outcompute.Trader.Trading.Binance
         [Required]
         [Range(typeof(TimeSpan), "0.00:01:00.000", "1.00:00:00.000")]
         public TimeSpan MarketDataStreamResetPeriod { get; set; } = TimeSpan.FromHours(1);
-
-        [Obsolete("Remove")]
-        public ISet<string> UserDataStreamSymbols { get; } = new HashSet<string>(StringComparer.Ordinal);
 
         [Required]
         [Range(typeof(TimeSpan), "0.00:01:00.000", "0.00:59:00.000")]

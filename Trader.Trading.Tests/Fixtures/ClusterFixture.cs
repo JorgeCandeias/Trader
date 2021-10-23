@@ -5,8 +5,6 @@ using Orleans;
 using Orleans.Hosting;
 using Orleans.TestingHost;
 using Outcompute.Trader.Trading.Algorithms;
-using Outcompute.Trader.Trading.Providers;
-using Outcompute.Trader.Trading.Providers.Balances;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -59,11 +57,12 @@ namespace Outcompute.Trader.Trading.Tests.Fixtures
             siloBuilder
                 .AddTrader()
                 .AddInMemoryTradingRepository()
-                    .ConfigureServices(services =>
-                    {
-                        services
-                            .AddAlgoType<TestAlgo, TestAlgoOptions>("Test");
-                    });
+                .AddInMemoryTradingService()
+                .ConfigureServices(services =>
+                {
+                    services
+                        .AddAlgoType<TestAlgo, TestAlgoOptions>("Test");
+                });
         }
     }
 
@@ -73,6 +72,7 @@ namespace Outcompute.Trader.Trading.Tests.Fixtures
         {
             clientBuilder
                 .AddInMemoryTradingRepository()
+                .AddInMemoryTradingService()
                 .ConfigureServices(services =>
                 {
                     services

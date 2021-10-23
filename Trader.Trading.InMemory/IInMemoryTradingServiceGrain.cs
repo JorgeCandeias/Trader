@@ -21,6 +21,14 @@ namespace Outcompute.Trader.Trading.InMemory
 
         #endregion Orders
 
+        #region Exchange
+
+        Task<ExchangeInfo> GetExchangeInfoAsync();
+
+        Task SetExchangeInfoAsync(ExchangeInfo info);
+
+        #endregion Exchange
+
         Task<IReadOnlyCollection<SavingsPosition>> GetFlexibleProductPositionsAsync(string asset);
 
         Task SetFlexibleProductPositionsAsync(IEnumerable<SavingsPosition> items);

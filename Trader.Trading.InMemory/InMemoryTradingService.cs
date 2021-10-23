@@ -46,6 +46,22 @@ namespace Outcompute.Trader.Trading.InMemory
 
         #endregion Orders
 
+        #region Exchange
+
+        public Task<ExchangeInfo> GetExchangeInfoAsync(CancellationToken cancellationToken = default)
+        {
+            return _grain.GetExchangeInfoAsync();
+        }
+
+        public Task SetExchangeInfoAsync(ExchangeInfo info, CancellationToken cancellationToken = default)
+        {
+            if (info is null) throw new ArgumentNullException(nameof(info));
+
+            return _grain.SetExchangeInfoAsync(info);
+        }
+
+        #endregion Exchange
+
         public Task CloseUserDataStreamAsync(string listenKey, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
@@ -72,11 +88,6 @@ namespace Outcompute.Trader.Trading.InMemory
         }
 
         public IReadOnlyCollection<SavingsProduct> GetCachedFlexibleProductsByAsset(string asset)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<ExchangeInfo> GetExchangeInfoAsync(CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }

@@ -165,6 +165,26 @@ namespace Outcompute.Trader.Trading.InMemory
 
         #endregion Orders
 
+        #region Exchange
+
+        private ExchangeInfo _info = ExchangeInfo.Empty;
+
+        public Task<ExchangeInfo> GetExchangeInfoAsync()
+        {
+            return Task.FromResult(_info);
+        }
+
+        public Task SetExchangeInfoAsync(ExchangeInfo info)
+        {
+            if (info is null) throw new ArgumentNullException(nameof(info));
+
+            _info = info;
+
+            return Task.CompletedTask;
+        }
+
+        #endregion Exchange
+
         public Task<IReadOnlyCollection<SavingsPosition>> GetFlexibleProductPositionsAsync(string asset)
         {
             if (asset is null) throw new ArgumentNullException(nameof(asset));

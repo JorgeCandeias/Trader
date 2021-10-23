@@ -9,10 +9,6 @@ namespace Outcompute.Trader.Models
         decimal LeftQuota,
         decimal MinRedemptionAmount)
     {
-        public static SavingsQuota Empty { get; } = new SavingsQuota(
-            string.Empty,
-            0m,
-            0m,
-            0m);
+        public static SavingsQuota Empty { get; } = new SavingsQuota(string.Empty, 0m, 0m, 0m);
     }
 }

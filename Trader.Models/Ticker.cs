@@ -1,7 +1,9 @@
-﻿using System;
+﻿using Orleans.Concurrency;
+using System;
 
 namespace Outcompute.Trader.Models
 {
+    [Immutable]
     public record Ticker(
         string Symbol,
         decimal PriceChange,
@@ -21,5 +23,8 @@ namespace Outcompute.Trader.Models
         DateTime CloseTime,
         int FirstId,
         int LastId,
-        int Count);
+        int Count)
+    {
+        public static Ticker Empty { get; } = new Ticker(string.Empty, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, DateTime.MinValue, DateTime.MinValue, 0, 0, 0);
+    }
 }

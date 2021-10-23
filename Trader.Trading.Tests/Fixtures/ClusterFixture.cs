@@ -77,7 +77,7 @@ namespace Outcompute.Trader.Trading.Tests.Fixtures
                 {
                     services
                         .AddModelAutoMapperProfiles()
-                        .AddSingleton<IBalanceProvider, BalanceProvider>();
+                        .AddTradingServices();
                 });
         }
     }

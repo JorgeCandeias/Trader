@@ -249,12 +249,12 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 
                 // wait for a few seconds for the stream to stabilize so we don't miss any incoming data from binance
                 _logger.LogInformation("{Name} waiting {Period} for stream to stabilize...", Name, _options.UserDataStreamStabilizationPeriod);
-                await Task.Delay(_options.UserDataStreamStabilizationPeriod, _lifetime.ApplicationStopping);
+                await Task.Delay(_options.UserDataStreamStabilizationPeriod, linked.Token);
 
                 // sync asset balances
-                var accountInfo = await _trader.GetAccountInfoAsync(_lifetime.ApplicationStopping);
+                var accountInfo = await _trader.GetAccountInfoAsync(linked.Token);
 
-                await _balances.SetBalancesAsync(accountInfo, _lifetime.ApplicationStopping);
+                await _balances.SetBalancesAsync(accountInfo, linked.Token);
 
                 // sync orders for all symbols
                 foreach (var symbol in _symbols)
@@ -271,7 +271,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 
                                 return Task.CompletedTask;
                             })
-                        .ExecuteAsync(ct => _orderSynchronizer.SynchronizeOrdersAsync(symbol, ct), _lifetime.ApplicationStopping, true);
+                        .ExecuteAsync(ct => _orderSynchronizer.SynchronizeOrdersAsync(symbol, ct), linked.Token, true);
                 }
 
                 // sync trades for all symbols
@@ -280,16 +280,16 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
                     await Policy
                         .Handle<BinanceTooManyRequestsException>()
                         .WaitAndRetryForeverAsync(
-                            (n, ex, ctx) => ((BinanceTooManyRequestsException)ex).RetryAfter,
+                            (n, ex, ctx) => ((BinanceTooManyRequestsException)ex).RetryAfter.Add(TimeSpan.FromSeconds(1)),
                             (ex, ts, ctx) =>
                             {
                                 _logger.LogWarning(ex,
                                     "{Name} backing off for {TimeSpan}...",
-                                    Name, ts);
+                                    Name, ts.Add(TimeSpan.FromSeconds(1)));
 
                                 return Task.CompletedTask;
                             })
-                        .ExecuteAsync(ct => _tradeSynchronizer.SynchronizeTradesAsync(symbol, ct), _lifetime.ApplicationStopping, true);
+                        .ExecuteAsync(ct => _tradeSynchronizer.SynchronizeTradesAsync(symbol, ct), linked.Token, true);
                 }
 
                 // signal that everything is ready

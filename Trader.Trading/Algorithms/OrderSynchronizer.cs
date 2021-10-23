@@ -2,7 +2,7 @@
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
 using Outcompute.Trader.Trading.Providers.Orders;
-using Outcompute.Trader.Trading.Providers.Trades;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -25,7 +25,14 @@ namespace Outcompute.Trader.Trading.Algorithms
             _orders = orders;
         }
 
-        public async Task SynchronizeOrdersAsync(string symbol, CancellationToken cancellationToken = default)
+        public Task SynchronizeOrdersAsync(string symbol, CancellationToken cancellationToken = default)
+        {
+            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+
+            return SynchronizeOrdersCoreAsync(symbol, cancellationToken);
+        }
+
+        private async Task SynchronizeOrdersCoreAsync(string symbol, CancellationToken cancellationToken = default)
         {
             var watch = Stopwatch.StartNew();
             var count = 0;

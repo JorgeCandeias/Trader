@@ -51,10 +51,11 @@ namespace Outcompute.Trader.Trading.Algorithms
 
             var fromSymbols = options.Algos
                 .Select(x => x.Value.Symbol)
-                .Where(x => x is not null);
+                .Where(x => !string.IsNullOrEmpty(x));
 
             var fromBalances = options.Algos
-                .SelectMany(x => x.Value.DependsOn.Balances);
+                .SelectMany(x => x.Value.DependsOn.Balances)
+                .Where(x => !string.IsNullOrEmpty(x));
 
             return fromSymbols.Concat(fromBalances).Distinct();
         }

@@ -22,9 +22,11 @@ namespace Outcompute.Trader.Trading.Providers.Orders
             _mapper = mapper;
         }
 
-        public async Task<IReadOnlyList<OrderQueryResult>> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default)
+        public Task<IReadOnlyList<OrderQueryResult>> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default)
         {
-            return await _factory.GetOrderProviderReplicaGrain(symbol).GetOrdersAsync();
+            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+
+            return _factory.GetOrderProviderReplicaGrain(symbol).GetOrdersAsync();
         }
 
         public Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default)

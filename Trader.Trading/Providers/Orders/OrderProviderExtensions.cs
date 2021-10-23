@@ -29,6 +29,7 @@ namespace Outcompute.Trader.Trading.Providers.Orders
         public static Task<long?> TryGetMinTransientOrderIdAsync(this IOrderProvider provider, string symbol, CancellationToken cancellationToken = default)
         {
             if (provider is null) throw new ArgumentNullException(nameof(provider));
+            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
             return GetMinTransientOrderIdCoreAsync(provider, symbol, cancellationToken);
 

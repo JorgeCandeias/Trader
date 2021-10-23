@@ -15,7 +15,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
 
         [Required]
         [Range(0.001, 1)]
-        public decimal TargetQuoteBalanceFractionPerBuy { get; set; } = 0.001m;
+        public decimal TargetQuoteBalanceFractionPerBuy { get; set; } = 0.002m;
 
         [Required]
         [Range(1, 1000000)]
@@ -58,19 +58,19 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         public int RsiPeriodsC { get; set; } = 24;
 
         [Required]
-        public decimal RsiOverboughtA { get; set; } = 30m;
+        public decimal RsiOverboughtA { get; set; } = 20m;
 
         [Required]
         public decimal RsiOversoldA { get; set; } = 50m;
 
         [Required]
-        public decimal RsiOverboughtB { get; set; } = 30m;
+        public decimal RsiOverboughtB { get; set; } = 20m;
 
         [Required]
         public decimal RsiOversoldB { get; set; } = 50m;
 
         [Required]
-        public decimal RsiOverboughtC { get; set; } = 30m;
+        public decimal RsiOverboughtC { get; set; } = 20m;
 
         [Required]
         public decimal RsiOversoldC { get; set; } = 50m;

@@ -14,8 +14,6 @@ namespace Outcompute.Trader.Trading.Data.InMemory
 
         public InMemoryTradingRepository(IGrainFactory factory)
         {
-            if (factory is null) throw new ArgumentNullException(nameof(factory));
-
             _grain = factory.GetGrain<IInMemoryTradingRepositoryGrain>(Guid.Empty);
         }
 

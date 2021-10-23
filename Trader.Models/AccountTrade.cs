@@ -21,6 +21,8 @@ namespace Outcompute.Trader.Models
         bool IsMaker,
         bool IsBestMatch)
     {
+        public static AccountTrade Empty { get; } = new AccountTrade(string.Empty, 0, 0, 0, 0, 0, 0, 0, string.Empty, DateTime.MinValue, false, false, false);
+
         public static IComparer<AccountTrade> TradeIdComparer { get; } = new TradeIdComparerInternal();
 
         public static IEqualityComparer<AccountTrade> TradeIdEqualityComparer { get; } = new TradeIdEqualityComparerInternal();

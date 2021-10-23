@@ -101,7 +101,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
 
             if (TrySignalBuyOrder())
             {
-                await _context.SetTrackingBuyAsync(_context.Symbol, _options.BuyOrderSafetyRatio, _options.TargetQuoteBalanceFractionPerBuy, _options.MaxNotional, cancellationToken);
+                await _context.SetTrackingBuyAsync(_context.Symbol, _options.BuyOrderSafetyRatio, _options.TargetQuoteBalanceFractionPerBuy, _options.MaxNotional, _options.RedeemSavings, cancellationToken);
             }
             else
             {

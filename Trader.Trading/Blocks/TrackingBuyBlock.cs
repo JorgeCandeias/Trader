@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -14,30 +15,25 @@ namespace Outcompute.Trader.Trading.Algorithms
     {
         private static string TypeName => nameof(TrackingBuyBlock);
 
-        public static ValueTask<bool> SetTrackingBuyAsync(this IAlgoContext context, Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, CancellationToken cancellationToken = default)
+        public static ValueTask<bool> SetTrackingBuyAsync(this IAlgoContext context, Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings, CancellationToken cancellationToken = default)
         {
             if (context is null) throw new ArgumentNullException(nameof(context));
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
-            return SetTrackingBuyInnerAsync(context, symbol, pullbackRatio, targetQuoteBalanceFractionPerBuy, maxNotional, cancellationToken);
+            return SetTrackingBuyInnerAsync(context, symbol, pullbackRatio, targetQuoteBalanceFractionPerBuy, maxNotional, redeemSavings, cancellationToken);
         }
 
-        private static async ValueTask<bool> SetTrackingBuyInnerAsync(IAlgoContext context, Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, CancellationToken cancellationToken)
+        private static async ValueTask<bool> SetTrackingBuyInnerAsync(IAlgoContext context, Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings, CancellationToken cancellationToken)
         {
             var logger = context.ServiceProvider.GetRequiredService<ILogger<IAlgoContext>>();
 
             var ticker = await context.GetRequiredTickerAsync(symbol.Name, cancellationToken).ConfigureAwait(false);
             var orders = await context.GetOpenOrdersAsync(symbol, OrderSide.Buy, cancellationToken).ConfigureAwait(false);
-            var balance = await context.GetBalanceProvider().TryGetBalanceAsync(symbol.QuoteAsset, cancellationToken).ConfigureAwait(false);
+            var balance = await context.GetBalanceProvider().GetRequiredBalanceAsync(symbol.QuoteAsset, cancellationToken).ConfigureAwait(false);
+            var savings = await context.GetSavingsProvider().GetPositionOrZeroAsync(symbol.QuoteAsset, cancellationToken).ConfigureAwait(false);
 
-            if (balance is null)
-            {
-                logger.LogError(
-                    "{Type} {Symbol} could not acquire balance for {Quote}",
-                    TypeName, symbol.Name, symbol.QuoteAsset);
-
-                return false;
-            }
+            // identify the free balance
+            var free = balance.Free + (redeemSavings ? savings.FreeAmount : 0m);
 
             // identify the target low price for the first buy
             var lowBuyPrice = ticker.ClosePrice * pullbackRatio;
@@ -60,7 +56,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             }
 
             // calculate the target notional
-            var total = balance.Free * targetQuoteBalanceFractionPerBuy;
+            var total = free * targetQuoteBalanceFractionPerBuy;
 
             // cap it at the max notional
             if (maxNotional.HasValue)
@@ -91,30 +87,37 @@ namespace Outcompute.Trader.Trading.Algorithms
             }
 
             // ensure there is enough quote asset for it
-            if (total > balance.Free)
+            if (total > free)
             {
-                var necessary = total - balance.Free;
+                var necessary = total - free;
 
                 logger.LogWarning(
-                    "{Type} {Name} must place order with amount of {Total} {Quote} but the free amount is only {Free} {Quote}. Will attempt to redeem the necessary {Necessary} {Quote} from savings...",
-                    TypeName, symbol.Name, total, symbol.QuoteAsset, balance.Free, symbol.QuoteAsset, necessary, symbol.QuoteAsset);
+                    "{Type} {Name} must place order with amount of {Total} {Quote} but the free amount is only {Free} {Quote}",
+                    TypeName, symbol.Name, total, symbol.QuoteAsset, free, symbol.QuoteAsset);
 
-                var (success, _) = await context.TryRedeemSavingsAsync(symbol.QuoteAsset, necessary, cancellationToken).ConfigureAwait(false);
-                if (success)
+                if (redeemSavings)
                 {
                     logger.LogInformation(
-                        "{Type} {Name} redeemed {Quantity} {Asset} from savings",
-                        TypeName, symbol.Name, necessary, symbol.QuoteAsset);
+                        "Will attempt to redeem the necessary {Necessary} {Quote} from savings...",
+                        necessary, symbol.QuoteAsset);
 
-                    return true;
-                }
-                else
-                {
-                    logger.LogError(
-                        "{Type} {Name} could not redeem the necessary {Quantity} {Asset} from savings",
-                        TypeName, symbol.Name, necessary, symbol.QuoteAsset);
+                    var (success, actual) = await context.TryRedeemSavingsAsync(symbol.QuoteAsset, necessary, cancellationToken).ConfigureAwait(false);
+                    if (success)
+                    {
+                        logger.LogInformation(
+                            "{Type} {Name} redeemed {Quantity} {Asset} from savings to cover the necessary {Necessary} {Asset}",
+                            TypeName, symbol.Name, actual, symbol.QuoteAsset, necessary, symbol.QuoteAsset);
 
-                    return false;
+                        return true;
+                    }
+                    else
+                    {
+                        logger.LogError(
+                            "{Type} {Name} could not redeem the necessary {Quantity} {Asset} from savings",
+                            TypeName, symbol.Name, necessary, symbol.QuoteAsset);
+
+                        return false;
+                    }
                 }
             }
 

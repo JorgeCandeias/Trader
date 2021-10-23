@@ -3,7 +3,6 @@ using Microsoft.Extensions.Options;
 using Outcompute.Trader.Core;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -20,10 +19,10 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
 
         public ValueAveragingAlgo(IAlgoContext context, IOptionsMonitor<ValueAveragingAlgoOptions> monitor, ILogger<ValueAveragingAlgoOptions> logger, ISystemClock clock)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
-            _monitor = monitor ?? throw new ArgumentNullException(nameof(monitor));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _context = context;
+            _monitor = monitor;
+            _logger = logger;
+            _clock = clock;
         }
 
         private static string TypeName => nameof(ValueAveragingAlgo);

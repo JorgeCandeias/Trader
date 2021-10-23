@@ -55,10 +55,10 @@ namespace Outcompute.Trader.Data.InMemory.Tests.Fixtures
             siloBuilder
                 .AddTrader()
                 .AddInMemoryTradingRepository()
-                    .ConfigureServices(services =>
-                    {
-                        services.AddAlgoType<TestAlgo, TestAlgoOptions>("Test");
-                    });
+                .ConfigureServices(services =>
+                {
+                    services.AddAlgoType<TestAlgo, TestAlgoOptions>("Test");
+                });
         }
     }
 

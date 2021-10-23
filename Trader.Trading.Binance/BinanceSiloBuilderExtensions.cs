@@ -11,9 +11,11 @@ using Outcompute.Trader.Trading.Binance.Providers.MarketData;
 using Outcompute.Trader.Trading.Binance.Providers.UserData;
 using Outcompute.Trader.Trading.Binance.Signing;
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Orleans.Hosting
 {
+    [ExcludeFromCodeCoverage]
     public static class BinanceSiloBuilderExtensions
     {
         public static ISiloBuilder AddBinanceTradingService(this ISiloBuilder builder, Action<BinanceOptions> configure)

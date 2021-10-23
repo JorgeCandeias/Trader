@@ -8,12 +8,14 @@ using Outcompute.Trader.Models.Collections;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Binance
 {
+    [ExcludeFromCodeCoverage(Justification = "Requires Integration Testing")]
     internal class BinanceTradingService : ITradingService, IHostedService
     {
         private readonly ILogger _logger;

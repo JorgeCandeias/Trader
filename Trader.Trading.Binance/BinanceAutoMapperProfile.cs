@@ -3,10 +3,12 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Binance.Converters;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace Outcompute.Trader.Trading.Binance
 {
+    [ExcludeFromCodeCoverage]
     internal class BinanceAutoMapperProfile : Profile
     {
         public BinanceAutoMapperProfile()

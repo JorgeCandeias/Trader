@@ -1,6 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Orleans.Streams;
-using Outcompute.Trader.Trading;
 using System;
 
 namespace Orleans.Hosting

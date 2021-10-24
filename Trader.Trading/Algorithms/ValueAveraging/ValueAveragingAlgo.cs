@@ -102,28 +102,18 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
             // publish the profit stats
             await _context.PublishProfitAsync(_significant.Profit);
 
-            // todo: refactor this
-            var results = new List<IAlgoResult>(2);
+            // evaluate signals and return results for them
+            return Many(
 
-            if (TrySignalBuyOrder())
-            {
-                await SetTrackingBuyAsync(_context.Symbol, _options.BuyOrderSafetyRatio, _options.TargetQuoteBalanceFractionPerBuy, _options.MaxNotional, _options.RedeemSavings, cancellationToken);
-            }
-            else
-            {
-                results.Add(ClearOpenOrders(_context.Symbol, OrderSide.Buy));
-            }
+                // set a tracking buy if we hit a buy signal
+                TrySignalBuyOrder()
+                    ? TrackingBuy(_context.Symbol, _options.PullbackRatio, _options.TargetQuoteBalanceFractionPerBuy, _options.MaxNotional, _options.RedeemSavings)
+                    : Noop(),
 
-            if (TrySignalSellOrder())
-            {
-                results.Add(SignificantAveragingSell(_ticker, _significant.Orders, _options.MinSellProfitRate, _options.RedeemSavings));
-            }
-            else
-            {
-                results.Add(ClearOpenOrders(_context.Symbol, OrderSide.Sell));
-            }
-
-            return Many(results);
+                // place an averaging sell if we hit a sell signal
+                TrySignalSellOrder()
+                    ? SignificantAveragingSell(_ticker, _significant.Orders, _options.MinSellProfitRate, _options.RedeemSavings)
+                    : Noop());
         }
 
         private int GetMaxPeriods()

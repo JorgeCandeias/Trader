@@ -64,9 +64,9 @@ namespace Outcompute.Trader.Trading.Algorithms
             return SignificantAveragingSell(EnsureSymbol(), ticker, orders, minimumProfitRate, redeemSavings);
         }
 
-        public virtual Task SetTrackingBuyAsync(decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings, CancellationToken cancellationToken = default)
+        public virtual TrackingBuyAlgoResult TrackingBuy(decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings)
         {
-            return SetTrackingBuyAsync(EnsureSymbol(), pullbackRatio, targetQuoteBalanceFractionPerBuy, maxNotional, redeemSavings, cancellationToken);
+            return TrackingBuy(EnsureSymbol(), pullbackRatio, targetQuoteBalanceFractionPerBuy, maxNotional, redeemSavings);
         }
     }
 }

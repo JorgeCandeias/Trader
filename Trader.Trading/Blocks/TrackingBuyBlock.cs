@@ -1,6 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Blocks;
 using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Collections.Generic;
@@ -11,26 +11,44 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
-    public static class TrackingBuyBlock
+    internal class TrackingBuyBlock : ITrackingBuyBlock
     {
-        private static string TypeName => nameof(TrackingBuyBlock);
+        private readonly ILogger _logger;
+        private readonly ITickerProvider _tickers;
+        private readonly IBalanceProvider _balances;
+        private readonly ISavingsProvider _savings;
+        private readonly IGetOpenOrdersBlock _getOpenOrdersBlock;
+        private readonly IRedeemSavingsBlock _redeemSavingsBlock;
+        private readonly ICreateOrderBlock _createOrderBlock;
+        private readonly ICancelOrderBlock _cancelOrderBlock;
 
-        public static ValueTask<bool> SetTrackingBuyAsync(this IAlgoContext context, Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings, CancellationToken cancellationToken = default)
+        public TrackingBuyBlock(ILogger<TrackingBuyBlock> logger, ITickerProvider tickers, IBalanceProvider balances, ISavingsProvider savings, IGetOpenOrdersBlock getOpenOrdersBlock, IRedeemSavingsBlock redeemSavingsBlock, ICreateOrderBlock createOrderBlock, ICancelOrderBlock cancelOrderBlock)
         {
-            if (context is null) throw new ArgumentNullException(nameof(context));
-            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
-
-            return SetTrackingBuyInnerAsync(context, symbol, pullbackRatio, targetQuoteBalanceFractionPerBuy, maxNotional, redeemSavings, cancellationToken);
+            _logger = logger;
+            _tickers = tickers;
+            _balances = balances;
+            _savings = savings;
+            _getOpenOrdersBlock = getOpenOrdersBlock;
+            _redeemSavingsBlock = redeemSavingsBlock;
+            _createOrderBlock = createOrderBlock;
+            _cancelOrderBlock = cancelOrderBlock;
         }
 
-        private static async ValueTask<bool> SetTrackingBuyInnerAsync(IAlgoContext context, Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings, CancellationToken cancellationToken)
-        {
-            var logger = context.ServiceProvider.GetRequiredService<ILogger<IAlgoContext>>();
+        private static string TypeName => nameof(TrackingBuyBlock);
 
-            var ticker = await context.GetRequiredTickerAsync(symbol.Name, cancellationToken).ConfigureAwait(false);
-            var orders = await context.GetOpenOrdersAsync(symbol, OrderSide.Buy, cancellationToken).ConfigureAwait(false);
-            var balance = await context.GetBalanceProvider().GetRequiredBalanceAsync(symbol.QuoteAsset, cancellationToken).ConfigureAwait(false);
-            var savings = await context.GetSavingsProvider().GetPositionOrZeroAsync(symbol.QuoteAsset, cancellationToken).ConfigureAwait(false);
+        public Task<bool> SetTrackingBuyAsync(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings, CancellationToken cancellationToken = default)
+        {
+            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+
+            return SetTrackingBuyCoreAsync(symbol, pullbackRatio, targetQuoteBalanceFractionPerBuy, maxNotional, redeemSavings, cancellationToken);
+        }
+
+        private async Task<bool> SetTrackingBuyCoreAsync(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings, CancellationToken cancellationToken)
+        {
+            var ticker = await _tickers.GetRequiredTickerAsync(symbol.Name, cancellationToken).ConfigureAwait(false);
+            var orders = await _getOpenOrdersBlock.GetOpenOrdersAsync(symbol, OrderSide.Buy, cancellationToken).ConfigureAwait(false);
+            var balance = await _balances.GetRequiredBalanceAsync(symbol.QuoteAsset, cancellationToken).ConfigureAwait(false);
+            var savings = await _savings.GetPositionOrZeroAsync(symbol.QuoteAsset, cancellationToken).ConfigureAwait(false);
 
             // identify the free balance
             var free = balance.Free + (redeemSavings ? savings.FreeAmount : 0m);
@@ -41,13 +59,13 @@ namespace Outcompute.Trader.Trading.Algorithms
             // under adjust the buy price to the tick size
             lowBuyPrice = Math.Floor(lowBuyPrice / symbol.Filters.Price.TickSize) * symbol.Filters.Price.TickSize;
 
-            logger.LogInformation(
+            _logger.LogInformation(
                 "{Type} {Name} identified first buy target price at {LowPrice} {LowQuote} with current price at {CurrentPrice} {CurrentQuote}",
                 TypeName, symbol.Name, lowBuyPrice, symbol.QuoteAsset, ticker.ClosePrice, symbol.QuoteAsset);
 
-            orders = await TryCloseLowBuysAsync(context, logger, symbol, orders, lowBuyPrice, cancellationToken).ConfigureAwait(false);
+            orders = await TryCloseLowBuysAsync(symbol, orders, lowBuyPrice, cancellationToken).ConfigureAwait(false);
 
-            orders = await TryCloseHighBuysAsync(context, logger, symbol, orders, cancellationToken).ConfigureAwait(false);
+            orders = await TryCloseHighBuysAsync(symbol, orders, cancellationToken).ConfigureAwait(false);
 
             // if there are still open orders then leave them be
             if (orders.Count > 0)
@@ -79,7 +97,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             // check if it still is under the max notional after adjustments - some assets have very high minimum notionals or lot sizes
             if (maxNotional.HasValue && total > maxNotional)
             {
-                logger.LogError(
+                _logger.LogError(
                     "{Type} {Name} cannot place buy order with amount of {Total} {Quote} because it is above the configured maximum notional of {MaxNotional}",
                     TypeName, symbol.Name, total, symbol.QuoteAsset, maxNotional);
 
@@ -91,20 +109,23 @@ namespace Outcompute.Trader.Trading.Algorithms
             {
                 var necessary = total - free;
 
-                logger.LogWarning(
+                _logger.LogWarning(
                     "{Type} {Name} must place order with amount of {Total} {Quote} but the free amount is only {Free} {Quote}",
                     TypeName, symbol.Name, total, symbol.QuoteAsset, free, symbol.QuoteAsset);
 
                 if (redeemSavings)
                 {
-                    logger.LogInformation(
+                    _logger.LogInformation(
                         "Will attempt to redeem the necessary {Necessary} {Quote} from savings...",
                         necessary, symbol.QuoteAsset);
 
-                    var (success, actual) = await context.TryRedeemSavingsAsync(symbol.QuoteAsset, necessary, cancellationToken).ConfigureAwait(false);
+                    var (success, actual) = await _redeemSavingsBlock
+                        .TryRedeemSavingsAsync(symbol.QuoteAsset, necessary, cancellationToken)
+                        .ConfigureAwait(false);
+
                     if (success)
                     {
-                        logger.LogInformation(
+                        _logger.LogInformation(
                             "{Type} {Name} redeemed {Quantity} {Asset} from savings to cover the necessary {Necessary} {Asset}",
                             TypeName, symbol.Name, actual, symbol.QuoteAsset, necessary, symbol.QuoteAsset);
 
@@ -112,7 +133,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                     }
                     else
                     {
-                        logger.LogError(
+                        _logger.LogError(
                             "{Type} {Name} could not redeem the necessary {Quantity} {Asset} from savings",
                             TypeName, symbol.Name, necessary, symbol.QuoteAsset);
 
@@ -121,29 +142,29 @@ namespace Outcompute.Trader.Trading.Algorithms
                 }
             }
 
-            logger.LogInformation(
+            _logger.LogInformation(
                 "{Type} {Name} placing {OrderType} {OrderSode} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",
                 TypeName, symbol.Name, OrderType.Limit, OrderSide.Buy, symbol.Name, quantity, symbol.BaseAsset, lowBuyPrice, symbol.QuoteAsset, quantity * lowBuyPrice, symbol.QuoteAsset);
 
             // place the order now
             var tag = $"{symbol.Name}{lowBuyPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal);
-            await context
+            await _createOrderBlock
                 .CreateOrderAsync(symbol, OrderType.Limit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, lowBuyPrice, tag, cancellationToken)
                 .ConfigureAwait(false);
 
             return true;
         }
 
-        private static async Task<IReadOnlyList<OrderQueryResult>> TryCloseLowBuysAsync(IAlgoContext context, ILogger logger, Symbol symbol, IReadOnlyList<OrderQueryResult> orders, decimal lowBuyPrice, CancellationToken cancellationToken)
+        private async Task<IReadOnlyList<OrderQueryResult>> TryCloseLowBuysAsync(Symbol symbol, IReadOnlyList<OrderQueryResult> orders, decimal lowBuyPrice, CancellationToken cancellationToken)
         {
             // cancel all open buy orders with an open price lower than the lower band to the current price
             foreach (var order in orders.Where(x => x.Side == OrderSide.Buy && x.Price < lowBuyPrice))
             {
-                logger.LogInformation(
+                _logger.LogInformation(
                     "{Type} {Name} cancelling low starting open order with price {Price} for {Quantity} units",
                     TypeName, symbol.Name, order.Price, order.OriginalQuantity);
 
-                await context
+                await _cancelOrderBlock
                     .CancelOrderAsync(symbol.Name, order.OrderId, cancellationToken)
                     .ConfigureAwait(false);
 
@@ -153,15 +174,15 @@ namespace Outcompute.Trader.Trading.Algorithms
             return orders;
         }
 
-        private static async Task<IReadOnlyList<OrderQueryResult>> TryCloseHighBuysAsync(IAlgoContext context, ILogger logger, Symbol symbol, IReadOnlyList<OrderQueryResult> orders, CancellationToken cancellationToken)
+        private async Task<IReadOnlyList<OrderQueryResult>> TryCloseHighBuysAsync(Symbol symbol, IReadOnlyList<OrderQueryResult> orders, CancellationToken cancellationToken)
         {
             foreach (var order in orders.Where(x => x.Side == OrderSide.Buy).OrderBy(x => x.Price).Skip(1))
             {
-                logger.LogInformation(
+                _logger.LogInformation(
                     "{Type} {Name} cancelling low starting open order with price {Price} for {Quantity} units",
                     TypeName, symbol.Name, order.Price, order.OriginalQuantity);
 
-                await context
+                await _cancelOrderBlock
                     .CancelOrderAsync(symbol.Name, order.OrderId, cancellationToken)
                     .ConfigureAwait(false);
 

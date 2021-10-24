@@ -101,20 +101,20 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
 
             if (TrySignalBuyOrder())
             {
-                await _context.SetTrackingBuyAsync(_context.Symbol, _options.BuyOrderSafetyRatio, _options.TargetQuoteBalanceFractionPerBuy, _options.MaxNotional, _options.RedeemSavings, cancellationToken);
+                await SetTrackingBuyAsync(_context.Symbol, _options.BuyOrderSafetyRatio, _options.TargetQuoteBalanceFractionPerBuy, _options.MaxNotional, _options.RedeemSavings, cancellationToken);
             }
             else
             {
-                await _context.ClearOpenOrdersAsync(_context.Symbol, OrderSide.Buy, cancellationToken);
+                await ClearOpenOrdersAsync(_context.Symbol, OrderSide.Buy, cancellationToken);
             }
 
             if (TrySignalSellOrder())
             {
-                await _context.SetSignificantAveragingSellAsync(_context.Symbol, _ticker, _significant.Orders, _options.MinSellProfitRate, _options.RedeemSavings, cancellationToken);
+                await SetSignificantAveragingSellAsync(_context.Symbol, _ticker, _significant.Orders, _options.MinSellProfitRate, _options.RedeemSavings, cancellationToken);
             }
             else
             {
-                await _context.ClearOpenOrdersAsync(_context.Symbol, OrderSide.Sell, cancellationToken);
+                await ClearOpenOrdersAsync(_context.Symbol, OrderSide.Sell, cancellationToken);
             }
 
             // publish the profit stats

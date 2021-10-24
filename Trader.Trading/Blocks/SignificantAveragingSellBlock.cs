@@ -6,15 +6,25 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Algorithms
+namespace Outcompute.Trader.Trading.Blocks
 {
-    public static class SignificantAveragingSellBlock
+    internal class SignificantAveragingSellBlock : ISignificantAveragingSellBlock
     {
+        private readonly ILogger _logger;
+        private readonly IClearOpenOrdersBlock _clearOpenOrdersBlock;
+        private readonly IEnsureSingleOrderBlock _ensureSingleOrderBlock;
+
+        public SignificantAveragingSellBlock(ILogger<SignificantAveragingSellBlock> logger, IClearOpenOrdersBlock clearOpenOrdersBlock, IEnsureSingleOrderBlock ensureSingleOrderBlock)
+        {
+            _logger = logger;
+            _clearOpenOrdersBlock = clearOpenOrdersBlock;
+            _ensureSingleOrderBlock = ensureSingleOrderBlock;
+        }
+
         private static string TypeName => nameof(SignificantAveragingSellBlock);
 
-        public static ValueTask SetSignificantAveragingSellAsync(this IAlgoContext context, Symbol symbol, MiniTicker ticker, IReadOnlyCollection<OrderQueryResult> orders, decimal minimumProfitRate, bool redeemSavings, CancellationToken cancellationToken = default)
+        public Task SetSignificantAveragingSellAsync(Symbol symbol, MiniTicker ticker, IReadOnlyCollection<OrderQueryResult> orders, decimal minimumProfitRate, bool redeemSavings, CancellationToken cancellationToken = default)
         {
-            if (context is null) throw new ArgumentNullException(nameof(context));
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
             if (ticker is null) throw new ArgumentNullException(nameof(ticker));
             if (orders is null) throw new ArgumentNullException(nameof(orders));
@@ -31,30 +41,30 @@ namespace Outcompute.Trader.Trading.Algorithms
                 }
             }
 
-            return SetSignificantAveragingSellInnerAsync(context, symbol, ticker, orders, minimumProfitRate, redeemSavings, cancellationToken);
+            return SetSignificantAveragingSellCoreAsync(symbol, ticker, orders, minimumProfitRate, redeemSavings, cancellationToken);
         }
 
-        private static async ValueTask SetSignificantAveragingSellInnerAsync(IAlgoContext context, Symbol symbol, MiniTicker ticker, IReadOnlyCollection<OrderQueryResult> orders, decimal minimumProfitRate, bool redeemSavings, CancellationToken cancellationToken)
+        private async Task SetSignificantAveragingSellCoreAsync(Symbol symbol, MiniTicker ticker, IReadOnlyCollection<OrderQueryResult> orders, decimal minimumProfitRate, bool redeemSavings, CancellationToken cancellationToken)
         {
             // calculate the desired sell
-            var desired = CalculateDesiredSell(context, symbol, minimumProfitRate, orders, ticker);
+            var desired = CalculateDesiredSell(symbol, minimumProfitRate, orders, ticker);
 
             // apply the desired sell
             if (desired == DesiredSell.None)
             {
-                await context
+                await _clearOpenOrdersBlock
                     .ClearOpenOrdersAsync(symbol, OrderSide.Sell, cancellationToken)
                     .ConfigureAwait(false);
             }
             else
             {
-                await context
+                await _ensureSingleOrderBlock
                     .EnsureSingleOrderAsync(symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, desired.Quantity, desired.Price, redeemSavings, cancellationToken)
                     .ConfigureAwait(false);
             }
         }
 
-        private static DesiredSell CalculateDesiredSell(IAlgoContext context, Symbol symbol, decimal minimumProfitRate, IReadOnlyCollection<OrderQueryResult> orders, MiniTicker ticker)
+        private DesiredSell CalculateDesiredSell(Symbol symbol, decimal minimumProfitRate, IReadOnlyCollection<OrderQueryResult> orders, MiniTicker ticker)
         {
             // skip if there is nothing to sell
             if (orders.Count == 0)
@@ -96,7 +106,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             // skip if no buy orders were elected for selling
             if (count <= 0)
             {
-                context.GetLogger().LogInformation(
+                _logger.LogInformation(
                     "{Type} {Symbol} cannot elect any buy orders for selling at a minimum profit rate of {MinimumProfitRate}",
                     TypeName, symbol.Name, minimumProfitRate);
 
@@ -106,7 +116,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             // break if the quantity is under the minimum lot size
             if (quantity < symbol.Filters.LotSize.StepSize)
             {
-                context.GetLogger().LogError(
+                _logger.LogError(
                     "{Type} {Name} cannot set sell order for {Quantity} {Asset} because the quantity is under the minimum lot size of {MinLotSize} {Asset}",
                     TypeName, symbol.Name, quantity, symbol.BaseAsset, symbol.Filters.LotSize.StepSize, symbol.BaseAsset);
 
@@ -119,7 +129,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             // check if the sell is under the minimum notional filter
             if (quantity * ticker.ClosePrice < symbol.Filters.MinNotional.MinNotional)
             {
-                context.GetLogger().LogError(
+                _logger.LogError(
                     "{Type} {Name} cannot set sell order for {Quantity} {Asset} at {Price} {Quote} totalling {Total} {Quote} because it is under the minimum notional of {MinNotional} {Quote}",
                     TypeName, symbol.Name, quantity, symbol.BaseAsset, ticker.ClosePrice, symbol.QuoteAsset, quantity * ticker.ClosePrice, symbol.QuoteAsset, symbol.Filters.MinNotional.MinNotional, symbol.QuoteAsset);
 

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Collections.Generic;
@@ -7,28 +8,31 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Algorithms
+namespace Outcompute.Trader.Trading.Blocks
 {
-    public class AveragingSellBlock
+    internal class AveragingSellBlock : IAveragingSellBlock
     {
         private readonly ILogger _logger;
         private readonly IBalanceProvider _balances;
         private readonly ISavingsProvider _savings;
         private readonly ITickerProvider _tickers;
+        private readonly IEnsureSingleOrderBlock _ensureSingleOrderBlock;
+        private readonly IClearOpenOrdersBlock _clearOpenOrdersBlock;
 
-        public AveragingSellBlock(ILogger<AveragingSellBlock> logger, IBalanceProvider balances, ISavingsProvider savings, ITickerProvider tickers)
+        public AveragingSellBlock(ILogger<AveragingSellBlock> logger, IBalanceProvider balances, ISavingsProvider savings, ITickerProvider tickers, IEnsureSingleOrderBlock ensureSingleOrderBlock, IClearOpenOrdersBlock clearOpenOrdersBlock)
         {
             _logger = logger;
             _balances = balances;
             _savings = savings;
             _tickers = tickers;
+            _ensureSingleOrderBlock = ensureSingleOrderBlock;
+            _clearOpenOrdersBlock = clearOpenOrdersBlock;
         }
 
         private static string TypeName => nameof(AveragingSellBlock);
 
-        public Task SetAveragingSellAsync(IAlgoContext context, Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, CancellationToken cancellationToken = default)
+        public Task SetAveragingSellAsync(Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, CancellationToken cancellationToken = default)
         {
-            if (context is null) throw new ArgumentNullException(nameof(context));
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
             if (orders is null) throw new ArgumentNullException(nameof(orders));
 
@@ -44,10 +48,10 @@ namespace Outcompute.Trader.Trading.Algorithms
                 }
             }
 
-            return SetAveragingSellCoreAsync(context, symbol, orders, profitMultiplier, redeemSavings, cancellationToken);
+            return SetAveragingSellCoreAsync(symbol, orders, profitMultiplier, redeemSavings, cancellationToken);
         }
 
-        private async Task SetAveragingSellCoreAsync(IAlgoContext context, Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, CancellationToken cancellationToken)
+        private async Task SetAveragingSellCoreAsync(Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, CancellationToken cancellationToken)
         {
             // get required data
             var balance = await _balances.GetBalanceOrZeroAsync(symbol.BaseAsset, cancellationToken).ConfigureAwait(false);
@@ -60,11 +64,15 @@ namespace Outcompute.Trader.Trading.Algorithms
             // apply the desired sell
             if (desired == DesiredSell.None)
             {
-                await context.ClearOpenOrdersAsync(symbol, OrderSide.Sell, cancellationToken).ConfigureAwait(false);
+                await _clearOpenOrdersBlock
+                    .ClearOpenOrdersAsync(symbol, OrderSide.Sell, cancellationToken)
+                    .ConfigureAwait(false);
             }
             else
             {
-                await context.EnsureSingleOrderAsync(symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, desired.Quantity, desired.Price, redeemSavings, cancellationToken).ConfigureAwait(false);
+                await _ensureSingleOrderBlock
+                    .EnsureSingleOrderAsync(symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, desired.Quantity, desired.Price, redeemSavings, cancellationToken)
+                    .ConfigureAwait(false);
             }
         }
 

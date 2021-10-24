@@ -37,7 +37,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Accumulator
 
             _logger.LogInformation("{Type} {Name} running...", TypeName, _context.Name);
 
-            await _context.SetTrackingBuyAsync(symbol, options.PullbackRatio, options.TargetQuoteBalanceFractionPerBuy, options.MaxNotional, options.RedeemSavings, cancellationToken);
+            await SetTrackingBuyAsync(symbol, options.PullbackRatio, options.TargetQuoteBalanceFractionPerBuy, options.MaxNotional, options.RedeemSavings, cancellationToken);
 
             await _context.PublishProfitAsync(Profit.Zero(symbol.Name, symbol.BaseAsset, symbol.QuoteAsset));
         }

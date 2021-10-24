@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
 using System;
@@ -7,37 +6,43 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Algorithms
+namespace Outcompute.Trader.Trading.Blocks
 {
-    public static class CancelOrderBlock
+    public class CancelOrderBlock : ICancelOrderBlock
     {
-        public static ValueTask<CancelStandardOrderResult> CancelOrderAsync(this IAlgoContext context, string symbol, long orderId, CancellationToken cancellationToken = default)
+        private readonly ILogger _logger;
+        private readonly ITradingService _trader;
+        private readonly IOrderProvider _orders;
+
+        public CancelOrderBlock(ILogger<CancelOrderBlock> logger, ITradingService trader, IOrderProvider orders)
         {
-            if (context is null) throw new ArgumentNullException(nameof(context));
-            if (symbol is null) throw new ArgumentNullException(nameof(context));
-
-            var logger = context.ServiceProvider.GetRequiredService<ILogger<IAlgoContext>>();
-            var trader = context.ServiceProvider.GetRequiredService<ITradingService>();
-            var orderProvider = context.ServiceProvider.GetRequiredService<IOrderProvider>();
-
-            return CancelOrderInnerAsync(symbol, orderId, logger, trader, orderProvider, cancellationToken);
+            _logger = logger;
+            _trader = trader;
+            _orders = orders;
         }
 
-        private static async ValueTask<CancelStandardOrderResult> CancelOrderInnerAsync(string symbol, long orderId, ILogger logger, ITradingService trader, IOrderProvider orderProvider, CancellationToken cancellationToken = default)
+        public Task<CancelStandardOrderResult> CancelOrderAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
         {
-            logger.LogStart(symbol, orderId);
+            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+
+            return CancelOrderCoreAsync(symbol, orderId, cancellationToken);
+        }
+
+        private async Task<CancelStandardOrderResult> CancelOrderCoreAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
+        {
+            LogStart(_logger, symbol, orderId);
 
             var watch = Stopwatch.StartNew();
 
-            var order = await trader
+            var order = await _trader
                 .CancelOrderAsync(symbol, orderId, cancellationToken)
                 .ConfigureAwait(false);
 
-            await orderProvider
+            await _orders
                 .SetOrderAsync(order, cancellationToken)
                 .ConfigureAwait(false);
 
-            logger.LogEnd(symbol, orderId, watch.ElapsedMilliseconds);
+            LogEnd(_logger, symbol, orderId, watch.ElapsedMilliseconds);
 
             return order;
         }
@@ -46,14 +51,14 @@ namespace Outcompute.Trader.Trading.Algorithms
             LogLevel.Information, new EventId(0, nameof(LogStart)),
             "{Type} {Symbol} cancelling order {OrderId}...");
 
-        private static void LogStart(this ILogger logger, string symbol, long orderId) =>
+        private static void LogStart(ILogger logger, string symbol, long orderId) =>
             _logStart(logger, nameof(CancelOrderBlock), symbol, orderId, null!);
 
         private static readonly Action<ILogger, string, string, long, long, Exception> _logEnd = LoggerMessage.Define<string, string, long, long>(
             LogLevel.Information, new EventId(0, nameof(LogEnd)),
             "{Type} {Symbol} cancelled order {OrderId} in {ElapsedMs}ms");
 
-        private static void LogEnd(this ILogger logger, string symbol, long orderId, long elapsedMs) =>
+        private static void LogEnd(ILogger logger, string symbol, long orderId, long elapsedMs) =>
             _logEnd(logger, nameof(CancelOrderBlock), symbol, orderId, elapsedMs, null!);
     }
 }

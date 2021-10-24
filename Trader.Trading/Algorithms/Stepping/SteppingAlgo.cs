@@ -5,7 +5,6 @@ using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms.Exceptions;
 using Outcompute.Trader.Trading.Providers;
 using Outcompute.Trader.Trading.Providers.Orders;
-using Outcompute.Trader.Trading.Providers.Trades;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -133,7 +132,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             // if the above checks fails then close the band
             if (band.OpenOrderId is not 0)
             {
-                var result = await _context.CancelOrderAsync(_symbol.Name, band.OpenOrderId, cancellationToken);
+                var result = await CancelOrderAsync(_symbol.Name, band.OpenOrderId, cancellationToken);
 
                 _logger.LogInformation(
                     "{Type} {Name} closed out-of-range {OrderSide} {OrderType} for {Quantity} {Asset} at {Price} {Quote}",
@@ -229,7 +228,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                     "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}. Will attempt to redeem from savings...",
                     TypeName, _context.Name, total, _symbol.QuoteAsset, _balances.Quote.Free, _symbol.QuoteAsset);
 
-                var (success, _) = await _context.TryRedeemSavingsAsync(_symbol.QuoteAsset, necessary, cancellationToken);
+                var (success, _) = await TryRedeemSavingsAsync(_symbol.QuoteAsset, necessary, cancellationToken);
 
                 if (success)
                 {
@@ -258,7 +257,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
             // place the buy order
             var tag = $"{_symbol.Name}{lowerPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal);
-            var result = await _context.CreateOrderAsync(_symbol, OrderType.Limit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, lowerPrice, tag, cancellationToken);
+            var result = await CreateOrderAsync(_symbol, OrderType.Limit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, lowerPrice, tag, cancellationToken);
 
             _logger.LogInformation(
                 "{Type} {Name} placed {OrderType} {OrderSide} for {Quantity} {Asset} at {Price} {Quote}",
@@ -294,7 +293,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                             "{Type} {Name} must place {OrderType} {OrderSide} of {Quantity} {Asset} for {Price} {Quote} but there is only {Free} {Asset} available. Will attempt to redeem {Necessary} {Asset} rest from savings.",
                             TypeName, _context.Name, OrderType.Limit, OrderSide.Sell, band.Quantity, _symbol.BaseAsset, band.ClosePrice, _symbol.QuoteAsset, _balances.Asset.Free, _symbol.BaseAsset, necessary, _symbol.BaseAsset);
 
-                        var (success, _) = await _context.TryRedeemSavingsAsync(_symbol.BaseAsset, necessary, cancellationToken);
+                        var (success, _) = await TryRedeemSavingsAsync(_symbol.BaseAsset, necessary, cancellationToken);
 
                         if (success)
                         {
@@ -317,7 +316,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
                     var tag = _orderCodeGenerator.GetSellClientOrderId(band.OpenOrderId);
 
-                    var result = await _context.CreateOrderAsync(_symbol, OrderType.Limit, OrderSide.Sell, TimeInForce.GoodTillCanceled, band.Quantity, band.ClosePrice, tag, cancellationToken);
+                    var result = await CreateOrderAsync(_symbol, OrderType.Limit, OrderSide.Sell, TimeInForce.GoodTillCanceled, band.Quantity, band.ClosePrice, tag, cancellationToken);
 
                     band.CloseOrderId = result.OrderId;
 
@@ -346,7 +345,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             {
                 if (!_bands.Any(x => x.CloseOrderId == orderId))
                 {
-                    var result = await _context.CancelOrderAsync(_symbol.Name, orderId, cancellationToken);
+                    var result = await CancelOrderAsync(_symbol.Name, orderId, cancellationToken);
 
                     _logger.LogWarning(
                         "{Type} {Name} cancelled sell order not associated with a band for {Quantity} {Asset} at {Price} {Quote}",
@@ -381,7 +380,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             {
                 if (!bands.Contains(orderId))
                 {
-                    var result = await _context.CancelOrderAsync(_symbol.Name, orderId, cancellationToken);
+                    var result = await CancelOrderAsync(_symbol.Name, orderId, cancellationToken);
 
                     _logger.LogWarning(
                         "{Type} {Name} cancelled excess sell order for {Quantity} {Asset} at {Price} {Quote}",
@@ -417,7 +416,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 {
                     if (lowest.Price < lowBuyPrice)
                     {
-                        var cancelled = await _context.CancelOrderAsync(_symbol.Name, lowest.OrderId, cancellationToken);
+                        var cancelled = await CancelOrderAsync(_symbol.Name, lowest.OrderId, cancellationToken);
 
                         _logger.LogInformation(
                             "{Type} {Name} cancelled low starting open order with price {Price} for {Quantity} units",
@@ -464,7 +463,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                         "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}. Will attempt to redeem from savings...",
                         TypeName, _context.Name, total, _symbol.QuoteAsset, _balances.Quote.Free, _symbol.QuoteAsset);
 
-                    var (success, _) = await _context.TryRedeemSavingsAsync(_symbol.QuoteAsset, necessary, cancellationToken);
+                    var (success, _) = await TryRedeemSavingsAsync(_symbol.QuoteAsset, necessary, cancellationToken);
 
                     if (success)
                     {
@@ -493,7 +492,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
                 // place a limit order at the current price
                 var tag = $"{_symbol.Name}{lowBuyPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal);
-                var result = await _context.CreateOrderAsync(_symbol, OrderType.Limit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, lowBuyPrice, tag, cancellationToken);
+                var result = await CreateOrderAsync(_symbol, OrderType.Limit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, lowBuyPrice, tag, cancellationToken);
 
                 _logger.LogInformation(
                     "{Type} {Name} created {OrderSide} {OrderType} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",

@@ -1,49 +1,53 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
-using Outcompute.Trader.Trading.Providers.Orders;
 using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Algorithms
+namespace Outcompute.Trader.Trading.Blocks
 {
-    public static class CreateOrderBlock
+    internal class CreateOrderBlock : ICreateOrderBlock
     {
-        private static string TypeName => nameof(CreateOrderBlock);
+        private readonly ILogger _logger;
+        private readonly ITradingService _trader;
+        private readonly IOrderProvider _orders;
 
-        public static ValueTask<OrderResult> CreateOrderAsync(this IAlgoContext context, Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag, CancellationToken cancellationToken = default)
+        public CreateOrderBlock(ILogger<CreateOrderBlock> logger, ITradingService trader, IOrderProvider orders)
         {
-            if (context is null) throw new ArgumentNullException(nameof(context));
-            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
-
-            var logger = context.ServiceProvider.GetRequiredService<ILogger<IAlgoContext>>();
-            var trader = context.ServiceProvider.GetRequiredService<ITradingService>();
-            var orderProvider = context.ServiceProvider.GetRequiredService<IOrderProvider>();
-
-            return CreateOrderInnerAsync(symbol, type, side, timeInForce, quantity, price, tag, logger, trader, orderProvider, cancellationToken);
+            _logger = logger;
+            _trader = trader;
+            _orders = orders;
         }
 
-        private static async ValueTask<OrderResult> CreateOrderInnerAsync(Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag, ILogger logger, ITradingService trader, IOrderProvider orderProvider, CancellationToken cancellationToken = default)
+        private static string TypeName => nameof(CreateOrderBlock);
+
+        public Task<OrderResult> CreateOrderAsync(Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag, CancellationToken cancellationToken = default)
+        {
+            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+
+            return CreateOrderCoreAsync(symbol, type, side, timeInForce, quantity, price, tag, cancellationToken);
+        }
+
+        private async Task<OrderResult> CreateOrderCoreAsync(Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag, CancellationToken cancellationToken = default)
         {
             // if we got here then we can place the order
             var watch = Stopwatch.StartNew();
 
-            logger.LogInformation(
+            _logger.LogInformation(
                 "{Type} {Name} placing {OrderType} {OrderSide} order for {Quantity:F8} {Asset} at {Price:F8} {Quote} for a total of {Total:F8} {Quote}",
                 TypeName, symbol.Name, type, side, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.QuoteAsset);
 
-            var result = await trader
+            var result = await _trader
                 .CreateOrderAsync(symbol.Name, side, type, timeInForce, quantity, null, price, tag, null, null, cancellationToken)
                 .ConfigureAwait(false);
 
-            await orderProvider
+            await _orders
                 .SetOrderAsync(result, 0m, 0m, 0m, cancellationToken)
                 .ConfigureAwait(false);
 
-            logger.LogInformation(
+            _logger.LogInformation(
                 "{Type} {Name} placed {OrderType} {OrderSide} order for {Quantity:F8} {Asset} at {Price:F8} {Quote} for a total of {Total:F8} {Quote} in {ElapsedMs}ms",
                 TypeName, symbol.Name, type, side, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.QuoteAsset, watch.ElapsedMilliseconds);
 

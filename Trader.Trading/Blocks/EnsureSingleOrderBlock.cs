@@ -1,34 +1,47 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Algorithms.Exceptions;
 using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Algorithms
+namespace Outcompute.Trader.Trading.Blocks
 {
-    public static class EnsureSingleOrderBlock
+    internal class EnsureSingleOrderBlock : IEnsureSingleOrderBlock
     {
-        private static string TypeName => nameof(EnsureSingleOrderBlock);
+        private readonly IOptionsMonitor<SavingsOptions> _monitor;
+        private readonly ILogger _logger;
+        private readonly IBalanceProvider _balances;
+        private readonly ICreateOrderBlock _createOrderBlock;
+        private readonly IGetOpenOrdersBlock _getOpenOrdersBlock;
+        private readonly ICancelOrderBlock _cancelOrderBlock;
+        private readonly IRedeemSavingsBlock _redeemSavingsBlock;
 
-        public static ValueTask<bool> EnsureSingleOrderAsync(this IAlgoContext context, Symbol symbol, OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings, CancellationToken cancellationToken = default)
+        public EnsureSingleOrderBlock(IOptionsMonitor<SavingsOptions> monitor, ILogger<EnsureSingleOrderBlock> logger, IBalanceProvider balances, ICreateOrderBlock orderCreator, IGetOpenOrdersBlock getOpenOrdersBlock, ICancelOrderBlock cancelOrderBlock, IRedeemSavingsBlock redeemSavingsBlock)
         {
-            if (context is null) throw new ArgumentNullException(nameof(context));
-            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
-
-            var logger = context.ServiceProvider.GetRequiredService<ILogger<IAlgoContext>>();
-            var savingsOptions = context.ServiceProvider.GetRequiredService<IOptions<SavingsOptions>>().Value;
-
-            return context.EnsureSingleOrderInnerAsync(symbol, side, type, timeInForce, quantity, price, redeemSavings, savingsOptions, logger, cancellationToken);
+            _monitor = monitor;
+            _logger = logger;
+            _balances = balances;
+            _createOrderBlock = orderCreator;
+            _getOpenOrdersBlock = getOpenOrdersBlock;
+            _cancelOrderBlock = cancelOrderBlock;
+            _redeemSavingsBlock = redeemSavingsBlock;
         }
 
-        private static async ValueTask<bool> EnsureSingleOrderInnerAsync(this IAlgoContext context, Symbol symbol, OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings, SavingsOptions savingsOptions, ILogger logger, CancellationToken cancellationToken = default)
+        private static string TypeName => nameof(EnsureSingleOrderBlock);
+
+        public Task<bool> EnsureSingleOrderAsync(Symbol symbol, OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings, CancellationToken cancellationToken = default)
+        {
+            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+
+            return EnsureSingleOrderCoreAsync(symbol, side, type, timeInForce, quantity, price, redeemSavings, cancellationToken);
+        }
+
+        private async Task<bool> EnsureSingleOrderCoreAsync(Symbol symbol, OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings, CancellationToken cancellationToken = default)
         {
             // get current open orders
-            var orders = await context
+            var orders = await _getOpenOrdersBlock
                 .GetOpenOrdersAsync(symbol, side, cancellationToken)
                 .ConfigureAwait(false);
 
@@ -38,7 +51,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             {
                 if (order.Type != type || order.OriginalQuantity != quantity || order.Price != price)
                 {
-                    await context
+                    await _cancelOrderBlock
                         .CancelOrderAsync(order.Symbol, order.OrderId, cancellationToken)
                         .ConfigureAwait(false);
 
@@ -57,7 +70,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 _ => throw new ArgumentOutOfRangeException(nameof(side))
             };
 
-            var balance = await context.GetBalanceProvider().GetRequiredBalanceAsync(sourceAsset, cancellationToken).ConfigureAwait(false);
+            var balance = await _balances.GetRequiredBalanceAsync(sourceAsset, cancellationToken).ConfigureAwait(false);
 
             // get the quantity for the affected asset
             var sourceQuantity = side switch
@@ -74,21 +87,23 @@ namespace Outcompute.Trader.Trading.Algorithms
                 {
                     var necessary = sourceQuantity - balance.Free;
 
-                    var (success, redeemed) = await context
+                    var (success, redeemed) = await _redeemSavingsBlock
                         .TryRedeemSavingsAsync(sourceAsset, necessary, cancellationToken)
                         .ConfigureAwait(false);
 
                     if (success)
                     {
-                        logger.LogInformation(
-                            "{Type} {Name} redeemed {Redeemed:F8} {Asset} from savings to cover the necessary {Necessary:F8} {Asset} and will wait {Wait} for the operation to complete",
-                            TypeName, symbol.Name, redeemed, sourceAsset, necessary, sourceAsset, savingsOptions.SavingsRedemptionDelay);
+                        var delay = _monitor.CurrentValue.SavingsRedemptionDelay;
 
-                        await Task.Delay(savingsOptions.SavingsRedemptionDelay, cancellationToken).ConfigureAwait(false);
+                        _logger.LogInformation(
+                            "{Type} {Name} redeemed {Redeemed:F8} {Asset} from savings to cover the necessary {Necessary:F8} {Asset} and will wait {Wait} for the operation to complete",
+                            TypeName, symbol.Name, redeemed, sourceAsset, necessary, sourceAsset, delay);
+
+                        await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
                     }
                     else
                     {
-                        logger.LogWarning(
+                        _logger.LogWarning(
                             "{type} {Name} could not redeem the necessary {Necessary:F8} {Asset} from savings",
                             TypeName, symbol.Name, necessary, sourceAsset);
 
@@ -97,7 +112,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 }
                 else
                 {
-                    logger.LogWarning(
+                    _logger.LogWarning(
                         "{Type} {Name} must place {OrderType} {OrderSide} of {Quantity:F8} {Asset} for {Price:F8} {Quote} but there is only {Free:F8} {Asset} available and savings redemption is disabled",
                         TypeName, symbol.Name, type, side, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, balance.Free, sourceAsset);
 
@@ -106,7 +121,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             }
 
             // if we got here then we can place the order
-            await context
+            await _createOrderBlock
                 .CreateOrderAsync(symbol, type, side, timeInForce, quantity, price, $"{symbol.Name}{price:F8}".Replace(".", "", StringComparison.Ordinal), cancellationToken)
                 .ConfigureAwait(false);
 

@@ -6,7 +6,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Operations
+namespace Outcompute.Trader.Trading.Operations.EnsureSingleOrder
 {
     internal class EnsureSingleOrderOperation : IEnsureSingleOrderOperation
     {

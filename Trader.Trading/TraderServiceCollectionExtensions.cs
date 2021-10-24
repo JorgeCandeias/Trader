@@ -57,7 +57,10 @@ namespace Microsoft.Extensions.DependencyInjection
 
                 // exchange info provider
                 .AddSingleton<IExchangeInfoProvider, ExchangeInfoProvider>()
-                .AddOptions<ExchangeInfoOptions>().ValidateDataAnnotations().Services;
+                .AddOptions<ExchangeInfoOptions>().ValidateDataAnnotations().Services
+
+                // blocks
+                .AddSingleton<AveragingSellBlock>();
         }
     }
 }

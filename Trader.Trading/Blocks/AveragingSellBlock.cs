@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
 using System;
@@ -10,11 +9,24 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
-    public static class AveragingSellBlock
+    public class AveragingSellBlock
     {
+        private readonly ILogger _logger;
+        private readonly IBalanceProvider _balances;
+        private readonly ISavingsProvider _savings;
+        private readonly ITickerProvider _tickers;
+
+        public AveragingSellBlock(ILogger<AveragingSellBlock> logger, IBalanceProvider balances, ISavingsProvider savings, ITickerProvider tickers)
+        {
+            _logger = logger;
+            _balances = balances;
+            _savings = savings;
+            _tickers = tickers;
+        }
+
         private static string TypeName => nameof(AveragingSellBlock);
 
-        public static ValueTask SetAveragingSellAsync(this IAlgoContext context, Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, CancellationToken cancellationToken = default)
+        public Task SetAveragingSellAsync(IAlgoContext context, Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, CancellationToken cancellationToken = default)
         {
             if (context is null) throw new ArgumentNullException(nameof(context));
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
@@ -32,21 +44,18 @@ namespace Outcompute.Trader.Trading.Algorithms
                 }
             }
 
-            return SetAveragingSellInnerAsync(context, symbol, orders, profitMultiplier, redeemSavings, cancellationToken);
+            return SetAveragingSellCoreAsync(context, symbol, orders, profitMultiplier, redeemSavings, cancellationToken);
         }
 
-        private static async ValueTask SetAveragingSellInnerAsync(IAlgoContext context, Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, CancellationToken cancellationToken)
+        private async Task SetAveragingSellCoreAsync(IAlgoContext context, Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, CancellationToken cancellationToken)
         {
-            // resolve services
-            var logger = context.ServiceProvider.GetRequiredService<ILogger<IAlgoContext>>();
-
             // get required data
-            var balance = await context.GetBalanceProvider().GetBalanceOrZeroAsync(symbol.BaseAsset, cancellationToken).ConfigureAwait(false);
-            var savings = await context.GetSavingsProvider().GetPositionOrZeroAsync(symbol.BaseAsset, cancellationToken).ConfigureAwait(false);
-            var ticker = await context.GetTickerProvider().GetRequiredTickerAsync(symbol.Name, cancellationToken).ConfigureAwait(false);
+            var balance = await _balances.GetBalanceOrZeroAsync(symbol.BaseAsset, cancellationToken).ConfigureAwait(false);
+            var savings = await _savings.GetPositionOrZeroAsync(symbol.BaseAsset, cancellationToken).ConfigureAwait(false);
+            var ticker = await _tickers.GetRequiredTickerAsync(symbol.Name, cancellationToken).ConfigureAwait(false);
 
             // calculate the desired sell
-            var desired = CalculateDesiredSell(logger, symbol, profitMultiplier, orders, balance, savings, ticker);
+            var desired = CalculateDesiredSell(symbol, profitMultiplier, orders, balance, savings, ticker);
 
             // apply the desired sell
             if (desired == DesiredSell.None)
@@ -59,7 +68,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             }
         }
 
-        private static DesiredSell CalculateDesiredSell(ILogger logger, Symbol symbol, decimal profitMultiplier, IReadOnlyCollection<OrderQueryResult> orders, Balance balance, SavingsPosition savings, MiniTicker ticker)
+        private DesiredSell CalculateDesiredSell(Symbol symbol, decimal profitMultiplier, IReadOnlyCollection<OrderQueryResult> orders, Balance balance, SavingsPosition savings, MiniTicker ticker)
         {
             // skip if there is nothing to sell
             if (orders.Count == 0)
@@ -74,7 +83,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             var total = balance.Free + savings.FreeAmount;
             if (total < quantity)
             {
-                logger.LogWarning(
+                _logger.LogWarning(
                     "{Type} cannot evaluate desired sell for symbol {Symbol} because there are not enough assets available to sell",
                     TypeName, symbol.Name);
 
@@ -90,7 +99,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             // adjust the quantity down to lot size filter
             if (quantity < symbol.Filters.LotSize.StepSize)
             {
-                logger.LogError(
+                _logger.LogError(
                     "{Type} {Name} cannot set sell order for {Quantity} {Asset} because the quantity is under the minimum lot size of {MinLotSize} {Asset}",
                     TypeName, symbol.Name, quantity, symbol.BaseAsset, symbol.Filters.LotSize.StepSize, symbol.BaseAsset);
 
@@ -111,7 +120,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             // check if the sell is under the minimum notional filter
             if (quantity * price < symbol.Filters.MinNotional.MinNotional)
             {
-                logger.LogError(
+                _logger.LogError(
                     "{Type} {Name} cannot set sell order for {Quantity} {Asset} at {Price} {Quote} totalling {Total} {Quote} because it is under the minimum notional of {MinNotional} {Quote}",
                     TypeName, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.QuoteAsset, symbol.Filters.MinNotional.MinNotional, symbol.QuoteAsset);
 
@@ -121,7 +130,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             // check if the sell is above the maximum percent filter
             if (price > ticker.ClosePrice * symbol.Filters.PercentPrice.MultiplierUp)
             {
-                logger.LogError(
+                _logger.LogError(
                     "{Type} {Name} cannot set sell order for {Quantity} {Asset} at {Price} {Quote} totalling {Total} {Quote} because it is under the maximum percent filter price of {MaxPrice} {Quote}",
                     TypeName, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.QuoteAsset, ticker.ClosePrice * symbol.Filters.PercentPrice.MultiplierUp, symbol.QuoteAsset);
 
@@ -131,7 +140,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             // only sell if the price is at or above the ticker
             if (ticker.ClosePrice < price)
             {
-                logger.LogInformation(
+                _logger.LogInformation(
                     "{Type} {Name} holding off sell order of {Quantity} {Asset} until price hits {Price} {Quote} ({Percent:P2} of current value of {Ticker} {Quote})",
                     TypeName, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, price / ticker.ClosePrice, ticker.ClosePrice, symbol.QuoteAsset);
 

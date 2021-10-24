@@ -1,4 +1,8 @@
-﻿using System.Threading;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Outcompute.Trader.Models;
+using System;
+using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
@@ -22,5 +26,27 @@ namespace Outcompute.Trader.Trading.Algorithms
         }
 
         public IAlgoContext Context { get; set; } = NullAlgoContext.Instance;
+
+        private Symbol EnsureSymbol()
+        {
+            if (Context.Symbol == Symbol.Empty)
+            {
+                throw new InvalidOperationException("Current algo has no default symbol");
+            }
+
+            return Context.Symbol;
+        }
+
+        public virtual Task SetAveragingSellAsync(IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, CancellationToken cancellationToken = default)
+        {
+            return SetAveragingSellAsync(EnsureSymbol(), orders, profitMultiplier, redeemSavings, cancellationToken);
+        }
+
+        public virtual Task SetAveragingSellAsync(Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, CancellationToken cancellationToken = default)
+        {
+            return Context.ServiceProvider
+                .GetRequiredService<AveragingSellBlock>()
+                .SetAveragingSellAsync(Context, symbol, orders, profitMultiplier, redeemSavings, cancellationToken);
+        }
     }
 }

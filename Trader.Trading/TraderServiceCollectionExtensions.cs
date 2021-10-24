@@ -66,7 +66,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddCancelOrderServices()
                 .AddSingleton<IEnsureSingleOrderOperation, EnsureSingleOrderOperation>()
                 .AddSingleton<ICancelOrderOperation, CancelOrderOperation>()
-                .AddSingleton<IClearOpenOrdersOperation, ClearOpenOrdersOperation>()
+                .AddClearOpenOrdersServices()
                 .AddSingleton<IGetOpenOrdersOperation, GetOpenOrdersOperation>()
                 .AddSingleton<IRedeemSavingsOperation, RedeemSavingsOperation>()
                 .AddSingleton<ISignificantAveragingSellOperation, SignificantAveragingSellOperation>()

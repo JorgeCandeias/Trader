@@ -5,7 +5,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Operations
+namespace Outcompute.Trader.Trading.Operations.ClearOpenOrders
 {
     internal class ClearOpenOrdersOperation : IClearOpenOrdersOperation
     {

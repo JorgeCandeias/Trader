@@ -6,7 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Operations
+namespace Outcompute.Trader.Trading.Operations.SignificantAveragingSell
 {
     internal class SignificantAveragingSellOperation : ISignificantAveragingSellOperation
     {

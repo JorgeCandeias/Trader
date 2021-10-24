@@ -8,6 +8,7 @@ using Outcompute.Trader.Trading.Operations.CreateOrder;
 using Outcompute.Trader.Trading.Operations.EnsureSingleOrder;
 using Outcompute.Trader.Trading.Operations.Many;
 using Outcompute.Trader.Trading.Operations.RedeemSavings;
+using Outcompute.Trader.Trading.Operations.SignificantAveragingSell;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;

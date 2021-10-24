@@ -101,8 +101,17 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 return result;
             }
 
-            if (await TrySetBandSellOrdersAsync(cancellationToken)) return Noop();
-            if (await TryCreateLowerBandOrderAsync(cancellationToken)) return Noop();
+            result = await TrySetBandSellOrdersAsync(cancellationToken);
+            if (result is not null)
+            {
+                return result;
+            }
+
+            result = await TryCreateLowerBandOrderAsync(cancellationToken);
+            if (result is not null)
+            {
+                return result;
+            }
 
             return TryCloseOutOfRangeBands() ?? Noop();
         }
@@ -156,7 +165,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             return null;
         }
 
-        private async Task<bool> TryCreateLowerBandOrderAsync(CancellationToken cancellationToken = default)
+        private async Task<IAlgoResult?> TryCreateLowerBandOrderAsync(CancellationToken cancellationToken = default)
         {
             // identify the highest and lowest bands
             var highBand = _bands.Max;
@@ -169,7 +178,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                     TypeName, _context.Name);
 
                 // something went wrong so let the algo reset
-                return true;
+                return Noop();
             }
 
             // skip if the current price is at or above the band open price
@@ -180,7 +189,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                     TypeName, _context.Name, _ticker.ClosePrice, _symbol.QuoteAsset, lowBand.OpenPrice, _symbol.QuoteAsset, lowBand.ClosePrice, _symbol.QuoteAsset);
 
                 // let the algo continue
-                return false;
+                return null;
             }
 
             // skip if we are already at the maximum number of bands
@@ -191,7 +200,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                     TypeName, _context.Name, _options.MaxBands);
 
                 // let the algo continue
-                return false;
+                return null;
             }
 
             // skip if lower band creation is disabled
@@ -201,7 +210,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                     "{Type} {Name} cannot create lower band because the feature is disabled",
                     TypeName, _context.Name);
 
-                return false;
+                return null;
             }
 
             // find the lower price under the current price and low band
@@ -251,7 +260,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                         TypeName, _context.Name, necessary, _symbol.QuoteAsset);
 
                     // let the algo cycle to allow redemption to process
-                    return true;
+                    return Noop();
                 }
                 else
                 {
@@ -259,7 +268,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                         "{Type} {Name} failed to redeem the necessary amount of {Quantity} {Asset}",
                         TypeName, _context.Name, necessary, _symbol.QuoteAsset);
 
-                    return false;
+                    return null;
                 }
             }
 
@@ -271,26 +280,20 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
             // place the buy order
             var tag = $"{_symbol.Name}{lowerPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal);
-            var result = await CreateOrderAsync(_symbol, OrderType.Limit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, lowerPrice, tag, cancellationToken);
-
-            _logger.LogInformation(
-                "{Type} {Name} placed {OrderType} {OrderSide} for {Quantity} {Asset} at {Price} {Quote}",
-                TypeName, _context.Name, result.Type, result.Side, result.OriginalQuantity, _symbol.BaseAsset, result.Price, _symbol.QuoteAsset);
-
-            return false;
+            return CreateOrder(_symbol, OrderType.Limit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, lowerPrice, tag);
         }
 
         /// <summary>
         /// Sets sell orders for open bands that do not have them yet.
         /// </summary>
-        private async Task<bool> TrySetBandSellOrdersAsync(CancellationToken cancellationToken = default)
+        private async Task<IAlgoResult?> TrySetBandSellOrdersAsync(CancellationToken cancellationToken = default)
         {
             // skip if we have reach the max sell orders
             var orders = await _orderProvider.GetTransientOrdersBySideAsync(_symbol.Name, OrderSide.Sell, cancellationToken);
 
             if (orders.Count >= _options.MaxActiveSellOrders)
             {
-                return false;
+                return null;
             }
 
             // create a sell order for the lowest band only
@@ -316,7 +319,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                                 TypeName, _context.Name, necessary, _symbol.BaseAsset);
 
                             // let the algo cycle to allow redemption to process
-                            return true;
+                            return Noop();
                         }
                         else
                         {
@@ -324,25 +327,17 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                                "{Type} {Name} cannot set band sell order of {Quantity} {Asset} for {Price} {Quote} because there are only {Balance} {Asset} free and savings redemption failed",
                                 TypeName, _context.Name, band.Quantity, _symbol.BaseAsset, band.ClosePrice, _symbol.QuoteAsset, _balances.Asset.Free, _symbol.BaseAsset);
 
-                            return false;
+                            return null;
                         }
                     }
 
                     var tag = _orderCodeGenerator.GetSellClientOrderId(band.OpenOrderId);
 
-                    var result = await CreateOrderAsync(_symbol, OrderType.Limit, OrderSide.Sell, TimeInForce.GoodTillCanceled, band.Quantity, band.ClosePrice, tag, cancellationToken);
-
-                    band.CloseOrderId = result.OrderId;
-
-                    _logger.LogInformation(
-                        "{Type} {Name} placed {OrderType} {OrderSide} order for band of {Quantity} {Asset} with {OpenPrice} {Quote} at {ClosePrice} {Quote}",
-                        TypeName, _context.Name, result.Type, result.Side, result.OriginalQuantity, _symbol.BaseAsset, band.OpenPrice, _symbol.QuoteAsset, result.Price, _symbol.QuoteAsset);
-
-                    return true;
+                    return CreateOrder(_symbol, OrderType.Limit, OrderSide.Sell, TimeInForce.GoodTillCanceled, band.Quantity, band.ClosePrice, tag);
                 }
             }
 
-            return false;
+            return null;
         }
 
         /// <summary>
@@ -476,14 +471,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
                 // place a limit order at the current price
                 var tag = $"{_symbol.Name}{lowBuyPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal);
-                var result = await CreateOrderAsync(_symbol, OrderType.Limit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, lowBuyPrice, tag, cancellationToken);
-
-                _logger.LogInformation(
-                    "{Type} {Name} created {OrderSide} {OrderType} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",
-                    TypeName, _context.Name, result.Side, result.Type, result.Symbol, result.OriginalQuantity, _symbol.BaseAsset, result.Price, _symbol.QuoteAsset, result.OriginalQuantity * result.Price, _symbol.QuoteAsset);
-
-                // skip the rest of this tick to let the algo resync
-                return Noop();
+                return CreateOrder(_symbol, OrderType.Limit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, lowBuyPrice, tag);
             }
             else
             {

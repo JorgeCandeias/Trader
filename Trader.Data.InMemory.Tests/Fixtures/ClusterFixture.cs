@@ -64,7 +64,7 @@ namespace Outcompute.Trader.Data.InMemory.Tests.Fixtures
 
     public class TestAlgo : Algo
     {
-        public override ValueTask GoAsync(CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+        public override Task GoAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 
     public class TestAlgoOptions

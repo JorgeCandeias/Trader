@@ -1,10 +1,11 @@
-﻿using System.Threading.Tasks;
+﻿using System.Threading;
+using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
     public interface IAlgoResultExecutor<in TAlgoResult>
-        where TAlgoResult : IAlgoResult
+        where TAlgoResult : notnull, IAlgoResult
     {
-        Task ExecuteAsync(TAlgoResult result);
+        Task ExecuteAsync(IAlgoContext context, TAlgoResult result, CancellationToken cancellationToken = default);
     }
 }

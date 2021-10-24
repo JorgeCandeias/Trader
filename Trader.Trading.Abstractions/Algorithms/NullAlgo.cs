@@ -15,10 +15,10 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public static NullAlgo Instance { get; } = new NullAlgo();
 
-        public ValueTask StartAsync(CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+        public Task StartAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
 
-        public ValueTask StopAsync(CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+        public Task StopAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
 
-        public ValueTask GoAsync(CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+        public Task GoAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 }

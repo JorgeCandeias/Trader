@@ -60,7 +60,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         /// </summary>
         private readonly SortedSet<Band> _bands = new();
 
-        public override async ValueTask GoAsync(CancellationToken cancellationToken = default)
+        public override async Task GoAsync(CancellationToken cancellationToken = default)
         {
             // pin the options for this execution
             _options = _monitor.Get(_context.Name);

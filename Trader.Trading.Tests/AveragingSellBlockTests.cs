@@ -2,6 +2,7 @@
 using Moq;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Blocks;
+using Outcompute.Trader.Trading.Blocks.AveragingSell;
 using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Threading;

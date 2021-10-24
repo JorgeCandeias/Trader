@@ -13,16 +13,16 @@ namespace Outcompute.Trader.Trading.Algorithms
     /// </summary>
     public abstract class Algo : IAlgo
     {
-        public abstract ValueTask GoAsync(CancellationToken cancellationToken = default);
+        public abstract Task GoAsync(CancellationToken cancellationToken = default);
 
-        public virtual ValueTask StartAsync(CancellationToken cancellationToken = default)
+        public virtual Task StartAsync(CancellationToken cancellationToken = default)
         {
-            return ValueTask.CompletedTask;
+            return Task.CompletedTask;
         }
 
-        public virtual ValueTask StopAsync(CancellationToken cancellationToken = default)
+        public virtual Task StopAsync(CancellationToken cancellationToken = default)
         {
-            return ValueTask.CompletedTask;
+            return Task.CompletedTask;
         }
 
         public IAlgoContext Context { get; set; } = NullAlgoContext.Instance;

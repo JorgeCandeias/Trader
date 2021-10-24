@@ -37,7 +37,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         private decimal _rsiB;
         private decimal _rsiC;
 
-        public override async ValueTask GoAsync(CancellationToken cancellationToken = default)
+        public override async Task GoAsync(CancellationToken cancellationToken = default)
         {
             _options = _monitor.Get(_context.Name);
 

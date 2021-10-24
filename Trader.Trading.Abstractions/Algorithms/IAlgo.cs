@@ -9,10 +9,10 @@ namespace Outcompute.Trader.Trading.Algorithms
     /// </summary>
     public interface IAlgo
     {
-        ValueTask StartAsync(CancellationToken cancellationToken = default);
+        Task StartAsync(CancellationToken cancellationToken = default);
 
-        ValueTask StopAsync(CancellationToken cancellationToken = default);
+        Task StopAsync(CancellationToken cancellationToken = default);
 
-        ValueTask GoAsync(CancellationToken cancellationToken = default);
+        Task GoAsync(CancellationToken cancellationToken = default);
     }
 }

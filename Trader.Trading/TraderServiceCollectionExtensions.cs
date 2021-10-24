@@ -61,7 +61,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddOptions<ExchangeInfoOptions>().ValidateDataAnnotations().Services
 
                 // blocks
-                .AddSingleton<IAveragingSellBlock, AveragingSellBlock>()
+                .AddAveragingSellServices()
                 .AddSingleton<ICreateOrderBlock, CreateOrderBlock>()
                 .AddSingleton<IEnsureSingleOrderBlock, EnsureSingleOrderBlock>()
                 .AddSingleton<ICancelOrderBlock, CancelOrderBlock>()
@@ -69,10 +69,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<IGetOpenOrdersBlock, GetOpenOrdersBlock>()
                 .AddSingleton<IRedeemSavingsBlock, RedeemSavingsBlock>()
                 .AddSingleton<ISignificantAveragingSellBlock, SignificantAveragingSellBlock>()
-                .AddSingleton<ITrackingBuyBlock, TrackingBuyBlock>()
-
-                // algo result handling
-                .AddSingleton<IAlgoResultHandler, AlgoResultHandler>();
+                .AddSingleton<ITrackingBuyBlock, TrackingBuyBlock>();
         }
     }
 }

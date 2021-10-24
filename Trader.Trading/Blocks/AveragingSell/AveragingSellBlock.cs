@@ -8,7 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Blocks
+namespace Outcompute.Trader.Trading.Blocks.AveragingSell
 {
     internal class AveragingSellBlock : IAveragingSellBlock
     {

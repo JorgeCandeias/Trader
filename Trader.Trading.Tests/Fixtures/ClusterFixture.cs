@@ -45,6 +45,9 @@ namespace Outcompute.Trader.Trading.Tests.Fixtures
                     {
                         { "Trader:Algos:MyTestAlgo:Type", "Test" },
                         { "Trader:Algos:MyTestAlgo:Options:TestValue", "123" },
+                        { "Trader:Algos:MyTestAlgo:DependsOn:Klines:0:Symbol", "BTCGBP" },
+                        { "Trader:Algos:MyTestAlgo:DependsOn:Klines:0:Interval", "Days1" },
+                        { "Trader:Algos:MyTestAlgo:DependsOn:Klines:0:Periods", "100" }
                     });
                 });
         }

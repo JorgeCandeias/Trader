@@ -6,12 +6,10 @@ using OrleansDashboard;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Algorithms;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Providers.Klines
@@ -19,17 +17,17 @@ namespace Outcompute.Trader.Trading.Providers.Klines
     [Reentrant]
     internal class KlineProviderGrain : Grain, IKlineProviderGrain
     {
+        private readonly KlineProviderOptions _options;
         private readonly ReactiveOptions _reactive;
         private readonly ITradingRepository _repository;
-        private readonly IAlgoDependencyInfo _dependencies;
         private readonly ISystemClock _clock;
         private readonly IHostApplicationLifetime _lifetime;
 
-        public KlineProviderGrain(IOptions<ReactiveOptions> reactive, ITradingRepository repository, IAlgoDependencyInfo dependencies, ISystemClock clock, IHostApplicationLifetime lifetime)
+        public KlineProviderGrain(IOptions<KlineProviderOptions> options, IOptions<ReactiveOptions> reactive, ITradingRepository repository, ISystemClock clock, IHostApplicationLifetime lifetime)
         {
+            _options = options.Value;
             _reactive = reactive.Value;
             _repository = repository;
-            _dependencies = dependencies;
             _clock = clock;
             _lifetime = lifetime;
         }
@@ -53,11 +51,6 @@ namespace Outcompute.Trader.Trading.Providers.Klines
         /// The current change serial number;
         /// </summary>
         private int _serial;
-
-        /// <summary>
-        /// Maximum cached periods needed by algos.
-        /// </summary>
-        private int _periods;
 
         /// <summary>
         /// Holds the kline cache in a form that is mutable but still convertible to immutable upon request with low overhead.
@@ -88,13 +81,9 @@ namespace Outcompute.Trader.Trading.Providers.Klines
         {
             (_symbol, _interval) = this.GetPrimaryKeys();
 
-            _periods = _dependencies
-                .GetKlines(_symbol, _interval)
-                .Select(x => x.Periods)
-                .DefaultIfEmpty(0)
-                .Max();
-
             await LoadAsync();
+
+            RegisterTimer(_ => CleanupAsync(), null, _options.CleanupPeriod, _options.CleanupPeriod);
 
             await base.OnActivateAsync();
         }
@@ -142,7 +131,7 @@ namespace Outcompute.Trader.Trading.Providers.Klines
 
         private async Task LoadAsync()
         {
-            var result = await _repository.GetKlinesAsync(_symbol, _interval, _clock.UtcNow.Subtract(_interval, _periods + 1), _clock.UtcNow);
+            var result = await _repository.GetKlinesAsync(_symbol, _interval, _clock.UtcNow.Subtract(_interval, _options.MaxCachedKlines + 1), _clock.UtcNow);
 
             foreach (var kline in result)
             {
@@ -171,16 +160,20 @@ namespace Outcompute.Trader.Trading.Providers.Klines
 
         private void Apply(Kline item)
         {
-            // remove old item to allow an update
-            if (_klines.Remove(item) && !Unindex(item))
-            {
-                throw new InvalidOperationException($"Failed to unindex kline ('{item.Symbol}','{item.Interval}','{item.OpenTime}')");
-            }
+            Remove(item);
 
             _klines.Add(item);
 
             Index(item);
             Complete();
+        }
+
+        private void Remove(Kline item)
+        {
+            if (_klines.Remove(item) && !Unindex(item))
+            {
+                throw new InvalidOperationException($"Failed to unindex kline ('{item.Symbol}','{item.Interval}','{item.OpenTime}')");
+            }
         }
 
         private void Index(Kline item)
@@ -256,6 +249,16 @@ namespace Outcompute.Trader.Trading.Providers.Klines
             }
 
             return completion.Task;
+        }
+
+        private Task CleanupAsync()
+        {
+            while (_klines.Count > _options.MaxCachedKlines)
+            {
+                Remove(_klines.Min!);
+            }
+
+            return Task.CompletedTask;
         }
     }
 }

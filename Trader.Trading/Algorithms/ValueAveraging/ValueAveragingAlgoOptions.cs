@@ -58,22 +58,22 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         public int RsiPeriodsC { get; set; } = 24;
 
         [Required]
-        public decimal RsiOverboughtA { get; set; } = 20m;
+        public decimal RsiOverboughtA { get; set; } = 30m;
 
         [Required]
-        public decimal RsiOversoldA { get; set; } = 50m;
+        public decimal RsiOversoldA { get; set; } = 70m;
 
         [Required]
-        public decimal RsiOverboughtB { get; set; } = 20m;
+        public decimal RsiOverboughtB { get; set; } = 30m;
 
         [Required]
-        public decimal RsiOversoldB { get; set; } = 50m;
+        public decimal RsiOversoldB { get; set; } = 70m;
 
         [Required]
-        public decimal RsiOverboughtC { get; set; } = 20m;
+        public decimal RsiOverboughtC { get; set; } = 30m;
 
         [Required]
-        public decimal RsiOversoldC { get; set; } = 50m;
+        public decimal RsiOversoldC { get; set; } = 70m;
 
         public static ValueAveragingAlgoOptions Default { get; } = new ValueAveragingAlgoOptions();
     }

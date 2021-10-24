@@ -8,6 +8,7 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -23,11 +24,11 @@ namespace Outcompute.Trader.Trading.Watchdog
         private readonly IRandomGenerator _random;
         private readonly IServiceProvider _provider;
 
-        public WatchdogService(IOptions<WatchdogOptions> options, ILogger<WatchdogService> logger, IWatchdogEntry[] entries, IHostApplicationLifetime lifetime, ISiloStatusOracle oracle, IRandomGenerator random, IServiceProvider provider)
+        public WatchdogService(IOptions<WatchdogOptions> options, ILogger<WatchdogService> logger, IEnumerable<IWatchdogEntry> entries, IHostApplicationLifetime lifetime, ISiloStatusOracle oracle, IRandomGenerator random, IServiceProvider provider)
         {
             _options = options.Value;
             _logger = logger;
-            _entries = entries;
+            _entries = entries.ToArray();
             _lifetime = lifetime;
             _oracle = oracle;
             _random = random;

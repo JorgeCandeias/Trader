@@ -7,20 +7,20 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Blocks
+namespace Outcompute.Trader.Trading.Operations
 {
-    internal class GetOpenOrdersBlock : IGetOpenOrdersBlock
+    internal class GetOpenOrdersOperation : IGetOpenOrdersOperation
     {
         private readonly ILogger _logger;
         private readonly IOrderProvider _orders;
 
-        public GetOpenOrdersBlock(ILogger<GetOpenOrdersBlock> logger, IOrderProvider orders)
+        public GetOpenOrdersOperation(ILogger<GetOpenOrdersOperation> logger, IOrderProvider orders)
         {
             _logger = logger;
             _orders = orders;
         }
 
-        private static string TypeName => nameof(GetOpenOrdersBlock);
+        private static string TypeName => nameof(GetOpenOrdersOperation);
 
         public Task<IReadOnlyList<OrderQueryResult>> GetOpenOrdersAsync(Symbol symbol, OrderSide side, CancellationToken cancellationToken = default)
         {

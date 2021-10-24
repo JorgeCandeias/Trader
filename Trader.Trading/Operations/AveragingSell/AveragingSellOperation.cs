@@ -8,18 +8,18 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Blocks.AveragingSell
+namespace Outcompute.Trader.Trading.Operations.AveragingSell
 {
-    internal class AveragingSellBlock : IAveragingSellBlock
+    internal class AveragingSellOperation : IAveragingSellOperation
     {
         private readonly ILogger _logger;
         private readonly IBalanceProvider _balances;
         private readonly ISavingsProvider _savings;
         private readonly ITickerProvider _tickers;
-        private readonly IEnsureSingleOrderBlock _ensureSingleOrderBlock;
-        private readonly IClearOpenOrdersBlock _clearOpenOrdersBlock;
+        private readonly IEnsureSingleOrderOperation _ensureSingleOrderBlock;
+        private readonly IClearOpenOrdersOperation _clearOpenOrdersBlock;
 
-        public AveragingSellBlock(ILogger<AveragingSellBlock> logger, IBalanceProvider balances, ISavingsProvider savings, ITickerProvider tickers, IEnsureSingleOrderBlock ensureSingleOrderBlock, IClearOpenOrdersBlock clearOpenOrdersBlock)
+        public AveragingSellOperation(ILogger<AveragingSellOperation> logger, IBalanceProvider balances, ISavingsProvider savings, ITickerProvider tickers, IEnsureSingleOrderOperation ensureSingleOrderBlock, IClearOpenOrdersOperation clearOpenOrdersBlock)
         {
             _logger = logger;
             _balances = balances;
@@ -29,7 +29,7 @@ namespace Outcompute.Trader.Trading.Blocks.AveragingSell
             _clearOpenOrdersBlock = clearOpenOrdersBlock;
         }
 
-        private static string TypeName => nameof(AveragingSellBlock);
+        private static string TypeName => nameof(AveragingSellOperation);
 
         public Task SetAveragingSellAsync(Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, CancellationToken cancellationToken = default)
         {

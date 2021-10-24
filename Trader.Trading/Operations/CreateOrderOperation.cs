@@ -6,22 +6,22 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Blocks
+namespace Outcompute.Trader.Trading.Operations
 {
-    internal class CreateOrderBlock : ICreateOrderBlock
+    internal class CreateOrderOperation : ICreateOrderOperation
     {
         private readonly ILogger _logger;
         private readonly ITradingService _trader;
         private readonly IOrderProvider _orders;
 
-        public CreateOrderBlock(ILogger<CreateOrderBlock> logger, ITradingService trader, IOrderProvider orders)
+        public CreateOrderOperation(ILogger<CreateOrderOperation> logger, ITradingService trader, IOrderProvider orders)
         {
             _logger = logger;
             _trader = trader;
             _orders = orders;
         }
 
-        private static string TypeName => nameof(CreateOrderBlock);
+        private static string TypeName => nameof(CreateOrderOperation);
 
         public Task<OrderResult> CreateOrderAsync(Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag, CancellationToken cancellationToken = default)
         {

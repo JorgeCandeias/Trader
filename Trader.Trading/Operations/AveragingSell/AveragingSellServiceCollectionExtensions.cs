@@ -1,6 +1,6 @@
 ﻿using Outcompute.Trader.Trading.Algorithms;
-using Outcompute.Trader.Trading.Blocks;
-using Outcompute.Trader.Trading.Blocks.AveragingSell;
+using Outcompute.Trader.Trading.Operations;
+using Outcompute.Trader.Trading.Operations.AveragingSell;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -9,7 +9,7 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddAveragingSellServices(this IServiceCollection services)
         {
             return services
-                .AddSingleton<IAveragingSellBlock, AveragingSellBlock>()
+                .AddSingleton<IAveragingSellOperation, AveragingSellOperation>()
                 .AddSingleton<IAlgoResultExecutor<AveragingSellResult>, AveragingSellExecutor>();
         }
     }

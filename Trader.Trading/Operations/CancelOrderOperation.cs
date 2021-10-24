@@ -6,15 +6,15 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Blocks
+namespace Outcompute.Trader.Trading.Operations
 {
-    public class CancelOrderBlock : ICancelOrderBlock
+    public class CancelOrderOperation : ICancelOrderOperation
     {
         private readonly ILogger _logger;
         private readonly ITradingService _trader;
         private readonly IOrderProvider _orders;
 
-        public CancelOrderBlock(ILogger<CancelOrderBlock> logger, ITradingService trader, IOrderProvider orders)
+        public CancelOrderOperation(ILogger<CancelOrderOperation> logger, ITradingService trader, IOrderProvider orders)
         {
             _logger = logger;
             _trader = trader;
@@ -52,13 +52,13 @@ namespace Outcompute.Trader.Trading.Blocks
             "{Type} {Symbol} cancelling order {OrderId}...");
 
         private static void LogStart(ILogger logger, string symbol, long orderId) =>
-            _logStart(logger, nameof(CancelOrderBlock), symbol, orderId, null!);
+            _logStart(logger, nameof(CancelOrderOperation), symbol, orderId, null!);
 
         private static readonly Action<ILogger, string, string, long, long, Exception> _logEnd = LoggerMessage.Define<string, string, long, long>(
             LogLevel.Information, new EventId(0, nameof(LogEnd)),
             "{Type} {Symbol} cancelled order {OrderId} in {ElapsedMs}ms");
 
         private static void LogEnd(ILogger logger, string symbol, long orderId, long elapsedMs) =>
-            _logEnd(logger, nameof(CancelOrderBlock), symbol, orderId, elapsedMs, null!);
+            _logEnd(logger, nameof(CancelOrderOperation), symbol, orderId, elapsedMs, null!);
     }
 }

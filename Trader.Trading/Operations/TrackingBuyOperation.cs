@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Blocks;
+using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Collections.Generic;
@@ -9,20 +9,20 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Algorithms
+namespace Outcompute.Trader.Trading.Operations
 {
-    internal class TrackingBuyBlock : ITrackingBuyBlock
+    internal class TrackingBuyOperation : ITrackingBuyOperation
     {
         private readonly ILogger _logger;
         private readonly ITickerProvider _tickers;
         private readonly IBalanceProvider _balances;
         private readonly ISavingsProvider _savings;
-        private readonly IGetOpenOrdersBlock _getOpenOrdersBlock;
-        private readonly IRedeemSavingsBlock _redeemSavingsBlock;
-        private readonly ICreateOrderBlock _createOrderBlock;
-        private readonly ICancelOrderBlock _cancelOrderBlock;
+        private readonly IGetOpenOrdersOperation _getOpenOrdersBlock;
+        private readonly IRedeemSavingsOperation _redeemSavingsBlock;
+        private readonly ICreateOrderOperation _createOrderBlock;
+        private readonly ICancelOrderOperation _cancelOrderBlock;
 
-        public TrackingBuyBlock(ILogger<TrackingBuyBlock> logger, ITickerProvider tickers, IBalanceProvider balances, ISavingsProvider savings, IGetOpenOrdersBlock getOpenOrdersBlock, IRedeemSavingsBlock redeemSavingsBlock, ICreateOrderBlock createOrderBlock, ICancelOrderBlock cancelOrderBlock)
+        public TrackingBuyOperation(ILogger<TrackingBuyOperation> logger, ITickerProvider tickers, IBalanceProvider balances, ISavingsProvider savings, IGetOpenOrdersOperation getOpenOrdersBlock, IRedeemSavingsOperation redeemSavingsBlock, ICreateOrderOperation createOrderBlock, ICancelOrderOperation cancelOrderBlock)
         {
             _logger = logger;
             _tickers = tickers;
@@ -34,7 +34,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             _cancelOrderBlock = cancelOrderBlock;
         }
 
-        private static string TypeName => nameof(TrackingBuyBlock);
+        private static string TypeName => nameof(TrackingBuyOperation);
 
         public Task<bool> SetTrackingBuyAsync(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings, CancellationToken cancellationToken = default)
         {

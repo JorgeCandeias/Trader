@@ -6,19 +6,19 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Blocks
+namespace Outcompute.Trader.Trading.Operations
 {
-    internal class EnsureSingleOrderBlock : IEnsureSingleOrderBlock
+    internal class EnsureSingleOrderOperation : IEnsureSingleOrderOperation
     {
         private readonly IOptionsMonitor<SavingsOptions> _monitor;
         private readonly ILogger _logger;
         private readonly IBalanceProvider _balances;
-        private readonly ICreateOrderBlock _createOrderBlock;
-        private readonly IGetOpenOrdersBlock _getOpenOrdersBlock;
-        private readonly ICancelOrderBlock _cancelOrderBlock;
-        private readonly IRedeemSavingsBlock _redeemSavingsBlock;
+        private readonly ICreateOrderOperation _createOrderBlock;
+        private readonly IGetOpenOrdersOperation _getOpenOrdersBlock;
+        private readonly ICancelOrderOperation _cancelOrderBlock;
+        private readonly IRedeemSavingsOperation _redeemSavingsBlock;
 
-        public EnsureSingleOrderBlock(IOptionsMonitor<SavingsOptions> monitor, ILogger<EnsureSingleOrderBlock> logger, IBalanceProvider balances, ICreateOrderBlock orderCreator, IGetOpenOrdersBlock getOpenOrdersBlock, ICancelOrderBlock cancelOrderBlock, IRedeemSavingsBlock redeemSavingsBlock)
+        public EnsureSingleOrderOperation(IOptionsMonitor<SavingsOptions> monitor, ILogger<EnsureSingleOrderOperation> logger, IBalanceProvider balances, ICreateOrderOperation orderCreator, IGetOpenOrdersOperation getOpenOrdersBlock, ICancelOrderOperation cancelOrderBlock, IRedeemSavingsOperation redeemSavingsBlock)
         {
             _monitor = monitor;
             _logger = logger;
@@ -29,7 +29,7 @@ namespace Outcompute.Trader.Trading.Blocks
             _redeemSavingsBlock = redeemSavingsBlock;
         }
 
-        private static string TypeName => nameof(EnsureSingleOrderBlock);
+        private static string TypeName => nameof(EnsureSingleOrderOperation);
 
         public Task<bool> EnsureSingleOrderAsync(Symbol symbol, OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings, CancellationToken cancellationToken = default)
         {

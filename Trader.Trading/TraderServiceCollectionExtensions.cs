@@ -1,6 +1,6 @@
 ﻿using Outcompute.Trader.Trading;
 using Outcompute.Trader.Trading.Algorithms;
-using Outcompute.Trader.Trading.Blocks;
+using Outcompute.Trader.Trading.Operations;
 using Outcompute.Trader.Trading.Providers;
 using Outcompute.Trader.Trading.Providers.Balances;
 using Outcompute.Trader.Trading.Providers.Exchange;
@@ -62,14 +62,14 @@ namespace Microsoft.Extensions.DependencyInjection
 
                 // blocks
                 .AddAveragingSellServices()
-                .AddSingleton<ICreateOrderBlock, CreateOrderBlock>()
-                .AddSingleton<IEnsureSingleOrderBlock, EnsureSingleOrderBlock>()
-                .AddSingleton<ICancelOrderBlock, CancelOrderBlock>()
-                .AddSingleton<IClearOpenOrdersBlock, ClearOpenOrdersBlock>()
-                .AddSingleton<IGetOpenOrdersBlock, GetOpenOrdersBlock>()
-                .AddSingleton<IRedeemSavingsBlock, RedeemSavingsBlock>()
-                .AddSingleton<ISignificantAveragingSellBlock, SignificantAveragingSellBlock>()
-                .AddSingleton<ITrackingBuyBlock, TrackingBuyBlock>();
+                .AddSingleton<ICreateOrderOperation, CreateOrderOperation>()
+                .AddSingleton<IEnsureSingleOrderOperation, EnsureSingleOrderOperation>()
+                .AddSingleton<ICancelOrderOperation, CancelOrderOperation>()
+                .AddSingleton<IClearOpenOrdersOperation, ClearOpenOrdersOperation>()
+                .AddSingleton<IGetOpenOrdersOperation, GetOpenOrdersOperation>()
+                .AddSingleton<IRedeemSavingsOperation, RedeemSavingsOperation>()
+                .AddSingleton<ISignificantAveragingSellOperation, SignificantAveragingSellOperation>()
+                .AddSingleton<ITrackingBuyOperation, TrackingBuyOperation>();
         }
     }
 }

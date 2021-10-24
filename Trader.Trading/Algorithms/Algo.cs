@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Blocks;
-using Outcompute.Trader.Trading.Blocks.AveragingSell;
+using Outcompute.Trader.Trading.Operations;
+using Outcompute.Trader.Trading.Operations.AveragingSell;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -41,56 +41,56 @@ namespace Outcompute.Trader.Trading.Algorithms
         public virtual Task<OrderResult> CreateOrderAsync(Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag, CancellationToken cancellationToken = default)
         {
             return Context.ServiceProvider
-                .GetRequiredService<ICreateOrderBlock>()
+                .GetRequiredService<ICreateOrderOperation>()
                 .CreateOrderAsync(symbol, type, side, timeInForce, quantity, price, tag, cancellationToken);
         }
 
         public virtual Task<CancelStandardOrderResult> CancelOrderAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
         {
             return Context.ServiceProvider
-                .GetRequiredService<ICancelOrderBlock>()
+                .GetRequiredService<ICancelOrderOperation>()
                 .CancelOrderAsync(symbol, orderId, cancellationToken);
         }
 
         public virtual Task<bool> EnsureSingleOrderAsync(Symbol symbol, OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings, CancellationToken cancellationToken = default)
         {
             return Context.ServiceProvider
-                .GetRequiredService<IEnsureSingleOrderBlock>()
+                .GetRequiredService<IEnsureSingleOrderOperation>()
                 .EnsureSingleOrderAsync(symbol, side, type, timeInForce, quantity, price, redeemSavings, cancellationToken);
         }
 
         public virtual Task ClearOpenOrdersAsync(Symbol symbol, OrderSide side, CancellationToken cancellationToken = default)
         {
             return Context.ServiceProvider
-                .GetRequiredService<IClearOpenOrdersBlock>()
+                .GetRequiredService<IClearOpenOrdersOperation>()
                 .ClearOpenOrdersAsync(symbol, side, cancellationToken);
         }
 
         public virtual Task<IReadOnlyList<OrderQueryResult>> GetOpenOrdersAsync(Symbol symbol, OrderSide side, CancellationToken cancellationToken = default)
         {
             return Context.ServiceProvider
-                .GetRequiredService<IGetOpenOrdersBlock>()
+                .GetRequiredService<IGetOpenOrdersOperation>()
                 .GetOpenOrdersAsync(symbol, side, cancellationToken);
         }
 
         public virtual Task<(bool Success, decimal Redeemed)> TryRedeemSavingsAsync(string asset, decimal amount, CancellationToken cancellationToken = default)
         {
             return Context.ServiceProvider
-                .GetRequiredService<IRedeemSavingsBlock>()
+                .GetRequiredService<IRedeemSavingsOperation>()
                 .TryRedeemSavingsAsync(asset, amount, cancellationToken);
         }
 
         public virtual Task SetSignificantAveragingSellAsync(Symbol symbol, MiniTicker ticker, IReadOnlyCollection<OrderQueryResult> orders, decimal minimumProfitRate, bool redeemSavings, CancellationToken cancellationToken = default)
         {
             return Context.ServiceProvider
-                .GetRequiredService<ISignificantAveragingSellBlock>()
+                .GetRequiredService<ISignificantAveragingSellOperation>()
                 .SetSignificantAveragingSellAsync(symbol, ticker, orders, minimumProfitRate, redeemSavings, cancellationToken);
         }
 
         public virtual Task<bool> SetTrackingBuyAsync(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings, CancellationToken cancellationToken = default)
         {
             return Context.ServiceProvider
-                .GetRequiredService<ITrackingBuyBlock>()
+                .GetRequiredService<ITrackingBuyOperation>()
                 .SetTrackingBuyAsync(symbol, pullbackRatio, targetQuoteBalanceFractionPerBuy, maxNotional, redeemSavings, cancellationToken);
         }
     }

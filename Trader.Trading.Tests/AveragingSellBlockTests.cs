@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Blocks;
-using Outcompute.Trader.Trading.Blocks.AveragingSell;
+using Outcompute.Trader.Trading.Operations;
+using Outcompute.Trader.Trading.Operations.AveragingSell;
 using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Threading;
@@ -17,13 +17,13 @@ namespace Outcompute.Trader.Trading.Tests
         public async Task ThrowsOnNullSymbol()
         {
             // arrange
-            var block = new AveragingSellBlock(
-                NullLogger<AveragingSellBlock>.Instance,
+            var block = new AveragingSellOperation(
+                NullLogger<AveragingSellOperation>.Instance,
                 Mock.Of<IBalanceProvider>(),
                 Mock.Of<ISavingsProvider>(),
                 Mock.Of<ITickerProvider>(),
-                Mock.Of<IEnsureSingleOrderBlock>(),
-                Mock.Of<IClearOpenOrdersBlock>());
+                Mock.Of<IEnsureSingleOrderOperation>(),
+                Mock.Of<IClearOpenOrdersOperation>());
 
             // act
             Task TestCode() => block.SetAveragingSellAsync(null!, null!, 0m, false, CancellationToken.None);
@@ -37,13 +37,13 @@ namespace Outcompute.Trader.Trading.Tests
         {
             // arrange
             var symbol = Symbol.Empty;
-            var block = new AveragingSellBlock(
-                NullLogger<AveragingSellBlock>.Instance,
+            var block = new AveragingSellOperation(
+                NullLogger<AveragingSellOperation>.Instance,
                 Mock.Of<IBalanceProvider>(),
                 Mock.Of<ISavingsProvider>(),
                 Mock.Of<ITickerProvider>(),
-                Mock.Of<IEnsureSingleOrderBlock>(),
-                Mock.Of<IClearOpenOrdersBlock>());
+                Mock.Of<IEnsureSingleOrderOperation>(),
+                Mock.Of<IClearOpenOrdersOperation>());
 
             // act
             Task TestCode() => block.SetAveragingSellAsync(symbol, null!, 0m, false, CancellationToken.None);
@@ -58,13 +58,13 @@ namespace Outcompute.Trader.Trading.Tests
             // arrange
             var symbol = Symbol.Empty;
             var orders = new[] { OrderQueryResult.Empty with { OrderId = 123, Side = OrderSide.Sell } };
-            var block = new AveragingSellBlock(
-                NullLogger<AveragingSellBlock>.Instance,
+            var block = new AveragingSellOperation(
+                NullLogger<AveragingSellOperation>.Instance,
                 Mock.Of<IBalanceProvider>(),
                 Mock.Of<ISavingsProvider>(),
                 Mock.Of<ITickerProvider>(),
-                Mock.Of<IEnsureSingleOrderBlock>(),
-                Mock.Of<IClearOpenOrdersBlock>());
+                Mock.Of<IEnsureSingleOrderOperation>(),
+                Mock.Of<IClearOpenOrdersOperation>());
 
             // act
             Task TestCode() => block.SetAveragingSellAsync(symbol, orders, 0m, false, CancellationToken.None);
@@ -79,13 +79,13 @@ namespace Outcompute.Trader.Trading.Tests
             // arrange
             var symbol = Symbol.Empty;
             var orders = new[] { OrderQueryResult.Empty with { OrderId = 123, Side = OrderSide.Buy, ExecutedQuantity = 0m } };
-            var block = new AveragingSellBlock(
-                NullLogger<AveragingSellBlock>.Instance,
+            var block = new AveragingSellOperation(
+                NullLogger<AveragingSellOperation>.Instance,
                 Mock.Of<IBalanceProvider>(),
                 Mock.Of<ISavingsProvider>(),
                 Mock.Of<ITickerProvider>(),
-                Mock.Of<IEnsureSingleOrderBlock>(),
-                Mock.Of<IClearOpenOrdersBlock>());
+                Mock.Of<IEnsureSingleOrderOperation>(),
+                Mock.Of<IClearOpenOrdersOperation>());
 
             // act
             Task TestCode() => block.SetAveragingSellAsync(symbol, orders, 0m, false, CancellationToken.None);

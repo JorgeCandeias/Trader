@@ -6,22 +6,22 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Blocks
+namespace Outcompute.Trader.Trading.Operations
 {
-    internal class SignificantAveragingSellBlock : ISignificantAveragingSellBlock
+    internal class SignificantAveragingSellOperation : ISignificantAveragingSellOperation
     {
         private readonly ILogger _logger;
-        private readonly IClearOpenOrdersBlock _clearOpenOrdersBlock;
-        private readonly IEnsureSingleOrderBlock _ensureSingleOrderBlock;
+        private readonly IClearOpenOrdersOperation _clearOpenOrdersBlock;
+        private readonly IEnsureSingleOrderOperation _ensureSingleOrderBlock;
 
-        public SignificantAveragingSellBlock(ILogger<SignificantAveragingSellBlock> logger, IClearOpenOrdersBlock clearOpenOrdersBlock, IEnsureSingleOrderBlock ensureSingleOrderBlock)
+        public SignificantAveragingSellOperation(ILogger<SignificantAveragingSellOperation> logger, IClearOpenOrdersOperation clearOpenOrdersBlock, IEnsureSingleOrderOperation ensureSingleOrderBlock)
         {
             _logger = logger;
             _clearOpenOrdersBlock = clearOpenOrdersBlock;
             _ensureSingleOrderBlock = ensureSingleOrderBlock;
         }
 
-        private static string TypeName => nameof(SignificantAveragingSellBlock);
+        private static string TypeName => nameof(SignificantAveragingSellOperation);
 
         public Task SetSignificantAveragingSellAsync(Symbol symbol, MiniTicker ticker, IReadOnlyCollection<OrderQueryResult> orders, decimal minimumProfitRate, bool redeemSavings, CancellationToken cancellationToken = default)
         {

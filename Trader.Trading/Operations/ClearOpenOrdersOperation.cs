@@ -5,14 +5,14 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Blocks
+namespace Outcompute.Trader.Trading.Operations
 {
-    internal class ClearOpenOrdersBlock : IClearOpenOrdersBlock
+    internal class ClearOpenOrdersOperation : IClearOpenOrdersOperation
     {
         private readonly ITradingService _trader;
         private readonly IOrderProvider _orders;
 
-        public ClearOpenOrdersBlock(ITradingService trader, IOrderProvider orders)
+        public ClearOpenOrdersOperation(ITradingService trader, IOrderProvider orders)
         {
             _trader = trader;
             _orders = orders;

@@ -1,5 +1,5 @@
 ﻿using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Blocks.AveragingSell;
+using Outcompute.Trader.Trading.Operations.AveragingSell;
 using System;
 using System.Collections.Generic;
 using System.Threading;

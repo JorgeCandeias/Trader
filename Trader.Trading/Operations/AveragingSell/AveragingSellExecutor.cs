@@ -2,13 +2,13 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Blocks.AveragingSell
+namespace Outcompute.Trader.Trading.Operations.AveragingSell
 {
     internal class AveragingSellExecutor : IAlgoResultExecutor<AveragingSellResult>
     {
-        private readonly IAveragingSellBlock _block;
+        private readonly IAveragingSellOperation _block;
 
-        public AveragingSellExecutor(IAveragingSellBlock block)
+        public AveragingSellExecutor(IAveragingSellOperation block)
         {
             _block = block;
         }

@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Blocks.AveragingSell
+namespace Outcompute.Trader.Trading.Operations.AveragingSell
 {
     public class AveragingSellResult : IAlgoResult
     {

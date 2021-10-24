@@ -80,15 +80,31 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 "{Type} {Name} reports latest asset price is {Price} {QuoteAsset}",
                 TypeName, _context.Name, _ticker.ClosePrice, _symbol.QuoteAsset);
 
+            IAlgoResult? result;
+
             if (await TryCreateTradingBandsAsync(significant.Orders, cancellationToken)) return Noop();
-            if (await TrySetStartingTradeAsync(cancellationToken)) return Noop();
-            if (await TryCancelRogueSellOrdersAsync(cancellationToken)) return Noop();
-            if (await TryCancelExcessSellOrdersAsync(cancellationToken)) return Noop();
+            result = await TrySetStartingTradeAsync(cancellationToken);
+            if (result is not null)
+            {
+                return result;
+            }
+
+            result = await TryCancelRogueSellOrdersAsync(cancellationToken);
+            if (result is not null)
+            {
+                return result;
+            }
+
+            result = await TryCancelExcessSellOrdersAsync(cancellationToken);
+            if (result is not null)
+            {
+                return result;
+            }
+
             if (await TrySetBandSellOrdersAsync(cancellationToken)) return Noop();
             if (await TryCreateLowerBandOrderAsync(cancellationToken)) return Noop();
-            await TryCloseOutOfRangeBandsAsync(cancellationToken);
 
-            return Noop();
+            return TryCloseOutOfRangeBands() ?? Noop();
         }
 
         private async Task ApplyAccountInfoAsync(CancellationToken cancellationToken)
@@ -112,36 +128,32 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 TypeName, _context.Name, _symbol.QuoteAsset, _balances.Quote.Free, _balances.Quote.Locked, _balances.Quote.Total);
         }
 
-        private async Task<bool> TryCloseOutOfRangeBandsAsync(CancellationToken cancellationToken = default)
+        private IAlgoResult? TryCloseOutOfRangeBands()
         {
             // take the upper band
             var upper = _bands.Max;
-            if (upper is null) return false;
+            if (upper is null) return null;
 
             // calculate the step size
             var step = upper.OpenPrice * _options.PullbackRatio;
 
             // take the lower band
             var band = _bands.Min;
-            if (band is null) return false;
+            if (band is null) return null;
 
             // ensure the lower band is on ordered status
-            if (band.Status != BandStatus.Ordered) return false;
+            if (band.Status != BandStatus.Ordered) return null;
 
             // ensure the lower band is opening within reasonable range of the current price
-            if (band.OpenPrice >= _ticker.ClosePrice - step) return false;
+            if (band.OpenPrice >= _ticker.ClosePrice - step) return null;
 
             // if the above checks fails then close the band
             if (band.OpenOrderId is not 0)
             {
-                var result = await CancelOrderAsync(_symbol, band.OpenOrderId, cancellationToken);
-
-                _logger.LogInformation(
-                    "{Type} {Name} closed out-of-range {OrderSide} {OrderType} for {Quantity} {Asset} at {Price} {Quote}",
-                    TypeName, _context.Name, result.Side, result.Type, result.OriginalQuantity, _symbol.BaseAsset, result.Price, _symbol.QuoteAsset);
+                return CancelOrder(_symbol, band.OpenOrderId);
             }
 
-            return true;
+            return null;
         }
 
         private async Task<bool> TryCreateLowerBandOrderAsync(CancellationToken cancellationToken = default)
@@ -336,34 +348,27 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         /// <summary>
         /// Identify and cancel rogue sell orders that do not belong to a trading band.
         /// </summary>
-        private async Task<bool> TryCancelRogueSellOrdersAsync(CancellationToken cancellationToken = default)
+        private async Task<IAlgoResult?> TryCancelRogueSellOrdersAsync(CancellationToken cancellationToken)
         {
-            // get all transient sell orders
-            var orders = await _orderProvider.GetTransientOrdersBySideAsync(_symbol.Name, OrderSide.Sell, cancellationToken);
-
-            var fail = false;
+            var orders = await _orderProvider
+                .GetTransientOrdersBySideAsync(_symbol.Name, OrderSide.Sell, cancellationToken)
+                .ConfigureAwait(false);
 
             foreach (var orderId in orders.Select(x => x.OrderId))
             {
                 if (!_bands.Any(x => x.CloseOrderId == orderId))
                 {
-                    var result = await CancelOrderAsync(_symbol, orderId, cancellationToken);
-
-                    _logger.LogWarning(
-                        "{Type} {Name} cancelled sell order not associated with a band for {Quantity} {Asset} at {Price} {Quote}",
-                        TypeName, _context.Name, result.OriginalQuantity, _symbol.BaseAsset, result.Price, _symbol.QuoteAsset);
-
-                    fail = true;
+                    return CancelOrder(_symbol, orderId);
                 }
             }
 
-            return fail;
+            return null;
         }
 
         /// <summary>
         /// Identify and cancel excess sell orders above the limit.
         /// </summary>
-        private async Task<bool> TryCancelExcessSellOrdersAsync(CancellationToken cancellationToken = default)
+        private async Task<IAlgoResult?> TryCancelExcessSellOrdersAsync(CancellationToken cancellationToken = default)
         {
             // get the order ids for the lowest open bands
             var bands = _bands
@@ -377,25 +382,18 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             var orders = await _orderProvider.GetTransientOrdersBySideAsync(_symbol.Name, OrderSide.Sell, cancellationToken);
 
             // cancel all excess sell orders now
-            var changed = false;
             foreach (var orderId in orders.Select(x => x.OrderId))
             {
                 if (!bands.Contains(orderId))
                 {
-                    var result = await CancelOrderAsync(_symbol, orderId, cancellationToken);
-
-                    _logger.LogWarning(
-                        "{Type} {Name} cancelled excess sell order for {Quantity} {Asset} at {Price} {Quote}",
-                        TypeName, _context.Name, result.OriginalQuantity, _symbol.BaseAsset, result.Price, _symbol.QuoteAsset);
-
-                    changed = true;
+                    return CancelOrder(_symbol, orderId);
                 }
             }
 
-            return changed;
+            return null;
         }
 
-        private async Task<bool> TrySetStartingTradeAsync(CancellationToken cancellationToken = default)
+        private async Task<IAlgoResult?> TrySetStartingTradeAsync(CancellationToken cancellationToken = default)
         {
             // only manage the opening if there are no bands or only a single order band to move around
             if (_bands.Count == 0 || _bands.Count == 1 && _bands.Single().Status == BandStatus.Ordered)
@@ -414,25 +412,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 var orders = await _orderProvider.GetTransientOrdersBySideAsync(_symbol.Name, OrderSide.Buy, cancellationToken);
 
                 var lowest = orders.FirstOrDefault(x => x.Side == OrderSide.Buy && x.Status.IsTransientStatus());
-                if (lowest is not null)
+                if (lowest is not null && lowest.Price < lowBuyPrice)
                 {
-                    if (lowest.Price < lowBuyPrice)
-                    {
-                        var cancelled = await CancelOrderAsync(_symbol, lowest.OrderId, cancellationToken);
-
-                        _logger.LogInformation(
-                            "{Type} {Name} cancelled low starting open order with price {Price} for {Quantity} units",
-                            TypeName, _context.Name, cancelled.Price, cancelled.OriginalQuantity);
-                    }
-                    else
-                    {
-                        _logger.LogInformation(
-                            "{Type} {Name} identified a closer opening order for {Quantity} {Asset} at {Price} {Quote} and will leave as-is",
-                            TypeName, _context.Name, lowest.OriginalQuantity, _symbol.BaseAsset, lowest.Price, _symbol.QuoteAsset);
-                    }
-
-                    // let the algo resync
-                    return true;
+                    return CancelOrder(_symbol, lowest.OrderId);
                 }
 
                 if (!_options.IsOpeningEnabled)
@@ -441,7 +423,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                         "{Type} {Name} cannot create the opening band because it is disabled",
                         TypeName, _context.Name);
 
-                    return true;
+                    return Noop();
                 }
 
                 // calculate the amount to pay with
@@ -474,7 +456,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                             TypeName, _context.Name, necessary, _symbol.QuoteAsset);
 
                         // let the algo cycle to allow redemption to process
-                        return true;
+                        return Noop();
                     }
                     else
                     {
@@ -482,7 +464,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                             "{Type} {Name} failed to redeem the necessary amount of {Quantity} {Asset}",
                             TypeName, _context.Name, necessary, _symbol.QuoteAsset);
 
-                        return false;
+                        return null;
                     }
                 }
 
@@ -501,11 +483,11 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                     TypeName, _context.Name, result.Side, result.Type, result.Symbol, result.OriginalQuantity, _symbol.BaseAsset, result.Price, _symbol.QuoteAsset, result.OriginalQuantity * result.Price, _symbol.QuoteAsset);
 
                 // skip the rest of this tick to let the algo resync
-                return true;
+                return Noop();
             }
             else
             {
-                return false;
+                return null;
             }
         }
 

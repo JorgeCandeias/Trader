@@ -10,7 +10,7 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             return services
                 .AddSingleton<IAveragingSellOperation, AveragingSellOperation>()
-                .AddSingleton<IAlgoResultExecutor<AveragingSellResult>, AveragingSellExecutor>();
+                .AddSingleton<IAlgoResultExecutor<AveragingSellAlgoResult>, AveragingSellExecutor>();
         }
     }
 }

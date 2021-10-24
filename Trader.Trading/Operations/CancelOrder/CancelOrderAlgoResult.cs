@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Operations.CancelOrder
 {
-    public class CancelOrderResult : IAlgoResult
+    public class CancelOrderAlgoResult : IAlgoResult
     {
-        public CancelOrderResult(Symbol symbol, long orderId)
+        public CancelOrderAlgoResult(Symbol symbol, long orderId)
         {
             Symbol = symbol ?? throw new ArgumentNullException(nameof(symbol));
             OrderId = orderId;
@@ -23,7 +23,7 @@ namespace Outcompute.Trader.Trading.Operations.CancelOrder
             if (context is null) throw new ArgumentNullException(nameof(context));
 
             return context.ServiceProvider
-                .GetRequiredService<IAlgoResultExecutor<CancelOrderResult>>()
+                .GetRequiredService<IAlgoResultExecutor<CancelOrderAlgoResult>>()
                 .ExecuteAsync(context, this, cancellationToken);
         }
     }

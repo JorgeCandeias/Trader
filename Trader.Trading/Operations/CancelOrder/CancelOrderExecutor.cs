@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Operations.CancelOrder
 {
-    internal class CancelOrderExecutor : IAlgoResultExecutor<CancelOrderResult>
+    internal class CancelOrderExecutor : IAlgoResultExecutor<CancelOrderAlgoResult>
     {
         private readonly ICancelOrderOperation _operation;
 
@@ -13,7 +13,7 @@ namespace Outcompute.Trader.Trading.Operations.CancelOrder
             _operation = operation;
         }
 
-        public Task ExecuteAsync(IAlgoContext context, CancelOrderResult result, CancellationToken cancellationToken = default)
+        public Task ExecuteAsync(IAlgoContext context, CancelOrderAlgoResult result, CancellationToken cancellationToken = default)
         {
             return _operation.CancelOrderAsync(result.Symbol, result.OrderId, cancellationToken);
         }

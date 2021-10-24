@@ -10,7 +10,7 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             return services
                 .AddSingleton<ICancelOrderOperation, CancelOrderOperation>()
-                .AddSingleton<IAlgoResultExecutor<CancelOrderResult>, CancelOrderExecutor>();
+                .AddSingleton<IAlgoResultExecutor<CancelOrderAlgoResult>, CancelOrderExecutor>();
         }
     }
 }

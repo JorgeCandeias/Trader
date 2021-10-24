@@ -2,6 +2,7 @@
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Operations;
 using Outcompute.Trader.Trading.Operations.AveragingSell;
+using Outcompute.Trader.Trading.Operations.CancelOrder;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -35,7 +36,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public virtual IAlgoResult AveragingSell(Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings)
         {
-            return new AveragingSellResult(symbol, orders, profitMultiplier, redeemSavings);
+            return new AveragingSellAlgoResult(symbol, orders, profitMultiplier, redeemSavings);
         }
 
         public virtual Task<OrderResult> CreateOrderAsync(Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag, CancellationToken cancellationToken = default)
@@ -45,11 +46,9 @@ namespace Outcompute.Trader.Trading.Algorithms
                 .CreateOrderAsync(symbol, type, side, timeInForce, quantity, price, tag, cancellationToken);
         }
 
-        public virtual Task<CancelStandardOrderResult> CancelOrderAsync(Symbol symbol, long orderId, CancellationToken cancellationToken = default)
+        public virtual IAlgoResult CancelOrder(Symbol symbol, long orderId)
         {
-            return Context.ServiceProvider
-                .GetRequiredService<ICancelOrderOperation>()
-                .CancelOrderAsync(symbol, orderId, cancellationToken);
+            return new CancelOrderAlgoResult(symbol, orderId);
         }
 
         public virtual Task<bool> EnsureSingleOrderAsync(Symbol symbol, OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings, CancellationToken cancellationToken = default)

@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Operations.AveragingSell
 {
-    public class AveragingSellResult : IAlgoResult
+    public class AveragingSellAlgoResult : IAlgoResult
     {
-        public AveragingSellResult(Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings)
+        public AveragingSellAlgoResult(Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings)
         {
             Symbol = symbol ?? throw new ArgumentNullException(nameof(symbol));
             Orders = orders ?? throw new ArgumentNullException(nameof(orders));
@@ -28,7 +28,7 @@ namespace Outcompute.Trader.Trading.Operations.AveragingSell
             if (context is null) throw new ArgumentNullException(nameof(context));
 
             return context.ServiceProvider
-                .GetRequiredService<IAlgoResultExecutor<AveragingSellResult>>()
+                .GetRequiredService<IAlgoResultExecutor<AveragingSellAlgoResult>>()
                 .ExecuteAsync(context, this, cancellationToken);
         }
     }

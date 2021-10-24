@@ -31,17 +31,12 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public virtual IAlgoResult AveragingSell(IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings)
         {
-            return new AveragingSellResult(EnsureSymbol(), orders, profitMultiplier, redeemSavings);
+            return new AveragingSellAlgoResult(EnsureSymbol(), orders, profitMultiplier, redeemSavings);
         }
 
         public virtual Task<OrderResult> CreateOrderAsync(OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag, CancellationToken cancellationToken = default)
         {
             return CreateOrderAsync(EnsureSymbol(), type, side, timeInForce, quantity, price, tag, cancellationToken);
-        }
-
-        public virtual Task<CancelStandardOrderResult> CancelOrderAsync(long orderId, CancellationToken cancellationToken = default)
-        {
-            return CancelOrderAsync(EnsureSymbol(), orderId, cancellationToken);
         }
 
         public virtual Task<bool> EnsureSingleOrderAsync(OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings, CancellationToken cancellationToken = default)

@@ -20,5 +20,7 @@ namespace Outcompute.Trader.Trading.Algorithms
         {
             return ValueTask.CompletedTask;
         }
+
+        public IAlgoContext Context { get; set; } = NullAlgoContext.Instance;
     }
 }

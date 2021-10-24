@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
-using Outcompute.Trader.Trading.Providers.Orders;
 using System;
 using System.Diagnostics;
 using System.Threading;

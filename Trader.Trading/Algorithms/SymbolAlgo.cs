@@ -44,9 +44,9 @@ namespace Outcompute.Trader.Trading.Algorithms
             return EnsureSingleOrderAsync(EnsureSymbol(), side, type, timeInForce, quantity, price, redeemSavings, cancellationToken);
         }
 
-        public virtual Task ClearOpenOrdersAsync(OrderSide side, CancellationToken cancellationToken = default)
+        public virtual IAlgoResult ClearOpenOrders(OrderSide side)
         {
-            return ClearOpenOrdersAsync(EnsureSymbol(), side, cancellationToken);
+            return ClearOpenOrders(EnsureSymbol(), side);
         }
 
         public virtual Task<IReadOnlyList<OrderQueryResult>> GetOpenOrdersAsync(OrderSide side, CancellationToken cancellationToken = default)

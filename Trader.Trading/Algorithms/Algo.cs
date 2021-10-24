@@ -3,6 +3,8 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Operations;
 using Outcompute.Trader.Trading.Operations.AveragingSell;
 using Outcompute.Trader.Trading.Operations.CancelOrder;
+using Outcompute.Trader.Trading.Operations.ClearOpenOrders;
+using Outcompute.Trader.Trading.Operations.Many;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -34,6 +36,16 @@ namespace Outcompute.Trader.Trading.Algorithms
             return NullAlgoResult.Instance;
         }
 
+        public virtual IAlgoResult Many(IEnumerable<IAlgoResult> results)
+        {
+            return new ManyAlgoResult(results);
+        }
+
+        public virtual IAlgoResult Many(params IAlgoResult[] results)
+        {
+            return new ManyAlgoResult(results);
+        }
+
         public virtual IAlgoResult AveragingSell(Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings)
         {
             return new AveragingSellAlgoResult(symbol, orders, profitMultiplier, redeemSavings);
@@ -58,11 +70,9 @@ namespace Outcompute.Trader.Trading.Algorithms
                 .EnsureSingleOrderAsync(symbol, side, type, timeInForce, quantity, price, redeemSavings, cancellationToken);
         }
 
-        public virtual Task ClearOpenOrdersAsync(Symbol symbol, OrderSide side, CancellationToken cancellationToken = default)
+        public virtual IAlgoResult ClearOpenOrders(Symbol symbol, OrderSide side)
         {
-            return Context.ServiceProvider
-                .GetRequiredService<IClearOpenOrdersOperation>()
-                .ClearOpenOrdersAsync(symbol, side, cancellationToken);
+            return new ClearOpenOrdersAlgoResult(symbol, side);
         }
 
         public virtual Task<IReadOnlyList<OrderQueryResult>> GetOpenOrdersAsync(Symbol symbol, OrderSide side, CancellationToken cancellationToken = default)

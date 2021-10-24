@@ -99,13 +99,19 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
             _rsiB = klines.LastRelativeStrengthIndexOrDefault(x => x.ClosePrice, _options.RsiPeriodsB);
             _rsiC = klines.LastRelativeStrengthIndexOrDefault(x => x.ClosePrice, _options.RsiPeriodsC);
 
+            // publish the profit stats
+            await _context.PublishProfitAsync(_significant.Profit);
+
+            // todo: refactor this
+            var results = new List<IAlgoResult>();
+
             if (TrySignalBuyOrder())
             {
                 await SetTrackingBuyAsync(_context.Symbol, _options.BuyOrderSafetyRatio, _options.TargetQuoteBalanceFractionPerBuy, _options.MaxNotional, _options.RedeemSavings, cancellationToken);
             }
             else
             {
-                await ClearOpenOrdersAsync(_context.Symbol, OrderSide.Buy, cancellationToken);
+                results.Add(ClearOpenOrders(_context.Symbol, OrderSide.Buy));
             }
 
             if (TrySignalSellOrder())
@@ -114,13 +120,10 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
             }
             else
             {
-                await ClearOpenOrdersAsync(_context.Symbol, OrderSide.Sell, cancellationToken);
+                results.Add(ClearOpenOrders(_context.Symbol, OrderSide.Sell));
             }
 
-            // publish the profit stats
-            await _context.PublishProfitAsync(_significant.Profit);
-
-            return Noop();
+            return Many(results);
         }
 
         private int GetMaxPeriods()

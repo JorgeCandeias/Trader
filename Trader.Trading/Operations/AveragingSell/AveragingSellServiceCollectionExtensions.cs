@@ -1,8 +1,7 @@
-﻿using Outcompute.Trader.Trading.Algorithms;
-using Outcompute.Trader.Trading.Operations;
-using Outcompute.Trader.Trading.Operations.AveragingSell;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Outcompute.Trader.Trading.Algorithms;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace Outcompute.Trader.Trading.Operations.AveragingSell
 {
     internal static class AveragingSellServiceCollectionExtensions
     {

@@ -73,7 +73,6 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddCreateOrderServices()
                 .AddEnsureSingleOrderServices()
                 .AddManyServices()
-                .AddSingleton<IGetOpenOrdersOperation, GetOpenOrdersOperation>()
                 .AddSingleton<IRedeemSavingsOperation, RedeemSavingsOperation>()
                 .AddSingleton<ISignificantAveragingSellOperation, SignificantAveragingSellOperation>()
                 .AddSingleton<ITrackingBuyOperation, TrackingBuyOperation>();

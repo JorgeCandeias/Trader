@@ -1,5 +1,9 @@
 ﻿using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Operations.AveragingSell;
+using Outcompute.Trader.Trading.Operations.ClearOpenOrders;
+using Outcompute.Trader.Trading.Operations.CreateOrder;
+using Outcompute.Trader.Trading.Operations.EnsureSingleOrder;
+using Outcompute.Trader.Trading.Operations.SignificantAveragingSell;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -29,22 +33,22 @@ namespace Outcompute.Trader.Trading.Algorithms
             return Context.Symbol;
         }
 
-        public virtual IAlgoResult AveragingSell(IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings)
+        public virtual AveragingSellAlgoResult AveragingSell(IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings)
         {
-            return new AveragingSellAlgoResult(EnsureSymbol(), orders, profitMultiplier, redeemSavings);
+            return AveragingSell(EnsureSymbol(), orders, profitMultiplier, redeemSavings);
         }
 
-        public virtual IAlgoResult CreateOrder(OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag)
+        public virtual CreateOrderAlgoResult CreateOrder(OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag)
         {
             return CreateOrder(EnsureSymbol(), type, side, timeInForce, quantity, price, tag);
         }
 
-        public virtual IAlgoResult EnsureSingleOrder(OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings)
+        public virtual EnsureSingleOrderAlgoResult EnsureSingleOrder(OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings)
         {
             return EnsureSingleOrder(EnsureSymbol(), side, type, timeInForce, quantity, price, redeemSavings);
         }
 
-        public virtual IAlgoResult ClearOpenOrders(OrderSide side)
+        public virtual ClearOpenOrdersAlgoResult ClearOpenOrders(OrderSide side)
         {
             return ClearOpenOrders(EnsureSymbol(), side);
         }
@@ -54,9 +58,9 @@ namespace Outcompute.Trader.Trading.Algorithms
             return GetOpenOrdersAsync(EnsureSymbol(), side, cancellationToken);
         }
 
-        public virtual Task SetSignificantAveragingSellAsync(MiniTicker ticker, IReadOnlyCollection<OrderQueryResult> orders, decimal minimumProfitRate, bool redeemSavings, CancellationToken cancellationToken = default)
+        public virtual SignificantAveragingSellAlgoResult SignificantAveragingSell(MiniTicker ticker, IReadOnlyCollection<OrderQueryResult> orders, decimal minimumProfitRate, bool redeemSavings)
         {
-            return SetSignificantAveragingSellAsync(EnsureSymbol(), ticker, orders, minimumProfitRate, redeemSavings, cancellationToken);
+            return SignificantAveragingSell(EnsureSymbol(), ticker, orders, minimumProfitRate, redeemSavings);
         }
 
         public virtual Task<bool> SetTrackingBuyAsync(decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings, CancellationToken cancellationToken = default)

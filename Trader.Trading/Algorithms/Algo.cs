@@ -87,11 +87,9 @@ namespace Outcompute.Trader.Trading.Algorithms
             return new RedeemSavingsAlgoResult(asset, amount);
         }
 
-        public virtual Task SetSignificantAveragingSellAsync(Symbol symbol, MiniTicker ticker, IReadOnlyCollection<OrderQueryResult> orders, decimal minimumProfitRate, bool redeemSavings, CancellationToken cancellationToken = default)
+        public virtual SignificantAveragingSellAlgoResult SignificantAveragingSell(Symbol symbol, MiniTicker ticker, IReadOnlyCollection<OrderQueryResult> orders, decimal minimumProfitRate, bool redeemSavings)
         {
-            return Context.ServiceProvider
-                .GetRequiredService<ISignificantAveragingSellOperation>()
-                .SetSignificantAveragingSellAsync(symbol, ticker, orders, minimumProfitRate, redeemSavings, cancellationToken);
+            return new SignificantAveragingSellAlgoResult(symbol, ticker, orders, minimumProfitRate, redeemSavings);
         }
 
         public virtual Task<bool> SetTrackingBuyAsync(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings, CancellationToken cancellationToken = default)

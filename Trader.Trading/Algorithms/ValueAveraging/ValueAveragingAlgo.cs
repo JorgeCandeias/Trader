@@ -103,7 +103,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
             await _context.PublishProfitAsync(_significant.Profit);
 
             // todo: refactor this
-            var results = new List<IAlgoResult>();
+            var results = new List<IAlgoResult>(2);
 
             if (TrySignalBuyOrder())
             {
@@ -116,7 +116,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
 
             if (TrySignalSellOrder())
             {
-                await SetSignificantAveragingSellAsync(_context.Symbol, _ticker, _significant.Orders, _options.MinSellProfitRate, _options.RedeemSavings, cancellationToken);
+                results.Add(SignificantAveragingSell(_ticker, _significant.Orders, _options.MinSellProfitRate, _options.RedeemSavings));
             }
             else
             {

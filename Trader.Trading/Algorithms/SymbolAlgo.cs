@@ -39,9 +39,9 @@ namespace Outcompute.Trader.Trading.Algorithms
             return CreateOrder(EnsureSymbol(), type, side, timeInForce, quantity, price, tag);
         }
 
-        public virtual Task<bool> EnsureSingleOrderAsync(OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings, CancellationToken cancellationToken = default)
+        public virtual IAlgoResult EnsureSingleOrder(OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings)
         {
-            return EnsureSingleOrderAsync(EnsureSymbol(), side, type, timeInForce, quantity, price, redeemSavings, cancellationToken);
+            return EnsureSingleOrder(EnsureSymbol(), side, type, timeInForce, quantity, price, redeemSavings);
         }
 
         public virtual IAlgoResult ClearOpenOrders(OrderSide side)

@@ -5,6 +5,7 @@ using Outcompute.Trader.Trading.Operations.AveragingSell;
 using Outcompute.Trader.Trading.Operations.CancelOrder;
 using Outcompute.Trader.Trading.Operations.ClearOpenOrders;
 using Outcompute.Trader.Trading.Operations.CreateOrder;
+using Outcompute.Trader.Trading.Operations.EnsureSingleOrder;
 using Outcompute.Trader.Trading.Operations.Many;
 using System.Collections.Generic;
 using System.Threading;
@@ -62,11 +63,9 @@ namespace Outcompute.Trader.Trading.Algorithms
             return new CancelOrderAlgoResult(symbol, orderId);
         }
 
-        public virtual Task<bool> EnsureSingleOrderAsync(Symbol symbol, OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings, CancellationToken cancellationToken = default)
+        public virtual IAlgoResult EnsureSingleOrder(Symbol symbol, OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings)
         {
-            return Context.ServiceProvider
-                .GetRequiredService<IEnsureSingleOrderOperation>()
-                .EnsureSingleOrderAsync(symbol, side, type, timeInForce, quantity, price, redeemSavings, cancellationToken);
+            return new EnsureSingleOrderAlgoResult(symbol, side, type, timeInForce, quantity, price, redeemSavings);
         }
 
         public virtual IAlgoResult ClearOpenOrders(Symbol symbol, OrderSide side)

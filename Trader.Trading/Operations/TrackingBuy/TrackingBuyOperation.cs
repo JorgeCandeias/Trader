@@ -9,7 +9,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Operations
+namespace Outcompute.Trader.Trading.Operations.TrackingBuy
 {
     internal class TrackingBuyOperation : ITrackingBuyOperation
     {
@@ -36,14 +36,14 @@ namespace Outcompute.Trader.Trading.Operations
 
         private static string TypeName => nameof(TrackingBuyOperation);
 
-        public Task<bool> SetTrackingBuyAsync(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings, CancellationToken cancellationToken = default)
+        public Task SetTrackingBuyAsync(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings, CancellationToken cancellationToken = default)
         {
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
             return SetTrackingBuyCoreAsync(symbol, pullbackRatio, targetQuoteBalanceFractionPerBuy, maxNotional, redeemSavings, cancellationToken);
         }
 
-        private async Task<bool> SetTrackingBuyCoreAsync(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings, CancellationToken cancellationToken)
+        private async Task SetTrackingBuyCoreAsync(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings, CancellationToken cancellationToken)
         {
             var ticker = await _tickers.GetRequiredTickerAsync(symbol.Name, cancellationToken).ConfigureAwait(false);
             var orders = await _getOpenOrdersBlock.GetOpenOrdersAsync(symbol, OrderSide.Buy, cancellationToken).ConfigureAwait(false);
@@ -68,10 +68,7 @@ namespace Outcompute.Trader.Trading.Operations
             orders = await TryCloseHighBuysAsync(symbol, orders, cancellationToken).ConfigureAwait(false);
 
             // if there are still open orders then leave them be
-            if (orders.Count > 0)
-            {
-                return false;
-            }
+            if (orders.Count > 0) return;
 
             // calculate the target notional
             var total = free * targetQuoteBalanceFractionPerBuy;
@@ -101,7 +98,7 @@ namespace Outcompute.Trader.Trading.Operations
                     "{Type} {Name} cannot place buy order with amount of {Total} {Quote} because it is above the configured maximum notional of {MaxNotional}",
                     TypeName, symbol.Name, total, symbol.QuoteAsset, maxNotional);
 
-                return false;
+                return;
             }
 
             // ensure there is enough quote asset for it
@@ -129,7 +126,7 @@ namespace Outcompute.Trader.Trading.Operations
                             "{Type} {Name} redeemed {Quantity} {Asset} from savings to cover the necessary {Necessary} {Asset}",
                             TypeName, symbol.Name, actual, symbol.QuoteAsset, necessary, symbol.QuoteAsset);
 
-                        return true;
+                        return;
                     }
                     else
                     {
@@ -137,7 +134,7 @@ namespace Outcompute.Trader.Trading.Operations
                             "{Type} {Name} could not redeem the necessary {Quantity} {Asset} from savings",
                             TypeName, symbol.Name, necessary, symbol.QuoteAsset);
 
-                        return false;
+                        return;
                     }
                 }
             }
@@ -151,8 +148,6 @@ namespace Outcompute.Trader.Trading.Operations
             await _createOrderBlock
                 .CreateOrderAsync(symbol, OrderType.Limit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, lowBuyPrice, tag, cancellationToken)
                 .ConfigureAwait(false);
-
-            return true;
         }
 
         private async Task<IReadOnlyList<OrderQueryResult>> TryCloseLowBuysAsync(Symbol symbol, IReadOnlyList<OrderQueryResult> orders, decimal lowBuyPrice, CancellationToken cancellationToken)

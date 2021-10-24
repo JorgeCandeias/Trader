@@ -4,6 +4,7 @@ using Outcompute.Trader.Trading.Operations.ClearOpenOrders;
 using Outcompute.Trader.Trading.Operations.CreateOrder;
 using Outcompute.Trader.Trading.Operations.EnsureSingleOrder;
 using Outcompute.Trader.Trading.Operations.SignificantAveragingSell;
+using Outcompute.Trader.Trading.Operations.TrackingBuy;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -63,7 +64,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             return SignificantAveragingSell(EnsureSymbol(), ticker, orders, minimumProfitRate, redeemSavings);
         }
 
-        public virtual Task<bool> SetTrackingBuyAsync(decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings, CancellationToken cancellationToken = default)
+        public virtual Task SetTrackingBuyAsync(decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings, CancellationToken cancellationToken = default)
         {
             return SetTrackingBuyAsync(EnsureSymbol(), pullbackRatio, targetQuoteBalanceFractionPerBuy, maxNotional, redeemSavings, cancellationToken);
         }

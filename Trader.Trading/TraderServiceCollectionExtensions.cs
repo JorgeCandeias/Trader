@@ -1,6 +1,5 @@
 ﻿using Outcompute.Trader.Trading;
 using Outcompute.Trader.Trading.Algorithms;
-using Outcompute.Trader.Trading.Operations;
 using Outcompute.Trader.Trading.Operations.AveragingSell;
 using Outcompute.Trader.Trading.Operations.CancelOrder;
 using Outcompute.Trader.Trading.Operations.ClearOpenOrders;
@@ -9,6 +8,7 @@ using Outcompute.Trader.Trading.Operations.EnsureSingleOrder;
 using Outcompute.Trader.Trading.Operations.Many;
 using Outcompute.Trader.Trading.Operations.RedeemSavings;
 using Outcompute.Trader.Trading.Operations.SignificantAveragingSell;
+using Outcompute.Trader.Trading.Operations.TrackingBuy;
 using Outcompute.Trader.Trading.Providers;
 using Outcompute.Trader.Trading.Providers.Balances;
 using Outcompute.Trader.Trading.Providers.Exchange;
@@ -77,7 +77,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddManyServices()
                 .AddRedeemSavingsServices()
                 .AddSignificantAveragingSellServices()
-                .AddSingleton<ITrackingBuyOperation, TrackingBuyOperation>();
+                .AddTrackingBuyServices();
         }
     }
 }

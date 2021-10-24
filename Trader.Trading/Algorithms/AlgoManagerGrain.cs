@@ -76,11 +76,14 @@ namespace Outcompute.Trader.Trading.Algorithms
             // snapshot the current options for this tick
             var options = _options.CurrentValue;
 
-            // execute all algos ones by one
+            // execute all algos one by one
             foreach (var algo in options.Algos)
             {
                 // break early on app shutdown
                 if (_lifetime.ApplicationStopping.IsCancellationRequested) return;
+
+                // skip disabled algo
+                if (!algo.Value.Enabled) continue;
 
                 // skip algo non batch algo
                 if (!algo.Value.BatchEnabled) continue;

@@ -6,7 +6,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Operations
+namespace Outcompute.Trader.Trading.Operations.CreateOrder
 {
     internal class CreateOrderOperation : ICreateOrderOperation
     {

@@ -4,6 +4,7 @@ using Outcompute.Trader.Trading.Operations;
 using Outcompute.Trader.Trading.Operations.AveragingSell;
 using Outcompute.Trader.Trading.Operations.CancelOrder;
 using Outcompute.Trader.Trading.Operations.ClearOpenOrders;
+using Outcompute.Trader.Trading.Operations.CreateOrder;
 using Outcompute.Trader.Trading.Operations.Many;
 using Outcompute.Trader.Trading.Providers;
 using Outcompute.Trader.Trading.Providers.Balances;
@@ -65,12 +66,12 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddOptions<ExchangeInfoOptions>().ValidateDataAnnotations().Services
 
                 // blocks
-                .AddManyServices()
                 .AddAveragingSellServices()
                 .AddCancelOrderServices()
-                .AddSingleton<IEnsureSingleOrderOperation, EnsureSingleOrderOperation>()
-                .AddSingleton<ICancelOrderOperation, CancelOrderOperation>()
                 .AddClearOpenOrdersServices()
+                .AddCreateOrderServices()
+                .AddManyServices()
+                .AddSingleton<IEnsureSingleOrderOperation, EnsureSingleOrderOperation>()
                 .AddSingleton<IGetOpenOrdersOperation, GetOpenOrdersOperation>()
                 .AddSingleton<IRedeemSavingsOperation, RedeemSavingsOperation>()
                 .AddSingleton<ISignificantAveragingSellOperation, SignificantAveragingSellOperation>()

@@ -69,7 +69,10 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<IGetOpenOrdersBlock, GetOpenOrdersBlock>()
                 .AddSingleton<IRedeemSavingsBlock, RedeemSavingsBlock>()
                 .AddSingleton<ISignificantAveragingSellBlock, SignificantAveragingSellBlock>()
-                .AddSingleton<ITrackingBuyBlock, TrackingBuyBlock>();
+                .AddSingleton<ITrackingBuyBlock, TrackingBuyBlock>()
+
+                // algo result handling
+                .AddSingleton<IAlgoResultHandler, AlgoResultHandler>();
         }
     }
 }

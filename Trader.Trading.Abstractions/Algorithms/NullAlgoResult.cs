@@ -3,13 +3,13 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
-    public class NullAlgoResult : AlgoResult
+    public class NullAlgoResult : IAlgoResult
     {
         private NullAlgoResult()
         {
         }
 
-        public override Task ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
+        public Task ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
         {
             return Task.CompletedTask;
         }

@@ -13,6 +13,6 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         Task StopAsync(CancellationToken cancellationToken = default);
 
-        Task GoAsync(CancellationToken cancellationToken = default);
+        Task<IAlgoResult> GoAsync(CancellationToken cancellationToken = default);
     }
 }

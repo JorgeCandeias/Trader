@@ -37,7 +37,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         private decimal _rsiB;
         private decimal _rsiC;
 
-        public override async Task GoAsync(CancellationToken cancellationToken = default)
+        public override async Task<IAlgoResult> GoAsync(CancellationToken cancellationToken = default)
         {
             _options = _monitor.Get(_context.Name);
 
@@ -119,6 +119,8 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
 
             // publish the profit stats
             await _context.PublishProfitAsync(_significant.Profit);
+
+            return Noop();
         }
 
         private int GetMaxPeriods()

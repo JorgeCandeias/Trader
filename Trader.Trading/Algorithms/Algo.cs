@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Blocks;
+using Outcompute.Trader.Trading.Blocks.AveragingSell;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,7 +14,7 @@ namespace Outcompute.Trader.Trading.Algorithms
     /// </summary>
     public abstract class Algo : IAlgo
     {
-        public abstract Task GoAsync(CancellationToken cancellationToken = default);
+        public abstract Task<IAlgoResult> GoAsync(CancellationToken cancellationToken = default);
 
         public virtual Task StartAsync(CancellationToken cancellationToken = default)
         {
@@ -27,11 +28,14 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public IAlgoContext Context { get; set; } = NullAlgoContext.Instance;
 
-        public virtual Task SetAveragingSellAsync(Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, CancellationToken cancellationToken = default)
+        public virtual IAlgoResult Noop()
         {
-            return Context.ServiceProvider
-                .GetRequiredService<IAveragingSellBlock>()
-                .SetAveragingSellAsync(symbol, orders, profitMultiplier, redeemSavings, cancellationToken);
+            return NullAlgoResult.Instance;
+        }
+
+        public virtual IAlgoResult AveragingSell(Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings)
+        {
+            return new AveragingSellResult(symbol, orders, profitMultiplier, redeemSavings);
         }
 
         public virtual Task<OrderResult> CreateOrderAsync(Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag, CancellationToken cancellationToken = default)

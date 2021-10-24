@@ -159,7 +159,10 @@ namespace Outcompute.Trader.Trading.Algorithms
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(limit.Token, _cancellation.Token);
 
             // execute the algo under the limits
-            await _algo.GoAsync(linked.Token);
+            var result = await _algo.GoAsync(linked.Token);
+
+            // execute the algo result under the limits
+            await result.ExecuteAsync(AlgoContext.Current, linked.Token);
         }
 
         public Task TickAsync()

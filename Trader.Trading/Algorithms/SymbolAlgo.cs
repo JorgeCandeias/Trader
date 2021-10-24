@@ -1,4 +1,5 @@
 ﻿using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Blocks.AveragingSell;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -8,14 +9,14 @@ namespace Outcompute.Trader.Trading.Algorithms
 {
     public abstract class SymbolAlgo : Algo, ISymbolAlgo
     {
-        public override Task GoAsync(CancellationToken cancellationToken = default)
+        public override Task<IAlgoResult> GoAsync(CancellationToken cancellationToken = default)
         {
             return OnExecuteAsync(cancellationToken);
         }
 
-        protected virtual Task OnExecuteAsync(CancellationToken cancellationToken = default)
+        protected virtual Task<IAlgoResult> OnExecuteAsync(CancellationToken cancellationToken = default)
         {
-            return Task.CompletedTask;
+            return Task.FromResult(Noop());
         }
 
         private Symbol EnsureSymbol()
@@ -28,9 +29,9 @@ namespace Outcompute.Trader.Trading.Algorithms
             return Context.Symbol;
         }
 
-        public virtual Task SetAveragingSellAsync(IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, CancellationToken cancellationToken = default)
+        public virtual IAlgoResult AveragingSell(IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings)
         {
-            return SetAveragingSellAsync(EnsureSymbol(), orders, profitMultiplier, redeemSavings, cancellationToken);
+            return new AveragingSellResult(EnsureSymbol(), orders, profitMultiplier, redeemSavings);
         }
 
         public virtual Task<OrderResult> CreateOrderAsync(OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag, CancellationToken cancellationToken = default)

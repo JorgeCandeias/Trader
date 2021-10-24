@@ -21,7 +21,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Accumulator
 
         private static string TypeName => nameof(AccumulatorAlgo);
 
-        public override async Task GoAsync(CancellationToken cancellationToken = default)
+        public override async Task<IAlgoResult> GoAsync(CancellationToken cancellationToken = default)
         {
             // snapshot the options for this execution
             var options = _options.Get(_context.Name);
@@ -32,7 +32,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Accumulator
             if (!options.Enabled)
             {
                 _logger.LogInformation("{Type} {Name} is disabled", TypeName, _context.Name);
-                return;
+
+                return Noop();
             }
 
             _logger.LogInformation("{Type} {Name} running...", TypeName, _context.Name);
@@ -40,6 +41,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Accumulator
             await SetTrackingBuyAsync(symbol, options.PullbackRatio, options.TargetQuoteBalanceFractionPerBuy, options.MaxNotional, options.RedeemSavings, cancellationToken);
 
             await _context.PublishProfitAsync(Profit.Zero(symbol.Name, symbol.BaseAsset, symbol.QuoteAsset));
+
+            return Noop();
         }
     }
 }

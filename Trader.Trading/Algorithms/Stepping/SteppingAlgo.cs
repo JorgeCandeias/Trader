@@ -60,7 +60,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         /// </summary>
         private readonly SortedSet<Band> _bands = new();
 
-        public override async Task GoAsync(CancellationToken cancellationToken = default)
+        public override async Task<IAlgoResult> GoAsync(CancellationToken cancellationToken = default)
         {
             // pin the options for this execution
             _options = _monitor.Get(_context.Name);
@@ -80,13 +80,15 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 "{Type} {Name} reports latest asset price is {Price} {QuoteAsset}",
                 TypeName, _context.Name, _ticker.ClosePrice, _symbol.QuoteAsset);
 
-            if (await TryCreateTradingBandsAsync(significant.Orders, cancellationToken)) return;
-            if (await TrySetStartingTradeAsync(cancellationToken)) return;
-            if (await TryCancelRogueSellOrdersAsync(cancellationToken)) return;
-            if (await TryCancelExcessSellOrdersAsync(cancellationToken)) return;
-            if (await TrySetBandSellOrdersAsync(cancellationToken)) return;
-            if (await TryCreateLowerBandOrderAsync(cancellationToken)) return;
+            if (await TryCreateTradingBandsAsync(significant.Orders, cancellationToken)) return Noop();
+            if (await TrySetStartingTradeAsync(cancellationToken)) return Noop();
+            if (await TryCancelRogueSellOrdersAsync(cancellationToken)) return Noop();
+            if (await TryCancelExcessSellOrdersAsync(cancellationToken)) return Noop();
+            if (await TrySetBandSellOrdersAsync(cancellationToken)) return Noop();
+            if (await TryCreateLowerBandOrderAsync(cancellationToken)) return Noop();
             await TryCloseOutOfRangeBandsAsync(cancellationToken);
+
+            return Noop();
         }
 
         private async Task ApplyAccountInfoAsync(CancellationToken cancellationToken)

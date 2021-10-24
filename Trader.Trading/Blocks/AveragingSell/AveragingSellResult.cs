@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Blocks.AveragingSell
 {
-    public class AveragingSellResult : AlgoResult
+    public class AveragingSellResult : IAlgoResult
     {
         public AveragingSellResult(Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings)
         {
@@ -23,7 +23,7 @@ namespace Outcompute.Trader.Trading.Blocks.AveragingSell
         public decimal ProfitMultiplier { get; }
         public bool RedeemSavings { get; }
 
-        public override Task ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
+        public Task ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
         {
             if (context is null) throw new ArgumentNullException(nameof(context));
 

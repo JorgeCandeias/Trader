@@ -137,7 +137,7 @@ namespace Outcompute.Trader.App
                 _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             }
 
-            public override async Task GoAsync(CancellationToken cancellationToken = default)
+            public override async Task<IAlgoResult> GoAsync(CancellationToken cancellationToken = default)
             {
                 var options = _options.Get(_context.Name);
 
@@ -152,6 +152,8 @@ namespace Outcompute.Trader.App
                 _logger.LogInformation("{Name} reports RSI6 = {Value}", nameof(TestAlgo), klines.RelativeStrengthIndex(x => x.ClosePrice, 6));
                 _logger.LogInformation("{Name} reports RSI12 = {Value}", nameof(TestAlgo), klines.RelativeStrengthIndex(x => x.ClosePrice, 12));
                 _logger.LogInformation("{Name} reports RSI24 = {Value}", nameof(TestAlgo), klines.RelativeStrengthIndex(x => x.ClosePrice, 24));
+
+                return Noop();
             }
         }
 

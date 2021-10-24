@@ -10,7 +10,10 @@ namespace Outcompute.Trader.Trading.Tests
     {
         private class MyAlgo : Algo
         {
-            public override Task GoAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
+            public override Task<IAlgoResult> GoAsync(CancellationToken cancellationToken = default)
+            {
+                return Task.FromResult(Noop());
+            }
         }
 
         [Fact]

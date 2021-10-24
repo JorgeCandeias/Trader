@@ -7,6 +7,7 @@ using Outcompute.Trader.Trading.Operations.ClearOpenOrders;
 using Outcompute.Trader.Trading.Operations.CreateOrder;
 using Outcompute.Trader.Trading.Operations.EnsureSingleOrder;
 using Outcompute.Trader.Trading.Operations.Many;
+using Outcompute.Trader.Trading.Operations.RedeemSavings;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -33,42 +34,42 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public IAlgoContext Context { get; set; } = NullAlgoContext.Instance;
 
-        public virtual IAlgoResult Noop()
+        public virtual NoopAlgoResult Noop()
         {
-            return NullAlgoResult.Instance;
+            return NoopAlgoResult.Instance;
         }
 
-        public virtual IAlgoResult Many(IEnumerable<IAlgoResult> results)
-        {
-            return new ManyAlgoResult(results);
-        }
-
-        public virtual IAlgoResult Many(params IAlgoResult[] results)
+        public virtual ManyAlgoResult Many(IEnumerable<IAlgoResult> results)
         {
             return new ManyAlgoResult(results);
         }
 
-        public virtual IAlgoResult AveragingSell(Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings)
+        public virtual ManyAlgoResult Many(params IAlgoResult[] results)
+        {
+            return new ManyAlgoResult(results);
+        }
+
+        public virtual AveragingSellAlgoResult AveragingSell(Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings)
         {
             return new AveragingSellAlgoResult(symbol, orders, profitMultiplier, redeemSavings);
         }
 
-        public virtual IAlgoResult CreateOrder(Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag)
+        public virtual CreateOrderAlgoResult CreateOrder(Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag)
         {
             return new CreateOrderAlgoResult(symbol, type, side, timeInForce, quantity, price, tag);
         }
 
-        public virtual IAlgoResult CancelOrder(Symbol symbol, long orderId)
+        public virtual CancelOrderAlgoResult CancelOrder(Symbol symbol, long orderId)
         {
             return new CancelOrderAlgoResult(symbol, orderId);
         }
 
-        public virtual IAlgoResult EnsureSingleOrder(Symbol symbol, OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings)
+        public virtual EnsureSingleOrderAlgoResult EnsureSingleOrder(Symbol symbol, OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings)
         {
             return new EnsureSingleOrderAlgoResult(symbol, side, type, timeInForce, quantity, price, redeemSavings);
         }
 
-        public virtual IAlgoResult ClearOpenOrders(Symbol symbol, OrderSide side)
+        public virtual ClearOpenOrdersAlgoResult ClearOpenOrders(Symbol symbol, OrderSide side)
         {
             return new ClearOpenOrdersAlgoResult(symbol, side);
         }
@@ -80,11 +81,9 @@ namespace Outcompute.Trader.Trading.Algorithms
                 .GetOpenOrdersAsync(symbol, side, cancellationToken);
         }
 
-        public virtual Task<(bool Success, decimal Redeemed)> TryRedeemSavingsAsync(string asset, decimal amount, CancellationToken cancellationToken = default)
+        public virtual RedeemSavingsAlgoResult TryRedeemSavings(string asset, decimal amount)
         {
-            return Context.ServiceProvider
-                .GetRequiredService<IRedeemSavingsOperation>()
-                .TryRedeemSavingsAsync(asset, amount, cancellationToken);
+            return new RedeemSavingsAlgoResult(asset, amount);
         }
 
         public virtual Task SetSignificantAveragingSellAsync(Symbol symbol, MiniTicker ticker, IReadOnlyCollection<OrderQueryResult> orders, decimal minimumProfitRate, bool redeemSavings, CancellationToken cancellationToken = default)

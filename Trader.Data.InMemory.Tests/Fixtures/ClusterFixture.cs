@@ -66,7 +66,7 @@ namespace Outcompute.Trader.Data.InMemory.Tests.Fixtures
     {
         public override Task<IAlgoResult> GoAsync(CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(Noop());
+            return Task.FromResult<IAlgoResult>(Noop());
         }
     }
 

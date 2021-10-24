@@ -89,7 +89,7 @@ namespace Outcompute.Trader.Trading.Tests.Fixtures
     {
         public override Task<IAlgoResult> GoAsync(CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(Noop());
+            return Task.FromResult<IAlgoResult>(Noop());
         }
     }
 

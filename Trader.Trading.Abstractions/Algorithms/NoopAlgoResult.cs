@@ -3,9 +3,9 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
-    public class NullAlgoResult : IAlgoResult
+    public class NoopAlgoResult : IAlgoResult
     {
-        private NullAlgoResult()
+        private NoopAlgoResult()
         {
         }
 
@@ -14,6 +14,6 @@ namespace Outcompute.Trader.Trading.Algorithms
             return Task.CompletedTask;
         }
 
-        public static NullAlgoResult Instance { get; } = new NullAlgoResult();
+        public static NoopAlgoResult Instance { get; } = new NoopAlgoResult();
     }
 }

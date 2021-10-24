@@ -16,7 +16,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         protected virtual Task<IAlgoResult> OnExecuteAsync(CancellationToken cancellationToken = default)
         {
-            return Task.FromResult(Noop());
+            return Task.FromResult<IAlgoResult>(Noop());
         }
 
         private Symbol EnsureSymbol()

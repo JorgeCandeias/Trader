@@ -27,7 +27,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public Task<IAlgoResult> GoAsync(CancellationToken cancellationToken = default)
         {
-            return Task.FromResult<IAlgoResult>(NullAlgoResult.Instance);
+            return Task.FromResult<IAlgoResult>(NoopAlgoResult.Instance);
         }
     }
 }

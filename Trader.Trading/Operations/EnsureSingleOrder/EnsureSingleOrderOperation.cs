@@ -87,17 +87,17 @@ namespace Outcompute.Trader.Trading.Operations.EnsureSingleOrder
                 {
                     var necessary = sourceQuantity - balance.Free;
 
-                    var (success, redeemed) = await _redeemSavingsBlock
+                    var result = await _redeemSavingsBlock
                         .TryRedeemSavingsAsync(sourceAsset, necessary, cancellationToken)
                         .ConfigureAwait(false);
 
-                    if (success)
+                    if (result.Success)
                     {
                         var delay = _monitor.CurrentValue.SavingsRedemptionDelay;
 
                         _logger.LogInformation(
                             "{Type} {Name} redeemed {Redeemed:F8} {Asset} from savings to cover the necessary {Necessary:F8} {Asset} and will wait {Wait} for the operation to complete",
-                            TypeName, symbol.Name, redeemed, sourceAsset, necessary, sourceAsset, delay);
+                            TypeName, symbol.Name, result.Redeemed, sourceAsset, necessary, sourceAsset, delay);
 
                         await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
                     }

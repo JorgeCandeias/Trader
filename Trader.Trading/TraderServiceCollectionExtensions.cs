@@ -1,6 +1,7 @@
 ﻿using Outcompute.Trader.Trading;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Operations;
+using Outcompute.Trader.Trading.Operations.CancelOrder;
 using Outcompute.Trader.Trading.Providers;
 using Outcompute.Trader.Trading.Providers.Balances;
 using Outcompute.Trader.Trading.Providers.Exchange;
@@ -62,7 +63,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
                 // blocks
                 .AddAveragingSellServices()
-                .AddSingleton<ICreateOrderOperation, CreateOrderOperation>()
+                .AddCancelOrderServices()
                 .AddSingleton<IEnsureSingleOrderOperation, EnsureSingleOrderOperation>()
                 .AddSingleton<ICancelOrderOperation, CancelOrderOperation>()
                 .AddSingleton<IClearOpenOrdersOperation, ClearOpenOrdersOperation>()

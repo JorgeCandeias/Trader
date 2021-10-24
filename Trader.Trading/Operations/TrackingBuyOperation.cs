@@ -165,7 +165,7 @@ namespace Outcompute.Trader.Trading.Operations
                     TypeName, symbol.Name, order.Price, order.OriginalQuantity);
 
                 await _cancelOrderBlock
-                    .CancelOrderAsync(symbol.Name, order.OrderId, cancellationToken)
+                    .CancelOrderAsync(symbol, order.OrderId, cancellationToken)
                     .ConfigureAwait(false);
 
                 orders = orders.ToImmutableList().Remove(order);
@@ -183,7 +183,7 @@ namespace Outcompute.Trader.Trading.Operations
                     TypeName, symbol.Name, order.Price, order.OriginalQuantity);
 
                 await _cancelOrderBlock
-                    .CancelOrderAsync(symbol.Name, order.OrderId, cancellationToken)
+                    .CancelOrderAsync(symbol, order.OrderId, cancellationToken)
                     .ConfigureAwait(false);
 
                 orders = orders.ToImmutableList().Remove(order);

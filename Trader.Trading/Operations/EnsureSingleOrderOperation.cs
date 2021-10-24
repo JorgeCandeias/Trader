@@ -52,7 +52,7 @@ namespace Outcompute.Trader.Trading.Operations
                 if (order.Type != type || order.OriginalQuantity != quantity || order.Price != price)
                 {
                     await _cancelOrderBlock
-                        .CancelOrderAsync(order.Symbol, order.OrderId, cancellationToken)
+                        .CancelOrderAsync(symbol, order.OrderId, cancellationToken)
                         .ConfigureAwait(false);
 
                     count--;

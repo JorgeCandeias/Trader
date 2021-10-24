@@ -6,7 +6,7 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Operations
+namespace Outcompute.Trader.Trading.Operations.CancelOrder
 {
     public class CancelOrderOperation : ICancelOrderOperation
     {
@@ -21,28 +21,28 @@ namespace Outcompute.Trader.Trading.Operations
             _orders = orders;
         }
 
-        public Task<CancelStandardOrderResult> CancelOrderAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
+        public Task<CancelStandardOrderResult> CancelOrderAsync(Symbol symbol, long orderId, CancellationToken cancellationToken = default)
         {
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
             return CancelOrderCoreAsync(symbol, orderId, cancellationToken);
         }
 
-        private async Task<CancelStandardOrderResult> CancelOrderCoreAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
+        private async Task<CancelStandardOrderResult> CancelOrderCoreAsync(Symbol symbol, long orderId, CancellationToken cancellationToken = default)
         {
-            LogStart(_logger, symbol, orderId);
+            LogStart(_logger, symbol.Name, orderId);
 
             var watch = Stopwatch.StartNew();
 
             var order = await _trader
-                .CancelOrderAsync(symbol, orderId, cancellationToken)
+                .CancelOrderAsync(symbol.Name, orderId, cancellationToken)
                 .ConfigureAwait(false);
 
             await _orders
                 .SetOrderAsync(order, cancellationToken)
                 .ConfigureAwait(false);
 
-            LogEnd(_logger, symbol, orderId, watch.ElapsedMilliseconds);
+            LogEnd(_logger, symbol.Name, orderId, watch.ElapsedMilliseconds);
 
             return order;
         }

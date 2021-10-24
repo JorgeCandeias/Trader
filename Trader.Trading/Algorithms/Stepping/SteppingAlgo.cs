@@ -134,7 +134,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             // if the above checks fails then close the band
             if (band.OpenOrderId is not 0)
             {
-                var result = await CancelOrderAsync(_symbol.Name, band.OpenOrderId, cancellationToken);
+                var result = await CancelOrderAsync(_symbol, band.OpenOrderId, cancellationToken);
 
                 _logger.LogInformation(
                     "{Type} {Name} closed out-of-range {OrderSide} {OrderType} for {Quantity} {Asset} at {Price} {Quote}",
@@ -347,7 +347,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             {
                 if (!_bands.Any(x => x.CloseOrderId == orderId))
                 {
-                    var result = await CancelOrderAsync(_symbol.Name, orderId, cancellationToken);
+                    var result = await CancelOrderAsync(_symbol, orderId, cancellationToken);
 
                     _logger.LogWarning(
                         "{Type} {Name} cancelled sell order not associated with a band for {Quantity} {Asset} at {Price} {Quote}",
@@ -382,7 +382,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             {
                 if (!bands.Contains(orderId))
                 {
-                    var result = await CancelOrderAsync(_symbol.Name, orderId, cancellationToken);
+                    var result = await CancelOrderAsync(_symbol, orderId, cancellationToken);
 
                     _logger.LogWarning(
                         "{Type} {Name} cancelled excess sell order for {Quantity} {Asset} at {Price} {Quote}",
@@ -418,7 +418,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 {
                     if (lowest.Price < lowBuyPrice)
                     {
-                        var cancelled = await CancelOrderAsync(_symbol.Name, lowest.OrderId, cancellationToken);
+                        var cancelled = await CancelOrderAsync(_symbol, lowest.OrderId, cancellationToken);
 
                         _logger.LogInformation(
                             "{Type} {Name} cancelled low starting open order with price {Price} for {Quantity} units",

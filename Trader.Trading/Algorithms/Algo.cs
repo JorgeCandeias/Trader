@@ -45,7 +45,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 .CreateOrderAsync(symbol, type, side, timeInForce, quantity, price, tag, cancellationToken);
         }
 
-        public virtual Task<CancelStandardOrderResult> CancelOrderAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
+        public virtual Task<CancelStandardOrderResult> CancelOrderAsync(Symbol symbol, long orderId, CancellationToken cancellationToken = default)
         {
             return Context.ServiceProvider
                 .GetRequiredService<ICancelOrderOperation>()

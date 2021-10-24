@@ -41,7 +41,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public virtual Task<CancelStandardOrderResult> CancelOrderAsync(long orderId, CancellationToken cancellationToken = default)
         {
-            return CancelOrderAsync(EnsureSymbol().Name, orderId, cancellationToken);
+            return CancelOrderAsync(EnsureSymbol(), orderId, cancellationToken);
         }
 
         public virtual Task<bool> EnsureSingleOrderAsync(OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings, CancellationToken cancellationToken = default)

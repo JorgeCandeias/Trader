@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Outcompute.Trader.Core;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Commands;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;

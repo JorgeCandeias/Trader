@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using Outcompute.Trader.Trading.Commands;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms

@@ -1,4 +1,5 @@
 ﻿using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Commands.AveragingSell;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Commands.ClearOpenOrders;

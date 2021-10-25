@@ -10,6 +10,7 @@ using Orleans.Statistics;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Providers;
 using Serilog;
 using Serilog.Events;

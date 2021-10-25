@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Orleans.Hosting;
 using Orleans.TestingHost;
 using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Commands;
 using System;
 using System.Collections.Generic;
 using System.Threading;

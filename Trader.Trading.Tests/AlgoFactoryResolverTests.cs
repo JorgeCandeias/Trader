@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Commands;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;

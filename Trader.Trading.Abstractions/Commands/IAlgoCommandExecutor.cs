@@ -1,7 +1,8 @@
-﻿using System.Threading;
+﻿using Outcompute.Trader.Trading.Algorithms;
+using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Algorithms
+namespace Outcompute.Trader.Trading.Commands
 {
     public interface IAlgoCommandExecutor<in TAlgoCommand>
         where TAlgoCommand : notnull, IAlgoCommand

@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Outcompute.Trader.Trading.Algorithms;
-using Outcompute.Trader.Trading.Commands;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -23,7 +22,7 @@ namespace Outcompute.Trader.Trading.Commands.RedeemSavings
             if (context is null) throw new ArgumentNullException(nameof(context));
 
             return context.ServiceProvider
-                .GetRequiredService<IAlgoResultExecutor<RedeemSavingsCommand, RedeemSavingsEvent>>()
+                .GetRequiredService<IAlgoCommandExecutor<RedeemSavingsCommand, RedeemSavingsEvent>>()
                 .ExecuteAsync(context, this, cancellationToken);
         }
 

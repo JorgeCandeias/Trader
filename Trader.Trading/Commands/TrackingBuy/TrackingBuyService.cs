@@ -3,6 +3,7 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
+using Outcompute.Trader.Trading.Commands.RedeemSavings;
 using Outcompute.Trader.Trading.Providers;
 using Outcompute.Trader.Trading.Providers.Orders;
 using System;
@@ -21,16 +22,14 @@ namespace Outcompute.Trader.Trading.Commands.TrackingBuy
         private readonly IBalanceProvider _balances;
         private readonly ISavingsProvider _savings;
         private readonly IOrderProvider _orders;
-        private readonly IRedeemSavingsService _redeemSavingsBlock;
 
-        public TrackingBuyService(ILogger<TrackingBuyService> logger, ITickerProvider tickers, IBalanceProvider balances, ISavingsProvider savings, IOrderProvider orders, IRedeemSavingsService redeemSavingsBlock)
+        public TrackingBuyService(ILogger<TrackingBuyService> logger, ITickerProvider tickers, IBalanceProvider balances, ISavingsProvider savings, IOrderProvider orders)
         {
             _logger = logger;
             _tickers = tickers;
             _balances = balances;
             _savings = savings;
             _orders = orders;
-            _redeemSavingsBlock = redeemSavingsBlock;
         }
 
         private static string TypeName => nameof(TrackingBuyService);
@@ -115,15 +114,16 @@ namespace Outcompute.Trader.Trading.Commands.TrackingBuy
                         "Will attempt to redeem the necessary {Necessary} {Quote} from savings...",
                         necessary, symbol.QuoteAsset);
 
-                    var (success, actual) = await _redeemSavingsBlock
-                        .TryRedeemSavingsAsync(symbol.QuoteAsset, necessary, cancellationToken)
+                    // todo: assign context
+                    var result = await new RedeemSavingsCommand(symbol.QuoteAsset, necessary)
+                        .ExecuteAsync(AlgoContext.Empty, cancellationToken)
                         .ConfigureAwait(false);
 
-                    if (success)
+                    if (result.Success)
                     {
                         _logger.LogInformation(
                             "{Type} {Name} redeemed {Quantity} {Asset} from savings to cover the necessary {Necessary} {Asset}",
-                            TypeName, symbol.Name, actual, symbol.QuoteAsset, necessary, symbol.QuoteAsset);
+                            TypeName, symbol.Name, result.Redeemed, symbol.QuoteAsset, necessary, symbol.QuoteAsset);
 
                         return;
                     }

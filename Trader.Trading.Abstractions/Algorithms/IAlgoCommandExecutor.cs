@@ -9,7 +9,7 @@ namespace Outcompute.Trader.Trading.Algorithms
         Task ExecuteAsync(IAlgoContext context, TAlgoCommand command, CancellationToken cancellationToken = default);
     }
 
-    public interface IAlgoResultExecutor<in TAlgoCommand, TResult>
+    public interface IAlgoCommandExecutor<in TAlgoCommand, TResult>
         where TAlgoCommand : notnull, IAlgoCommand
     {
         Task<TResult> ExecuteAsync(IAlgoContext context, TAlgoCommand result, CancellationToken cancellationToken = default);

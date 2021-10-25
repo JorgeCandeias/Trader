@@ -4,6 +4,7 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
+using Outcompute.Trader.Trading.Commands.RedeemSavings;
 using Outcompute.Trader.Trading.Providers;
 using Outcompute.Trader.Trading.Providers.Orders;
 using System;
@@ -18,15 +19,13 @@ namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder
         private readonly ILogger _logger;
         private readonly IBalanceProvider _balances;
         private readonly IOrderProvider _orders;
-        private readonly IRedeemSavingsService _redeemSavingsBlock;
 
-        public EnsureSingleOrderExecutor(IOptionsMonitor<SavingsOptions> monitor, ILogger<EnsureSingleOrderExecutor> logger, IBalanceProvider balances, IOrderProvider orders, IRedeemSavingsService redeemSavingsBlock)
+        public EnsureSingleOrderExecutor(IOptionsMonitor<SavingsOptions> monitor, ILogger<EnsureSingleOrderExecutor> logger, IBalanceProvider balances, IOrderProvider orders)
         {
             _monitor = monitor;
             _logger = logger;
             _balances = balances;
             _orders = orders;
-            _redeemSavingsBlock = redeemSavingsBlock;
         }
 
         private static string TypeName => nameof(EnsureSingleOrderExecutor);
@@ -80,8 +79,8 @@ namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder
                 {
                     var necessary = sourceQuantity - balance.Free;
 
-                    var result = await _redeemSavingsBlock
-                        .TryRedeemSavingsAsync(sourceAsset, necessary, cancellationToken)
+                    var result = await new RedeemSavingsCommand(sourceAsset, necessary)
+                        .ExecuteAsync(context, cancellationToken)
                         .ConfigureAwait(false);
 
                     if (result.Success)

@@ -83,7 +83,12 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
             IAlgoCommand? result;
 
-            if (await TryCreateTradingBandsAsync(significant.Orders, cancellationToken)) return Noop();
+            result = await TryCreateTradingBandsAsync(significant.Orders, cancellationToken);
+            if (result is not null)
+            {
+                return result;
+            }
+
             result = await TrySetStartingTradeAsync(cancellationToken);
             if (result is not null)
             {
@@ -486,7 +491,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             }
         }
 
-        private async Task<bool> TryCreateTradingBandsAsync(ImmutableSortedOrderSet significant, CancellationToken cancellationToken = default)
+        private async Task<IAlgoCommand?> TryCreateTradingBandsAsync(ImmutableSortedOrderSet significant, CancellationToken cancellationToken = default)
         {
             _bands.Clear();
 
@@ -499,7 +504,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                         "{Type} {Name} identified a significant {OrderSide} {OrderType} order {OrderId} for {Quantity} {Asset} on {Time} with zero price and will let the algo refresh to pick up missing trades",
                         TypeName, _context.Name, order.Side, order.Type, order.OrderId, order.ExecutedQuantity, _symbol.BaseAsset, order.Time);
 
-                    return true;
+                    return Noop();
                 }
 
                 if (order.Status.IsTransientStatus())
@@ -539,7 +544,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                         "{Type} {Name} identified a significant {OrderSide} {OrderType} order {OrderId} for {Quantity} {Asset} on {Time} with zero price and will let the algo refresh to pick up missing trades",
                         TypeName, _context.Name, order.Side, order.Type, order.OrderId, order.ExecutedQuantity, _symbol.BaseAsset, order.Time);
 
-                    return true;
+                    return Noop();
                 }
 
                 // add transient orders with original quantity
@@ -554,7 +559,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             }
 
             // skip if no bands were created
-            if (_bands.Count == 0) return false;
+            if (_bands.Count == 0) return null;
 
             // figure out the constant step size
             var stepSize = _bands.Max!.OpenPrice * _options.PullbackRatio;
@@ -639,7 +644,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 TypeName, _context.Name, _bands.Count, _bands);
 
             // always let the algo continue
-            return false;
+            return null;
         }
 
         #region Classes

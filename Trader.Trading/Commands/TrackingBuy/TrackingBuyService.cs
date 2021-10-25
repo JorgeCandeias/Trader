@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
-using Outcompute.Trader.Trading.Commands;
+using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Providers;
 using Outcompute.Trader.Trading.Providers.Orders;
 using System;
@@ -22,9 +22,8 @@ namespace Outcompute.Trader.Trading.Commands.TrackingBuy
         private readonly IOrderProvider _orders;
         private readonly IRedeemSavingsService _redeemSavingsBlock;
         private readonly ICreateOrderService _createOrderBlock;
-        private readonly ICancelOrderService _cancelOrderBlock;
 
-        public TrackingBuyService(ILogger<TrackingBuyService> logger, ITickerProvider tickers, IBalanceProvider balances, ISavingsProvider savings, IOrderProvider orders, IRedeemSavingsService redeemSavingsBlock, ICreateOrderService createOrderBlock, ICancelOrderService cancelOrderBlock)
+        public TrackingBuyService(ILogger<TrackingBuyService> logger, ITickerProvider tickers, IBalanceProvider balances, ISavingsProvider savings, IOrderProvider orders, IRedeemSavingsService redeemSavingsBlock, ICreateOrderService createOrderBlock)
         {
             _logger = logger;
             _tickers = tickers;
@@ -33,7 +32,6 @@ namespace Outcompute.Trader.Trading.Commands.TrackingBuy
             _orders = orders;
             _redeemSavingsBlock = redeemSavingsBlock;
             _createOrderBlock = createOrderBlock;
-            _cancelOrderBlock = cancelOrderBlock;
         }
 
         private static string TypeName => nameof(TrackingBuyService);
@@ -161,8 +159,9 @@ namespace Outcompute.Trader.Trading.Commands.TrackingBuy
                     "{Type} {Name} cancelling low starting open order with price {Price} for {Quantity} units",
                     TypeName, symbol.Name, order.Price, order.OriginalQuantity);
 
-                await _cancelOrderBlock
-                    .CancelOrderAsync(symbol, order.OrderId, cancellationToken)
+                // todo: assign context
+                await new CancelOrderCommand(symbol, order.OrderId)
+                    .ExecuteAsync(AlgoContext.Empty, cancellationToken)
                     .ConfigureAwait(false);
 
                 orders = orders.ToImmutableList().Remove(order);
@@ -179,8 +178,9 @@ namespace Outcompute.Trader.Trading.Commands.TrackingBuy
                     "{Type} {Name} cancelling low starting open order with price {Price} for {Quantity} units",
                     TypeName, symbol.Name, order.Price, order.OriginalQuantity);
 
-                await _cancelOrderBlock
-                    .CancelOrderAsync(symbol, order.OrderId, cancellationToken)
+                // todo: assign context
+                await new CancelOrderCommand(symbol, order.OrderId)
+                    .ExecuteAsync(AlgoContext.Empty, cancellationToken)
                     .ConfigureAwait(false);
 
                 orders = orders.ToImmutableList().Remove(order);

@@ -1,7 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Commands;
+using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Providers;
 using Outcompute.Trader.Trading.Providers.Orders;
 using System;
@@ -17,17 +18,15 @@ namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder
         private readonly IBalanceProvider _balances;
         private readonly IOrderProvider _orders;
         private readonly ICreateOrderService _createOrderBlock;
-        private readonly ICancelOrderService _cancelOrderBlock;
         private readonly IRedeemSavingsService _redeemSavingsBlock;
 
-        public EnsureSingleOrderService(IOptionsMonitor<SavingsOptions> monitor, ILogger<EnsureSingleOrderService> logger, IBalanceProvider balances, IOrderProvider orders, ICreateOrderService orderCreator, ICancelOrderService cancelOrderBlock, IRedeemSavingsService redeemSavingsBlock)
+        public EnsureSingleOrderService(IOptionsMonitor<SavingsOptions> monitor, ILogger<EnsureSingleOrderService> logger, IBalanceProvider balances, IOrderProvider orders, ICreateOrderService orderCreator, IRedeemSavingsService redeemSavingsBlock)
         {
             _monitor = monitor;
             _logger = logger;
             _balances = balances;
             _orders = orders;
             _createOrderBlock = orderCreator;
-            _cancelOrderBlock = cancelOrderBlock;
             _redeemSavingsBlock = redeemSavingsBlock;
         }
 
@@ -53,8 +52,9 @@ namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder
             {
                 if (order.Type != type || order.OriginalQuantity != quantity || order.Price != price)
                 {
-                    await _cancelOrderBlock
-                        .CancelOrderAsync(symbol, order.OrderId, cancellationToken)
+                    // todo: replace context
+                    await new CancelOrderCommand(symbol, order.OrderId)
+                        .ExecuteAsync(AlgoContext.Empty, cancellationToken)
                         .ConfigureAwait(false);
 
                     count--;

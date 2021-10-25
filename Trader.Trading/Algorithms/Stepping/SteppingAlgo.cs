@@ -81,45 +81,15 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 "{Type} {Name} reports latest asset price is {Price} {QuoteAsset}",
                 TypeName, _context.Name, _ticker.ClosePrice, _symbol.QuoteAsset);
 
-            IAlgoCommand? result;
-
-            result = await TryCreateTradingBandsAsync(significant.Orders, cancellationToken);
-            if (result is not null)
-            {
-                return result;
-            }
-
-            result = await TrySetStartingTradeAsync(cancellationToken);
-            if (result is not null)
-            {
-                return result;
-            }
-
-            result = await TryCancelRogueSellOrdersAsync(cancellationToken);
-            if (result is not null)
-            {
-                return result;
-            }
-
-            result = await TryCancelExcessSellOrdersAsync(cancellationToken);
-            if (result is not null)
-            {
-                return result;
-            }
-
-            result = await TrySetBandSellOrdersAsync(cancellationToken);
-            if (result is not null)
-            {
-                return result;
-            }
-
-            result = await TryCreateLowerBandOrderAsync(cancellationToken);
-            if (result is not null)
-            {
-                return result;
-            }
-
-            return TryCloseOutOfRangeBands() ?? Noop();
+            return
+                await TryCreateTradingBandsAsync(significant.Orders, cancellationToken) ??
+                await TrySetStartingTradeAsync(cancellationToken) ??
+                await TryCancelRogueSellOrdersAsync(cancellationToken) ??
+                await TryCancelExcessSellOrdersAsync(cancellationToken) ??
+                await TrySetBandSellOrdersAsync(cancellationToken) ??
+                await TryCreateLowerBandOrderAsync(cancellationToken) ??
+                TryCloseOutOfRangeBands() ??
+                Noop();
         }
 
         private async Task ApplyAccountInfoAsync(CancellationToken cancellationToken)

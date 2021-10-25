@@ -37,7 +37,7 @@ namespace Trader.Trading.Indicators.Benchmarks
         }
 
         [Benchmark]
-        public ValueTask<SignificantResult> ResolveAsync()
+        public Task<SignificantResult> ResolveAsync()
         {
             return _resolver.ResolveAsync(_symbol);
         }

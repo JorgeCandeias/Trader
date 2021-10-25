@@ -25,44 +25,11 @@ namespace Outcompute.Trader.Models
         decimal TakerBuyBaseAssetVolume,
         decimal TakerBuyQuoteAssetVolume)
     {
-        // todo: replace usage of this this with key comparer
-        public static IComparer<Kline> OpenTimeComparer { get; } = new OpenTimeComparerInternal();
-
-        // todo: replace usage of this this with key comparer
-        public static IEqualityComparer<Kline> OpenTimeEqualityComparer { get; } = new OpenTimeEqualityComparerInternal();
-
         public static IComparer<Kline> KeyComparer { get; } = new KeyComparerInternal();
 
-        private sealed class OpenTimeComparerInternal : Comparer<Kline>
-        {
-            public override int Compare(Kline? x, Kline? y)
-            {
-                if (x is null)
-                {
-                    if (y is null)
-                    {
-                        return 0;
-                    }
-                    else
-                    {
-                        return -1;
-                    }
-                }
-                else
-                {
-                    if (y is null)
-                    {
-                        return 1;
-                    }
-                    else
-                    {
-                        return DateTime.Compare(x.OpenTime, y.OpenTime);
-                    }
-                }
-            }
-        }
+        public static IEqualityComparer<Kline> KeyEqualityComparer { get; } = new KeyEqualityComparerInternal();
 
-        private sealed class OpenTimeEqualityComparerInternal : EqualityComparer<Kline>
+        private sealed class KeyEqualityComparerInternal : EqualityComparer<Kline>
         {
             public override bool Equals(Kline? x, Kline? y)
             {
@@ -72,7 +39,10 @@ namespace Outcompute.Trader.Models
                 }
                 else
                 {
-                    return y is not null && EqualityComparer<DateTime>.Default.Equals(x.OpenTime, y.OpenTime);
+                    return y is not null
+                        && EqualityComparer<string>.Default.Equals(x.Symbol, y.Symbol)
+                        && EqualityComparer<KlineInterval>.Default.Equals(x.Interval, y.Interval)
+                        && EqualityComparer<DateTime>.Default.Equals(x.OpenTime, y.OpenTime);
                 }
             }
 
@@ -80,7 +50,7 @@ namespace Outcompute.Trader.Models
             {
                 if (obj is null) throw new ArgumentNullException(nameof(obj));
 
-                return obj.OpenTime.GetHashCode();
+                return HashCode.Combine(obj.Symbol, obj.Interval, obj.OpenTime);
             }
         }
 

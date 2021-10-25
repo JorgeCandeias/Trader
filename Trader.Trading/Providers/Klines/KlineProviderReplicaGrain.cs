@@ -59,7 +59,7 @@ namespace Outcompute.Trader.Trading.Providers.Klines
         /// <summary>
         /// Holds the kline cache in a form that is mutable but still convertible to immutable upon request with low overhead.
         /// </summary>
-        private readonly ImmutableSortedSet<Kline>.Builder _klines = ImmutableSortedSet.CreateBuilder(Kline.OpenTimeComparer);
+        private readonly ImmutableSortedSet<Kline>.Builder _klines = ImmutableSortedSet.CreateBuilder(Kline.KeyComparer);
 
         /// <summary>
         /// Indexes klines by open time to speed up requests for a single order.

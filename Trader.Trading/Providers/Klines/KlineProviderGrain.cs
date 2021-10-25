@@ -55,7 +55,7 @@ namespace Outcompute.Trader.Trading.Providers.Klines
         /// <summary>
         /// Holds the kline cache in a form that is mutable but still convertible to immutable upon request with low overhead.
         /// </summary>
-        private readonly ImmutableSortedSet<Kline>.Builder _klines = ImmutableSortedSet.CreateBuilder(Kline.OpenTimeComparer);
+        private readonly ImmutableSortedSet<Kline>.Builder _klines = ImmutableSortedSet.CreateBuilder(Kline.KeyComparer);
 
         /// <summary>
         /// Indexes klines by open time to speed up requests for a single order.
@@ -65,7 +65,7 @@ namespace Outcompute.Trader.Trading.Providers.Klines
         /// <summary>
         /// Assigns a unique serial number to each kline.
         /// </summary>
-        private readonly Dictionary<Kline, int> _serialByKline = new(Kline.OpenTimeEqualityComparer);
+        private readonly Dictionary<Kline, int> _serialByKline = new(Kline.KeyEqualityComparer);
 
         /// <summary>
         /// Indexes each kline by it serial number.
@@ -112,7 +112,7 @@ namespace Outcompute.Trader.Trading.Providers.Klines
             // fulfill the request now if possible
             if (_serial >= fromSerial)
             {
-                var builder = ImmutableSortedSet.CreateBuilder(Kline.OpenTimeComparer);
+                var builder = ImmutableSortedSet.CreateBuilder(Kline.KeyComparer);
 
                 for (var i = fromSerial; i <= _serial; i++)
                 {
@@ -232,7 +232,7 @@ namespace Outcompute.Trader.Trading.Providers.Klines
             else
             {
                 // complete on changes only
-                var builder = ImmutableSortedSet.CreateBuilder(Kline.OpenTimeComparer);
+                var builder = ImmutableSortedSet.CreateBuilder(Kline.KeyComparer);
 
                 for (var s = fromSerial; s <= _serial; s++)
                 {

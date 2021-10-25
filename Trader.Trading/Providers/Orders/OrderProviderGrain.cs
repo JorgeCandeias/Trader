@@ -35,7 +35,7 @@ namespace Outcompute.Trader.Trading.Providers.Orders
         /// <summary>
         /// Holds the order cache in a form that is mutable but still convertible to immutable upon request with low overhead.
         /// </summary>
-        private readonly ImmutableSortedSet<OrderQueryResult>.Builder _orders = ImmutableSortedSet.CreateBuilder(OrderQueryResult.OrderIdComparer);
+        private readonly ImmutableSortedSet<OrderQueryResult>.Builder _orders = ImmutableSortedSet.CreateBuilder(OrderQueryResult.KeyComparer);
 
         /// <summary>
         /// An instance version that helps reset replicas upon reactivation of this grain.
@@ -107,7 +107,7 @@ namespace Outcompute.Trader.Trading.Providers.Orders
             // fulfill the request now if possible
             if (_serial >= fromSerial)
             {
-                var builder = ImmutableSortedSet.CreateBuilder(OrderQueryResult.OrderIdComparer);
+                var builder = ImmutableSortedSet.CreateBuilder(OrderQueryResult.KeyComparer);
 
                 for (var i = fromSerial; i <= _serial; i++)
                 {

@@ -44,7 +44,7 @@ namespace Outcompute.Trader.Trading.Providers.Orders
         /// <summary>
         /// Holds the order cache in a form that is mutable but still convertible to immutable upon request with low overhead.
         /// </summary>
-        private readonly ImmutableSortedSet<OrderQueryResult>.Builder _orders = ImmutableSortedSet.CreateBuilder(OrderQueryResult.OrderIdComparer);
+        private readonly ImmutableSortedSet<OrderQueryResult>.Builder _orders = ImmutableSortedSet.CreateBuilder(OrderQueryResult.KeyComparer);
 
         /// <summary>
         /// Indexes orders by order id to speed up requests for a single order.

@@ -3,6 +3,7 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
 using static System.String;
@@ -14,9 +15,13 @@ namespace Outcompute.Trader.Trading.Algorithms
         Task<SignificantResult> ResolveAsync(Symbol symbol, CancellationToken cancellationToken = default);
     }
 
-    public record SignificantResult(ImmutableSortedOrderSet Orders, Profit Profit)
+    [Immutable]
+    public record SignificantResult(ImmutableSortedOrderSet Orders, Profit Profit, ImmutableList<ProfitEvent> ProfitEvents)
     {
-        public static SignificantResult Empty { get; } = new SignificantResult(ImmutableSortedOrderSet.Empty, Profit.Zero(string.Empty, string.Empty, string.Empty));
+        public static SignificantResult Empty { get; } = new SignificantResult(
+            ImmutableSortedOrderSet.Empty,
+            Profit.Zero(string.Empty, string.Empty, string.Empty),
+            ImmutableList<ProfitEvent>.Empty);
     }
 
     [Immutable]
@@ -130,4 +135,26 @@ namespace Outcompute.Trader.Trading.Algorithms
                 profit.D30 / 30m);
         }
     }
+
+    [Immutable]
+    public record ProfitEvent(
+        Symbol Symbol,
+        DateTime EventTime,
+        long BuyOrderId,
+        long BuyTradeId,
+        long SellOrderId,
+        long SellTradeId,
+        decimal Quantity,
+        decimal BuyPrice,
+        decimal SellPrice)
+    {
+        public decimal BuyValue => Quantity * BuyPrice;
+        public decimal SellValue => Quantity * SellPrice;
+        public decimal Profit => (SellPrice - BuyPrice) * Quantity;
+    }
+
+    [Immutable]
+    public record CommissionEvent(
+        Symbol Symbol,
+        DateTime EventTime);
 }

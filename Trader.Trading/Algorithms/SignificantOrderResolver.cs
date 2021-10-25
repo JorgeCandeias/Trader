@@ -7,6 +7,7 @@ using Outcompute.Trader.Trading.Providers.Orders;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -59,6 +60,8 @@ namespace Outcompute.Trader.Trading.Algorithms
             using var subjects = ArrayPool<Map>.Shared.RentSegmentWith(details);
 
             // keep track of profit
+            var profits = ImmutableList.CreateBuilder<ProfitEvent>();
+
             var todayProfit = 0m;
             var yesterdayProfit = 0m;
             var thisWeekProfit = 0m;
@@ -112,6 +115,18 @@ namespace Outcompute.Trader.Trading.Algorithms
                             if (sell.Trade.Time >= window1d) d1 += profit;
                             if (sell.Trade.Time >= window7d) d7 += profit;
                             if (sell.Trade.Time >= window30d) d30 += profit;
+
+                            // create a profit event
+                            profits.Add(new ProfitEvent(
+                                symbol,
+                                sell.Trade.Time,
+                                buy.Order.OrderId,
+                                buy.Trade.Id,
+                                sell.Order.OrderId,
+                                sell.Trade.Id,
+                                take,
+                                buy.Trade.Price,
+                                sell.Trade.Price));
 
                             // if the sale is filled then we can break early
                             if (sell.RemainingExecutedQuantity == 0) break;
@@ -205,7 +220,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 d7,
                 d30);
 
-            return new SignificantResult(significant.ToImmutable(), summary);
+            return new SignificantResult(significant.ToImmutable(), summary, profits.ToImmutable());
         }
 
         private SortedSet<Map> Combine(Symbol symbol, IEnumerable<OrderQueryResult> orders, IEnumerable<AccountTrade> trades)

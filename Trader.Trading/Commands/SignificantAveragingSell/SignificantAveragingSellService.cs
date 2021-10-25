@@ -2,6 +2,7 @@
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Commands.ClearOpenOrders;
+using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,12 +14,10 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
     internal class SignificantAveragingSellService : ISignificantAveragingSellService
     {
         private readonly ILogger _logger;
-        private readonly IEnsureSingleOrderService _ensureSingleOrderBlock;
 
-        public SignificantAveragingSellService(ILogger<SignificantAveragingSellService> logger, IEnsureSingleOrderService ensureSingleOrderBlock)
+        public SignificantAveragingSellService(ILogger<SignificantAveragingSellService> logger)
         {
             _logger = logger;
-            _ensureSingleOrderBlock = ensureSingleOrderBlock;
         }
 
         private static string TypeName => nameof(SignificantAveragingSellService);
@@ -59,8 +58,9 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
             }
             else
             {
-                await _ensureSingleOrderBlock
-                    .EnsureSingleOrderAsync(symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, desired.Quantity, desired.Price, redeemSavings, cancellationToken)
+                // todo: assign context
+                await new EnsureSingleOrderCommand(symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, desired.Quantity, desired.Price, redeemSavings)
+                    .ExecuteAsync(AlgoContext.Empty, cancellationToken)
                     .ConfigureAwait(false);
             }
         }

@@ -74,8 +74,6 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<IAlgoCommandExecutor<CancelOrderCommand>, CancelOrderExecutor>()
                 .AddSingleton<IAlgoCommandExecutor<ClearOpenOrdersCommand>, ClearOpenOrdersExecutor>()
                 .AddSingleton<IAlgoCommandExecutor<CreateOrderCommand>, CreateOrderExecutor>()
-
-                .AddSingleton<IEnsureSingleOrderService, EnsureSingleOrderService>()
                 .AddSingleton<IAlgoCommandExecutor<EnsureSingleOrderCommand>, EnsureSingleOrderExecutor>()
 
                 .AddSingleton<IAlgoCommandExecutor<ManyCommand>, ManyExecutor>()

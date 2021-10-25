@@ -18,6 +18,8 @@ namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder
             Quantity = quantity;
             Price = price;
             RedeemSavings = redeemSavings;
+
+            if (side != OrderSide.Buy && side != OrderSide.Sell) throw new ArgumentOutOfRangeException(nameof(side));
         }
 
         public Symbol Symbol { get; }

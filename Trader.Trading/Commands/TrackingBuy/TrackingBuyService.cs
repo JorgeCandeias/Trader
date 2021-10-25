@@ -144,6 +144,8 @@ namespace Outcompute.Trader.Trading.Commands.TrackingBuy
 
             // place the order now
             var tag = $"{symbol.Name}{lowBuyPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal);
+
+            // todo: assign context
             await new CreateOrderCommand(symbol, OrderType.Limit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, lowBuyPrice, tag)
                 .ExecuteAsync(AlgoContext.Empty, cancellationToken)
                 .ConfigureAwait(false);

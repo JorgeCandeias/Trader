@@ -235,9 +235,9 @@ namespace Outcompute.Trader.Trading.Providers.Orders
 
                 for (var s = fromSerial; s <= _serial; s++)
                 {
-                    if (_orderBySerial.TryGetValue(s, out var kline))
+                    if (_orderBySerial.TryGetValue(s, out var order))
                     {
-                        builder.Add(kline);
+                        builder.Add(order);
                     }
                 }
 

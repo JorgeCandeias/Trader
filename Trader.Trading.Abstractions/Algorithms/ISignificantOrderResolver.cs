@@ -11,7 +11,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 {
     public interface ISignificantOrderResolver
     {
-        ValueTask<SignificantResult> ResolveAsync(Symbol symbol, CancellationToken cancellationToken = default);
+        Task<SignificantResult> ResolveAsync(Symbol symbol, CancellationToken cancellationToken = default);
     }
 
     public record SignificantResult(ImmutableSortedOrderSet Orders, Profit Profit)

@@ -36,24 +36,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             public decimal RemainingExecutedQuantity { get; set; }
         }
 
-        private sealed class MapComparer : IComparer<Map>
-        {
-            private MapComparer()
-            {
-            }
-
-            public int Compare(Map? x, Map? y)
-            {
-                if (x is null) throw new ArgumentNullException(nameof(x));
-                if (y is null) throw new ArgumentNullException(nameof(y));
-
-                return Comparer<long>.Default.Compare(x.Trade.Id, y.Trade.Id);
-            }
-
-            public static MapComparer Instance { get; } = new MapComparer();
-        }
-
-        public async ValueTask<SignificantResult> ResolveAsync(Symbol symbol, CancellationToken cancellationToken = default)
+        public async Task<SignificantResult> ResolveAsync(Symbol symbol, CancellationToken cancellationToken = default)
         {
             var orders = await _orders
                 .GetSignificantCompletedOrdersAsync(symbol.Name, cancellationToken)
@@ -70,41 +53,7 @@ namespace Outcompute.Trader.Trading.Algorithms
         {
             var watch = Stopwatch.StartNew();
 
-            var lookup = trades.ToLookup(x => x.OrderId);
-
-            var details = new SortedSet<Map>(MapComparer.Instance);
-
-            foreach (var order in orders)
-            {
-                var quantity = 0m;
-
-                foreach (var trade in lookup[order.OrderId])
-                {
-                    // map the order to the trade so we have info on both
-                    var map = new Map(order, trade)
-                    {
-                        RemainingExecutedQuantity = trade.Quantity
-                    };
-
-                    // remove the spent commission from the buy balance if taken from the same asset
-                    if (trade.IsBuyer && trade.CommissionAsset == symbol.BaseAsset)
-                    {
-                        map.RemainingExecutedQuantity -= trade.Commission;
-                    }
-
-                    details.Add(map);
-
-                    quantity += trade.Quantity;
-                }
-
-                if (quantity != order.ExecutedQuantity)
-                {
-                    // we have missing trades if this happened
-                    _logger.LogError(
-                        "{Name} {Symbol} could not match {OrderSide} {OrderType} {OrderId} at {Time} for {ExecutedQuantity} units with total trade quantity of {TradeQuantity}",
-                        Name, symbol.Name, order.Side, order.Type, order.OrderId, order.Time, order.ExecutedQuantity, quantity);
-                }
-            }
+            var details = Combine(symbol, orders, trades);
 
             // now prune the significant trades to account interim sales
             using var subjects = ArrayPool<Map>.Shared.RentSegmentWith(details);
@@ -257,6 +206,64 @@ namespace Outcompute.Trader.Trading.Algorithms
                 d30);
 
             return new SignificantResult(significant.ToImmutable(), summary);
+        }
+
+        private SortedSet<Map> Combine(Symbol symbol, IEnumerable<OrderQueryResult> orders, IEnumerable<AccountTrade> trades)
+        {
+            var lookup = trades.ToLookup(x => x.OrderId);
+
+            var result = new SortedSet<Map>(MapComparer.Instance);
+
+            foreach (var order in orders)
+            {
+                var quantity = 0m;
+
+                foreach (var trade in lookup[order.OrderId])
+                {
+                    // map the order to the trade so we have info on both
+                    var map = new Map(order, trade)
+                    {
+                        RemainingExecutedQuantity = trade.Quantity
+                    };
+
+                    // remove the spent commission from the buy balance if taken from the same asset
+                    if (trade.IsBuyer && trade.CommissionAsset == symbol.BaseAsset)
+                    {
+                        map.RemainingExecutedQuantity -= trade.Commission;
+                    }
+
+                    result.Add(map);
+
+                    quantity += trade.Quantity;
+                }
+
+                if (quantity != order.ExecutedQuantity)
+                {
+                    // we have missing trades if this happened
+                    _logger.LogError(
+                        "{Name} {Symbol} could not match {OrderSide} {OrderType} {OrderId} at {Time} for {ExecutedQuantity} units with total trade quantity of {TradeQuantity}",
+                        Name, symbol.Name, order.Side, order.Type, order.OrderId, order.Time, order.ExecutedQuantity, quantity);
+                }
+            }
+
+            return result;
+        }
+
+        private sealed class MapComparer : IComparer<Map>
+        {
+            private MapComparer()
+            {
+            }
+
+            public int Compare(Map? x, Map? y)
+            {
+                if (x is null) throw new ArgumentNullException(nameof(x));
+                if (y is null) throw new ArgumentNullException(nameof(y));
+
+                return Comparer<long>.Default.Compare(x.Trade.Id, y.Trade.Id);
+            }
+
+            public static MapComparer Instance { get; } = new MapComparer();
         }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using Orleans.Concurrency;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -17,10 +16,10 @@ namespace Outcompute.Trader.Trading.Algorithms
     }
 
     [Immutable]
-    public record SignificantResult(ImmutableSortedOrderSet Orders, ImmutableList<ProfitEvent> ProfitEvents, ImmutableList<CommissionEvent> CommissionEvents)
+    public record SignificantResult(ImmutableSortedSet<OrderQueryResult> Orders, ImmutableList<ProfitEvent> ProfitEvents, ImmutableList<CommissionEvent> CommissionEvents)
     {
         public static SignificantResult Empty { get; } = new SignificantResult(
-            ImmutableSortedOrderSet.Empty,
+            ImmutableSortedSet<OrderQueryResult>.Empty.WithComparer(OrderQueryResult.KeyComparer),
             ImmutableList<ProfitEvent>.Empty,
             ImmutableList<CommissionEvent>.Empty);
     }

@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Options;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms.Exceptions;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Providers;
@@ -459,7 +458,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             return CreateOrder(_context.Symbol, OrderType.Limit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, lowBuyPrice, tag);
         }
 
-        private IAlgoCommand? TryCreateTradingBands(ImmutableSortedOrderSet significant, IReadOnlyList<OrderQueryResult> nonSignificantTransientBuyOrders, IReadOnlyList<OrderQueryResult> transientSellOrders)
+        private IAlgoCommand? TryCreateTradingBands(IReadOnlyList<OrderQueryResult> significant, IReadOnlyList<OrderQueryResult> nonSignificantTransientBuyOrders, IReadOnlyList<OrderQueryResult> transientSellOrders)
         {
             _bands.Clear();
 

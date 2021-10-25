@@ -1,7 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Providers;
 using Outcompute.Trader.Trading.Providers.Orders;
 using System;
@@ -18,14 +16,12 @@ namespace Outcompute.Trader.Trading.Algorithms
     internal class SignificantOrderResolver : ISignificantOrderResolver
     {
         private readonly ILogger _logger;
-        private readonly ISystemClock _clock;
         private readonly IOrderProvider _orders;
         private readonly ITradeProvider _trades;
 
-        public SignificantOrderResolver(ILogger<SignificantOrderResolver> logger, ISystemClock clock, IOrderProvider orders, ITradeProvider trades)
+        public SignificantOrderResolver(ILogger<SignificantOrderResolver> logger, IOrderProvider orders, ITradeProvider trades)
         {
             _logger = logger;
-            _clock = clock;
             _orders = orders;
             _trades = trades;
         }
@@ -114,7 +110,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             }
 
             // keep only buy orders with some quantity left to sell
-            var significant = ImmutableSortedOrderSet.CreateBuilder();
+            var significant = ImmutableSortedSet.CreateBuilder(OrderQueryResult.KeyComparer);
 
             foreach (var survivor in subjects.Segment
                 .Where(x => x.Order.Side == OrderSide.Buy && x.RemainingExecutedQuantity > 0m)

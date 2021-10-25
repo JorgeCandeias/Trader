@@ -3,15 +3,15 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
-    public interface IAlgoCommandExecutor<in TAlgoResult>
-        where TAlgoResult : notnull, IAlgoCommand
+    public interface IAlgoCommandExecutor<in TAlgoCommand>
+        where TAlgoCommand : notnull, IAlgoCommand
     {
-        Task ExecuteAsync(IAlgoContext context, TAlgoResult result, CancellationToken cancellationToken = default);
+        Task ExecuteAsync(IAlgoContext context, TAlgoCommand command, CancellationToken cancellationToken = default);
     }
 
-    public interface IAlgoResultExecutor<in TAlgoResult, TResult>
-        where TAlgoResult : notnull, IAlgoCommand
+    public interface IAlgoResultExecutor<in TAlgoCommand, TResult>
+        where TAlgoCommand : notnull, IAlgoCommand
     {
-        Task<TResult> ExecuteAsync(IAlgoContext context, TAlgoResult result, CancellationToken cancellationToken = default);
+        Task<TResult> ExecuteAsync(IAlgoContext context, TAlgoCommand result, CancellationToken cancellationToken = default);
     }
 }

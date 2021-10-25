@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
+using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Providers;
 using Outcompute.Trader.Trading.Providers.Orders;
 using System;
@@ -17,16 +18,14 @@ namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder
         private readonly ILogger _logger;
         private readonly IBalanceProvider _balances;
         private readonly IOrderProvider _orders;
-        private readonly ICreateOrderService _createOrderBlock;
         private readonly IRedeemSavingsService _redeemSavingsBlock;
 
-        public EnsureSingleOrderService(IOptionsMonitor<SavingsOptions> monitor, ILogger<EnsureSingleOrderService> logger, IBalanceProvider balances, IOrderProvider orders, ICreateOrderService orderCreator, IRedeemSavingsService redeemSavingsBlock)
+        public EnsureSingleOrderService(IOptionsMonitor<SavingsOptions> monitor, ILogger<EnsureSingleOrderService> logger, IBalanceProvider balances, IOrderProvider orders, IRedeemSavingsService redeemSavingsBlock)
         {
             _monitor = monitor;
             _logger = logger;
             _balances = balances;
             _orders = orders;
-            _createOrderBlock = orderCreator;
             _redeemSavingsBlock = redeemSavingsBlock;
         }
 
@@ -123,8 +122,10 @@ namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder
             }
 
             // if we got here then we can place the order
-            await _createOrderBlock
-                .CreateOrderAsync(symbol, type, side, timeInForce, quantity, price, $"{symbol.Name}{price:F8}".Replace(".", "", StringComparison.Ordinal), cancellationToken)
+            // todo: assign the context
+            var tag = $"{symbol.Name}{price:F8}".Replace(".", "", StringComparison.Ordinal);
+            await new CreateOrderCommand(symbol, type, side, timeInForce, quantity, price, tag)
+                .ExecuteAsync(AlgoContext.Empty, cancellationToken)
                 .ConfigureAwait(false);
 
             return true;

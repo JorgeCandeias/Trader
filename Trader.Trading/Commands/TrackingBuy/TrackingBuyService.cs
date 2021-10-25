@@ -2,6 +2,7 @@
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
+using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Providers;
 using Outcompute.Trader.Trading.Providers.Orders;
 using System;
@@ -21,9 +22,8 @@ namespace Outcompute.Trader.Trading.Commands.TrackingBuy
         private readonly ISavingsProvider _savings;
         private readonly IOrderProvider _orders;
         private readonly IRedeemSavingsService _redeemSavingsBlock;
-        private readonly ICreateOrderService _createOrderBlock;
 
-        public TrackingBuyService(ILogger<TrackingBuyService> logger, ITickerProvider tickers, IBalanceProvider balances, ISavingsProvider savings, IOrderProvider orders, IRedeemSavingsService redeemSavingsBlock, ICreateOrderService createOrderBlock)
+        public TrackingBuyService(ILogger<TrackingBuyService> logger, ITickerProvider tickers, IBalanceProvider balances, ISavingsProvider savings, IOrderProvider orders, IRedeemSavingsService redeemSavingsBlock)
         {
             _logger = logger;
             _tickers = tickers;
@@ -31,7 +31,6 @@ namespace Outcompute.Trader.Trading.Commands.TrackingBuy
             _savings = savings;
             _orders = orders;
             _redeemSavingsBlock = redeemSavingsBlock;
-            _createOrderBlock = createOrderBlock;
         }
 
         private static string TypeName => nameof(TrackingBuyService);
@@ -145,8 +144,8 @@ namespace Outcompute.Trader.Trading.Commands.TrackingBuy
 
             // place the order now
             var tag = $"{symbol.Name}{lowBuyPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal);
-            await _createOrderBlock
-                .CreateOrderAsync(symbol, OrderType.Limit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, lowBuyPrice, tag, cancellationToken)
+            await new CreateOrderCommand(symbol, OrderType.Limit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, lowBuyPrice, tag)
+                .ExecuteAsync(AlgoContext.Empty, cancellationToken)
                 .ConfigureAwait(false);
         }
 

@@ -23,21 +23,21 @@ namespace Outcompute.Trader.Trading.Commands.CancelOrder
 
         private static string TypeName => nameof(CancelOrderExecutor);
 
-        public async Task ExecuteAsync(IAlgoContext context, CancelOrderCommand result, CancellationToken cancellationToken = default)
+        public async Task ExecuteAsync(IAlgoContext context, CancelOrderCommand command, CancellationToken cancellationToken = default)
         {
-            LogStart(_logger, result.Symbol.Name, result.OrderId);
+            LogStart(_logger, command.Symbol.Name, command.OrderId);
 
             var watch = Stopwatch.StartNew();
 
             var order = await _trader
-                .CancelOrderAsync(result.Symbol.Name, result.OrderId, cancellationToken)
+                .CancelOrderAsync(command.Symbol.Name, command.OrderId, cancellationToken)
                 .ConfigureAwait(false);
 
             await _orders
                 .SetOrderAsync(order, cancellationToken)
                 .ConfigureAwait(false);
 
-            LogEnd(_logger, result.Symbol.Name, result.OrderId, watch.ElapsedMilliseconds);
+            LogEnd(_logger, command.Symbol.Name, command.OrderId, watch.ElapsedMilliseconds);
         }
 
         private static readonly Action<ILogger, string, string, long, Exception> _logStart = LoggerMessage.Define<string, string, long>(

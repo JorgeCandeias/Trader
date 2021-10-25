@@ -22,16 +22,16 @@ namespace Outcompute.Trader.Trading.Commands.CreateOrder
 
         private static string TypeName => nameof(CreateOrderExecutor);
 
-        public async Task ExecuteAsync(IAlgoContext context, CreateOrderCommand result, CancellationToken cancellationToken = default)
+        public async Task ExecuteAsync(IAlgoContext context, CreateOrderCommand command, CancellationToken cancellationToken = default)
         {
             var watch = Stopwatch.StartNew();
 
             _logger.LogInformation(
                 "{Type} {Name} placing {OrderType} {OrderSide} order for {Quantity:F8} {Asset} at {Price:F8} {Quote} for a total of {Total:F8} {Quote}",
-                TypeName, result.Symbol.Name, result.Type, result.Side, result.Quantity, result.Symbol.BaseAsset, result.Price, result.Symbol.QuoteAsset, result.Quantity * result.Price, result.Symbol.QuoteAsset);
+                TypeName, command.Symbol.Name, command.Type, command.Side, command.Quantity, command.Symbol.BaseAsset, command.Price, command.Symbol.QuoteAsset, command.Quantity * command.Price, command.Symbol.QuoteAsset);
 
             var created = await _trader
-                .CreateOrderAsync(result.Symbol.Name, result.Side, result.Type, result.TimeInForce, result.Quantity, null, result.Price, result.Tag, null, null, cancellationToken)
+                .CreateOrderAsync(command.Symbol.Name, command.Side, command.Type, command.TimeInForce, command.Quantity, null, command.Price, command.Tag, null, null, cancellationToken)
                 .ConfigureAwait(false);
 
             await _orders
@@ -40,7 +40,7 @@ namespace Outcompute.Trader.Trading.Commands.CreateOrder
 
             _logger.LogInformation(
                 "{Type} {Name} placed {OrderType} {OrderSide} order for {Quantity:F8} {Asset} at {Price:F8} {Quote} for a total of {Total:F8} {Quote} in {ElapsedMs}ms",
-                TypeName, result.Symbol.Name, result.Type, result.Side, result.Quantity, result.Symbol.BaseAsset, result.Price, result.Symbol.QuoteAsset, result.Quantity * result.Price, result.Symbol.QuoteAsset, watch.ElapsedMilliseconds);
+                TypeName, command.Symbol.Name, command.Type, command.Side, command.Quantity, command.Symbol.BaseAsset, command.Price, command.Symbol.QuoteAsset, command.Quantity * command.Price, command.Symbol.QuoteAsset, watch.ElapsedMilliseconds);
         }
     }
 }

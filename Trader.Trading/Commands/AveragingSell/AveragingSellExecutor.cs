@@ -29,26 +29,26 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
 
         private static string TypeName => nameof(AveragingSellExecutor);
 
-        public async Task ExecuteAsync(IAlgoContext context, AveragingSellCommand result, CancellationToken cancellationToken = default)
+        public async Task ExecuteAsync(IAlgoContext context, AveragingSellCommand command, CancellationToken cancellationToken = default)
         {
             // get required data
-            var balance = await _balances.GetBalanceOrZeroAsync(result.Symbol.BaseAsset, cancellationToken).ConfigureAwait(false);
-            var savings = await _savings.GetPositionOrZeroAsync(result.Symbol.BaseAsset, cancellationToken).ConfigureAwait(false);
-            var ticker = await _tickers.GetRequiredTickerAsync(result.Symbol.Name, cancellationToken).ConfigureAwait(false);
+            var balance = await _balances.GetBalanceOrZeroAsync(command.Symbol.BaseAsset, cancellationToken).ConfigureAwait(false);
+            var savings = await _savings.GetPositionOrZeroAsync(command.Symbol.BaseAsset, cancellationToken).ConfigureAwait(false);
+            var ticker = await _tickers.GetRequiredTickerAsync(command.Symbol.Name, cancellationToken).ConfigureAwait(false);
 
             // calculate the desired sell
-            var desired = CalculateDesiredSell(result.Symbol, result.ProfitMultiplier, result.Orders, balance, savings, ticker);
+            var desired = CalculateDesiredSell(command.Symbol, command.ProfitMultiplier, command.Orders, balance, savings, ticker);
 
             // apply the desired sell
             if (desired == DesiredSell.None)
             {
-                await new ClearOpenOrdersCommand(result.Symbol, OrderSide.Sell)
+                await new ClearOpenOrdersCommand(command.Symbol, OrderSide.Sell)
                     .ExecuteAsync(context, cancellationToken)
                     .ConfigureAwait(false);
             }
             else
             {
-                await new EnsureSingleOrderCommand(result.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, desired.Quantity, desired.Price, result.RedeemSavings)
+                await new EnsureSingleOrderCommand(command.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, desired.Quantity, desired.Price, command.RedeemSavings)
                     .ExecuteAsync(context, cancellationToken)
                     .ConfigureAwait(false);
             }

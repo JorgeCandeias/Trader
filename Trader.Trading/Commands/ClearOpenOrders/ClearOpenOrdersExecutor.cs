@@ -17,16 +17,16 @@ namespace Outcompute.Trader.Trading.Commands.ClearOpenOrders
             _orders = orders;
         }
 
-        public async Task ExecuteAsync(IAlgoContext context, ClearOpenOrdersCommand result, CancellationToken cancellationToken = default)
+        public async Task ExecuteAsync(IAlgoContext context, ClearOpenOrdersCommand command, CancellationToken cancellationToken = default)
         {
             var orders = await _orders
-                .GetTransientOrdersBySideAsync(result.Symbol.Name, result.Side, cancellationToken)
+                .GetTransientOrdersBySideAsync(command.Symbol.Name, command.Side, cancellationToken)
                 .ConfigureAwait(false);
 
             foreach (var order in orders)
             {
                 var cancelled = await _trader
-                    .CancelOrderAsync(result.Symbol.Name, order.OrderId, cancellationToken)
+                    .CancelOrderAsync(command.Symbol.Name, order.OrderId, cancellationToken)
                     .ConfigureAwait(false);
 
                 await _orders

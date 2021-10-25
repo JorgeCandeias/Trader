@@ -6,9 +6,9 @@ namespace Outcompute.Trader.Trading.Commands.Many
 {
     internal class ManyExecutor : IAlgoCommandExecutor<ManyCommand>
     {
-        public async Task ExecuteAsync(IAlgoContext context, ManyCommand result, CancellationToken cancellationToken = default)
+        public async Task ExecuteAsync(IAlgoContext context, ManyCommand command, CancellationToken cancellationToken = default)
         {
-            foreach (var item in result.Results)
+            foreach (var item in command.Results)
             {
                 await item
                     .ExecuteAsync(context, cancellationToken)

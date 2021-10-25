@@ -72,8 +72,6 @@ namespace Microsoft.Extensions.DependencyInjection
                 // commands
                 .AddSingleton<IAlgoCommandExecutor<AveragingSellCommand>, AveragingSellExecutor>()
                 .AddSingleton<IAlgoCommandExecutor<CancelOrderCommand>, CancelOrderExecutor>()
-
-                .AddSingleton<IClearOpenOrdersService, ClearOpenOrdersService>()
                 .AddSingleton<IAlgoCommandExecutor<ClearOpenOrdersCommand>, ClearOpenOrdersExecutor>()
 
                 .AddSingleton<ICreateOrderService, CreateOrderService>()

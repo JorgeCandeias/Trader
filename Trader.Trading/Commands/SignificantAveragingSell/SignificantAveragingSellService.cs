@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Commands;
+using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Commands.ClearOpenOrders;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,13 +13,11 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
     internal class SignificantAveragingSellService : ISignificantAveragingSellService
     {
         private readonly ILogger _logger;
-        private readonly IClearOpenOrdersService _clearOpenOrdersBlock;
         private readonly IEnsureSingleOrderService _ensureSingleOrderBlock;
 
-        public SignificantAveragingSellService(ILogger<SignificantAveragingSellService> logger, IClearOpenOrdersService clearOpenOrdersBlock, IEnsureSingleOrderService ensureSingleOrderBlock)
+        public SignificantAveragingSellService(ILogger<SignificantAveragingSellService> logger, IEnsureSingleOrderService ensureSingleOrderBlock)
         {
             _logger = logger;
-            _clearOpenOrdersBlock = clearOpenOrdersBlock;
             _ensureSingleOrderBlock = ensureSingleOrderBlock;
         }
 
@@ -53,8 +52,9 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
             // apply the desired sell
             if (desired == DesiredSell.None)
             {
-                await _clearOpenOrdersBlock
-                    .ClearOpenOrdersAsync(symbol, OrderSide.Sell, cancellationToken)
+                // todo: assign the context
+                await new ClearOpenOrdersCommand(symbol, OrderSide.Sell)
+                    .ExecuteAsync(AlgoContext.Empty, cancellationToken)
                     .ConfigureAwait(false);
             }
             else

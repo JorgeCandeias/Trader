@@ -1,5 +1,6 @@
 ﻿using Outcompute.Trader.Trading.Algorithms;
-using Outcompute.Trader.Trading.Commands;
+using Outcompute.Trader.Trading.Providers;
+using Outcompute.Trader.Trading.Providers.Orders;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -7,16 +8,31 @@ namespace Outcompute.Trader.Trading.Commands.ClearOpenOrders
 {
     internal class ClearOpenOrdersExecutor : IAlgoCommandExecutor<ClearOpenOrdersCommand>
     {
-        private readonly IClearOpenOrdersService _operation;
+        private readonly ITradingService _trader;
+        private readonly IOrderProvider _orders;
 
-        public ClearOpenOrdersExecutor(IClearOpenOrdersService operation)
+        public ClearOpenOrdersExecutor(ITradingService trader, IOrderProvider orders)
         {
-            _operation = operation;
+            _trader = trader;
+            _orders = orders;
         }
 
-        public Task ExecuteAsync(IAlgoContext context, ClearOpenOrdersCommand result, CancellationToken cancellationToken = default)
+        public async Task ExecuteAsync(IAlgoContext context, ClearOpenOrdersCommand result, CancellationToken cancellationToken = default)
         {
-            return _operation.ClearOpenOrdersAsync(result.Symbol, result.Side, cancellationToken);
+            var orders = await _orders
+                .GetTransientOrdersBySideAsync(result.Symbol.Name, result.Side, cancellationToken)
+                .ConfigureAwait(false);
+
+            foreach (var order in orders)
+            {
+                var cancelled = await _trader
+                    .CancelOrderAsync(result.Symbol.Name, order.OrderId, cancellationToken)
+                    .ConfigureAwait(false);
+
+                await _orders
+                    .SetOrderAsync(cancelled, cancellationToken)
+                    .ConfigureAwait(false);
+            }
         }
     }
 }

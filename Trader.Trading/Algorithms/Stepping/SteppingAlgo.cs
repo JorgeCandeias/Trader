@@ -76,13 +76,17 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 .GetTransientOrdersBySideAsync(_context.Symbol.Name, OrderSide.Sell, cancellationToken)
                 .ConfigureAwait(false);
 
+            var transientBuyOrders = await _orderProvider
+                .GetTransientOrdersBySideAsync(_context.Symbol.Name, OrderSide.Buy, cancellationToken)
+                .ConfigureAwait(false);
+
             _logger.LogInformation(
                 "{Type} {Name} reports latest asset price is {Price} {QuoteAsset}",
                 TypeName, _context.Name, _ticker.ClosePrice, _context.Symbol.QuoteAsset);
 
             return
                 TryCreateTradingBands(significant.Orders, nonSignificantTransientBuyOrders, transientSellOrders) ??
-                await TrySetStartingTradeAsync(cancellationToken) ??
+                await TrySetStartingTradeAsync(transientBuyOrders, cancellationToken) ??
                 await TryCancelRogueSellOrdersAsync(cancellationToken) ??
                 await TryCancelExcessSellOrdersAsync(cancellationToken) ??
                 await TrySetBandSellOrdersAsync(cancellationToken) ??
@@ -367,7 +371,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             return null;
         }
 
-        private async Task<IAlgoCommand?> TrySetStartingTradeAsync(CancellationToken cancellationToken = default)
+        private async Task<IAlgoCommand?> TrySetStartingTradeAsync(IReadOnlyList<OrderQueryResult> transientBuyOrders, CancellationToken cancellationToken = default)
         {
             // skip if there's more than one band
             if (_bands.Count > 1) return null;
@@ -386,9 +390,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 TypeName, _context.Name, lowBuyPrice, _context.Symbol.QuoteAsset, _ticker.ClosePrice, _context.Symbol.QuoteAsset);
 
             // cancel the lowest open buy order with a open price lower than the lower band to the current price
-            var orders = await _orderProvider.GetTransientOrdersBySideAsync(_context.Symbol.Name, OrderSide.Buy, cancellationToken);
-
-            var lowest = orders.FirstOrDefault(x => x.Side == OrderSide.Buy && x.Status.IsTransientStatus());
+            var lowest = transientBuyOrders.FirstOrDefault(x => x.Side == OrderSide.Buy && x.Status.IsTransientStatus());
             if (lowest is not null && lowest.Price < lowBuyPrice)
             {
                 return CancelOrder(_context.Symbol, lowest.OrderId);

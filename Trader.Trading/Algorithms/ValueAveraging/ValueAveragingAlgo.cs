@@ -111,7 +111,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
 
                 // set a tracking buy if we hit a buy signal
                 TrySignalBuyOrder()
-                    ? TrackingBuy(_context.Symbol, _options.PullbackRatio, _options.TargetQuoteBalanceFractionPerBuy, _options.MaxNotional, _options.RedeemSavings)
+                    ? SetTrackingBuy()
                     : Noop(),
 
                 // place an averaging sell if we hit a sell signal
@@ -127,26 +127,49 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
 
         private bool TrySignalBuyOrder()
         {
-            // break on disabled opening
-            if (_significant.Orders.Count == 0 && !_options.IsOpeningEnabled)
-            {
-                _logger.LogInformation(
-                    "{Type} {Symbol} has opening disabled and will not signal a buy order",
-                    TypeName, _context.Symbol.Name);
+            return
+                EnsureOpeningEnabled() &&
+                EnsureAveragingEnabled() &&
+                EnsureTickerLowerThanSafePrice() &&
+                EnsureSmaLowEnough() &&
+                EnsureRsiLowEnough();
+        }
 
-                return false;
-            }
+        private IAlgoCommand SetTrackingBuy()
+        {
+            _logger.LogInformation(
+                    "{Type} {Symbol} will signal a buy order for the current state (Ticker = {Ticker:F8}, SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}, RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8})",
+                    TypeName, _context.Symbol.Name, _ticker.ClosePrice, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC);
 
-            // break on disabled averaging
-            if (_significant.Orders.Count > 0 && !_options.IsAveragingEnabled)
-            {
-                _logger.LogInformation(
-                    "{Type} {Symbol} has averaging disabled and will not signal a buy order",
-                    TypeName, _context.Symbol.Name);
+            return TrackingBuy(_context.Symbol, _options.PullbackRatio, _options.TargetQuoteBalanceFractionPerBuy, _options.MaxNotional, _options.RedeemSavings);
+        }
 
-                return false;
-            }
+        private bool EnsureRsiLowEnough()
+        {
+            _logger.LogInformation(
+                 "{Type} {Symbol} evaluating indicators (RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8})",
+                 TypeName, _context.Symbol.Name, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC);
 
+            var isRsiOrdered = _rsiA < _rsiB && _rsiB < _rsiC;
+            var isRsiSignaling = _rsiA < _options.RsiOverboughtA && _rsiB < _options.RsiOverboughtB && _rsiC < _options.RsiOverboughtC;
+
+            return isRsiOrdered && isRsiSignaling;
+        }
+
+        private bool EnsureSmaLowEnough()
+        {
+            _logger.LogInformation(
+                "{Type} {Symbol} evaluating indicators (SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8})",
+                TypeName, _context.Symbol.Name, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC);
+
+            var isSmaOrdered = _smaA < _smaB && _smaB < _smaC;
+            var isTickerUnderSma = _ticker.ClosePrice < _smaA && _ticker.ClosePrice < _smaB && _ticker.ClosePrice < _smaC;
+
+            return isSmaOrdered && isTickerUnderSma;
+        }
+
+        private bool EnsureTickerLowerThanSafePrice()
+        {
             // break on price not low enough from previous significant buy
             if (_significant.Orders.Count > 0)
             {
@@ -167,29 +190,37 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
                 }
             }
 
-            _logger.LogInformation(
-                "{Type} {Symbol} evaluating indicators (SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8})",
-                TypeName, _context.Symbol.Name, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC);
+            return true;
+        }
 
-            _logger.LogInformation(
-                 "{Type} {Symbol} evaluating indicators (RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8})",
-                 TypeName, _context.Symbol.Name, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC);
-
-            // evaluate the signal now
-            var isSmaOrdered = _smaA < _smaB && _smaB < _smaC;
-            var isTickerUnderSma = _ticker.ClosePrice < _smaA && _ticker.ClosePrice < _smaB && _ticker.ClosePrice < _smaC;
-            var isRsiOrdered = _rsiA < _rsiB && _rsiB < _rsiC;
-            var isRsiSignaling = _rsiA < _options.RsiOverboughtA && _rsiB < _options.RsiOverboughtB && _rsiC < _options.RsiOverboughtC;
-            var signal = isSmaOrdered && isTickerUnderSma && isRsiOrdered && isRsiSignaling;
-
-            if (signal)
+        private bool EnsureAveragingEnabled()
+        {
+            // break on disabled averaging
+            if (_significant.Orders.Count > 0 && !_options.IsAveragingEnabled)
             {
                 _logger.LogInformation(
-                    "{Type} {Symbol} will signal a buy order for the current state (Ticker = {Ticker:F8}, SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}, RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8})",
-                    TypeName, _context.Symbol.Name, _ticker.ClosePrice, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC);
+                    "{Type} {Symbol} has averaging disabled and will not signal a buy order",
+                    TypeName, _context.Symbol.Name);
+
+                return false;
             }
 
-            return signal;
+            return true;
+        }
+
+        private bool EnsureOpeningEnabled()
+        {
+            // break on disabled opening
+            if (_significant.Orders.Count == 0 && !_options.IsOpeningEnabled)
+            {
+                _logger.LogInformation(
+                    "{Type} {Symbol} has opening disabled and will not signal a buy order",
+                    TypeName, _context.Symbol.Name);
+
+                return false;
+            }
+
+            return true;
         }
 
         private bool TrySignalSellOrder()

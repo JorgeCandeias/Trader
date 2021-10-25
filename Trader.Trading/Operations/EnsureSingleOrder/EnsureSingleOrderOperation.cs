@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
+using Outcompute.Trader.Trading.Providers.Orders;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,18 +14,18 @@ namespace Outcompute.Trader.Trading.Operations.EnsureSingleOrder
         private readonly IOptionsMonitor<SavingsOptions> _monitor;
         private readonly ILogger _logger;
         private readonly IBalanceProvider _balances;
+        private readonly IOrderProvider _orders;
         private readonly ICreateOrderOperation _createOrderBlock;
-        private readonly IGetOpenOrdersOperation _getOpenOrdersBlock;
         private readonly ICancelOrderOperation _cancelOrderBlock;
         private readonly IRedeemSavingsOperation _redeemSavingsBlock;
 
-        public EnsureSingleOrderOperation(IOptionsMonitor<SavingsOptions> monitor, ILogger<EnsureSingleOrderOperation> logger, IBalanceProvider balances, ICreateOrderOperation orderCreator, IGetOpenOrdersOperation getOpenOrdersBlock, ICancelOrderOperation cancelOrderBlock, IRedeemSavingsOperation redeemSavingsBlock)
+        public EnsureSingleOrderOperation(IOptionsMonitor<SavingsOptions> monitor, ILogger<EnsureSingleOrderOperation> logger, IBalanceProvider balances, IOrderProvider orders, ICreateOrderOperation orderCreator, ICancelOrderOperation cancelOrderBlock, IRedeemSavingsOperation redeemSavingsBlock)
         {
             _monitor = monitor;
             _logger = logger;
             _balances = balances;
+            _orders = orders;
             _createOrderBlock = orderCreator;
-            _getOpenOrdersBlock = getOpenOrdersBlock;
             _cancelOrderBlock = cancelOrderBlock;
             _redeemSavingsBlock = redeemSavingsBlock;
         }
@@ -41,8 +42,8 @@ namespace Outcompute.Trader.Trading.Operations.EnsureSingleOrder
         private async Task<bool> EnsureSingleOrderCoreAsync(Symbol symbol, OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings, CancellationToken cancellationToken = default)
         {
             // get current open orders
-            var orders = await _getOpenOrdersBlock
-                .GetOpenOrdersAsync(symbol, side, cancellationToken)
+            var orders = await _orders
+                .GetTransientOrdersBySideAsync(symbol.Name, side, cancellationToken)
                 .ConfigureAwait(false);
 
             // cancel all non-desired orders

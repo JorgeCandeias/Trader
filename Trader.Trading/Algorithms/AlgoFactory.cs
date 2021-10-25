@@ -21,8 +21,6 @@ namespace Outcompute.Trader.Trading.Algorithms
             var context = _provider.GetRequiredService<AlgoContext>();
             context.Name = name;
 
-            AlgoContext.Current = context;
-
             // resolve the algo instance now
             var algo = ActivatorUtilities.CreateInstance<TAlgo>(_provider);
 

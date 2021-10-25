@@ -54,11 +54,6 @@ namespace Outcompute.Trader.Trading.Algorithms
             return ClearOpenOrders(EnsureSymbol(), side);
         }
 
-        public virtual Task<IReadOnlyList<OrderQueryResult>> GetOpenOrdersAsync(OrderSide side, CancellationToken cancellationToken = default)
-        {
-            return GetOpenOrdersAsync(EnsureSymbol(), side, cancellationToken);
-        }
-
         public virtual SignificantAveragingSellAlgoResult SignificantAveragingSell(MiniTicker ticker, IReadOnlyCollection<OrderQueryResult> orders, decimal minimumProfitRate, bool redeemSavings)
         {
             return SignificantAveragingSell(EnsureSymbol(), ticker, orders, minimumProfitRate, redeemSavings);

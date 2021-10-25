@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
-using Outcompute.Trader.Trading.Algorithms.Exceptions;
 using Outcompute.Trader.Trading.Readyness;
 using System;
 using System.Threading;
@@ -31,6 +30,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         private string _name = Empty;
         private IAlgo _algo = NullAlgo.Instance;
+        private AlgoContext _context = AlgoContext.Empty;
         private IDisposable? _timer;
         private bool _ready;
         private bool _loggedNotReady;
@@ -43,28 +43,20 @@ namespace Outcompute.Trader.Trading.Algorithms
             // snapshot the current algo host options
             var options = _options.Get(_name);
 
-            // resolve the factory for the current algo type
-            var factory = _scope.ServiceProvider.GetRequiredService<IAlgoFactoryResolver>().Resolve(options.Type);
+            // keep the scoped context for use during result execution
+            _context = _scope.ServiceProvider.GetRequiredService<AlgoContext>();
 
-            // create the algo instance
-            _algo = factory.Create(_name);
-
-            // perform specific tasks for symbol algos
-            // this ad-hoc code needs to get refactored into its own component for each algo type using some strategy pattern
-            if (_algo is ISymbolAlgo symbolAlgo)
+            // resolve the symbol if defined
+            if (!IsNullOrWhiteSpace(options.Symbol))
             {
-                // validate the symbol option
-                if (IsNullOrWhiteSpace(options.Symbol))
-                {
-                    throw new AlgorithmException($"Algo '{_name}' is a '{nameof(ISymbolAlgo)}' and must specify the '{nameof(options.Symbol)}' option");
-                }
-
-                // get the scoped context
-                var context = _scope.ServiceProvider.GetRequiredService<AlgoContext>();
-
-                // set the symbol info on the scoped context
-                context.Symbol = await context.GetRequiredSymbolAsync(options.Symbol, _cancellation.Token);
+                _context.Symbol = await _context.GetRequiredSymbolAsync(options.Symbol);
             }
+
+            // resolve the factory for the current algo type and create the algo instance
+            _algo = _scope.ServiceProvider
+                .GetRequiredService<IAlgoFactoryResolver>()
+                .Resolve(options.Type)
+                .Create(_name);
 
             // run startup work
             await _algo.StartAsync(_cancellation.Token);
@@ -162,7 +154,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             var result = await _algo.GoAsync(linked.Token);
 
             // execute the algo result under the limits
-            await result.ExecuteAsync(AlgoContext.Current, linked.Token);
+            await result.ExecuteAsync(_context, linked.Token);
         }
 
         public Task TickAsync()

@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Operations;
+﻿using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Operations.AveragingSell;
 using Outcompute.Trader.Trading.Operations.CancelOrder;
 using Outcompute.Trader.Trading.Operations.ClearOpenOrders;
@@ -74,13 +72,6 @@ namespace Outcompute.Trader.Trading.Algorithms
         public virtual ClearOpenOrdersAlgoResult ClearOpenOrders(Symbol symbol, OrderSide side)
         {
             return new ClearOpenOrdersAlgoResult(symbol, side);
-        }
-
-        public virtual Task<IReadOnlyList<OrderQueryResult>> GetOpenOrdersAsync(Symbol symbol, OrderSide side, CancellationToken cancellationToken = default)
-        {
-            return Context.ServiceProvider
-                .GetRequiredService<IGetOpenOrdersOperation>()
-                .GetOpenOrdersAsync(symbol, side, cancellationToken);
         }
 
         public virtual RedeemSavingsAlgoResult TryRedeemSavings(string asset, decimal amount)

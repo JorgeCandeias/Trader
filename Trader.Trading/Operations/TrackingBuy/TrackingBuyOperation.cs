@@ -2,6 +2,7 @@
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Providers;
+using Outcompute.Trader.Trading.Providers.Orders;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -17,18 +18,18 @@ namespace Outcompute.Trader.Trading.Operations.TrackingBuy
         private readonly ITickerProvider _tickers;
         private readonly IBalanceProvider _balances;
         private readonly ISavingsProvider _savings;
-        private readonly IGetOpenOrdersOperation _getOpenOrdersBlock;
+        private readonly IOrderProvider _orders;
         private readonly IRedeemSavingsOperation _redeemSavingsBlock;
         private readonly ICreateOrderOperation _createOrderBlock;
         private readonly ICancelOrderOperation _cancelOrderBlock;
 
-        public TrackingBuyOperation(ILogger<TrackingBuyOperation> logger, ITickerProvider tickers, IBalanceProvider balances, ISavingsProvider savings, IGetOpenOrdersOperation getOpenOrdersBlock, IRedeemSavingsOperation redeemSavingsBlock, ICreateOrderOperation createOrderBlock, ICancelOrderOperation cancelOrderBlock)
+        public TrackingBuyOperation(ILogger<TrackingBuyOperation> logger, ITickerProvider tickers, IBalanceProvider balances, ISavingsProvider savings, IOrderProvider orders, IRedeemSavingsOperation redeemSavingsBlock, ICreateOrderOperation createOrderBlock, ICancelOrderOperation cancelOrderBlock)
         {
             _logger = logger;
             _tickers = tickers;
             _balances = balances;
             _savings = savings;
-            _getOpenOrdersBlock = getOpenOrdersBlock;
+            _orders = orders;
             _redeemSavingsBlock = redeemSavingsBlock;
             _createOrderBlock = createOrderBlock;
             _cancelOrderBlock = cancelOrderBlock;
@@ -46,7 +47,7 @@ namespace Outcompute.Trader.Trading.Operations.TrackingBuy
         private async Task SetTrackingBuyCoreAsync(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings, CancellationToken cancellationToken)
         {
             var ticker = await _tickers.GetRequiredTickerAsync(symbol.Name, cancellationToken).ConfigureAwait(false);
-            var orders = await _getOpenOrdersBlock.GetOpenOrdersAsync(symbol, OrderSide.Buy, cancellationToken).ConfigureAwait(false);
+            var orders = await _orders.GetTransientOrdersBySideAsync(symbol.Name, OrderSide.Buy, cancellationToken).ConfigureAwait(false);
             var balance = await _balances.GetRequiredBalanceAsync(symbol.QuoteAsset, cancellationToken).ConfigureAwait(false);
             var savings = await _savings.GetPositionOrZeroAsync(symbol.QuoteAsset, cancellationToken).ConfigureAwait(false);
 

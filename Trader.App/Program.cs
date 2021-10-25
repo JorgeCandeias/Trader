@@ -137,7 +137,7 @@ namespace Outcompute.Trader.App
                 _clock = clock ?? throw new ArgumentNullException(nameof(clock));
             }
 
-            public override async Task<IAlgoResult> GoAsync(CancellationToken cancellationToken = default)
+            public override async Task<IAlgoCommand> GoAsync(CancellationToken cancellationToken = default)
             {
                 var options = _options.Get(_context.Name);
 

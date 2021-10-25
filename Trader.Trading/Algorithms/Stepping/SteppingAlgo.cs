@@ -60,7 +60,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         /// </summary>
         private readonly SortedSet<Band> _bands = new();
 
-        public override async Task<IAlgoResult> GoAsync(CancellationToken cancellationToken = default)
+        public override async Task<IAlgoCommand> GoAsync(CancellationToken cancellationToken = default)
         {
             // pin the options for this execution
             _options = _monitor.Get(_context.Name);
@@ -80,7 +80,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 "{Type} {Name} reports latest asset price is {Price} {QuoteAsset}",
                 TypeName, _context.Name, _ticker.ClosePrice, _symbol.QuoteAsset);
 
-            IAlgoResult? result;
+            IAlgoCommand? result;
 
             if (await TryCreateTradingBandsAsync(significant.Orders, cancellationToken)) return Noop();
             result = await TrySetStartingTradeAsync(cancellationToken);
@@ -137,7 +137,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 TypeName, _context.Name, _symbol.QuoteAsset, _balances.Quote.Free, _balances.Quote.Locked, _balances.Quote.Total);
         }
 
-        private IAlgoResult? TryCloseOutOfRangeBands()
+        private IAlgoCommand? TryCloseOutOfRangeBands()
         {
             // take the upper band
             var upper = _bands.Max;
@@ -165,7 +165,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             return null;
         }
 
-        private async Task<IAlgoResult?> TryCreateLowerBandOrderAsync(CancellationToken cancellationToken = default)
+        private async Task<IAlgoCommand?> TryCreateLowerBandOrderAsync(CancellationToken cancellationToken = default)
         {
             // identify the highest and lowest bands
             var highBand = _bands.Max;
@@ -288,7 +288,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         /// <summary>
         /// Sets sell orders for open bands that do not have them yet.
         /// </summary>
-        private async Task<IAlgoResult?> TrySetBandSellOrdersAsync(CancellationToken cancellationToken = default)
+        private async Task<IAlgoCommand?> TrySetBandSellOrdersAsync(CancellationToken cancellationToken = default)
         {
             // skip if we have reach the max sell orders
             var orders = await _orderProvider.GetTransientOrdersBySideAsync(_symbol.Name, OrderSide.Sell, cancellationToken);
@@ -347,7 +347,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         /// <summary>
         /// Identify and cancel rogue sell orders that do not belong to a trading band.
         /// </summary>
-        private async Task<IAlgoResult?> TryCancelRogueSellOrdersAsync(CancellationToken cancellationToken)
+        private async Task<IAlgoCommand?> TryCancelRogueSellOrdersAsync(CancellationToken cancellationToken)
         {
             var orders = await _orderProvider
                 .GetTransientOrdersBySideAsync(_symbol.Name, OrderSide.Sell, cancellationToken)
@@ -367,7 +367,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         /// <summary>
         /// Identify and cancel excess sell orders above the limit.
         /// </summary>
-        private async Task<IAlgoResult?> TryCancelExcessSellOrdersAsync(CancellationToken cancellationToken = default)
+        private async Task<IAlgoCommand?> TryCancelExcessSellOrdersAsync(CancellationToken cancellationToken = default)
         {
             // get the order ids for the lowest open bands
             var bands = _bands
@@ -392,7 +392,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             return null;
         }
 
-        private async Task<IAlgoResult?> TrySetStartingTradeAsync(CancellationToken cancellationToken = default)
+        private async Task<IAlgoCommand?> TrySetStartingTradeAsync(CancellationToken cancellationToken = default)
         {
             // only manage the opening if there are no bands or only a single order band to move around
             if (_bands.Count == 0 || _bands.Count == 1 && _bands.Single().Status == BandStatus.Ordered)

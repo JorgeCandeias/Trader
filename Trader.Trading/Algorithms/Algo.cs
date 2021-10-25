@@ -1,13 +1,13 @@
 ﻿using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Operations.AveragingSell;
-using Outcompute.Trader.Trading.Operations.CancelOrder;
-using Outcompute.Trader.Trading.Operations.ClearOpenOrders;
-using Outcompute.Trader.Trading.Operations.CreateOrder;
-using Outcompute.Trader.Trading.Operations.EnsureSingleOrder;
-using Outcompute.Trader.Trading.Operations.Many;
-using Outcompute.Trader.Trading.Operations.RedeemSavings;
-using Outcompute.Trader.Trading.Operations.SignificantAveragingSell;
-using Outcompute.Trader.Trading.Operations.TrackingBuy;
+using Outcompute.Trader.Trading.Commands.AveragingSell;
+using Outcompute.Trader.Trading.Commands.CancelOrder;
+using Outcompute.Trader.Trading.Commands.ClearOpenOrders;
+using Outcompute.Trader.Trading.Commands.CreateOrder;
+using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
+using Outcompute.Trader.Trading.Commands.Many;
+using Outcompute.Trader.Trading.Commands.RedeemSavings;
+using Outcompute.Trader.Trading.Commands.SignificantAveragingSell;
+using Outcompute.Trader.Trading.Commands.TrackingBuy;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,7 +20,7 @@ namespace Outcompute.Trader.Trading.Algorithms
     /// </summary>
     public abstract class Algo : IAlgo
     {
-        public abstract Task<IAlgoResult> GoAsync(CancellationToken cancellationToken = default);
+        public abstract Task<IAlgoCommand> GoAsync(CancellationToken cancellationToken = default);
 
         public virtual Task StartAsync(CancellationToken cancellationToken = default)
         {
@@ -34,59 +34,59 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public IAlgoContext Context { get; set; } = NullAlgoContext.Instance;
 
-        public virtual NoopAlgoResult Noop()
+        public virtual NoopAlgoCommand Noop()
         {
-            return NoopAlgoResult.Instance;
+            return NoopAlgoCommand.Instance;
         }
 
-        public virtual ManyAlgoResult Many(IEnumerable<IAlgoResult> results)
+        public virtual ManyCommand Many(IEnumerable<IAlgoCommand> results)
         {
-            return new ManyAlgoResult(results);
+            return new ManyCommand(results);
         }
 
-        public virtual ManyAlgoResult Many(params IAlgoResult[] results)
+        public virtual ManyCommand Many(params IAlgoCommand[] results)
         {
-            return new ManyAlgoResult(results);
+            return new ManyCommand(results);
         }
 
-        public virtual AveragingSellAlgoResult AveragingSell(Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings)
+        public virtual AveragingSellCommand AveragingSell(Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings)
         {
-            return new AveragingSellAlgoResult(symbol, orders, profitMultiplier, redeemSavings);
+            return new AveragingSellCommand(symbol, orders, profitMultiplier, redeemSavings);
         }
 
-        public virtual CreateOrderAlgoResult CreateOrder(Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag)
+        public virtual CreateOrderCommand CreateOrder(Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag)
         {
-            return new CreateOrderAlgoResult(symbol, type, side, timeInForce, quantity, price, tag);
+            return new CreateOrderCommand(symbol, type, side, timeInForce, quantity, price, tag);
         }
 
-        public virtual CancelOrderAlgoResult CancelOrder(Symbol symbol, long orderId)
+        public virtual CancelOrderCommand CancelOrder(Symbol symbol, long orderId)
         {
-            return new CancelOrderAlgoResult(symbol, orderId);
+            return new CancelOrderCommand(symbol, orderId);
         }
 
-        public virtual EnsureSingleOrderAlgoResult EnsureSingleOrder(Symbol symbol, OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings)
+        public virtual EnsureSingleOrderCommand EnsureSingleOrder(Symbol symbol, OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings)
         {
-            return new EnsureSingleOrderAlgoResult(symbol, side, type, timeInForce, quantity, price, redeemSavings);
+            return new EnsureSingleOrderCommand(symbol, side, type, timeInForce, quantity, price, redeemSavings);
         }
 
-        public virtual ClearOpenOrdersAlgoResult ClearOpenOrders(Symbol symbol, OrderSide side)
+        public virtual ClearOpenOrdersCommand ClearOpenOrders(Symbol symbol, OrderSide side)
         {
-            return new ClearOpenOrdersAlgoResult(symbol, side);
+            return new ClearOpenOrdersCommand(symbol, side);
         }
 
-        public virtual RedeemSavingsAlgoResult TryRedeemSavings(string asset, decimal amount)
+        public virtual RedeemSavingsCommand TryRedeemSavings(string asset, decimal amount)
         {
-            return new RedeemSavingsAlgoResult(asset, amount);
+            return new RedeemSavingsCommand(asset, amount);
         }
 
-        public virtual SignificantAveragingSellAlgoResult SignificantAveragingSell(Symbol symbol, MiniTicker ticker, IReadOnlyCollection<OrderQueryResult> orders, decimal minimumProfitRate, bool redeemSavings)
+        public virtual SignificantAveragingSellCommand SignificantAveragingSell(Symbol symbol, MiniTicker ticker, IReadOnlyCollection<OrderQueryResult> orders, decimal minimumProfitRate, bool redeemSavings)
         {
-            return new SignificantAveragingSellAlgoResult(symbol, ticker, orders, minimumProfitRate, redeemSavings);
+            return new SignificantAveragingSellCommand(symbol, ticker, orders, minimumProfitRate, redeemSavings);
         }
 
-        public virtual TrackingBuyAlgoResult TrackingBuy(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings)
+        public virtual TrackingBuyCommand TrackingBuy(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings)
         {
-            return new TrackingBuyAlgoResult(symbol, pullbackRatio, targetQuoteBalanceFractionPerBuy, maxNotional, redeemSavings);
+            return new TrackingBuyCommand(symbol, pullbackRatio, targetQuoteBalanceFractionPerBuy, maxNotional, redeemSavings);
         }
     }
 }

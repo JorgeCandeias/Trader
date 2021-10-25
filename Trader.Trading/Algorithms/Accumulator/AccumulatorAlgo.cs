@@ -21,7 +21,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Accumulator
 
         private static string TypeName => nameof(AccumulatorAlgo);
 
-        public override async Task<IAlgoResult> GoAsync(CancellationToken cancellationToken = default)
+        public override async Task<IAlgoCommand> GoAsync(CancellationToken cancellationToken = default)
         {
             // snapshot the options for this execution
             var options = _options.Get(_context.Name);

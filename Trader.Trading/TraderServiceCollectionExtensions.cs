@@ -1,14 +1,15 @@
 ﻿using Outcompute.Trader.Trading;
 using Outcompute.Trader.Trading.Algorithms;
-using Outcompute.Trader.Trading.Operations.AveragingSell;
-using Outcompute.Trader.Trading.Operations.CancelOrder;
-using Outcompute.Trader.Trading.Operations.ClearOpenOrders;
-using Outcompute.Trader.Trading.Operations.CreateOrder;
-using Outcompute.Trader.Trading.Operations.EnsureSingleOrder;
-using Outcompute.Trader.Trading.Operations.Many;
-using Outcompute.Trader.Trading.Operations.RedeemSavings;
-using Outcompute.Trader.Trading.Operations.SignificantAveragingSell;
-using Outcompute.Trader.Trading.Operations.TrackingBuy;
+using Outcompute.Trader.Trading.Commands;
+using Outcompute.Trader.Trading.Commands.AveragingSell;
+using Outcompute.Trader.Trading.Commands.CancelOrder;
+using Outcompute.Trader.Trading.Commands.ClearOpenOrders;
+using Outcompute.Trader.Trading.Commands.CreateOrder;
+using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
+using Outcompute.Trader.Trading.Commands.Many;
+using Outcompute.Trader.Trading.Commands.RedeemSavings;
+using Outcompute.Trader.Trading.Commands.SignificantAveragingSell;
+using Outcompute.Trader.Trading.Commands.TrackingBuy;
 using Outcompute.Trader.Trading.Providers;
 using Outcompute.Trader.Trading.Providers.Balances;
 using Outcompute.Trader.Trading.Providers.Exchange;
@@ -68,16 +69,32 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<IExchangeInfoProvider, ExchangeInfoProvider>()
                 .AddOptions<ExchangeInfoOptions>().ValidateDataAnnotations().Services
 
-                // blocks
-                .AddAveragingSellServices()
-                .AddCancelOrderServices()
-                .AddClearOpenOrdersServices()
-                .AddCreateOrderServices()
-                .AddEnsureSingleOrderServices()
-                .AddManyServices()
-                .AddRedeemSavingsServices()
-                .AddSignificantAveragingSellServices()
-                .AddTrackingBuyServices();
+                // commands
+                .AddSingleton<IAveragingSellService, AveragingSellService>()
+                .AddSingleton<IAlgoCommandExecutor<AveragingSellCommand>, AveragingSellExecutor>()
+
+                .AddSingleton<ICancelOrderService, CancelOrderService>()
+                .AddSingleton<IAlgoCommandExecutor<CancelOrderCommand>, CancelOrderExecutor>()
+
+                .AddSingleton<IClearOpenOrdersService, ClearOpenOrdersService>()
+                .AddSingleton<IAlgoCommandExecutor<ClearOpenOrdersCommand>, ClearOpenOrdersExecutor>()
+
+                .AddSingleton<ICreateOrderService, CreateOrderService>()
+                .AddSingleton<IAlgoCommandExecutor<CreateOrderCommand>, CreateOrderExecutor>()
+
+                .AddSingleton<IEnsureSingleOrderService, EnsureSingleOrderService>()
+                .AddSingleton<IAlgoCommandExecutor<EnsureSingleOrderCommand>, EnsureSingleOrderExecutor>()
+
+                .AddSingleton<IAlgoCommandExecutor<ManyCommand>, ManyExecutor>()
+
+                .AddSingleton<IRedeemSavingsService, RedeemSavingsService>()
+                .AddSingleton<IAlgoCommandExecutor<RedeemSavingsCommand>, RedeemSavingsExecutor>()
+
+                .AddSingleton<ISignificantAveragingSellService, SignificantAveragingSellService>()
+                .AddSingleton<IAlgoCommandExecutor<SignificantAveragingSellCommand>, SignificantAveragingSellExecutor>()
+
+                .AddSingleton<ITrackingBuyService, TrackingBuyService>()
+                .AddSingleton<IAlgoCommandExecutor<TrackingBuyCommand>, TrackingBuyExecutor>();
         }
     }
 }

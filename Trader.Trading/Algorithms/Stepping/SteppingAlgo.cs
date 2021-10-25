@@ -360,95 +360,93 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
         private async Task<IAlgoCommand?> TrySetStartingTradeAsync(CancellationToken cancellationToken = default)
         {
-            // only manage the opening if there are no bands or only a single order band to move around
-            if (_bands.Count == 0 || _bands.Count == 1 && _bands.Single().Status == BandStatus.Ordered)
+            // skip if there's more than one band
+            if (_bands.Count > 1) return null;
+
+            // skip if there is one band but it is already active
+            if (_bands.Count == 1 && _bands.Min!.Status != BandStatus.Ordered) return null;
+
+            // identify the target low price for the first buy
+            var lowBuyPrice = _ticker.ClosePrice;
+
+            // under adjust the buy price to the tick size
+            lowBuyPrice = Math.Floor(lowBuyPrice / _context.Symbol.Filters.Price.TickSize) * _context.Symbol.Filters.Price.TickSize;
+
+            _logger.LogInformation(
+                "{Type} {Name} identified first buy target price at {LowPrice} {LowQuote} with current price at {CurrentPrice} {CurrentQuote}",
+                TypeName, _context.Name, lowBuyPrice, _context.Symbol.QuoteAsset, _ticker.ClosePrice, _context.Symbol.QuoteAsset);
+
+            // cancel the lowest open buy order with a open price lower than the lower band to the current price
+            var orders = await _orderProvider.GetTransientOrdersBySideAsync(_context.Symbol.Name, OrderSide.Buy, cancellationToken);
+
+            var lowest = orders.FirstOrDefault(x => x.Side == OrderSide.Buy && x.Status.IsTransientStatus());
+            if (lowest is not null && lowest.Price < lowBuyPrice)
             {
-                // identify the target low price for the first buy
-                var lowBuyPrice = _ticker.ClosePrice;
+                return CancelOrder(_context.Symbol, lowest.OrderId);
+            }
 
-                // under adjust the buy price to the tick size
-                lowBuyPrice = Math.Floor(lowBuyPrice / _context.Symbol.Filters.Price.TickSize) * _context.Symbol.Filters.Price.TickSize;
+            if (!_options.IsOpeningEnabled)
+            {
+                _logger.LogWarning(
+                    "{Type} {Name} cannot create the opening band because it is disabled",
+                    TypeName, _context.Name);
 
-                _logger.LogInformation(
-                    "{Type} {Name} identified first buy target price at {LowPrice} {LowQuote} with current price at {CurrentPrice} {CurrentQuote}",
-                    TypeName, _context.Name, lowBuyPrice, _context.Symbol.QuoteAsset, _ticker.ClosePrice, _context.Symbol.QuoteAsset);
+                return Noop();
+            }
 
-                // cancel the lowest open buy order with a open price lower than the lower band to the current price
-                var orders = await _orderProvider.GetTransientOrdersBySideAsync(_context.Symbol.Name, OrderSide.Buy, cancellationToken);
+            // calculate the amount to pay with
+            var total = Math.Round(_balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand, _context.Symbol.QuoteAssetPrecision);
 
-                var lowest = orders.FirstOrDefault(x => x.Side == OrderSide.Buy && x.Status.IsTransientStatus());
-                if (lowest is not null && lowest.Price < lowBuyPrice)
+            // lower below the max notional if needed
+            if (_options.MaxNotional.HasValue)
+            {
+                total = Math.Min(total, _options.MaxNotional.Value);
+            }
+
+            // raise to the minimum notional if needed
+            total = Math.Max(total, _context.Symbol.Filters.MinNotional.MinNotional);
+
+            // ensure there is enough quote asset for it
+            if (total > _balances.Quote.Free)
+            {
+                var necessary = total - _balances.Quote.Free;
+
+                _logger.LogWarning(
+                    "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}. Will attempt to redeem from savings...",
+                    TypeName, _context.Name, total, _context.Symbol.QuoteAsset, _balances.Quote.Free, _context.Symbol.QuoteAsset);
+
+                var result = await TryRedeemSavings(_context.Symbol.QuoteAsset, necessary)
+                    .ExecuteAsync(_context, cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (result.Success)
                 {
-                    return CancelOrder(_context.Symbol, lowest.OrderId);
-                }
+                    _logger.LogInformation(
+                        "{Type} {Name} redeemed {Amount} {Asset} successfully",
+                        TypeName, _context.Name, necessary, _context.Symbol.QuoteAsset);
 
-                if (!_options.IsOpeningEnabled)
-                {
-                    _logger.LogWarning(
-                        "{Type} {Name} cannot create the opening band because it is disabled",
-                        TypeName, _context.Name);
-
+                    // let the algo cycle to allow redemption to process
                     return Noop();
                 }
-
-                // calculate the amount to pay with
-                var total = Math.Round(_balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand, _context.Symbol.QuoteAssetPrecision);
-
-                // lower below the max notional if needed
-                if (_options.MaxNotional.HasValue)
+                else
                 {
-                    total = Math.Min(total, _options.MaxNotional.Value);
+                    _logger.LogError(
+                        "{Type} {Name} failed to redeem the necessary amount of {Quantity} {Asset}",
+                        TypeName, _context.Name, necessary, _context.Symbol.QuoteAsset);
+
+                    return null;
                 }
-
-                // raise to the minimum notional if needed
-                total = Math.Max(total, _context.Symbol.Filters.MinNotional.MinNotional);
-
-                // ensure there is enough quote asset for it
-                if (total > _balances.Quote.Free)
-                {
-                    var necessary = total - _balances.Quote.Free;
-
-                    _logger.LogWarning(
-                        "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}. Will attempt to redeem from savings...",
-                        TypeName, _context.Name, total, _context.Symbol.QuoteAsset, _balances.Quote.Free, _context.Symbol.QuoteAsset);
-
-                    var result = await TryRedeemSavings(_context.Symbol.QuoteAsset, necessary)
-                        .ExecuteAsync(_context, cancellationToken)
-                        .ConfigureAwait(false);
-
-                    if (result.Success)
-                    {
-                        _logger.LogInformation(
-                            "{Type} {Name} redeemed {Amount} {Asset} successfully",
-                            TypeName, _context.Name, necessary, _context.Symbol.QuoteAsset);
-
-                        // let the algo cycle to allow redemption to process
-                        return Noop();
-                    }
-                    else
-                    {
-                        _logger.LogError(
-                            "{Type} {Name} failed to redeem the necessary amount of {Quantity} {Asset}",
-                            TypeName, _context.Name, necessary, _context.Symbol.QuoteAsset);
-
-                        return null;
-                    }
-                }
-
-                // calculate the appropriate quantity to buy
-                var quantity = total / lowBuyPrice;
-
-                // round it up to the lot size step
-                quantity = Math.Ceiling(quantity / _context.Symbol.Filters.LotSize.StepSize) * _context.Symbol.Filters.LotSize.StepSize;
-
-                // place a limit order at the current price
-                var tag = $"{_context.Symbol.Name}{lowBuyPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal);
-                return CreateOrder(_context.Symbol, OrderType.Limit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, lowBuyPrice, tag);
             }
-            else
-            {
-                return null;
-            }
+
+            // calculate the appropriate quantity to buy
+            var quantity = total / lowBuyPrice;
+
+            // round it up to the lot size step
+            quantity = Math.Ceiling(quantity / _context.Symbol.Filters.LotSize.StepSize) * _context.Symbol.Filters.LotSize.StepSize;
+
+            // place a limit order at the current price
+            var tag = $"{_context.Symbol.Name}{lowBuyPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal);
+            return CreateOrder(_context.Symbol, OrderType.Limit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, lowBuyPrice, tag);
         }
 
         private async Task<IAlgoCommand?> TryCreateTradingBandsAsync(ImmutableSortedOrderSet significant, CancellationToken cancellationToken = default)

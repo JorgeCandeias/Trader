@@ -35,7 +35,7 @@ namespace Outcompute.Trader.Trading.Providers.Trades
         /// <summary>
         /// Holds the trade cache in a form that is mutable but still convertible to immutable upon request with low overhead.
         /// </summary>
-        private readonly ImmutableSortedSet<AccountTrade>.Builder _trades = ImmutableSortedSet.CreateBuilder(AccountTrade.TradeIdComparer);
+        private readonly ImmutableSortedSet<AccountTrade>.Builder _trades = ImmutableSortedSet.CreateBuilder(AccountTrade.KeyComparer);
 
         /// <summary>
         /// An instance version that helps reset replicas upon reactivation of this grain.
@@ -107,7 +107,7 @@ namespace Outcompute.Trader.Trading.Providers.Trades
             // fulfill the request now if possible
             if (_serial >= fromSerial)
             {
-                var builder = ImmutableSortedSet.CreateBuilder(AccountTrade.TradeIdComparer);
+                var builder = ImmutableSortedSet.CreateBuilder(AccountTrade.KeyComparer);
 
                 for (var i = fromSerial; i <= _serial; i++)
                 {

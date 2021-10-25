@@ -26,9 +26,6 @@ namespace Outcompute.Trader.Models
         public static IComparer<AccountTrade> KeyComparer { get; } = new KeyComparerInternal();
 
         // todo: replace usage of this this with key comparer
-        public static IComparer<AccountTrade> TradeIdComparer { get; } = new TradeIdComparerInternal();
-
-        // todo: replace usage of this this with key comparer
         public static IEqualityComparer<AccountTrade> TradeIdEqualityComparer { get; } = new TradeIdEqualityComparerInternal();
 
         private sealed class KeyComparerInternal : Comparer<AccountTrade>

@@ -44,7 +44,7 @@ namespace Outcompute.Trader.Trading.Providers.Trades
         /// <summary>
         /// Holds the trade cache in a form that is mutable but still convertible to immutable upon request with low overhead.
         /// </summary>
-        private readonly ImmutableSortedSet<AccountTrade>.Builder _trades = ImmutableSortedSet.CreateBuilder(AccountTrade.TradeIdComparer);
+        private readonly ImmutableSortedSet<AccountTrade>.Builder _trades = ImmutableSortedSet.CreateBuilder(AccountTrade.KeyComparer);
 
         /// <summary>
         /// Indexes trades by trade id to speed up requests for a single trade.

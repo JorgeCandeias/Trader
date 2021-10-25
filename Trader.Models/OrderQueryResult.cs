@@ -51,9 +51,9 @@ namespace Outcompute.Trader.Models
         // todo: replace usage of this this with key comparer
         public static IEqualityComparer<OrderQueryResult> OrderIdEqualityComparer { get; } = new OrderIdEqualityComparerInternal();
 
-        private sealed class KeyComparerInternal : IComparer<OrderQueryResult>
+        private sealed class KeyComparerInternal : Comparer<OrderQueryResult>
         {
-            public int Compare(OrderQueryResult? x, OrderQueryResult? y)
+            public override int Compare(OrderQueryResult? x, OrderQueryResult? y)
             {
                 if (x is null)
                 {

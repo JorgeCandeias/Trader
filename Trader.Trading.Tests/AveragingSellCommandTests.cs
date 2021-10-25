@@ -4,7 +4,6 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Commands.AveragingSell;
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -18,7 +17,10 @@ namespace Outcompute.Trader.Trading.Tests
         {
             // arrange
             var symbol = Symbol.Empty;
-            var orders = Array.Empty<OrderQueryResult>();
+            var orders = new[]
+            {
+                OrderQueryResult.Empty with { Symbol = symbol.Name, OrderId = 123, Side = OrderSide.Buy, ExecutedQuantity = 123m }
+            };
             var profitMultiplier = 1.10m;
             var redeemSavings = true;
             var executor = Mock.Of<IAlgoCommandExecutor<AveragingSellCommand>>();

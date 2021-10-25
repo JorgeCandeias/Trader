@@ -25,8 +25,10 @@ namespace Outcompute.Trader.Models
         decimal TakerBuyBaseAssetVolume,
         decimal TakerBuyQuoteAssetVolume)
     {
+        // todo: replace usage of this this with key comparer
         public static IComparer<Kline> OpenTimeComparer { get; } = new OpenTimeComparerInternal();
 
+        // todo: replace usage of this this with key comparer
         public static IEqualityComparer<Kline> OpenTimeEqualityComparer { get; } = new OpenTimeEqualityComparerInternal();
 
         public static IComparer<Kline> KeyComparer { get; } = new KeyComparerInternal();

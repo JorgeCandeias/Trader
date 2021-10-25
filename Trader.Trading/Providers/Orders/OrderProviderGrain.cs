@@ -213,31 +213,36 @@ namespace Outcompute.Trader.Trading.Providers.Orders
 
                 if (_completions.Remove(key, out var completion))
                 {
-                    if (key.Version != _version)
-                    {
-                        // complete on data reset
-                        completion.SetResult(new ReactiveResult(_version, _serial, _orders.ToImmutable()));
-                    }
-                    else
-                    {
-                        // complete on changes only
-                        var builder = ImmutableSortedSet.CreateBuilder(OrderQueryResult.OrderIdComparer);
-
-                        for (var s = key.FromSerial; s <= _serial; s++)
-                        {
-                            if (_orderBySerial.TryGetValue(s, out var kline))
-                            {
-                                builder.Add(kline);
-                            }
-                        }
-
-                        completion.SetResult(new ReactiveResult(_version, _serial, builder.ToImmutable()));
-                    }
+                    Complete(completion, key.Version, key.FromSerial);
                 }
             }
 
             // cleanup
             ArrayPool<(Guid, int)>.Shared.Return(elected);
+        }
+
+        private void Complete(TaskCompletionSource<ReactiveResult?> completion, Guid version, int fromSerial)
+        {
+            if (version != _version)
+            {
+                // complete on data reset
+                completion.SetResult(new ReactiveResult(_version, _serial, _orders.ToImmutable()));
+            }
+            else
+            {
+                // complete on changes only
+                var builder = ImmutableSortedSet.CreateBuilder(OrderQueryResult.KeyComparer);
+
+                for (var s = fromSerial; s <= _serial; s++)
+                {
+                    if (_orderBySerial.TryGetValue(s, out var kline))
+                    {
+                        builder.Add(kline);
+                    }
+                }
+
+                completion.SetResult(new ReactiveResult(_version, _serial, builder.ToImmutable()));
+            }
         }
 
         private Task<ReactiveResult?> GetOrCreateCompletionTask(Guid version, int fromSerial)

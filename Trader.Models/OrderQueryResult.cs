@@ -48,8 +48,10 @@ namespace Outcompute.Trader.Models
 
         public static IComparer<OrderQueryResult> KeyComparer { get; } = new KeyComparerInternal();
 
+        // todo: replace usage of this this with key comparer
         public static IComparer<OrderQueryResult> OrderIdComparer { get; } = new OrderIdComparerInternal();
 
+        // todo: replace usage of this this with key comparer
         public static IEqualityComparer<OrderQueryResult> OrderIdEqualityComparer { get; } = new OrderIdEqualityComparerInternal();
 
         private sealed class KeyComparerInternal : IComparer<OrderQueryResult>

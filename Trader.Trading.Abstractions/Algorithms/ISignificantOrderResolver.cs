@@ -16,12 +16,13 @@ namespace Outcompute.Trader.Trading.Algorithms
     }
 
     [Immutable]
-    public record SignificantResult(ImmutableSortedOrderSet Orders, Profit Profit, ImmutableList<ProfitEvent> ProfitEvents)
+    public record SignificantResult(ImmutableSortedOrderSet Orders, Profit Profit, ImmutableList<ProfitEvent> ProfitEvents, ImmutableList<CommissionEvent> CommissionEvents)
     {
         public static SignificantResult Empty { get; } = new SignificantResult(
             ImmutableSortedOrderSet.Empty,
             Profit.Zero(string.Empty, string.Empty, string.Empty),
-            ImmutableList<ProfitEvent>.Empty);
+            ImmutableList<ProfitEvent>.Empty,
+            ImmutableList<CommissionEvent>.Empty);
     }
 
     [Immutable]
@@ -156,5 +157,9 @@ namespace Outcompute.Trader.Trading.Algorithms
     [Immutable]
     public record CommissionEvent(
         Symbol Symbol,
-        DateTime EventTime);
+        DateTime EventTime,
+        long OrderId,
+        long TradeId,
+        string Asset,
+        decimal Commission);
 }

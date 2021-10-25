@@ -54,10 +54,10 @@ namespace Outcompute.Trader.Trading.Algorithms
         {
             var watch = Stopwatch.StartNew();
 
-            var details = Combine(symbol, orders, trades);
+            var (mapping, commissions) = Combine(symbol, orders, trades);
 
             // now prune the significant trades to account interim sales
-            using var subjects = ArrayPool<Map>.Shared.RentSegmentWith(details);
+            using var subjects = ArrayPool<Map>.Shared.RentSegmentWith(mapping);
 
             // keep track of profit
             var profits = ImmutableList.CreateBuilder<ProfitEvent>();
@@ -220,14 +220,15 @@ namespace Outcompute.Trader.Trading.Algorithms
                 d7,
                 d30);
 
-            return new SignificantResult(significant.ToImmutable(), summary, profits.ToImmutable());
+            return new SignificantResult(significant.ToImmutable(), summary, profits.ToImmutable(), commissions);
         }
 
-        private SortedSet<Map> Combine(Symbol symbol, IEnumerable<OrderQueryResult> orders, IEnumerable<AccountTrade> trades)
+        private (SortedSet<Map> Mapping, ImmutableList<CommissionEvent> Commissions) Combine(Symbol symbol, IEnumerable<OrderQueryResult> orders, IEnumerable<AccountTrade> trades)
         {
             var lookup = trades.ToLookup(x => x.OrderId);
 
-            var result = new SortedSet<Map>(MapComparer.Instance);
+            var mapping = new SortedSet<Map>(MapComparer.Instance);
+            var commissions = ImmutableList.CreateBuilder<CommissionEvent>();
 
             foreach (var order in orders)
             {
@@ -247,7 +248,16 @@ namespace Outcompute.Trader.Trading.Algorithms
                         map.RemainingExecutedQuantity -= trade.Commission;
                     }
 
-                    result.Add(map);
+                    // log the commission event regardless
+                    commissions.Add(new CommissionEvent(
+                        symbol,
+                        trade.Time,
+                        trade.OrderId,
+                        trade.Id,
+                        trade.CommissionAsset,
+                        trade.Commission));
+
+                    mapping.Add(map);
 
                     quantity += trade.Quantity;
                 }
@@ -261,7 +271,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 }
             }
 
-            return result;
+            return (mapping, commissions.ToImmutable());
         }
 
         private sealed class MapComparer : IComparer<Map>

@@ -48,8 +48,7 @@ namespace Outcompute.Trader.Models
 
         public static IComparer<OrderQueryResult> KeyComparer { get; } = new KeyComparerInternal();
 
-        // todo: replace usage of this this with key comparer
-        public static IEqualityComparer<OrderQueryResult> OrderIdEqualityComparer { get; } = new OrderIdEqualityComparerInternal();
+        public static IEqualityComparer<OrderQueryResult> KeyEqualityComparer { get; } = new KeyEqualityComparerInternal();
 
         private sealed class KeyComparerInternal : Comparer<OrderQueryResult>
         {
@@ -83,9 +82,9 @@ namespace Outcompute.Trader.Models
             }
         }
 
-        private sealed class OrderIdEqualityComparerInternal : IEqualityComparer<OrderQueryResult>
+        private sealed class KeyEqualityComparerInternal : EqualityComparer<OrderQueryResult>
         {
-            public bool Equals(OrderQueryResult? x, OrderQueryResult? y)
+            public override bool Equals(OrderQueryResult? x, OrderQueryResult? y)
             {
                 if (x is null)
                 {
@@ -93,13 +92,15 @@ namespace Outcompute.Trader.Models
                 }
                 else
                 {
-                    return y is not null && y.OrderId == x.OrderId;
+                    return y is not null &&
+                        EqualityComparer<string>.Default.Equals(x.Symbol, y.Symbol) &&
+                        EqualityComparer<long>.Default.Equals(x.OrderId, y.OrderId);
                 }
             }
 
-            public int GetHashCode([DisallowNull] OrderQueryResult obj)
+            public override int GetHashCode([DisallowNull] OrderQueryResult obj)
             {
-                return obj.OrderId.GetHashCode();
+                return HashCode.Combine(obj.Symbol, obj.OrderId);
             }
         }
     }

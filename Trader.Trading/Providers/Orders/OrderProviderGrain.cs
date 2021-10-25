@@ -50,7 +50,7 @@ namespace Outcompute.Trader.Trading.Providers.Orders
         /// <summary>
         /// Assigns a unique serial number to all orders.
         /// </summary>
-        private readonly Dictionary<OrderQueryResult, int> _serialByOrder = new(OrderQueryResult.OrderIdEqualityComparer);
+        private readonly Dictionary<OrderQueryResult, int> _serialByOrder = new(OrderQueryResult.KeyEqualityComparer);
 
         /// <summary>
         /// Indexes orders by their latest serial number to speed up update requests.

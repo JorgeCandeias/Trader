@@ -458,10 +458,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             return CreateOrder(_context.Symbol, OrderType.Limit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, lowBuyPrice, tag);
         }
 
-        private IAlgoCommand? TryCreateTradingBands(IReadOnlyList<OrderQueryResult> significant, IReadOnlyList<OrderQueryResult> nonSignificantTransientBuyOrders, IReadOnlyList<OrderQueryResult> transientSellOrders)
+        private IAlgoCommand? ApplySignificantBuyOrdersToBands(IReadOnlyList<OrderQueryResult> significant)
         {
-            _bands.Clear();
-
             // apply the significant buy orders to the bands
             foreach (var order in significant.Where(x => x.Side == OrderSide.Buy))
             {
@@ -500,6 +498,11 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 }
             }
 
+            return null;
+        }
+
+        private IAlgoCommand? ApplyNonSignificantTransientBuyOrdersToBands(IReadOnlyList<OrderQueryResult> nonSignificantTransientBuyOrders)
+        {
             foreach (var order in nonSignificantTransientBuyOrders)
             {
                 if (order.Price is 0)
@@ -520,6 +523,22 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                     CloseOrderClientId = _orderCodeGenerator.GetSellClientOrderId(order.OrderId),
                     Status = BandStatus.Ordered
                 });
+            }
+
+            return null;
+        }
+
+        private IAlgoCommand? TryCreateTradingBands(IReadOnlyList<OrderQueryResult> significant, IReadOnlyList<OrderQueryResult> nonSignificantTransientBuyOrders, IReadOnlyList<OrderQueryResult> transientSellOrders)
+        {
+            _bands.Clear();
+
+            var result =
+                ApplySignificantBuyOrdersToBands(significant) ??
+                ApplyNonSignificantTransientBuyOrdersToBands(nonSignificantTransientBuyOrders);
+
+            if (result is not null)
+            {
+                return result;
             }
 
             // skip if no bands were created

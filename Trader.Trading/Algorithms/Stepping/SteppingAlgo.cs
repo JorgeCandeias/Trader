@@ -528,22 +528,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             return null;
         }
 
-        private IAlgoCommand? TryCreateTradingBands(IReadOnlyList<OrderQueryResult> significant, IReadOnlyList<OrderQueryResult> nonSignificantTransientBuyOrders, IReadOnlyList<OrderQueryResult> transientSellOrders)
+        private void AdjustBandClosePrices()
         {
-            _bands.Clear();
-
-            var result =
-                ApplySignificantBuyOrdersToBands(significant) ??
-                ApplyNonSignificantTransientBuyOrdersToBands(nonSignificantTransientBuyOrders);
-
-            if (result is not null)
-            {
-                return result;
-            }
-
-            // skip if no bands were created
-            if (_bands.Count == 0) return null;
-
             // figure out the constant step size
             var stepSize = _bands.Max!.OpenPrice * _options.PullbackRatio;
 
@@ -577,7 +563,10 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 // adjust the sell price up to the tick size
                 band.ClosePrice = Math.Ceiling(band.ClosePrice / _context.Symbol.Filters.Price.TickSize) * _context.Symbol.Filters.Price.TickSize;
             }
+        }
 
+        private void RemoveBandLeftovers()
+        {
             // identify bands where the target sell is somehow below the notional filter
             var leftovers = _bands.Where(x => x.Status == BandStatus.Open && x.Quantity * x.ClosePrice < _context.Symbol.Filters.MinNotional.MinNotional).ToHashSet();
             if (leftovers.Count > 0)
@@ -606,6 +595,26 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                     _context.Symbol.QuoteAsset,
                     buyNotional > 0 ? nowNotional / buyNotional : 0);
             }
+        }
+
+        private IAlgoCommand? TryCreateTradingBands(IReadOnlyList<OrderQueryResult> significant, IReadOnlyList<OrderQueryResult> nonSignificantTransientBuyOrders, IReadOnlyList<OrderQueryResult> transientSellOrders)
+        {
+            _bands.Clear();
+
+            var result =
+                ApplySignificantBuyOrdersToBands(significant) ??
+                ApplyNonSignificantTransientBuyOrdersToBands(nonSignificantTransientBuyOrders);
+
+            if (result is not null)
+            {
+                return result;
+            }
+
+            // skip if no bands were created
+            if (_bands.Count == 0) return null;
+
+            AdjustBandClosePrices();
+            RemoveBandLeftovers();
 
             // apply open sell orders to the bands
             var used = new HashSet<Band>();

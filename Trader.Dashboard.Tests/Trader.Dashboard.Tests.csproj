@@ -2,14 +2,12 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
+
     <IsPackable>false</IsPackable>
-    <Nullable>enable</Nullable>
-    <NeutralLanguage>en-GB</NeutralLanguage>
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <AnalysisMode>AllEnabledByDefault</AnalysisMode>
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
-    <AssemblyName>Outcompute.Trader.Data.Sql.Tests</AssemblyName>
-    <RootNamespace>Outcompute.Trader.Data.Sql.Tests</RootNamespace>
+
+    <AssemblyName>Outcompute.Trader.Dashboard.Tests</AssemblyName>
+
+    <RootNamespace>Outcompute.Trader.Dashboard.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,8 +16,8 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="JetBrains.dotMemoryUnit" Version="3.1.20200127.214830" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="3.0.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.11.0" />
+    <PackageReference Include="Moq" Version="4.16.1" />
     <PackageReference Include="SonarAnalyzer.CSharp" Version="8.30.0.37606">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -36,6 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Trader.Data.Sql\Trader.Data.Sql.csproj" />
+    <ProjectReference Include="..\Trader.Dashboard\Trader.Dashboard.csproj" />
   </ItemGroup>
+
 </Project>

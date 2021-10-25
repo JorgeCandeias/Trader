@@ -60,11 +60,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Trading.Binance.Test
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Data.InMemory", "Trader.Data.InMemory\Trader.Data.InMemory.csproj", "{0E0D3646-B221-4A8C-9EC0-5E3A7F1A170D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Trading.InMemory", "Trader.Trading.InMemory\Trader.Trading.InMemory.csproj", "{945FE858-4678-4A46-B83B-D2AB2CC3A99A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Trading.InMemory", "Trader.Trading.InMemory\Trader.Trading.InMemory.csproj", "{945FE858-4678-4A46-B83B-D2AB2CC3A99A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Trading.InMemory.Tests", "Trader.Trading.InMemory.Tests\Trader.Trading.InMemory.Tests.csproj", "{E0B16DE8-6160-40E7-9414-7734E9441327}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Trading.InMemory.Tests", "Trader.Trading.InMemory.Tests\Trader.Trading.InMemory.Tests.csproj", "{E0B16DE8-6160-40E7-9414-7734E9441327}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Data.InMemory.Tests", "Trader.Data.InMemory.Tests\Trader.Data.InMemory.Tests.csproj", "{EB3BDCD4-5115-4F33-B9AA-FE242CE0817B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Data.InMemory.Tests", "Trader.Data.InMemory.Tests\Trader.Data.InMemory.Tests.csproj", "{EB3BDCD4-5115-4F33-B9AA-FE242CE0817B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Dashboard.Tests", "Trader.Dashboard.Tests\Trader.Dashboard.Tests.csproj", "{AAC512E6-F837-4A22-A345-3EF4C2F3705A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -180,6 +182,10 @@ Global
 		{EB3BDCD4-5115-4F33-B9AA-FE242CE0817B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EB3BDCD4-5115-4F33-B9AA-FE242CE0817B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EB3BDCD4-5115-4F33-B9AA-FE242CE0817B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AAC512E6-F837-4A22-A345-3EF4C2F3705A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AAC512E6-F837-4A22-A345-3EF4C2F3705A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AAC512E6-F837-4A22-A345-3EF4C2F3705A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AAC512E6-F837-4A22-A345-3EF4C2F3705A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -194,6 +200,7 @@ Global
 		{AAA8F74C-7697-424E-8BE2-A09116997A49} = {724871D8-46E7-4280-B828-D6A28360E820}
 		{E0B16DE8-6160-40E7-9414-7734E9441327} = {724871D8-46E7-4280-B828-D6A28360E820}
 		{EB3BDCD4-5115-4F33-B9AA-FE242CE0817B} = {724871D8-46E7-4280-B828-D6A28360E820}
+		{AAC512E6-F837-4A22-A345-3EF4C2F3705A} = {724871D8-46E7-4280-B828-D6A28360E820}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7716D8A4-6E15-41AB-90E0-DE40D69C82EE}

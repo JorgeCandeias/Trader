@@ -14,6 +14,11 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<InternalsVisibleTo Include="Outcompute.Trader.Dashboard.Tests" />
+		<InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<EmbeddedResource Include="..\Trader.Dashboard.WebApp\wwwroot\favicon.ico">
 			<Visible>false</Visible>
 			<LogicalName>wwwroot.favicon.ico</LogicalName>

@@ -87,7 +87,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             return
                 TryCreateTradingBands(significant.Orders, nonSignificantTransientBuyOrders, transientSellOrders) ??
                 await TrySetStartingTradeAsync(transientBuyOrders, cancellationToken) ??
-                await TryCancelRogueSellOrdersAsync(cancellationToken) ??
+                TryCancelRogueSellOrdersAsync(transientSellOrders) ??
                 await TryCancelExcessSellOrdersAsync(cancellationToken) ??
                 await TrySetBandSellOrdersAsync(cancellationToken) ??
                 await TryCreateLowerBandOrderAsync(cancellationToken) ??
@@ -326,13 +326,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         /// <summary>
         /// Identify and cancel rogue sell orders that do not belong to a trading band.
         /// </summary>
-        private async Task<IAlgoCommand?> TryCancelRogueSellOrdersAsync(CancellationToken cancellationToken)
+        private IAlgoCommand? TryCancelRogueSellOrdersAsync(IReadOnlyList<OrderQueryResult> transientSellOrders)
         {
-            var orders = await _orderProvider
-                .GetTransientOrdersBySideAsync(_context.Symbol.Name, OrderSide.Sell, cancellationToken)
-                .ConfigureAwait(false);
-
-            foreach (var orderId in orders.Select(x => x.OrderId))
+            foreach (var orderId in transientSellOrders.Select(x => x.OrderId))
             {
                 if (!_bands.Any(x => x.CloseOrderId == orderId))
                 {

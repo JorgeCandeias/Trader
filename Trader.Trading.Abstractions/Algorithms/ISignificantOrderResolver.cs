@@ -144,36 +144,13 @@ namespace Outcompute.Trader.Trading.Algorithms
 
             foreach (var profit in profits)
             {
-                // assign to the appropriate counters
-                if (profit.EventTime.Date == today) todayProfit += profit.Profit;
-                if (profit.EventTime.Date == today.AddDays(-1)) yesterdayProfit += profit.Profit;
-                if (profit.EventTime.Date >= today.Previous(DayOfWeek.Sunday)) thisWeekProfit += profit.Profit;
-                if (profit.EventTime.Date >= today.Previous(DayOfWeek.Sunday, 2) && profit.EventTime.Date < today.Previous(DayOfWeek.Sunday)) prevWeekProfit += profit.Profit;
-                if (profit.EventTime.Date >= today.AddDays(-today.Day + 1)) thisMonthProfit += profit.Profit;
-                if (profit.EventTime.Date >= new DateTime(today.Year, 1, 1)) thisYearProfit += profit.Profit;
-                all += profit.Profit;
-
-                // assign to the window counters
-                if (profit.EventTime >= window1d) d1 += profit.Profit;
-                if (profit.EventTime >= window7d) d7 += profit.Profit;
-                if (profit.EventTime >= window30d) d30 += profit.Profit;
+                // apply this profit event
+                Apply(profit, profit.Profit);
 
                 // if the commission was taken from the sell asset then remove it from profit
                 foreach (var loss in lookup[(profit.Symbol.QuoteAsset, profit.SellOrderId, profit.SellTradeId)].Select(x => x.Commission))
                 {
-                    // assign to the appropriate counters
-                    if (profit.EventTime.Date == today) todayProfit -= loss;
-                    if (profit.EventTime.Date == today.AddDays(-1)) yesterdayProfit -= loss;
-                    if (profit.EventTime.Date >= today.Previous(DayOfWeek.Sunday)) thisWeekProfit -= loss;
-                    if (profit.EventTime.Date >= today.Previous(DayOfWeek.Sunday, 2) && profit.EventTime.Date < today.Previous(DayOfWeek.Sunday)) prevWeekProfit -= loss;
-                    if (profit.EventTime.Date >= today.AddDays(-today.Day + 1)) thisMonthProfit -= loss;
-                    if (profit.EventTime.Date >= new DateTime(today.Year, 1, 1)) thisYearProfit -= loss;
-                    all -= loss;
-
-                    // assign to the window counters
-                    if (profit.EventTime >= window1d) d1 -= loss;
-                    if (profit.EventTime >= window7d) d7 -= loss;
-                    if (profit.EventTime >= window30d) d30 -= loss;
+                    Apply(profit, -loss);
                 }
             }
 
@@ -191,6 +168,23 @@ namespace Outcompute.Trader.Trading.Algorithms
                 d1,
                 d7,
                 d30);
+
+            void Apply(ProfitEvent profit, decimal value)
+            {
+                // assign to the appropriate counters
+                if (profit.EventTime.Date == today) todayProfit += value;
+                if (profit.EventTime.Date == today.AddDays(-1)) yesterdayProfit += value;
+                if (profit.EventTime.Date >= today.Previous(DayOfWeek.Sunday)) thisWeekProfit += value;
+                if (profit.EventTime.Date >= today.Previous(DayOfWeek.Sunday, 2) && profit.EventTime.Date < today.Previous(DayOfWeek.Sunday)) prevWeekProfit += value;
+                if (profit.EventTime.Date >= today.AddDays(-today.Day + 1)) thisMonthProfit += value;
+                if (profit.EventTime.Date >= new DateTime(today.Year, 1, 1)) thisYearProfit += value;
+                all += value;
+
+                // assign to the window counters
+                if (profit.EventTime >= window1d) d1 += value;
+                if (profit.EventTime >= window7d) d7 += value;
+                if (profit.EventTime >= window30d) d30 += value;
+            }
         }
     }
 

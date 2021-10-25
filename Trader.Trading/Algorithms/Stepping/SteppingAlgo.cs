@@ -87,8 +87,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             return
                 TryCreateTradingBands(significant.Orders, nonSignificantTransientBuyOrders, transientSellOrders) ??
                 await TrySetStartingTradeAsync(transientBuyOrders, cancellationToken) ??
-                TryCancelRogueSellOrdersAsync(transientSellOrders) ??
-                await TryCancelExcessSellOrdersAsync(cancellationToken) ??
+                TryCancelRogueSellOrders(transientSellOrders) ??
+                TryCancelExcessSellOrders(transientSellOrders) ??
                 await TrySetBandSellOrdersAsync(cancellationToken) ??
                 await TryCreateLowerBandOrderAsync(cancellationToken) ??
                 TryCloseOutOfRangeBands() ??
@@ -326,7 +326,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         /// <summary>
         /// Identify and cancel rogue sell orders that do not belong to a trading band.
         /// </summary>
-        private IAlgoCommand? TryCancelRogueSellOrdersAsync(IReadOnlyList<OrderQueryResult> transientSellOrders)
+        private IAlgoCommand? TryCancelRogueSellOrders(IReadOnlyList<OrderQueryResult> transientSellOrders)
         {
             foreach (var orderId in transientSellOrders.Select(x => x.OrderId))
             {
@@ -342,7 +342,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         /// <summary>
         /// Identify and cancel excess sell orders above the limit.
         /// </summary>
-        private async Task<IAlgoCommand?> TryCancelExcessSellOrdersAsync(CancellationToken cancellationToken = default)
+        private IAlgoCommand? TryCancelExcessSellOrders(IReadOnlyList<OrderQueryResult> transientSellOrders)
         {
             // get the order ids for the lowest open bands
             var bands = _bands
@@ -352,11 +352,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 .Where(x => x is not 0)
                 .ToHashSet();
 
-            // get all transient sell orders
-            var orders = await _orderProvider.GetTransientOrdersBySideAsync(_context.Symbol.Name, OrderSide.Sell, cancellationToken);
-
             // cancel all excess sell orders now
-            foreach (var orderId in orders.Select(x => x.OrderId))
+            foreach (var orderId in transientSellOrders.Select(x => x.OrderId))
             {
                 if (!bands.Contains(orderId))
                 {

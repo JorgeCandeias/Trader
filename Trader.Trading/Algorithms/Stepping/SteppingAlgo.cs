@@ -67,12 +67,21 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
             _ticker = await _context.GetRequiredTickerAsync(_context.Symbol.Name, cancellationToken);
 
+            // get the non-significant open buy orders to the bands
+            var nonSignificantTransientBuyOrders = await _orderProvider
+                .GetNonSignificantTransientOrdersBySideAsync(_context.Symbol.Name, OrderSide.Buy, cancellationToken)
+                .ConfigureAwait(false);
+
+            var transientSellOrders = await _orderProvider
+                .GetTransientOrdersBySideAsync(_context.Symbol.Name, OrderSide.Sell, cancellationToken)
+                .ConfigureAwait(false);
+
             _logger.LogInformation(
                 "{Type} {Name} reports latest asset price is {Price} {QuoteAsset}",
                 TypeName, _context.Name, _ticker.ClosePrice, _context.Symbol.QuoteAsset);
 
             return
-                await TryCreateTradingBandsAsync(significant.Orders, cancellationToken) ??
+                TryCreateTradingBands(significant.Orders, nonSignificantTransientBuyOrders, transientSellOrders) ??
                 await TrySetStartingTradeAsync(cancellationToken) ??
                 await TryCancelRogueSellOrdersAsync(cancellationToken) ??
                 await TryCancelExcessSellOrdersAsync(cancellationToken) ??
@@ -449,7 +458,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             return CreateOrder(_context.Symbol, OrderType.Limit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, lowBuyPrice, tag);
         }
 
-        private async Task<IAlgoCommand?> TryCreateTradingBandsAsync(ImmutableSortedOrderSet significant, CancellationToken cancellationToken = default)
+        private IAlgoCommand? TryCreateTradingBands(ImmutableSortedOrderSet significant, IReadOnlyList<OrderQueryResult> nonSignificantTransientBuyOrders, IReadOnlyList<OrderQueryResult> transientSellOrders)
         {
             _bands.Clear();
 
@@ -491,10 +500,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 }
             }
 
-            // apply the non-significant open buy orders to the bands
-            var orders = await _orderProvider.GetNonSignificantTransientOrdersBySideAsync(_context.Symbol.Name, OrderSide.Buy, cancellationToken);
-
-            foreach (var order in orders)
+            foreach (var order in nonSignificantTransientBuyOrders)
             {
                 if (order.Price is 0)
                 {
@@ -585,9 +591,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             // apply open sell orders to the bands
             var used = new HashSet<Band>();
 
-            orders = await _orderProvider.GetTransientOrdersBySideAsync(_context.Symbol.Name, OrderSide.Sell, cancellationToken);
-
-            foreach (var order in orders)
+            foreach (var order in transientSellOrders)
             {
                 var band = _bands.Except(used).SingleOrDefault(x => x.CloseOrderClientId == order.ClientOrderId);
                 if (band is not null)

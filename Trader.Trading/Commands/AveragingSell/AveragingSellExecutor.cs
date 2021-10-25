@@ -56,12 +56,6 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
 
         private DesiredSell CalculateDesiredSell(Symbol symbol, decimal profitMultiplier, IReadOnlyCollection<OrderQueryResult> orders, Balance balance, SavingsPosition savings, MiniTicker ticker)
         {
-            // skip if there is nothing to sell
-            if (orders.Count == 0)
-            {
-                return DesiredSell.None;
-            }
-
             // take all known significant buy orders on the symbol
             var quantity = orders.Sum(x => x.ExecutedQuantity);
 

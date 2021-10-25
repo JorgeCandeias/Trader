@@ -17,6 +17,12 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
             ProfitMultiplier = profitMultiplier;
             RedeemSavings = redeemSavings;
 
+            if (orders.Count == 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(orders), $"Orders parameter must not be empty");
+            }
+
+            var quantity = 0m;
             foreach (var order in orders)
             {
                 if (order.Side != OrderSide.Buy)
@@ -27,6 +33,12 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
                 {
                     throw new ArgumentOutOfRangeException(nameof(orders), $"Order {order.OrderId} has non-significant executed quantity");
                 }
+                quantity += order.ExecutedQuantity;
+            }
+
+            if (quantity == 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(orders), $"Sum of all {nameof(OrderQueryResult.ExecutedQuantity)} in orders must be greater than zero");
             }
         }
 

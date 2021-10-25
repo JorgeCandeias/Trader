@@ -110,9 +110,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             }
 
             // keep only buy orders with some quantity left to sell
-            var significant = ImmutableSortedSet.CreateBuilder(OrderQueryResult.KeyComparer);
-
-            foreach (var survivor in subjects.Segment
+            var significant = subjects.Segment
                 .Where(x => x.Order.Side == OrderSide.Buy && x.RemainingExecutedQuantity > 0m)
                 .GroupBy(x => x.Order)
                 .Select(x => new OrderQueryResult(
@@ -136,16 +134,14 @@ namespace Outcompute.Trader.Trading.Algorithms
                     x.Key.Time,
                     x.Key.UpdateTime,
                     x.Key.IsWorking,
-                    x.Key.OriginalQuoteOrderQuantity)))
-            {
-                significant.Add(survivor);
-            }
+                    x.Key.OriginalQuoteOrderQuantity))
+                .ToImmutableSortedSet(OrderQueryResult.KeyComparer);
 
             _logger.LogInformation(
                 "{Name} {Symbol} identified {Count} significant orders in {ElapsedMs}ms",
                 nameof(SignificantOrderResolver), symbol.Name, significant.Count, watch.ElapsedMilliseconds);
 
-            return new SignificantResult(significant.ToImmutable(), profits.ToImmutable(), commissions);
+            return new SignificantResult(significant, profits.ToImmutable(), commissions);
         }
 
         private (SortedSet<Map> Mapping, ImmutableList<CommissionEvent> Commissions) Combine(Symbol symbol, IEnumerable<OrderQueryResult> orders, IEnumerable<AccountTrade> trades)

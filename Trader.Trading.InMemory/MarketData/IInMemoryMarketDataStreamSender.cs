@@ -3,7 +3,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.InMemory
+namespace Outcompute.Trader.Trading.InMemory.MarketData
 {
     public interface IInMemoryMarketDataStreamSender
     {

@@ -51,8 +51,8 @@ namespace Outcompute.Trader.Trading.Binance.Tests.Fixtures
             siloBuilder
                 .AddTrader()
                 .ConfigureApplicationParts(manager => manager.AddApplicationPart(typeof(ClusterFixture).Assembly).WithReferences())
-                    .AddInMemoryTradingRepository()
-                    .AddInMemoryTradingService();
+                .AddInMemoryTradingRepository()
+                .AddInMemoryTradingService();
         }
     }
 

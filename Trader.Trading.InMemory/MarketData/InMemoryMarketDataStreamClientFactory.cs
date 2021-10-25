@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Outcompute.Trader.Trading.InMemory
+namespace Outcompute.Trader.Trading.InMemory.MarketData
 {
     internal class InMemoryMarketDataStreamClientFactory : IMarketDataStreamClientFactory
     {

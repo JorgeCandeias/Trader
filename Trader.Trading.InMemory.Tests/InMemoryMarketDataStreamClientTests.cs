@@ -1,4 +1,5 @@
 ﻿using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.InMemory.MarketData;
 using System.Threading.Tasks;
 using Xunit;
 

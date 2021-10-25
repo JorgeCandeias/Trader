@@ -5,11 +5,13 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.InMemory
+namespace Outcompute.Trader.Trading.InMemory.UserData
 {
-    internal class InMemoryMarketDataStreamSender : IInMemoryMarketDataStreamSender
+    internal class InMemoryUserDataStreamSender : IInMemoryUserDataStreamSender
     {
-        public IDisposable Register(Func<MarketDataStreamMessage, CancellationToken, Task> action)
+        private readonly ConcurrentDictionary<Func<UserDataStreamMessage, CancellationToken, Task>, bool> _actions = new();
+
+        public IDisposable Register(Func<UserDataStreamMessage, CancellationToken, Task> action)
         {
             if (action is null) throw new ArgumentNullException(nameof(action));
 
@@ -18,9 +20,7 @@ namespace Outcompute.Trader.Trading.InMemory
             return new DisposableAction(() => _actions.TryRemove(action, out _));
         }
 
-        private readonly ConcurrentDictionary<Func<MarketDataStreamMessage, CancellationToken, Task>, bool> _actions = new();
-
-        public async Task SendAsync(MarketDataStreamMessage message, CancellationToken cancellationToken = default)
+        public async Task SendAsync(UserDataStreamMessage message, CancellationToken cancellationToken = default)
         {
             foreach (var action in _actions.Keys)
             {

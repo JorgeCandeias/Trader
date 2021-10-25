@@ -4,18 +4,18 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.InMemory
+namespace Outcompute.Trader.Trading.InMemory.UserData
 {
-    internal sealed class InMemoryMarketDataStreamClient : IMarketDataStreamClient
+    internal sealed class InMemoryUserDataStreamClient : IUserDataStreamClient
     {
         private readonly IDisposable _registration;
 
-        public InMemoryMarketDataStreamClient(IInMemoryMarketDataStreamSender sender)
+        public InMemoryUserDataStreamClient(IInMemoryUserDataStreamSender sender)
         {
             _registration = sender.Register((message, ct) => _channel.Writer.WriteAsync(message, ct).AsTask());
         }
 
-        private readonly Channel<MarketDataStreamMessage> _channel = Channel.CreateUnbounded<MarketDataStreamMessage>();
+        private readonly Channel<UserDataStreamMessage> _channel = Channel.CreateUnbounded<UserDataStreamMessage>();
 
         private CancellationTokenSource? _cancellation;
 
@@ -33,7 +33,7 @@ namespace Outcompute.Trader.Trading.InMemory
             return Task.CompletedTask;
         }
 
-        public async Task<MarketDataStreamMessage> ReceiveAsync(CancellationToken cancellationToken = default)
+        public async Task<UserDataStreamMessage> ReceiveAsync(CancellationToken cancellationToken = default)
         {
             if (_cancellation is null) throw new InvalidOperationException();
 
@@ -41,6 +41,8 @@ namespace Outcompute.Trader.Trading.InMemory
 
             return await _channel.Reader.ReadAsync(linked.Token).ConfigureAwait(false);
         }
+
+        #region Disposable
 
         private bool _disposed;
 
@@ -59,9 +61,11 @@ namespace Outcompute.Trader.Trading.InMemory
             GC.SuppressFinalize(this);
         }
 
-        ~InMemoryMarketDataStreamClient()
+        ~InMemoryUserDataStreamClient()
         {
             DisposeCore();
         }
+
+        #endregion Disposable
     }
 }

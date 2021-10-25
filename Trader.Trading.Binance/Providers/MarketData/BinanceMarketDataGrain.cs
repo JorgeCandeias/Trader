@@ -108,8 +108,6 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             }
         }
 
-        [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "N/A")]
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Worker Task")]
         private async Task ExecuteStreamAsync()
         {
             try
@@ -118,73 +116,8 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                 using var resetCancellation = new CancellationTokenSource(_options.MarketDataStreamResetPeriod);
                 using var linkedCancellation = CancellationTokenSource.CreateLinkedTokenSource(resetCancellation.Token, _lifetime.ApplicationStopping);
 
-                // create a client for the streams we want
-                var streams = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                streams.UnionWith(_tickerSymbols.Select(x => $"{x.ToLowerInvariant()}@miniTicker"));
-                streams.UnionWith(_klineWindows.Select(x => $"{x.Key.Symbol.ToLowerInvariant()}@kline_{_mapper.Map<string>(x.Key.Interval)}"));
-
-                _logger.LogInformation("{Name} connecting to streams {Streams}...", TypeName, streams);
-
-                using var client = _factory.Create(streams);
-
-                await client.ConnectAsync(linkedCancellation.Token);
-
                 // start streaming in the background while we sync from the api
-                // we use the activation scheduler for this background task so that we can access grain state in a concurrency safe manner
-                var streamTask = Task.Run(async () =>
-                {
-                    // this worker action pushes incoming klines to the system in the background so we dont hold up the binance stream
-                    var klineWorker = new ActionBlock<Kline>(async item =>
-                    {
-                        try
-                        {
-                            await _klines.SetKlineAsync(item, linkedCancellation.Token);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, "{Name} failed to push kline {Kline}", TypeName, item);
-                        }
-                    }, new ExecutionDataflowBlockOptions
-                    {
-                        MaxDegreeOfParallelism = _klineWindows.Count
-                    });
-
-                    // this worker action pushes incoming tickers to the system in the background so we dont hold up the binance stream
-                    var tickerWorker = new ActionBlock<MiniTicker>(async item =>
-                    {
-                        try
-                        {
-                            await _tickers.SetTickerAsync(item, linkedCancellation.Token);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, "{Name} failed to push ticker {Ticker}", TypeName, item);
-                        }
-                    }, new ExecutionDataflowBlockOptions
-                    {
-                        MaxDegreeOfParallelism = _tickerSymbols.Count
-                    });
-
-                    while (!linkedCancellation.Token.IsCancellationRequested)
-                    {
-                        var message = await client.ReceiveAsync(linkedCancellation.Token);
-
-                        if (message.Error is not null)
-                        {
-                            throw new BinanceCodeException(message.Error.Code, message.Error.Message, 0);
-                        }
-
-                        if (message.MiniTicker is not null && _tickerSymbols.Contains(message.MiniTicker.Symbol))
-                        {
-                            tickerWorker.Post(message.MiniTicker);
-                        }
-
-                        if (message.Kline is not null && _klineWindows.ContainsKey((message.Kline.Symbol, message.Kline.Interval)))
-                        {
-                            klineWorker.Post(message.Kline);
-                        }
-                    }
-                }, linkedCancellation.Token);
+                var streamTask = Task.Run(() => StreamAsync(linkedCancellation.Token), linkedCancellation.Token);
 
                 // sync tickers from the api
                 await SyncTickersAsync(linkedCancellation.Token);
@@ -201,6 +134,75 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             finally
             {
                 _ready = false;
+            }
+        }
+
+        [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Stream Worker")]
+        [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "N/A")]
+        private async Task StreamAsync(CancellationToken cancellationToken)
+        {
+            // create a client for the streams we want
+            var streams = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            streams.UnionWith(_tickerSymbols.Select(x => $"{x.ToLowerInvariant()}@miniTicker"));
+            streams.UnionWith(_klineWindows.Select(x => $"{x.Key.Symbol.ToLowerInvariant()}@kline_{_mapper.Map<string>(x.Key.Interval)}"));
+
+            _logger.LogInformation("{Name} connecting to streams {Streams}...", TypeName, streams);
+
+            using var client = _factory.Create(streams);
+
+            await client.ConnectAsync(cancellationToken);
+
+            // this worker action pushes incoming klines to the system in the background so we dont hold up the binance stream
+            var klineWorker = new ActionBlock<Kline>(async item =>
+            {
+                try
+                {
+                    await _klines.SetKlineAsync(item, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "{Name} failed to push kline {Kline}", TypeName, item);
+                }
+            }, new ExecutionDataflowBlockOptions
+            {
+                MaxDegreeOfParallelism = _klineWindows.Count
+            });
+
+            // this worker action pushes incoming tickers to the system in the background so we dont hold up the binance stream
+            var tickerWorker = new ActionBlock<MiniTicker>(async item =>
+            {
+                try
+                {
+                    await _tickers.SetTickerAsync(item, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "{Name} failed to push ticker {Ticker}", TypeName, item);
+                }
+            }, new ExecutionDataflowBlockOptions
+            {
+                MaxDegreeOfParallelism = _tickerSymbols.Count
+            });
+
+            // now we can stream from the exchange
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                var message = await client.ReceiveAsync(cancellationToken);
+
+                if (message.Error is not null)
+                {
+                    throw new BinanceCodeException(message.Error.Code, message.Error.Message, 0);
+                }
+
+                if (message.MiniTicker is not null && _tickerSymbols.Contains(message.MiniTicker.Symbol))
+                {
+                    tickerWorker.Post(message.MiniTicker);
+                }
+
+                if (message.Kline is not null && _klineWindows.ContainsKey((message.Kline.Symbol, message.Kline.Interval)))
+                {
+                    klineWorker.Post(message.Kline);
+                }
             }
         }
 

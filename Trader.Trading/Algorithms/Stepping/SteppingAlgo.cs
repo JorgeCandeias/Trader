@@ -89,7 +89,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 await TrySetStartingTradeAsync(transientBuyOrders, cancellationToken) ??
                 TryCancelRogueSellOrders(transientSellOrders) ??
                 TryCancelExcessSellOrders(transientSellOrders) ??
-                await TrySetBandSellOrdersAsync(cancellationToken) ??
+                await TrySetBandSellOrdersAsync(transientSellOrders, cancellationToken) ??
                 await TryCreateLowerBandOrderAsync(cancellationToken) ??
                 TryCloseOutOfRangeBands() ??
                 Noop();
@@ -144,7 +144,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             return null;
         }
 
-        private async Task<IAlgoCommand?> TryCreateLowerBandOrderAsync(CancellationToken cancellationToken = default)
+        private async ValueTask<IAlgoCommand?> TryCreateLowerBandOrderAsync(CancellationToken cancellationToken = default)
         {
             // identify the highest and lowest bands
             var highBand = _bands.Max;
@@ -267,12 +267,10 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         /// <summary>
         /// Sets sell orders for open bands that do not have them yet.
         /// </summary>
-        private async Task<IAlgoCommand?> TrySetBandSellOrdersAsync(CancellationToken cancellationToken = default)
+        private async ValueTask<IAlgoCommand?> TrySetBandSellOrdersAsync(IReadOnlyList<OrderQueryResult> transientSellOrders, CancellationToken cancellationToken = default)
         {
             // skip if we have reach the max sell orders
-            var orders = await _orderProvider.GetTransientOrdersBySideAsync(_context.Symbol.Name, OrderSide.Sell, cancellationToken);
-
-            if (orders.Count >= _options.MaxActiveSellOrders)
+            if (transientSellOrders.Count >= _options.MaxActiveSellOrders)
             {
                 return null;
             }
@@ -364,7 +362,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             return null;
         }
 
-        private async Task<IAlgoCommand?> TrySetStartingTradeAsync(IReadOnlyList<OrderQueryResult> transientBuyOrders, CancellationToken cancellationToken = default)
+        private async ValueTask<IAlgoCommand?> TrySetStartingTradeAsync(IReadOnlyList<OrderQueryResult> transientBuyOrders, CancellationToken cancellationToken = default)
         {
             // skip if there's more than one band
             if (_bands.Count > 1) return null;

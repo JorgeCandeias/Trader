@@ -50,6 +50,8 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
             _trades = tradeProvider;
 
             _symbols = dependencies.GetSymbols().ToHashSet();
+
+            _pusher = new ActionBlock<UserDataStreamMessage>(HandleMessageAsync, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = _symbols.Count + 1 });
         }
 
         private static string Name => nameof(BinanceUserDataGrain);
@@ -64,6 +66,9 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
         /// Holds the background streaming and syncing work.
         /// </summary>
         private Task? _work;
+
+        // this worker will process and publish messages in the background so we dont hold up the binance stream
+        private readonly ActionBlock<UserDataStreamMessage> _pusher;
 
         public override Task OnActivateAsync()
         {
@@ -205,46 +210,12 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
         {
             try
             {
-                _logger.LogInformation("{Name} creating user stream key...", Name);
-
-                _listenKey = await _trader.CreateUserDataStreamAsync(_lifetime.ApplicationStopping);
-
-                _logger.LogInformation("{Name} created user stream with key {ListenKey}", Name, _listenKey);
-
-                _logger.LogInformation("{Name} connecting user stream with key {ListenKey}...", Name, _listenKey);
-
-                using var client = _streams.Create(_listenKey);
-
-                await client.ConnectAsync(_lifetime.ApplicationStopping);
-
-                BumpPingTime();
-
-                _logger.LogInformation("{Name} connected user stream with key {ListenKey}", Name, _listenKey);
-
-                // this worker will process and publish messages in the background so we dont hold up the binance stream
-                var worker = new ActionBlock<UserDataStreamMessage>(HandleMessageAsync, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = Environment.ProcessorCount });
-
                 // this token will reset the stream on a schedule to compensate for binance misbehaving
                 using var reset = new CancellationTokenSource(_options.UserDataStreamResetPeriod);
                 using var linked = CancellationTokenSource.CreateLinkedTokenSource(reset.Token, _lifetime.ApplicationStopping);
 
                 // start streaming in the background while we sync from the api
-                var streamTask = Task.Run(async () =>
-                {
-                    while (!linked.Token.IsCancellationRequested)
-                    {
-                        if (_clock.UtcNow >= _nextPingTime)
-                        {
-                            await _trader.PingUserDataStreamAsync(_listenKey, linked.Token);
-
-                            BumpPingTime();
-                        }
-
-                        var message = await client.ReceiveAsync(linked.Token);
-
-                        worker.Post(message);
-                    }
-                }, _lifetime.ApplicationStopping);
+                var streamTask = Task.Run(() => StreamAsync(linked.Token), linked.Token);
 
                 // wait for a few seconds for the stream to stabilize so we don't miss any incoming data from binance
                 _logger.LogInformation("{Name} waiting {Period} for stream to stabilize...", Name, _options.UserDataStreamStabilizationPeriod);
@@ -252,7 +223,6 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 
                 // sync asset balances
                 var accountInfo = await _trader.GetAccountInfoAsync(linked.Token);
-
                 await _balances.SetBalancesAsync(accountInfo, linked.Token);
 
                 // sync orders for all symbols
@@ -277,6 +247,39 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
             {
                 // if the stream collapses at any point then update the readyness state
                 _ready = false;
+            }
+        }
+
+        private async Task StreamAsync(CancellationToken cancellationToken)
+        {
+            _logger.LogInformation("{Name} creating user stream key...", Name);
+
+            _listenKey = await _trader.CreateUserDataStreamAsync(cancellationToken);
+
+            _logger.LogInformation("{Name} created user stream with key {ListenKey}", Name, _listenKey);
+
+            _logger.LogInformation("{Name} connecting user stream with key {ListenKey}...", Name, _listenKey);
+
+            using var client = _streams.Create(_listenKey);
+
+            await client.ConnectAsync(cancellationToken);
+
+            BumpPingTime();
+
+            _logger.LogInformation("{Name} connected user stream with key {ListenKey}", Name, _listenKey);
+
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                if (_clock.UtcNow >= _nextPingTime)
+                {
+                    await _trader.PingUserDataStreamAsync(_listenKey, cancellationToken);
+
+                    BumpPingTime();
+                }
+
+                var message = await client.ReceiveAsync(cancellationToken);
+
+                _pusher.Post(message);
             }
         }
 

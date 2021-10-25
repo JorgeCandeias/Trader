@@ -77,8 +77,6 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<IAlgoCommandExecutor<EnsureSingleOrderCommand>, EnsureSingleOrderExecutor>()
                 .AddSingleton<IAlgoCommandExecutor<ManyCommand>, ManyExecutor>()
                 .AddSingleton<IAlgoCommandExecutor<RedeemSavingsCommand, RedeemSavingsEvent>, RedeemSavingsExecutor>()
-
-                .AddSingleton<ISignificantAveragingSellService, SignificantAveragingSellService>()
                 .AddSingleton<IAlgoCommandExecutor<SignificantAveragingSellCommand>, SignificantAveragingSellExecutor>()
 
                 .AddSingleton<ITrackingBuyService, TrackingBuyService>()

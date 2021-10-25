@@ -17,6 +17,18 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
             Orders = orders ?? throw new ArgumentNullException(nameof(orders));
             MinimumProfitRate = minimumProfitRate;
             RedeemSavings = redeemSavings;
+
+            foreach (var order in orders)
+            {
+                if (order.Side != OrderSide.Buy)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(orders), $"Parameter '{nameof(orders)}' must only contain orders with side '{OrderSide.Buy}'");
+                }
+                else if (order.ExecutedQuantity <= 0m)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(orders), $"Parameter '{nameof(orders)}' must only contain orders with executed quantity greater than zero'");
+                }
+            }
         }
 
         public Symbol Symbol { get; }

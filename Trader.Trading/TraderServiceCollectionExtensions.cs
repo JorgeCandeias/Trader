@@ -70,7 +70,6 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddOptions<ExchangeInfoOptions>().ValidateDataAnnotations().Services
 
                 // commands
-                .AddSingleton<IAveragingSellService, AveragingSellService>()
                 .AddSingleton<IAlgoCommandExecutor<AveragingSellCommand>, AveragingSellExecutor>()
 
                 .AddSingleton<ICancelOrderService, CancelOrderService>()

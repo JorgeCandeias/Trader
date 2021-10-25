@@ -16,6 +16,18 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
             Orders = orders ?? throw new ArgumentNullException(nameof(orders));
             ProfitMultiplier = profitMultiplier;
             RedeemSavings = redeemSavings;
+
+            foreach (var order in orders)
+            {
+                if (order.Side != OrderSide.Buy)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(orders), $"Order {order.OrderId} is not a buy order");
+                }
+                else if (order.ExecutedQuantity <= 0m)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(orders), $"Order {order.OrderId} has non-significant executed quantity");
+                }
+            }
         }
 
         public Symbol Symbol { get; }

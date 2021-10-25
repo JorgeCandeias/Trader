@@ -25,8 +25,7 @@ namespace Outcompute.Trader.Models
 
         public static IComparer<AccountTrade> KeyComparer { get; } = new KeyComparerInternal();
 
-        // todo: replace usage of this this with key comparer
-        public static IEqualityComparer<AccountTrade> TradeIdEqualityComparer { get; } = new TradeIdEqualityComparerInternal();
+        public static IEqualityComparer<AccountTrade> TradeKeyEqualityComparer { get; } = new TradeKeyEqualityComparerInternal();
 
         private sealed class KeyComparerInternal : Comparer<AccountTrade>
         {
@@ -60,36 +59,7 @@ namespace Outcompute.Trader.Models
             }
         }
 
-        private sealed class TradeIdComparerInternal : Comparer<AccountTrade>
-        {
-            public override int Compare(AccountTrade? x, AccountTrade? y)
-            {
-                if (x is null)
-                {
-                    if (y is null)
-                    {
-                        return 0;
-                    }
-                    else
-                    {
-                        return 1;
-                    }
-                }
-                else
-                {
-                    if (y is null)
-                    {
-                        return -1;
-                    }
-                    else
-                    {
-                        return Comparer<long>.Default.Compare(x.Id, y.Id);
-                    }
-                }
-            }
-        }
-
-        private sealed class TradeIdEqualityComparerInternal : EqualityComparer<AccountTrade>
+        private sealed class TradeKeyEqualityComparerInternal : EqualityComparer<AccountTrade>
         {
             public override bool Equals(AccountTrade? x, AccountTrade? y)
             {
@@ -99,13 +69,16 @@ namespace Outcompute.Trader.Models
                 }
                 else
                 {
-                    return y is not null && y.Id == x.Id;
+                    return
+                        y is not null &&
+                        EqualityComparer<string>.Default.Equals(x.Symbol, y.Symbol) &&
+                        EqualityComparer<long>.Default.Equals(x.Id, y.Id);
                 }
             }
 
             public override int GetHashCode([DisallowNull] AccountTrade obj)
             {
-                return obj.Id.GetHashCode();
+                return HashCode.Combine(obj.Symbol, obj.Id);
             }
         }
     }

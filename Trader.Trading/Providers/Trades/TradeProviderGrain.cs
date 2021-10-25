@@ -50,7 +50,7 @@ namespace Outcompute.Trader.Trading.Providers.Trades
         /// <summary>
         /// Assigns a unique serial number to all trades.
         /// </summary>
-        private readonly Dictionary<AccountTrade, int> _serialByTrade = new(AccountTrade.TradeIdEqualityComparer);
+        private readonly Dictionary<AccountTrade, int> _serialByTrade = new(AccountTrade.TradeKeyEqualityComparer);
 
         /// <summary>
         /// Indexes trades by their latest serial number to speed up update requests.

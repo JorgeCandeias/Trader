@@ -62,6 +62,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             while (!cancellationToken.IsCancellationRequested)
             {
                 var orders = await _trader
+                    .WithBackoff()
                     .GetAllOrdersAsync(symbol, orderId + 1, 1000, cancellationToken)
                     .ConfigureAwait(false);
 

@@ -7,7 +7,6 @@ using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Providers;
-using Polly;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -259,37 +258,13 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
                 // sync orders for all symbols
                 foreach (var symbol in _symbols)
                 {
-                    await Policy
-                        .Handle<BinanceTooManyRequestsException>()
-                        .WaitAndRetryForeverAsync(
-                            (n, ex, ctx) => ((BinanceTooManyRequestsException)ex).RetryAfter.Add(TimeSpan.FromSeconds(1)),
-                            (ex, ts, ctx) =>
-                            {
-                                _logger.LogWarning(ex,
-                                    "{Name} backing off for {TimeSpan}...",
-                                    Name, ts.Add(TimeSpan.FromSeconds(1)));
-
-                                return Task.CompletedTask;
-                            })
-                        .ExecuteAsync(ct => _orderSynchronizer.SynchronizeOrdersAsync(symbol, ct), linked.Token, true);
+                    await _orderSynchronizer.SynchronizeOrdersAsync(symbol, linked.Token);
                 }
 
                 // sync trades for all symbols
                 foreach (var symbol in _symbols)
                 {
-                    await Policy
-                        .Handle<BinanceTooManyRequestsException>()
-                        .WaitAndRetryForeverAsync(
-                            (n, ex, ctx) => ((BinanceTooManyRequestsException)ex).RetryAfter.Add(TimeSpan.FromSeconds(1)),
-                            (ex, ts, ctx) =>
-                            {
-                                _logger.LogWarning(ex,
-                                    "{Name} backing off for {TimeSpan}...",
-                                    Name, ts.Add(TimeSpan.FromSeconds(1)));
-
-                                return Task.CompletedTask;
-                            })
-                        .ExecuteAsync(ct => _tradeSynchronizer.SynchronizeTradesAsync(symbol, ct), linked.Token, true);
+                    await _tradeSynchronizer.SynchronizeTradesAsync(symbol, linked.Token);
                 }
 
                 // signal that everything is ready

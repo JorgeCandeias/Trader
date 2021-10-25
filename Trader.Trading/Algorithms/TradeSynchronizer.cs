@@ -38,6 +38,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             {
                 // query for the next trades
                 var trades = await _trader
+                    .WithBackoff()
                     .GetAccountTradesAsync(symbol, tradeId + 1, 1000, cancellationToken)
                     .ConfigureAwait(false);
 

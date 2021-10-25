@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms.Exceptions;
@@ -22,14 +23,16 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         private readonly IOptionsMonitor<SteppingAlgoOptions> _monitor;
         private readonly IOrderCodeGenerator _orderCodeGenerator;
         private readonly IOrderProvider _orderProvider;
+        private readonly ISystemClock _clock;
 
-        public SteppingAlgo(IAlgoContext context, ILogger<SteppingAlgo> logger, IOptionsMonitor<SteppingAlgoOptions> options, IOrderCodeGenerator orderCodeGenerator, IOrderProvider orderProvider)
+        public SteppingAlgo(IAlgoContext context, ILogger<SteppingAlgo> logger, IOptionsMonitor<SteppingAlgoOptions> options, IOrderCodeGenerator orderCodeGenerator, IOrderProvider orderProvider, ISystemClock clock)
         {
             _context = context;
             _logger = logger;
             _monitor = options;
             _orderCodeGenerator = orderCodeGenerator;
             _orderProvider = orderProvider;
+            _clock = clock;
         }
 
         private static string TypeName => nameof(SteppingAlgo);
@@ -61,9 +64,14 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
             await ApplyAccountInfoAsync(cancellationToken);
 
-            var significant = await _context.GetSignificantOrderResolver().ResolveAsync(_context.Symbol, cancellationToken);
+            var significant = await _context
+                .GetSignificantOrderResolver()
+                .ResolveAsync(_context.Symbol, cancellationToken)
+                .ConfigureAwait(false);
 
-            await _context.PublishProfitAsync(significant.Profit);
+            await _context
+                .PublishProfitAsync(Profit.FromEvents(_context.Symbol, significant.ProfitEvents, significant.CommissionEvents, _clock.UtcNow))
+                .ConfigureAwait(false);
 
             _ticker = await _context.GetRequiredTickerAsync(_context.Symbol.Name, cancellationToken);
 

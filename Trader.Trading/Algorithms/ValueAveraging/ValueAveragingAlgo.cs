@@ -45,6 +45,9 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
             // get significant orders
             _significant = await _context.GetSignificantOrderResolver().ResolveAsync(_context.Symbol, cancellationToken);
 
+            // this is meant for rendering and will be refactored at some point
+            var profit = Profit.FromEvents(_context.Symbol, _significant.ProfitEvents, _significant.CommissionEvents, _clock.UtcNow);
+
             // get current ticker
             _ticker = await _context.GetRequiredTickerAsync(_context.Symbol.Name, cancellationToken);
 
@@ -70,7 +73,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
                     "{Type} {Name} reports Unrealized PnL = {Value:F8} ({Ratio:P8})",
                     TypeName, _context.Name, uPnL, uPnL / total);
 
-                var rPnl = _significant.Profit.All;
+                var rPnl = profit.All;
 
                 // this requires the full order set to calculate as a ratio
                 _logger.LogInformation(
@@ -101,7 +104,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
             _rsiC = klines.LastRelativeStrengthIndexOrDefault(x => x.ClosePrice, _options.RsiPeriodsC);
 
             // publish the profit stats
-            await _context.PublishProfitAsync(_significant.Profit);
+            await _context.PublishProfitAsync(profit);
 
             // evaluate signals and return results for them
             return Many(

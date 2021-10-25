@@ -62,24 +62,6 @@ namespace Outcompute.Trader.Trading.Algorithms
             // keep track of profit
             var profits = ImmutableList.CreateBuilder<ProfitEvent>();
 
-            var todayProfit = 0m;
-            var yesterdayProfit = 0m;
-            var thisWeekProfit = 0m;
-            var prevWeekProfit = 0m;
-            var thisMonthProfit = 0m;
-            var thisYearProfit = 0m;
-            var all = 0m;
-            var d1 = 0m;
-            var d7 = 0m;
-            var d30 = 0m;
-
-            // hold the current time so profit assignments are consistent
-            var now = _clock.UtcNow;
-            var window1d = now.AddDays(-1);
-            var window7d = now.AddDays(-7);
-            var window30d = now.AddDays(-30);
-            var today = now.Date;
-
             // now match sale leftovers using lifo
             // the sales may not fill completely using the buys due to selling from savings and buy market orders to help fix bugs
             for (var i = 0; i < subjects.Segment.Count; ++i)
@@ -99,23 +81,6 @@ namespace Outcompute.Trader.Trading.Algorithms
                             buy.RemainingExecutedQuantity -= take;
                             sell.RemainingExecutedQuantity -= take;
 
-                            // calculate profit for this
-                            var profit = take * (sell.Trade.Price - buy.Trade.Price);
-
-                            // assign to the appropriate counters
-                            if (sell.Trade.Time.Date == today) todayProfit += profit;
-                            if (sell.Trade.Time.Date == today.AddDays(-1)) yesterdayProfit += profit;
-                            if (sell.Trade.Time.Date >= today.Previous(DayOfWeek.Sunday)) thisWeekProfit += profit;
-                            if (sell.Trade.Time.Date >= today.Previous(DayOfWeek.Sunday, 2) && sell.Trade.Time.Date < today.Previous(DayOfWeek.Sunday)) prevWeekProfit += profit;
-                            if (sell.Trade.Time.Date >= today.AddDays(-today.Day + 1)) thisMonthProfit += profit;
-                            if (sell.Trade.Time.Date >= new DateTime(today.Year, 1, 1)) thisYearProfit += profit;
-                            all += profit;
-
-                            // assign to the window counters
-                            if (sell.Trade.Time >= window1d) d1 += profit;
-                            if (sell.Trade.Time >= window7d) d7 += profit;
-                            if (sell.Trade.Time >= window30d) d30 += profit;
-
                             // create a profit event
                             profits.Add(new ProfitEvent(
                                 symbol,
@@ -131,27 +96,6 @@ namespace Outcompute.Trader.Trading.Algorithms
                             // if the sale is filled then we can break early
                             if (sell.RemainingExecutedQuantity == 0) break;
                         }
-                    }
-
-                    // if the commission was taken from the sell asset then remove it from profit
-                    if (sell.Trade.CommissionAsset == symbol.QuoteAsset)
-                    {
-                        // calculate loss for this
-                        var loss = sell.Trade.Commission;
-
-                        // assign to the appropriate counters
-                        if (sell.Trade.Time.Date == today) todayProfit -= loss;
-                        if (sell.Trade.Time.Date == today.AddDays(-1)) yesterdayProfit -= loss;
-                        if (sell.Trade.Time.Date >= today.Previous(DayOfWeek.Sunday)) thisWeekProfit -= loss;
-                        if (sell.Trade.Time.Date >= today.Previous(DayOfWeek.Sunday, 2) && sell.Trade.Time.Date < today.Previous(DayOfWeek.Sunday)) prevWeekProfit -= loss;
-                        if (sell.Trade.Time.Date >= today.AddDays(-today.Day + 1)) thisMonthProfit -= loss;
-                        if (sell.Trade.Time.Date >= new DateTime(today.Year, 1, 1)) thisYearProfit -= loss;
-                        all -= loss;
-
-                        // assign to the window counters
-                        if (sell.Trade.Time >= window1d) d1 -= loss;
-                        if (sell.Trade.Time >= window7d) d7 -= loss;
-                        if (sell.Trade.Time >= window30d) d30 -= loss;
                     }
 
                     // if the sale was still not filled then force close it
@@ -205,22 +149,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 "{Name} {Symbol} identified {Count} significant orders in {ElapsedMs}ms",
                 nameof(SignificantOrderResolver), symbol.Name, significant.Count, watch.ElapsedMilliseconds);
 
-            var summary = new Profit(
-                symbol.Name,
-                symbol.BaseAsset,
-                symbol.QuoteAsset,
-                todayProfit,
-                yesterdayProfit,
-                thisWeekProfit,
-                prevWeekProfit,
-                thisMonthProfit,
-                thisYearProfit,
-                all,
-                d1,
-                d7,
-                d30);
-
-            return new SignificantResult(significant.ToImmutable(), summary, profits.ToImmutable(), commissions);
+            return new SignificantResult(significant.ToImmutable(), profits.ToImmutable(), commissions);
         }
 
         private (SortedSet<Map> Mapping, ImmutableList<CommissionEvent> Commissions) Combine(Symbol symbol, IEnumerable<OrderQueryResult> orders, IEnumerable<AccountTrade> trades)

@@ -4,6 +4,7 @@ using Outcompute.Trader.Models.Collections;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using static System.String;
@@ -16,11 +17,10 @@ namespace Outcompute.Trader.Trading.Algorithms
     }
 
     [Immutable]
-    public record SignificantResult(ImmutableSortedOrderSet Orders, Profit Profit, ImmutableList<ProfitEvent> ProfitEvents, ImmutableList<CommissionEvent> CommissionEvents)
+    public record SignificantResult(ImmutableSortedOrderSet Orders, ImmutableList<ProfitEvent> ProfitEvents, ImmutableList<CommissionEvent> CommissionEvents)
     {
         public static SignificantResult Empty { get; } = new SignificantResult(
             ImmutableSortedOrderSet.Empty,
-            Profit.Zero(string.Empty, string.Empty, string.Empty),
             ImmutableList<ProfitEvent>.Empty,
             ImmutableList<CommissionEvent>.Empty);
     }
@@ -116,6 +116,82 @@ namespace Outcompute.Trader.Trading.Algorithms
                 D1 + item.D1,
                 D7 + item.D7,
                 D30 + item.D30);
+        }
+
+        public static Profit FromEvents(Symbol symbol, IEnumerable<ProfitEvent> profits, IEnumerable<CommissionEvent> commissions, DateTime now)
+        {
+            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+            if (profits is null) throw new ArgumentNullException(nameof(profits));
+            if (commissions is null) throw new ArgumentNullException(nameof(commissions));
+
+            var lookup = commissions.ToLookup(x => (x.Asset, x.OrderId, x.TradeId));
+
+            var todayProfit = 0m;
+            var yesterdayProfit = 0m;
+            var thisWeekProfit = 0m;
+            var prevWeekProfit = 0m;
+            var thisMonthProfit = 0m;
+            var thisYearProfit = 0m;
+            var all = 0m;
+            var d1 = 0m;
+            var d7 = 0m;
+            var d30 = 0m;
+
+            // hold the current time so profit assignments are consistent
+            var window1d = now.AddDays(-1);
+            var window7d = now.AddDays(-7);
+            var window30d = now.AddDays(-30);
+            var today = now.Date;
+
+            foreach (var profit in profits)
+            {
+                // assign to the appropriate counters
+                if (profit.EventTime.Date == today) todayProfit += profit.Profit;
+                if (profit.EventTime.Date == today.AddDays(-1)) yesterdayProfit += profit.Profit;
+                if (profit.EventTime.Date >= today.Previous(DayOfWeek.Sunday)) thisWeekProfit += profit.Profit;
+                if (profit.EventTime.Date >= today.Previous(DayOfWeek.Sunday, 2) && profit.EventTime.Date < today.Previous(DayOfWeek.Sunday)) prevWeekProfit += profit.Profit;
+                if (profit.EventTime.Date >= today.AddDays(-today.Day + 1)) thisMonthProfit += profit.Profit;
+                if (profit.EventTime.Date >= new DateTime(today.Year, 1, 1)) thisYearProfit += profit.Profit;
+                all += profit.Profit;
+
+                // assign to the window counters
+                if (profit.EventTime >= window1d) d1 += profit.Profit;
+                if (profit.EventTime >= window7d) d7 += profit.Profit;
+                if (profit.EventTime >= window30d) d30 += profit.Profit;
+
+                // if the commission was taken from the sell asset then remove it from profit
+                foreach (var loss in lookup[(profit.Symbol.QuoteAsset, profit.SellOrderId, profit.SellTradeId)].Select(x => x.Commission))
+                {
+                    // assign to the appropriate counters
+                    if (profit.EventTime.Date == today) todayProfit -= loss;
+                    if (profit.EventTime.Date == today.AddDays(-1)) yesterdayProfit -= loss;
+                    if (profit.EventTime.Date >= today.Previous(DayOfWeek.Sunday)) thisWeekProfit -= loss;
+                    if (profit.EventTime.Date >= today.Previous(DayOfWeek.Sunday, 2) && profit.EventTime.Date < today.Previous(DayOfWeek.Sunday)) prevWeekProfit -= loss;
+                    if (profit.EventTime.Date >= today.AddDays(-today.Day + 1)) thisMonthProfit -= loss;
+                    if (profit.EventTime.Date >= new DateTime(today.Year, 1, 1)) thisYearProfit -= loss;
+                    all -= loss;
+
+                    // assign to the window counters
+                    if (profit.EventTime >= window1d) d1 -= loss;
+                    if (profit.EventTime >= window7d) d7 -= loss;
+                    if (profit.EventTime >= window30d) d30 -= loss;
+                }
+            }
+
+            return new Profit(
+                symbol.Name,
+                symbol.BaseAsset,
+                symbol.QuoteAsset,
+                todayProfit,
+                yesterdayProfit,
+                thisWeekProfit,
+                prevWeekProfit,
+                thisMonthProfit,
+                thisYearProfit,
+                all,
+                d1,
+                d7,
+                d30);
         }
     }
 

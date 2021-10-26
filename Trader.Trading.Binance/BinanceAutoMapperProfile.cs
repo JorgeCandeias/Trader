@@ -80,16 +80,6 @@ namespace Outcompute.Trader.Trading.Binance
                 .ForCtorParam(nameof(Trade.Quantity), x => x.MapFrom(y => y.Qty))
                 .ForCtorParam(nameof(Trade.QuoteQuantity), x => x.MapFrom(y => y.QuoteQty));
 
-            CreateMap<IDictionary<string, JsonElement>, AggTrade>()
-                .ForCtorParam(nameof(AggTrade.AggregateTradeId), x => x.MapFrom(y => y["a"].GetInt32()))
-                .ForCtorParam(nameof(AggTrade.Price), x => x.MapFrom(y => y["p"].GetString()))
-                .ForCtorParam(nameof(AggTrade.Quantity), x => x.MapFrom(y => y["q"].GetString()))
-                .ForCtorParam(nameof(AggTrade.FirstTradeId), x => x.MapFrom(y => y["f"].GetInt32()))
-                .ForCtorParam(nameof(AggTrade.LastTradeId), x => x.MapFrom(y => y["l"].GetInt32()))
-                .ForCtorParam(nameof(AggTrade.Timestamp), x => x.MapFrom(y => y["T"].GetInt64()))
-                .ForCtorParam(nameof(AggTrade.IsBuyerMaker), x => x.MapFrom(y => y["m"].GetBoolean()))
-                .ForCtorParam(nameof(AggTrade.IsBestMatch), x => x.MapFrom(y => y["M"].GetBoolean()));
-
             CreateMap<SymbolOrderBookTickerModel, SymbolOrderBookTicker>()
                 .ForCtorParam(nameof(SymbolOrderBookTicker.BidQuantity), x => x.MapFrom(y => y.BidQty))
                 .ForCtorParam(nameof(SymbolOrderBookTicker.AskQuantity), x => x.MapFrom(y => y.AskQty));

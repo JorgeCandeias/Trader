@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Outcompute.Trader.Models;
+using System;
 
 namespace Outcompute.Trader.Trading.Binance.Converters
 {
@@ -13,7 +14,7 @@ namespace Outcompute.Trader.Trading.Binance.Converters
 
                 AccountType.Spot => "SPOT",
 
-                _ => throw new AutoMapperMappingException($"Unknown {nameof(AccountType)} '{source}'")
+                _ => throw new ArgumentOutOfRangeException(nameof(source), $"Unknown {nameof(AccountType)} '{source}'")
             };
         }
 
@@ -25,7 +26,7 @@ namespace Outcompute.Trader.Trading.Binance.Converters
 
                 "SPOT" => AccountType.Spot,
 
-                _ => throw new AutoMapperMappingException($"Unknown {nameof(AccountType)} '{source}'")
+                _ => throw new ArgumentOutOfRangeException(nameof(source), $"Unknown {nameof(AccountType)} '{source}'")
             };
         }
     }

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Binance.Converters;
+using System;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Binance.Tests
@@ -31,6 +32,27 @@ namespace Outcompute.Trader.Trading.Binance.Tests
             Assert.Equal(expected, result);
         }
 
+        [Fact]
+        public void ThrowsOnInvalidString()
+        {
+            // arrange
+            var provider = new ServiceCollection()
+                .AddSingleton<AccountTypeConverter>()
+                .AddAutoMapper(config =>
+                {
+                    config.CreateMap<string, AccountType>().ConvertUsing<AccountTypeConverter>();
+                })
+                .BuildServiceProvider();
+
+            var mapper = provider.GetRequiredService<IMapper>();
+
+            // act
+            void Test() => mapper.Map<AccountType>("");
+
+            // assert
+            Assert.Throws<ArgumentOutOfRangeException>("source", Test);
+        }
+
         [Theory]
         [InlineData(AccountType.None, null)]
         [InlineData(AccountType.Spot, "SPOT")]
@@ -52,6 +74,27 @@ namespace Outcompute.Trader.Trading.Binance.Tests
 
             // assert
             Assert.Equal(expected, result);
+        }
+
+        [Fact]
+        public void ThrowsOnInvalidAccountType()
+        {
+            // arrange
+            var provider = new ServiceCollection()
+                .AddSingleton<AccountTypeConverter>()
+                .AddAutoMapper(config =>
+                {
+                    config.CreateMap<AccountType, string>().ConvertUsing<AccountTypeConverter>();
+                })
+                .BuildServiceProvider();
+
+            var mapper = provider.GetRequiredService<IMapper>();
+
+            // act
+            void Test() => mapper.Map<string>((AccountType)999);
+
+            // assert
+            Assert.Throws<ArgumentOutOfRangeException>("source", Test);
         }
     }
 }

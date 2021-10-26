@@ -122,7 +122,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
 
         private int GetMaxPeriods()
         {
-            return MathS.Max(stackalloc int[] { _options.SmaPeriodsA, _options.SmaPeriodsB, _options.SmaPeriodsC, _options.RsiPeriodsA, _options.RsiPeriodsB, _options.RsiPeriodsC });
+            return MathSpan.Max(stackalloc int[] { _options.SmaPeriodsA, _options.SmaPeriodsB, _options.SmaPeriodsC, _options.RsiPeriodsA, _options.RsiPeriodsB, _options.RsiPeriodsC });
         }
 
         private bool TrySignalBuyOrder()

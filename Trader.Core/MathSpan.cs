@@ -6,11 +6,19 @@ namespace Outcompute.Trader.Core
     /// <summary>
     /// Provides helper math functions over <see cref="ReadOnlySpan{T}"/>.
     /// </summary>
-    public static class MathS
+    public static class MathSpan
     {
+        private static void EnsureValuesNotEmpty<T>(ReadOnlySpan<T> values)
+        {
+            if (values.Length <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(values), $"Parameter '{nameof(values)}' is empty");
+            }
+        }
+
         public static int Max(ReadOnlySpan<int> values)
         {
-            if (values.Length <= 0) throw new ArgumentNullException(nameof(values));
+            EnsureValuesNotEmpty(values);
 
             var max = values[0];
             for (var i = 1; i < values.Length; i++)
@@ -26,7 +34,7 @@ namespace Outcompute.Trader.Core
 
         public static decimal Max(ReadOnlySpan<decimal> values)
         {
-            if (values.Length <= 0) throw new ArgumentNullException(nameof(values));
+            EnsureValuesNotEmpty(values);
 
             var max = values[0];
             for (var i = 1; i < values.Length; i++)
@@ -43,7 +51,7 @@ namespace Outcompute.Trader.Core
         public static T Max<T>(ReadOnlySpan<T> values)
             where T : IComparable<T>
         {
-            if (values.Length <= 0) throw new ArgumentNullException(nameof(values));
+            EnsureValuesNotEmpty(values);
 
             var max = values[0];
             for (var i = 1; i < values.Length; i++)
@@ -59,7 +67,7 @@ namespace Outcompute.Trader.Core
 
         public static int Min(ReadOnlySpan<int> values)
         {
-            if (values.Length <= 0) throw new ArgumentNullException(nameof(values));
+            EnsureValuesNotEmpty(values);
 
             var min = values[0];
             for (var i = 1; i < values.Length; i++)
@@ -75,7 +83,7 @@ namespace Outcompute.Trader.Core
 
         public static decimal Min(ReadOnlySpan<decimal> values)
         {
-            if (values.Length <= 0) throw new ArgumentNullException(nameof(values));
+            EnsureValuesNotEmpty(values);
 
             var min = values[0];
             for (var i = 1; i < values.Length; i++)
@@ -92,7 +100,7 @@ namespace Outcompute.Trader.Core
         public static T Min<T>(ReadOnlySpan<T> values)
             where T : IComparable<T>
         {
-            if (values.Length <= 0) throw new ArgumentNullException(nameof(values));
+            EnsureValuesNotEmpty(values);
 
             var min = values[0];
             for (var i = 1; i < values.Length; i++)

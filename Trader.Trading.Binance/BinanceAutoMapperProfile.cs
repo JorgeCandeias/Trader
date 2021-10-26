@@ -57,7 +57,6 @@ namespace Outcompute.Trader.Trading.Binance
 
             // simple model mappings
             CreateMap<ExchangeInfoModel, ExchangeInfo>();
-            CreateMap<AvgPriceModel, AvgPrice>();
             CreateMap<TickerModel, Ticker>();
             CreateMap<SymbolPriceTickerModel, SymbolPriceTicker>();
 

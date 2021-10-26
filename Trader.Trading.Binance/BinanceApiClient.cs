@@ -106,17 +106,6 @@ namespace Outcompute.Trader.Trading.Binance
             return _mapper.Map<IEnumerable<Trade>>(result);
         }
 
-        public async Task<AvgPrice> GetAvgPriceAsync(string symbol, CancellationToken cancellationToken = default)
-        {
-            var result = await _client
-                .GetFromJsonAsync<AvgPriceModel>(
-                    new Uri($"/api/v3/avgPrice?symbol={HttpUtility.UrlEncode(symbol)}", UriKind.Relative),
-                    cancellationToken)
-                .ConfigureAwait(false);
-
-            return _mapper.Map<AvgPrice>(result);
-        }
-
         public async Task<TickerModel> Get24hTickerPriceChangeStatisticsAsync(string symbol, CancellationToken cancellationToken = default)
         {
             _ = symbol ?? throw new ArgumentNullException(nameof(symbol));

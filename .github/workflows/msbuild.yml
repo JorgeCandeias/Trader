@@ -76,6 +76,11 @@ jobs:
       working-directory: Trader.Orleans.Database\bin\${{ env.BUILD_CONFIGURATION }}
       run: |
         sqlpackage /Action:Publish /Profile:Trader.Orleans.Database.LocalDB.publish.xml /SourceFile:Trader.Orleans.Database.dacpac /TargetDatabaseName:TraderTest
+        
+    - name: Delete Database Projects
+      run: |
+        rm -f -d -r Trader.Data.Sql.Database
+        rm -f -d -r Trader.Orleans.Database
       
     - name: Restore dependencies
       run: dotnet restore

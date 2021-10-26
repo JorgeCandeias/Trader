@@ -76,11 +76,23 @@ jobs:
       working-directory: Trader.Orleans.Database\bin\${{ env.BUILD_CONFIGURATION }}
       run: |
         sqlpackage /Action:Publish /Profile:Trader.Orleans.Database.LocalDB.publish.xml /SourceFile:Trader.Orleans.Database.dacpac /TargetDatabaseName:TraderTest
+        
+    - name: Delete Database Projects
+      shell: cmd
+      run: |
+        RMDIR /S /Q Trader.Data.Sql.Database
+        RMDIR /S /Q Trader.Orleans.Database
       
     - name: Restore dependencies
       run: dotnet restore
+      
+    - name: Build
+      run: dotnet build --no-restore
+      
+    - name: Test
+      run: dotnet test --no-build
 
-    - name: Build & Analyze
+    - name: Analyze
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

@@ -1,6 +1,6 @@
 <Project>
 	<PropertyGroup>
-		<Version>0.1.6</Version>
+		<Version>0.1.7</Version>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageIcon>Icon.128x128.png</PackageIcon>
 		<Authors>Jorge Candeias</Authors>

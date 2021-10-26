@@ -8,7 +8,7 @@ namespace Outcompute.Trader.Trading.Commands.Many
     {
         public async Task ExecuteAsync(IAlgoContext context, ManyCommand command, CancellationToken cancellationToken = default)
         {
-            foreach (var item in command.Results)
+            foreach (var item in command.Commands)
             {
                 await item
                     .ExecuteAsync(context, cancellationToken)

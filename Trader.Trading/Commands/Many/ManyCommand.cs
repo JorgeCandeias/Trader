@@ -9,17 +9,17 @@ namespace Outcompute.Trader.Trading.Commands.Many
 {
     public class ManyCommand : IAlgoCommand
     {
-        public ManyCommand(IEnumerable<IAlgoCommand> results)
+        public ManyCommand(IEnumerable<IAlgoCommand> commands)
         {
-            Results = results ?? throw new ArgumentNullException(nameof(results));
+            Commands = commands ?? throw new ArgumentNullException(nameof(commands));
         }
 
         public ManyCommand(params IAlgoCommand[] results)
         {
-            Results = results;
+            Commands = results;
         }
 
-        public IEnumerable<IAlgoCommand> Results { get; }
+        public IEnumerable<IAlgoCommand> Commands { get; }
 
         public Task ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
         {

@@ -78,6 +78,7 @@ jobs:
         sqlpackage /Action:Publish /Profile:Trader.Orleans.Database.LocalDB.publish.xml /SourceFile:Trader.Orleans.Database.dacpac /TargetDatabaseName:TraderTest
         
     - name: Delete Database Projects
+      shell: cmd
       run: |
         RMDIR /S /Q Trader.Data.Sql.Database
         RMDIR /S /Q Trader.Orleans.Database

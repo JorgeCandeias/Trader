@@ -13,6 +13,6 @@ namespace Outcompute.Trader.Trading.Commands
     public interface IAlgoCommandExecutor<in TAlgoCommand, TResult>
         where TAlgoCommand : notnull, IAlgoCommand
     {
-        Task<TResult> ExecuteAsync(IAlgoContext context, TAlgoCommand result, CancellationToken cancellationToken = default);
+        Task<TResult> ExecuteAsync(IAlgoContext context, TAlgoCommand command, CancellationToken cancellationToken = default);
     }
 }

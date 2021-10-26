@@ -79,8 +79,8 @@ jobs:
         
     - name: Delete Database Projects
       run: |
-        rm -f -d -r Trader.Data.Sql.Database
-        rm -f -d -r Trader.Orleans.Database
+        rd /s /q Trader.Data.Sql.Database
+        rm /s /q Trader.Orleans.Database
       
     - name: Restore dependencies
       run: dotnet restore

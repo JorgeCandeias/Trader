@@ -1,21 +1,17 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
-using static System.String;
 
 namespace Outcompute.Trader.Trading.Algorithms.Stepping
 {
     public class SteppingAlgoOptions
     {
         [Required]
-        public string Symbol { get; set; } = Empty;
-
-        [Required]
         [Range(1, 999)]
         public int MaxBands { get; set; } = 99;
 
         [Required]
         [Range(1, 99)]
-        public int MaxActiveSellOrders { get; set; } = 99;
+        public int MaxActiveSellOrders { get; set; } = 1;
 
         [Required]
         [Range(0.01, 1)]
@@ -23,7 +19,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
         [Required]
         [Range(0.001, 1)]
-        public decimal TargetQuoteBalanceFractionPerBand { get; set; } = 0.01m;
+        public decimal TargetQuoteBalanceFractionPerBand { get; set; } = 0.002m;
 
         /// <summary>
         /// If <see cref="true"/> the algo will create the opening band automatically.

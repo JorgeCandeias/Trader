@@ -7,7 +7,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
     {
         [Required]
         [Range(0.01, 0.99)]
-        public decimal PullbackRatio { get; set; } = 0.95m;
+        public decimal PullbackRatio { get; set; } = 0.90m;
 
         [Required]
         [Range(0.01, 1.00)]

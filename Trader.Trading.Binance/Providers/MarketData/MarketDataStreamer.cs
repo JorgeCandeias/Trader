@@ -20,7 +20,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         private readonly IKlineProvider _klines;
         private readonly ITickerProvider _tickers;
 
-        public MarketDataStreamer(ILogger logger, IMapper mapper, IMarketDataStreamClientFactory factory, IKlineProvider klines, ITickerProvider tickers)
+        public MarketDataStreamer(ILogger<MarketDataStreamer> logger, IMapper mapper, IMarketDataStreamClientFactory factory, IKlineProvider klines, ITickerProvider tickers)
         {
             _logger = logger;
             _mapper = mapper;

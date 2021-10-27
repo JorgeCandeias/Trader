@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.InMemory
 {
-    internal class InMemoryMarketDataStreamSender : IInMemoryMarketDataStreamSender
+    public class InMemoryMarketDataStreamSender : IInMemoryMarketDataStreamSender
     {
         public IDisposable Register(Func<MarketDataStreamMessage, CancellationToken, Task> action)
         {

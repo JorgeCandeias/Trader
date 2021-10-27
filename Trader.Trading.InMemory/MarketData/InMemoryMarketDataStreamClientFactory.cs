@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Outcompute.Trader.Trading.InMemory.MarketData
 {
-    internal class InMemoryMarketDataStreamClientFactory : IMarketDataStreamClientFactory
+    public class InMemoryMarketDataStreamClientFactory : IMarketDataStreamClientFactory
     {
         private readonly IServiceProvider _provider;
 

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.InMemory.MarketData
 {
-    internal sealed class InMemoryMarketDataStreamClient : IMarketDataStreamClient
+    public sealed class InMemoryMarketDataStreamClient : IMarketDataStreamClient
     {
         private readonly IDisposable _registration;
 

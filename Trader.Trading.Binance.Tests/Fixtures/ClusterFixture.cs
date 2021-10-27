@@ -39,6 +39,19 @@ namespace Outcompute.Trader.Trading.Binance.Tests.Fixtures
                 {
                     config.AddInMemoryCollection(new Dictionary<string, string>
                     {
+                        { "Trader:Algos:MyTestAlgo1:Type", "Test" },
+                        { "Trader:Algos:MyTestAlgo1:Options:TestValue", "123" },
+                        { "Trader:Algos:MyTestAlgo1:DependsOn:Klines:0:Symbol", "BTCGBP" },
+                        { "Trader:Algos:MyTestAlgo1:DependsOn:Klines:0:Interval", "Days1" },
+                        { "Trader:Algos:MyTestAlgo1:DependsOn:Klines:0:Periods", "100" },
+                        { "Trader:Algos:MyTestAlgo1:DependsOn:Tickers:0", "BTCGBP" },
+
+                        { "Trader:Algos:MyTestAlgo2:Type", "Test" },
+                        { "Trader:Algos:MyTestAlgo2:Options:TestValue", "234" },
+                        { "Trader:Algos:MyTestAlgo2:DependsOn:Klines:0:Symbol", "ETHGBP" },
+                        { "Trader:Algos:MyTestAlgo2:DependsOn:Klines:0:Interval", "Hours1" },
+                        { "Trader:Algos:MyTestAlgo2:DependsOn:Klines:0:Periods", "200" },
+                        { "Trader:Algos:MyTestAlgo2:DependsOn:Tickers:0", "ETHGBP" }
                     });
                 });
         }

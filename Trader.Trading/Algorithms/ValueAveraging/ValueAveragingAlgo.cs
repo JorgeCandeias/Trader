@@ -170,26 +170,37 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
 
         private bool EnsureTickerLowerThanSafePrice()
         {
-            // break on price not low enough from previous significant buy
-            if (_significant.Orders.Count > 0)
+            // skip this rule if there are no orders to evaluate
+            if (_significant.Orders.Count == 0)
             {
-                // ignore leftovers - only apply this rule if the significant total is above the minimum notional
-                var total = _significant.Orders.Sum(x => x.ExecutedQuantity * x.Price);
-                if (total >= _context.Symbol.Filters.MinNotional.MinNotional)
-                {
-                    var minPrice = _significant.Orders.Max!.Price;
-                    var lowPrice = minPrice * _options.PullbackRatio;
-                    if (_ticker.ClosePrice > lowPrice)
-                    {
-                        _logger.LogInformation(
-                            "{Type} {Symbol} detected ticker of {Ticker:F8} is above the low price of {LowPrice:F8} calculated as {PullBackRatio:F8} of the min significant buy price of {MinPrice:F8} and will not signal a buy order",
-                            TypeName, _context.Symbol.Name, _ticker.ClosePrice, lowPrice, _options.PullbackRatio, minPrice);
-
-                        return false;
-                    }
-                }
+                return true;
             }
 
+            // skip this rule if the significant total is under the minimum notional (leftovers)
+            if (_significant.Orders.Sum(x => x.ExecutedQuantity * x.Price) < _context.Symbol.Filters.MinNotional.MinNotional)
+            {
+                return true;
+            }
+
+            // skip this rule if the significant quantity is under the minimum lot size (leftovers)
+            if (_significant.Orders.Sum(x => x.ExecutedQuantity) < _context.Symbol.Filters.LotSize.StepSize)
+            {
+                return true;
+            }
+
+            // break on price not low enough from previous significant buy
+            var minPrice = _significant.Orders.Max!.Price;
+            var lowPrice = minPrice * _options.PullbackRatio;
+            if (_ticker.ClosePrice > lowPrice)
+            {
+                _logger.LogInformation(
+                    "{Type} {Symbol} detected ticker of {Ticker:F8} is above the low price of {LowPrice:F8} calculated as {PullBackRatio:F8} of the min significant buy price of {MinPrice:F8} and will not signal a buy order",
+                    TypeName, _context.Symbol.Name, _ticker.ClosePrice, lowPrice, _options.PullbackRatio, minPrice);
+
+                return false;
+            }
+
+            // otherwise skip this rule by default
             return true;
         }
 

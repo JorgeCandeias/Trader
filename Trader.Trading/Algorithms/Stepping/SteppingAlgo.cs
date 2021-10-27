@@ -214,7 +214,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             }
 
             // under adjust the buy price to the tick size
-            lowerPrice = Math.Floor(lowerPrice / _context.Symbol.Filters.Price.TickSize) * _context.Symbol.Filters.Price.TickSize;
+            lowerPrice = SymbolMathExtensions.AdjustPriceUpToTickSize(_context.Symbol, lowerPrice);
 
             // calculate the quote amount to pay with
             var total = _balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand;
@@ -226,7 +226,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             }
 
             // raise to the minimum notional if needed
-            total = Math.Max(total, _context.Symbol.Filters.MinNotional.MinNotional);
+            total = SymbolMathExtensions.AdjustTotalUpToMinNotional(_context.Symbol, total);
 
             // ensure there is enough quote asset for it
             if (total > _balances.Quote.Free)
@@ -264,7 +264,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             var quantity = total / lowerPrice;
 
             // round it down to the lot size step
-            quantity = Math.Ceiling(quantity / _context.Symbol.Filters.LotSize.StepSize) * _context.Symbol.Filters.LotSize.StepSize;
+            quantity = _context.Symbol.AdjustQuantityUpToLotSize(quantity);
 
             // place the buy order
             var tag = $"{_context.Symbol.Name}{lowerPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal);
@@ -292,9 +292,20 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                     {
                         var necessary = band.Quantity - _balances.Asset.Free;
 
-                        _logger.LogWarning(
-                            "{Type} {Name} must place {OrderType} {OrderSide} of {Quantity} {Asset} for {Price} {Quote} but there is only {Free} {Asset} available. Will attempt to redeem {Necessary} {Asset} rest from savings.",
-                            TypeName, _context.Name, OrderType.Limit, OrderSide.Sell, band.Quantity, _context.Symbol.BaseAsset, band.ClosePrice, _context.Symbol.QuoteAsset, _balances.Asset.Free, _context.Symbol.BaseAsset, necessary, _context.Symbol.BaseAsset);
+                        if (_options.RedeemAssetSavings)
+                        {
+                            _logger.LogInformation(
+                                "{Type} {Name} must place {OrderType} {OrderSide} of {Quantity} {Asset} for {Price} {Quote} but there is only {Free} {Asset} available. Will attempt to redeem {Necessary} {Asset} rest from savings.",
+                                TypeName, _context.Name, OrderType.Limit, OrderSide.Sell, band.Quantity, _context.Symbol.BaseAsset, band.ClosePrice, _context.Symbol.QuoteAsset, _balances.Asset.Free, _context.Symbol.BaseAsset, necessary, _context.Symbol.BaseAsset);
+                        }
+                        else
+                        {
+                            _logger.LogWarning(
+                                "{Type} {Name} must place {OrderType} {OrderSide} of {Quantity} {Asset} for {Price} {Quote} but there is only {Free} {Asset} available and savings redemption is disabled.",
+                                TypeName, _context.Name, OrderType.Limit, OrderSide.Sell, band.Quantity, _context.Symbol.BaseAsset, band.ClosePrice, _context.Symbol.QuoteAsset, _balances.Asset.Free);
+
+                            return null;
+                        }
 
                         var result = await TryRedeemSavings(_context.Symbol.BaseAsset, necessary)
                             .ExecuteAsync(_context, cancellationToken)
@@ -381,7 +392,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             var lowBuyPrice = _ticker.ClosePrice;
 
             // under adjust the buy price to the tick size
-            lowBuyPrice = Math.Floor(lowBuyPrice / _context.Symbol.Filters.Price.TickSize) * _context.Symbol.Filters.Price.TickSize;
+            lowBuyPrice = _context.Symbol.AdjustPriceDownToTickSize(lowBuyPrice);
 
             _logger.LogInformation(
                 "{Type} {Name} identified first buy target price at {LowPrice} {LowQuote} with current price at {CurrentPrice} {CurrentQuote}",
@@ -413,7 +424,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             }
 
             // raise to the minimum notional if needed
-            total = Math.Max(total, _context.Symbol.Filters.MinNotional.MinNotional);
+            total = _context.Symbol.AdjustTotalUpToMinNotional(total);
 
             // ensure there is enough quote asset for it
             if (total > _balances.Quote.Free)
@@ -450,8 +461,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             // calculate the appropriate quantity to buy
             var quantity = total / lowBuyPrice;
 
-            // round it up to the lot size step
-            quantity = Math.Ceiling(quantity / _context.Symbol.Filters.LotSize.StepSize) * _context.Symbol.Filters.LotSize.StepSize;
+            // adjust the quantity up to the lot size
+            quantity = _context.Symbol.AdjustQuantityUpToLotSize(quantity);
 
             // place a limit order at the current price
             var tag = $"{_context.Symbol.Name}{lowBuyPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal);
@@ -565,36 +576,49 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             }
         }
 
-        private void RemoveBandLeftovers()
+        private void MergeLeftoverBands()
         {
-            // identify bands where the target sell is somehow below the notional filter
-            var leftovers = _bands.Where(x => x.Status == BandStatus.Open && x.Quantity * x.ClosePrice < _context.Symbol.Filters.MinNotional.MinNotional).ToHashSet();
-            if (leftovers.Count > 0)
+            // skip this rule if there are not enough bands to evaluate
+            if (_bands.Count < 2) return;
+
+            // skip this rule if the lowest band is already ordered
+            if (_bands.Min!.Status != BandStatus.Open) return;
+
+            // keep merging the lowest band
+            while (_bands.Count > 1)
             {
-                // remove all leftovers
-                foreach (var band in leftovers)
+                // break if the lowest band is already above min lot size
+                if (_bands.Min.Quantity >= _context.Symbol.Filters.LotSize.MinQuantity) break;
+
+                // break if the lowest band is already above min notional
+                if ((_bands.Min.Quantity * _bands.Min.OpenPrice) >= _context.Symbol.Filters.MinNotional.MinNotional) break;
+
+                // get the lowest two bands
+                var tail = _bands.Take(2).ToArray();
+                var lowest = tail[0];
+                var above = tail[1];
+
+                // merge both bands
+                var merged = new Band
                 {
-                    _bands.Remove(band);
-                }
+                    Status = BandStatus.Open,
+                    Quantity = lowest.Quantity + above.Quantity,
+                    OpenPrice = ((lowest.Quantity * lowest.OpenPrice) + (above.Quantity * above.OpenPrice)) / (lowest.Quantity + above.Quantity),
+                    OpenOrderId = lowest.OpenOrderId,
+                    CloseOrderId = lowest.CloseOrderId,
+                    CloseOrderClientId = lowest.CloseOrderClientId
+                };
 
-                var quantity = leftovers.Sum(x => x.Quantity);
-                var openPrice = leftovers.Sum(x => x.OpenPrice * x.Quantity) / leftovers.Sum(x => x.Quantity);
-                var buyNotional = quantity * openPrice;
-                var nowNotional = quantity * _ticker.ClosePrice;
+                // remove current bands
+                _bands.Remove(lowest);
+                _bands.Remove(above);
 
-                _logger.LogWarning(
-                    "{Type} {Name} ignoring {Count} under notional bands of {Quantity:N8} {Asset} bought at {BuyNotional:N8} {Quote} now worth {NowNotional:N8} {Quote} ({Percent:P2})",
-                    TypeName,
-                    _context.Name,
-                    leftovers.Count,
-                    leftovers.Sum(x => x.Quantity),
-                    _context.Symbol.BaseAsset,
-                    buyNotional,
-                    _context.Symbol.QuoteAsset,
-                    nowNotional,
-                    _context.Symbol.QuoteAsset,
-                    buyNotional > 0 ? nowNotional / buyNotional : 0);
+                // add the new merged band
+                _bands.Add(merged);
             }
+
+            // adjust the lowest band so the order is valid
+            _bands.Min.Quantity = _context.Symbol.AdjustQuantityDownToLotSize(_bands.Min.Quantity);
         }
 
         private IAlgoCommand? TryCreateTradingBands(IReadOnlyList<OrderQueryResult> significant, IReadOnlyList<OrderQueryResult> nonSignificantTransientBuyOrders, IReadOnlyList<OrderQueryResult> transientSellOrders)
@@ -613,8 +637,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             // skip if no bands were created
             if (_bands.Count == 0) return null;
 
+            MergeLeftoverBands();
             AdjustBandClosePrices();
-            RemoveBandLeftovers();
 
             // apply open sell orders to the bands
             var used = new HashSet<Band>();

@@ -19,7 +19,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
         [Required]
         [Range(0.001, 1)]
-        public decimal TargetQuoteBalanceFractionPerBand { get; set; } = 0.002m;
+        public decimal TargetQuoteBalanceFractionPerBand { get; set; } = 0.01m;
 
         /// <summary>
         /// If <see cref="true"/> the algo will create the opening band automatically.
@@ -36,6 +36,12 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         /// </summary>
         [Required]
         public bool IsLowerBandOpeningEnabled { get; set; } = true;
+
+        [Required]
+        public bool UseQuoteSavings { get; set; } = false;
+
+        [Required]
+        public bool RedeemAssetSavings { get; set; } = true;
 
         public decimal? MaxNotional { get; set; }
     }

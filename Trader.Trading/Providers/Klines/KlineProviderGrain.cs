@@ -35,12 +35,12 @@ namespace Outcompute.Trader.Trading.Providers.Klines
         /// <summary>
         /// The symbol that this grain is responsible for.
         /// </summary>
-        private string _symbol = null!;
+        internal string _symbol = null!;
 
         /// <summary>
         /// The interval that this grain instance is reponsible for.
         /// </summary>
-        private KlineInterval _interval;
+        internal KlineInterval _interval;
 
         /// <summary>
         /// The current version.
@@ -141,6 +141,10 @@ namespace Outcompute.Trader.Trading.Providers.Klines
 
         public Task SetKlineAsync(Kline item)
         {
+            if (item is null) throw new ArgumentNullException(nameof(item));
+            if (item.Symbol != _symbol) throw new ArgumentOutOfRangeException(nameof(item));
+            if (item.Interval != _interval) throw new ArgumentOutOfRangeException(nameof(item));
+
             Apply(item);
 
             return Task.CompletedTask;

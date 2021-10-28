@@ -134,5 +134,38 @@ namespace Outcompute.Trader.Data.Sql.Tests
                 Assert.Equal(trade.Id, x.Id);
             });
         }
+
+        [Fact]
+        public async Task SetsAndGetsTicker()
+        {
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+
+            // arrange
+            var ticker = new MiniTicker(Guid.NewGuid().ToString(), DateTime.Today, 1.0m, 2.0m, 3.0m, 4.0m, 5.0m, 6.0m);
+
+            // act
+            await _repository.SetTickerAsync(ticker);
+            var result = await _repository.TryGetTickerAsync(ticker.Symbol);
+
+            // assert
+            Assert.NotNull(result);
+            Assert.Equal(ticker, result);
+        }
+
+        [Fact]
+        public async Task SetsAndGetsKline()
+        {
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+
+            // arrange
+            var kline = new Kline(Guid.NewGuid().ToString(), KlineInterval.Days1, DateTime.Today, DateTime.Today.AddDays(-1), DateTime.Today, 1, 3, 1m, 2m, 3m, 4m, 5m, 6m, 3, true, 7m, 8m);
+
+            // act
+            await _repository.SetKlineAsync(kline);
+            var result = await _repository.GetKlinesAsync(kline.Symbol, kline.Interval, DateTime.Today.AddDays(-1), DateTime.Today);
+
+            // assert
+            Assert.Collection(result, x => Assert.Equal(kline, x));
+        }
     }
 }

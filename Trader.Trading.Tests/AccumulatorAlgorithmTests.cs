@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
 using Moq;
-using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Algorithms.Accumulator;
 using Xunit;
 
@@ -12,7 +11,6 @@ namespace Outcompute.Trader.Trading.Tests
         public void Constructs()
         {
             // arrange
-            var context = Mock.Of<IAlgoContext>();
             var name = "SomeSymbol";
             var options = Mock.Of<IOptionsMonitor<AccumulatorAlgoOptions>>(x => x.Get(name) == new AccumulatorAlgoOptions
             {
@@ -20,7 +18,7 @@ namespace Outcompute.Trader.Trading.Tests
             });
 
             // act
-            var algo = new AccumulatorAlgo(context, options);
+            var algo = new AccumulatorAlgo(options);
 
             // assert
             Assert.NotNull(algo);

@@ -36,12 +36,24 @@ namespace Outcompute.Trader.Trading.Algorithms
         /// The current spot balance for the base asset of the default symbol.
         /// This is only populated if the default symbol is defined.
         /// </summary>
-        Balance AssetBalance { get; }
+        Balance AssetSpotBalance { get; }
 
         /// <summary>
         /// The current spot balance for the quote asset of the default symbol.
         /// This is only populated if the default symbol is defined.
         /// </summary>
-        Balance QuoteBalance { get; }
+        Balance QuoteSpotBalance { get; }
+
+        /// <summary>
+        /// The current savings balance for the base asset of the default symbol.
+        /// This is only populated if the default symbol is defined.
+        /// </summary>
+        SavingsPosition AssetSavingsBalance { get; }
+
+        /// <summary>
+        /// The current savings balance for the quote asset of the default symbol.
+        /// This is only populated if the default symbol is defined.
+        /// </summary>
+        SavingsPosition QuoteSavingsBalance { get; }
     }
 }

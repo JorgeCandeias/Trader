@@ -22,8 +22,12 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public MiniTicker Ticker => MiniTicker.Empty;
 
-        public Balance AssetBalance => Balance.Empty;
+        public Balance AssetSpotBalance => Balance.Empty;
 
-        public Balance QuoteBalance => Balance.Empty;
+        public Balance QuoteSpotBalance => Balance.Empty;
+
+        public SavingsPosition AssetSavingsBalance => SavingsPosition.Empty;
+
+        public SavingsPosition QuoteSavingsBalance => SavingsPosition.Empty;
     }
 }

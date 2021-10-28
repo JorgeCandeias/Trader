@@ -11,13 +11,15 @@ namespace Outcompute.Trader.Trading.Algorithms
         private readonly ISignificantOrderResolver _resolver;
         private readonly ITickerProvider _tickers;
         private readonly IBalanceProvider _balances;
+        private readonly ISavingsProvider _savings;
 
-        public AlgoContextHydrator(IExchangeInfoProvider exchange, ISignificantOrderResolver resolver, ITickerProvider tickers, IBalanceProvider balances)
+        public AlgoContextHydrator(IExchangeInfoProvider exchange, ISignificantOrderResolver resolver, ITickerProvider tickers, IBalanceProvider balances, ISavingsProvider savings)
         {
             _exchange = exchange;
             _resolver = resolver;
             _tickers = tickers;
             _balances = balances;
+            _savings = savings;
         }
 
         public Task HydrateSymbolAsync(AlgoContext context, string symbol, CancellationToken cancellationToken = default)
@@ -78,6 +80,14 @@ namespace Outcompute.Trader.Trading.Algorithms
                 .ContinueWith(symbolx => _balances.GetBalanceOrZeroAsync(symbolx.Result.QuoteAsset, cancellationToken), cancellationToken, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Default)
                 .Unwrap();
 
+            var assetSavingsTask = symbolTask
+                .ContinueWith(symbolx => _savings.GetPositionOrZeroAsync(symbolx.Result.BaseAsset, cancellationToken), cancellationToken, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Default)
+                .Unwrap();
+
+            var quoteSavingsTask = symbolTask
+                .ContinueWith(symbolx => _savings.GetPositionOrZeroAsync(symbolx.Result.QuoteAsset, cancellationToken), cancellationToken, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Default)
+                .Unwrap();
+
             // populate the symbol
             context.Symbol = await symbolTask.ConfigureAwait(false);
 
@@ -88,10 +98,16 @@ namespace Outcompute.Trader.Trading.Algorithms
             context.Ticker = await tickerTask.ConfigureAwait(false);
 
             // populate the asset spot balance
-            context.AssetBalance = await assetBalanceTask.ConfigureAwait(false);
+            context.AssetSpotBalance = await assetBalanceTask.ConfigureAwait(false);
 
             // populate the quote spot balance
-            context.QuoteBalance = await quoteBalanceTask.ConfigureAwait(false);
+            context.QuoteSpotBalance = await quoteBalanceTask.ConfigureAwait(false);
+
+            // populate the asset savings balance
+            context.AssetSavingsBalance = await assetSavingsTask.ConfigureAwait(false);
+
+            // populate the quote savings balance
+            context.QuoteSavingsBalance = await quoteSavingsTask.ConfigureAwait(false);
         }
     }
 }

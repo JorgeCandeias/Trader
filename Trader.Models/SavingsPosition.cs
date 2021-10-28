@@ -19,6 +19,8 @@ namespace Outcompute.Trader.Models
         decimal TotalInterest,
         bool CanRedeem)
     {
+        public static SavingsPosition Empty { get; } = new(string.Empty, string.Empty, string.Empty, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, true);
+
         public static SavingsPosition Zero(string asset) => new(asset, asset, asset, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, true);
     }
 }

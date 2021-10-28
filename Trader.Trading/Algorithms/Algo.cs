@@ -21,6 +21,12 @@ namespace Outcompute.Trader.Trading.Algorithms
     /// </summary>
     public abstract class Algo : IAlgo
     {
+        protected Algo()
+        {
+            // pin the scoped context created by the factory
+            Context = AlgoContext.Current;
+        }
+
         public abstract Task<IAlgoCommand> GoAsync(CancellationToken cancellationToken = default);
 
         public virtual Task StartAsync(CancellationToken cancellationToken = default)
@@ -33,7 +39,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             return Task.CompletedTask;
         }
 
-        public IAlgoContext Context { get; set; } = NullAlgoContext.Instance;
+        public IAlgoContext Context { get; }
 
         public virtual NoopAlgoCommand Noop()
         {

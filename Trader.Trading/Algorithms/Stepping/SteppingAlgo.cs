@@ -21,14 +21,16 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         private readonly IOptionsMonitor<SteppingAlgoOptions> _monitor;
         private readonly IOrderCodeGenerator _orderCodeGenerator;
         private readonly IOrderProvider _orderProvider;
+        private readonly ISavingsProvider _savingsProvider;
 
-        public SteppingAlgo(IAlgoContext context, ILogger<SteppingAlgo> logger, IOptionsMonitor<SteppingAlgoOptions> options, IOrderCodeGenerator orderCodeGenerator, IOrderProvider orderProvider)
+        public SteppingAlgo(IAlgoContext context, ILogger<SteppingAlgo> logger, IOptionsMonitor<SteppingAlgoOptions> options, IOrderCodeGenerator orderCodeGenerator, IOrderProvider orderProvider, ISavingsProvider savingsProvider)
         {
             _context = context;
             _logger = logger;
             _monitor = options;
             _orderCodeGenerator = orderCodeGenerator;
             _orderProvider = orderProvider;
+            _savingsProvider = savingsProvider;
         }
 
         private static string TypeName => nameof(SteppingAlgo);
@@ -39,11 +41,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         private SteppingAlgoOptions _options = new();
 
         /// <summary>
-        /// Keeps track of the relevant account balances.
-        /// </summary>
-        private readonly Balances _balances = new();
-
-        /// <summary>
         /// Keeps track of the bands managed by the algorithm.
         /// </summary>
         private readonly SortedSet<Band> _bands = new();
@@ -52,8 +49,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         {
             // pin the options for this execution
             _options = _monitor.Get(_context.Name);
-
-            await ApplyAccountInfoAsync(cancellationToken);
 
             // get the non-significant open buy orders to the bands
             var nonSignificantTransientBuyOrders = await _orderProvider
@@ -81,27 +76,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 await TryCreateLowerBandOrderAsync(cancellationToken) ??
                 TryCloseOutOfRangeBands() ??
                 Noop();
-        }
-
-        private async Task ApplyAccountInfoAsync(CancellationToken cancellationToken)
-        {
-            var assetBalance = await _context.GetBalanceProvider().GetRequiredBalanceAsync(_context.Symbol.BaseAsset, cancellationToken);
-
-            _balances.Asset.Free = assetBalance.Free;
-            _balances.Asset.Locked = assetBalance.Locked;
-
-            _logger.LogInformation(
-                "{Type} {Name} reports balance for base asset {Asset} is (Free = {Free}, Locked = {Locked}, Total = {Total})",
-                TypeName, _context.Name, _context.Symbol.BaseAsset, _balances.Asset.Free, _balances.Asset.Locked, _balances.Asset.Total);
-
-            var quoteBalance = await _context.GetBalanceProvider().GetRequiredBalanceAsync(_context.Symbol.QuoteAsset, cancellationToken);
-
-            _balances.Quote.Free = quoteBalance.Free;
-            _balances.Quote.Locked = quoteBalance.Locked;
-
-            _logger.LogInformation(
-                "{Type} {Name} reports balance for quote asset {Asset} is (Free = {Free}, Locked = {Locked}, Total = {Total})",
-                TypeName, _context.Name, _context.Symbol.QuoteAsset, _balances.Quote.Free, _balances.Quote.Locked, _balances.Quote.Total);
         }
 
         private IAlgoCommand? TryCloseOutOfRangeBands()
@@ -198,7 +172,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             lowerPrice = lowerPrice.AdjustPriceUpToTickSize(_context.Symbol);
 
             // calculate the quote amount to pay with
-            var total = _balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand;
+            var total = _context.QuoteBalance.Free * _options.TargetQuoteBalanceFractionPerBand;
 
             // lower below the max notional if needed
             if (_options.MaxNotional.HasValue)
@@ -210,13 +184,13 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             total = total.AdjustTotalUpToMinNotional(_context.Symbol);
 
             // ensure there is enough quote asset for it
-            if (total > _balances.Quote.Free)
+            if (total > _context.QuoteBalance.Free)
             {
-                var necessary = total - _balances.Quote.Free;
+                var necessary = total - _context.QuoteBalance.Free;
 
                 _logger.LogWarning(
                     "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}. Will attempt to redeem from savings...",
-                    TypeName, _context.Name, total, _context.Symbol.QuoteAsset, _balances.Quote.Free, _context.Symbol.QuoteAsset);
+                    TypeName, _context.Name, total, _context.Symbol.QuoteAsset, _context.QuoteBalance.Free, _context.Symbol.QuoteAsset);
 
                 var result = await TryRedeemSavings(_context.Symbol.QuoteAsset, necessary)
                     .ExecuteAsync(_context, cancellationToken)
@@ -269,21 +243,21 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 if (band.CloseOrderId is 0)
                 {
                     // acount for leftovers
-                    if (band.Quantity > _balances.Asset.Free)
+                    if (band.Quantity > _context.AssetBalance.Free)
                     {
-                        var necessary = band.Quantity - _balances.Asset.Free;
+                        var necessary = band.Quantity - _context.AssetBalance.Free;
 
                         if (_options.RedeemAssetSavings)
                         {
                             _logger.LogInformation(
                                 "{Type} {Name} must place {OrderType} {OrderSide} of {Quantity} {Asset} for {Price} {Quote} but there is only {Free} {Asset} available. Will attempt to redeem {Necessary} {Asset} rest from savings.",
-                                TypeName, _context.Name, OrderType.Limit, OrderSide.Sell, band.Quantity, _context.Symbol.BaseAsset, band.ClosePrice, _context.Symbol.QuoteAsset, _balances.Asset.Free, _context.Symbol.BaseAsset, necessary, _context.Symbol.BaseAsset);
+                                TypeName, _context.Name, OrderType.Limit, OrderSide.Sell, band.Quantity, _context.Symbol.BaseAsset, band.ClosePrice, _context.Symbol.QuoteAsset, _context.AssetBalance.Free, _context.Symbol.BaseAsset, necessary, _context.Symbol.BaseAsset);
                         }
                         else
                         {
                             _logger.LogWarning(
                                 "{Type} {Name} must place {OrderType} {OrderSide} of {Quantity} {Asset} for {Price} {Quote} but there is only {Free} {Asset} available and savings redemption is disabled.",
-                                TypeName, _context.Name, OrderType.Limit, OrderSide.Sell, band.Quantity, _context.Symbol.BaseAsset, band.ClosePrice, _context.Symbol.QuoteAsset, _balances.Asset.Free);
+                                TypeName, _context.Name, OrderType.Limit, OrderSide.Sell, band.Quantity, _context.Symbol.BaseAsset, band.ClosePrice, _context.Symbol.QuoteAsset, _context.AssetBalance.Free);
 
                             return null;
                         }
@@ -305,7 +279,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                         {
                             _logger.LogError(
                                "{Type} {Name} cannot set band sell order of {Quantity} {Asset} for {Price} {Quote} because there are only {Balance} {Asset} free and savings redemption failed",
-                                TypeName, _context.Name, band.Quantity, _context.Symbol.BaseAsset, band.ClosePrice, _context.Symbol.QuoteAsset, _balances.Asset.Free, _context.Symbol.BaseAsset);
+                                TypeName, _context.Name, band.Quantity, _context.Symbol.BaseAsset, band.ClosePrice, _context.Symbol.QuoteAsset, _context.AssetBalance.Free, _context.Symbol.BaseAsset);
 
                             return null;
                         }
@@ -396,7 +370,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             }
 
             // calculate the amount to pay with
-            var total = Math.Round(_balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand, _context.Symbol.QuoteAssetPrecision);
+            var total = Math.Round(_context.QuoteBalance.Free * _options.TargetQuoteBalanceFractionPerBand, _context.Symbol.QuoteAssetPrecision);
 
             // lower below the max notional if needed
             if (_options.MaxNotional.HasValue)
@@ -408,13 +382,13 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             total = total.AdjustTotalUpToMinNotional(_context.Symbol);
 
             // ensure there is enough quote asset for it
-            if (total > _balances.Quote.Free)
+            if (total > _context.QuoteBalance.Free)
             {
-                var necessary = total - _balances.Quote.Free;
+                var necessary = total - _context.QuoteBalance.Free;
 
                 _logger.LogWarning(
                     "{Type} {Name} cannot create order with amount of {Total} {Quote} because the free amount is only {Free} {Quote}. Will attempt to redeem from savings...",
-                    TypeName, _context.Name, total, _context.Symbol.QuoteAsset, _balances.Quote.Free, _context.Symbol.QuoteAsset);
+                    TypeName, _context.Name, total, _context.Symbol.QuoteAsset, _context.QuoteBalance.Free, _context.Symbol.QuoteAsset);
 
                 var result = await TryRedeemSavings(_context.Symbol.QuoteAsset, necessary)
                     .ExecuteAsync(_context, cancellationToken)
@@ -729,19 +703,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
                 return first.CompareTo(second) >= 0;
             }
-        }
-
-        private sealed class Balance
-        {
-            public decimal Free { get; set; }
-            public decimal Locked { get; set; }
-            public decimal Total => Free + Locked;
-        }
-
-        private sealed class Balances
-        {
-            public Balance Asset { get; } = new();
-            public Balance Quote { get; } = new();
         }
 
         #endregion Classes

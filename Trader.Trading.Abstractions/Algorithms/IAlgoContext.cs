@@ -31,5 +31,17 @@ namespace Outcompute.Trader.Trading.Algorithms
         /// This is only populated if the default symbol is defined.
         /// </summary>
         MiniTicker Ticker { get; }
+
+        /// <summary>
+        /// The current spot balance for the base asset of the default symbol.
+        /// This is only populated if the default symbol is defined.
+        /// </summary>
+        Balance AssetBalance { get; }
+
+        /// <summary>
+        /// The current spot balance for the quote asset of the default symbol.
+        /// This is only populated if the default symbol is defined.
+        /// </summary>
+        Balance QuoteBalance { get; }
     }
 }

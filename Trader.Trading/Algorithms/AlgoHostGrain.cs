@@ -3,7 +3,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
-using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Trading.Readyness;
 using System;
 using System.Threading;
@@ -21,17 +20,15 @@ namespace Outcompute.Trader.Trading.Algorithms
         private readonly IServiceScope _scope;
         private readonly IAlgoContextHydrator _hydrator;
         private readonly IHostApplicationLifetime _lifetime;
-        private readonly ISystemClock _clock;
         private readonly IAlgoStatisticsPublisher _publisher;
 
-        public AlgoHostGrain(ILogger<AlgoHostGrain> logger, IOptionsMonitor<AlgoHostGrainOptions> options, IReadynessProvider readyness, IAlgoContextHydrator hydrator, IHostApplicationLifetime lifetime, ISystemClock clock, IAlgoStatisticsPublisher publisher, IServiceProvider provider)
+        public AlgoHostGrain(ILogger<AlgoHostGrain> logger, IOptionsMonitor<AlgoHostGrainOptions> options, IReadynessProvider readyness, IAlgoContextHydrator hydrator, IHostApplicationLifetime lifetime, IAlgoStatisticsPublisher publisher, IServiceProvider provider)
         {
             _logger = logger;
             _options = options;
             _readyness = readyness;
             _hydrator = hydrator;
             _lifetime = lifetime;
-            _clock = clock;
             _publisher = publisher;
             _scope = provider.CreateScope();
         }
@@ -59,7 +56,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             // resolve the symbol if this algo defines it
             if (!IsNullOrWhiteSpace(options.Symbol))
             {
-                await _hydrator.HydrateAsync(_context, options.Symbol, _lifetime.ApplicationStopping);
+                await _hydrator.HydrateSymbolAsync(_context, options.Symbol, _lifetime.ApplicationStopping);
             }
 
             // resolve the factory for the current algo type and create the algo instance
@@ -164,7 +161,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             if (!IsNullOrWhiteSpace(options.Symbol))
             {
                 // update the context properties
-                await _hydrator.HydrateAsync(_context, options.Symbol, _clock.UtcNow, linked.Token);
+                await _hydrator.HydrateAllAsync(_context, options.Symbol, linked.Token);
 
                 // publish current algo statistics
                 await _publisher.PublishAsync(_context.Significant, _context.Ticker, linked.Token);

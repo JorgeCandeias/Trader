@@ -10,6 +10,8 @@ namespace Outcompute.Trader.Trading.Algorithms
         {
         }
 
+        public static NullAlgoContext Instance { get; } = new NullAlgoContext();
+
         public string Name => string.Empty;
 
         public Symbol Symbol => Symbol.Empty;
@@ -20,6 +22,8 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public MiniTicker Ticker => MiniTicker.Empty;
 
-        public static NullAlgoContext Instance { get; } = new NullAlgoContext();
+        public Balance AssetBalance => Balance.Empty;
+
+        public Balance QuoteBalance => Balance.Empty;
     }
 }

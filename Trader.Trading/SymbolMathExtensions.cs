@@ -4,35 +4,35 @@ namespace Outcompute.Trader.Models
 {
     public static class SymbolMathExtensions
     {
-        public static decimal AdjustQuantityDownToLotSize(this Symbol symbol, decimal quantity)
+        public static decimal AdjustQuantityDownToLotSize(this decimal quantity, Symbol symbol)
         {
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
             return Math.Floor(quantity / symbol.Filters.LotSize.StepSize) * symbol.Filters.LotSize.StepSize;
         }
 
-        public static decimal AdjustQuantityUpToLotSize(this Symbol symbol, decimal quantity)
+        public static decimal AdjustQuantityUpToLotSize(this decimal quantity, Symbol symbol)
         {
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
             return Math.Ceiling(quantity / symbol.Filters.LotSize.StepSize) * symbol.Filters.LotSize.StepSize;
         }
 
-        public static decimal AdjustPriceDownToTickSize(this Symbol symbol, decimal price)
+        public static decimal AdjustPriceDownToTickSize(this decimal price, Symbol symbol)
         {
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
             return Math.Floor(price / symbol.Filters.Price.TickSize) * symbol.Filters.Price.TickSize;
         }
 
-        public static decimal AdjustPriceUpToTickSize(this Symbol symbol, decimal price)
+        public static decimal AdjustPriceUpToTickSize(this decimal price, Symbol symbol)
         {
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
             return Math.Ceiling(price / symbol.Filters.Price.TickSize) * symbol.Filters.Price.TickSize;
         }
 
-        public static decimal AdjustTotalUpToMinNotional(this Symbol symbol, decimal total)
+        public static decimal AdjustTotalUpToMinNotional(this decimal total, Symbol symbol)
         {
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 

@@ -63,13 +63,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
             await ApplyAccountInfoAsync(cancellationToken);
 
-            var significant = await _context
-                .GetSignificantOrderResolver()
-                .ResolveAsync(_context.Symbol, cancellationToken)
-                .ConfigureAwait(false);
-
             await _context
-                .PublishProfitAsync(Profit.FromEvents(_context.Symbol, significant.ProfitEvents, significant.CommissionEvents, _clock.UtcNow))
+                .PublishProfitAsync(Profit.FromEvents(_context.Symbol, Context.Significant.ProfitEvents, Context.Significant.CommissionEvents, _clock.UtcNow))
                 .ConfigureAwait(false);
 
             _ticker = await _context.GetRequiredTickerAsync(_context.Symbol.Name, cancellationToken);
@@ -92,7 +87,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 TypeName, _context.Name, _ticker.ClosePrice, _context.Symbol.QuoteAsset);
 
             return
-                TryCreateTradingBands(significant.Orders, nonSignificantTransientBuyOrders, transientSellOrders) ??
+                TryCreateTradingBands(nonSignificantTransientBuyOrders, transientSellOrders) ??
                 await TrySetStartingTradeAsync(transientBuyOrders, cancellationToken) ??
                 TryCancelRogueSellOrders(transientSellOrders) ??
                 TryCancelExcessSellOrders(transientSellOrders) ??
@@ -214,7 +209,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             }
 
             // under adjust the buy price to the tick size
-            lowerPrice = SymbolMathExtensions.AdjustPriceUpToTickSize(_context.Symbol, lowerPrice);
+            lowerPrice = lowerPrice.AdjustPriceUpToTickSize(_context.Symbol);
 
             // calculate the quote amount to pay with
             var total = _balances.Quote.Free * _options.TargetQuoteBalanceFractionPerBand;
@@ -226,7 +221,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             }
 
             // raise to the minimum notional if needed
-            total = SymbolMathExtensions.AdjustTotalUpToMinNotional(_context.Symbol, total);
+            total = total.AdjustTotalUpToMinNotional(_context.Symbol);
 
             // ensure there is enough quote asset for it
             if (total > _balances.Quote.Free)
@@ -264,7 +259,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             var quantity = total / lowerPrice;
 
             // round it down to the lot size step
-            quantity = _context.Symbol.AdjustQuantityUpToLotSize(quantity);
+            quantity = quantity.AdjustQuantityUpToLotSize(_context.Symbol);
 
             // place the buy order
             var tag = $"{_context.Symbol.Name}{lowerPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal);
@@ -392,7 +387,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             var lowBuyPrice = _ticker.ClosePrice;
 
             // under adjust the buy price to the tick size
-            lowBuyPrice = _context.Symbol.AdjustPriceDownToTickSize(lowBuyPrice);
+            lowBuyPrice = lowBuyPrice.AdjustPriceDownToTickSize(_context.Symbol);
 
             _logger.LogInformation(
                 "{Type} {Name} identified first buy target price at {LowPrice} {LowQuote} with current price at {CurrentPrice} {CurrentQuote}",
@@ -424,7 +419,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             }
 
             // raise to the minimum notional if needed
-            total = _context.Symbol.AdjustTotalUpToMinNotional(total);
+            total = total.AdjustTotalUpToMinNotional(_context.Symbol);
 
             // ensure there is enough quote asset for it
             if (total > _balances.Quote.Free)
@@ -462,17 +457,17 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             var quantity = total / lowBuyPrice;
 
             // adjust the quantity up to the lot size
-            quantity = _context.Symbol.AdjustQuantityUpToLotSize(quantity);
+            quantity = quantity.AdjustQuantityUpToLotSize(_context.Symbol);
 
             // place a limit order at the current price
             var tag = $"{_context.Symbol.Name}{lowBuyPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal);
             return CreateOrder(_context.Symbol, OrderType.Limit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, lowBuyPrice, tag);
         }
 
-        private IAlgoCommand? ApplySignificantBuyOrdersToBands(IReadOnlyList<OrderQueryResult> significant)
+        private IAlgoCommand? ApplySignificantBuyOrdersToBands()
         {
             // apply the significant buy orders to the bands
-            foreach (var order in significant.Where(x => x.Side == OrderSide.Buy))
+            foreach (var order in Context.Significant.Orders.Where(x => x.Side == OrderSide.Buy))
             {
                 if (order.Price is 0)
                 {
@@ -587,11 +582,12 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             // keep merging the lowest band
             while (_bands.Count > 1)
             {
-                // break if the lowest band is already above min lot size
-                if (_bands.Min.Quantity >= _context.Symbol.Filters.LotSize.MinQuantity) break;
-
-                // break if the lowest band is already above min notional
-                if ((_bands.Min.Quantity * _bands.Min.OpenPrice) >= _context.Symbol.Filters.MinNotional.MinNotional) break;
+                // break if the lowest band is already above min lot size and min notional after adjustment
+                if ((_bands.Min.Quantity.AdjustQuantityDownToLotSize(_context.Symbol) >= _context.Symbol.Filters.LotSize.MinQuantity) &&
+                    (_bands.Min.Quantity.AdjustQuantityDownToLotSize(_context.Symbol) * _bands.Min.OpenPrice.AdjustPriceDownToTickSize(_context.Symbol)) >= _context.Symbol.Filters.MinNotional.MinNotional)
+                {
+                    break;
+                }
 
                 // get the lowest two bands
                 var tail = _bands.Take(2).ToArray();
@@ -618,15 +614,15 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             }
 
             // adjust the lowest band so the order is valid
-            _bands.Min.Quantity = _context.Symbol.AdjustQuantityDownToLotSize(_bands.Min.Quantity);
+            _bands.Min.Quantity = _bands.Min.Quantity.AdjustQuantityDownToLotSize(_context.Symbol);
         }
 
-        private IAlgoCommand? TryCreateTradingBands(IReadOnlyList<OrderQueryResult> significant, IReadOnlyList<OrderQueryResult> nonSignificantTransientBuyOrders, IReadOnlyList<OrderQueryResult> transientSellOrders)
+        private IAlgoCommand? TryCreateTradingBands(IReadOnlyList<OrderQueryResult> nonSignificantTransientBuyOrders, IReadOnlyList<OrderQueryResult> transientSellOrders)
         {
             _bands.Clear();
 
             var result =
-                ApplySignificantBuyOrdersToBands(significant) ??
+                ApplySignificantBuyOrdersToBands() ??
                 ApplyNonSignificantTransientBuyOrdersToBands(nonSignificantTransientBuyOrders);
 
             if (result is not null)

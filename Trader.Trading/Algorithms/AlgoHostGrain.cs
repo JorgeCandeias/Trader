@@ -1,7 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
+using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Trading.Readyness;
 using System;
 using System.Threading;
@@ -17,12 +19,18 @@ namespace Outcompute.Trader.Trading.Algorithms
         private readonly IOptionsMonitor<AlgoHostGrainOptions> _options;
         private readonly IReadynessProvider _readyness;
         private readonly IServiceScope _scope;
+        private readonly IAlgoContextHydrator _hydrator;
+        private readonly IHostApplicationLifetime _lifetime;
+        private readonly ISystemClock _clock;
 
-        public AlgoHostGrain(ILogger<AlgoHostGrain> logger, IOptionsMonitor<AlgoHostGrainOptions> options, IReadynessProvider readyness, IServiceProvider provider)
+        public AlgoHostGrain(ILogger<AlgoHostGrain> logger, IOptionsMonitor<AlgoHostGrainOptions> options, IReadynessProvider readyness, IAlgoContextHydrator hydrator, IHostApplicationLifetime lifetime, ISystemClock clock, IServiceProvider provider)
         {
             _logger = logger;
             _options = options;
             _readyness = readyness;
+            _hydrator = hydrator;
+            _lifetime = lifetime;
+            _clock = clock;
             _scope = provider.CreateScope();
         }
 
@@ -46,10 +54,10 @@ namespace Outcompute.Trader.Trading.Algorithms
             // keep the scoped context for use during result execution
             _context = _scope.ServiceProvider.GetRequiredService<AlgoContext>();
 
-            // resolve the symbol if defined
+            // resolve the symbol if this algo defines it
             if (!IsNullOrWhiteSpace(options.Symbol))
             {
-                _context.Symbol = await _context.GetRequiredSymbolAsync(options.Symbol);
+                await _hydrator.HydrateAsync(_context, options.Symbol, _lifetime.ApplicationStopping);
             }
 
             // resolve the factory for the current algo type and create the algo instance
@@ -149,6 +157,12 @@ namespace Outcompute.Trader.Trading.Algorithms
             // enforce the execution time limit along with grain cancellation
             using var limit = new CancellationTokenSource(options.MaxExecutionTime);
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(limit.Token, _cancellation.Token);
+
+            // update the context with new information for this tick
+            if (!IsNullOrWhiteSpace(options.Symbol))
+            {
+                await _hydrator.HydrateAsync(_context, options.Symbol, _clock.UtcNow, _lifetime.ApplicationStopping);
+            }
 
             // execute the algo under the limits
             var result = await _algo.GoAsync(linked.Token);

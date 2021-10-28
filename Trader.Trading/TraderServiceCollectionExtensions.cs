@@ -36,6 +36,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<ITradeSynchronizer, TradeSynchronizer>()
                 .AddSingleton<IOrderCodeGenerator, OrderCodeGenerator>()
                 .AddSingleton<IAlgoDependencyInfo, AlgoDependencyInfo>()
+                .AddSingleton<IAlgoContextHydrator, AlgoContextHydrator>()
                 .AddOptions<AlgoConfigurationMappingOptions>().ValidateDataAnnotations().Services
                 .AddOptions<SavingsOptions>().ValidateDataAnnotations().Services
 

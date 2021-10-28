@@ -29,7 +29,6 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         private static string TypeName => nameof(ValueAveragingAlgo);
 
         private ValueAveragingAlgoOptions _options = ValueAveragingAlgoOptions.Default;
-        private SignificantResult _significant = SignificantResult.Empty;
         private MiniTicker _ticker = MiniTicker.Empty;
         private decimal _smaA;
         private decimal _smaB;
@@ -42,20 +41,17 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         {
             _options = _monitor.Get(_context.Name);
 
-            // get significant orders
-            _significant = await _context.GetSignificantOrderResolver().ResolveAsync(_context.Symbol, cancellationToken);
-
             // this is meant for rendering and will be refactored at some point
-            var profit = Profit.FromEvents(_context.Symbol, _significant.ProfitEvents, _significant.CommissionEvents, _clock.UtcNow);
+            var profit = Profit.FromEvents(_context.Symbol, Context.Significant.ProfitEvents, Context.Significant.CommissionEvents, _clock.UtcNow);
 
             // get current ticker
             _ticker = await _context.GetRequiredTickerAsync(_context.Symbol.Name, cancellationToken);
 
             // calculate current unrealized pnl
-            if (_significant.Orders.Count > 0)
+            if (Context.Significant.Orders.Count > 0)
             {
-                var total = _significant.Orders.Sum(x => x.Price * x.ExecutedQuantity);
-                var quantity = _significant.Orders.Sum(x => x.ExecutedQuantity);
+                var total = Context.Significant.Orders.Sum(x => x.Price * x.ExecutedQuantity);
+                var quantity = Context.Significant.Orders.Sum(x => x.ExecutedQuantity);
 
                 _logger.LogInformation(
                     "{Type} {Name} reports Buy Value = {Total:F8}",
@@ -116,7 +112,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
 
                 // place an averaging sell if we hit a sell signal
                 TrySignalSellOrder()
-                    ? SignificantAveragingSell(_ticker, _significant.Orders, _options.MinSellProfitRate, _options.RedeemSavings)
+                    ? SignificantAveragingSell(_ticker, Context.Significant.Orders, _options.MinSellProfitRate, _options.RedeemSavings)
                     : Noop());
         }
 
@@ -171,25 +167,25 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         private bool EnsureTickerLowerThanSafePrice()
         {
             // skip this rule if there are no orders to evaluate
-            if (_significant.Orders.Count == 0)
+            if (Context.Significant.Orders.Count == 0)
             {
                 return true;
             }
 
             // skip this rule if the significant total is under the minimum notional (leftovers)
-            if (_significant.Orders.Sum(x => x.ExecutedQuantity * x.Price) < _context.Symbol.Filters.MinNotional.MinNotional)
+            if (Context.Significant.Orders.Sum(x => x.ExecutedQuantity * x.Price) < _context.Symbol.Filters.MinNotional.MinNotional)
             {
                 return true;
             }
 
             // skip this rule if the significant quantity is under the minimum lot size (leftovers)
-            if (_significant.Orders.Sum(x => x.ExecutedQuantity) < _context.Symbol.Filters.LotSize.StepSize)
+            if (Context.Significant.Orders.Sum(x => x.ExecutedQuantity) < _context.Symbol.Filters.LotSize.StepSize)
             {
                 return true;
             }
 
             // break on price not low enough from previous significant buy
-            var minPrice = _significant.Orders.Max!.Price;
+            var minPrice = Context.Significant.Orders.Max!.Price;
             var lowPrice = minPrice * _options.PullbackRatio;
             if (_ticker.ClosePrice > lowPrice)
             {
@@ -207,7 +203,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         private bool EnsureAveragingEnabled()
         {
             // break on disabled averaging
-            if (_significant.Orders.Count > 0 && !_options.IsAveragingEnabled)
+            if (Context.Significant.Orders.Count > 0 && !_options.IsAveragingEnabled)
             {
                 _logger.LogInformation(
                     "{Type} {Symbol} has averaging disabled and will not signal a buy order",
@@ -222,7 +218,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         private bool EnsureOpeningEnabled()
         {
             // break on disabled opening
-            if (_significant.Orders.Count == 0 && !_options.IsOpeningEnabled)
+            if (Context.Significant.Orders.Count == 0 && !_options.IsOpeningEnabled)
             {
                 _logger.LogInformation(
                     "{Type} {Symbol} has opening disabled and will not signal a buy order",
@@ -237,7 +233,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         private bool TrySignalSellOrder()
         {
             // evaluate target profit rate vs last buy order
-            if (_significant.Orders.Max?.Price * _options.TargetSellProfitRate <= _ticker.ClosePrice)
+            if (Context.Significant.Orders.Max?.Price * _options.TargetSellProfitRate <= _ticker.ClosePrice)
             {
                 return true;
             }

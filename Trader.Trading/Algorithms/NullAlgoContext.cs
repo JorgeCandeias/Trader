@@ -16,6 +16,8 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public IServiceProvider ServiceProvider => NullServiceProvider.Instance;
 
+        public SignificantResult Significant => SignificantResult.Empty;
+
         public static NullAlgoContext Instance { get; } = new NullAlgoContext();
     }
 }

@@ -25,5 +25,11 @@ namespace Outcompute.Trader.Trading.Algorithms
         /// This is only populated if the default symbol is defined.
         /// </summary>
         SignificantResult Significant { get; }
+
+        /// <summary>
+        /// The current ticker for the default symbol.
+        /// This is only populated if the default symbol is defined.
+        /// </summary>
+        MiniTicker Ticker { get; }
     }
 }

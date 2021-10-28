@@ -16,9 +16,10 @@ namespace Outcompute.Trader.Trading.Algorithms
     }
 
     [Immutable]
-    public record SignificantResult(ImmutableSortedSet<OrderQueryResult> Orders, ImmutableList<ProfitEvent> ProfitEvents, ImmutableList<CommissionEvent> CommissionEvents)
+    public record SignificantResult(Symbol Symbol, ImmutableSortedSet<OrderQueryResult> Orders, ImmutableList<ProfitEvent> ProfitEvents, ImmutableList<CommissionEvent> CommissionEvents)
     {
         public static SignificantResult Empty { get; } = new SignificantResult(
+            Symbol.Empty,
             ImmutableSortedSet<OrderQueryResult>.Empty.WithComparer(OrderQueryResult.KeyComparer),
             ImmutableList<ProfitEvent>.Empty,
             ImmutableList<CommissionEvent>.Empty);

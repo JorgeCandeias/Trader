@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Exceptions;
 using Outcompute.Trader.Trading.Commands;
@@ -22,16 +21,14 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         private readonly IOptionsMonitor<SteppingAlgoOptions> _monitor;
         private readonly IOrderCodeGenerator _orderCodeGenerator;
         private readonly IOrderProvider _orderProvider;
-        private readonly ISystemClock _clock;
 
-        public SteppingAlgo(IAlgoContext context, ILogger<SteppingAlgo> logger, IOptionsMonitor<SteppingAlgoOptions> options, IOrderCodeGenerator orderCodeGenerator, IOrderProvider orderProvider, ISystemClock clock)
+        public SteppingAlgo(IAlgoContext context, ILogger<SteppingAlgo> logger, IOptionsMonitor<SteppingAlgoOptions> options, IOrderCodeGenerator orderCodeGenerator, IOrderProvider orderProvider)
         {
             _context = context;
             _logger = logger;
             _monitor = options;
             _orderCodeGenerator = orderCodeGenerator;
             _orderProvider = orderProvider;
-            _clock = clock;
         }
 
         private static string TypeName => nameof(SteppingAlgo);
@@ -40,11 +37,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         /// Options active for each execution.
         /// </summary>
         private SteppingAlgoOptions _options = new();
-
-        /// <summary>
-        /// Holds the ticker for the execution.
-        /// </summary>
-        private MiniTicker _ticker = MiniTicker.Empty;
 
         /// <summary>
         /// Keeps track of the relevant account balances.
@@ -63,12 +55,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
             await ApplyAccountInfoAsync(cancellationToken);
 
-            await _context
-                .PublishProfitAsync(Profit.FromEvents(_context.Symbol, Context.Significant.ProfitEvents, Context.Significant.CommissionEvents, _clock.UtcNow))
-                .ConfigureAwait(false);
-
-            _ticker = await _context.GetRequiredTickerAsync(_context.Symbol.Name, cancellationToken);
-
             // get the non-significant open buy orders to the bands
             var nonSignificantTransientBuyOrders = await _orderProvider
                 .GetNonSignificantTransientOrdersBySideAsync(_context.Symbol.Name, OrderSide.Buy, cancellationToken)
@@ -84,7 +70,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
             _logger.LogInformation(
                 "{Type} {Name} reports latest asset price is {Price} {QuoteAsset}",
-                TypeName, _context.Name, _ticker.ClosePrice, _context.Symbol.QuoteAsset);
+                TypeName, _context.Name, _context.Ticker.ClosePrice, _context.Symbol.QuoteAsset);
 
             return
                 TryCreateTradingBands(nonSignificantTransientBuyOrders, transientSellOrders) ??
@@ -135,7 +121,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             if (band.Status != BandStatus.Ordered) return null;
 
             // ensure the lower band is opening within reasonable range of the current price
-            if (band.OpenPrice >= _ticker.ClosePrice - step) return null;
+            if (band.OpenPrice >= _context.Ticker.ClosePrice - step) return null;
 
             // if the above checks fails then close the band
             if (band.OpenOrderId is not 0)
@@ -163,11 +149,11 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             }
 
             // skip if the current price is at or above the band open price
-            if (_ticker.ClosePrice >= lowBand.OpenPrice)
+            if (_context.Ticker.ClosePrice >= lowBand.OpenPrice)
             {
                 _logger.LogInformation(
                     "{Type} {Name} reports price {Price} {Quote} is within the current low band of {OpenPrice} {Quote} to {ClosePrice} {Quote}",
-                    TypeName, _context.Name, _ticker.ClosePrice, _context.Symbol.QuoteAsset, lowBand.OpenPrice, _context.Symbol.QuoteAsset, lowBand.ClosePrice, _context.Symbol.QuoteAsset);
+                    TypeName, _context.Name, _context.Ticker.ClosePrice, _context.Symbol.QuoteAsset, lowBand.OpenPrice, _context.Symbol.QuoteAsset, lowBand.ClosePrice, _context.Symbol.QuoteAsset);
 
                 // let the algo continue
                 return null;
@@ -197,7 +183,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             // find the lower price under the current price and low band
             var lowerPrice = highBand.OpenPrice;
             var stepPrice = highBand.ClosePrice - highBand.OpenPrice;
-            while (lowerPrice >= _ticker.ClosePrice || lowerPrice >= lowBand.OpenPrice)
+            while (lowerPrice >= _context.Ticker.ClosePrice || lowerPrice >= lowBand.OpenPrice)
             {
                 lowerPrice -= stepPrice;
             }
@@ -384,14 +370,14 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             if (_bands.Count == 1 && _bands.Min!.Status != BandStatus.Ordered) return null;
 
             // identify the target low price for the first buy
-            var lowBuyPrice = _ticker.ClosePrice;
+            var lowBuyPrice = _context.Ticker.ClosePrice;
 
             // under adjust the buy price to the tick size
             lowBuyPrice = lowBuyPrice.AdjustPriceDownToTickSize(_context.Symbol);
 
             _logger.LogInformation(
                 "{Type} {Name} identified first buy target price at {LowPrice} {LowQuote} with current price at {CurrentPrice} {CurrentQuote}",
-                TypeName, _context.Name, lowBuyPrice, _context.Symbol.QuoteAsset, _ticker.ClosePrice, _context.Symbol.QuoteAsset);
+                TypeName, _context.Name, lowBuyPrice, _context.Symbol.QuoteAsset, _context.Ticker.ClosePrice, _context.Symbol.QuoteAsset);
 
             // cancel the lowest open buy order with a open price lower than the lower band to the current price
             var lowest = transientBuyOrders.FirstOrDefault(x => x.Side == OrderSide.Buy && x.Status.IsTransientStatus());
@@ -546,7 +532,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
                 // ensure the close price is below the max percent filter
                 // this can happen due to an asset crashing down several multiples
-                var maxPrice = _ticker.ClosePrice * _context.Symbol.Filters.PercentPrice.MultiplierUp;
+                var maxPrice = _context.Ticker.ClosePrice * _context.Symbol.Filters.PercentPrice.MultiplierUp;
                 if (band.ClosePrice > maxPrice)
                 {
                     _logger.LogError(
@@ -556,7 +542,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
                 // ensure the close price is above the min percent filter
                 // this can happen to old leftovers that were bought very cheap
-                var minPrice = _ticker.ClosePrice * _context.Symbol.Filters.PercentPrice.MultiplierDown;
+                var minPrice = _context.Ticker.ClosePrice * _context.Symbol.Filters.PercentPrice.MultiplierDown;
                 if (band.ClosePrice < minPrice)
                 {
                     _logger.LogWarning(

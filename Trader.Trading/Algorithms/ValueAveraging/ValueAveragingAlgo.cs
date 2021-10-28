@@ -29,7 +29,6 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         private static string TypeName => nameof(ValueAveragingAlgo);
 
         private ValueAveragingAlgoOptions _options = ValueAveragingAlgoOptions.Default;
-        private MiniTicker _ticker = MiniTicker.Empty;
         private decimal _smaA;
         private decimal _smaB;
         private decimal _smaC;
@@ -40,48 +39,6 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         public override async Task<IAlgoCommand> GoAsync(CancellationToken cancellationToken = default)
         {
             _options = _monitor.Get(_context.Name);
-
-            // this is meant for rendering and will be refactored at some point
-            var profit = Profit.FromEvents(_context.Symbol, Context.Significant.ProfitEvents, Context.Significant.CommissionEvents, _clock.UtcNow);
-
-            // get current ticker
-            _ticker = await _context.GetRequiredTickerAsync(_context.Symbol.Name, cancellationToken);
-
-            // calculate current unrealized pnl
-            if (Context.Significant.Orders.Count > 0)
-            {
-                var total = Context.Significant.Orders.Sum(x => x.Price * x.ExecutedQuantity);
-                var quantity = Context.Significant.Orders.Sum(x => x.ExecutedQuantity);
-
-                _logger.LogInformation(
-                    "{Type} {Name} reports Buy Value = {Total:F8}",
-                    TypeName, _context.Name, total);
-
-                var now = quantity * _ticker.ClosePrice;
-
-                _logger.LogInformation(
-                    "{Type} {Name} reports Present Value = {Value:F8}",
-                    TypeName, _context.Name, now);
-
-                var uPnL = now - total;
-
-                _logger.LogInformation(
-                    "{Type} {Name} reports Unrealized PnL = {Value:F8} ({Ratio:P8})",
-                    TypeName, _context.Name, uPnL, uPnL / total);
-
-                var rPnl = profit.All;
-
-                // this requires the full order set to calculate as a ratio
-                _logger.LogInformation(
-                    "{Type} {Name} reports Realized PnL = {Value:F8}",
-                    TypeName, _context.Name, rPnl, rPnl);
-
-                var pPnl = uPnL + rPnl;
-
-                _logger.LogInformation(
-                    "{Type} {Name} reports Present PnL = {Value:F8}",
-                    TypeName, _context.Name, pPnl);
-            }
 
             // get the lastest klines
             var maxPeriods = GetMaxPeriods();
@@ -99,9 +56,6 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
             _rsiB = klines.LastRelativeStrengthIndexOrDefault(x => x.ClosePrice, _options.RsiPeriodsB);
             _rsiC = klines.LastRelativeStrengthIndexOrDefault(x => x.ClosePrice, _options.RsiPeriodsC);
 
-            // publish the profit stats
-            await _context.PublishProfitAsync(profit);
-
             // evaluate signals and return results for them
             return Many(
 
@@ -112,7 +66,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
 
                 // place an averaging sell if we hit a sell signal
                 TrySignalSellOrder()
-                    ? SignificantAveragingSell(_ticker, Context.Significant.Orders, _options.MinSellProfitRate, _options.RedeemSavings)
+                    ? SignificantAveragingSell(_context.Ticker, Context.Significant.Orders, _options.MinSellProfitRate, _options.RedeemSavings)
                     : Noop());
         }
 
@@ -135,7 +89,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         {
             _logger.LogInformation(
                     "{Type} {Symbol} will signal a buy order for the current state (Ticker = {Ticker:F8}, SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}, RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8})",
-                    TypeName, _context.Symbol.Name, _ticker.ClosePrice, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC);
+                    TypeName, _context.Symbol.Name, _context.Ticker.ClosePrice, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC);
 
             return TrackingBuy(_context.Symbol, _options.BuyOrderSafetyRatio, _options.TargetQuoteBalanceFractionPerBuy, _options.MaxNotional, _options.RedeemSavings);
         }
@@ -159,7 +113,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
                 TypeName, _context.Symbol.Name, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC);
 
             var isSmaOrdered = _smaA < _smaB && _smaB < _smaC;
-            var isTickerUnderSma = _ticker.ClosePrice < _smaA && _ticker.ClosePrice < _smaB && _ticker.ClosePrice < _smaC;
+            var isTickerUnderSma = _context.Ticker.ClosePrice < _smaA && _context.Ticker.ClosePrice < _smaB && _context.Ticker.ClosePrice < _smaC;
 
             return isSmaOrdered && isTickerUnderSma;
         }
@@ -187,11 +141,11 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
             // break on price not low enough from previous significant buy
             var minPrice = Context.Significant.Orders.Max!.Price;
             var lowPrice = minPrice * _options.PullbackRatio;
-            if (_ticker.ClosePrice > lowPrice)
+            if (_context.Ticker.ClosePrice > lowPrice)
             {
                 _logger.LogInformation(
                     "{Type} {Symbol} detected ticker of {Ticker:F8} is above the low price of {LowPrice:F8} calculated as {PullBackRatio:F8} of the min significant buy price of {MinPrice:F8} and will not signal a buy order",
-                    TypeName, _context.Symbol.Name, _ticker.ClosePrice, lowPrice, _options.PullbackRatio, minPrice);
+                    TypeName, _context.Symbol.Name, _context.Ticker.ClosePrice, lowPrice, _options.PullbackRatio, minPrice);
 
                 return false;
             }
@@ -233,7 +187,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         private bool TrySignalSellOrder()
         {
             // evaluate target profit rate vs last buy order
-            if (Context.Significant.Orders.Max?.Price * _options.TargetSellProfitRate <= _ticker.ClosePrice)
+            if (Context.Significant.Orders.Max?.Price * _options.TargetSellProfitRate <= _context.Ticker.ClosePrice)
             {
                 return true;
             }
@@ -245,7 +199,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
             {
                 _logger.LogInformation(
                     "{Type} {Symbol} signalling sell for current state (Ticker = {Ticker:F8}, SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}, RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8})",
-                    TypeName, _context.Symbol.Name, _ticker.ClosePrice, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC);
+                    TypeName, _context.Symbol.Name, _context.Ticker.ClosePrice, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC);
 
                 return true;
             }

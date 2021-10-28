@@ -19,9 +19,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Accumulator
         public decimal? MaxNotional { get; set; }
 
         [Required]
-        public bool Enabled { get; set; } = true;
-
-        [Required]
         public bool RedeemSavings { get; set; } = false;
     }
 }

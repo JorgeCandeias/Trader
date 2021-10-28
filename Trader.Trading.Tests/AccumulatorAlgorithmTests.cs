@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using Moq;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Algorithms.Accumulator;
@@ -19,10 +18,9 @@ namespace Outcompute.Trader.Trading.Tests
             {
                 Symbol = "SomeSymbol"
             });
-            var logger = NullLogger<AccumulatorAlgo>.Instance;
 
             // act
-            var algo = new AccumulatorAlgo(context, options, logger);
+            var algo = new AccumulatorAlgo(context, options);
 
             // assert
             Assert.NotNull(algo);

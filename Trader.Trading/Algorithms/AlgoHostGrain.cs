@@ -22,8 +22,9 @@ namespace Outcompute.Trader.Trading.Algorithms
         private readonly IAlgoContextHydrator _hydrator;
         private readonly IHostApplicationLifetime _lifetime;
         private readonly ISystemClock _clock;
+        private readonly IAlgoStatisticsPublisher _publisher;
 
-        public AlgoHostGrain(ILogger<AlgoHostGrain> logger, IOptionsMonitor<AlgoHostGrainOptions> options, IReadynessProvider readyness, IAlgoContextHydrator hydrator, IHostApplicationLifetime lifetime, ISystemClock clock, IServiceProvider provider)
+        public AlgoHostGrain(ILogger<AlgoHostGrain> logger, IOptionsMonitor<AlgoHostGrainOptions> options, IReadynessProvider readyness, IAlgoContextHydrator hydrator, IHostApplicationLifetime lifetime, ISystemClock clock, IAlgoStatisticsPublisher publisher, IServiceProvider provider)
         {
             _logger = logger;
             _options = options;
@@ -31,6 +32,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             _hydrator = hydrator;
             _lifetime = lifetime;
             _clock = clock;
+            _publisher = publisher;
             _scope = provider.CreateScope();
         }
 
@@ -161,7 +163,11 @@ namespace Outcompute.Trader.Trading.Algorithms
             // update the context with new information for this tick
             if (!IsNullOrWhiteSpace(options.Symbol))
             {
-                await _hydrator.HydrateAsync(_context, options.Symbol, _clock.UtcNow, _lifetime.ApplicationStopping);
+                // update the context properties
+                await _hydrator.HydrateAsync(_context, options.Symbol, _clock.UtcNow, linked.Token);
+
+                // publish current algo statistics
+                await _publisher.PublishAsync(_context.Significant, _context.Ticker, linked.Token);
             }
 
             // execute the algo under the limits

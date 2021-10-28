@@ -18,6 +18,8 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public SignificantResult Significant => SignificantResult.Empty;
 
+        public MiniTicker Ticker => MiniTicker.Empty;
+
         public static NullAlgoContext Instance { get; } = new NullAlgoContext();
     }
 }

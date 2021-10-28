@@ -10,11 +10,13 @@ namespace Outcompute.Trader.Trading.Algorithms
     {
         private readonly IExchangeInfoProvider _exchange;
         private readonly ISignificantOrderResolver _resolver;
+        private readonly ITickerProvider _tickers;
 
-        public AlgoContextHydrator(IExchangeInfoProvider exchange, ISignificantOrderResolver resolver)
+        public AlgoContextHydrator(IExchangeInfoProvider exchange, ISignificantOrderResolver resolver, ITickerProvider tickers)
         {
             _exchange = exchange;
             _resolver = resolver;
+            _tickers = tickers;
         }
 
         public Task HydrateAsync(AlgoContext context, string symbol, CancellationToken cancellationToken = default)
@@ -61,8 +63,15 @@ namespace Outcompute.Trader.Trading.Algorithms
             // populate new symbol information
             var symbolx = await HydrateCoreAsync(context, symbol, cancellationToken).ConfigureAwait(false);
 
+            // fetch all required information in parallel as much as possible
+            var significantTask = _resolver.ResolveAsync(symbolx, cancellationToken);
+            var tickerTask = _tickers.GetRequiredTickerAsync(symbol, cancellationToken);
+
             // populate significant assets
-            context.Significant = await _resolver.ResolveAsync(symbolx, cancellationToken);
+            context.Significant = await significantTask.ConfigureAwait(false);
+
+            // populate the current ticker
+            context.Ticker = await tickerTask.ConfigureAwait(false);
         }
     }
 }

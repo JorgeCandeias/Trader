@@ -37,6 +37,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<IOrderCodeGenerator, OrderCodeGenerator>()
                 .AddSingleton<IAlgoDependencyInfo, AlgoDependencyInfo>()
                 .AddSingleton<IAlgoContextHydrator, AlgoContextHydrator>()
+                .AddSingleton<IAlgoStatisticsPublisher, AlgoStatisticsPublisher>()
                 .AddOptions<AlgoConfigurationMappingOptions>().ValidateDataAnnotations().Services
                 .AddOptions<SavingsOptions>().ValidateDataAnnotations().Services
 

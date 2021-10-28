@@ -17,8 +17,10 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public IServiceProvider ServiceProvider { get; }
 
-        public static AlgoContext Empty { get; } = new AlgoContext(NullServiceProvider.Instance);
-
         public SignificantResult Significant { get; set; } = SignificantResult.Empty;
+
+        public MiniTicker Ticker { get; set; } = MiniTicker.Empty;
+
+        public static AlgoContext Empty { get; } = new AlgoContext(NullServiceProvider.Instance);
     }
 }

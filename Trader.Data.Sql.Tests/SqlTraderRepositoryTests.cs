@@ -167,5 +167,21 @@ namespace Outcompute.Trader.Data.Sql.Tests
             // assert
             Assert.Collection(result, x => Assert.Equal(kline, x));
         }
+
+        [Fact]
+        public async Task SetsAndGetsKlines()
+        {
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+
+            // arrange
+            var kline = new Kline(Guid.NewGuid().ToString(), KlineInterval.Days1, DateTime.Today, DateTime.Today.AddDays(-1), DateTime.Today, 1, 3, 1m, 2m, 3m, 4m, 5m, 6m, 3, true, 7m, 8m);
+
+            // act
+            await _repository.SetKlinesAsync(new[] { kline });
+            var result = await _repository.GetKlinesAsync(kline.Symbol, kline.Interval, DateTime.Today.AddDays(-1), DateTime.Today);
+
+            // assert
+            Assert.Collection(result, x => Assert.Equal(kline, x));
+        }
     }
 }

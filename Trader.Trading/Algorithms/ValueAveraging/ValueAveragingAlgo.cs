@@ -17,7 +17,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
         private readonly ILogger _logger;
         private readonly ISystemClock _clock;
 
-        public ValueAveragingAlgo(IOptionsMonitor<ValueAveragingAlgoOptions> monitor, ILogger<ValueAveragingAlgoOptions> logger, ISystemClock clock)
+        public ValueAveragingAlgo(IOptionsMonitor<ValueAveragingAlgoOptions> monitor, ILogger<ValueAveragingAlgo> logger, ISystemClock clock)
         {
             _monitor = monitor;
             _logger = logger;

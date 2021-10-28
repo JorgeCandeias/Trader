@@ -12,6 +12,8 @@ namespace Outcompute.Trader.Trading.InMemory.MarketData
 
         public InMemoryMarketDataStreamClient(IInMemoryMarketDataStreamSender sender)
         {
+            if (sender is null) throw new ArgumentNullException(nameof(sender));
+
             _registration = sender.Register((message, ct) => _channel.Writer.WriteAsync(message, ct).AsTask());
         }
 

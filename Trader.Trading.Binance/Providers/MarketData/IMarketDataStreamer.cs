@@ -7,6 +7,6 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 {
     internal interface IMarketDataStreamer
     {
-        Task StreamAsync(ISet<string> tickers, ISet<(string Symbol, KlineInterval Interval)> klines, CancellationToken cancellationToken);
+        Task StreamAsync(ISet<string> tickers, ISet<(string Symbol, KlineInterval Interval)> klines, CancellationToken cancellationToken = default);
     }
 }

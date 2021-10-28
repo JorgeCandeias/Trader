@@ -31,7 +31,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 
         private static string TypeName => nameof(MarketDataStreamer);
 
-        public Task StreamAsync(ISet<string> tickers, ISet<(string Symbol, KlineInterval Interval)> klines, CancellationToken cancellationToken)
+        public Task StreamAsync(ISet<string> tickers, ISet<(string Symbol, KlineInterval Interval)> klines, CancellationToken cancellationToken = default)
         {
             return StreamCoreAsync(tickers, klines, cancellationToken);
         }

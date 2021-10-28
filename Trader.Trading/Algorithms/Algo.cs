@@ -39,7 +39,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             return Task.CompletedTask;
         }
 
-        public IAlgoContext Context { get; }
+        public IAlgoContext Context { get; set; }
 
         public virtual NoopAlgoCommand Noop()
         {

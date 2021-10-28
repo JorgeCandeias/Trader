@@ -18,14 +18,12 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
     {
         private readonly ILogger _logger;
         private readonly IOptionsMonitor<SteppingAlgoOptions> _monitor;
-        private readonly IOrderCodeGenerator _orderCodeGenerator;
         private readonly IOrderProvider _orderProvider;
 
-        public SteppingAlgo(ILogger<SteppingAlgo> logger, IOptionsMonitor<SteppingAlgoOptions> options, IOrderCodeGenerator orderCodeGenerator, IOrderProvider orderProvider)
+        public SteppingAlgo(ILogger<SteppingAlgo> logger, IOptionsMonitor<SteppingAlgoOptions> options, IOrderProvider orderProvider)
         {
             _logger = logger;
             _monitor = options;
-            _orderCodeGenerator = orderCodeGenerator;
             _orderProvider = orderProvider;
         }
 
@@ -218,7 +216,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             quantity = quantity.AdjustQuantityUpToLotSize(Context.Symbol);
 
             // place the buy order
-            var tag = $"{Context.Symbol.Name}{lowerPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal);
+            var tag = CreateTag(Context.Symbol.Name, lowerPrice);
             return CreateOrder(Context.Symbol, OrderType.Limit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, lowerPrice, tag);
         }
 
@@ -281,9 +279,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                         }
                     }
 
-                    var tag = _orderCodeGenerator.GetSellClientOrderId(band.OpenOrderId);
-
-                    return CreateOrder(Context.Symbol, OrderType.Limit, OrderSide.Sell, TimeInForce.GoodTillCanceled, band.Quantity, band.ClosePrice, tag);
+                    return CreateOrder(Context.Symbol, OrderType.Limit, OrderSide.Sell, TimeInForce.GoodTillCanceled, band.Quantity, band.ClosePrice, null);
                 }
             }
 
@@ -428,8 +424,13 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             quantity = quantity.AdjustQuantityUpToLotSize(Context.Symbol);
 
             // place a limit order at the current price
-            var tag = $"{Context.Symbol.Name}{lowBuyPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal);
+            var tag = CreateTag(Context.Symbol.Name, lowBuyPrice);
             return CreateOrder(Context.Symbol, OrderType.Limit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, lowBuyPrice, tag);
+        }
+
+        private static string CreateTag(string symbol, decimal price)
+        {
+            return $"{symbol}{price:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal);
         }
 
         private IAlgoCommand? ApplySignificantBuyOrdersToBands()
@@ -454,7 +455,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                         Quantity = order.OriginalQuantity,
                         OpenPrice = order.Price,
                         OpenOrderId = order.OrderId,
-                        CloseOrderClientId = _orderCodeGenerator.GetSellClientOrderId(order.OrderId),
+                        CloseOrderClientId = CreateTag(order.Symbol, order.Price),
                         Status = BandStatus.Ordered
                     });
                 }
@@ -466,7 +467,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                         Quantity = order.ExecutedQuantity,
                         OpenPrice = order.Price,
                         OpenOrderId = order.OrderId,
-                        CloseOrderClientId = _orderCodeGenerator.GetSellClientOrderId(order.OrderId),
+                        CloseOrderClientId = CreateTag(order.Symbol, order.Price),
                         Status = BandStatus.Open
                     });
                 }
@@ -494,7 +495,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                     Quantity = order.OriginalQuantity,
                     OpenPrice = order.Price,
                     OpenOrderId = order.OrderId,
-                    CloseOrderClientId = _orderCodeGenerator.GetSellClientOrderId(order.OrderId),
+                    CloseOrderClientId = CreateTag(order.Symbol, order.Price),
                     Status = BandStatus.Ordered
                 });
             }

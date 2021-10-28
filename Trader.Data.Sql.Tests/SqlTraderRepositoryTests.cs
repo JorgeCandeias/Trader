@@ -54,5 +54,25 @@ namespace Outcompute.Trader.Data.Sql.Tests
             Assert.Equal(balance2, result2);
             Assert.Null(result3);
         }
+
+        [Fact]
+        public async Task SetsAndGetsOrder()
+        {
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+
+            // arrange
+            var order = new OrderQueryResult(Guid.NewGuid().ToString(), 1, 0, string.Empty, 123, 1000, 0, 0, OrderStatus.New, TimeInForce.GoodTillCanceled, OrderType.Limit, OrderSide.Buy, 0, 0, DateTime.UtcNow, DateTime.UtcNow, false, 0);
+
+            // act
+            await _repository.SetOrderAsync(order);
+            var result = await _repository.GetOrdersAsync(order.Symbol);
+
+            // assert
+            Assert.Collection(result, x =>
+            {
+                Assert.Equal(order.Symbol, x.Symbol);
+                Assert.Equal(order.OrderId, x.OrderId);
+            });
+        }
     }
 }

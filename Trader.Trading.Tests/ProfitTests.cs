@@ -51,5 +51,25 @@ namespace Outcompute.Trader.Trading.Tests
             Assert.Equal(quote, result.Quote);
             Assert.Equal(3, result.Today);
         }
+
+        [Fact]
+        public void Add()
+        {
+            // arrange
+            var symbol = "ABCXYZ";
+            var asset = "ABC";
+            var quote = "XYZ";
+            var profit1 = Profit.Zero(symbol, asset, quote) with { Today = 1 };
+            var profit2 = Profit.Zero(symbol, asset, quote) with { Today = 2 };
+
+            // act
+            var result = profit1.Add(profit2);
+
+            // assert
+            Assert.Equal(symbol, result.Symbol);
+            Assert.Equal(asset, result.Asset);
+            Assert.Equal(quote, result.Quote);
+            Assert.Equal(3, result.Today);
+        }
     }
 }

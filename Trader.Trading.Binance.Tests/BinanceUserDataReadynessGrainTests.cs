@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Hosting;
-using Orleans;
+﻿using Orleans;
 using Orleans.TestingHost;
 using Outcompute.Trader.Trading.Binance.Tests.Fixtures;
 using System;
@@ -9,7 +8,7 @@ using Xunit;
 namespace Outcompute.Trader.Trading.Binance.Tests
 {
     [Collection(nameof(ClusterCollectionFixture))]
-    public sealed class BinanceUserDataReadynessGrainTests: IDisposable
+    public sealed class BinanceUserDataReadynessGrainTests
     {
         private readonly TestCluster _cluster;
 
@@ -26,11 +25,6 @@ namespace Outcompute.Trader.Trading.Binance.Tests
 
             // assert
             Assert.False(result);
-        }
-
-        public void Dispose()
-        {
-            //_cluster.Dispose();
         }
     }
 }

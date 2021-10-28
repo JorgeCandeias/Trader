@@ -1,4 +1,6 @@
-﻿using Outcompute.Trader.Trading.Algorithms;
+﻿using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Algorithms;
+using System;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
@@ -70,6 +72,23 @@ namespace Outcompute.Trader.Trading.Tests
             Assert.Equal(asset, result.Asset);
             Assert.Equal(quote, result.Quote);
             Assert.Equal(3, result.Today);
+        }
+
+        [Fact]
+        public void FromEvents()
+        {
+            // arrange
+            var symbol = Symbol.Empty with { Name = "ABCXYZ", BaseAsset = "ABC", QuoteAsset = "XYZ" };
+            var time = DateTime.Today;
+            var profit = new ProfitEvent(symbol, time, 1, 1, 2, 2, 100m, 123m, 124m);
+            var commission = new CommissionEvent(symbol, time, 2, 2, "XYZ", 0.01m);
+
+            // act
+            var result = Profit.FromEvents(symbol, new[] { profit }, new[] { commission }, DateTime.Today);
+
+            // assert
+            Assert.Equal(symbol.Name, result.Symbol);
+            Assert.Equal(99.99m, result.Today);
         }
     }
 }

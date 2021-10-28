@@ -94,5 +94,45 @@ namespace Outcompute.Trader.Data.Sql.Tests
                 Assert.Equal(order.OrderId, x.OrderId);
             });
         }
+
+        [Fact]
+        public async Task SetsAndGetsTrade()
+        {
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+
+            // arrange
+            var trade = new AccountTrade(Guid.NewGuid().ToString(), 1, 2, 0, 123, 1000, 0, 0.01m, Guid.NewGuid().ToString(), DateTime.UtcNow, true, true, true);
+
+            // act
+            await _repository.SetTradeAsync(trade);
+            var result = await _repository.GetTradesAsync(trade.Symbol);
+
+            // assert
+            Assert.Collection(result, x =>
+            {
+                Assert.Equal(trade.Symbol, x.Symbol);
+                Assert.Equal(trade.Id, x.Id);
+            });
+        }
+
+        [Fact]
+        public async Task SetsAndGetsTrades()
+        {
+            using var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled);
+
+            // arrange
+            var trade = new AccountTrade(Guid.NewGuid().ToString(), 1, 2, 0, 123, 1000, 0, 0.01m, Guid.NewGuid().ToString(), DateTime.UtcNow, true, true, true);
+
+            // act
+            await _repository.SetTradesAsync(new[] { trade });
+            var result = await _repository.GetTradesAsync(trade.Symbol);
+
+            // assert
+            Assert.Collection(result, x =>
+            {
+                Assert.Equal(trade.Symbol, x.Symbol);
+                Assert.Equal(trade.Id, x.Id);
+            });
+        }
     }
 }

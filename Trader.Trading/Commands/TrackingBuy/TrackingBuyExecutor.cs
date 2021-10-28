@@ -48,7 +48,7 @@ namespace Outcompute.Trader.Trading.Commands.TrackingBuy
             var lowBuyPrice = ticker.ClosePrice * command.PullbackRatio;
 
             // under adjust the buy price to the tick size
-            lowBuyPrice = Math.Floor(lowBuyPrice / command.Symbol.Filters.Price.TickSize) * command.Symbol.Filters.Price.TickSize;
+            lowBuyPrice = lowBuyPrice.AdjustPriceDownToTickSize(command.Symbol);
 
             _logger.LogInformation(
                 "{Type} {Name} identified first buy target price at {LowPrice} {LowQuote} with current price at {CurrentPrice} {CurrentQuote}",
@@ -71,13 +71,13 @@ namespace Outcompute.Trader.Trading.Commands.TrackingBuy
             }
 
             // bump it to the minimum notional if needed
-            total = Math.Max(total, command.Symbol.Filters.MinNotional.MinNotional);
+            total = total.AdjustTotalUpToMinNotional(command.Symbol);
 
             // calculate the appropriate quantity to buy
             var quantity = total / lowBuyPrice;
 
             // round it down to the lot size step
-            quantity = Math.Ceiling(quantity / command.Symbol.Filters.LotSize.StepSize) * command.Symbol.Filters.LotSize.StepSize;
+            quantity = quantity.AdjustQuantityDownToLotSize(command.Symbol);
 
             // calculat the true notional after adjustments
             total = quantity * lowBuyPrice;
@@ -93,13 +93,13 @@ namespace Outcompute.Trader.Trading.Commands.TrackingBuy
             }
 
             // ensure there is enough quote asset for it
-            if (total > free)
+            if (total > balance.Free)
             {
-                var necessary = total - free;
+                var necessary = total - balance.Free;
 
                 _logger.LogWarning(
                     "{Type} {Name} must place order with amount of {Total} {Quote} but the free amount is only {Free} {Quote}",
-                    TypeName, command.Symbol.Name, total, command.Symbol.QuoteAsset, free, command.Symbol.QuoteAsset);
+                    TypeName, command.Symbol.Name, total, command.Symbol.QuoteAsset, balance.Free, command.Symbol.QuoteAsset);
 
                 if (command.RedeemSavings)
                 {

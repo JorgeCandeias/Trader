@@ -33,9 +33,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
             var transientSellOrders = Context.Orders
                 .Where(x => x.Side == OrderSide.Sell && x.Status.IsTransientStatus());
 
-            var transientBuyOrders = Context.Orders
-                .Where(x => x.Side == OrderSide.Buy && x.Status.IsTransientStatus());
-
             // start fresh for this tick - later on we can optimize with diffs
             _bands.Clear();
 
@@ -45,7 +42,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
                 TryMergeLeftoverBands() ??
                 TryAdjustBandClosePrices() ??
                 TryApplyOpenSellOrders() ??
-                await TrySetStartingTradeAsync(transientBuyOrders, cancellationToken) ??
+                await TrySetStartingTradeAsync(cancellationToken) ??
                 TryCancelRogueSellOrders(transientSellOrders) ??
                 TryCancelExcessSellOrders(transientSellOrders) ??
                 await TrySetBandSellOrdersAsync(transientSellOrders, cancellationToken) ??

@@ -44,7 +44,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
                 TryApplyOpenSellOrders() ??
                 await TrySetStartingTradeAsync(cancellationToken) ??
                 TryCancelRogueSellOrders() ??
-                TryCancelExcessSellOrders(transientSellOrders) ??
+                TryCancelExcessSellOrders() ??
                 await TrySetBandSellOrdersAsync(transientSellOrders, cancellationToken) ??
                 await TryCreateLowerBandOrderAsync(cancellationToken) ??
                 TryCloseOutOfRangeBands() ??

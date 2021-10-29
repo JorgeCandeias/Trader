@@ -1,6 +1,5 @@
 ﻿using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Commands;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
@@ -10,7 +9,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
         /// <summary>
         /// Identify and cancel excess sell orders above the limit.
         /// </summary>
-        protected IAlgoCommand? TryCancelExcessSellOrders(IEnumerable<OrderQueryResult> transientSellOrders)
+        protected IAlgoCommand? TryCancelExcessSellOrders()
         {
             // get the order ids for the lowest open bands
             var bands = _bands
@@ -21,7 +20,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
                 .ToHashSet();
 
             // cancel all excess sell orders now
-            foreach (var orderId in transientSellOrders.Select(x => x.OrderId))
+            foreach (var orderId in Context.Orders.Where(x => x.Side == OrderSide.Sell && x.Status.IsTransientStatus()).Select(x => x.OrderId))
             {
                 if (!bands.Contains(orderId))
                 {

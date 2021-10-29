@@ -279,7 +279,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                         }
                     }
 
-                    return CreateOrder(Context.Symbol, OrderType.Limit, OrderSide.Sell, TimeInForce.GoodTillCanceled, band.Quantity, band.ClosePrice, null);
+                    var tag = CreateTag(Context.Symbol.Name, band.ClosePrice);
+                    return CreateOrder(Context.Symbol, OrderType.Limit, OrderSide.Sell, TimeInForce.GoodTillCanceled, band.Quantity, band.ClosePrice, tag);
                 }
             }
 
@@ -545,26 +546,29 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             // skip this rule if there are not enough bands to evaluate
             if (_bands.Count < 2) return;
 
-            // skip this rule if the lowest band is already ordered
-            if (_bands.Min!.Status != BandStatus.Open) return;
-
-            // keep merging the lowest band
-            while (_bands.Count > 1)
+            // keep merging the lowest open band
+            Band? merged = null;
+            while (true)
             {
+                // take the first two open bands
+                var elected = _bands.Where(x => x.Status == BandStatus.Open).Take(2).ToArray();
+
+                // break if there are less than two bands
+                if (elected.Length < 2) break;
+
+                // pin the bands
+                var lowest = elected[0];
+                var above = elected[1];
+
                 // break if the lowest band is already above min lot size and min notional after adjustment
-                if ((_bands.Min.Quantity.AdjustQuantityDownToLotSize(Context.Symbol) >= Context.Symbol.Filters.LotSize.MinQuantity) &&
-                    (_bands.Min.Quantity.AdjustQuantityDownToLotSize(Context.Symbol) * _bands.Min.OpenPrice.AdjustPriceDownToTickSize(Context.Symbol)) >= Context.Symbol.Filters.MinNotional.MinNotional)
+                if ((lowest.Quantity.AdjustQuantityDownToLotSize(Context.Symbol) >= Context.Symbol.Filters.LotSize.MinQuantity) &&
+                    (lowest.Quantity.AdjustQuantityDownToLotSize(Context.Symbol) * lowest.OpenPrice.AdjustPriceDownToTickSize(Context.Symbol)) >= Context.Symbol.Filters.MinNotional.MinNotional)
                 {
                     break;
                 }
 
-                // get the lowest two bands
-                var tail = _bands.Take(2).ToArray();
-                var lowest = tail[0];
-                var above = tail[1];
-
                 // merge both bands
-                var merged = new Band
+                merged = new Band
                 {
                     Status = BandStatus.Open,
                     Quantity = lowest.Quantity + above.Quantity,
@@ -582,8 +586,11 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 _bands.Add(merged);
             }
 
-            // adjust the lowest band so the order is valid
-            _bands.Min.Quantity = _bands.Min.Quantity.AdjustQuantityDownToLotSize(Context.Symbol);
+            // adjust the merged band
+            if (merged is not null)
+            {
+                merged.Quantity = merged.Quantity.AdjustQuantityDownToLotSize(Context.Symbol);
+            }
         }
 
         private IAlgoCommand? TryCreateTradingBands(IReadOnlyList<OrderQueryResult> nonSignificantTransientBuyOrders, IReadOnlyList<OrderQueryResult> transientSellOrders)
@@ -610,7 +617,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
             foreach (var order in transientSellOrders)
             {
-                var band = _bands.Except(used).SingleOrDefault(x => x.CloseOrderClientId == order.ClientOrderId);
+                var band = _bands.Except(used).SingleOrDefault(x => x.ClosePrice == order.Price && x.Quantity == order.OriginalQuantity);
                 if (band is not null)
                 {
                     band.CloseOrderId = order.OrderId;

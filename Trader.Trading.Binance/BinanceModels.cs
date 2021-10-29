@@ -27,7 +27,10 @@
         int MaxNumOrders,
         int MaxNumAlgoOrders,
         int MaxNumIcebergOrders,
-        decimal MaxPosition);
+        decimal MaxPosition)
+    {
+        public static SymbolFilterModel Empty { get; } = new SymbolFilterModel(string.Empty, 0, 0, 0, 0, 0, 0, 0, 0, 0, false, 0, 0, 0, 0, 0, 0);
+    }
 
     internal record SymbolModel(
         string Symbol,

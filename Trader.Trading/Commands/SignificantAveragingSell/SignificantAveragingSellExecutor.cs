@@ -52,7 +52,7 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
             var numerator = 0m;
             var quantity = 0m;
 
-            foreach (var order in orders.OrderBy(x => x.Price))
+            foreach (var order in orders.Reverse())
             {
                 // calculate the candidate average sell price
                 var orderNumerator = order.ExecutedQuantity * order.Price;

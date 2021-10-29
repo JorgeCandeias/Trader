@@ -1,6 +1,8 @@
 ﻿using Outcompute.Trader.Core;
 using Outcompute.Trader.Models;
 using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
@@ -29,5 +31,7 @@ namespace Outcompute.Trader.Trading.Algorithms
         public SavingsPosition AssetSavingsBalance => SavingsPosition.Empty;
 
         public SavingsPosition QuoteSavingsBalance => SavingsPosition.Empty;
+
+        public IReadOnlyList<OrderQueryResult> Orders => ImmutableList<OrderQueryResult>.Empty;
     }
 }

@@ -1,6 +1,8 @@
 ﻿using Outcompute.Trader.Core;
 using Outcompute.Trader.Models;
 using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Threading;
 
 namespace Outcompute.Trader.Trading.Algorithms
@@ -29,6 +31,8 @@ namespace Outcompute.Trader.Trading.Algorithms
         public SavingsPosition AssetSavingsBalance { get; set; } = SavingsPosition.Empty;
 
         public SavingsPosition QuoteSavingsBalance { get; set; } = SavingsPosition.Empty;
+
+        public IReadOnlyList<OrderQueryResult> Orders { get; set; } = ImmutableList<OrderQueryResult>.Empty;
 
         #region Static Helpers
 

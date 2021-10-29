@@ -12,14 +12,16 @@ namespace Outcompute.Trader.Trading.Algorithms
         private readonly ITickerProvider _tickers;
         private readonly IBalanceProvider _balances;
         private readonly ISavingsProvider _savings;
+        private readonly IOrderProvider _orders;
 
-        public AlgoContextHydrator(IExchangeInfoProvider exchange, ISignificantOrderResolver resolver, ITickerProvider tickers, IBalanceProvider balances, ISavingsProvider savings)
+        public AlgoContextHydrator(IExchangeInfoProvider exchange, ISignificantOrderResolver resolver, ITickerProvider tickers, IBalanceProvider balances, ISavingsProvider savings, IOrderProvider orders)
         {
             _exchange = exchange;
             _resolver = resolver;
             _tickers = tickers;
             _balances = balances;
             _savings = savings;
+            _orders = orders;
         }
 
         public Task HydrateSymbolAsync(AlgoContext context, string symbol, CancellationToken cancellationToken = default)
@@ -88,6 +90,9 @@ namespace Outcompute.Trader.Trading.Algorithms
                 .ContinueWith(symbolx => _savings.GetPositionOrZeroAsync(symbolx.Result.QuoteAsset, cancellationToken), cancellationToken, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Default)
                 .Unwrap();
 
+            var ordersTask = _orders
+                .GetOrdersAsync(symbol, CancellationToken.None);
+
             // populate the symbol
             context.Symbol = await symbolTask.ConfigureAwait(false);
 
@@ -108,6 +113,9 @@ namespace Outcompute.Trader.Trading.Algorithms
 
             // populate the quote savings balance
             context.QuoteSavingsBalance = await quoteSavingsTask.ConfigureAwait(false);
+
+            // populate orders
+            context.Orders = await ordersTask.ConfigureAwait(false);
         }
     }
 }

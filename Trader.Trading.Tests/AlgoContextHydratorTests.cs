@@ -3,6 +3,8 @@ using Outcompute.Trader.Core;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Providers;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -33,7 +35,8 @@ namespace Outcompute.Trader.Trading.Tests
             var tickers = Mock.Of<ITickerProvider>();
             var balances = Mock.Of<IBalanceProvider>();
             var savings = Mock.Of<ISavingsProvider>();
-            var hydrator = new AlgoContextHydrator(exchange, resolver, tickers, balances, savings);
+            var orders = Mock.Of<IOrderProvider>();
+            var hydrator = new AlgoContextHydrator(exchange, resolver, tickers, balances, savings, orders);
             var context = new AlgoContext(NullServiceProvider.Instance);
 
             // act
@@ -98,7 +101,13 @@ namespace Outcompute.Trader.Trading.Tests
                 .Setup(x => x.TryGetPositionAsync(symbol.QuoteAsset, CancellationToken.None))
                 .Returns(Task.FromResult<SavingsPosition?>(quoteSavings));
 
-            var hydrator = new AlgoContextHydrator(exchange, resolver, tickers, balances, savings);
+            var order = OrderQueryResult.Empty with { Symbol = symbol.Name };
+            var orders = Mock.Of<IOrderProvider>();
+            Mock.Get(orders)
+                .Setup(x => x.GetOrdersAsync(symbol.Name, CancellationToken.None))
+                .Returns(Task.FromResult<IReadOnlyList<OrderQueryResult>>(new[] { order }));
+
+            var hydrator = new AlgoContextHydrator(exchange, resolver, tickers, balances, savings, orders);
             var context = new AlgoContext(NullServiceProvider.Instance);
 
             // act
@@ -112,6 +121,7 @@ namespace Outcompute.Trader.Trading.Tests
             Assert.Same(quoteBalance, context.QuoteSpotBalance);
             Assert.Same(assetSavings, context.AssetSavingsBalance);
             Assert.Same(quoteSavings, context.QuoteSavingsBalance);
+            Assert.Same(order, context.Orders.Single());
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Outcompute.Trader.Models;
 using System;
+using System.Collections.Generic;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
@@ -55,5 +56,11 @@ namespace Outcompute.Trader.Trading.Algorithms
         /// This is only populated if the default symbol is defined.
         /// </summary>
         SavingsPosition QuoteSavingsBalance { get; }
+
+        /// <summary>
+        /// Gets all historial orders for the default symbol.
+        /// This is only populated if the default symbol is defined.
+        /// </summary>
+        IReadOnlyList<OrderQueryResult> Orders { get; }
     }
 }

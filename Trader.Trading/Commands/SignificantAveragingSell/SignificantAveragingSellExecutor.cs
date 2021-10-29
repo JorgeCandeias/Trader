@@ -71,6 +71,10 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
                     count++;
                     numerator = candidateNumerator;
                     quantity = candidateQuantity;
+
+                    _logger.LogInformation(
+                        "{Type} {Symbol} elected order {OrderId} for sale with significant quantity {Quantity:F8} {Asset} at buy price {Price:F8} {Quote}",
+                        TypeName, symbol.Name, order.OrderId, order.ExecutedQuantity, symbol.BaseAsset, order.Price, symbol.QuoteAsset);
                 }
                 else
                 {
@@ -82,14 +86,25 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
             if (count <= 0)
             {
                 _logger.LogInformation(
-                    "{Type} {Symbol} cannot elect any buy orders for selling at a minimum profit rate of {MinimumProfitRate}",
+                    "{Type} {Symbol} cannot elect any buy orders for selling at a minimum profit rate of {MinimumProfitRate:F8}",
                     TypeName, symbol.Name, minimumProfitRate);
 
                 return DesiredSell.None;
             }
 
+            // calculate average buy price
+            var averagePrice = numerator / quantity;
+
+            _logger.LogInformation(
+                "{Type} {Symbol} elected {Count} orders for sale with total quantity {Quantity:F8} {Asset} at average buy price {Price:F8} {Quote}",
+                TypeName, symbol.Name, count, quantity, symbol.BaseAsset, averagePrice, symbol.QuoteAsset);
+
             // adjust the quantity down to the lot size filter
             quantity = quantity.AdjustQuantityDownToLotStepSize(symbol);
+
+            _logger.LogInformation(
+                "{Type} {Symbol} adjusted quantity by lot step size of {LotStepSize} {Asset} down to {Quantity:F8} {Asset}",
+                TypeName, symbol.Name, symbol.Filters.LotSize.StepSize, symbol.BaseAsset, quantity, symbol.BaseAsset);
 
             // break if the quantity is under the minimum lot size
             if (quantity < symbol.Filters.LotSize.MinQuantity)
@@ -103,6 +118,10 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
 
             // calculate the sell notional
             var total = quantity * ticker.ClosePrice;
+
+            _logger.LogInformation(
+                "{Type} {Symbol} calculated notional of {Total:F8} {Quote} using quantity of {Quantity:F8} {Asset} and ticker of {Price:F8} {Quote}",
+                TypeName, symbol.Name, total, symbol.QuoteAsset, quantity, symbol.BaseAsset, ticker.ClosePrice, symbol.QuoteAsset);
 
             // check if the sell is under the minimum notional filter
             if (total < symbol.Filters.MinNotional.MinNotional)

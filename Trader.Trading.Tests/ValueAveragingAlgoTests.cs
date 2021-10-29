@@ -26,15 +26,17 @@ namespace Outcompute.Trader.Trading.Tests
             // arrange
             var name = "MyAlgo";
 
-            var monitor = Mock.Of<IOptionsMonitor<ValueAveragingAlgoOptions>>(
-                x => !x.Get(name).IsOpeningEnabled);
+            var options = Options.Create(new ValueAveragingAlgoOptions
+            {
+                IsOpeningEnabled = false
+            });
 
             var logger = NullLogger<ValueAveragingAlgo>.Instance;
 
             var clock = Mock.Of<ISystemClock>(
                 x => x.UtcNow == DateTime.Today);
 
-            var algo = new ValueAveragingAlgo(monitor, logger, clock);
+            var algo = new ValueAveragingAlgo(options, logger, clock);
 
             var symbol = Symbol.Empty with
             {

@@ -8,18 +8,16 @@ namespace Outcompute.Trader.Trading.Algorithms.Accumulator
 {
     internal class AccumulatorAlgo : SymbolAlgo
     {
-        private readonly IOptionsMonitor<AccumulatorAlgoOptions> _options;
+        private readonly AccumulatorAlgoOptions _options;
 
-        public AccumulatorAlgo(IOptionsMonitor<AccumulatorAlgoOptions> options)
+        public AccumulatorAlgo(IOptions<AccumulatorAlgoOptions> options)
         {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
+            _options = options.Value;
         }
 
         public override Task<IAlgoCommand> GoAsync(CancellationToken cancellationToken = default)
         {
-            var options = _options.Get(Context.Name);
-
-            return TrackingBuy(Context.Symbol, options.PullbackRatio, options.TargetQuoteBalanceFractionPerBuy, options.MaxNotional, options.RedeemSavings)
+            return TrackingBuy(Context.Symbol, _options.PullbackRatio, _options.TargetQuoteBalanceFractionPerBuy, _options.MaxNotional, _options.RedeemSavings)
                 .AsTaskResult<IAlgoCommand>();
         }
     }

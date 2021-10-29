@@ -12,20 +12,19 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
 {
     internal class ValueAveragingAlgo : SymbolAlgo
     {
-        private readonly IOptionsMonitor<ValueAveragingAlgoOptions> _monitor;
+        private readonly ValueAveragingAlgoOptions _options;
         private readonly ILogger _logger;
         private readonly ISystemClock _clock;
 
-        public ValueAveragingAlgo(IOptionsMonitor<ValueAveragingAlgoOptions> monitor, ILogger<ValueAveragingAlgo> logger, ISystemClock clock)
+        public ValueAveragingAlgo(IOptions<ValueAveragingAlgoOptions> options, ILogger<ValueAveragingAlgo> logger, ISystemClock clock)
         {
-            _monitor = monitor;
+            _options = options.Value;
             _logger = logger;
             _clock = clock;
         }
 
         private static string TypeName => nameof(ValueAveragingAlgo);
 
-        private ValueAveragingAlgoOptions _options = ValueAveragingAlgoOptions.Default;
         private decimal _smaA;
         private decimal _smaB;
         private decimal _smaC;
@@ -35,8 +34,6 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
 
         public override async Task<IAlgoCommand> GoAsync(CancellationToken cancellationToken = default)
         {
-            _options = _monitor.Get(Context.Name);
-
             // get the lastest klines
             var maxPeriods = GetMaxPeriods();
             var end = _clock.UtcNow;

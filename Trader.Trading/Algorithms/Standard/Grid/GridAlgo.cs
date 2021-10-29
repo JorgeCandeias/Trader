@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using static System.String;
 
 namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
 {
@@ -28,21 +27,25 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
         /// <summary>
         /// Keeps track of the bands managed by the algorithm.
         /// </summary>
-        private readonly SortedSet<Band> _bands = new();
+        private readonly SortedSet<Band> _bands = new(BandComparer.Default);
 
         public override async Task<IAlgoCommand> GoAsync(CancellationToken cancellationToken = default)
         {
-            var nonSignificantTransientBuyOrders = Context.Orders
-                .Where(x => x.Side == OrderSide.Buy && x.Status.IsTransientStatus() && x.ExecutedQuantity <= 0);
-
             var transientSellOrders = Context.Orders
                 .Where(x => x.Side == OrderSide.Sell && x.Status.IsTransientStatus());
 
             var transientBuyOrders = Context.Orders
                 .Where(x => x.Side == OrderSide.Buy && x.Status.IsTransientStatus());
 
+            // start fresh for this tick - later on we can optimize with diffs
+            _bands.Clear();
+
             return
-                TryCreateTradingBands(nonSignificantTransientBuyOrders, transientSellOrders) ??
+                TryApplySignificantBuyOrders() ??
+                TryApplyNonSignificantOpenBuyOrders() ??
+                TryMergeLeftoverBands() ??
+                TryAdjustBandClosePrices() ??
+                TryApplyOpenSellOrders() ??
                 await TrySetStartingTradeAsync(transientBuyOrders, cancellationToken) ??
                 TryCancelRogueSellOrders(transientSellOrders) ??
                 TryCancelExcessSellOrders(transientSellOrders) ??
@@ -315,7 +318,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
 
         private async ValueTask<IAlgoCommand?> TrySetStartingTradeAsync(IEnumerable<OrderQueryResult> transientBuyOrders, CancellationToken cancellationToken = default)
         {
-            // disable the opening if required
+            // stop opening evaluation if it is disabled
             if (!_options.IsOpeningEnabled)
             {
                 _logger.LogWarning(
@@ -414,7 +417,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
             return $"{symbol}{price:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal);
         }
 
-        private IAlgoCommand? ApplySignificantBuyOrdersToBands()
+        private IAlgoCommand? TryApplySignificantBuyOrders()
         {
             // apply the significant buy orders to the bands
             foreach (var order in Context.Significant.Orders.Where(x => x.Side == OrderSide.Buy))
@@ -454,12 +457,13 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
                 }
             }
 
+            // everything applied so let the algo continue
             return null;
         }
 
-        private IAlgoCommand? ApplyNonSignificantTransientBuyOrdersToBands(IEnumerable<OrderQueryResult> nonSignificantTransientBuyOrders)
+        private IAlgoCommand? TryApplyNonSignificantOpenBuyOrders()
         {
-            foreach (var order in nonSignificantTransientBuyOrders)
+            foreach (var order in Context.Orders.Where(x => x.Side == OrderSide.Buy && x.Status.IsTransientStatus() && x.ExecutedQuantity <= 0))
             {
                 if (order.Price is 0)
                 {
@@ -484,8 +488,14 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
             return null;
         }
 
-        private void AdjustBandClosePrices()
+        private IAlgoCommand? TryAdjustBandClosePrices()
         {
+            // skip this step if there are no bands to adjust
+            if (_bands.Count == 0)
+            {
+                return null;
+            }
+
             // figure out the constant step size
             var stepSize = _bands.Max!.OpenPrice * _options.PullbackRatio;
 
@@ -519,12 +529,18 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
                 // adjust the sell price up to the tick size
                 band.ClosePrice = Math.Ceiling(band.ClosePrice / Context.Symbol.Filters.Price.TickSize) * Context.Symbol.Filters.Price.TickSize;
             }
+
+            // let the algo continue
+            return null;
         }
 
-        private void MergeLeftoverBands()
+        private IAlgoCommand? TryMergeLeftoverBands()
         {
             // skip this rule if there are not enough bands to evaluate
-            if (_bands.Count < 2) return;
+            if (_bands.Count < 2)
+            {
+                return null;
+            }
 
             // keep merging the lowest open band
             Band? merged = null;
@@ -571,33 +587,26 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
             {
                 merged.Quantity = merged.Quantity.AdjustQuantityDownToLotStepSize(Context.Symbol);
             }
+
+            // let the algo continue
+            return null;
         }
 
-        private IAlgoCommand? TryCreateTradingBands(IEnumerable<OrderQueryResult> nonSignificantTransientBuyOrders, IEnumerable<OrderQueryResult> transientSellOrders)
+        private IAlgoCommand? TryApplyOpenSellOrders()
         {
-            _bands.Clear();
-
-            var result =
-                ApplySignificantBuyOrdersToBands() ??
-                ApplyNonSignificantTransientBuyOrdersToBands(nonSignificantTransientBuyOrders);
-
-            if (result is not null)
-            {
-                return result;
-            }
-
-            // skip if no bands were created
-            if (_bands.Count == 0) return null;
-
-            MergeLeftoverBands();
-            AdjustBandClosePrices();
+            // keeps track of used bands so we dont apply duplicate sell orders
+            HashSet<Band>? used = null;
 
             // apply open sell orders to the bands
-            var used = new HashSet<Band>();
-
-            foreach (var order in transientSellOrders)
+            foreach (var order in Context.Orders.Where(x => x.Side == OrderSide.Sell && x.Status.IsTransientStatus()))
             {
+                // lazy create the used hashset to minimize garbage
+                used ??= new HashSet<Band>(_bands.Count, BandEqualityComparer.Default);
+
+                // attempt to find the band that matches the sell order
                 var band = _bands.Except(used).SingleOrDefault(x => x.ClosePrice == order.Price && x.Quantity == order.OriginalQuantity);
+
+                // if we found the band then track the active sell order on it
                 if (band is not null)
                 {
                     band.CloseOrderId = order.OrderId;
@@ -612,95 +621,5 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
             // always let the algo continue
             return null;
         }
-
-        #region Classes
-
-        private enum BandStatus
-        {
-            Ordered,
-            Open
-        }
-
-        private sealed class Band : IComparable<Band>
-        {
-            public Guid Id { get; } = Guid.NewGuid();
-
-            public long OpenOrderId { get; set; }
-
-            public decimal Quantity { get; set; }
-            public decimal OpenPrice { get; set; }
-            public BandStatus Status { get; set; }
-            public long CloseOrderId { get; set; }
-            public decimal ClosePrice { get; set; }
-            public string CloseOrderClientId { get; set; } = Empty;
-
-            public int CompareTo(Band? other)
-            {
-                if (other is null) return 1;
-
-                var byOpenPrice = OpenPrice.CompareTo(other.OpenPrice);
-                if (byOpenPrice is not 0) return byOpenPrice;
-
-                var byOpenOrderId = OpenOrderId.CompareTo(other.OpenOrderId);
-                if (byOpenOrderId is not 0) return byOpenOrderId;
-
-                var byId = Id.CompareTo(other.Id);
-                if (byId is not 0) return byId;
-
-                return 0;
-            }
-
-            public override bool Equals(object? obj) => obj is Band band && CompareTo(band) is 0;
-
-            public override int GetHashCode() => HashCode.Combine(OpenPrice, Id);
-
-            public static bool operator ==(Band first, Band second)
-            {
-                if (first is null) return second is null;
-
-                return first.CompareTo(second) is 0;
-            }
-
-            public static bool operator !=(Band first, Band second)
-            {
-                if (first is null) return second is not null;
-
-                return first.CompareTo(second) is 0;
-            }
-
-            public static bool operator <(Band first, Band second)
-            {
-                _ = first ?? throw new ArgumentNullException(nameof(first));
-                _ = second ?? throw new ArgumentNullException(nameof(second));
-
-                return first.CompareTo(second) < 0;
-            }
-
-            public static bool operator >(Band first, Band second)
-            {
-                _ = first ?? throw new ArgumentNullException(nameof(first));
-                _ = second ?? throw new ArgumentNullException(nameof(second));
-
-                return first.CompareTo(second) > 0;
-            }
-
-            public static bool operator <=(Band first, Band second)
-            {
-                _ = first ?? throw new ArgumentNullException(nameof(first));
-                _ = second ?? throw new ArgumentNullException(nameof(second));
-
-                return first.CompareTo(second) <= 0;
-            }
-
-            public static bool operator >=(Band first, Band second)
-            {
-                _ = first ?? throw new ArgumentNullException(nameof(first));
-                _ = second ?? throw new ArgumentNullException(nameof(second));
-
-                return first.CompareTo(second) >= 0;
-            }
-        }
-
-        #endregion Classes
     }
 }

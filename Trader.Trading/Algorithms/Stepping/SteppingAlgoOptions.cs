@@ -19,7 +19,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
         [Required]
         [Range(0.001, 1)]
-        public decimal TargetQuoteBalanceFractionPerBand { get; set; } = 0.01m;
+        public decimal BuyQuoteBalanceFraction { get; set; } = 0.01m;
 
         /// <summary>
         /// If <see cref="true"/> the algo will create the opening band automatically.

@@ -166,7 +166,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             lowerPrice = lowerPrice.AdjustPriceUpToTickSize(Context.Symbol);
 
             // calculate the quote amount to pay with
-            var total = GetFreeBalance() * _options.TargetQuoteBalanceFractionPerBand;
+            var total = GetFreeBalance() * _options.BuyQuoteBalanceFraction;
 
             // lower below the max notional if needed
             if (_options.MaxNotional.HasValue)
@@ -375,7 +375,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             }
 
             // calculate the amount to pay with
-            var total = Math.Round(GetFreeBalance() * _options.TargetQuoteBalanceFractionPerBand, Context.Symbol.QuoteAssetPrecision);
+            var total = Math.Round(GetFreeBalance() * _options.BuyQuoteBalanceFraction, Context.Symbol.QuoteAssetPrecision);
 
             // lower below the max notional if needed
             if (_options.MaxNotional.HasValue)

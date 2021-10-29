@@ -1,6 +1,5 @@
 ﻿using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Commands;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
@@ -10,9 +9,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
         /// <summary>
         /// Identify and cancel rogue sell orders that do not belong to a trading band.
         /// </summary>
-        protected IAlgoCommand? TryCancelRogueSellOrders(IEnumerable<OrderQueryResult> transientSellOrders)
+        protected IAlgoCommand? TryCancelRogueSellOrders()
         {
-            foreach (var orderId in transientSellOrders.Select(x => x.OrderId))
+            foreach (var orderId in Context.Orders.Where(x => x.Side == OrderSide.Sell && x.Status.IsTransientStatus()).Select(x => x.OrderId))
             {
                 if (!_bands.Any(x => x.CloseOrderId == orderId))
                 {

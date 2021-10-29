@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using static System.String;
 
-namespace Outcompute.Trader.Trading.Algorithms.Accumulator
+namespace Outcompute.Trader.Trading.Algorithms.Standard.Accumulator
 {
     public class AccumulatorAlgoOptions
     {

@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Orleans.Runtime;
 using Outcompute.Trader.Trading.Algorithms;
-using Outcompute.Trader.Trading.Algorithms.Accumulator;
+using Outcompute.Trader.Trading.Algorithms.Standard.Accumulator;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests

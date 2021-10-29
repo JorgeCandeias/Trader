@@ -1,5 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
-using Outcompute.Trader.Trading.Algorithms.Accumulator;
+using Outcompute.Trader.Trading.Algorithms.Standard.Accumulator;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests

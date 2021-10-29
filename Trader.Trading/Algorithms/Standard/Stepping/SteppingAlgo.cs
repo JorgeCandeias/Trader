@@ -10,7 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using static System.String;
 
-namespace Outcompute.Trader.Trading.Algorithms.Stepping
+namespace Outcompute.Trader.Trading.Algorithms.Standard.Stepping
 {
     internal class SteppingAlgo : SymbolAlgo
     {
@@ -541,8 +541,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 var above = elected[1];
 
                 // break if the lowest band is already above min lot size and min notional after adjustment
-                if ((lowest.Quantity.AdjustQuantityDownToLotStepSize(Context.Symbol) >= Context.Symbol.Filters.LotSize.MinQuantity) &&
-                    (lowest.Quantity.AdjustQuantityDownToLotStepSize(Context.Symbol) * lowest.OpenPrice.AdjustPriceDownToTickSize(Context.Symbol)) >= Context.Symbol.Filters.MinNotional.MinNotional)
+                if (lowest.Quantity.AdjustQuantityDownToLotStepSize(Context.Symbol) >= Context.Symbol.Filters.LotSize.MinQuantity &&
+                    lowest.Quantity.AdjustQuantityDownToLotStepSize(Context.Symbol) * lowest.OpenPrice.AdjustPriceDownToTickSize(Context.Symbol) >= Context.Symbol.Filters.MinNotional.MinNotional)
                 {
                     break;
                 }
@@ -552,7 +552,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 {
                     Status = BandStatus.Open,
                     Quantity = lowest.Quantity + above.Quantity,
-                    OpenPrice = ((lowest.Quantity * lowest.OpenPrice) + (above.Quantity * above.OpenPrice)) / (lowest.Quantity + above.Quantity),
+                    OpenPrice = (lowest.Quantity * lowest.OpenPrice + above.Quantity * above.OpenPrice) / (lowest.Quantity + above.Quantity),
                     OpenOrderId = lowest.OpenOrderId,
                     CloseOrderId = lowest.CloseOrderId,
                     CloseOrderClientId = lowest.CloseOrderClientId

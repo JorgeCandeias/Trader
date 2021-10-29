@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
+namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 {
     internal class ValueAveragingAlgo : SymbolAlgo
     {
@@ -124,7 +124,7 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
             var last = Context.Significant.Orders.Max!;
 
             // skip this rule if the significant total of the last order is under the minimum notional (leftovers)
-            if ((last.ExecutedQuantity * last.Price) < Context.Symbol.Filters.MinNotional.MinNotional)
+            if (last.ExecutedQuantity * last.Price < Context.Symbol.Filters.MinNotional.MinNotional)
             {
                 return true;
             }

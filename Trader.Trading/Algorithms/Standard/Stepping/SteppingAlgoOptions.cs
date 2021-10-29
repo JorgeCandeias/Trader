@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace Outcompute.Trader.Trading.Algorithms.Stepping
+namespace Outcompute.Trader.Trading.Algorithms.Standard.Stepping
 {
     public class SteppingAlgoOptions
     {

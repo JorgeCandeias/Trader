@@ -4,7 +4,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Algorithms.Accumulator
+namespace Outcompute.Trader.Trading.Algorithms.Standard.Accumulator
 {
     internal class AccumulatorAlgo : SymbolAlgo
     {

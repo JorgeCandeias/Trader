@@ -1,4 +1,4 @@
-﻿using Outcompute.Trader.Trading.Algorithms.Stepping;
+﻿using Outcompute.Trader.Trading.Algorithms.Standard.Stepping;
 
 namespace Microsoft.Extensions.DependencyInjection
 {

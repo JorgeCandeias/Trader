@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 using Moq;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
-using Outcompute.Trader.Trading.Algorithms.Stepping;
+using Outcompute.Trader.Trading.Algorithms.Standard.Stepping;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Commands.ClearOpenOrders;
 using Outcompute.Trader.Trading.Commands.CreateOrder;

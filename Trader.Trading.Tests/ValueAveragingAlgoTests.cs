@@ -5,7 +5,7 @@ using Moq;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
-using Outcompute.Trader.Trading.Algorithms.ValueAveraging;
+using Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging;
 using Outcompute.Trader.Trading.Commands.Many;
 using Outcompute.Trader.Trading.Providers;
 using System;

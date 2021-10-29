@@ -1,4 +1,4 @@
-﻿using Outcompute.Trader.Trading.Algorithms.ValueAveraging;
+﻿using Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging;
 
 namespace Microsoft.Extensions.DependencyInjection
 {

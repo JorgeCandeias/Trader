@@ -1,4 +1,4 @@
-﻿using Outcompute.Trader.Trading.Algorithms.Accumulator;
+﻿using Outcompute.Trader.Trading.Algorithms.Standard.Accumulator;
 
 namespace Microsoft.Extensions.DependencyInjection
 {

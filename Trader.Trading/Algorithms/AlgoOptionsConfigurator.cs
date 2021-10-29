@@ -18,6 +18,23 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public void Configure(string name, TOptions options)
         {
+            if (name is null)
+            {
+                throw new ArgumentNullException(nameof(name));
+            }
+
+            if (name == Options.DefaultName)
+            {
+                if (string.IsNullOrWhiteSpace(AlgoContext.Current.Name))
+                {
+                    throw new InvalidOperationException($"{nameof(AlgoContext)}.{nameof(AlgoContext.Current)}.{nameof(AlgoContext.Current.Name)} must be defined to configure default options");
+                }
+                else
+                {
+                    name = AlgoContext.Current.Name;
+                }
+            }
+
             _config
                 .GetSection(_mapping.AlgosKey)
                 .GetSection(name)
@@ -27,7 +44,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public void Configure(TOptions options)
         {
-            throw new NotSupportedException();
+            Configure(Options.DefaultName, options);
         }
     }
 }

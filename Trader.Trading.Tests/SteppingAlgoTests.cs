@@ -23,8 +23,11 @@ namespace Outcompute.Trader.Trading.Tests
             // arrange
             var name = "MyAlgo";
             var logger = NullLogger<SteppingAlgo>.Instance;
-            var options = Mock.Of<IOptionsMonitor<SteppingAlgoOptions>>(
-                x => !x.Get(name).IsOpeningEnabled);
+
+            var options = Options.Create(new SteppingAlgoOptions
+            {
+                IsOpeningEnabled = false
+            });
 
             var symbol = Symbol.Empty with
             {
@@ -59,8 +62,11 @@ namespace Outcompute.Trader.Trading.Tests
             // arrange
             var name = "MyAlgo";
             var logger = NullLogger<SteppingAlgo>.Instance;
-            var options = Mock.Of<IOptionsMonitor<SteppingAlgoOptions>>(
-                x => x.Get(name).IsOpeningEnabled);
+
+            var options = Options.Create(new SteppingAlgoOptions
+            {
+                IsOpeningEnabled = true
+            });
 
             var symbol = Symbol.Empty with
             {
@@ -118,8 +124,11 @@ namespace Outcompute.Trader.Trading.Tests
             // arrange
             var name = "MyAlgo";
             var logger = NullLogger<SteppingAlgo>.Instance;
-            var options = Mock.Of<IOptionsMonitor<SteppingAlgoOptions>>(
-                x => x.Get(name).IsOpeningEnabled);
+
+            var options = Options.Create(new SteppingAlgoOptions
+            {
+                IsOpeningEnabled = true
+            });
 
             var symbol = Symbol.Empty with
             {

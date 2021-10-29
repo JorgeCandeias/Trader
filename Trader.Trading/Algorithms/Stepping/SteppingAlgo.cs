@@ -15,20 +15,15 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
     internal class SteppingAlgo : SymbolAlgo
     {
         private readonly ILogger _logger;
-        private readonly IOptionsMonitor<SteppingAlgoOptions> _monitor;
+        private readonly SteppingAlgoOptions _options;
 
-        public SteppingAlgo(ILogger<SteppingAlgo> logger, IOptionsMonitor<SteppingAlgoOptions> options)
+        public SteppingAlgo(ILogger<SteppingAlgo> logger, IOptions<SteppingAlgoOptions> options)
         {
             _logger = logger;
-            _monitor = options;
+            _options = options.Value;
         }
 
         private static string TypeName => nameof(SteppingAlgo);
-
-        /// <summary>
-        /// Options active for each execution.
-        /// </summary>
-        private SteppingAlgoOptions _options = new();
 
         /// <summary>
         /// Keeps track of the bands managed by the algorithm.
@@ -37,9 +32,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
 
         public override async Task<IAlgoCommand> GoAsync(CancellationToken cancellationToken = default)
         {
-            // pin the options for this execution
-            _options = _monitor.Get(Context.Name);
-
             var nonSignificantTransientBuyOrders = Context.Orders
                 .Where(x => x.Side == OrderSide.Buy && x.Status.IsTransientStatus() && x.ExecutedQuantity <= 0);
 

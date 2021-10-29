@@ -31,6 +31,10 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         private async Task PublishCoreAsync(SignificantResult significant, MiniTicker ticker)
         {
+            _logger.LogInformation(
+                "{Type} {Name} reports Ticker = {Ticker:F8}",
+                TypeName, ticker.Symbol, ticker.ClosePrice);
+
             if (significant.Orders.Count > 0)
             {
                 var quantity = significant.Orders.Sum(x => x.ExecutedQuantity);

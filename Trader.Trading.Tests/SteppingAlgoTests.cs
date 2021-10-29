@@ -9,9 +9,6 @@ using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Commands.ClearOpenOrders;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Commands.RedeemSavings;
-using Outcompute.Trader.Trading.Providers;
-using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -36,13 +33,7 @@ namespace Outcompute.Trader.Trading.Tests
                 QuoteAsset = "XYZ"
             };
 
-            var orderProvider = Mock.Of<IOrderProvider>();
-            Mock.Get(orderProvider)
-                .Setup(x => x.GetOrdersAsync(symbol.Name, CancellationToken.None))
-                .Returns(Task.FromResult<IReadOnlyList<OrderQueryResult>>(ImmutableList<OrderQueryResult>.Empty))
-                .Verifiable();
-
-            var algo = new SteppingAlgo(logger, options, orderProvider);
+            var algo = new SteppingAlgo(logger, options);
 
             var provider = new ServiceCollection()
                 .BuildServiceProvider();
@@ -57,8 +48,6 @@ namespace Outcompute.Trader.Trading.Tests
             var result = await algo.GoAsync();
 
             // arrange
-            Mock.Get(orderProvider).VerifyAll();
-
             var command = Assert.IsType<ClearOpenOrdersCommand>(result);
             Assert.Equal(symbol, command.Symbol);
             Assert.Equal(OrderSide.Buy, command.Side);
@@ -91,13 +80,7 @@ namespace Outcompute.Trader.Trading.Tests
                 }
             };
 
-            var orderProvider = Mock.Of<IOrderProvider>();
-            Mock.Get(orderProvider)
-                .Setup(x => x.GetOrdersAsync(symbol.Name, CancellationToken.None))
-                .Returns(Task.FromResult<IReadOnlyList<OrderQueryResult>>(ImmutableList<OrderQueryResult>.Empty))
-                .Verifiable();
-
-            var algo = new SteppingAlgo(logger, options, orderProvider);
+            var algo = new SteppingAlgo(logger, options);
 
             var redeemSavingsExecutor = Mock.Of<IAlgoCommandExecutor<RedeemSavingsCommand, RedeemSavingsEvent>>();
             Mock.Get(redeemSavingsExecutor)
@@ -124,7 +107,6 @@ namespace Outcompute.Trader.Trading.Tests
             var result = await algo.GoAsync();
 
             // arrange
-            Mock.Get(orderProvider).VerifyAll();
             Mock.Get(redeemSavingsExecutor).VerifyAll();
 
             Assert.IsType<NoopAlgoCommand>(result);
@@ -161,13 +143,7 @@ namespace Outcompute.Trader.Trading.Tests
                 }
             };
 
-            var orderProvider = Mock.Of<IOrderProvider>();
-            Mock.Get(orderProvider)
-                .Setup(x => x.GetOrdersAsync(symbol.Name, CancellationToken.None))
-                .Returns(Task.FromResult<IReadOnlyList<OrderQueryResult>>(ImmutableList<OrderQueryResult>.Empty))
-                .Verifiable();
-
-            var algo = new SteppingAlgo(logger, options, orderProvider);
+            var algo = new SteppingAlgo(logger, options);
 
             var redeemSavingsExecutor = Mock.Of<IAlgoCommandExecutor<RedeemSavingsCommand, RedeemSavingsEvent>>();
             Mock.Get(redeemSavingsExecutor)
@@ -198,8 +174,6 @@ namespace Outcompute.Trader.Trading.Tests
             var result = await algo.GoAsync();
 
             // arrange
-            Mock.Get(orderProvider).VerifyAll();
-
             var command = Assert.IsType<CreateOrderCommand>(result);
             Assert.Equal(symbol, command.Symbol);
             Assert.Equal(OrderType.Limit, command.Type);

@@ -49,22 +49,6 @@ namespace Outcompute.Trader.Trading.Providers.Orders
             }
         }
 
-        public static Task<IReadOnlyList<OrderQueryResult>> GetNonSignificantTransientOrdersBySideAsync(this IOrderProvider provider, string symbol, OrderSide orderSide, CancellationToken cancellationToken = default)
-        {
-            if (provider is null) throw new ArgumentNullException(nameof(provider));
-
-            return GetNonSignificantTransientOrdersBySideCoreAsync(provider, symbol, orderSide, cancellationToken);
-
-            static async Task<IReadOnlyList<OrderQueryResult>> GetNonSignificantTransientOrdersBySideCoreAsync(IOrderProvider provider, string symbol, OrderSide orderSide, CancellationToken cancellationToken = default)
-            {
-                var orders = await provider.GetOrdersAsync(symbol, cancellationToken).ConfigureAwait(false);
-
-                return orders
-                    .Where(x => x.Side == orderSide && x.ExecutedQuantity <= 0m && x.Status.IsTransientStatus())
-                    .ToImmutableList();
-            }
-        }
-
         public static Task<IReadOnlyList<OrderQueryResult>> GetSignificantCompletedOrdersAsync(this IOrderProvider provider, string symbol, CancellationToken cancellationToken = default)
         {
             if (provider is null) throw new ArgumentNullException(nameof(provider));
@@ -77,22 +61,6 @@ namespace Outcompute.Trader.Trading.Providers.Orders
 
                 return orders
                     .Where(x => x.ExecutedQuantity > 0 && x.Status.IsCompletedStatus())
-                    .ToImmutableList();
-            }
-        }
-
-        public static Task<IReadOnlyList<OrderQueryResult>> GetTransientOrdersBySideAsync(this IOrderProvider provider, string symbol, OrderSide orderSide, CancellationToken cancellationToken = default)
-        {
-            if (provider is null) throw new ArgumentNullException(nameof(provider));
-
-            return GetTransientOrdersBySideCoreAsync(provider, symbol, orderSide, cancellationToken);
-
-            static async Task<IReadOnlyList<OrderQueryResult>> GetTransientOrdersBySideCoreAsync(IOrderProvider provider, string symbol, OrderSide orderSide, CancellationToken cancellationToken = default)
-            {
-                var orders = await provider.GetOrdersAsync(symbol, cancellationToken).ConfigureAwait(false);
-
-                return orders
-                    .Where(x => x.Side == orderSide && x.Status.IsTransientStatus())
                     .ToImmutableList();
             }
         }

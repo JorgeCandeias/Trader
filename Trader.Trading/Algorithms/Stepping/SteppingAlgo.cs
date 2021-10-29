@@ -3,8 +3,6 @@ using Microsoft.Extensions.Options;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Exceptions;
 using Outcompute.Trader.Trading.Commands;
-using Outcompute.Trader.Trading.Providers;
-using Outcompute.Trader.Trading.Providers.Orders;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,13 +16,11 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
     {
         private readonly ILogger _logger;
         private readonly IOptionsMonitor<SteppingAlgoOptions> _monitor;
-        private readonly IOrderProvider _orderProvider;
 
-        public SteppingAlgo(ILogger<SteppingAlgo> logger, IOptionsMonitor<SteppingAlgoOptions> options, IOrderProvider orderProvider)
+        public SteppingAlgo(ILogger<SteppingAlgo> logger, IOptionsMonitor<SteppingAlgoOptions> options)
         {
             _logger = logger;
             _monitor = options;
-            _orderProvider = orderProvider;
         }
 
         private static string TypeName => nameof(SteppingAlgo);
@@ -44,18 +40,14 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             // pin the options for this execution
             _options = _monitor.Get(Context.Name);
 
-            // get the non-significant open buy orders to the bands
-            var nonSignificantTransientBuyOrders = await _orderProvider
-                .GetNonSignificantTransientOrdersBySideAsync(Context.Symbol.Name, OrderSide.Buy, cancellationToken)
-                .ConfigureAwait(false);
+            var nonSignificantTransientBuyOrders = Context.Orders
+                .Where(x => x.Side == OrderSide.Buy && x.Status.IsTransientStatus() && x.ExecutedQuantity <= 0);
 
-            var transientSellOrders = await _orderProvider
-                .GetTransientOrdersBySideAsync(Context.Symbol.Name, OrderSide.Sell, cancellationToken)
-                .ConfigureAwait(false);
+            var transientSellOrders = Context.Orders
+                .Where(x => x.Side == OrderSide.Sell && x.Status.IsTransientStatus());
 
-            var transientBuyOrders = await _orderProvider
-                .GetTransientOrdersBySideAsync(Context.Symbol.Name, OrderSide.Buy, cancellationToken)
-                .ConfigureAwait(false);
+            var transientBuyOrders = Context.Orders
+                .Where(x => x.Side == OrderSide.Buy && x.Status.IsTransientStatus());
 
             _logger.LogInformation(
                 "{Type} {Name} reports latest asset price is {Price} {QuoteAsset}",
@@ -223,10 +215,10 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         /// <summary>
         /// Sets sell orders for open bands that do not have them yet.
         /// </summary>
-        private async ValueTask<IAlgoCommand?> TrySetBandSellOrdersAsync(IReadOnlyList<OrderQueryResult> transientSellOrders, CancellationToken cancellationToken = default)
+        private async ValueTask<IAlgoCommand?> TrySetBandSellOrdersAsync(IEnumerable<OrderQueryResult> transientSellOrders, CancellationToken cancellationToken = default)
         {
             // skip if we have reach the max sell orders
-            if (transientSellOrders.Count >= _options.MaxActiveSellOrders)
+            if (transientSellOrders.Take(_options.MaxActiveSellOrders).Count() >= _options.MaxActiveSellOrders)
             {
                 return null;
             }
@@ -290,7 +282,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         /// <summary>
         /// Identify and cancel rogue sell orders that do not belong to a trading band.
         /// </summary>
-        private IAlgoCommand? TryCancelRogueSellOrders(IReadOnlyList<OrderQueryResult> transientSellOrders)
+        private IAlgoCommand? TryCancelRogueSellOrders(IEnumerable<OrderQueryResult> transientSellOrders)
         {
             foreach (var orderId in transientSellOrders.Select(x => x.OrderId))
             {
@@ -306,7 +298,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
         /// <summary>
         /// Identify and cancel excess sell orders above the limit.
         /// </summary>
-        private IAlgoCommand? TryCancelExcessSellOrders(IReadOnlyList<OrderQueryResult> transientSellOrders)
+        private IAlgoCommand? TryCancelExcessSellOrders(IEnumerable<OrderQueryResult> transientSellOrders)
         {
             // get the order ids for the lowest open bands
             var bands = _bands
@@ -333,7 +325,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             return Context.QuoteSpotBalance.Free + (_options.UseQuoteSavings ? Context.QuoteSavingsBalance.FreeAmount : 0m);
         }
 
-        private async ValueTask<IAlgoCommand?> TrySetStartingTradeAsync(IReadOnlyList<OrderQueryResult> transientBuyOrders, CancellationToken cancellationToken = default)
+        private async ValueTask<IAlgoCommand?> TrySetStartingTradeAsync(IEnumerable<OrderQueryResult> transientBuyOrders, CancellationToken cancellationToken = default)
         {
             // disable the opening if required
             if (!_options.IsOpeningEnabled)
@@ -477,7 +469,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             return null;
         }
 
-        private IAlgoCommand? ApplyNonSignificantTransientBuyOrdersToBands(IReadOnlyList<OrderQueryResult> nonSignificantTransientBuyOrders)
+        private IAlgoCommand? ApplyNonSignificantTransientBuyOrdersToBands(IEnumerable<OrderQueryResult> nonSignificantTransientBuyOrders)
         {
             foreach (var order in nonSignificantTransientBuyOrders)
             {
@@ -593,7 +585,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             }
         }
 
-        private IAlgoCommand? TryCreateTradingBands(IReadOnlyList<OrderQueryResult> nonSignificantTransientBuyOrders, IReadOnlyList<OrderQueryResult> transientSellOrders)
+        private IAlgoCommand? TryCreateTradingBands(IEnumerable<OrderQueryResult> nonSignificantTransientBuyOrders, IEnumerable<OrderQueryResult> transientSellOrders)
         {
             _bands.Clear();
 

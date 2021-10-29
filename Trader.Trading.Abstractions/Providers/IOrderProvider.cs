@@ -33,6 +33,11 @@ namespace Outcompute.Trader.Trading.Providers
         Task<IReadOnlyList<OrderQueryResult>> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Gets filtered orders for the specified symbol sorted by <see cref="OrderQueryResult.OrderId"/>.
+        /// </summary>
+        Task<IReadOnlyList<OrderQueryResult>> GetOrdersByFilterAsync(string symbol, OrderSide? side, bool? isTransient, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Gets the order with the specified <paramref name="orderId"/> and <paramref name="symbol"/>.
         /// </summary>
         Task<OrderQueryResult?> TryGetOrderAsync(string symbol, long orderId, CancellationToken cancellationToken = default);

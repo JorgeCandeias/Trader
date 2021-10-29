@@ -6,7 +6,6 @@ using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Commands.RedeemSavings;
 using Outcompute.Trader.Trading.Providers;
-using Outcompute.Trader.Trading.Providers.Orders;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -34,7 +33,7 @@ namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder
         {
             // get current open orders
             var orders = await _orders
-                .GetTransientOrdersBySideAsync(command.Symbol.Name, command.Side, cancellationToken)
+                .GetOrdersByFilterAsync(command.Symbol.Name, command.Side, true, cancellationToken)
                 .ConfigureAwait(false);
 
             // cancel all non-desired orders

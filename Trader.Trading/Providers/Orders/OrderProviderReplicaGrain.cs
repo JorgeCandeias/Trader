@@ -6,6 +6,7 @@ using Outcompute.Trader.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Providers.Orders
@@ -72,6 +73,25 @@ namespace Outcompute.Trader.Trading.Providers.Orders
         public Task<IReadOnlyList<OrderQueryResult>> GetOrdersAsync()
         {
             return Task.FromResult<IReadOnlyList<OrderQueryResult>>(_orders.ToImmutable());
+        }
+
+        public Task<IReadOnlyList<OrderQueryResult>> GetOrdersByFilterAsync(OrderSide? side, bool? isTransient)
+        {
+            var query = _orders.AsEnumerable();
+
+            if (side.HasValue)
+            {
+                query = query.Where(x => x.Side == side.Value);
+            }
+
+            if (isTransient.HasValue)
+            {
+                query = query.Where(x => x.Status.IsTransientStatus() == isTransient.Value);
+            }
+
+            var result = query.ToImmutableList();
+
+            return Task.FromResult<IReadOnlyList<OrderQueryResult>>(result);
         }
 
         public Task SetOrderAsync(OrderQueryResult item)

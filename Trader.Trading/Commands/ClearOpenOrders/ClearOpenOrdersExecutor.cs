@@ -1,6 +1,5 @@
 ﻿using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Providers;
-using Outcompute.Trader.Trading.Providers.Orders;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,7 +19,7 @@ namespace Outcompute.Trader.Trading.Commands.ClearOpenOrders
         public async Task ExecuteAsync(IAlgoContext context, ClearOpenOrdersCommand command, CancellationToken cancellationToken = default)
         {
             var orders = await _orders
-                .GetTransientOrdersBySideAsync(command.Symbol.Name, command.Side, cancellationToken)
+                .GetOrdersByFilterAsync(command.Symbol.Name, command.Side, true, cancellationToken)
                 .ConfigureAwait(false);
 
             foreach (var order in orders)

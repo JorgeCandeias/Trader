@@ -15,7 +15,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
         protected async ValueTask<IAlgoCommand?> TrySetBandSellOrdersAsync(CancellationToken cancellationToken = default)
         {
             // skip if we have reach the max sell orders
-            if (Context.Orders.Where(x => x.Side == OrderSide.Sell && x.Status.IsTransientStatus()).Take(_options.MaxActiveSellOrders).Count() >= _options.MaxActiveSellOrders)
+            if (_transient.Where(x => x.Side == OrderSide.Sell).Take(_options.MaxActiveSellOrders).Count() >= _options.MaxActiveSellOrders)
             {
                 return null;
             }

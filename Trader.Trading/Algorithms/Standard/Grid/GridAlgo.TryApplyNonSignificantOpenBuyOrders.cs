@@ -9,7 +9,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
     {
         protected IAlgoCommand? TryApplyNonSignificantOpenBuyOrders()
         {
-            foreach (var order in Context.Orders.Where(x => x.Side == OrderSide.Buy && x.Status.IsTransientStatus() && x.ExecutedQuantity <= 0))
+            foreach (var order in _transient.Where(x => x.Side == OrderSide.Buy && x.ExecutedQuantity <= 0))
             {
                 if (order.Price is 0)
                 {

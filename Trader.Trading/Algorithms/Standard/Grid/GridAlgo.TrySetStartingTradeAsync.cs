@@ -45,7 +45,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
                 TypeName, Context.Name, lowBuyPrice, Context.Symbol.QuoteAsset, Context.Ticker.ClosePrice, Context.Symbol.QuoteAsset);
 
             // cancel the lowest open buy order with a open price lower than the lower band to the current price
-            var lowest = Context.Orders.FirstOrDefault(x => x.Side == OrderSide.Buy && x.Status.IsTransientStatus() && x.Price < lowBuyPrice);
+            var lowest = _transient.FirstOrDefault(x => x.Side == OrderSide.Buy && x.Price < lowBuyPrice);
             if (lowest is not null)
             {
                 return CancelOrder(Context.Symbol, lowest.OrderId);

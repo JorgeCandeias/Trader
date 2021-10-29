@@ -14,7 +14,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
             HashSet<Band>? used = null;
 
             // apply open sell orders to the bands
-            foreach (var order in Context.Orders.Where(x => x.Side == OrderSide.Sell && x.Status.IsTransientStatus()))
+            foreach (var order in _transient.Where(x => x.Side == OrderSide.Sell))
             {
                 // lazy create the used hashset to minimize garbage
                 used ??= new HashSet<Band>(_bands.Count, BandEqualityComparer.Default);

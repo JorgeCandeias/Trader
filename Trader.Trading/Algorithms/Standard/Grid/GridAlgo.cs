@@ -1,8 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Commands;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -26,11 +28,21 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
         /// </summary>
         private readonly SortedSet<Band> _bands = new(BandComparer.Default);
 
+        /// <summary>
+        /// Caches the very few transient orders to optimize loops in all steps.
+        /// </summary>
+        private readonly SortedSet<OrderQueryResult> _transient = new(OrderQueryResult.KeyComparer);
+
         public override async Task<IAlgoCommand> GoAsync(CancellationToken cancellationToken = default)
         {
             // start fresh for this tick - later on we can optimize with diffs
             _bands.Clear();
 
+            // cache the few transient orders so we dont have to loop through thousands of orders multiple times just to use a couple
+            _transient.Clear();
+            _transient.UnionWith(Context.Orders.Where(x => x.Status.IsTransientStatus()));
+
+            // evaluate rules one-by-one and let the first one win
             return
                 TryApplySignificantBuyOrders() ??
                 TryApplyNonSignificantOpenBuyOrders() ??

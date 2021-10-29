@@ -11,7 +11,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
         /// </summary>
         protected IAlgoCommand? TryCancelRogueSellOrders()
         {
-            foreach (var orderId in Context.Orders.Where(x => x.Side == OrderSide.Sell && x.Status.IsTransientStatus()).Select(x => x.OrderId))
+            foreach (var orderId in _transient.Where(x => x.Side == OrderSide.Sell).Select(x => x.OrderId))
             {
                 if (!_bands.Any(x => x.CloseOrderId == orderId))
                 {

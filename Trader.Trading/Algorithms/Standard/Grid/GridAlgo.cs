@@ -1,10 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Commands;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -30,9 +28,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
 
         public override async Task<IAlgoCommand> GoAsync(CancellationToken cancellationToken = default)
         {
-            var transientSellOrders = Context.Orders
-                .Where(x => x.Side == OrderSide.Sell && x.Status.IsTransientStatus());
-
             // start fresh for this tick - later on we can optimize with diffs
             _bands.Clear();
 
@@ -45,7 +40,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
                 await TrySetStartingTradeAsync(cancellationToken) ??
                 TryCancelRogueSellOrders() ??
                 TryCancelExcessSellOrders() ??
-                await TrySetBandSellOrdersAsync(transientSellOrders, cancellationToken) ??
+                await TrySetBandSellOrdersAsync(cancellationToken) ??
                 await TryCreateLowerBandOrderAsync(cancellationToken) ??
                 TryCloseOutOfRangeBands() ??
                 Noop();

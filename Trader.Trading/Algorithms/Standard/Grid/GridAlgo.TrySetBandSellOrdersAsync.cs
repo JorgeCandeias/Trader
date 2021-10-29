@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Commands;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,10 +12,10 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
         /// <summary>
         /// Sets sell orders for open bands that do not have them yet.
         /// </summary>
-        protected async ValueTask<IAlgoCommand?> TrySetBandSellOrdersAsync(IEnumerable<OrderQueryResult> transientSellOrders, CancellationToken cancellationToken = default)
+        protected async ValueTask<IAlgoCommand?> TrySetBandSellOrdersAsync(CancellationToken cancellationToken = default)
         {
             // skip if we have reach the max sell orders
-            if (transientSellOrders.Take(_options.MaxActiveSellOrders).Count() >= _options.MaxActiveSellOrders)
+            if (Context.Orders.Where(x => x.Side == OrderSide.Sell && x.Status.IsTransientStatus()).Take(_options.MaxActiveSellOrders).Count() >= _options.MaxActiveSellOrders)
             {
                 return null;
             }

@@ -5,7 +5,6 @@ using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Commands;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -124,20 +123,23 @@ namespace Outcompute.Trader.Trading.Algorithms.ValueAveraging
                 return true;
             }
 
-            // skip this rule if the significant total is under the minimum notional (leftovers)
-            if (Context.Significant.Orders.Sum(x => x.ExecutedQuantity * x.Price) < Context.Symbol.Filters.MinNotional.MinNotional)
+            // pin the last significant order
+            var last = Context.Significant.Orders.Max!;
+
+            // skip this rule if the significant total of the last order is under the minimum notional (leftovers)
+            if ((last.ExecutedQuantity * last.Price) < Context.Symbol.Filters.MinNotional.MinNotional)
             {
                 return true;
             }
 
-            // skip this rule if the significant quantity is under the minimum lot size (leftovers)
-            if (Context.Significant.Orders.Sum(x => x.ExecutedQuantity) < Context.Symbol.Filters.LotSize.StepSize)
+            // skip this rule if the significant quantity of the last order is under the minimum lot size (leftovers)
+            if (last.ExecutedQuantity < Context.Symbol.Filters.LotSize.MinQuantity)
             {
                 return true;
             }
 
-            // break on price not low enough from previous significant buy
-            var minPrice = Context.Significant.Orders.Max!.Price;
+            // break on price not low enough from last significant buy
+            var minPrice = last.Price;
             var lowPrice = minPrice * _options.PullbackRatio;
             if (Context.Ticker.ClosePrice > lowPrice)
             {

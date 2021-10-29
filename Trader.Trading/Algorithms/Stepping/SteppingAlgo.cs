@@ -41,10 +41,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             var transientBuyOrders = Context.Orders
                 .Where(x => x.Side == OrderSide.Buy && x.Status.IsTransientStatus());
 
-            _logger.LogInformation(
-                "{Type} {Name} reports latest asset price is {Price} {QuoteAsset}",
-                TypeName, Context.Name, Context.Ticker.ClosePrice, Context.Symbol.QuoteAsset);
-
             return
                 TryCreateTradingBands(nonSignificantTransientBuyOrders, transientSellOrders) ??
                 await TrySetStartingTradeAsync(transientBuyOrders, cancellationToken) ??

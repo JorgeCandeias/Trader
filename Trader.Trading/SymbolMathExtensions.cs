@@ -4,7 +4,7 @@ namespace Outcompute.Trader.Models
 {
     public static class SymbolMathExtensions
     {
-        public static decimal AdjustQuantityDownToLotSize(this decimal quantity, Symbol symbol)
+        public static decimal AdjustQuantityDownToLotStepSize(this decimal quantity, Symbol symbol)
         {
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 

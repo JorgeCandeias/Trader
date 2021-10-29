@@ -561,8 +561,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
                 var above = elected[1];
 
                 // break if the lowest band is already above min lot size and min notional after adjustment
-                if ((lowest.Quantity.AdjustQuantityDownToLotSize(Context.Symbol) >= Context.Symbol.Filters.LotSize.MinQuantity) &&
-                    (lowest.Quantity.AdjustQuantityDownToLotSize(Context.Symbol) * lowest.OpenPrice.AdjustPriceDownToTickSize(Context.Symbol)) >= Context.Symbol.Filters.MinNotional.MinNotional)
+                if ((lowest.Quantity.AdjustQuantityDownToLotStepSize(Context.Symbol) >= Context.Symbol.Filters.LotSize.MinQuantity) &&
+                    (lowest.Quantity.AdjustQuantityDownToLotStepSize(Context.Symbol) * lowest.OpenPrice.AdjustPriceDownToTickSize(Context.Symbol)) >= Context.Symbol.Filters.MinNotional.MinNotional)
                 {
                     break;
                 }
@@ -589,7 +589,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             // adjust the merged band
             if (merged is not null)
             {
-                merged.Quantity = merged.Quantity.AdjustQuantityDownToLotSize(Context.Symbol);
+                merged.Quantity = merged.Quantity.AdjustQuantityDownToLotStepSize(Context.Symbol);
             }
         }
 

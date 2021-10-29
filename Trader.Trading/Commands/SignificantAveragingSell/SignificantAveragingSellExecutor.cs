@@ -3,7 +3,6 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Commands.ClearOpenOrders;
 using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -64,7 +63,7 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
                 var candidateSellPrice = candidateAverageBuyPrice * minimumProfitRate;
 
                 // adjust the candidate average sell price up to the tick size
-                candidateSellPrice = Math.Ceiling(candidateSellPrice / symbol.Filters.Price.TickSize) * symbol.Filters.Price.TickSize;
+                candidateSellPrice = candidateSellPrice.AdjustPriceUpToTickSize(symbol);
 
                 // elect the order if the candidate average sell price is below the ticker
                 if (candidateSellPrice <= ticker.ClosePrice)
@@ -89,21 +88,24 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
                 return DesiredSell.None;
             }
 
+            // adjust the quantity down to the lot size filter
+            quantity = quantity.AdjustQuantityDownToLotStepSize(symbol);
+
             // break if the quantity is under the minimum lot size
-            if (quantity < symbol.Filters.LotSize.StepSize)
+            if (quantity < symbol.Filters.LotSize.MinQuantity)
             {
                 _logger.LogError(
                     "{Type} {Name} cannot set sell order for {Quantity} {Asset} because the quantity is under the minimum lot size of {MinLotSize} {Asset}",
-                    TypeName, symbol.Name, quantity, symbol.BaseAsset, symbol.Filters.LotSize.StepSize, symbol.BaseAsset);
+                    TypeName, symbol.Name, quantity, symbol.BaseAsset, symbol.Filters.LotSize.MinQuantity, symbol.BaseAsset);
 
                 return DesiredSell.None;
             }
 
-            // adjust the quantity down to the lot size filter
-            quantity = Math.Floor(quantity / symbol.Filters.LotSize.StepSize) * symbol.Filters.LotSize.StepSize;
+            // calculate the sell notional
+            var total = quantity * ticker.ClosePrice;
 
             // check if the sell is under the minimum notional filter
-            if (quantity * ticker.ClosePrice < symbol.Filters.MinNotional.MinNotional)
+            if (total < symbol.Filters.MinNotional.MinNotional)
             {
                 _logger.LogError(
                     "{Type} {Name} cannot set sell order for {Quantity} {Asset} at {Price} {Quote} totalling {Total} {Quote} because it is under the minimum notional of {MinNotional} {Quote}",

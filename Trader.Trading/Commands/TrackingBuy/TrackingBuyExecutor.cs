@@ -77,7 +77,7 @@ namespace Outcompute.Trader.Trading.Commands.TrackingBuy
             var quantity = total / lowBuyPrice;
 
             // round it down to the lot size step
-            quantity = quantity.AdjustQuantityDownToLotSize(command.Symbol);
+            quantity = quantity.AdjustQuantityDownToLotStepSize(command.Symbol);
 
             // calculat the true notional after adjustments
             total = quantity * lowBuyPrice;

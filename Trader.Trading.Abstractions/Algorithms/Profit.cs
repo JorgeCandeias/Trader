@@ -2,6 +2,7 @@
 using Outcompute.Trader.Models;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace Outcompute.Trader.Trading.Algorithms
@@ -29,53 +30,41 @@ namespace Outcompute.Trader.Trading.Algorithms
         {
             if (items is null) throw new ArgumentNullException(nameof(items));
 
-            var today = 0m;
-            var yesterday = 0m;
-            var thisWeek = 0m;
-            var prevWeek = 0m;
-            var thisMonth = 0m;
-            var thisYear = 0m;
-            var all = 0m;
-            var d1 = 0m;
-            var d7 = 0m;
-            var d30 = 0m;
+            var builder = CreateBuilder();
 
-            string? quote = null;
-            string? asset = null;
-            string? symbol = null;
             var first = true;
 
             foreach (var item in items)
             {
                 if (first)
                 {
-                    quote = item.Quote;
-                    asset = item.Asset;
-                    symbol = item.Symbol;
+                    builder.Symbol = item.Symbol;
+                    builder.Asset = item.Asset;
+                    builder.Quote = item.Quote;
 
                     first = false;
                 }
                 else
                 {
-                    if (item.Quote != quote) throw new InvalidOperationException($"Cannot aggregate profit from different quotes '{quote}' and '{item.Quote}'");
+                    if (item.Quote != builder.Quote) throw new InvalidOperationException($"Cannot aggregate profit from different quotes '{builder.Quote}' and '{item.Quote}'");
 
-                    if (item.Asset != asset) asset = null;
-                    if (item.Symbol != symbol) symbol = null;
+                    if (item.Asset != builder.Asset) builder.Asset = string.Empty;
+                    if (item.Symbol != builder.Symbol) builder.Symbol = string.Empty;
                 }
 
-                today += item.Today;
-                yesterday += item.Yesterday;
-                thisWeek += item.ThisWeek;
-                prevWeek += item.PrevWeek;
-                thisMonth += item.ThisMonth;
-                thisYear += item.ThisYear;
-                all += item.All;
-                d1 += item.D1;
-                d7 += item.D7;
-                d30 += item.D30;
+                builder.Today += item.Today;
+                builder.Yesterday += item.Yesterday;
+                builder.ThisWeek += item.ThisWeek;
+                builder.PrevWeek += item.PrevWeek;
+                builder.ThisMonth += item.ThisMonth;
+                builder.ThisYear += item.ThisYear;
+                builder.All += item.All;
+                builder.D1 += item.D1;
+                builder.D7 += item.D7;
+                builder.D30 += item.D30;
             }
 
-            return new Profit(symbol ?? string.Empty, asset ?? string.Empty, quote ?? string.Empty, today, yesterday, thisWeek, prevWeek, thisMonth, thisYear, all, d1, d7, d30);
+            return builder.ToProfit();
         }
 
         public Profit Add(Profit item)
@@ -107,66 +96,93 @@ namespace Outcompute.Trader.Trading.Algorithms
 
             var lookup = commissions.ToLookup(x => (x.Asset, x.OrderId, x.TradeId));
 
-            var todayProfit = 0m;
-            var yesterdayProfit = 0m;
-            var thisWeekProfit = 0m;
-            var prevWeekProfit = 0m;
-            var thisMonthProfit = 0m;
-            var thisYearProfit = 0m;
-            var all = 0m;
-            var d1 = 0m;
-            var d7 = 0m;
-            var d30 = 0m;
-
-            // hold the current time so profit assignments are consistent
-            var window1d = now.AddDays(-1);
-            var window7d = now.AddDays(-7);
-            var window30d = now.AddDays(-30);
-            var today = now.Date;
+            var builder = CreateBuilder();
+            builder.Symbol = symbol.Name;
+            builder.Asset = symbol.BaseAsset;
+            builder.Quote = symbol.QuoteAsset;
 
             foreach (var profit in profits)
             {
-                // apply this profit event
-                Apply(profit, profit.Profit);
+                builder.Add(profit, now);
 
                 // if the commission was taken from the sell asset then remove it from profit
                 foreach (var loss in lookup[(profit.Symbol.QuoteAsset, profit.SellOrderId, profit.SellTradeId)].Select(x => x.Commission))
                 {
-                    Apply(profit, -loss);
+                    builder.Add(profit.EventTime, now, -loss);
                 }
             }
 
-            return new Profit(
-                symbol.Name,
-                symbol.BaseAsset,
-                symbol.QuoteAsset,
-                todayProfit,
-                yesterdayProfit,
-                thisWeekProfit,
-                prevWeekProfit,
-                thisMonthProfit,
-                thisYearProfit,
-                all,
-                d1,
-                d7,
-                d30);
+            return builder.ToProfit();
+        }
 
-            void Apply(ProfitEvent profit, decimal value)
+        [SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Builder")]
+        public class Builder
+        {
+            internal Builder()
             {
+            }
+
+            // identifiers
+            public string Symbol { get; set; } = string.Empty;
+            public string Asset { get; set; } = string.Empty;
+            public string Quote { get; set; } = string.Empty;
+
+            // fixed windows
+            public decimal Today { get; set; }
+            public decimal Yesterday { get; set; }
+            public decimal ThisWeek { get; set; }
+            public decimal PrevWeek { get; set; }
+            public decimal ThisMonth { get; set; }
+            public decimal ThisYear { get; set; }
+            public decimal All { get; set; }
+
+            // rolling windows
+            public decimal D1 { get; set; }
+            public decimal D7 { get; set; }
+            public decimal D30 { get; set; }
+
+            public Profit ToProfit() => new(Symbol, Asset, Quote, Today, Yesterday, ThisWeek, PrevWeek, ThisMonth, ThisYear, All, D1, D7, D30);
+
+            public void Add(ProfitEvent profit, DateTime now)
+            {
+                if (profit is null)
+                {
+                    throw new ArgumentNullException(nameof(profit));
+                }
+
                 // assign to the appropriate counters
-                if (profit.EventTime.Date == today) todayProfit += value;
-                if (profit.EventTime.Date == today.AddDays(-1)) yesterdayProfit += value;
-                if (profit.EventTime.Date >= today.Previous(DayOfWeek.Sunday)) thisWeekProfit += value;
-                if (profit.EventTime.Date >= today.Previous(DayOfWeek.Sunday, 2) && profit.EventTime.Date < today.Previous(DayOfWeek.Sunday)) prevWeekProfit += value;
-                if (profit.EventTime.Date >= today.AddDays(-today.Day + 1)) thisMonthProfit += value;
-                if (profit.EventTime.Date >= new DateTime(today.Year, 1, 1)) thisYearProfit += value;
-                all += value;
+                if (profit.EventTime.Date == now.Date) Today += profit.Profit;
+                if (profit.EventTime.Date == now.Date.AddDays(-1)) Yesterday += profit.Profit;
+                if (profit.EventTime.Date >= now.Date.Previous(DayOfWeek.Sunday)) ThisWeek += profit.Profit;
+                if (profit.EventTime.Date >= now.Date.Previous(DayOfWeek.Sunday, 2) && profit.EventTime.Date < now.Date.Previous(DayOfWeek.Sunday)) PrevWeek += profit.Profit;
+                if (profit.EventTime.Date >= now.Date.AddDays(-now.Day + 1)) ThisMonth += profit.Profit;
+                if (profit.EventTime.Date >= new DateTime(now.Year, 1, 1)) ThisYear += profit.Profit;
+                All += profit.Profit;
 
                 // assign to the window counters
-                if (profit.EventTime >= window1d) d1 += value;
-                if (profit.EventTime >= window7d) d7 += value;
-                if (profit.EventTime >= window30d) d30 += value;
+                if (profit.EventTime >= now.AddDays(-1)) D1 += profit.Profit;
+                if (profit.EventTime >= now.AddDays(-7)) D7 += profit.Profit;
+                if (profit.EventTime >= now.AddDays(-30)) D30 += profit.Profit;
+            }
+
+            public void Add(DateTime time, DateTime now, decimal value)
+            {
+                // assign to the appropriate counters
+                if (time.Date == now.Date) Today += value;
+                if (time.Date == now.Date.AddDays(-1)) Yesterday += value;
+                if (time.Date >= now.Date.Previous(DayOfWeek.Sunday)) ThisWeek += value;
+                if (time.Date >= now.Date.Previous(DayOfWeek.Sunday, 2) && time.Date < now.Date.Previous(DayOfWeek.Sunday)) PrevWeek += value;
+                if (time.Date >= now.Date.AddDays(-now.Day + 1)) ThisMonth += value;
+                if (time.Date >= new DateTime(now.Year, 1, 1)) ThisYear += value;
+                All += value;
+
+                // assign to the window counters
+                if (time >= now.AddDays(-1)) D1 += value;
+                if (time >= now.AddDays(-7)) D7 += value;
+                if (time >= now.AddDays(-30)) D30 += value;
             }
         }
+
+        public static Builder CreateBuilder() => new();
     }
 }

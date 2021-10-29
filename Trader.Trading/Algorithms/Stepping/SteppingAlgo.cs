@@ -213,7 +213,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             var quantity = total / lowerPrice;
 
             // round it down to the lot size step
-            quantity = quantity.AdjustQuantityUpToLotSize(Context.Symbol);
+            quantity = quantity.AdjustQuantityUpToLotStepSize(Context.Symbol);
 
             // place the buy order
             var tag = CreateTag(Context.Symbol.Name, lowerPrice);
@@ -422,7 +422,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Stepping
             var quantity = total / lowBuyPrice;
 
             // adjust the quantity up to the lot size
-            quantity = quantity.AdjustQuantityUpToLotSize(Context.Symbol);
+            quantity = quantity.AdjustQuantityUpToLotStepSize(Context.Symbol);
 
             // place a limit order at the current price
             var tag = CreateTag(Context.Symbol.Name, lowBuyPrice);

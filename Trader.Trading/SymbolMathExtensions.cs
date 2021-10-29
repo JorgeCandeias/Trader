@@ -11,7 +11,7 @@ namespace Outcompute.Trader.Models
             return Math.Floor(quantity / symbol.Filters.LotSize.StepSize) * symbol.Filters.LotSize.StepSize;
         }
 
-        public static decimal AdjustQuantityUpToLotSize(this decimal quantity, Symbol symbol)
+        public static decimal AdjustQuantityUpToLotStepSize(this decimal quantity, Symbol symbol)
         {
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 

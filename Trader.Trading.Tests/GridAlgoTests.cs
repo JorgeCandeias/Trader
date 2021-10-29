@@ -4,7 +4,7 @@ using Microsoft.Extensions.Options;
 using Moq;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
-using Outcompute.Trader.Trading.Algorithms.Standard.Stepping;
+using Outcompute.Trader.Trading.Algorithms.Standard.Grid;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Commands.ClearOpenOrders;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
@@ -15,16 +15,16 @@ using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
 {
-    public class SteppingAlgoTests
+    public class GridAlgoTests
     {
         [Fact]
         public async Task ReturnsClearOpenOrdersOnDisabledOpening()
         {
             // arrange
             var name = "MyAlgo";
-            var logger = NullLogger<SteppingAlgo>.Instance;
+            var logger = NullLogger<GridAlgo>.Instance;
 
-            var options = Options.Create(new SteppingAlgoOptions
+            var options = Options.Create(new GridAlgoOptions
             {
                 IsOpeningEnabled = false
             });
@@ -36,7 +36,7 @@ namespace Outcompute.Trader.Trading.Tests
                 QuoteAsset = "XYZ"
             };
 
-            var algo = new SteppingAlgo(logger, options);
+            var algo = new GridAlgo(logger, options);
 
             var provider = new ServiceCollection()
                 .BuildServiceProvider();
@@ -61,9 +61,9 @@ namespace Outcompute.Trader.Trading.Tests
         {
             // arrange
             var name = "MyAlgo";
-            var logger = NullLogger<SteppingAlgo>.Instance;
+            var logger = NullLogger<GridAlgo>.Instance;
 
-            var options = Options.Create(new SteppingAlgoOptions
+            var options = Options.Create(new GridAlgoOptions
             {
                 IsOpeningEnabled = true
             });
@@ -86,7 +86,7 @@ namespace Outcompute.Trader.Trading.Tests
                 }
             };
 
-            var algo = new SteppingAlgo(logger, options);
+            var algo = new GridAlgo(logger, options);
 
             var redeemSavingsExecutor = Mock.Of<IAlgoCommandExecutor<RedeemSavingsCommand, RedeemSavingsEvent>>();
             Mock.Get(redeemSavingsExecutor)
@@ -123,9 +123,9 @@ namespace Outcompute.Trader.Trading.Tests
         {
             // arrange
             var name = "MyAlgo";
-            var logger = NullLogger<SteppingAlgo>.Instance;
+            var logger = NullLogger<GridAlgo>.Instance;
 
-            var options = Options.Create(new SteppingAlgoOptions
+            var options = Options.Create(new GridAlgoOptions
             {
                 IsOpeningEnabled = true
             });
@@ -152,7 +152,7 @@ namespace Outcompute.Trader.Trading.Tests
                 }
             };
 
-            var algo = new SteppingAlgo(logger, options);
+            var algo = new GridAlgo(logger, options);
 
             var redeemSavingsExecutor = Mock.Of<IAlgoCommandExecutor<RedeemSavingsCommand, RedeemSavingsEvent>>();
             Mock.Get(redeemSavingsExecutor)

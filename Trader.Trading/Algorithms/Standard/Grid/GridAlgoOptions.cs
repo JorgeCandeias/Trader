@@ -1,9 +1,9 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace Outcompute.Trader.Trading.Algorithms.Standard.Stepping
+namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
 {
-    public class SteppingAlgoOptions
+    public class GridAlgoOptions
     {
         [Required]
         [Range(1, 999)]

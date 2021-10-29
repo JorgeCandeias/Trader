@@ -10,20 +10,20 @@ using System.Threading;
 using System.Threading.Tasks;
 using static System.String;
 
-namespace Outcompute.Trader.Trading.Algorithms.Standard.Stepping
+namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
 {
-    internal class SteppingAlgo : SymbolAlgo
+    internal class GridAlgo : SymbolAlgo
     {
         private readonly ILogger _logger;
-        private readonly SteppingAlgoOptions _options;
+        private readonly GridAlgoOptions _options;
 
-        public SteppingAlgo(ILogger<SteppingAlgo> logger, IOptions<SteppingAlgoOptions> options)
+        public GridAlgo(ILogger<GridAlgo> logger, IOptions<GridAlgoOptions> options)
         {
             _logger = logger;
             _options = options.Value;
         }
 
-        private static string TypeName => nameof(SteppingAlgo);
+        private static string TypeName => nameof(GridAlgo);
 
         /// <summary>
         /// Keeps track of the bands managed by the algorithm.

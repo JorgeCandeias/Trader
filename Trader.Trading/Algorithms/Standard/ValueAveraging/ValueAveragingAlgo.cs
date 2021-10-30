@@ -56,12 +56,12 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
                 // set a tracking buy if we hit a buy signal
                 TrySignalBuyOrder()
                     ? SetTrackingBuy()
-                    : Noop(),
+                    : ClearOpenOrders(Context.Symbol, OrderSide.Buy),
 
                 // place an averaging sell if we hit a sell signal
                 TrySignalSellOrder()
                     ? SignificantAveragingSell(Context.Ticker, Context.Significant.Orders, _options.MinSellProfitRate, _options.RedeemSavings)
-                    : Noop());
+                    : ClearOpenOrders(Context.Symbol, OrderSide.Sell));
         }
 
         private int GetMaxPeriods()

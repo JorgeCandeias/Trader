@@ -6,6 +6,7 @@ using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging;
+using Outcompute.Trader.Trading.Commands.ClearOpenOrders;
 using Outcompute.Trader.Trading.Commands.Many;
 using Outcompute.Trader.Trading.Providers;
 using System;
@@ -21,7 +22,7 @@ namespace Outcompute.Trader.Trading.Tests
     public class ValueAveragingAlgoTests
     {
         [Fact]
-        public async Task ReturnsNoopOnNoSignals()
+        public async Task ReturnsClearOrdersOnNoSignals()
         {
             // arrange
             var name = "MyAlgo";
@@ -74,8 +75,14 @@ namespace Outcompute.Trader.Trading.Tests
             var command = Assert.IsType<ManyCommand>(result);
             var steps = command.Commands.ToArray();
             Assert.Equal(2, steps.Length);
-            Assert.IsType<NoopAlgoCommand>(steps[0]);
-            Assert.IsType<NoopAlgoCommand>(steps[1]);
+
+            var sub0 = Assert.IsType<ClearOpenOrdersCommand>(steps[0]);
+            Assert.Equal(symbol, sub0.Symbol);
+            Assert.Equal(OrderSide.Buy, sub0.Side);
+
+            var sub1 = Assert.IsType<ClearOpenOrdersCommand>(steps[1]);
+            Assert.Equal(symbol, sub1.Symbol);
+            Assert.Equal(OrderSide.Sell, sub1.Side);
 
             Mock.Get(klineProvider).VerifyAll();
         }

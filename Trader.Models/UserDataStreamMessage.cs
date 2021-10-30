@@ -3,18 +3,32 @@ using System.Collections.Immutable;
 
 namespace Outcompute.Trader.Models
 {
-    public record UserDataStreamMessage();
+    public record UserDataStreamMessage()
+    {
+        public static UserDataStreamMessage Empty { get; } = new UserDataStreamMessage();
+    }
 
     public record OutboundAccountPositionUserDataStreamMessage(
         DateTime EventTime,
         DateTime LastAccountUpdateTime,
         ImmutableList<OutboundAccountPositionBalanceUserDataStreamMessage> Balances)
-        : UserDataStreamMessage;
+        : UserDataStreamMessage
+    {
+        public static new OutboundAccountPositionUserDataStreamMessage Empty { get; } =
+            new OutboundAccountPositionUserDataStreamMessage(
+                DateTime.MinValue,
+                DateTime.MinValue,
+                ImmutableList<OutboundAccountPositionBalanceUserDataStreamMessage>.Empty);
+    }
 
     public record OutboundAccountPositionBalanceUserDataStreamMessage(
         string Asset,
         decimal Free,
-        decimal Locked);
+        decimal Locked)
+    {
+        public static OutboundAccountPositionBalanceUserDataStreamMessage Empty { get; } =
+            new OutboundAccountPositionBalanceUserDataStreamMessage(string.Empty, 0, 0);
+    }
 
     public record BalanceUpdateUserDataStreamMessage(
         DateTime EventTime,
@@ -53,7 +67,39 @@ namespace Outcompute.Trader.Models
         decimal CummulativeQuoteAssetTransactedQuantity,
         decimal LastQuoteAssetTransactedQuantity,
         decimal QuoteOrderQuantity)
-        : UserDataStreamMessage;
+        : UserDataStreamMessage
+    {
+        public static new ExecutionReportUserDataStreamMessage Empty { get; } = new ExecutionReportUserDataStreamMessage(
+            DateTime.MinValue,
+            string.Empty,
+            string.Empty,
+            OrderSide.None,
+            OrderType.None,
+            TimeInForce.None,
+            0,
+            0,
+            0,
+            0,
+            0,
+            string.Empty,
+            ExecutionType.None,
+            OrderStatus.None,
+            string.Empty,
+            0,
+            0,
+            0,
+            0,
+            0,
+            string.Empty,
+            DateTime.MinValue,
+            0,
+            false,
+            false,
+            DateTime.MinValue,
+            0,
+            0,
+            0);
+    }
 
     public record ListStatusUserDataStreamMessage(
         DateTime EventTime,

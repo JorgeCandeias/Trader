@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
+using Orleans.Timers;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
@@ -31,10 +32,11 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
         private readonly IOrderProvider _orders;
         private readonly IBalanceProvider _balances;
         private readonly ITradeProvider _trades;
+        private readonly ITimerRegistry _timers;
 
         private readonly HashSet<string> _symbols;
 
-        public BinanceUserDataGrain(IOptions<BinanceOptions> options, ILogger<BinanceUserDataGrain> logger, ITradingService trader, IUserDataStreamClientFactory streams, IOrderSynchronizer orders, ITradeSynchronizer trades, ISystemClock clock, IMapper mapper, IHostApplicationLifetime lifetime, IOrderProvider orderProvider, IBalanceProvider balances, ITradeProvider tradeProvider, IAlgoDependencyInfo dependencies)
+        public BinanceUserDataGrain(IOptions<BinanceOptions> options, ILogger<BinanceUserDataGrain> logger, ITradingService trader, IUserDataStreamClientFactory streams, IOrderSynchronizer orders, ITradeSynchronizer trades, ISystemClock clock, IMapper mapper, IHostApplicationLifetime lifetime, IOrderProvider orderProvider, IBalanceProvider balances, ITradeProvider tradeProvider, IAlgoDependencyInfo dependencies, ITimerRegistry timers)
         {
             _options = options.Value;
             _logger = logger;
@@ -48,6 +50,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
             _orders = orderProvider;
             _balances = balances;
             _trades = tradeProvider;
+            _timers = timers;
 
             _symbols = dependencies.GetSymbols().ToHashSet();
 
@@ -70,9 +73,11 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
         // this worker will process and publish messages in the background so we dont hold up the binance stream
         private readonly ActionBlock<UserDataStreamMessage> _pusher;
 
+        private IDisposable? _timer;
+
         public override Task OnActivateAsync()
         {
-            RegisterTimer(_ => TickEnsureWorkAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+            _timer = _timers.RegisterTimer(this, _ => TickEnsureWorkAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
 
             _logger.LogInformation("{Name} started", Name);
 
@@ -81,6 +86,8 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 
         public override async Task OnDeactivateAsync()
         {
+            _timer?.Dispose();
+
             // gracefully unregister the user stream
             if (_listenKey is not null)
             {

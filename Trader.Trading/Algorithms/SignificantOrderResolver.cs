@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
-using Outcompute.Trader.Trading.Providers.Orders;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
@@ -36,7 +35,7 @@ namespace Outcompute.Trader.Trading.Algorithms
         public async Task<SignificantResult> ResolveAsync(Symbol symbol, CancellationToken cancellationToken = default)
         {
             var orders = await _orders
-                .GetSignificantCompletedOrdersAsync(symbol.Name, cancellationToken)
+                .GetOrdersByFilterAsync(symbol.Name, null, false, true, cancellationToken)
                 .ConfigureAwait(false);
 
             var trades = await _trades

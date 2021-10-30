@@ -75,7 +75,7 @@ namespace Outcompute.Trader.Trading.Providers.Orders
             return Task.FromResult<IReadOnlyList<OrderQueryResult>>(_orders.ToImmutable());
         }
 
-        public Task<IReadOnlyList<OrderQueryResult>> GetOrdersByFilterAsync(OrderSide? side, bool? isTransient)
+        public Task<IReadOnlyList<OrderQueryResult>> GetOrdersByFilterAsync(OrderSide? side, bool? transient, bool? significant)
         {
             var query = _orders.AsEnumerable();
 
@@ -84,9 +84,14 @@ namespace Outcompute.Trader.Trading.Providers.Orders
                 query = query.Where(x => x.Side == side.Value);
             }
 
-            if (isTransient.HasValue)
+            if (transient.HasValue)
             {
-                query = query.Where(x => x.Status.IsTransientStatus() == isTransient.Value);
+                query = query.Where(x => x.Status.IsTransientStatus() == transient.Value);
+            }
+
+            if (significant.HasValue)
+            {
+                query = query.Where(x => (x.ExecutedQuantity > 0) == significant.Value);
             }
 
             var result = query.ToImmutableList();

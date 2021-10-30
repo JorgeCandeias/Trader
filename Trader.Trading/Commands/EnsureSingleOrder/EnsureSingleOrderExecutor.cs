@@ -33,7 +33,7 @@ namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder
         {
             // get current open orders
             var orders = await _orders
-                .GetOrdersByFilterAsync(command.Symbol.Name, command.Side, true, cancellationToken)
+                .GetOrdersByFilterAsync(command.Symbol.Name, command.Side, true, null, cancellationToken)
                 .ConfigureAwait(false);
 
             // cancel all non-desired orders

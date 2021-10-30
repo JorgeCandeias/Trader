@@ -9,7 +9,7 @@ namespace Outcompute.Trader.Trading.Providers.Orders
     {
         Task<IReadOnlyList<OrderQueryResult>> GetOrdersAsync();
 
-        Task<IReadOnlyList<OrderQueryResult>> GetOrdersByFilterAsync(OrderSide? side, bool? isTransient);
+        Task<IReadOnlyList<OrderQueryResult>> GetOrdersByFilterAsync(OrderSide? side, bool? transient, bool? significant);
 
         Task<OrderQueryResult?> TryGetOrderAsync(long orderId);
 

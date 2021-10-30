@@ -29,11 +29,11 @@ namespace Outcompute.Trader.Trading.Providers.Orders
             return _factory.GetOrderProviderReplicaGrain(symbol).GetOrdersAsync();
         }
 
-        public Task<IReadOnlyList<OrderQueryResult>> GetOrdersByFilterAsync(string symbol, OrderSide? side, bool? isTransient, CancellationToken cancellationToken = default)
+        public Task<IReadOnlyList<OrderQueryResult>> GetOrdersByFilterAsync(string symbol, OrderSide? side, bool? transient, bool? significant, CancellationToken cancellationToken = default)
         {
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
-            return _factory.GetOrderProviderReplicaGrain(symbol).GetOrdersByFilterAsync(side, isTransient);
+            return _factory.GetOrderProviderReplicaGrain(symbol).GetOrdersByFilterAsync(side, transient, significant);
         }
 
         public Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default)

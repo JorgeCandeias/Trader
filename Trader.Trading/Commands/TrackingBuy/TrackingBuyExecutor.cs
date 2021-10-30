@@ -36,7 +36,7 @@ namespace Outcompute.Trader.Trading.Commands.TrackingBuy
         public async Task ExecuteAsync(IAlgoContext context, TrackingBuyCommand command, CancellationToken cancellationToken = default)
         {
             var ticker = await _tickers.GetRequiredTickerAsync(command.Symbol.Name, cancellationToken).ConfigureAwait(false);
-            var orders = await _orders.GetOrdersByFilterAsync(command.Symbol.Name, OrderSide.Buy, true, cancellationToken).ConfigureAwait(false);
+            var orders = await _orders.GetOrdersByFilterAsync(command.Symbol.Name, OrderSide.Buy, true, null, cancellationToken).ConfigureAwait(false);
             var balance = await _balances.GetRequiredBalanceAsync(command.Symbol.QuoteAsset, cancellationToken).ConfigureAwait(false);
             var savings = await _savings.GetPositionOrZeroAsync(command.Symbol.QuoteAsset, cancellationToken).ConfigureAwait(false);
 

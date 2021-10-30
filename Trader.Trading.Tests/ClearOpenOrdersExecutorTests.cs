@@ -28,7 +28,7 @@ namespace Outcompute.Trader.Trading.Tests
             var order = OrderQueryResult.Empty with { Symbol = symbol.Name, OrderId = orderId, Status = OrderStatus.New, Side = side };
             var orders = Mock.Of<IOrderProvider>();
             Mock.Get(orders)
-                .Setup(x => x.GetOrdersByFilterAsync(symbol.Name, side, true, CancellationToken.None))
+                .Setup(x => x.GetOrdersByFilterAsync(symbol.Name, side, true, null, CancellationToken.None))
                 .Returns(Task.FromResult<IReadOnlyList<OrderQueryResult>>(new[] { order }))
                 .Verifiable();
             Mock.Get(orders)

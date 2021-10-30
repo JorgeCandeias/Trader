@@ -149,7 +149,7 @@ namespace Outcompute.Trader.Trading.Binance.Tests
 
             // act - tick timer
             await timer.AsyncCallback(timer.State);
-            await Task.Delay(100);
+            await Task.Delay(1000);
 
             // act - deactivate
             await grain.OnDeactivateAsync();

@@ -162,9 +162,9 @@ namespace Outcompute.Trader.App
 
                 var klines = await _context.GetKlineProvider().GetKlinesAsync(options.Symbol, KlineInterval.Days1, start, end, cancellationToken).ConfigureAwait(false);
 
-                _logger.LogInformation("{Name} reports SMA7 = {Value}", nameof(TestAlgo), klines.LastSimpleMovingAverage(x => x.ClosePrice, 7));
-                _logger.LogInformation("{Name} reports SMA25 = {Value}", nameof(TestAlgo), klines.LastSimpleMovingAverage(x => x.ClosePrice, 25));
-                _logger.LogInformation("{Name} reports SMA99 = {Value}", nameof(TestAlgo), klines.LastSimpleMovingAverage(x => x.ClosePrice, 99));
+                _logger.LogInformation("{Name} reports SMA7 = {Value}", nameof(TestAlgo), klines.LastSma(x => x.ClosePrice, 7));
+                _logger.LogInformation("{Name} reports SMA25 = {Value}", nameof(TestAlgo), klines.LastSma(x => x.ClosePrice, 25));
+                _logger.LogInformation("{Name} reports SMA99 = {Value}", nameof(TestAlgo), klines.LastSma(x => x.ClosePrice, 99));
                 _logger.LogInformation("{Name} reports RSI6 = {Value}", nameof(TestAlgo), klines.RelativeStrengthIndex(x => x.ClosePrice, 6));
                 _logger.LogInformation("{Name} reports RSI12 = {Value}", nameof(TestAlgo), klines.RelativeStrengthIndex(x => x.ClosePrice, 12));
                 _logger.LogInformation("{Name} reports RSI24 = {Value}", nameof(TestAlgo), klines.RelativeStrengthIndex(x => x.ClosePrice, 24));

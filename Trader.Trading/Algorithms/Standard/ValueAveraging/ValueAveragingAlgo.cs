@@ -42,9 +42,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             var klines = await Context.GetKlinesAsync(Context.Symbol.Name, _options.KlineInterval, start, end, cancellationToken);
 
             // calculate the current moving averages
-            _smaA = klines.LastSimpleMovingAverage(x => x.ClosePrice, _options.SmaPeriodsA);
-            _smaB = klines.LastSimpleMovingAverage(x => x.ClosePrice, _options.SmaPeriodsB);
-            _smaC = klines.LastSimpleMovingAverage(x => x.ClosePrice, _options.SmaPeriodsC);
+            _smaA = klines.LastSma(x => x.ClosePrice, _options.SmaPeriodsA);
+            _smaB = klines.LastSma(x => x.ClosePrice, _options.SmaPeriodsB);
+            _smaC = klines.LastSma(x => x.ClosePrice, _options.SmaPeriodsC);
 
             // calculate the rsi values
             _rsiA = klines.LastRelativeStrengthIndexOrDefault(x => x.ClosePrice, _options.RsiPeriodsA);

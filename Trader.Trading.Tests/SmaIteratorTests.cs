@@ -5,13 +5,13 @@ using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
 {
-    public class RmaIteratorTests
+    public class SmaIteratorTests
     {
         [Fact]
         public void ThrowsOnNullSource()
         {
             // act
-            static RmaIterator Test() => new(null!, 14);
+            static SmaIterator Test() => new(null!, 14);
 
             // assert
             Assert.Throws<ArgumentNullException>("source", Test);
@@ -21,7 +21,7 @@ namespace Outcompute.Trader.Trading.Tests
         public void ThrowsOnLowPeriods()
         {
             // act
-            static RmaIterator Test() => new(Enumerable.Empty<decimal>(), 0);
+            static SmaIterator Test() => new(Enumerable.Empty<decimal>(), 0);
 
             // assert
             Assert.Throws<ArgumentOutOfRangeException>("periods", Test);
@@ -33,7 +33,7 @@ namespace Outcompute.Trader.Trading.Tests
             // arrange
             var source = Enumerable.Empty<decimal>();
             var periods = 14;
-            using var rma = new RmaIterator(source, periods);
+            using var rma = new SmaIterator(source, periods);
 
             // act
             var result = rma.ToList();
@@ -43,24 +43,32 @@ namespace Outcompute.Trader.Trading.Tests
         }
 
         [Fact]
-        public void CalculatesRma()
+        public void CalculatesSma()
         {
             // arrange
             var periods = 14;
             var source = new decimal[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
 
-            // calculate rmas one by one
+            // calculate smas one by one
             var expected = new decimal[20];
             expected[0] = source[0];
             for (var i = 1; i < source.Length; i++)
             {
-                expected[i] = ((expected[i - 1] * (periods - 1)) + source[i]) / periods;
+                var sum = 0m;
+                var count = 0;
+                for (var j = i; j >= 0 && j > i - periods; j--)
+                {
+                    sum += source[j];
+                    count++;
+                }
+
+                expected[i] = sum / count;
             }
 
-            using var rma = new RmaIterator(source, periods);
+            using var sma = new SmaIterator(source, periods);
 
             // act
-            var result = rma.ToList();
+            var result = sma.ToList();
 
             // assert
             Assert.Equal(source.Length, result.Count);

@@ -80,7 +80,13 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<IAlgoCommandExecutor<ManyCommand>, ManyExecutor>()
                 .AddSingleton<IAlgoCommandExecutor<RedeemSavingsCommand, RedeemSavingsEvent>, RedeemSavingsExecutor>()
                 .AddSingleton<IAlgoCommandExecutor<SignificantAveragingSellCommand>, SignificantAveragingSellExecutor>()
-                .AddSingleton<IAlgoCommandExecutor<TrackingBuyCommand>, TrackingBuyExecutor>();
+                .AddSingleton<IAlgoCommandExecutor<TrackingBuyCommand>, TrackingBuyExecutor>()
+
+                // builtin algos
+                .AddAccumulatorAlgo()
+                .AddValueAveragingAlgo()
+                .AddGridAlgo()
+                .AddPennyAccumulatorAlgo();
         }
     }
 }

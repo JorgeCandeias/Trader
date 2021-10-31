@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
@@ -18,6 +19,7 @@ namespace Outcompute.Trader.Trading.Binance
     [ExcludeFromCodeCoverage(Justification = "Requires Integration Testing")]
     internal class BinanceTradingService : ITradingService, IHostedService
     {
+        private readonly BinanceOptions _options;
         private readonly ILogger _logger;
         private readonly BinanceApiClient _client;
         private readonly BinanceUsageContext _usage;
@@ -25,8 +27,9 @@ namespace Outcompute.Trader.Trading.Binance
         private readonly ISystemClock _clock;
         private readonly IServiceProvider _provider;
 
-        public BinanceTradingService(ILogger<BinanceTradingService> logger, BinanceApiClient client, BinanceUsageContext usage, IMapper mapper, ISystemClock clock, IServiceProvider provider)
+        public BinanceTradingService(IOptions<BinanceOptions> options, ILogger<BinanceTradingService> logger, BinanceApiClient client, BinanceUsageContext usage, IMapper mapper, ISystemClock clock, IServiceProvider provider)
         {
+            _options = options.Value;
             _logger = logger;
             _client = client;
             _usage = usage;
@@ -61,6 +64,15 @@ namespace Outcompute.Trader.Trading.Binance
                 .ConfigureAwait(false);
 
             return _mapper.Map<SymbolPriceTicker>(output);
+        }
+
+        public async Task<IReadOnlyCollection<SymbolPriceTicker>> GetSymbolPriceTickersAsync(CancellationToken cancellationToken = default)
+        {
+            var output = await _client
+                .GetSymbolPriceTickersAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            return _mapper.Map<IReadOnlyCollection<SymbolPriceTicker>>(output);
         }
 
         public async Task<ImmutableSortedTradeSet> GetAccountTradesAsync(string symbol, long? fromId, int? limit, CancellationToken cancellationToken = default)
@@ -158,6 +170,17 @@ namespace Outcompute.Trader.Trading.Binance
                 .ConfigureAwait(false);
 
             return _mapper.Map<Ticker>(output);
+        }
+
+        public async Task<IReadOnlyCollection<Ticker>> Get24hTickerPriceChangeStatisticsAsync(CancellationToken cancellationToken = default)
+        {
+            BinanceApiContext.SkipSigning = true;
+
+            var output = await _client
+                .Get24hTickerPriceChangeStatisticsAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            return _mapper.Map<IReadOnlyCollection<Ticker>>(output);
         }
 
         public async Task<IReadOnlyCollection<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime startTime, DateTime endTime, int limit, CancellationToken cancellationToken = default)

@@ -21,6 +21,9 @@ namespace Outcompute.Trader.Trading
             string symbol,
             CancellationToken cancellationToken = default);
 
+        Task<IReadOnlyCollection<SymbolPriceTicker>> GetSymbolPriceTickersAsync(
+            CancellationToken cancellationToken = default);
+
         Task<ImmutableSortedTradeSet> GetAccountTradesAsync(
             string symbol,
             long? fromId,
@@ -66,6 +69,9 @@ namespace Outcompute.Trader.Trading
 
         Task<Ticker> Get24hTickerPriceChangeStatisticsAsync(
             string symbol,
+            CancellationToken cancellationToken = default);
+
+        Task<IReadOnlyCollection<Ticker>> Get24hTickerPriceChangeStatisticsAsync(
             CancellationToken cancellationToken = default);
 
         Task<IReadOnlyCollection<Kline>> GetKlinesAsync(

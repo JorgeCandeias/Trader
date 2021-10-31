@@ -53,6 +53,9 @@ namespace Outcompute.Trader.Trading.Algorithms
             // keep the scoped context for use during result execution
             _context = _scope.ServiceProvider.GetRequiredService<AlgoContext>();
 
+            // assign as the current context
+            AlgoContext.Current = _context;
+
             // resolve the symbol if this algo defines it
             if (!IsNullOrWhiteSpace(options.Symbol))
             {
@@ -166,6 +169,9 @@ namespace Outcompute.Trader.Trading.Algorithms
                 // publish current algo statistics
                 await _publisher.PublishAsync(_context.Significant, _context.Ticker, linked.Token);
             }
+
+            // set as the current context again
+            AlgoContext.Current = _context;
 
             // execute the algo under the limits
             var result = await _algo.GoAsync(linked.Token);

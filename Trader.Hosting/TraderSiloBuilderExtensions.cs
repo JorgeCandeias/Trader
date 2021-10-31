@@ -12,9 +12,6 @@ namespace Orleans.Hosting
                 {
                     services
                         .AddTradingServices()
-                        .AddAccumulatorAlgo()
-                        .AddValueAveragingAlgo()
-                        .AddStepAlgo()
                         .AddSystemClock()
                         .AddSafeTimerFactory()
                         .AddBase62NumberSerializer()

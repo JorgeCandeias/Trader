@@ -112,6 +112,11 @@ namespace Outcompute.Trader.Trading.InMemory
             throw new NotImplementedException();
         }
 
+        public Task<IReadOnlyCollection<SymbolPriceTicker>> GetSymbolPriceTickersAsync(CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
         public Task PingUserDataStreamAsync(string listenKey, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
@@ -143,5 +148,10 @@ namespace Outcompute.Trader.Trading.InMemory
         }
 
         public ITradingService WithBackoff() => this;
+
+        public Task<IReadOnlyCollection<Ticker>> Get24hTickerPriceChangeStatisticsAsync(CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

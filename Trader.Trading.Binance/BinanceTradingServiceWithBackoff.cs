@@ -121,6 +121,11 @@ namespace Outcompute.Trader.Trading.Binance
             return WaitAndRetryForeverAsync(ct => _trader.GetSymbolPriceTickerAsync(symbol, ct), cancellationToken);
         }
 
+        public Task<IReadOnlyCollection<SymbolPriceTicker>> GetSymbolPriceTickersAsync(CancellationToken cancellationToken = default)
+        {
+            return WaitAndRetryForeverAsync(ct => _trader.GetSymbolPriceTickersAsync(ct), cancellationToken);
+        }
+
         public Task PingUserDataStreamAsync(string listenKey, CancellationToken cancellationToken = default)
         {
             return WaitAndRetryForeverAsync(ct => _trader.PingUserDataStreamAsync(listenKey, ct), cancellationToken);
@@ -134,6 +139,11 @@ namespace Outcompute.Trader.Trading.Binance
         public Task<SavingsQuota?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string productId, SavingsRedemptionType type, CancellationToken cancellationToken = default)
         {
             return WaitAndRetryForeverAsync(ct => _trader.TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(productId, type, ct), cancellationToken);
+        }
+
+        public Task<IReadOnlyCollection<Ticker>> Get24hTickerPriceChangeStatisticsAsync(CancellationToken cancellationToken = default)
+        {
+            return WaitAndRetryForeverAsync(ct => _trader.Get24hTickerPriceChangeStatisticsAsync(ct), cancellationToken);
         }
     }
 }

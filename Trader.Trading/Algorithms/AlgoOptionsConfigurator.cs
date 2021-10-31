@@ -12,8 +12,8 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public AlgoOptionsConfigurator(IOptions<AlgoConfigurationMappingOptions> mapping, IConfiguration config)
         {
-            _mapping = mapping.Value ?? throw new ArgumentNullException(nameof(mapping));
-            _config = config ?? throw new ArgumentNullException(nameof(config));
+            _mapping = mapping.Value;
+            _config = config;
         }
 
         public void Configure(string name, TOptions options)

@@ -43,7 +43,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             // otherwise attempt to start from the last known order
             if (!orderId.HasValue)
             {
-                orderId = await _orders.TryGetMaxOrderIdAsync(symbol, cancellationToken).ConfigureAwait(false);
+                orderId = (await _orders.TryGetMaxOrderIdAsync(symbol, cancellationToken).ConfigureAwait(false)) + 1;
             }
 
             // otherwise start from scratch
@@ -63,7 +63,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             {
                 var orders = await _trader
                     .WithBackoff()
-                    .GetAllOrdersAsync(symbol, orderId + 1, 1000, cancellationToken)
+                    .GetAllOrdersAsync(symbol, orderId, 1000, cancellationToken)
                     .ConfigureAwait(false);
 
                 // break if we got all orders
@@ -73,7 +73,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 worker.Post((symbol, orders));
 
                 // keep the last order id
-                orderId = orders.Max(x => x.OrderId);
+                orderId = orders.Max(x => x.OrderId) + 1;
 
                 // keep track for logging
                 count += orders.Count;

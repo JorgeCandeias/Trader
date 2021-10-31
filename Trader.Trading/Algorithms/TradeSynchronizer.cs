@@ -27,7 +27,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             var watch = Stopwatch.StartNew();
 
             // start from the last trade if possible
-            var tradeId = await _provider.TryGetLastTradeIdAsync(symbol, cancellationToken).ConfigureAwait(false) ?? 0;
+            var tradeId = (await _provider.TryGetLastTradeIdAsync(symbol, cancellationToken).ConfigureAwait(false) ?? 0) + 1;
 
             // save all trades in the background so we can keep pulling trades
             var worker = new ActionBlock<IEnumerable<AccountTrade>>(work => _provider.SetTradesAsync(symbol, work, cancellationToken));
@@ -39,7 +39,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 // query for the next trades
                 var trades = await _trader
                     .WithBackoff()
-                    .GetAccountTradesAsync(symbol, tradeId + 1, 1000, cancellationToken)
+                    .GetAccountTradesAsync(symbol, tradeId, 1000, cancellationToken)
                     .ConfigureAwait(false);
 
                 // break if we got all trades
@@ -49,7 +49,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 worker.Post(trades);
 
                 // keep the last trade
-                tradeId = trades.Max!.Id;
+                tradeId = trades.Max!.Id + 1;
 
                 // keep track for logging
                 count += trades.Count;

@@ -38,6 +38,9 @@
     <ProjectReference Include="..\Trader.Trading\Trader.Trading.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <None Update="appsettings.production.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Threading;
 using System.Threading.Tasks;
+using EnvironmentName = Microsoft.Extensions.Hosting.EnvironmentName;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace Outcompute.Trader.App
@@ -32,11 +33,25 @@ namespace Outcompute.Trader.App
         private static Task Main()
         {
             return Host.CreateDefaultBuilder()
-                .ConfigureAppConfiguration(config =>
+                .UseEnvironment(EnvironmentName.Development)
+                .ConfigureHostConfiguration(config =>
                 {
-                    config.AddUserSecrets<Program>();
-                    config.AddEnvironmentVariables("Trader");
-                    config.AddJsonFile("appsettings.local.json", true);
+                    config.AddEnvironmentVariables("TRADER_");
+                })
+                .ConfigureAppConfiguration((context, config) =>
+                {
+                    config.Sources.Clear();
+                    if (context.HostingEnvironment.IsProduction())
+                    {
+                        config.AddEnvironmentVariables("Trader");
+                        config.AddJsonFile("appsettings.production.json", false);
+                        config.AddJsonFile("appsettings.local.json", true);
+                    }
+                    else
+                    {
+                        config.AddJsonFile("appsettings.json", false);
+                        config.AddUserSecrets<Program>();
+                    }
                 })
                 .ConfigureLogging(logging =>
                 {

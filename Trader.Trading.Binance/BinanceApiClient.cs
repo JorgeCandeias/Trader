@@ -117,6 +117,15 @@ namespace Outcompute.Trader.Trading.Binance
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
 
+        public async Task<IReadOnlyCollection<TickerModel>> Get24hTickerPriceChangeStatisticsAsync(CancellationToken cancellationToken = default)
+        {
+            return await _client
+                .GetFromJsonAsync<TickerModel[]>(
+                    new Uri($"/api/v3/ticker/24hr", UriKind.Relative),
+                    cancellationToken)
+                .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
+        }
+
         public async Task<SymbolPriceTickerModel> GetSymbolPriceTickerAsync(string symbol, CancellationToken cancellationToken = default)
         {
             _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
@@ -130,7 +139,7 @@ namespace Outcompute.Trader.Trading.Binance
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
 
-        public async Task<ImmutableList<SymbolPriceTicker>> GetSymbolPriceTickersAsync(CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<SymbolPriceTicker>> GetSymbolPriceTickersAsync(CancellationToken cancellationToken = default)
         {
             var result = await _client
                 .GetFromJsonAsync<IEnumerable<SymbolPriceTickerModel>>(
@@ -138,7 +147,7 @@ namespace Outcompute.Trader.Trading.Binance
                     cancellationToken)
                 .ConfigureAwait(false);
 
-            return _mapper.Map<ImmutableList<SymbolPriceTicker>>(result);
+            return _mapper.Map<IEnumerable<SymbolPriceTicker>>(result);
         }
 
         public async Task<SymbolOrderBookTicker> GetSymbolOrderBookTickerAsync(string symbol, CancellationToken cancellationToken = default)

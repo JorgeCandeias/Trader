@@ -54,10 +54,10 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
                 _bands.Add(merged);
             }
 
-            // adjust the merged band
-            if (merged is not null)
+            // adjust all band quantities
+            foreach (var band in _bands)
             {
-                merged.Quantity = merged.Quantity.AdjustQuantityDownToLotStepSize(Context.Symbol);
+                band.Quantity = band.Quantity.AdjustQuantityDownToLotStepSize(Context.Symbol);
             }
 
             // let the algo continue

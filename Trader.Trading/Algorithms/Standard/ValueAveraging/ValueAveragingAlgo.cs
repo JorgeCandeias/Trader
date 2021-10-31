@@ -5,6 +5,7 @@ using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Commands;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -69,14 +70,17 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             return MathSpan.Max(stackalloc int[] { _options.SmaPeriodsA, _options.SmaPeriodsB, _options.SmaPeriodsC, _options.RsiPeriodsA, _options.RsiPeriodsB, _options.RsiPeriodsC });
         }
 
+        [SuppressMessage("Blocker Code Smell", "S2178:Short-circuit logic should be used in boolean contexts", Justification = "Indicators")]
         private bool TrySignalBuyOrder()
         {
             return
-                EnsureOpeningEnabled() &&
-                EnsureAveragingEnabled() &&
-                EnsureTickerLowerThanSafePrice() &&
-                EnsureSmaLowEnough() &&
-                EnsureRsiLowEnough();
+                IsOpeningEnabled() &
+                IsAveragingEnabled() &
+                IsTickerLowerThanSafePrice() &
+                IsSmaTrendingDown() &
+                IsTickerBelowSmas() &
+                IsRsiTrendingDown() &
+                IsRsiOversold();
         }
 
         private IAlgoCommand SetTrackingBuy()
@@ -88,31 +92,95 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             return TrackingBuy(Context.Symbol, _options.BuyOrderSafetyRatio, _options.BuyQuoteBalanceFraction, _options.MaxNotional, _options.RedeemSavings);
         }
 
-        private bool EnsureRsiLowEnough()
+        private bool IsRsiTrendingDown()
         {
+            var indicator = _rsiA < _rsiB && _rsiB < _rsiC;
+
             _logger.LogInformation(
-                 "{Type} {Symbol} evaluating indicators (RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8})",
-                 TypeName, Context.Symbol.Name, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC);
+                "{Type} {Symbol} reports (RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8}) trending down = {Indicator}",
+                TypeName, Context.Symbol.Name, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC, indicator);
 
-            var isRsiOrdered = _rsiA < _rsiB && _rsiB < _rsiC;
-            var isRsiSignaling = _rsiA < _options.RsiOverboughtA && _rsiB < _options.RsiOverboughtB && _rsiC < _options.RsiOverboughtC;
-
-            return isRsiOrdered && isRsiSignaling;
+            return indicator;
         }
 
-        private bool EnsureSmaLowEnough()
+        private bool IsRsiOversold()
         {
+            var indicator = _rsiA < _options.RsiOversoldA && _rsiB < _options.RsiOversoldB && _rsiC < _options.RsiOversoldC;
+
             _logger.LogInformation(
-                "{Type} {Symbol} evaluating indicators (SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8})",
-                TypeName, Context.Symbol.Name, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC);
+                "{Type} {Symbol} reports (RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8}) oversold = {Indicator}",
+                TypeName, Context.Symbol.Name, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC, indicator);
 
-            var isSmaOrdered = _smaA < _smaB && _smaB < _smaC;
-            var isTickerUnderSma = Context.Ticker.ClosePrice < _smaA && Context.Ticker.ClosePrice < _smaB && Context.Ticker.ClosePrice < _smaC;
-
-            return isSmaOrdered && isTickerUnderSma;
+            return indicator;
         }
 
-        private bool EnsureTickerLowerThanSafePrice()
+        private bool IsSmaTrendingDown()
+        {
+            var indicator = _smaA < _smaB && _smaB < _smaC;
+
+            _logger.LogInformation(
+                "{Type} {Symbol} reports (SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}) trending down = {Indicator}",
+                TypeName, Context.Symbol.Name, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, indicator);
+
+            return indicator;
+        }
+
+        private bool IsTickerBelowSmas()
+        {
+            var indicator = Context.Ticker.ClosePrice < _smaA && Context.Ticker.ClosePrice < _smaB && Context.Ticker.ClosePrice < _smaC;
+
+            _logger.LogInformation(
+                "{Type} {Symbol} reports Ticker {Ticker:F8} below (SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}) = {Indicator}",
+                TypeName, Context.Symbol.Name, Context.Ticker.ClosePrice, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, indicator);
+
+            return indicator;
+        }
+
+        private bool IsSmaTrendingUp()
+        {
+            var indicator = _smaA > _smaB && _smaB > _smaC;
+
+            _logger.LogInformation(
+                "{Type} {Symbol} reports (SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}) trending up = {Indicator}",
+                TypeName, Context.Symbol.Name, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, indicator);
+
+            return indicator;
+        }
+
+        private bool IsTickerAboveSmas()
+        {
+            var indicator = Context.Ticker.ClosePrice > _smaA && Context.Ticker.ClosePrice > _smaB && Context.Ticker.ClosePrice > _smaC;
+
+            _logger.LogInformation(
+                "{Type} {Symbol} reports Ticker {Ticker:F8} above (SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}) = {Indicator}",
+                TypeName, Context.Symbol.Name, Context.Ticker.ClosePrice, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, indicator);
+
+            return indicator;
+        }
+
+        private bool IsRsiOverbought()
+        {
+            var indicator = _rsiA > _options.RsiOverboughtA && _rsiB > _options.RsiOverboughtB && _rsiC > _options.RsiOverboughtC;
+
+            _logger.LogInformation(
+                "{Type} {Symbol} reports (RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8}) overbought = {Indicator}",
+                TypeName, Context.Symbol.Name, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC, indicator);
+
+            return indicator;
+        }
+
+        private bool IsRsiTrendingUp()
+        {
+            var indicator = _rsiA > _rsiB && _rsiB > _rsiC;
+
+            _logger.LogInformation(
+                "{Type} {Symbol} reports (RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8}) trending up = {Indicator}",
+                TypeName, Context.Symbol.Name, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC, indicator);
+
+            return indicator;
+        }
+
+        private bool IsTickerLowerThanSafePrice()
         {
             // skip this rule if there are no orders to evaluate
             if (Context.Significant.Orders.Count == 0)
@@ -151,7 +219,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             return true;
         }
 
-        private bool EnsureAveragingEnabled()
+        private bool IsAveragingEnabled()
         {
             // break on disabled averaging
             if (Context.Significant.Orders.Count > 0 && !_options.IsAveragingEnabled)
@@ -166,7 +234,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             return true;
         }
 
-        private bool EnsureOpeningEnabled()
+        private bool IsOpeningEnabled()
         {
             // break on disabled opening
             if (Context.Significant.Orders.Count == 0 && !_options.IsOpeningEnabled)
@@ -181,27 +249,23 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             return true;
         }
 
+        [SuppressMessage("Blocker Code Smell", "S2178:Short-circuit logic should be used in boolean contexts", Justification = "Indicators")]
         private bool TrySignalSellOrder()
         {
-            // evaluate target profit rate vs last buy order
-            if (Context.Significant.Orders.Max?.Price * _options.TargetSellProfitRate <= Context.Ticker.ClosePrice)
-            {
-                return true;
-            }
+            var signal =
+                IsSmaTrendingUp() &
+                IsTickerAboveSmas() &
+                IsRsiTrendingUp() &
+                IsRsiOverbought();
 
-            // evaluate indicators
-            var isRsiOrdered = _rsiA > _rsiB && _rsiB > _rsiC;
-            var isRsiSignaling = _rsiA > _options.RsiOversoldA && _rsiB > _options.RsiOversoldB && _rsiC > _options.RsiOversoldC;
-            if (isRsiOrdered && isRsiSignaling)
+            if (signal)
             {
                 _logger.LogInformation(
                     "{Type} {Symbol} signalling sell for current state (Ticker = {Ticker:F8}, SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}, RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8})",
                     TypeName, Context.Symbol.Name, Context.Ticker.ClosePrice, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC);
-
-                return true;
             }
 
-            return false;
+            return signal;
         }
     }
 }

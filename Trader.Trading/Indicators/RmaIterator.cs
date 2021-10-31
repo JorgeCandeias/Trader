@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Outcompute.Trader.Trading.Indicators
 {
@@ -10,30 +9,25 @@ namespace Outcompute.Trader.Trading.Indicators
     internal sealed class RmaIterator : Iterator<decimal>
     {
         private readonly IEnumerable<decimal> _source;
+        private readonly IEnumerator<decimal> _enumerator;
         private readonly int _periods;
-
-        private IEnumerator<decimal>? _enumerator;
 
         public RmaIterator(IEnumerable<decimal> source, int periods)
         {
             _source = source ?? throw new ArgumentNullException(nameof(source));
             _periods = periods > 0 ? periods : throw new ArgumentOutOfRangeException(nameof(periods));
+
+            _enumerator = source.GetEnumerator();
+            _state = 1;
         }
 
-        [SuppressMessage("Major Code Smell", "S907:\"goto\" statement should not be used", Justification = "Lazy Iterator Optimization")]
         public override bool MoveNext()
         {
             switch (_state)
             {
-                // lazily initialize the enumerator
-                case 0:
-                    _enumerator = _source.GetEnumerator();
-                    _state = 1;
-                    goto case 1;
-
                 // rma - first value
                 case 1:
-                    if (_enumerator!.MoveNext())
+                    if (_enumerator.MoveNext())
                     {
                         _current = _enumerator.Current;
                         _state = 2;
@@ -49,7 +43,7 @@ namespace Outcompute.Trader.Trading.Indicators
 
                 // rma - following values
                 case 2:
-                    if (_enumerator!.MoveNext())
+                    if (_enumerator.MoveNext())
                     {
                         var value = _enumerator.Current;
 
@@ -73,12 +67,7 @@ namespace Outcompute.Trader.Trading.Indicators
         protected override void Dispose(bool disposing)
         {
             _state = -1;
-
-            if (_enumerator is not null)
-            {
-                _enumerator.Dispose();
-                _enumerator = null;
-            }
+            _enumerator.Dispose();
 
             base.Dispose(disposing);
         }

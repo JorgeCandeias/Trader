@@ -1,7 +1,6 @@
 ﻿using Outcompute.Trader.Core.Pooling;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Outcompute.Trader.Trading.Indicators
 {
@@ -11,36 +10,32 @@ namespace Outcompute.Trader.Trading.Indicators
     internal sealed class SmaIterator : Iterator<decimal>
     {
         private readonly IEnumerable<decimal> _source;
+        private readonly IEnumerator<decimal> _enumerator;
         private readonly int _periods;
+        private readonly Queue<decimal> _queue;
 
-        private IEnumerator<decimal>? _enumerator;
-        private Queue<decimal>? _queue;
         private decimal _sum;
 
         public SmaIterator(IEnumerable<decimal> source, int periods)
         {
             _source = source ?? throw new ArgumentNullException(nameof(source));
             _periods = periods > 0 ? periods : throw new ArgumentOutOfRangeException(nameof(periods));
+
+            _enumerator = _source.GetEnumerator();
+            _queue = QueuePool<decimal>.Shared.Get();
+            _state = 1;
         }
 
-        [SuppressMessage("Major Code Smell", "S907:\"goto\" statement should not be used", Justification = "Lazy Iterator Optimization")]
         public override bool MoveNext()
         {
             switch (_state)
             {
-                // lazily initialize the enumerator
-                case 0:
-                    _enumerator = _source.GetEnumerator();
-                    _queue = QueuePool<decimal>.Shared.Get();
-                    _state = 1;
-                    goto case 1;
-
                 // sma - first value
                 case 1:
-                    if (_enumerator!.MoveNext())
+                    if (_enumerator.MoveNext())
                     {
                         _current = _enumerator.Current;
-                        _queue!.Enqueue(_current);
+                        _queue.Enqueue(_current);
                         _sum += _current;
                         _state = 2;
 
@@ -55,11 +50,11 @@ namespace Outcompute.Trader.Trading.Indicators
 
                 // sma - following values
                 case 2:
-                    if (_enumerator!.MoveNext())
+                    if (_enumerator.MoveNext())
                     {
                         var value = _enumerator.Current;
 
-                        if (_queue!.Count >= _periods)
+                        if (_queue.Count >= _periods)
                         {
                             _sum -= _queue.Dequeue();
                         }
@@ -86,18 +81,9 @@ namespace Outcompute.Trader.Trading.Indicators
         protected override void Dispose(bool disposing)
         {
             _state = -1;
+            _enumerator.Dispose();
 
-            if (_enumerator is not null)
-            {
-                _enumerator.Dispose();
-                _enumerator = null;
-            }
-
-            if (_queue is not null)
-            {
-                QueuePool<decimal>.Shared.Return(_queue);
-                _queue = null;
-            }
+            QueuePool<decimal>.Shared.Return(_queue);
 
             base.Dispose(disposing);
         }

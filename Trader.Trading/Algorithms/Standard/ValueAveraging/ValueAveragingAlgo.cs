@@ -6,6 +6,7 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Commands;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -47,9 +48,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             _smaC = klines.LastSma(x => x.ClosePrice, _options.SmaPeriodsC);
 
             // calculate the rsi values
-            _rsiA = klines.LastRelativeStrengthIndexOrDefault(x => x.ClosePrice, _options.RsiPeriodsA);
-            _rsiB = klines.LastRelativeStrengthIndexOrDefault(x => x.ClosePrice, _options.RsiPeriodsB);
-            _rsiC = klines.LastRelativeStrengthIndexOrDefault(x => x.ClosePrice, _options.RsiPeriodsC);
+            _rsiA = klines.LastRsi(x => x.ClosePrice, _options.RsiPeriodsA);
+            _rsiB = klines.LastRsi(x => x.ClosePrice, _options.RsiPeriodsB);
+            _rsiC = klines.LastRsi(x => x.ClosePrice, _options.RsiPeriodsC);
 
             // evaluate signals and return results for them
             return Many(

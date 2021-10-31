@@ -108,9 +108,15 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.PennyAccumulator
                     "{Name} got {Count} klines for symbol {Symbol}",
                     TypeName, klines.Count, ticker.Symbol);
 
-                var rsis = klines.RelativeStrengthIndex(x => x.ClosePrice, 14).ToList();
+                var rsis = klines.Rsi(x => x.ClosePrice, 14).ToList();
 
-                var rsi = klines.LastRelativeStrengthIndexOrDefault(x => x.ClosePrice, _options.CurrentValue.RsiPeriods);
+                _logger.LogInformation("RSI(14) over 14 = {RSI}", klines.TakeLast(14).Rsi(x => x.ClosePrice, 14).TakeLast(14));
+                _logger.LogInformation("RSI(14) over 20 = {RSI}", klines.TakeLast(20).Rsi(x => x.ClosePrice, 14).TakeLast(14));
+                _logger.LogInformation("RSI(14) over 100 = {RSI}", klines.TakeLast(100).Rsi(x => x.ClosePrice, 14).TakeLast(14));
+                _logger.LogInformation("RSI(14) over 200 = {RSI}", klines.TakeLast(200).Rsi(x => x.ClosePrice, 14).TakeLast(14));
+                _logger.LogInformation("RSI(14) over {Count} = {RSI}", klines.Count, klines.Rsi(x => x.ClosePrice, 14).TakeLast(14));
+
+                var rsi = klines.LastRsi(x => x.ClosePrice, _options.CurrentValue.RsiPeriods);
 
                 _logger.LogInformation(
                     "{Name} reports symbol {Symbol} with price {Price:F8} has RSI of {Rsi:F8}",

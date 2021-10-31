@@ -13,7 +13,7 @@ namespace Outcompute.Trader.Trading.Tests
             var input = Enumerable.Empty<decimal>();
 
             // act
-            var output = input.MovingSums(3);
+            var output = input.MovingSum(3);
 
             // assert
             Assert.Empty(output);
@@ -26,12 +26,12 @@ namespace Outcompute.Trader.Trading.Tests
             var input = new decimal[] { 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144 };
 
             // act
-            var output = input.MovingSums(3);
+            var output = input.MovingSum(3);
 
             // assert
             Assert.Collection(output,
-                x => Assert.Equal(0, x),
-                x => Assert.Equal(0, x),
+                x => Assert.Equal(1, x),
+                x => Assert.Equal(2, x),
                 x => Assert.Equal(4, x),
                 x => Assert.Equal(6, x),
                 x => Assert.Equal(10, x),

@@ -10,7 +10,6 @@ namespace System.Collections.Generic
         /// </summary>
         /// <param name="source">The source for SMA calculation.</param>
         /// <param name="periods">The number of periods for SMA calculation.</param>
-        /// <returns>An enumerable that calculates the Simple Moving Average over the specified source when enumerated.</returns>
         public static IEnumerable<decimal> Sma(this IEnumerable<decimal> source, int periods)
         {
             return new SmaIterator(source, periods);
@@ -22,7 +21,7 @@ namespace System.Collections.Generic
         {
             var transformed = source.Select(selector);
 
-            return new SmaIterator(transformed, periods);
+            return transformed.Sma(periods);
         }
 
         public static decimal LastSma(this IEnumerable<decimal> source, int periods)

@@ -24,7 +24,7 @@
         /// </summary>
         private static IEnumerable<decimal> GainsInner<T>(IEnumerable<T> items, Func<T, decimal> accessor)
         {
-            foreach (var item in items.Differences(accessor))
+            foreach (var item in items.Change(accessor))
             {
                 yield return Math.Max(item, 0m);
             }

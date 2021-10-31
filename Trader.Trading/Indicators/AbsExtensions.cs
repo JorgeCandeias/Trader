@@ -9,7 +9,6 @@ namespace System.Collections.Generic
         /// Calculates absolute values over the specified source.
         /// </summary>
         /// <param name="source">The source for absolute value calculation.</param>
-        /// <returns>An enumerable that calculates absolute values over the specified source when enumerated.</returns>
         public static IEnumerable<decimal> Abs(this IEnumerable<decimal> source)
         {
             return new AbsIterator(source);
@@ -21,7 +20,7 @@ namespace System.Collections.Generic
         {
             var transformed = source.Select(selector);
 
-            return new AbsIterator(transformed);
+            return transformed.Abs();
         }
     }
 }

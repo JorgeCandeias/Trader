@@ -10,7 +10,6 @@ namespace System.Collections.Generic
         /// </summary>
         /// <param name="source">The source for RMA calculation.</param>
         /// <param name="periods">The number of periods for RMA calculation.</param>
-        /// <returns>An enumerable that calculates the Running Moving Average over the specified source when enumerated.</returns>
         public static IEnumerable<decimal> Rma(this IEnumerable<decimal> source, int periods)
         {
             return new RmaIterator(source, periods);
@@ -22,7 +21,7 @@ namespace System.Collections.Generic
         {
             var transformed = source.Select(selector);
 
-            return new RmaIterator(transformed, periods);
+            return transformed.Rma(periods);
         }
     }
 }

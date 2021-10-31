@@ -25,7 +25,7 @@
         /// </summary>
         private static IEnumerable<decimal> LossesInner<T>(IEnumerable<T> items, Func<T, decimal> accessor)
         {
-            foreach (var item in items.Differences(accessor))
+            foreach (var item in items.Change(accessor))
             {
                 yield return Math.Min(item, 0m);
             }

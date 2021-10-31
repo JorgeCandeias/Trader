@@ -2,32 +2,52 @@
 {
     public static class RmaExtensions
     {
+        /// <summary>
+        /// Calculates the Running Moving Average over the specified source.
+        /// </summary>
+        /// <param name="items">The source for RMA calculation.</param>
+        /// <param name="periods">The number of periods for RMA calculation.</param>
+        /// <returns>An enumerable that calculates the Running Moving Average over the specified source when enumerated.</returns>
         public static IEnumerable<decimal> Rma(this IEnumerable<decimal> items, int periods)
         {
             if (items is null) throw new ArgumentNullException(nameof(items));
-            if (periods < 1) throw new ArgumentOutOfRangeException(nameof(periods));
+            if (periods < 0) throw new ArgumentOutOfRangeException(nameof(periods));
 
             return RmaCore(items, PassthroughDelegate, periods);
         }
 
+        /// <inheritdoc cref="Rma(IEnumerable{decimal}, int)"/>
+        /// <param name="accessor">A transform function to apply to each element.</param>
         public static IEnumerable<decimal> Rma<T>(this IEnumerable<T> items, Func<T, decimal> accessor, int periods)
         {
             if (items is null) throw new ArgumentNullException(nameof(items));
             if (accessor is null) throw new ArgumentNullException(nameof(accessor));
-            if (periods < 1) throw new ArgumentOutOfRangeException(nameof(periods));
+            if (periods < 0) throw new ArgumentOutOfRangeException(nameof(periods));
 
             return RmaCore(items, accessor, periods);
         }
 
+        /// <summary>
+        /// Creates a new <see cref="RmaEnumerable{T}"/> instance.
+        /// </summary>
         private static IEnumerable<decimal> RmaCore<T>(IEnumerable<T> items, Func<T, decimal> accessor, int periods)
         {
             return new RmaEnumerable<T>(items, accessor, periods);
         }
 
+        /// <summary>
+        /// Caches the passthrough delegate used by <see cref="Rma(IEnumerable{decimal}, int)"/> to avoid redundant allocations.
+        /// </summary>
         private static readonly Func<decimal, decimal> PassthroughDelegate = Passthrough;
 
+        /// <summary>
+        /// A passthrough transform function used by <see cref="Rma(IEnumerable{decimal}, int)"/>.
+        /// </summary>
         private static decimal Passthrough(decimal value) => value;
 
+        /// <summary>
+        /// An allocation-optimized enumerable that calculates the RMA over the specified source when enumerated.
+        /// </summary>
         private sealed class RmaEnumerable<T> : IEnumerable<decimal>
         {
             private readonly IEnumerable<T> _source;
@@ -45,6 +65,9 @@
 
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
+            /// <summary>
+            /// An allocation-optimized enumerator for <see cref="RmaEnumerable{T}"/>.
+            /// </summary>
             private sealed class RmaEnumerator : IEnumerator<decimal>
             {
                 private readonly IEnumerable<T> _source;

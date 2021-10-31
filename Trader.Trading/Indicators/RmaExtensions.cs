@@ -1,6 +1,4 @@
-﻿using System.Linq;
-
-namespace System.Collections.Generic
+﻿namespace System.Collections.Generic
 {
     public static class RmaExtensions
     {
@@ -9,7 +7,7 @@ namespace System.Collections.Generic
             if (items is null) throw new ArgumentNullException(nameof(items));
             if (periods < 1) throw new ArgumentOutOfRangeException(nameof(periods));
 
-            return RmaCore(items, x => x, periods);
+            return RmaCore(items, PassthroughDelegate, periods);
         }
 
         public static IEnumerable<decimal> Rma<T>(this IEnumerable<T> items, Func<T, decimal> accessor, int periods)
@@ -23,129 +21,99 @@ namespace System.Collections.Generic
 
         private static IEnumerable<decimal> RmaCore<T>(IEnumerable<T> items, Func<T, decimal> accessor, int periods)
         {
-            return new RmaEnumerable(items.Select(x => accessor(x)), periods);
-
-            /*
-            var count = 0;
-            var enumerator = items.GetEnumerator();
-            */
-
-            /*
-            // yield the sma until periods - 1
-            var sum = 0m;
-            var avg = 0m;
-            while (count < periods && enumerator.MoveNext())
-            {
-                ++count;
-                sum += accessor(enumerator.Current);
-                avg = sum / count;
-                yield return avg;
-            }
-
-            // yield the rma for the rest
-            var rma = avg;
-            while (enumerator.MoveNext())
-            {
-                ++count;
-
-                var current = accessor(enumerator.Current);
-                var n = Math.Max(count, periods);
-                rma = (((periods - 1) * rma) + current) / n;
-                yield return rma;
-            }
-            */
-
-            /*
-            if (enumerator.MoveNext())
-            {
-                ++count;
-                var rma = accessor(enumerator.Current);
-                yield return rma;
-
-                while (enumerator.MoveNext())
-                {
-                    ++count;
-
-                    var current = accessor(enumerator.Current);
-                    var n = Math.Min(count, periods);
-                    //var n = periods;
-                    rma = (((n - 1) * rma) + current) / n;
-                    yield return rma;
-                }
-            }
-            */
+            return new RmaEnumerable<T>(items, accessor, periods);
         }
 
-        private sealed class RmaEnumerable : IEnumerable<decimal>
+        private static readonly Func<decimal, decimal> PassthroughDelegate = Passthrough;
+
+        private static decimal Passthrough(decimal value) => value;
+
+        private sealed class RmaEnumerable<T> : IEnumerable<decimal>
         {
-            private readonly IEnumerable<decimal> _source;
+            private readonly IEnumerable<T> _source;
+            private readonly Func<T, decimal> _accessor;
             private readonly int _periods;
 
-            public RmaEnumerable(IEnumerable<decimal> source, int periods)
+            public RmaEnumerable(IEnumerable<T> source, Func<T, decimal> accessor, int periods)
             {
                 _source = source;
+                _accessor = accessor;
                 _periods = periods;
             }
 
-            public IEnumerator<decimal> GetEnumerator() => new RmaEnumerator(_source, _periods);
+            public IEnumerator<decimal> GetEnumerator() => new RmaEnumerator(_source, _accessor, _periods);
 
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
             private sealed class RmaEnumerator : IEnumerator<decimal>
             {
-                private readonly IEnumerable<decimal> _enumerable;
+                private readonly IEnumerable<T> _source;
+                private readonly Func<T, decimal> _accessor;
                 private readonly int _periods;
 
-                public RmaEnumerator(IEnumerable<decimal> enumerable, int periods)
+                public RmaEnumerator(IEnumerable<T> source, Func<T, decimal> accessor, int periods)
                 {
-                    _enumerable = enumerable;
+                    _source = source;
+                    _accessor = accessor;
                     _periods = periods;
+
+                    _enumerator = _source.GetEnumerator();
+                    _action = _phaseOne;
                 }
 
-                private IEnumerator<decimal>? _enumerator;
-                private int _count;
+                private IEnumerator<T> _enumerator;
+                private decimal? _current;
 
-                public decimal Current { get; private set; }
+                public decimal Current => _current ?? throw new InvalidOperationException();
 
-                object IEnumerator.Current => throw new NotImplementedException();
+                object IEnumerator.Current => Current;
 
-                public void Dispose()
+                private Action<RmaEnumerator, decimal> _action;
+
+                private static readonly Action<RmaEnumerator, decimal> _phaseOne = PhaseOne;
+
+                private static void PhaseOne(RmaEnumerator myself, decimal last)
                 {
-                    _enumerator?.Dispose();
+                    myself._current = last;
+                    myself._action = _phaseTwo;
+                }
+
+                private static readonly Action<RmaEnumerator, decimal> _phaseTwo = PhaseTwo;
+
+                private static void PhaseTwo(RmaEnumerator myself, decimal last)
+                {
+                    myself._current = (((myself._periods - 1) * myself._current!.Value) + last) / myself._periods;
                 }
 
                 public bool MoveNext()
                 {
-                    _enumerator ??= _enumerable.GetEnumerator();
-
-                    if (!_enumerator.MoveNext())
+                    if (_enumerator.MoveNext())
                     {
-                        return false;
-                    }
+                        var last = _accessor(_enumerator.Current);
 
-                    if (_count == 0)
-                    {
-                        _count++;
-                        Current = _enumerator.Current;
+                        _action(this, last);
+
+                        return true;
                     }
                     else
                     {
-                        _count++;
+                        _current = null;
 
-                        var last = _enumerator.Current;
-                        //var n = Math.Min(_count, _periods);
-                        var n = _periods;
-                        //var n = _count;
-                        Current = (((n - 1) * Current) + last) / n;
+                        return false;
                     }
-
-                    return true;
                 }
 
                 public void Reset()
                 {
-                    _enumerator = _enumerable.GetEnumerator();
-                    _count = 0;
+                    _enumerator.Dispose();
+                    _enumerator = _source.GetEnumerator();
+                    _action = _phaseOne;
+                    _current = null;
+                }
+
+                public void Dispose()
+                {
+                    _enumerator.Dispose();
                 }
             }
         }

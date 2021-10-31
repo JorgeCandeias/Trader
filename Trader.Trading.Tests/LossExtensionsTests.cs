@@ -4,7 +4,7 @@ using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
 {
-    public class LossesExtensionsTests
+    public class LossExtensionsTests
     {
         [Fact]
         public void YieldsEmptyResultOnEmptyInput()
@@ -13,7 +13,7 @@ namespace Outcompute.Trader.Trading.Tests
             var input = Enumerable.Empty<decimal>();
 
             // act
-            var output = input.Losses();
+            var output = input.Loss();
 
             // assert
             Assert.Empty(output);
@@ -26,7 +26,7 @@ namespace Outcompute.Trader.Trading.Tests
             var input = new decimal[] { 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144 };
 
             // act
-            var output = input.Losses();
+            var output = input.Loss();
 
             // assert
             Assert.Collection(output,
@@ -51,7 +51,7 @@ namespace Outcompute.Trader.Trading.Tests
             var input = new decimal[] { 144, 89, 55, 34, 21, 13, 8, 5, 3, 2, 1, 1 };
 
             // act
-            var output = input.Losses();
+            var output = input.Loss();
 
             // assert
             Assert.Collection(output,
@@ -76,7 +76,7 @@ namespace Outcompute.Trader.Trading.Tests
             var input = new decimal[] { 1, 2, 1, 5, 3, 13, 8, 34, 21, 89, 55, 144 };
 
             // act
-            var output = input.Losses();
+            var output = input.Loss();
 
             // assert
             Assert.Collection(output,

@@ -99,9 +99,6 @@
             var avgLosses = items.Losses(accessor).Abs().Rma(periods).GetEnumerator();
             var count = 0;
 
-            var prevAvgGain = 0m;
-            var prevAvgLoss = 0m;
-
             while (currentGains.MoveNext() && currentLosses.MoveNext() && avgGains.MoveNext() && avgLosses.MoveNext())
             {
                 // keep yield inconclusive until we have enough periods
@@ -111,7 +108,6 @@
                 }
 
                 // yield the first step of the rsi
-                //else if (count == periods)
                 else
                 {
                     // if there is no down in the market then return a full bullish rsi
@@ -128,30 +124,6 @@
                         yield return relativeStrengthIndex;
                     }
                 }
-
-                /*
-                // otherwise yield the second step of the rsi
-                else
-                {
-                    var numerator = (prevAvgGain * (periods - 1)) + currentGains.Current;
-                    var denominator = (prevAvgLoss * (periods - 1)) + currentLosses.Current;
-
-                    if (denominator is 0)
-                    {
-                        yield return 100m;
-                    }
-                    else
-                    {
-                        var relativeStrength = numerator / denominator;
-                        var relativeStrengthIndex = 100m - (100m / (1m + relativeStrength));
-
-                        yield return relativeStrengthIndex;
-                    }
-                }
-                */
-
-                prevAvgGain = avgGains.Current;
-                prevAvgLoss = avgLosses.Current;
             }
         }
     }

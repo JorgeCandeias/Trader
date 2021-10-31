@@ -93,9 +93,9 @@
         /// </summary>
         private static IEnumerable<decimal> RelativeStrengthIndexCore<T>(IEnumerable<T> items, Func<T, decimal> accessor, int periods)
         {
-            var currentGains = items.Gains(accessor).GetEnumerator();
+            var currentGains = items.Gain(accessor).GetEnumerator();
             var currentLosses = items.Losses(accessor).GetEnumerator();
-            var avgGains = items.Gains(accessor).Rma(periods).GetEnumerator();
+            var avgGains = items.Gain(accessor).Rma(periods).GetEnumerator();
             var avgLosses = items.Losses(accessor).Abs().Rma(periods).GetEnumerator();
             var count = 0;
 

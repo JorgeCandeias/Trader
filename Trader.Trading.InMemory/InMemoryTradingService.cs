@@ -168,5 +168,10 @@ namespace Outcompute.Trader.Trading.InMemory
         {
             return _grain.SetAccountTradeAsync(trade);
         }
+
+        public Task<IEnumerable<SwapPool>> GetSwapPoolsAsync(CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

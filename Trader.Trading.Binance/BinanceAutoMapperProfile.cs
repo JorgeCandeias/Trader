@@ -205,6 +205,8 @@ namespace Outcompute.Trader.Trading.Binance
 
             // convert payloads from the market data stream
             CreateMap<Memory<byte>, MarketDataStreamMessage>().ConvertUsing<MarketDataStreamMessageConverter>();
+
+            CreateMap<SwapPoolResponseModel, SwapPool>();
         }
     }
 }

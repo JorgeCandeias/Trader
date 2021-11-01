@@ -117,5 +117,8 @@ namespace Outcompute.Trader.Trading
         Task CloseUserDataStreamAsync(
             string listenKey,
             CancellationToken cancellationToken = default);
+
+        Task<IEnumerable<SwapPool>> GetSwapPoolsAsync(
+            CancellationToken cancellationToken = default);
     }
 }

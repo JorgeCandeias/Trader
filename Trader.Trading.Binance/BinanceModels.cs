@@ -401,4 +401,9 @@
         string Status,
         decimal UpLimit,
         decimal UpLimitPerUser);
+
+    internal record SwapPoolResponseModel(
+        int PoolId,
+        int PoolName,
+        string[] Assets);
 }

@@ -306,6 +306,21 @@ namespace Outcompute.Trader.Trading.Binance
                 .ConfigureAwait(false);
         }
 
+        #region Swap
+
+        public async Task<IEnumerable<SwapPool>> GetSwapPoolsAsync(CancellationToken cancellationToken = default)
+        {
+            BinanceApiContext.SkipSigning = true;
+
+            var result = await _client
+                .GetSwapPoolsAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            return _mapper.Map<IEnumerable<SwapPool>>(result);
+        }
+
+        #endregion Swap
+
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             await SyncLimitsAsync(cancellationToken).ConfigureAwait(false);

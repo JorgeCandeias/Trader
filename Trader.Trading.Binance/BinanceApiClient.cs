@@ -416,6 +416,19 @@ namespace Outcompute.Trader.Trading.Binance
 
         #endregion Savings Endpoints
 
+        #region Swap Endpoints
+
+        public async Task<IEnumerable<SwapPoolResponseModel>> GetSwapPoolsAsync(CancellationToken cancellationToken = default)
+        {
+            var uri = new Uri("/sapi/v1/bswap/pools", UriKind.Relative);
+
+            return await _client
+                .GetFromJsonAsync<IEnumerable<SwapPoolResponseModel>>(uri, cancellationToken)
+                .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
+        }
+
+        #endregion Swap Endpoints
+
         #region Helpers
 
         /// <summary>

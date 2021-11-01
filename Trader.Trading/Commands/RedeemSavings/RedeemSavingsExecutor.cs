@@ -57,18 +57,8 @@ namespace Outcompute.Trader.Trading.Commands.RedeemSavings
             }
 
             var quota = await _savings
-                .TryGetQuotaAsync(savings.Asset, savings.ProductId, SavingsRedemptionType.Fast, cancellationToken)
+                .GetQuotaOrZeroAsync(savings.Asset, savings.ProductId, SavingsRedemptionType.Fast, cancellationToken)
                 .ConfigureAwait(false);
-
-            // stop if there is no savings product
-            if (quota is null)
-            {
-                _logger.LogError(
-                    "{Type} cannot find a savings product for asset {Asset}",
-                    TypeName, command.Asset);
-
-                return new RedeemSavingsEvent(false, 0m);
-            }
 
             // stop if we would exceed the daily quota outright
             if (quota.LeftQuota < command.Amount)

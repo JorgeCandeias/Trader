@@ -17,6 +17,7 @@ using Serilog.Events;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 using System.Threading.Tasks;
 using EnvironmentName = Microsoft.Extensions.Hosting.EnvironmentName;
@@ -24,6 +25,7 @@ using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace Outcompute.Trader.App
 {
+    [ExcludeFromCodeCoverage]
     internal class Program
     {
         protected Program()

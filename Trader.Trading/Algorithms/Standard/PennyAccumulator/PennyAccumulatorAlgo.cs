@@ -5,12 +5,14 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Commands;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms.Standard.PennyAccumulator
 {
+    [ExcludeFromCodeCoverage]
     internal class PennyAccumulatorAlgo : Algo
     {
         private readonly IOptionsMonitor<PennyAccumulatorOptions> _options;

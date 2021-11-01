@@ -31,8 +31,6 @@ namespace Outcompute.Trader.Models
         {
             return interval switch
             {
-                KlineInterval.None => throw new ArgumentOutOfRangeException(nameof(interval)),
-
                 KlineInterval.Minutes1 => new DateTime(value.Year, value.Month, value.Day, value.Hour, value.Minute, 0),
                 KlineInterval.Minutes3 => new DateTime(value.Year, value.Month, value.Day, value.Hour, value.Minute - (value.Minute % 3), 0),
                 KlineInterval.Minutes5 => new DateTime(value.Year, value.Month, value.Day, value.Hour, value.Minute - (value.Minute % 5), 0),
@@ -45,9 +43,9 @@ namespace Outcompute.Trader.Models
                 KlineInterval.Hours8 => new DateTime(value.Year, value.Month, value.Day, value.Hour - (value.Hour % 8), 0, 0),
                 KlineInterval.Hours12 => new DateTime(value.Year, value.Month, value.Day, value.Hour - (value.Hour % 12), 0, 0),
                 KlineInterval.Days1 => new DateTime(value.Year, value.Month, value.Day),
-                KlineInterval.Days3 => new DateTime(value.Year, value.Month, value.Day - (value.Day % 3)),
+                KlineInterval.Days3 => new DateTime(value.Year, value.Month, value.Day - ((value.Day - 1) % 3)),
                 KlineInterval.Weeks1 => value.Subtract(TimeSpan.FromDays((int)value.DayOfWeek)).Date,
-                KlineInterval.Months1 => new DateTime(value.Year, value.Month, 0),
+                KlineInterval.Months1 => new DateTime(value.Year, value.Month, 1),
 
                 _ => throw new ArgumentOutOfRangeException(nameof(interval))
             };
@@ -64,8 +62,6 @@ namespace Outcompute.Trader.Models
         {
             return interval switch
             {
-                KlineInterval.None => throw new ArgumentOutOfRangeException(nameof(interval)),
-
                 KlineInterval.Minutes1 => value.AddMinutes(1 * count),
                 KlineInterval.Minutes3 => value.AddMinutes(3 * count),
                 KlineInterval.Minutes5 => value.AddMinutes(5 * count),
@@ -82,7 +78,7 @@ namespace Outcompute.Trader.Models
                 KlineInterval.Weeks1 => value.AddDays(7 * count),
                 KlineInterval.Months1 => value.AddMonths(1 * count),
 
-                _ => throw new ArgumentNullException(nameof(interval))
+                _ => throw new ArgumentOutOfRangeException(nameof(interval))
             };
         }
 

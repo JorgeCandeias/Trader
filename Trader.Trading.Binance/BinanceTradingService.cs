@@ -159,7 +159,7 @@ namespace Outcompute.Trader.Trading.Binance
             return _mapper.Map<AccountInfo>(output);
         }
 
-        public async Task<Ticker> Get24hTickerPriceChangeStatisticsAsync(string symbol, CancellationToken cancellationToken = default)
+        public async Task<Ticker?> Get24hTickerPriceChangeStatisticsAsync(string symbol, CancellationToken cancellationToken = default)
         {
             _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
 

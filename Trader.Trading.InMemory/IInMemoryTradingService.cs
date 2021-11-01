@@ -16,5 +16,9 @@ namespace Outcompute.Trader.Trading.InMemory
         Task SetFlexibleProductPositionsAsync(IEnumerable<SavingsPosition> items);
 
         Task SetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string productId, SavingsRedemptionType type, SavingsQuota item);
+
+        Task Set24hTickerPriceChangeStatisticsAsync(Ticker ticker, CancellationToken cancellationToken = default);
+
+        Task SetAccountInfoAsync(AccountInfo info, CancellationToken cancellationToken = default);
     }
 }

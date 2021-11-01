@@ -64,22 +64,32 @@ namespace Outcompute.Trader.Trading.InMemory
 
         public Task CloseUserDataStreamAsync(string listenKey, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            return Task.CompletedTask;
         }
 
         public Task<string> CreateUserDataStreamAsync(CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            return Task.FromResult(Guid.NewGuid().ToString());
+        }
+
+        public Task Set24hTickerPriceChangeStatisticsAsync(Ticker ticker, CancellationToken cancellationToken = default)
+        {
+            return _grain.Set24hTickerPriceChangeStatisticsAsync(ticker);
         }
 
         public Task<Ticker> Get24hTickerPriceChangeStatisticsAsync(string symbol, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            return _grain.Get24hTickerPriceChangeStatisticsAsync(symbol);
+        }
+
+        public Task<IReadOnlyCollection<Ticker>> Get24hTickerPriceChangeStatisticsAsync(CancellationToken cancellationToken = default)
+        {
+            return _grain.Get24hTickerPriceChangeStatisticsAsync();
         }
 
         public Task<AccountInfo> GetAccountInfoAsync(CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            return _grain.GetAccountInfoAsync();
         }
 
         public Task<ImmutableSortedTradeSet> GetAccountTradesAsync(string symbol, long? fromId, int? limit, CancellationToken cancellationToken = default)
@@ -149,9 +159,9 @@ namespace Outcompute.Trader.Trading.InMemory
 
         public ITradingService WithBackoff() => this;
 
-        public Task<IReadOnlyCollection<Ticker>> Get24hTickerPriceChangeStatisticsAsync(CancellationToken cancellationToken = default)
+        public Task SetAccountInfoAsync(AccountInfo info, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            return _grain.SetAccountInfoAsync(info);
         }
     }
 }

@@ -38,5 +38,15 @@ namespace Outcompute.Trader.Trading.InMemory
             SavingsRedemptionType type);
 
         Task SetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string productId, SavingsRedemptionType type, SavingsQuota item);
+
+        Task Set24hTickerPriceChangeStatisticsAsync(Ticker ticker);
+
+        Task<Ticker> Get24hTickerPriceChangeStatisticsAsync(string symbol);
+
+        Task<IReadOnlyCollection<Ticker>> Get24hTickerPriceChangeStatisticsAsync();
+
+        Task<AccountInfo> GetAccountInfoAsync();
+
+        Task SetAccountInfoAsync(AccountInfo info);
     }
 }

@@ -25,6 +25,8 @@ namespace Outcompute.Trader.Trading.InMemory
         private readonly Dictionary<(string, SavingsRedemptionType), SavingsQuota> _quotas = new();
         private readonly Dictionary<string, Dictionary<long, OrderQueryResult>> _orders = new();
         private readonly Dictionary<string, long> _orderIds = new();
+        private readonly Dictionary<string, Ticker> _tickers = new();
+        private AccountInfo _account = AccountInfo.Empty;
 
         #region Orders
 
@@ -225,6 +227,46 @@ namespace Outcompute.Trader.Trading.InMemory
             if (item is null) throw new ArgumentNullException(nameof(item));
 
             _quotas[(productId, type)] = item;
+
+            return Task.CompletedTask;
+        }
+
+        public Task Set24hTickerPriceChangeStatisticsAsync(Ticker ticker)
+        {
+            if (ticker is null) throw new ArgumentNullException(nameof(ticker));
+
+            _tickers[ticker.Symbol] = ticker;
+
+            return Task.CompletedTask;
+        }
+
+        public Task<Ticker> Get24hTickerPriceChangeStatisticsAsync(string symbol)
+        {
+            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+
+            if (_tickers.TryGetValue(symbol, out var ticker))
+            {
+                return Task.FromResult(ticker);
+            }
+
+            throw new KeyNotFoundException(symbol);
+        }
+
+        public Task<IReadOnlyCollection<Ticker>> Get24hTickerPriceChangeStatisticsAsync()
+        {
+            return Task.FromResult<IReadOnlyCollection<Ticker>>(_tickers.Values);
+        }
+
+        public Task<AccountInfo> GetAccountInfoAsync()
+        {
+            return Task.FromResult(_account);
+        }
+
+        public Task SetAccountInfoAsync(AccountInfo info)
+        {
+            if (info is null) throw new ArgumentNullException(nameof(info));
+
+            _account = info;
 
             return Task.CompletedTask;
         }

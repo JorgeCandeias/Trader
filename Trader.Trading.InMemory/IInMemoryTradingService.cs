@@ -20,5 +20,7 @@ namespace Outcompute.Trader.Trading.InMemory
         Task Set24hTickerPriceChangeStatisticsAsync(Ticker ticker, CancellationToken cancellationToken = default);
 
         Task SetAccountInfoAsync(AccountInfo info, CancellationToken cancellationToken = default);
+
+        Task SetAccountTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default);
     }
 }

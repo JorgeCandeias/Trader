@@ -1,5 +1,6 @@
 ﻿using Orleans;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Models.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -48,5 +49,9 @@ namespace Outcompute.Trader.Trading.InMemory
         Task<AccountInfo> GetAccountInfoAsync();
 
         Task SetAccountInfoAsync(AccountInfo info);
+
+        Task SetAccountTradeAsync(AccountTrade trade);
+
+        Task<ImmutableSortedTradeSet> GetAccountTradesAsync(string symbol, long? fromId, int? limit);
     }
 }

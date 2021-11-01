@@ -94,7 +94,7 @@ namespace Outcompute.Trader.Trading.InMemory
 
         public Task<ImmutableSortedTradeSet> GetAccountTradesAsync(string symbol, long? fromId, int? limit, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            return _grain.GetAccountTradesAsync(symbol, fromId, limit);
         }
 
         public IReadOnlyCollection<SavingsProduct> GetCachedFlexibleProductsByAsset(string asset)
@@ -162,6 +162,11 @@ namespace Outcompute.Trader.Trading.InMemory
         public Task SetAccountInfoAsync(AccountInfo info, CancellationToken cancellationToken = default)
         {
             return _grain.SetAccountInfoAsync(info);
+        }
+
+        public Task SetAccountTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default)
+        {
+            return _grain.SetAccountTradeAsync(trade);
         }
     }
 }

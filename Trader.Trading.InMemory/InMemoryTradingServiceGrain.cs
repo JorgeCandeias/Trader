@@ -2,6 +2,7 @@
 using Orleans.Concurrency;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Models.Collections;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -26,6 +27,7 @@ namespace Outcompute.Trader.Trading.InMemory
         private readonly Dictionary<string, Dictionary<long, OrderQueryResult>> _orders = new();
         private readonly Dictionary<string, long> _orderIds = new();
         private readonly Dictionary<string, Ticker> _tickers = new();
+        private readonly Dictionary<string, Dictionary<long, AccountTrade>> _trades = new();
         private AccountInfo _account = AccountInfo.Empty;
 
         #region Orders
@@ -269,6 +271,41 @@ namespace Outcompute.Trader.Trading.InMemory
             _account = info;
 
             return Task.CompletedTask;
+        }
+
+        public Task SetAccountTradeAsync(AccountTrade trade)
+        {
+            if (trade is null) throw new ArgumentNullException(nameof(trade));
+
+            _trades.GetOrCreate(trade.Symbol, () => new())[trade.Id] = trade;
+
+            return Task.CompletedTask;
+        }
+
+        public Task<ImmutableSortedTradeSet> GetAccountTradesAsync(string symbol, long? fromId, int? limit)
+        {
+            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+
+            if (!_trades.TryGetValue(symbol, out var lookup))
+            {
+                return Task.FromResult(ImmutableSortedTradeSet.Empty);
+            }
+
+            var query = lookup.Values.AsEnumerable();
+
+            if (fromId.HasValue)
+            {
+                query = query.Where(x => x.Id >= fromId.Value);
+            }
+
+            if (limit.HasValue)
+            {
+                query = query.Take(limit.Value);
+            }
+
+            var result = query.ToImmutableSortedTradeSet();
+
+            return Task.FromResult(result);
         }
     }
 }

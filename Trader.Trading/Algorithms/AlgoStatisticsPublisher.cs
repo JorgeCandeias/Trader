@@ -59,7 +59,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 
                 _logger.LogInformation(
                     "{Type} {Name} reports Unrealized PnL = {Value:F8} ({Ratio:P8})",
-                    TypeName, significant.Symbol.Name, uPnL, uPnL / total);
+                    TypeName, significant.Symbol.Name, uPnL, total == 0m ? 0m : uPnL / total);
 
                 var rPnl = significant.ProfitEvents.Sum(x => x.Profit);
 

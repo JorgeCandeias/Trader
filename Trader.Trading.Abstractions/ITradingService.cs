@@ -124,5 +124,8 @@ namespace Outcompute.Trader.Trading
         Task<SwapPoolLiquidity> GetSwapLiquidityAsync(
             long poolId,
             CancellationToken cancellationToken = default);
+
+        Task<IEnumerable<SwapPoolLiquidity>> GetSwapLiquiditiesAsync(
+            CancellationToken cancellationToken = default);
     }
 }

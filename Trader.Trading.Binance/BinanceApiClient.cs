@@ -438,6 +438,17 @@ namespace Outcompute.Trader.Trading.Binance
                 .WithNullHandling();
         }
 
+        public Task<IEnumerable<SwapPoolLiquidityResponseModel>> GetSwapLiquiditiesAsync(SwapPoolLiquidityRequestModel model, CancellationToken cancellationToken = default)
+        {
+            if (model is null) throw new ArgumentNullException(nameof(model));
+
+            var uri = Combine(new Uri("/sapi/v1/bswap/liquidity", UriKind.Relative), model);
+
+            return _client
+                .GetFromJsonAsync<IEnumerable<SwapPoolLiquidityResponseModel>>(uri, cancellationToken)
+                .WithNullHandling();
+        }
+
         #endregion Swap Endpoints
 
         #region Helpers

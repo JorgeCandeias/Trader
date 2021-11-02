@@ -465,6 +465,22 @@ namespace Outcompute.Trader.Trading.Binance
                 .ConfigureAwait(false);
         }
 
+        public async Task<SwapPoolRemoveLiquidityResponse> RemoveSwapLiquidityAsync(SwapPoolRemoveLiquidityRequest model, CancellationToken cancellationToken = default)
+        {
+            var uri = Combine(new Uri("/sapi/v1/bswap/liquidityRemove", UriKind.Relative), model);
+
+            var result = await _client
+                .PostAsync(uri, EmptyHttpContent.Instance, cancellationToken)
+                .ConfigureAwait(false);
+
+            result = result.EnsureSuccessStatusCode();
+
+            return await result.Content
+                .ReadFromJsonAsync<SwapPoolRemoveLiquidityResponse>(_jsonOptions, cancellationToken)
+                .WithNullHandling()
+                .ConfigureAwait(false);
+        }
+
         #endregion Swap Endpoints
 
         #region Helpers

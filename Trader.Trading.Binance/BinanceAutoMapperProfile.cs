@@ -34,6 +34,7 @@ namespace Outcompute.Trader.Trading.Binance
             CreateMap<string, SavingsRedemptionType>().ConvertUsing<SavingsRedemptionTypeConverter>();
             CreateMap<string, SavingsStatus>().ConvertUsing<SavingsStatusConverter>();
             CreateMap<string, SavingsFeatured>().ConvertUsing<SavingsFeaturedConverter>();
+            CreateMap<string, SwapPoolLiquidityType>().ConvertUsing<SwapPoolLiquidityTypeConverter>();
             CreateMap<long, TimeSpan>().ConvertUsing<TimeSpanConverter>();
             CreateMap<decimal[], Bid>().ConvertUsing(x => new Bid(x[0], x[1]));
             CreateMap<decimal[], Ask>().ConvertUsing(x => new Ask(x[0], x[1]));
@@ -54,6 +55,7 @@ namespace Outcompute.Trader.Trading.Binance
             CreateMap<SavingsRedemptionType, string>().ConvertUsing<SavingsRedemptionTypeConverter>();
             CreateMap<SavingsStatus, string>().ConvertUsing<SavingsStatusConverter>();
             CreateMap<SavingsFeatured, string>().ConvertUsing<SavingsFeaturedConverter>();
+            CreateMap<SwapPoolLiquidityType, string>().ConvertUsing<SwapPoolLiquidityTypeConverter>();
 
             // simple model mappings
             CreateMap<ExchangeInfoModel, ExchangeInfo>();
@@ -220,6 +222,9 @@ namespace Outcompute.Trader.Trading.Binance
                 .ForCtorParam(nameof(SwapPoolAddLiquidityRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
 
             CreateMap<SwapPoolAddLiquidityResponseModel, SwapPoolOperation>();
+
+            CreateMap<RemoveSwapLiquidity, SwapPoolRemoveLiquidityRequest>()
+                .ForCtorParam(nameof(SwapPoolRemoveLiquidityRequest.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
         }
     }
 }

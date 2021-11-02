@@ -15,4 +15,12 @@ namespace Outcompute.Trader.Trading.Binance
         decimal Quantity,
         TimeSpan? ReceiveWindow,
         DateTime Timestamp);
+
+    internal record RemoveSwapLiquidity(
+        long PoolId,
+        SwapPoolLiquidityType Type,
+        string? Asset,
+        decimal ShareAmount,
+        long? ReceiveWindow,
+        DateTime Timestamp);
 }

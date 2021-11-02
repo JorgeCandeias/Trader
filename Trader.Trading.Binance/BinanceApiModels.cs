@@ -436,4 +436,15 @@ namespace Outcompute.Trader.Trading.Binance
 
     internal record SwapPoolAddLiquidityResponseModel(
         long OperationId);
+
+    internal record SwapPoolRemoveLiquidityRequest(
+        long PoolId,
+        string Type,
+        string? Asset,
+        decimal ShareAmount,
+        long? RecvWindow,
+        long Timestamp);
+
+    internal record SwapPoolRemoveLiquidityResponse(
+        long OperationId);
 }

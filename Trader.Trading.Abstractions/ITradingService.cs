@@ -134,5 +134,11 @@ namespace Outcompute.Trader.Trading
             string asset,
             decimal quantity,
             CancellationToken cancellationToken = default);
+
+        Task<SwapPoolOperation> RemoveSwapLiquidityAsync(
+            long poolId,
+            SwapPoolLiquidityType type,
+            decimal shareAmount,
+            CancellationToken cancellationToken = default);
     }
 }

@@ -165,5 +165,10 @@ namespace Outcompute.Trader.Trading.Binance
         {
             return WaitAndRetryForeverAsync(ct => _trader.AddSwapLiquidityAsync(poolId, type, asset, quantity, ct), cancellationToken);
         }
+
+        public Task<SwapPoolOperation> RemoveSwapLiquidityAsync(long poolId, SwapPoolLiquidityType type, decimal shareAmount, CancellationToken cancellationToken = default)
+        {
+            return WaitAndRetryForeverAsync(ct => _trader.RemoveSwapLiquidityAsync(poolId, type, shareAmount, ct), cancellationToken);
+        }
     }
 }

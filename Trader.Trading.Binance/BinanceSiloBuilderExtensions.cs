@@ -99,6 +99,7 @@ namespace Orleans.Hosting
                         .AddSingleton<SavingsRedemptionTypeConverter>()
                         .AddSingleton<SavingsStatusConverter>()
                         .AddSingleton<SavingsFeaturedConverter>()
+                        .AddSingleton<SwapPoolLiquidityTypeConverter>()
 
                         // add watchdog entries
                         .AddWatchdogEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetBinanceMarketDataGrain().PingAsync())

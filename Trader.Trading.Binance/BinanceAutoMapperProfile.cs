@@ -208,11 +208,18 @@ namespace Outcompute.Trader.Trading.Binance
 
             CreateMap<SwapPoolResponseModel, SwapPool>();
 
-            CreateMap<GetSwapPoolLiquidity, SwapPoolLiquidityRequestModel>();
+            CreateMap<GetSwapPoolLiquidity, SwapPoolLiquidityRequestModel>()
+                .ForCtorParam(nameof(SwapPoolLiquidityRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
+
             CreateMap<SwapPoolLiquidityResponseModel, SwapPoolLiquidity>()
                 .ForCtorParam(nameof(SwapPoolLiquidity.ShareAmount), x => x.MapFrom(y => y.Share.ShareAmount))
                 .ForCtorParam(nameof(SwapPoolLiquidity.SharePercentage), x => x.MapFrom(y => y.Share.SharePercentage))
                 .ForCtorParam(nameof(SwapPoolLiquidity.AssetShare), x => x.MapFrom(y => y.Share.Asset));
+
+            CreateMap<AddSwapPoolLiquidity, SwapPoolAddLiquidityRequestModel>()
+                .ForCtorParam(nameof(SwapPoolAddLiquidityRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
+
+            CreateMap<SwapPoolAddLiquidityResponseModel, SwapPoolOperation>();
         }
     }
 }

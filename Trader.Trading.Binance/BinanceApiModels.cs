@@ -425,4 +425,15 @@ namespace Outcompute.Trader.Trading.Binance
         decimal ShareAmount,
         decimal SharePercentage,
         Dictionary<string, decimal> Asset);
+
+    internal record SwapPoolAddLiquidityRequestModel(
+        long PoolId,
+        string? Type,
+        string Asset,
+        decimal Quantity,
+        long? RecvWindow,
+        long Timestamp);
+
+    internal record SwapPoolAddLiquidityResponseModel(
+        long OperationId);
 }

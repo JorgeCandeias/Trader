@@ -1,9 +1,18 @@
-﻿using System;
+﻿using Outcompute.Trader.Models;
+using System;
 
 namespace Outcompute.Trader.Trading.Binance
 {
     internal record GetSwapPoolLiquidity(
         long? PoolId,
-        TimeSpan? RecvWindow,
+        TimeSpan? ReceiveWindow,
+        DateTime Timestamp);
+
+    internal record AddSwapPoolLiquidity(
+        long PoolId,
+        SwapPoolLiquidityType? Type,
+        string Asset,
+        decimal Quantity,
+        TimeSpan? ReceiveWindow,
         DateTime Timestamp);
 }

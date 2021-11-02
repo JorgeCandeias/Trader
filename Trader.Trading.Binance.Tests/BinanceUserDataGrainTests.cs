@@ -129,10 +129,14 @@ namespace Outcompute.Trader.Trading.Binance.Tests
                 .Returns(Task.CompletedTask)
                 .Verifiable();
 
-            var dependencies = Mock.Of<IOptionsMonitor<AlgoDependencyOptions>>();
-            Mock.Get(dependencies)
-                .Setup(x => x.CurrentValue.Symbols)
-                .Returns(new[] { symbol.Name }.ToHashSet());
+            var dependencyOptions = new AlgoDependencyOptions()
+            {
+                Symbols =
+                {
+                    symbol.Name
+                }
+            };
+            var dependencies = Mock.Of<IOptionsMonitor<AlgoDependencyOptions>>(x => x.CurrentValue == dependencyOptions);
 
             var timers = new FakeTimerRegistry();
             var grain = new BinanceUserDataGrain(options, dependencies, logger, trader, streams, orders, trades, clock, mapper, lifetime, orderProvider, balances, tradeProvider, timers);

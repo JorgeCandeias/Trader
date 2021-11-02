@@ -13,7 +13,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 {
     internal class BinanceMarketDataGrain : Grain, IBinanceMarketDataGrain
     {
-        private readonly BinanceOptions _options;
+        private readonly IOptionsMonitor<BinanceOptions> _options;
         private readonly IOptionsMonitor<AlgoDependencyOptions> _dependencies;
         private readonly ILogger _logger;
         private readonly IHostApplicationLifetime _lifetime;
@@ -22,9 +22,9 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         private readonly IKlineSynchronizer _klineSynchronizer;
         private readonly IMarketDataStreamer _streamer;
 
-        public BinanceMarketDataGrain(IOptions<BinanceOptions> options, IOptionsMonitor<AlgoDependencyOptions> dependencies, ILogger<BinanceMarketDataGrain> logger, IHostApplicationLifetime lifetime, ITimerRegistry timers, ITickerSynchronizer tickerSynchronizer, IKlineSynchronizer klineSynchronizer, IMarketDataStreamer streamer)
+        public BinanceMarketDataGrain(IOptionsMonitor<BinanceOptions> options, IOptionsMonitor<AlgoDependencyOptions> dependencies, ILogger<BinanceMarketDataGrain> logger, IHostApplicationLifetime lifetime, ITimerRegistry timers, ITickerSynchronizer tickerSynchronizer, IKlineSynchronizer klineSynchronizer, IMarketDataStreamer streamer)
         {
-            _options = options.Value;
+            _options = options;
             _dependencies = dependencies;
             _logger = logger;
             _lifetime = lifetime;
@@ -101,10 +101,11 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         {
             try
             {
+                var options = _options.CurrentValue;
                 var dependencies = _dependencies.CurrentValue;
 
                 // this helps cancel every local step upon stream failure at any point
-                using var resetCancellation = new CancellationTokenSource(_options.MarketDataStreamResetPeriod);
+                using var resetCancellation = new CancellationTokenSource(options.MarketDataStreamResetPeriod);
                 using var linkedCancellation = CancellationTokenSource.CreateLinkedTokenSource(resetCancellation.Token, _lifetime.ApplicationStopping);
 
                 // start streaming in the background while we sync from the api

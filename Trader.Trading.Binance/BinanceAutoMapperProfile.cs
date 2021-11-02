@@ -207,6 +207,12 @@ namespace Outcompute.Trader.Trading.Binance
             CreateMap<Memory<byte>, MarketDataStreamMessage>().ConvertUsing<MarketDataStreamMessageConverter>();
 
             CreateMap<SwapPoolResponseModel, SwapPool>();
+
+            CreateMap<GetSwapPoolLiquidity, SwapPoolLiquidityRequestModel>();
+            CreateMap<SwapPoolLiquidityResponseModel, SwapPoolLiquidity>()
+                .ForCtorParam(nameof(SwapPoolLiquidity.ShareAmount), x => x.MapFrom(y => y.Share.ShareAmount))
+                .ForCtorParam(nameof(SwapPoolLiquidity.SharePercentage), x => x.MapFrom(y => y.Share.SharePercentage))
+                .ForCtorParam(nameof(SwapPoolLiquidity.AssetShare), x => x.MapFrom(y => y.Share.Asset));
         }
     }
 }

@@ -424,7 +424,18 @@ namespace Outcompute.Trader.Trading.Binance
 
             return await _client
                 .GetFromJsonAsync<IEnumerable<SwapPoolResponseModel>>(uri, cancellationToken)
-                .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
+                .WithNullHandling();
+        }
+
+        public Task<SwapPoolLiquidityResponseModel> GetSwapLiquidityAsync(SwapPoolLiquidityRequestModel model, CancellationToken cancellationToken = default)
+        {
+            if (model is null) throw new ArgumentNullException(nameof(model));
+
+            var uri = Combine(new Uri("/sapi/v1/bswap/liquidity", UriKind.Relative), model);
+
+            return _client
+                .GetFromJsonAsync<SwapPoolLiquidityResponseModel>(uri, cancellationToken)
+                .WithNullHandling();
         }
 
         #endregion Swap Endpoints
@@ -496,5 +507,14 @@ namespace Outcompute.Trader.Trading.Binance
         }
 
         #endregion Helpers
+    }
+
+    internal static class BinanceApiClientExtensions
+    {
+        public static async Task<T> WithNullHandling<T>(this Task<T?> task)
+        {
+            var result = await task.ConfigureAwait(false);
+            return result ?? throw new BinanceUnknownResponseException();
+        }
     }
 }

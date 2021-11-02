@@ -1,4 +1,6 @@
-﻿namespace Outcompute.Trader.Trading.Binance
+﻿using System.Collections.Generic;
+
+namespace Outcompute.Trader.Trading.Binance
 {
     internal record ErrorModel(int Code, string Msg);
 
@@ -403,7 +405,24 @@
         decimal UpLimitPerUser);
 
     internal record SwapPoolResponseModel(
-        int PoolId,
+        long PoolId,
         int PoolName,
         string[] Assets);
+
+    internal record SwapPoolLiquidityRequestModel(
+        long? PoolId,
+        long? RecvWindow,
+        long Timestamp);
+
+    internal record SwapPoolLiquidityResponseModel(
+        long PoolId,
+        string PoolName,
+        long UpdatedTime,
+        Dictionary<string, decimal> Liquidity,
+        SwapPoolLiquidityShareResponseModel Share);
+
+    internal record SwapPoolLiquidityShareResponseModel(
+        decimal ShareAmount,
+        decimal SharePercentage,
+        Dictionary<string, decimal> Asset);
 }

@@ -319,6 +319,19 @@ namespace Outcompute.Trader.Trading.Binance
             return _mapper.Map<IEnumerable<SwapPool>>(result);
         }
 
+        public async Task<SwapPoolLiquidity> GetSwapLiquidityAsync(long poolId, CancellationToken cancellationToken = default)
+        {
+            var model = new GetSwapPoolLiquidity(poolId, null, _clock.UtcNow);
+
+            var input = _mapper.Map<SwapPoolLiquidityRequestModel>(model);
+
+            var output = await _client
+                .GetSwapLiquidityAsync(input, cancellationToken)
+                .ConfigureAwait(false);
+
+            return _mapper.Map<SwapPoolLiquidity>(output);
+        }
+
         #endregion Swap
 
         public async Task StartAsync(CancellationToken cancellationToken)

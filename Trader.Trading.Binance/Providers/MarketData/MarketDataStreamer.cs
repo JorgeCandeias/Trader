@@ -31,19 +31,22 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 
         private static string TypeName => nameof(MarketDataStreamer);
 
-        public Task StreamAsync(ISet<string> tickers, ISet<(string Symbol, KlineInterval Interval)> klines, CancellationToken cancellationToken = default)
+        public Task StreamAsync(IEnumerable<string> tickers, IEnumerable<(string Symbol, KlineInterval Interval)> klines, CancellationToken cancellationToken = default)
         {
             return StreamCoreAsync(tickers, klines, cancellationToken);
         }
 
         [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "N/A")]
         [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Worker")]
-        private async Task StreamCoreAsync(ISet<string> tickers, ISet<(string Symbol, KlineInterval Interval)> klines, CancellationToken cancellationToken)
+        private async Task StreamCoreAsync(IEnumerable<string> tickers, IEnumerable<(string Symbol, KlineInterval Interval)> klines, CancellationToken cancellationToken)
         {
+            var tickerLookup = tickers.ToHashSet();
+            var klineLookup = klines.ToHashSet();
+
             // create a client for the streams we want
             var streams = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            streams.UnionWith(tickers.Select(x => $"{x.ToLowerInvariant()}@miniTicker"));
-            streams.UnionWith(klines.Select(x => $"{x.Symbol.ToLowerInvariant()}@kline_{_mapper.Map<string>(x.Interval)}"));
+            streams.UnionWith(tickerLookup.Select(x => $"{x.ToLowerInvariant()}@miniTicker"));
+            streams.UnionWith(klineLookup.Select(x => $"{x.Symbol.ToLowerInvariant()}@kline_{_mapper.Map<string>(x.Interval)}"));
 
             _logger.LogInformation(
                 "{Name} connecting to streams {Streams}...",
@@ -70,7 +73,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                 }
             }, new ExecutionDataflowBlockOptions
             {
-                MaxDegreeOfParallelism = klines.Count
+                MaxDegreeOfParallelism = klineLookup.Count
             });
 
             // this worker action pushes incoming tickers to the system in the background so we dont hold up the binance stream
@@ -88,7 +91,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                 }
             }, new ExecutionDataflowBlockOptions
             {
-                MaxDegreeOfParallelism = tickers.Count
+                MaxDegreeOfParallelism = tickerLookup.Count
             });
 
             // now we can stream from the exchange
@@ -103,12 +106,12 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                     throw new BinanceCodeException(message.Error.Code, message.Error.Message, 0);
                 }
 
-                if (message.MiniTicker is not null && tickers.Contains(message.MiniTicker.Symbol))
+                if (message.MiniTicker is not null && tickerLookup.Contains(message.MiniTicker.Symbol))
                 {
                     tickerWorker.Post(message.MiniTicker);
                 }
 
-                if (message.Kline is not null && klines.Contains((message.Kline.Symbol, message.Kline.Interval)))
+                if (message.Kline is not null && klineLookup.Contains((message.Kline.Symbol, message.Kline.Interval)))
                 {
                     klineWorker.Post(message.Kline);
                 }

@@ -3,10 +3,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Timers;
-using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,6 +14,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
     internal class BinanceMarketDataGrain : Grain, IBinanceMarketDataGrain
     {
         private readonly BinanceOptions _options;
+        private readonly IOptionsMonitor<AlgoDependencyOptions> _dependencies;
         private readonly ILogger _logger;
         private readonly IHostApplicationLifetime _lifetime;
         private readonly ITimerRegistry _timers;
@@ -23,26 +22,16 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         private readonly IKlineSynchronizer _klineSynchronizer;
         private readonly IMarketDataStreamer _streamer;
 
-        private readonly HashSet<string> _tickerSymbols;
-        private readonly Dictionary<(string Symbol, KlineInterval Interval), int> _klineWindows;
-
-        public BinanceMarketDataGrain(IOptions<BinanceOptions> options, ILogger<BinanceMarketDataGrain> logger, IAlgoDependencyInfo dependencies, IHostApplicationLifetime lifetime, ITimerRegistry timers, ITickerSynchronizer tickerSynchronizer, IKlineSynchronizer klineSynchronizer, IMarketDataStreamer streamer)
+        public BinanceMarketDataGrain(IOptions<BinanceOptions> options, IOptionsMonitor<AlgoDependencyOptions> dependencies, ILogger<BinanceMarketDataGrain> logger, IHostApplicationLifetime lifetime, ITimerRegistry timers, ITickerSynchronizer tickerSynchronizer, IKlineSynchronizer klineSynchronizer, IMarketDataStreamer streamer)
         {
             _options = options.Value;
+            _dependencies = dependencies;
             _logger = logger;
             _lifetime = lifetime;
             _timers = timers;
             _tickerSynchronizer = tickerSynchronizer;
             _klineSynchronizer = klineSynchronizer;
             _streamer = streamer;
-
-            _tickerSymbols = dependencies.GetTickers().ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-            _klineWindows = dependencies
-                .GetKlines()
-                .GroupBy(x => (x.Symbol, x.Interval))
-                .Select(x => (x.Key, Periods: x.Max(y => y.Periods)))
-                .ToDictionary(x => x.Key, x => x.Periods);
         }
 
         private static string TypeName => nameof(BinanceMarketDataGrain);
@@ -55,8 +44,10 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 
         public override Task OnActivateAsync()
         {
+            var dependencies = _dependencies.CurrentValue;
+
             // if there are ticker or kline dependencies then ensure we keep streaming them
-            if (_tickerSymbols.Count > 0 || _klineWindows.Count > 0)
+            if (dependencies.Tickers.Count > 0 || dependencies.Klines.Count > 0)
             {
                 _timer = _timers.RegisterTimer(this, TickEnsureStreamAsync, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
             }
@@ -110,18 +101,20 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         {
             try
             {
+                var dependencies = _dependencies.CurrentValue;
+
                 // this helps cancel every local step upon stream failure at any point
                 using var resetCancellation = new CancellationTokenSource(_options.MarketDataStreamResetPeriod);
                 using var linkedCancellation = CancellationTokenSource.CreateLinkedTokenSource(resetCancellation.Token, _lifetime.ApplicationStopping);
 
                 // start streaming in the background while we sync from the api
-                var streamTask = Task.Run(() => _streamer.StreamAsync(_tickerSymbols, _klineWindows.Select(x => (x.Key.Symbol, x.Key.Interval)).ToHashSet(), linkedCancellation.Token), linkedCancellation.Token);
+                var streamTask = Task.Run(() => _streamer.StreamAsync(dependencies.Tickers, dependencies.Klines.Keys, linkedCancellation.Token), linkedCancellation.Token);
 
                 // sync tickers from the api
-                await _tickerSynchronizer.SyncAsync(_tickerSymbols, linkedCancellation.Token);
+                await _tickerSynchronizer.SyncAsync(dependencies.Symbols, linkedCancellation.Token);
 
                 // sync klines from the api
-                await _klineSynchronizer.SyncAsync(_klineWindows.Select(x => (x.Key.Symbol, x.Key.Interval, x.Value)), linkedCancellation.Token);
+                await _klineSynchronizer.SyncAsync(dependencies.Klines.Select(x => (x.Key.Symbol, x.Key.Interval, x.Value)), linkedCancellation.Token);
 
                 // signal the ready state to allow algos to execute
                 _ready = true;

@@ -35,11 +35,11 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<IOrderSynchronizer, OrderSynchronizer>()
                 .AddSingleton<ITradeSynchronizer, TradeSynchronizer>()
                 .AddSingleton<IOrderCodeGenerator, OrderCodeGenerator>()
-                .AddSingleton<IAlgoDependencyInfo, AlgoDependencyInfo>()
                 .AddSingleton<IAlgoContextHydrator, AlgoContextHydrator>()
                 .AddSingleton<IAlgoStatisticsPublisher, AlgoStatisticsPublisher>()
                 .AddOptions<AlgoConfigurationMappingOptions>().ValidateDataAnnotations().Services
                 .AddOptions<SavingsOptions>().ValidateDataAnnotations().Services
+                .ConfigureOptions<AlgoDependencyOptionsConfigurator>()
 
                 // kline provider
                 .AddSingleton<IKlineProvider, KlineProvider>()

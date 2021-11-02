@@ -7,7 +7,6 @@ using Outcompute.Trader.Trading.Algorithms;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Providers.Klines
@@ -18,11 +17,11 @@ namespace Outcompute.Trader.Trading.Providers.Klines
     {
         private readonly KlineProviderOptions _options;
         private readonly ReactiveOptions _reactive;
-        private readonly IAlgoDependencyInfo _dependencies;
+        private readonly IOptionsMonitor<AlgoDependencyOptions> _dependencies;
         private readonly IHostApplicationLifetime _lifetime;
         private readonly IGrainFactory _factory;
 
-        public KlineProviderReplicaGrain(IOptions<KlineProviderOptions> options, IOptions<ReactiveOptions> reactive, IAlgoDependencyInfo dependencies, IHostApplicationLifetime lifetime, IGrainFactory factory)
+        public KlineProviderReplicaGrain(IOptions<KlineProviderOptions> options, IOptions<ReactiveOptions> reactive, IOptionsMonitor<AlgoDependencyOptions> dependencies, IHostApplicationLifetime lifetime, IGrainFactory factory)
         {
             _options = options.Value;
             _reactive = reactive.Value;
@@ -70,11 +69,7 @@ namespace Outcompute.Trader.Trading.Providers.Klines
         {
             (_symbol, _interval) = this.GetPrimaryKeys();
 
-            _periods = _dependencies
-                .GetKlines(_symbol, _interval)
-                .Select(x => x.Periods)
-                .DefaultIfEmpty(0)
-                .Max();
+            _periods = _dependencies.CurrentValue.Klines.TryGetValue((_symbol, _interval), out var periods) ? periods : 0;
 
             await LoadAsync();
 

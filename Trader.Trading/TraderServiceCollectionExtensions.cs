@@ -1,4 +1,5 @@
-﻿using Outcompute.Trader.Trading;
+﻿using Orleans;
+using Outcompute.Trader.Trading;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Commands.AveragingSell;
@@ -28,6 +29,9 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             return services
 
+                // add watchdog entires
+                .AddWatchdogEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetAlgoManagerGrain().PingAsync())
+
                 // assorted services
                 .AddWatchdogService()
                 .AddSingleton<IReadynessProvider, ReadynessProvider>()
@@ -40,6 +44,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddOptions<AlgoConfigurationMappingOptions>().ValidateDataAnnotations().Services
                 .AddOptions<SavingsOptions>().ValidateDataAnnotations().Services
                 .ConfigureOptions<AlgoDependencyOptionsConfigurator>()
+                .ConfigureOptions<TraderOptionsConfigurator>().AddOptions<TraderOptions>().ValidateDataAnnotations().Services
 
                 // kline provider
                 .AddSingleton<IKlineProvider, KlineProvider>()

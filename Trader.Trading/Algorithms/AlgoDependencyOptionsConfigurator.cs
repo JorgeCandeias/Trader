@@ -5,9 +5,9 @@ namespace Outcompute.Trader.Trading.Algorithms
 {
     internal class AlgoDependencyOptionsConfigurator : IConfigureOptions<AlgoDependencyOptions>
     {
-        private readonly IOptionsMonitor<AlgoManagerGrainOptions> _monitor;
+        private readonly IOptionsMonitor<TraderOptions> _monitor;
 
-        public AlgoDependencyOptionsConfigurator(IOptionsMonitor<AlgoManagerGrainOptions> monitor)
+        public AlgoDependencyOptionsConfigurator(IOptionsMonitor<TraderOptions> monitor)
         {
             _monitor = monitor;
         }

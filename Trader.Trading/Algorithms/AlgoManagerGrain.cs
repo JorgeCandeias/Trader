@@ -12,11 +12,11 @@ namespace Outcompute.Trader.Trading.Algorithms
 {
     internal class AlgoManagerGrain : Grain, IAlgoManagerGrain
     {
-        private readonly IOptionsMonitor<AlgoManagerGrainOptions> _options;
+        private readonly IOptionsMonitor<TraderOptions> _options;
         private readonly ILogger _logger;
         private readonly IHostApplicationLifetime _lifetime;
 
-        public AlgoManagerGrain(IOptionsMonitor<AlgoManagerGrainOptions> options, ILogger<AlgoManagerGrain> logger, IHostApplicationLifetime lifetime)
+        public AlgoManagerGrain(IOptionsMonitor<TraderOptions> options, ILogger<AlgoManagerGrain> logger, IHostApplicationLifetime lifetime)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));

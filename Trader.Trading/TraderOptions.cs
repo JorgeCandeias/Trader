@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Outcompute.Trader.Trading.Algorithms;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace Outcompute.Trader.Trading.Algorithms
+namespace Outcompute.Trader.Trading
 {
-    public class AlgoManagerGrainOptions
+    public class TraderOptions
     {
         [Required]
         [Range(typeof(TimeSpan), "0.00:00:00.001", "1.00:00:00.000")]

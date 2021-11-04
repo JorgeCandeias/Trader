@@ -143,9 +143,9 @@ namespace Outcompute.Trader.Trading.Binance
         string TimeInForce,
         string Type,
         string Side,
-        NewOrderResponseFillModel[] Fills);
+        CreateOrderResponseFill[] Fills);
 
-    internal record NewOrderResponseFillModel(
+    internal record CreateOrderResponseFill(
         decimal Price,
         decimal Qty,
         decimal Commission,

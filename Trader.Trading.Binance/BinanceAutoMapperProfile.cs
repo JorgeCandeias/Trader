@@ -97,7 +97,7 @@ namespace Outcompute.Trader.Trading.Binance
                 .ForCtorParam(nameof(OrderResult.ExecutedQuantity), x => x.MapFrom(y => y.ExecutedQty))
                 .ForCtorParam(nameof(OrderResult.CummulativeQuoteQuantity), x => x.MapFrom(y => y.CummulativeQuoteQty));
 
-            CreateMap<NewOrderResponseFillModel, OrderFill>()
+            CreateMap<CreateOrderResponseFill, OrderFill>()
                 .ForCtorParam(nameof(OrderFill.Quantity), x => x.MapFrom(y => y.Qty));
 
             CreateMap<OrderQuery, GetOrderRequestModel>()

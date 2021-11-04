@@ -198,5 +198,10 @@ namespace Outcompute.Trader.Trading.InMemory
         {
             throw new NotImplementedException();
         }
+
+        public Task<SwapPoolLiquidityAddPreview> AddSwapPoolLiquidityPreviewAsync(long poolId, SwapPoolLiquidityType type, string quoteAsset, decimal quoteQuantity, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

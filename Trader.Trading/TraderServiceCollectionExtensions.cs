@@ -32,7 +32,7 @@ namespace Microsoft.Extensions.DependencyInjection
             return services
 
                 // add watchdog entires
-                .AddWatchdogEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetGrain<ISwapGrain>(Guid.Empty).PingAsync())
+                .AddWatchdogEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetGrain<ISwapPoolGrain>(Guid.Empty).PingAsync())
                 .AddWatchdogEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetAlgoManagerGrain().PingAsync())
 
                 // assorted services

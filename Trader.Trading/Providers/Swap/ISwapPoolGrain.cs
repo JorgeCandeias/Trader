@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Providers.Swap
 {
-    internal interface ISwapGrain : IGrainWithGuidKey
+    internal interface ISwapPoolGrain : IGrainWithGuidKey
     {
         Task PingAsync();
     }

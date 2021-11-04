@@ -494,6 +494,16 @@ namespace Outcompute.Trader.Trading.Binance
                 .ConfigureAwait(false);
         }
 
+        public async Task<AddSwapPoolLiquidityPreviewResponse> AddSwapPoolLiquidityPreviewAsync(AddSwapPoolLiquidityPreviewRequest model, CancellationToken cancellationToken = default)
+        {
+            var uri = Combine(new Uri("/sapi/v1/bswap/addLiquidityPreview", UriKind.Relative), model);
+
+            return await _client
+                .GetFromJsonAsync<AddSwapPoolLiquidityPreviewResponse>(uri, cancellationToken)
+                .WithNullHandling()
+                .ConfigureAwait(false);
+        }
+
         #endregion Swap Endpoints
 
         #region Helpers

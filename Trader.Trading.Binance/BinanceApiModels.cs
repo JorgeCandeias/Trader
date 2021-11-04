@@ -472,4 +472,22 @@ namespace Outcompute.Trader.Trading.Binance
         decimal MaxAdd,
         decimal MinSwap,
         decimal MaxSwap);
+
+    internal record AddSwapPoolLiquidityPreviewRequest(
+        long PoolId,
+        string Type,
+        string QuoteAsset,
+        decimal QuoteQty,
+        long? RecvWindow,
+        long Timestamp);
+
+    internal record AddSwapPoolLiquidityPreviewResponse(
+        string QuoteAsset,
+        string BaseAsset,
+        decimal QuoteAmt,
+        decimal BaseAmt,
+        decimal Price,
+        decimal Share,
+        decimal Slippage,
+        decimal Fee);
 }

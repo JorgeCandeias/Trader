@@ -28,4 +28,12 @@ namespace Outcompute.Trader.Trading.Binance
         long? PoolId,
         TimeSpan? ReceiveWindow,
         DateTime Timestamp);
+
+    internal record AddSwapPoolLiquidityPreview(
+        long PoolId,
+        SwapPoolLiquidityType Type,
+        string QuoteAsset,
+        decimal QuoteQuantity,
+        TimeSpan? ReceiveWindow,
+        DateTime Timestamp);
 }

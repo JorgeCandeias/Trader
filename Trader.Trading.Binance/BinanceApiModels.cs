@@ -274,7 +274,7 @@ namespace Outcompute.Trader.Trading.Binance
         long? RecvWindow,
         long Timestamp);
 
-    internal record AccountResponseModel(
+    internal record GetAccountInfoResponse(
         decimal MakerCommission,
         decimal TakerCommission,
         decimal BuyerCommission,
@@ -284,10 +284,10 @@ namespace Outcompute.Trader.Trading.Binance
         bool CanDeposit,
         long UpdateTime,
         string AccountType,
-        AccountBalanceResponseModel[] Balances,
+        GetAccountInfoResponseBalance[] Balances,
         string[] Permissions);
 
-    internal record AccountBalanceResponseModel(
+    internal record GetAccountInfoResponseBalance(
         string Asset,
         decimal Free,
         decimal Locked);

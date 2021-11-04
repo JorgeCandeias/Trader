@@ -283,12 +283,12 @@ namespace Outcompute.Trader.Trading.Binance
         /// <summary>
         /// Gets the account information.
         /// </summary>
-        public async Task<AccountResponseModel> GetAccountInfoAsync(GetAccountInfoRequest model, CancellationToken cancellationToken = default)
+        public async Task<GetAccountInfoResponse> GetAccountInfoAsync(GetAccountInfoRequest model, CancellationToken cancellationToken = default)
         {
             _ = model ?? throw new ArgumentNullException(nameof(model));
 
             return await _client
-                .GetFromJsonAsync<AccountResponseModel>(
+                .GetFromJsonAsync<GetAccountInfoResponse>(
                     Combine(new Uri("/api/v3/account", UriKind.Relative), model),
                     _jsonOptions,
                     cancellationToken)

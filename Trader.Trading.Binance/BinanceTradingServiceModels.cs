@@ -16,11 +16,16 @@ namespace Outcompute.Trader.Trading.Binance
         TimeSpan? ReceiveWindow,
         DateTime Timestamp);
 
-    internal record RemoveSwapLiquidity(
+    internal record RemoveSwapPoolLiquidity(
         long PoolId,
         SwapPoolLiquidityType Type,
         string? Asset,
         decimal ShareAmount,
         long? ReceiveWindow,
+        DateTime Timestamp);
+
+    internal record GetSwapPoolConfiguration(
+        long? PoolId,
+        TimeSpan? ReceiveWindow,
         DateTime Timestamp);
 }

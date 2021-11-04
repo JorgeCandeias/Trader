@@ -140,5 +140,8 @@ namespace Outcompute.Trader.Trading
             SwapPoolLiquidityType type,
             decimal shareAmount,
             CancellationToken cancellationToken = default);
+
+        Task<IEnumerable<SwapPoolConfiguration>> GetSwapPoolConfigurationsAsync(
+            CancellationToken cancellationToken = default);
     }
 }

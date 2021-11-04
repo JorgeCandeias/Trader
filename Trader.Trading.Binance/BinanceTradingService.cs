@@ -360,7 +360,7 @@ namespace Outcompute.Trader.Trading.Binance
 
         public async Task<SwapPoolOperation> RemoveSwapLiquidityAsync(long poolId, SwapPoolLiquidityType type, decimal shareAmount, CancellationToken cancellationToken = default)
         {
-            var model = new RemoveSwapLiquidity(poolId, type, null, shareAmount, null, _clock.UtcNow);
+            var model = new RemoveSwapPoolLiquidity(poolId, type, null, shareAmount, null, _clock.UtcNow);
 
             var input = _mapper.Map<RemoveSwapPoolLiquidityRequest>(model);
 
@@ -369,6 +369,19 @@ namespace Outcompute.Trader.Trading.Binance
                 .ConfigureAwait(false);
 
             return _mapper.Map<SwapPoolOperation>(output);
+        }
+
+        public async Task<IEnumerable<SwapPoolConfiguration>> GetSwapPoolConfigurationsAsync(CancellationToken cancellationToken = default)
+        {
+            var model = new GetSwapPoolConfiguration(null, null, _clock.UtcNow);
+
+            var input = _mapper.Map<GetSwapPoolConfigurationRequest>(model);
+
+            var output = await _client
+                .GetSwapPoolConfigurationsAsync(input, cancellationToken)
+                .ConfigureAwait(false);
+
+            return _mapper.Map<IEnumerable<SwapPoolConfiguration>>(output);
         }
 
         #endregion Swap

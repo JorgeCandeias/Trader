@@ -82,7 +82,7 @@ namespace Outcompute.Trader.Trading.Binance
         int Mins,
         decimal Price);
 
-    internal record TickerModel(
+    internal record ApiTicker(
         string Symbol,
         decimal PriceChange,
         decimal PriceChangePercent,

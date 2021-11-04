@@ -59,7 +59,7 @@ namespace Outcompute.Trader.Trading.Binance
 
             // simple model mappings
             CreateMap<ApiExchangeInfo, ExchangeInfo>();
-            CreateMap<TickerModel, Ticker>();
+            CreateMap<ApiTicker, Ticker>();
             CreateMap<SymbolPriceTickerModel, SymbolPriceTicker>();
 
             // complex model mappings

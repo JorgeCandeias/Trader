@@ -106,21 +106,21 @@ namespace Outcompute.Trader.Trading.Binance
             return _mapper.Map<IEnumerable<Trade>>(result);
         }
 
-        public async Task<TickerModel> Get24hTickerPriceChangeStatisticsAsync(string symbol, CancellationToken cancellationToken = default)
+        public async Task<ApiTicker> Get24hTickerPriceChangeStatisticsAsync(string symbol, CancellationToken cancellationToken = default)
         {
             _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
 
             return await _client
-                .GetFromJsonAsync<TickerModel>(
+                .GetFromJsonAsync<ApiTicker>(
                     new Uri($"/api/v3/ticker/24hr?symbol={HttpUtility.UrlEncode(symbol)}", UriKind.Relative),
                     cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
 
-        public async Task<IReadOnlyCollection<TickerModel>> Get24hTickerPriceChangeStatisticsAsync(CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyCollection<ApiTicker>> Get24hTickerPriceChangeStatisticsAsync(CancellationToken cancellationToken = default)
         {
             return await _client
-                .GetFromJsonAsync<TickerModel[]>(
+                .GetFromJsonAsync<ApiTicker[]>(
                     new Uri($"/api/v3/ticker/24hr", UriKind.Relative),
                     cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();

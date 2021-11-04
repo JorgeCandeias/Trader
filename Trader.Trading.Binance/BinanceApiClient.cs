@@ -406,14 +406,14 @@ namespace Outcompute.Trader.Trading.Binance
 
         private readonly Uri _getFlexibleProductListUri = new("/sapi/v1/lending/daily/product/list", UriKind.Relative);
 
-        public async Task<IEnumerable<FlexibleProductResponseModel>> GetFlexibleProductListAsync(GetFlexibleProductListRequest model, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<GetFlexibleProductListResponse>> GetFlexibleProductListAsync(GetFlexibleProductListRequest model, CancellationToken cancellationToken = default)
         {
             _ = model ?? throw new ArgumentNullException(nameof(model));
 
             var uri = Combine(_getFlexibleProductListUri, model);
 
             return await _client
-                .GetFromJsonAsync<IEnumerable<FlexibleProductResponseModel>>(uri, cancellationToken)
+                .GetFromJsonAsync<IEnumerable<GetFlexibleProductListResponse>>(uri, cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
 

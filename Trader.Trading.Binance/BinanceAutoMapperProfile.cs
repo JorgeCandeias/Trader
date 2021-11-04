@@ -200,7 +200,7 @@ namespace Outcompute.Trader.Trading.Binance
             CreateMap<GetFlexibleProduct, GetFlexibleProductListRequest>()
                 .ForCtorParam(nameof(GetFlexibleProductListRequest.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
 
-            CreateMap<FlexibleProductResponseModel, SavingsProduct>();
+            CreateMap<GetFlexibleProductListResponse, SavingsProduct>();
 
             // convert payloads from the user data stream
             CreateMap<Memory<byte>, UserDataStreamMessage>().ConvertUsing<UserDataStreamMessageConverter>();

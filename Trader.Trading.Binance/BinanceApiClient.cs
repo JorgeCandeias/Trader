@@ -234,7 +234,7 @@ namespace Outcompute.Trader.Trading.Binance
         /// <summary>
         /// Cancels all open orders.
         /// </summary>
-        public async Task<IEnumerable<CancelAllOrdersResponseModel>> CancelAllOrdersAsync(CancelAllOrdersRequest model, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<CancelAllOrdersResponse>> CancelAllOrdersAsync(CancelAllOrdersRequest model, CancellationToken cancellationToken = default)
         {
             var uri = Combine(new Uri("/api/v3/openOrders", UriKind.Relative), model);
 
@@ -243,7 +243,7 @@ namespace Outcompute.Trader.Trading.Binance
                 .ConfigureAwait(false);
 
             return await response.Content
-                .ReadFromJsonAsync<IEnumerable<CancelAllOrdersResponseModel>>(_jsonOptions, cancellationToken)
+                .ReadFromJsonAsync<IEnumerable<CancelAllOrdersResponse>>(_jsonOptions, cancellationToken)
                 .WithNullHandling()
                 .ConfigureAwait(false);
         }

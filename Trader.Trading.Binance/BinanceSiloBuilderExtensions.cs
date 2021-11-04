@@ -90,7 +90,7 @@ namespace Orleans.Hosting
                         .AddSingleton<ContingencyTypeConverter>()
                         .AddSingleton<OcoStatusConverter>()
                         .AddSingleton<OcoOrderStatusConverter>()
-                        .AddSingleton<CancelAllOrdersResponseModelConverter>()
+                        .AddSingleton<CancelAllOrdersResponseConverter>()
                         .AddSingleton<AccountTypeConverter>()
                         .AddSingleton<UserDataStreamMessageConverter>()
                         .AddSingleton<ExecutionTypeConverter>()

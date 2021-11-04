@@ -68,7 +68,7 @@ namespace Outcompute.Trader.Trading.Binance
             CreateMap<ApiSymbolFilter, SymbolFilter>().ConvertUsing<ApiSymbolFilterConverter>();
             CreateMap<IEnumerable<ApiSymbolFilter>, SymbolFilters>().ConvertUsing<ApiSymbolFiltersConverter>();
             CreateMap<ApiOrderBook, OrderBook>().ConvertUsing<ApiOrderBookConverter>();
-            CreateMap<CancelAllOrdersResponseModel, CancelOrderResult>().ConvertUsing<CancelAllOrdersResponseModelConverter>();
+            CreateMap<CancelAllOrdersResponse, CancelOrderResult>().ConvertUsing<CancelAllOrdersResponseConverter>();
 
             // renaming model mappings
             CreateMap<ApiSymbol, Symbol>()
@@ -124,13 +124,13 @@ namespace Outcompute.Trader.Trading.Binance
             CreateMap<CancelAllOrders, CancelAllOrdersRequest>()
                 .ForCtorParam(nameof(CancelAllOrdersRequest.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
 
-            CreateMap<CancelAllOrdersResponseModel, CancelStandardOrderResult>()
+            CreateMap<CancelAllOrdersResponse, CancelStandardOrderResult>()
                 .ForCtorParam(nameof(CancelStandardOrderResult.OriginalClientOrderId), x => x.MapFrom(y => y.OrigClientOrderId))
                 .ForCtorParam(nameof(CancelStandardOrderResult.OriginalQuantity), x => x.MapFrom(y => y.OrigQty))
                 .ForCtorParam(nameof(CancelStandardOrderResult.ExecutedQuantity), x => x.MapFrom(y => y.ExecutedQty))
                 .ForCtorParam(nameof(CancelStandardOrderResult.CummulativeQuoteQuantity), x => x.MapFrom(y => y.CummulativeQuoteQty));
 
-            CreateMap<CancelAllOrdersResponseModel, CancelOcoOrderResult>();
+            CreateMap<CancelAllOrdersResponse, CancelOcoOrderResult>();
 
             CreateMap<CancellAllOrdersOrderReportResponseModel, CancelOcoOrderOrderReportResult>()
                 .ForCtorParam(nameof(CancelOcoOrderOrderReportResult.OriginalClientOrderId), x => x.MapFrom(y => y.OrigClientOrderId))

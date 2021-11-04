@@ -179,7 +179,7 @@ namespace Outcompute.Trader.Trading.Binance
         /// <summary>
         /// Creates the specified order.
         /// </summary>
-        public async Task<NewOrderResponseModel> CreateOrderAsync(NewOrderRequestModel model, CancellationToken cancellationToken = default)
+        public async Task<NewOrderResponseModel> CreateOrderAsync(CreateOrderRequest model, CancellationToken cancellationToken = default)
         {
             _ = model ?? throw new ArgumentNullException(nameof(model));
             _ = model.Symbol ?? throw new ArgumentException($"{nameof(OrderQuery.Symbol)} is required");

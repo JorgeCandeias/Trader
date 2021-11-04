@@ -85,11 +85,11 @@ namespace Outcompute.Trader.Trading.Binance
                 .ForCtorParam(nameof(SymbolOrderBookTicker.BidQuantity), x => x.MapFrom(y => y.BidQty))
                 .ForCtorParam(nameof(SymbolOrderBookTicker.AskQuantity), x => x.MapFrom(y => y.AskQty));
 
-            CreateMap<Order, NewOrderRequestModel>()
-                .ForCtorParam(nameof(NewOrderRequestModel.QuoteOrderQty), x => x.MapFrom(y => y.QuoteOrderQuantity))
-                .ForCtorParam(nameof(NewOrderRequestModel.IcebergQty), x => x.MapFrom(y => y.IcebergQuantity))
-                .ForCtorParam(nameof(NewOrderRequestModel.NewOrderRespType), x => x.MapFrom(y => y.NewOrderResponseType))
-                .ForCtorParam(nameof(NewOrderRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
+            CreateMap<Order, CreateOrderRequest>()
+                .ForCtorParam(nameof(CreateOrderRequest.QuoteOrderQty), x => x.MapFrom(y => y.QuoteOrderQuantity))
+                .ForCtorParam(nameof(CreateOrderRequest.IcebergQty), x => x.MapFrom(y => y.IcebergQuantity))
+                .ForCtorParam(nameof(CreateOrderRequest.NewOrderRespType), x => x.MapFrom(y => y.NewOrderResponseType))
+                .ForCtorParam(nameof(CreateOrderRequest.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
 
             CreateMap<NewOrderResponseModel, OrderResult>()
                 .ForCtorParam(nameof(OrderResult.TransactionTime), x => x.MapFrom(y => y.TransactTime))

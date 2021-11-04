@@ -114,7 +114,7 @@ namespace Outcompute.Trader.Trading.Binance
         decimal AskPrice,
         decimal AskQty);
 
-    internal record NewOrderRequestModel(
+    internal record CreateOrderRequest(
         string Symbol,
         string Side,
         string Type,

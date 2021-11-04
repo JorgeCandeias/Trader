@@ -126,7 +126,7 @@ namespace Outcompute.Trader.Trading.Binance
         public async Task<OrderResult> CreateOrderAsync(string symbol, OrderSide side, OrderType type, TimeInForce? timeInForce, decimal? quantity, decimal? quoteOrderQuantity, decimal? price, string? newClientOrderId, decimal? stopPrice, decimal? icebergQuantity, CancellationToken cancellationToken = default)
         {
             var model = new Order(symbol, side, type, timeInForce, quantity, quoteOrderQuantity, price, newClientOrderId, stopPrice, icebergQuantity, NewOrderResponseType.Full, null, _clock.UtcNow);
-            var input = _mapper.Map<NewOrderRequestModel>(model);
+            var input = _mapper.Map<CreateOrderRequest>(model);
 
             var output = await _client
                 .CreateOrderAsync(input, cancellationToken)

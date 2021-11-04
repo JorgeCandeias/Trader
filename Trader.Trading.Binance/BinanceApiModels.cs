@@ -301,7 +301,7 @@ namespace Outcompute.Trader.Trading.Binance
         long? RecvWindow,
         long Timestamp);
 
-    internal record AccountTradesResponseModel(
+    internal record GetAccountTradesResponse(
         string Symbol,
         long Id,
         long OrderId,

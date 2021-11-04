@@ -298,13 +298,13 @@ namespace Outcompute.Trader.Trading.Binance
         /// <summary>
         /// Gets the account trades.
         /// </summary>
-        public async Task<IEnumerable<AccountTradesResponseModel>> GetAccountTradesAsync(GetAccountTradesRequest model, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<GetAccountTradesResponse>> GetAccountTradesAsync(GetAccountTradesRequest model, CancellationToken cancellationToken = default)
         {
             _ = model ?? throw new ArgumentNullException(nameof(model));
             _ = model.Symbol ?? throw new ArgumentException($"{nameof(GetAccountTradesRequest.Symbol)} is required");
 
             return await _client
-                .GetFromJsonAsync<IEnumerable<AccountTradesResponseModel>>(
+                .GetFromJsonAsync<IEnumerable<GetAccountTradesResponse>>(
                     Combine(new Uri("/api/v3/myTrades", UriKind.Relative), model),
                     cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();

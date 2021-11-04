@@ -52,7 +52,7 @@ namespace Outcompute.Trader.Trading.Binance
         public async Task<DateTime> GetTimeAsync(CancellationToken cancellationToken = default)
         {
             var result = await _client
-                .GetFromJsonAsync<ServerTimeModel>(
+                .GetFromJsonAsync<ApiServerTime>(
                     new Uri("/api/v3/time", UriKind.Relative),
                     cancellationToken)
                 .ConfigureAwait(false);

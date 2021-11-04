@@ -4,7 +4,7 @@ namespace Outcompute.Trader.Trading.Binance
 {
     internal record ApiError(int Code, string Msg);
 
-    internal record ServerTimeModel(long ServerTime);
+    internal record ApiServerTime(long ServerTime);
 
     internal record RateLimiterModel(
         string RateLimitType,

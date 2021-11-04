@@ -3,9 +3,9 @@ using System;
 
 namespace Outcompute.Trader.Trading.Binance.Converters
 {
-    internal class ServerTimeConverter : ITypeConverter<ServerTimeModel, DateTime>
+    internal class ServerTimeConverter : ITypeConverter<ApiServerTime, DateTime>
     {
-        public DateTime Convert(ServerTimeModel source, DateTime destination, ResolutionContext context)
+        public DateTime Convert(ApiServerTime source, DateTime destination, ResolutionContext context)
         {
             if (source is null) throw new ArgumentNullException(nameof(source));
 

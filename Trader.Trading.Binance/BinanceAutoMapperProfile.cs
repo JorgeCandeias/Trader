@@ -197,8 +197,8 @@ namespace Outcompute.Trader.Trading.Binance
             CreateMap<RedeemFlexibleProduct, RedeemFlexibleProductRequest>()
                 .ForCtorParam(nameof(RedeemFlexibleProductRequest.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
 
-            CreateMap<GetFlexibleProduct, FlexibleProductRequestModel>()
-                .ForCtorParam(nameof(FlexibleProductRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
+            CreateMap<GetFlexibleProduct, GetFlexibleProductListRequest>()
+                .ForCtorParam(nameof(GetFlexibleProductListRequest.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
 
             CreateMap<FlexibleProductResponseModel, SavingsProduct>();
 

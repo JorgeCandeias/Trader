@@ -256,7 +256,7 @@ namespace Outcompute.Trader.Trading.Binance
         {
             var model = new GetFlexibleProduct(status, featured, current, size, null, _clock.UtcNow);
 
-            var input = _mapper.Map<FlexibleProductRequestModel>(model);
+            var input = _mapper.Map<GetFlexibleProductListRequest>(model);
 
             var output = await _client
                 .GetFlexibleProductListAsync(input, cancellationToken)

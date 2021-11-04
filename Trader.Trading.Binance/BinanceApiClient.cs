@@ -406,7 +406,7 @@ namespace Outcompute.Trader.Trading.Binance
 
         private readonly Uri _getFlexibleProductListUri = new("/sapi/v1/lending/daily/product/list", UriKind.Relative);
 
-        public async Task<IEnumerable<FlexibleProductResponseModel>> GetFlexibleProductListAsync(FlexibleProductRequestModel model, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<FlexibleProductResponseModel>> GetFlexibleProductListAsync(GetFlexibleProductListRequest model, CancellationToken cancellationToken = default)
         {
             _ = model ?? throw new ArgumentNullException(nameof(model));
 

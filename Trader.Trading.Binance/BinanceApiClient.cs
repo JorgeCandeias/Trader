@@ -310,7 +310,7 @@ namespace Outcompute.Trader.Trading.Binance
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
 
-        public async Task<IEnumerable<KlineResponseModel>> GetKlinesAsync(GetKlinesRequest model, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<GetKlinesResponse>> GetKlinesAsync(GetKlinesRequest model, CancellationToken cancellationToken = default)
         {
             _ = model ?? throw new ArgumentNullException(nameof(model));
 
@@ -318,7 +318,7 @@ namespace Outcompute.Trader.Trading.Binance
                 .GetFromJsonAsync<IEnumerable<JsonElement[]>>(Combine(new Uri("/api/v3/klines", UriKind.Relative), model), cancellationToken)
                 .ConfigureAwait(false);
 
-            return _mapper.Map<IEnumerable<KlineResponseModel>>(response);
+            return _mapper.Map<IEnumerable<GetKlinesResponse>>(response);
         }
 
         /// <summary>

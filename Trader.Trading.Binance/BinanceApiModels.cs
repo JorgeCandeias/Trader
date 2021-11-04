@@ -332,7 +332,7 @@ namespace Outcompute.Trader.Trading.Binance
         long EndTime,
         int Limit);
 
-    internal record KlineResponseModel(
+    internal record GetKlinesResponse(
         long OpenTime,
         long CloseTime,
         string OpenPrice,

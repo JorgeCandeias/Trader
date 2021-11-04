@@ -163,20 +163,20 @@ namespace Outcompute.Trader.Trading.Binance
 
             CreateMap<GetKlines, GetKlinesRequest>();
 
-            CreateMap<JsonElement[], KlineResponseModel>()
-                .ForCtorParam(nameof(KlineResponseModel.OpenTime), x => x.MapFrom(y => y[0].GetInt64()))
-                .ForCtorParam(nameof(KlineResponseModel.OpenPrice), x => x.MapFrom(y => y[1].GetRequiredDecimalFromString()))
-                .ForCtorParam(nameof(KlineResponseModel.HighPrice), x => x.MapFrom(y => y[2].GetRequiredDecimalFromString()))
-                .ForCtorParam(nameof(KlineResponseModel.LowPrice), x => x.MapFrom(y => y[3].GetRequiredDecimalFromString()))
-                .ForCtorParam(nameof(KlineResponseModel.ClosePrice), x => x.MapFrom(y => y[4].GetRequiredDecimalFromString()))
-                .ForCtorParam(nameof(KlineResponseModel.Volume), x => x.MapFrom(y => y[5].GetRequiredDecimalFromString()))
-                .ForCtorParam(nameof(KlineResponseModel.CloseTime), x => x.MapFrom(y => y[6].GetInt64()))
-                .ForCtorParam(nameof(KlineResponseModel.QuoteAssetVolume), x => x.MapFrom(y => y[7].GetRequiredDecimalFromString()))
-                .ForCtorParam(nameof(KlineResponseModel.TradeCount), x => x.MapFrom(y => y[8].GetInt32()))
-                .ForCtorParam(nameof(KlineResponseModel.TakerBuyBaseAssetVolume), x => x.MapFrom(y => y[9].GetRequiredDecimalFromString()))
-                .ForCtorParam(nameof(KlineResponseModel.TakerBuyQuoteAssetVolume), x => x.MapFrom(y => y[10].GetRequiredDecimalFromString()));
+            CreateMap<JsonElement[], GetKlinesResponse>()
+                .ForCtorParam(nameof(GetKlinesResponse.OpenTime), x => x.MapFrom(y => y[0].GetInt64()))
+                .ForCtorParam(nameof(GetKlinesResponse.OpenPrice), x => x.MapFrom(y => y[1].GetRequiredDecimalFromString()))
+                .ForCtorParam(nameof(GetKlinesResponse.HighPrice), x => x.MapFrom(y => y[2].GetRequiredDecimalFromString()))
+                .ForCtorParam(nameof(GetKlinesResponse.LowPrice), x => x.MapFrom(y => y[3].GetRequiredDecimalFromString()))
+                .ForCtorParam(nameof(GetKlinesResponse.ClosePrice), x => x.MapFrom(y => y[4].GetRequiredDecimalFromString()))
+                .ForCtorParam(nameof(GetKlinesResponse.Volume), x => x.MapFrom(y => y[5].GetRequiredDecimalFromString()))
+                .ForCtorParam(nameof(GetKlinesResponse.CloseTime), x => x.MapFrom(y => y[6].GetInt64()))
+                .ForCtorParam(nameof(GetKlinesResponse.QuoteAssetVolume), x => x.MapFrom(y => y[7].GetRequiredDecimalFromString()))
+                .ForCtorParam(nameof(GetKlinesResponse.TradeCount), x => x.MapFrom(y => y[8].GetInt32()))
+                .ForCtorParam(nameof(GetKlinesResponse.TakerBuyBaseAssetVolume), x => x.MapFrom(y => y[9].GetRequiredDecimalFromString()))
+                .ForCtorParam(nameof(GetKlinesResponse.TakerBuyQuoteAssetVolume), x => x.MapFrom(y => y[10].GetRequiredDecimalFromString()));
 
-            CreateMap<KlineResponseModel, Kline>()
+            CreateMap<GetKlinesResponse, Kline>()
                 .ForCtorParam(nameof(Kline.Symbol), x => x.MapFrom((source, context) => context.Items[nameof(Kline.Symbol)]))
                 .ForCtorParam(nameof(Kline.Interval), x => x.MapFrom((source, context) => context.Items[nameof(Kline.Interval)]))
                 .ForCtorParam(nameof(Kline.EventTime), x => x.MapFrom(y => y.OpenTime))

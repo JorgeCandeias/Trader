@@ -240,10 +240,10 @@ namespace Outcompute.Trader.Trading.Binance
         string ListOrderStatus,
         string ListClientOrderId,
         long TransactionTime,
-        CancelAllOrdersOrderResponseModel[] Orders,
+        CancelAllOrdersResponseOrder[] Orders,
         CancellAllOrdersOrderReportResponseModel[] OrderReports);
 
-    internal record CancelAllOrdersOrderResponseModel(
+    internal record CancelAllOrdersResponseOrder(
         string Symbol,
         long OrderId,
         string ClientOrderId);

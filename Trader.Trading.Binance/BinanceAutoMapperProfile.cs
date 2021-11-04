@@ -151,8 +151,8 @@ namespace Outcompute.Trader.Trading.Binance
 
             CreateMap<GetAccountInfoResponseBalance, AccountBalance>();
 
-            CreateMap<GetAccountTrades, AccountTradesRequestModel>()
-                .ForCtorParam(nameof(AccountTradesRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
+            CreateMap<GetAccountTrades, GetAccountTradesRequest>()
+                .ForCtorParam(nameof(GetAccountTradesRequest.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
 
             CreateMap<AccountTradesResponseModel, AccountTrade>()
                 .ForCtorParam(nameof(AccountTrade.Quantity), x => x.MapFrom(y => y.Qty))

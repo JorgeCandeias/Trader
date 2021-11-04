@@ -292,7 +292,7 @@ namespace Outcompute.Trader.Trading.Binance
         decimal Free,
         decimal Locked);
 
-    internal record AccountTradesRequestModel(
+    internal record GetAccountTradesRequest(
         string Symbol,
         long? StartTime,
         long? EndTime,

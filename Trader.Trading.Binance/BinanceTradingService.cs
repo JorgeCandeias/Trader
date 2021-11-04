@@ -78,7 +78,7 @@ namespace Outcompute.Trader.Trading.Binance
         public async Task<ImmutableSortedTradeSet> GetAccountTradesAsync(string symbol, long? fromId, int? limit, CancellationToken cancellationToken = default)
         {
             var model = new GetAccountTrades(symbol, null, null, fromId, limit, null, _clock.UtcNow);
-            var input = _mapper.Map<AccountTradesRequestModel>(model);
+            var input = _mapper.Map<GetAccountTradesRequest>(model);
 
             var output = await _client
                 .GetAccountTradesAsync(input, cancellationToken)

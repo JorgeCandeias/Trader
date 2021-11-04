@@ -345,7 +345,7 @@ namespace Outcompute.Trader.Trading.Binance
         string TakerBuyBaseAssetVolume,
         string TakerBuyQuoteAssetVolume);
 
-    internal record FlexibleProductPositionRequestModel(
+    internal record GetFlexibleProductPositionsRequest(
         string Asset,
         long? RecvWindow,
         long Timestamp);

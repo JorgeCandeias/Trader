@@ -384,7 +384,7 @@ namespace Outcompute.Trader.Trading.Binance
             }
         }
 
-        public async Task<IEnumerable<FlexibleProductPositionResponseModel>> GetFlexibleProductPositionAsync(FlexibleProductPositionRequestModel model, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<FlexibleProductPositionResponseModel>> GetFlexibleProductPositionsAsync(GetFlexibleProductPositionsRequest model, CancellationToken cancellationToken = default)
         {
             _ = model ?? throw new ArgumentNullException(nameof(model));
 

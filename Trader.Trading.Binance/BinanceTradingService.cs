@@ -207,10 +207,10 @@ namespace Outcompute.Trader.Trading.Binance
         {
             var model = new GetFlexibleProductPosition(asset, null, _clock.UtcNow);
 
-            var input = _mapper.Map<FlexibleProductPositionRequestModel>(model);
+            var input = _mapper.Map<GetFlexibleProductPositionsRequest>(model);
 
             var output = await _client
-                .GetFlexibleProductPositionAsync(input, cancellationToken)
+                .GetFlexibleProductPositionsAsync(input, cancellationToken)
                 .ConfigureAwait(false);
 
             return _mapper.Map<IReadOnlyCollection<SavingsPosition>>(output);

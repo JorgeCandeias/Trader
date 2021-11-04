@@ -184,8 +184,8 @@ namespace Outcompute.Trader.Trading.Binance
                 .ForCtorParam(nameof(Kline.LastTradeId), x => x.MapFrom(y => -1))
                 .ForCtorParam(nameof(Kline.IsClosed), x => x.MapFrom(y => true));
 
-            CreateMap<GetFlexibleProductPosition, FlexibleProductPositionRequestModel>()
-                .ForCtorParam(nameof(FlexibleProductPositionRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
+            CreateMap<GetFlexibleProductPosition, GetFlexibleProductPositionsRequest>()
+                .ForCtorParam(nameof(GetFlexibleProductPositionsRequest.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
 
             CreateMap<FlexibleProductPositionResponseModel, SavingsPosition>();
 

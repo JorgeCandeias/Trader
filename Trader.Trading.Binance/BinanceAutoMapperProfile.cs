@@ -208,23 +208,23 @@ namespace Outcompute.Trader.Trading.Binance
             // convert payloads from the market data stream
             CreateMap<Memory<byte>, MarketDataStreamMessage>().ConvertUsing<MarketDataStreamMessageConverter>();
 
-            CreateMap<SwapPoolResponseModel, SwapPool>();
+            CreateMap<GetSwapPoolsResponse, SwapPool>();
 
-            CreateMap<GetSwapPoolLiquidity, SwapPoolLiquidityRequestModel>()
-                .ForCtorParam(nameof(SwapPoolLiquidityRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
+            CreateMap<GetSwapPoolLiquidity, GetSwapPoolLiquidityRequest>()
+                .ForCtorParam(nameof(GetSwapPoolLiquidityRequest.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
 
-            CreateMap<SwapPoolLiquidityResponseModel, SwapPoolLiquidity>()
+            CreateMap<GetSwapPoolLiquidityResponse, SwapPoolLiquidity>()
                 .ForCtorParam(nameof(SwapPoolLiquidity.ShareAmount), x => x.MapFrom(y => y.Share.ShareAmount))
                 .ForCtorParam(nameof(SwapPoolLiquidity.SharePercentage), x => x.MapFrom(y => y.Share.SharePercentage))
                 .ForCtorParam(nameof(SwapPoolLiquidity.AssetShare), x => x.MapFrom(y => y.Share.Asset));
 
-            CreateMap<AddSwapPoolLiquidity, SwapPoolAddLiquidityRequestModel>()
-                .ForCtorParam(nameof(SwapPoolAddLiquidityRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
+            CreateMap<AddSwapPoolLiquidity, AddSwapPoolLiquidityRequest>()
+                .ForCtorParam(nameof(AddSwapPoolLiquidityRequest.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
 
-            CreateMap<SwapPoolAddLiquidityResponseModel, SwapPoolOperation>();
+            CreateMap<AddSwapPoolLiquidityResponse, SwapPoolOperation>();
 
-            CreateMap<RemoveSwapLiquidity, SwapPoolRemoveLiquidityRequest>()
-                .ForCtorParam(nameof(SwapPoolRemoveLiquidityRequest.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
+            CreateMap<RemoveSwapLiquidity, RemoveSwapPoolLiquidityRequest>()
+                .ForCtorParam(nameof(RemoveSwapPoolLiquidityRequest.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
         }
     }
 }

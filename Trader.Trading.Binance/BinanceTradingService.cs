@@ -323,10 +323,10 @@ namespace Outcompute.Trader.Trading.Binance
         {
             var model = new GetSwapPoolLiquidity(poolId, null, _clock.UtcNow);
 
-            var input = _mapper.Map<SwapPoolLiquidityRequestModel>(model);
+            var input = _mapper.Map<GetSwapPoolLiquidityRequest>(model);
 
             var output = await _client
-                .GetSwapLiquidityAsync(input, cancellationToken)
+                .GetSwapPoolLiquidityAsync(input, cancellationToken)
                 .ConfigureAwait(false);
 
             return _mapper.Map<SwapPoolLiquidity>(output);
@@ -336,10 +336,10 @@ namespace Outcompute.Trader.Trading.Binance
         {
             var model = new GetSwapPoolLiquidity(null, null, _clock.UtcNow);
 
-            var input = _mapper.Map<SwapPoolLiquidityRequestModel>(model);
+            var input = _mapper.Map<GetSwapPoolLiquidityRequest>(model);
 
             var output = await _client
-                .GetSwapLiquiditiesAsync(input, cancellationToken)
+                .GetSwapPoolsLiquiditiesAsync(input, cancellationToken)
                 .ConfigureAwait(false);
 
             return _mapper.Map<IEnumerable<SwapPoolLiquidity>>(output);
@@ -349,10 +349,10 @@ namespace Outcompute.Trader.Trading.Binance
         {
             var model = new AddSwapPoolLiquidity(poolId, type, asset, quantity, null, _clock.UtcNow);
 
-            var input = _mapper.Map<SwapPoolAddLiquidityRequestModel>(model);
+            var input = _mapper.Map<AddSwapPoolLiquidityRequest>(model);
 
             var output = await _client
-                .AddSwapLiquidityAsync(input, cancellationToken)
+                .AddSwapPoolLiquidityAsync(input, cancellationToken)
                 .ConfigureAwait(false);
 
             return _mapper.Map<SwapPoolOperation>(output);
@@ -362,10 +362,10 @@ namespace Outcompute.Trader.Trading.Binance
         {
             var model = new RemoveSwapLiquidity(poolId, type, null, shareAmount, null, _clock.UtcNow);
 
-            var input = _mapper.Map<SwapPoolRemoveLiquidityRequest>(model);
+            var input = _mapper.Map<RemoveSwapPoolLiquidityRequest>(model);
 
             var output = await _client
-                .RemoveSwapLiquidityAsync(input, cancellationToken)
+                .RemoveSwapPoolLiquidityAsync(input, cancellationToken)
                 .ConfigureAwait(false);
 
             return _mapper.Map<SwapPoolOperation>(output);

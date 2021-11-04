@@ -407,29 +407,29 @@ namespace Outcompute.Trader.Trading.Binance
         decimal UpLimit,
         decimal UpLimitPerUser);
 
-    internal record SwapPoolResponseModel(
+    internal record GetSwapPoolsResponse(
         long PoolId,
         string PoolName,
         string[] Assets);
 
-    internal record SwapPoolLiquidityRequestModel(
+    internal record GetSwapPoolLiquidityRequest(
         long? PoolId,
         long? RecvWindow,
         long Timestamp);
 
-    internal record SwapPoolLiquidityResponseModel(
+    internal record GetSwapPoolLiquidityResponse(
         long PoolId,
         string PoolName,
         long UpdateTime,
         Dictionary<string, decimal> Liquidity,
-        SwapPoolLiquidityShareResponseModel Share);
+        GetSwapPoolLiquidityResponseShare Share);
 
-    internal record SwapPoolLiquidityShareResponseModel(
+    internal record GetSwapPoolLiquidityResponseShare(
         decimal ShareAmount,
         decimal SharePercentage,
         Dictionary<string, decimal> Asset);
 
-    internal record SwapPoolAddLiquidityRequestModel(
+    internal record AddSwapPoolLiquidityRequest(
         long PoolId,
         string? Type,
         string Asset,
@@ -437,10 +437,10 @@ namespace Outcompute.Trader.Trading.Binance
         long? RecvWindow,
         long Timestamp);
 
-    internal record SwapPoolAddLiquidityResponseModel(
+    internal record AddSwapPoolLiquidityResponse(
         long OperationId);
 
-    internal record SwapPoolRemoveLiquidityRequest(
+    internal record RemoveSwapPoolLiquidityRequest(
         long PoolId,
         string Type,
         string? Asset,
@@ -448,6 +448,6 @@ namespace Outcompute.Trader.Trading.Binance
         long? RecvWindow,
         long Timestamp);
 
-    internal record SwapPoolRemoveLiquidityResponse(
+    internal record RemoveSwapPoolLiquidityResponse(
         long OperationId);
 }

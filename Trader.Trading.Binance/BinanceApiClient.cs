@@ -421,38 +421,38 @@ namespace Outcompute.Trader.Trading.Binance
 
         #region Swap Endpoints
 
-        public async Task<IEnumerable<SwapPoolResponseModel>> GetSwapPoolsAsync(CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<GetSwapPoolsResponse>> GetSwapPoolsAsync(CancellationToken cancellationToken = default)
         {
             var uri = new Uri("/sapi/v1/bswap/pools", UriKind.Relative);
 
             return await _client
-                .GetFromJsonAsync<IEnumerable<SwapPoolResponseModel>>(uri, cancellationToken)
+                .GetFromJsonAsync<IEnumerable<GetSwapPoolsResponse>>(uri, cancellationToken)
                 .WithNullHandling();
         }
 
-        public Task<SwapPoolLiquidityResponseModel> GetSwapLiquidityAsync(SwapPoolLiquidityRequestModel model, CancellationToken cancellationToken = default)
+        public Task<GetSwapPoolLiquidityResponse> GetSwapPoolLiquidityAsync(GetSwapPoolLiquidityRequest model, CancellationToken cancellationToken = default)
         {
             if (model is null) throw new ArgumentNullException(nameof(model));
 
             var uri = Combine(new Uri("/sapi/v1/bswap/liquidity", UriKind.Relative), model);
 
             return _client
-                .GetFromJsonAsync<SwapPoolLiquidityResponseModel>(uri, cancellationToken)
+                .GetFromJsonAsync<GetSwapPoolLiquidityResponse>(uri, cancellationToken)
                 .WithNullHandling();
         }
 
-        public Task<IEnumerable<SwapPoolLiquidityResponseModel>> GetSwapLiquiditiesAsync(SwapPoolLiquidityRequestModel model, CancellationToken cancellationToken = default)
+        public Task<IEnumerable<GetSwapPoolLiquidityResponse>> GetSwapPoolsLiquiditiesAsync(GetSwapPoolLiquidityRequest model, CancellationToken cancellationToken = default)
         {
             if (model is null) throw new ArgumentNullException(nameof(model));
 
             var uri = Combine(new Uri("/sapi/v1/bswap/liquidity", UriKind.Relative), model);
 
             return _client
-                .GetFromJsonAsync<IEnumerable<SwapPoolLiquidityResponseModel>>(uri, cancellationToken)
+                .GetFromJsonAsync<IEnumerable<GetSwapPoolLiquidityResponse>>(uri, cancellationToken)
                 .WithNullHandling();
         }
 
-        public async Task<SwapPoolAddLiquidityResponseModel> AddSwapLiquidityAsync(SwapPoolAddLiquidityRequestModel model, CancellationToken cancellationToken = default)
+        public async Task<AddSwapPoolLiquidityResponse> AddSwapPoolLiquidityAsync(AddSwapPoolLiquidityRequest model, CancellationToken cancellationToken = default)
         {
             var uri = Combine(new Uri("/sapi/v1/bswap/liquidityAdd", UriKind.Relative), model);
 
@@ -463,12 +463,12 @@ namespace Outcompute.Trader.Trading.Binance
             result = result.EnsureSuccessStatusCode();
 
             return await result.Content
-                .ReadFromJsonAsync<SwapPoolAddLiquidityResponseModel>(_jsonOptions, cancellationToken)
+                .ReadFromJsonAsync<AddSwapPoolLiquidityResponse>(_jsonOptions, cancellationToken)
                 .WithNullHandling()
                 .ConfigureAwait(false);
         }
 
-        public async Task<SwapPoolRemoveLiquidityResponse> RemoveSwapLiquidityAsync(SwapPoolRemoveLiquidityRequest model, CancellationToken cancellationToken = default)
+        public async Task<RemoveSwapPoolLiquidityResponse> RemoveSwapPoolLiquidityAsync(RemoveSwapPoolLiquidityRequest model, CancellationToken cancellationToken = default)
         {
             var uri = Combine(new Uri("/sapi/v1/bswap/liquidityRemove", UriKind.Relative), model);
 
@@ -479,7 +479,7 @@ namespace Outcompute.Trader.Trading.Binance
             result = result.EnsureSuccessStatusCode();
 
             return await result.Content
-                .ReadFromJsonAsync<SwapPoolRemoveLiquidityResponse>(_jsonOptions, cancellationToken)
+                .ReadFromJsonAsync<RemoveSwapPoolLiquidityResponse>(_jsonOptions, cancellationToken)
                 .WithNullHandling()
                 .ConfigureAwait(false);
         }

@@ -241,14 +241,14 @@ namespace Outcompute.Trader.Trading.Binance
         string ListClientOrderId,
         long TransactionTime,
         CancelAllOrdersResponseOrder[] Orders,
-        CancellAllOrdersOrderReportResponseModel[] OrderReports);
+        CancelAllOrdersResponseOrderReport[] OrderReports);
 
     internal record CancelAllOrdersResponseOrder(
         string Symbol,
         long OrderId,
         string ClientOrderId);
 
-    internal record CancellAllOrdersOrderReportResponseModel(
+    internal record CancelAllOrdersResponseOrderReport(
         string Symbol,
         string OrigClientOrderId,
         long OrderId,
@@ -265,7 +265,7 @@ namespace Outcompute.Trader.Trading.Binance
         decimal StopPrice,
         decimal IcebergQty);
 
-    internal record GetOpenOrdersRequestModel(
+    internal record GetOpenOrdersRequest(
         string Symbol,
         long? RecvWindow,
         long Timestamp);

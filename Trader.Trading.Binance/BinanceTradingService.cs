@@ -90,7 +90,7 @@ namespace Outcompute.Trader.Trading.Binance
         public async Task<IReadOnlyCollection<OrderQueryResult>> GetOpenOrdersAsync(string symbol, CancellationToken cancellationToken = default)
         {
             var model = new GetOpenOrders(symbol, null, _clock.UtcNow);
-            var input = _mapper.Map<GetOpenOrdersRequestModel>(model);
+            var input = _mapper.Map<GetOpenOrdersRequest>(model);
 
             var output = await _client
                 .GetOpenOrdersAsync(input, cancellationToken)

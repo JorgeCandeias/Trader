@@ -132,7 +132,7 @@ namespace Outcompute.Trader.Trading.Binance
 
             CreateMap<CancelAllOrdersResponse, CancelOcoOrderResult>();
 
-            CreateMap<CancellAllOrdersOrderReportResponseModel, CancelOcoOrderOrderReportResult>()
+            CreateMap<CancelAllOrdersResponseOrderReport, CancelOcoOrderOrderReportResult>()
                 .ForCtorParam(nameof(CancelOcoOrderOrderReportResult.OriginalClientOrderId), x => x.MapFrom(y => y.OrigClientOrderId))
                 .ForCtorParam(nameof(CancelOcoOrderOrderReportResult.OriginalQuantity), x => x.MapFrom(y => y.OrigQty))
                 .ForCtorParam(nameof(CancelOcoOrderOrderReportResult.ExecutedQuantity), x => x.MapFrom(y => y.ExecutedQty))
@@ -141,8 +141,8 @@ namespace Outcompute.Trader.Trading.Binance
 
             CreateMap<CancelAllOrdersResponseOrder, CancelOcoOrderOrderResult>();
 
-            CreateMap<GetOpenOrders, GetOpenOrdersRequestModel>()
-                .ForCtorParam(nameof(GetOpenOrdersRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
+            CreateMap<GetOpenOrders, GetOpenOrdersRequest>()
+                .ForCtorParam(nameof(GetOpenOrdersRequest.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
 
             CreateMap<GetAccountInfo, AccountRequestModel>()
                 .ForCtorParam(nameof(AccountRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));

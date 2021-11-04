@@ -251,7 +251,7 @@ namespace Outcompute.Trader.Trading.Binance
         /// <summary>
         /// Gets all open orders.
         /// </summary>
-        public async Task<IEnumerable<GetOrderResponse>> GetOpenOrdersAsync(GetOpenOrdersRequestModel model, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<GetOrderResponse>> GetOpenOrdersAsync(GetOpenOrdersRequest model, CancellationToken cancellationToken = default)
         {
             _ = model ?? throw new ArgumentNullException(nameof(model));
             _ = model.Symbol ?? throw new ArgumentException($"{nameof(GetOpenOrders.Symbol)} is required");

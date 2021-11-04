@@ -3,9 +3,9 @@ using Outcompute.Trader.Models;
 
 namespace Outcompute.Trader.Trading.Binance.Converters
 {
-    internal class ExchangeFilterConverter : ITypeConverter<ExchangeFilterModel, ExchangeFilter>
+    internal class ApiExchangeFilterConverter : ITypeConverter<ApiExchangeFilter, ExchangeFilter>
     {
-        public ExchangeFilter Convert(ExchangeFilterModel source, ExchangeFilter destination, ResolutionContext context)
+        public ExchangeFilter Convert(ApiExchangeFilter source, ExchangeFilter destination, ResolutionContext context)
         {
             return source.FilterType switch
             {

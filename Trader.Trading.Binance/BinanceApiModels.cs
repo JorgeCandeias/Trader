@@ -52,7 +52,7 @@ namespace Outcompute.Trader.Trading.Binance
         ApiSymbolFilter[] Filters,
         string[] Permissions);
 
-    internal record ExchangeFilterModel(
+    internal record ApiExchangeFilter(
         string FilterType,
         int? MaxNumOrders,
         int? MaxNumAlgoOrders);
@@ -61,7 +61,7 @@ namespace Outcompute.Trader.Trading.Binance
         string Timezone,
         long ServerTime,
         ApiRateLimiter[] RateLimits,
-        ExchangeFilterModel[] ExchangeFilters,
+        ApiExchangeFilter[] ExchangeFilters,
         ApiSymbol[] Symbols);
 
     internal record OrderBookModel(

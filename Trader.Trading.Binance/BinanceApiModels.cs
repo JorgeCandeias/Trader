@@ -210,7 +210,7 @@ namespace Outcompute.Trader.Trading.Binance
         string Type,
         string Side);
 
-    internal record CancelAllOrdersRequestModel(
+    internal record CancelAllOrdersRequest(
         string Symbol,
         long? RecvWindow,
         long Timestamp);

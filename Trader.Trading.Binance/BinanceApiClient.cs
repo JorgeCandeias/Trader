@@ -234,15 +234,18 @@ namespace Outcompute.Trader.Trading.Binance
         /// <summary>
         /// Cancels all open orders.
         /// </summary>
-        public Task<ImmutableList<CancelOrderResult>> CancelAllOrdersAsync(CancelAllOrders cancellation, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<CancelAllOrdersResponseModel>> CancelAllOrdersAsync(CancelAllOrdersRequest model, CancellationToken cancellationToken = default)
         {
-            _ = cancellation ?? throw new ArgumentNullException(nameof(cancellation));
-            _ = cancellation.Symbol ?? throw new ArgumentException($"{nameof(OrderQuery.Symbol)} is required");
+            var uri = Combine(new Uri("/api/v3/openOrders", UriKind.Relative), model);
 
-            return DeleteAsync<CancelAllOrdersRequestModel, IEnumerable<CancelAllOrdersResponseModel>, ImmutableList<CancelOrderResult>>(
-                new Uri("/api/v3/openOrders", UriKind.Relative),
-                cancellation,
-                cancellationToken);
+            var response = await _client
+                .DeleteAsync(uri, cancellationToken)
+                .ConfigureAwait(false);
+
+            return await response.Content
+                .ReadFromJsonAsync<IEnumerable<CancelAllOrdersResponseModel>>(_jsonOptions, cancellationToken)
+                .WithNullHandling()
+                .ConfigureAwait(false);
         }
 
         /// <summary>

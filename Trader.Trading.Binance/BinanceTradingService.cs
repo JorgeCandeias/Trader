@@ -114,7 +114,7 @@ namespace Outcompute.Trader.Trading.Binance
         public async Task<IReadOnlyCollection<OrderQueryResult>> GetAllOrdersAsync(string symbol, long? orderId, int? limit, CancellationToken cancellationToken = default)
         {
             var model = new GetAllOrders(symbol, orderId, null, null, limit, null, _clock.UtcNow);
-            var input = _mapper.Map<GetAllOrdersRequestModel>(model);
+            var input = _mapper.Map<GetAllOrdersRequest>(model);
 
             var output = await _client
                 .GetAllOrdersAsync(input, cancellationToken)

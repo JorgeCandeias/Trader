@@ -158,7 +158,7 @@ namespace Outcompute.Trader.Trading.Binance
         long? RecvWindow,
         long? Timestamp);
 
-    internal record GetAllOrdersRequestModel(
+    internal record GetAllOrdersRequest(
         string Symbol,
         long? OrderId,
         long? StartTime,

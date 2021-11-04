@@ -68,7 +68,6 @@ namespace Outcompute.Trader.Trading.Binance
             CreateMap<ApiSymbolFilter, SymbolFilter>().ConvertUsing<ApiSymbolFilterConverter>();
             CreateMap<IEnumerable<ApiSymbolFilter>, SymbolFilters>().ConvertUsing<ApiSymbolFiltersConverter>();
             CreateMap<ApiOrderBook, OrderBook>().ConvertUsing<ApiOrderBookConverter>();
-            CreateMap<CancelAllOrdersResponseModel, CancelOrderResult>().ConvertUsing<CancelAllOrdersResponseModelConverter>();
 
             // renaming model mappings
             CreateMap<ApiSymbol, Symbol>()
@@ -100,46 +99,26 @@ namespace Outcompute.Trader.Trading.Binance
             CreateMap<CreateOrderResponseFill, OrderFill>()
                 .ForCtorParam(nameof(OrderFill.Quantity), x => x.MapFrom(y => y.Qty));
 
-            CreateMap<OrderQuery, GetOrderRequestModel>()
-                .ForCtorParam(nameof(GetOrderRequestModel.OrigClientOrderId), x => x.MapFrom(y => y.OriginalClientOrderId))
-                .ForCtorParam(nameof(GetOrderRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
+            CreateMap<OrderQuery, GetOrderRequest>()
+                .ForCtorParam(nameof(GetOrderRequest.OrigClientOrderId), x => x.MapFrom(y => y.OriginalClientOrderId))
+                .ForCtorParam(nameof(GetOrderRequest.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
 
-            CreateMap<GetOrderResponseModel, OrderQueryResult>()
+            CreateMap<GetOrderResponse, OrderQueryResult>()
                 .ForCtorParam(nameof(OrderQueryResult.OriginalQuantity), x => x.MapFrom(y => y.OrigQty))
                 .ForCtorParam(nameof(OrderQueryResult.ExecutedQuantity), x => x.MapFrom(y => y.ExecutedQty))
                 .ForCtorParam(nameof(OrderQueryResult.CummulativeQuoteQuantity), x => x.MapFrom(y => y.CummulativeQuoteQty))
                 .ForCtorParam(nameof(OrderQueryResult.IcebergQuantity), x => x.MapFrom(y => y.IcebergQty))
                 .ForCtorParam(nameof(OrderQueryResult.OriginalQuoteOrderQuantity), x => x.MapFrom(y => y.OrigQuoteOrderQty));
 
-            CreateMap<CancelStandardOrder, CancelOrderRequestModel>()
-                .ForCtorParam(nameof(CancelOrderRequestModel.OrigClientOrderId), x => x.MapFrom(y => y.OriginalClientOrderId))
-                .ForCtorParam(nameof(CancelOrderRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
+            CreateMap<CancelStandardOrder, CancelOrderRequest>()
+                .ForCtorParam(nameof(CancelOrderRequest.OrigClientOrderId), x => x.MapFrom(y => y.OriginalClientOrderId))
+                .ForCtorParam(nameof(CancelOrderRequest.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
 
-            CreateMap<CancelOrderResponseModel, CancelStandardOrderResult>()
+            CreateMap<CancelOrderResponse, CancelStandardOrderResult>()
                 .ForCtorParam(nameof(CancelStandardOrderResult.OriginalClientOrderId), x => x.MapFrom(y => y.OrigClientOrderId))
                 .ForCtorParam(nameof(CancelStandardOrderResult.OriginalQuantity), x => x.MapFrom(y => y.OrigQty))
                 .ForCtorParam(nameof(CancelStandardOrderResult.ExecutedQuantity), x => x.MapFrom(y => y.ExecutedQty))
                 .ForCtorParam(nameof(CancelStandardOrderResult.CummulativeQuoteQuantity), x => x.MapFrom(y => y.CummulativeQuoteQty));
-
-            CreateMap<CancelAllOrders, CancelAllOrdersRequestModel>()
-                .ForCtorParam(nameof(CancelAllOrdersRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
-
-            CreateMap<CancelAllOrdersResponseModel, CancelStandardOrderResult>()
-                .ForCtorParam(nameof(CancelStandardOrderResult.OriginalClientOrderId), x => x.MapFrom(y => y.OrigClientOrderId))
-                .ForCtorParam(nameof(CancelStandardOrderResult.OriginalQuantity), x => x.MapFrom(y => y.OrigQty))
-                .ForCtorParam(nameof(CancelStandardOrderResult.ExecutedQuantity), x => x.MapFrom(y => y.ExecutedQty))
-                .ForCtorParam(nameof(CancelStandardOrderResult.CummulativeQuoteQuantity), x => x.MapFrom(y => y.CummulativeQuoteQty));
-
-            CreateMap<CancelAllOrdersResponseModel, CancelOcoOrderResult>();
-
-            CreateMap<CancellAllOrdersOrderReportResponseModel, CancelOcoOrderOrderReportResult>()
-                .ForCtorParam(nameof(CancelOcoOrderOrderReportResult.OriginalClientOrderId), x => x.MapFrom(y => y.OrigClientOrderId))
-                .ForCtorParam(nameof(CancelOcoOrderOrderReportResult.OriginalQuantity), x => x.MapFrom(y => y.OrigQty))
-                .ForCtorParam(nameof(CancelOcoOrderOrderReportResult.ExecutedQuantity), x => x.MapFrom(y => y.ExecutedQty))
-                .ForCtorParam(nameof(CancelOcoOrderOrderReportResult.CummulativeQuoteQuantity), x => x.MapFrom(y => y.CummulativeQuoteQty))
-                .ForCtorParam(nameof(CancelOcoOrderOrderReportResult.IcebergQuantity), x => x.MapFrom(y => y.IcebergQty));
-
-            CreateMap<CancelAllOrdersOrderResponseModel, CancelOcoOrderOrderResult>();
 
             CreateMap<GetOpenOrders, GetOpenOrdersRequestModel>()
                 .ForCtorParam(nameof(GetOpenOrdersRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
@@ -158,8 +137,8 @@ namespace Outcompute.Trader.Trading.Binance
                 .ForCtorParam(nameof(AccountTrade.Quantity), x => x.MapFrom(y => y.Qty))
                 .ForCtorParam(nameof(AccountTrade.QuoteQuantity), x => x.MapFrom(y => y.QuoteQty));
 
-            CreateMap<GetAllOrders, GetAllOrdersRequestModel>()
-                .ForCtorParam(nameof(GetAllOrdersRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
+            CreateMap<GetAllOrders, GetAllOrdersRequest>()
+                .ForCtorParam(nameof(GetAllOrdersRequest.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
 
             CreateMap<GetKlines, KlineRequestModel>();
 

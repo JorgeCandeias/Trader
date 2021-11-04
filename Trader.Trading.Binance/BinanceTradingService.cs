@@ -102,7 +102,7 @@ namespace Outcompute.Trader.Trading.Binance
         public async Task<OrderQueryResult> GetOrderAsync(string symbol, long? orderId, string? originalClientOrderId, CancellationToken cancellationToken = default)
         {
             var model = new OrderQuery(symbol, orderId, originalClientOrderId, null, _clock.UtcNow);
-            var input = _mapper.Map<GetOrderRequestModel>(model);
+            var input = _mapper.Map<GetOrderRequest>(model);
 
             var output = await _client
                 .GetOrderAsync(input, cancellationToken)
@@ -114,7 +114,7 @@ namespace Outcompute.Trader.Trading.Binance
         public async Task<IReadOnlyCollection<OrderQueryResult>> GetAllOrdersAsync(string symbol, long? orderId, int? limit, CancellationToken cancellationToken = default)
         {
             var model = new GetAllOrders(symbol, orderId, null, null, limit, null, _clock.UtcNow);
-            var input = _mapper.Map<GetAllOrdersRequestModel>(model);
+            var input = _mapper.Map<GetAllOrdersRequest>(model);
 
             var output = await _client
                 .GetAllOrdersAsync(input, cancellationToken)
@@ -138,7 +138,7 @@ namespace Outcompute.Trader.Trading.Binance
         public async Task<CancelStandardOrderResult> CancelOrderAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
         {
             var model = new CancelStandardOrder(symbol, orderId, null, null, null, _clock.UtcNow);
-            var input = _mapper.Map<CancelOrderRequestModel>(model);
+            var input = _mapper.Map<CancelOrderRequest>(model);
 
             var output = await _client
                 .CancelOrderAsync(input, cancellationToken)

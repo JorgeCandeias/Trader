@@ -223,7 +223,7 @@ namespace Outcompute.Trader.Trading.Binance
         {
             var model = new GetLeftDailyRedemptionQuotaOnFlexibleProduct(productId, type, null, _clock.UtcNow);
 
-            var input = _mapper.Map<LeftDailyRedemptionQuotaOnFlexibleProductRequestModel>(model);
+            var input = _mapper.Map<GetLeftDailyRedemptionQuotaOnFlexibleProductRequest>(model);
 
             var output = await _client
                 .GetLeftDailyRedemptionQuotaOnFlexibleProductAsync(input, cancellationToken)

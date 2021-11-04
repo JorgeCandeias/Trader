@@ -189,8 +189,8 @@ namespace Outcompute.Trader.Trading.Binance
 
             CreateMap<GetFlexibleProductPositionsResponse, SavingsPosition>();
 
-            CreateMap<GetLeftDailyRedemptionQuotaOnFlexibleProduct, LeftDailyRedemptionQuotaOnFlexibleProductRequestModel>()
-                .ForCtorParam(nameof(LeftDailyRedemptionQuotaOnFlexibleProductRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
+            CreateMap<GetLeftDailyRedemptionQuotaOnFlexibleProduct, GetLeftDailyRedemptionQuotaOnFlexibleProductRequest>()
+                .ForCtorParam(nameof(GetLeftDailyRedemptionQuotaOnFlexibleProductRequest.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
 
             CreateMap<LeftDailyRedemptionQuotaOnFlexibleProductResponseModel, SavingsQuota>();
 

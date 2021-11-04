@@ -366,7 +366,7 @@ namespace Outcompute.Trader.Trading.Binance
         decimal TotalAmount,
         decimal TotalInterest);
 
-    internal record LeftDailyRedemptionQuotaOnFlexibleProductRequestModel(
+    internal record GetLeftDailyRedemptionQuotaOnFlexibleProductRequest(
         string ProductId,
         string Type,
         long? RecvWindow,

@@ -367,7 +367,7 @@ namespace Outcompute.Trader.Trading.Binance
 
         #region Savings Endpoints
 
-        public async Task<LeftDailyRedemptionQuotaOnFlexibleProductResponseModel?> GetLeftDailyRedemptionQuotaOnFlexibleProductAsync(LeftDailyRedemptionQuotaOnFlexibleProductRequestModel model, CancellationToken cancellationToken = default)
+        public async Task<LeftDailyRedemptionQuotaOnFlexibleProductResponseModel?> GetLeftDailyRedemptionQuotaOnFlexibleProductAsync(GetLeftDailyRedemptionQuotaOnFlexibleProductRequest model, CancellationToken cancellationToken = default)
         {
             _ = model ?? throw new ArgumentNullException(nameof(model));
 

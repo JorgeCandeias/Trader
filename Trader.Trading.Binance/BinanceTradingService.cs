@@ -291,7 +291,7 @@ namespace Outcompute.Trader.Trading.Binance
             BinanceApiContext.SkipSigning = true;
 
             await _client
-                .PingUserDataStreamAsync(new ListenKeyRequestModel(listenKey), cancellationToken)
+                .PingUserDataStreamAsync(new PingUserDataStreamRequest(listenKey), cancellationToken)
                 .ConfigureAwait(false);
         }
 
@@ -302,7 +302,7 @@ namespace Outcompute.Trader.Trading.Binance
             BinanceApiContext.SkipSigning = true;
 
             await _client
-                .CloseUserDataStreamAsync(new ListenKeyRequestModel(listenKey), cancellationToken)
+                .CloseUserDataStreamAsync(new CloseUserDataStreamRequest(listenKey), cancellationToken)
                 .ConfigureAwait(false);
         }
 

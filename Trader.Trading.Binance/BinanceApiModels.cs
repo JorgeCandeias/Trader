@@ -319,7 +319,10 @@ namespace Outcompute.Trader.Trading.Binance
     internal record CreateUserDataStreamResponse(
         string ListenKey);
 
-    internal record ListenKeyRequestModel(
+    internal record PingUserDataStreamRequest(
+        string ListenKey);
+
+    internal record CloseUserDataStreamRequest(
         string ListenKey);
 
     internal record KlineRequestModel(

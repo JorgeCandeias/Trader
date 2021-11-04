@@ -340,7 +340,7 @@ namespace Outcompute.Trader.Trading.Binance
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
 
-        public async Task PingUserDataStreamAsync(ListenKeyRequestModel model, CancellationToken cancellationToken = default)
+        public async Task PingUserDataStreamAsync(PingUserDataStreamRequest model, CancellationToken cancellationToken = default)
         {
             _ = model ?? throw new ArgumentNullException(nameof(model));
 
@@ -352,7 +352,7 @@ namespace Outcompute.Trader.Trading.Binance
                 .ConfigureAwait(false);
         }
 
-        public async Task CloseUserDataStreamAsync(ListenKeyRequestModel model, CancellationToken cancellationToken = default)
+        public async Task CloseUserDataStreamAsync(CloseUserDataStreamRequest model, CancellationToken cancellationToken = default)
         {
             _ = model ?? throw new ArgumentNullException(nameof(model));
 

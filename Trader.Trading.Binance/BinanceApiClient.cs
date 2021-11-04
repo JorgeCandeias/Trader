@@ -384,12 +384,12 @@ namespace Outcompute.Trader.Trading.Binance
             }
         }
 
-        public async Task<IEnumerable<FlexibleProductPositionResponseModel>> GetFlexibleProductPositionsAsync(GetFlexibleProductPositionsRequest model, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<GetFlexibleProductPositionsResponse>> GetFlexibleProductPositionsAsync(GetFlexibleProductPositionsRequest model, CancellationToken cancellationToken = default)
         {
             _ = model ?? throw new ArgumentNullException(nameof(model));
 
             return await _client
-                .GetFromJsonAsync<IEnumerable<FlexibleProductPositionResponseModel>>(Combine(new Uri("/sapi/v1/lending/daily/token/position", UriKind.Relative), model), cancellationToken)
+                .GetFromJsonAsync<IEnumerable<GetFlexibleProductPositionsResponse>>(Combine(new Uri("/sapi/v1/lending/daily/token/position", UriKind.Relative), model), cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
 

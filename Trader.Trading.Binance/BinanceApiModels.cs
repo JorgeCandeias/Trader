@@ -350,7 +350,7 @@ namespace Outcompute.Trader.Trading.Binance
         long? RecvWindow,
         long Timestamp);
 
-    internal record FlexibleProductPositionResponseModel(
+    internal record GetFlexibleProductPositionsResponse(
         decimal AnnualInterestRate,
         string Asset,
         decimal AvgAnnualInterestRate,

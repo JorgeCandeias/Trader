@@ -215,7 +215,7 @@ namespace Outcompute.Trader.Trading.Binance
         /// <summary>
         /// Cancels the specified order.
         /// </summary>
-        public async Task<CancelOrderResponseModel> CancelOrderAsync(CancelOrderRequestModel model, CancellationToken cancellationToken = default)
+        public async Task<CancelOrderResponseModel> CancelOrderAsync(CancelOrderRequest model, CancellationToken cancellationToken = default)
         {
             _ = model ?? throw new ArgumentNullException(nameof(model));
             _ = model.Symbol ?? throw new ArgumentException($"{nameof(OrderQuery.Symbol)} is required");

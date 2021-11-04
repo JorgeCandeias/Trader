@@ -187,7 +187,7 @@ namespace Outcompute.Trader.Trading.Binance
         bool IsWorking,
         decimal OrigQuoteOrderQty);
 
-    internal record CancelOrderRequestModel(
+    internal record CancelOrderRequest(
         string Symbol,
         long? OrderId,
         string OrigClientOrderId,

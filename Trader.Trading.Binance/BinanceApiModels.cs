@@ -78,7 +78,7 @@ namespace Outcompute.Trader.Trading.Binance
         bool IsBuyerMaker,
         bool IsBestMatch);
 
-    internal record AvgPriceModel(
+    internal record ApiAvgPrice(
         int Mins,
         decimal Price);
 

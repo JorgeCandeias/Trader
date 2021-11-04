@@ -60,10 +60,10 @@ namespace Outcompute.Trader.Trading.Binance
             return _mapper.Map<DateTime>(result);
         }
 
-        public async Task<ExchangeInfoModel> GetExchangeInfoAsync(CancellationToken cancellationToken = default)
+        public async Task<ApiExchangeInfo> GetExchangeInfoAsync(CancellationToken cancellationToken = default)
         {
             return await _client
-                .GetFromJsonAsync<ExchangeInfoModel>(
+                .GetFromJsonAsync<ApiExchangeInfo>(
                     new Uri("/api/v3/exchangeInfo", UriKind.Relative),
                     cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();

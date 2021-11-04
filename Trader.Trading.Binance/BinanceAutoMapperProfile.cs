@@ -58,7 +58,7 @@ namespace Outcompute.Trader.Trading.Binance
             CreateMap<SwapPoolLiquidityType, string>().ConvertUsing<SwapPoolLiquidityTypeConverter>();
 
             // simple model mappings
-            CreateMap<ExchangeInfoModel, ExchangeInfo>();
+            CreateMap<ApiExchangeInfo, ExchangeInfo>();
             CreateMap<TickerModel, Ticker>();
             CreateMap<SymbolPriceTickerModel, SymbolPriceTicker>();
 

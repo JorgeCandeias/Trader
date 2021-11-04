@@ -57,7 +57,7 @@ namespace Outcompute.Trader.Trading.Binance
         int? MaxNumOrders,
         int? MaxNumAlgoOrders);
 
-    internal record ExchangeInfoModel(
+    internal record ApiExchangeInfo(
         string Timezone,
         long ServerTime,
         ApiRateLimiter[] RateLimits,

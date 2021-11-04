@@ -71,7 +71,7 @@ namespace Outcompute.Trader.Trading.Binance
             CreateMap<CancelAllOrdersResponseModel, CancelOrderResult>().ConvertUsing<CancelAllOrdersResponseModelConverter>();
 
             // renaming model mappings
-            CreateMap<SymbolModel, Symbol>()
+            CreateMap<ApiSymbol, Symbol>()
                 .ForCtorParam(nameof(Symbol.Name), x => x.MapFrom(y => y.Symbol))
                 .ForCtorParam(nameof(Symbol.IsIcebergAllowed), x => x.MapFrom(y => y.IcebergAllowed))
                 .ForCtorParam(nameof(Symbol.IsOcoAllowed), x => x.MapFrom(y => y.OcoAllowed))

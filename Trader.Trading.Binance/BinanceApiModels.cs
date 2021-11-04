@@ -34,7 +34,7 @@ namespace Outcompute.Trader.Trading.Binance
         public static ApiSymbolFilter Empty { get; } = new ApiSymbolFilter(string.Empty, 0, 0, 0, 0, 0, 0, 0, 0, 0, false, 0, 0, 0, 0, 0, 0);
     }
 
-    internal record SymbolModel(
+    internal record ApiSymbol(
         string Symbol,
         string Status,
         string BaseAsset,
@@ -62,7 +62,7 @@ namespace Outcompute.Trader.Trading.Binance
         long ServerTime,
         ApiRateLimiter[] RateLimits,
         ExchangeFilterModel[] ExchangeFilters,
-        SymbolModel[] Symbols);
+        ApiSymbol[] Symbols);
 
     internal record OrderBookModel(
         int LastUpdateId,

@@ -6,7 +6,7 @@ namespace Outcompute.Trader.Trading.Binance
 
     internal record ApiServerTime(long ServerTime);
 
-    internal record RateLimiterModel(
+    internal record ApiRateLimiter(
         string RateLimitType,
         string Interval,
         int IntervalNum,
@@ -60,7 +60,7 @@ namespace Outcompute.Trader.Trading.Binance
     internal record ExchangeInfoModel(
         string Timezone,
         long ServerTime,
-        RateLimiterModel[] RateLimits,
+        ApiRateLimiter[] RateLimits,
         ExchangeFilterModel[] ExchangeFilters,
         SymbolModel[] Symbols);
 

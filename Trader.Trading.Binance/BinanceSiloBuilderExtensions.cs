@@ -77,7 +77,7 @@ namespace Orleans.Hosting
                         .AddSingleton<ApiServerTimeConverter>()
                         .AddSingleton<TimeZoneInfoConverter>()
                         .AddSingleton<DateTimeConverter>()
-                        .AddSingleton<RateLimitConverter>()
+                        .AddSingleton<ApiRateLimiterConverter>()
                         .AddSingleton<SymbolStatusConverter>()
                         .AddSingleton<OrderTypeConverter>()
                         .AddSingleton<SymbolFilterConverter>()

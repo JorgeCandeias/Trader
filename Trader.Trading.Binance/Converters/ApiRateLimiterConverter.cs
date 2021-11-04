@@ -4,9 +4,9 @@ using Outcompute.Trader.Models;
 
 namespace Outcompute.Trader.Trading.Binance.Converters
 {
-    internal class RateLimitConverter : ITypeConverter<RateLimiterModel, RateLimit>
+    internal class ApiRateLimiterConverter : ITypeConverter<ApiRateLimiter, RateLimit>
     {
-        public RateLimit Convert(RateLimiterModel source, RateLimit destination, ResolutionContext context)
+        public RateLimit Convert(ApiRateLimiter source, RateLimit destination, ResolutionContext context)
         {
             // quick path for null source
             if (source is null) return null!;

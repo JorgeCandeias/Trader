@@ -17,9 +17,11 @@ using Outcompute.Trader.Trading.Providers.Exchange;
 using Outcompute.Trader.Trading.Providers.Klines;
 using Outcompute.Trader.Trading.Providers.Orders;
 using Outcompute.Trader.Trading.Providers.Savings;
+using Outcompute.Trader.Trading.Providers.Swap;
 using Outcompute.Trader.Trading.Providers.Tickers;
 using Outcompute.Trader.Trading.Providers.Trades;
 using Outcompute.Trader.Trading.Readyness;
+using System;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -30,6 +32,7 @@ namespace Microsoft.Extensions.DependencyInjection
             return services
 
                 // add watchdog entires
+                .AddWatchdogEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetGrain<ISwapGrain>(Guid.Empty).PingAsync())
                 .AddWatchdogEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetAlgoManagerGrain().PingAsync())
 
                 // assorted services

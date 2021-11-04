@@ -406,7 +406,7 @@ namespace Outcompute.Trader.Trading.Binance
 
     internal record SwapPoolResponseModel(
         long PoolId,
-        int PoolName,
+        string PoolName,
         string[] Assets);
 
     internal record SwapPoolLiquidityRequestModel(
@@ -417,7 +417,7 @@ namespace Outcompute.Trader.Trading.Binance
     internal record SwapPoolLiquidityResponseModel(
         long PoolId,
         string PoolName,
-        long UpdatedTime,
+        long UpdateTime,
         Dictionary<string, decimal> Liquidity,
         SwapPoolLiquidityShareResponseModel Share);
 

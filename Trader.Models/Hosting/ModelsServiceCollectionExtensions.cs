@@ -18,12 +18,16 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton(typeof(ImmutableSortedOrderSetConverter<>))
                 .AddSingleton(typeof(ImmutableSortedTradeSetConverter<>))
                 .AddSingleton(typeof(ImmutableListConverter<,>))
+                .AddSingleton(typeof(ImmutableDictionaryConverter<,>))
+                .AddSingleton(typeof(ImmutableHashSetConverter<,>))
                 .AddAutoMapper(options =>
                 {
                     options.AddProfile<ImmutableSortedOrderSetProfile>();
                     options.AddProfile<ImmutableSortedTradeSetProfile>();
 
                     options.CreateMap(typeof(IEnumerable<>), typeof(ImmutableList<>)).ConvertUsing(typeof(ImmutableListConverter<,>));
+                    options.CreateMap(typeof(IDictionary<,>), typeof(ImmutableDictionary<,>)).ConvertUsing(typeof(ImmutableDictionaryConverter<,>));
+                    options.CreateMap(typeof(IEnumerable<>), typeof(ImmutableHashSet<>)).ConvertUsing(typeof(ImmutableHashSetConverter<,>));
 
                     options.CreateMap<Ticker, MiniTicker>()
                         .ForCtorParam(nameof(MiniTicker.EventTime), x => x.MapFrom(y => y.CloseTime))

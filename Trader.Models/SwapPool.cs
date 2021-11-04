@@ -6,6 +6,6 @@ namespace Outcompute.Trader.Models
     [Immutable]
     public record SwapPool(
         long PoolId,
-        int PoolName,
+        string PoolName,
         ImmutableHashSet<string> Assets);
 }

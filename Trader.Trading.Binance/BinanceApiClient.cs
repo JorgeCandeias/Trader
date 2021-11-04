@@ -76,7 +76,7 @@ namespace Outcompute.Trader.Trading.Binance
         public async Task<OrderBook> GetOrderBookAsync(string symbol, CancellationToken cancellationToken = default)
         {
             var result = await _client
-                .GetFromJsonAsync<OrderBookModel>(
+                .GetFromJsonAsync<ApiOrderBook>(
                     new Uri($"/api/v3/depth?symbol={HttpUtility.UrlEncode(symbol)}", UriKind.Relative),
                     cancellationToken)
                 .ConfigureAwait(false);

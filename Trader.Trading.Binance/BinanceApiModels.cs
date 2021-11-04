@@ -64,7 +64,7 @@ namespace Outcompute.Trader.Trading.Binance
         ApiExchangeFilter[] ExchangeFilters,
         ApiSymbol[] Symbols);
 
-    internal record OrderBookModel(
+    internal record ApiOrderBook(
         int LastUpdateId,
         decimal[][] Bids,
         decimal[][] Asks);

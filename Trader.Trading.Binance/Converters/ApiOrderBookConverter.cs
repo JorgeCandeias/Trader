@@ -1,13 +1,13 @@
 ﻿using AutoMapper;
+using Outcompute.Trader.Models;
 using System.Collections.Immutable;
 using System.Linq;
-using Outcompute.Trader.Models;
 
 namespace Outcompute.Trader.Trading.Binance.Converters
 {
-    internal class OrderBookConverter : ITypeConverter<OrderBookModel, OrderBook>
+    internal class ApiOrderBookConverter : ITypeConverter<ApiOrderBook, OrderBook>
     {
-        public OrderBook Convert(OrderBookModel source, OrderBook destination, ResolutionContext context)
+        public OrderBook Convert(ApiOrderBook source, OrderBook destination, ResolutionContext context)
         {
             if (source is null) return null!;
 

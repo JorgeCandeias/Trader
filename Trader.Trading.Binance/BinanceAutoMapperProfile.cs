@@ -67,7 +67,7 @@ namespace Outcompute.Trader.Trading.Binance
             CreateMap<ApiExchangeFilter, ExchangeFilter>().ConvertUsing<ApiExchangeFilterConverter>();
             CreateMap<ApiSymbolFilter, SymbolFilter>().ConvertUsing<ApiSymbolFilterConverter>();
             CreateMap<IEnumerable<ApiSymbolFilter>, SymbolFilters>().ConvertUsing<ApiSymbolFiltersConverter>();
-            CreateMap<OrderBookModel, OrderBook>().ConvertUsing<OrderBookConverter>();
+            CreateMap<ApiOrderBook, OrderBook>().ConvertUsing<ApiOrderBookConverter>();
             CreateMap<CancelAllOrdersResponseModel, CancelOrderResult>().ConvertUsing<CancelAllOrdersResponseModelConverter>();
 
             // renaming model mappings

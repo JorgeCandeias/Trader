@@ -126,14 +126,14 @@ namespace Outcompute.Trader.Trading.Binance
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
 
-        public async Task<SymbolPriceTickerModel> GetSymbolPriceTickerAsync(string symbol, CancellationToken cancellationToken = default)
+        public async Task<ApiSymbolPriceTicker> GetSymbolPriceTickerAsync(string symbol, CancellationToken cancellationToken = default)
         {
             _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
 
             BinanceApiContext.SkipSigning = true;
 
             return await _client
-                .GetFromJsonAsync<SymbolPriceTickerModel>(
+                .GetFromJsonAsync<ApiSymbolPriceTicker>(
                     new Uri($"/api/v3/ticker/price?symbol={HttpUtility.UrlEncode(symbol)}", UriKind.Relative),
                     cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
@@ -142,7 +142,7 @@ namespace Outcompute.Trader.Trading.Binance
         public async Task<IEnumerable<SymbolPriceTicker>> GetSymbolPriceTickersAsync(CancellationToken cancellationToken = default)
         {
             var result = await _client
-                .GetFromJsonAsync<IEnumerable<SymbolPriceTickerModel>>(
+                .GetFromJsonAsync<IEnumerable<ApiSymbolPriceTicker>>(
                     new Uri($"/api/v3/ticker/price", UriKind.Relative),
                     cancellationToken)
                 .ConfigureAwait(false);

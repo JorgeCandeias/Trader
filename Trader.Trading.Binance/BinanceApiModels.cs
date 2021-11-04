@@ -103,7 +103,7 @@ namespace Outcompute.Trader.Trading.Binance
         int LastId,
         int Count);
 
-    internal record SymbolPriceTickerModel(
+    internal record ApiSymbolPriceTicker(
         string Symbol,
         decimal Price);
 

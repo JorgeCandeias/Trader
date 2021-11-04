@@ -150,7 +150,7 @@ namespace Outcompute.Trader.Trading.Binance
         public async Task<AccountInfo> GetAccountInfoAsync(CancellationToken cancellationToken = default)
         {
             var model = new GetAccountInfo(null, _clock.UtcNow);
-            var input = _mapper.Map<AccountRequestModel>(model);
+            var input = _mapper.Map<GetAccountInfoRequest>(model);
 
             var output = await _client
                 .GetAccountInfoAsync(input, cancellationToken)

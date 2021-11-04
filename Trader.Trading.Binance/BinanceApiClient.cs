@@ -283,7 +283,7 @@ namespace Outcompute.Trader.Trading.Binance
         /// <summary>
         /// Gets the account information.
         /// </summary>
-        public async Task<AccountResponseModel> GetAccountInfoAsync(AccountRequestModel model, CancellationToken cancellationToken = default)
+        public async Task<AccountResponseModel> GetAccountInfoAsync(GetAccountInfoRequest model, CancellationToken cancellationToken = default)
         {
             _ = model ?? throw new ArgumentNullException(nameof(model));
 

@@ -270,7 +270,7 @@ namespace Outcompute.Trader.Trading.Binance
         long? RecvWindow,
         long Timestamp);
 
-    internal record AccountRequestModel(
+    internal record GetAccountInfoRequest(
         long? RecvWindow,
         long Timestamp);
 

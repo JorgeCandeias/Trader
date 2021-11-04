@@ -12,7 +12,7 @@ namespace Outcompute.Trader.Trading.Binance
         int IntervalNum,
         int Limit);
 
-    internal record SymbolFilterModel(
+    internal record ApiSymbolFilter(
         string FilterType,
         decimal MinPrice,
         decimal MaxPrice,
@@ -31,7 +31,7 @@ namespace Outcompute.Trader.Trading.Binance
         int MaxNumIcebergOrders,
         decimal MaxPosition)
     {
-        public static SymbolFilterModel Empty { get; } = new SymbolFilterModel(string.Empty, 0, 0, 0, 0, 0, 0, 0, 0, 0, false, 0, 0, 0, 0, 0, 0);
+        public static ApiSymbolFilter Empty { get; } = new ApiSymbolFilter(string.Empty, 0, 0, 0, 0, 0, 0, 0, 0, 0, false, 0, 0, 0, 0, 0, 0);
     }
 
     internal record SymbolModel(
@@ -49,7 +49,7 @@ namespace Outcompute.Trader.Trading.Binance
         bool QuoteOrderQtyMarketAllowed,
         bool IsSpotTradingAllowed,
         bool IsMarginTradingAllowed,
-        SymbolFilterModel[] Filters,
+        ApiSymbolFilter[] Filters,
         string[] Permissions);
 
     internal record ExchangeFilterModel(

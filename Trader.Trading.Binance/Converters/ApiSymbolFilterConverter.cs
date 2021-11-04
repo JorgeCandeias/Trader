@@ -3,9 +3,9 @@ using Outcompute.Trader.Models;
 
 namespace Outcompute.Trader.Trading.Binance.Converters
 {
-    internal class SymbolFilterConverter : ITypeConverter<SymbolFilterModel, SymbolFilter>
+    internal class ApiSymbolFilterConverter : ITypeConverter<ApiSymbolFilter, SymbolFilter>
     {
-        public SymbolFilter Convert(SymbolFilterModel source, SymbolFilter destination, ResolutionContext context)
+        public SymbolFilter Convert(ApiSymbolFilter source, SymbolFilter destination, ResolutionContext context)
         {
             return source.FilterType switch
             {

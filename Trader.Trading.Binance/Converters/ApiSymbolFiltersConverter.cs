@@ -8,9 +8,9 @@ namespace Outcompute.Trader.Trading.Binance.Converters
     /// <summary>
     /// Converts a source symbol filter api collection into the specialized symbol filter business model lookup.
     /// </summary>
-    internal class SymbolFiltersConverter : ITypeConverter<IEnumerable<SymbolFilterModel>, SymbolFilters>
+    internal class ApiSymbolFiltersConverter : ITypeConverter<IEnumerable<ApiSymbolFilter>, SymbolFilters>
     {
-        public SymbolFilters Convert(IEnumerable<SymbolFilterModel> source, SymbolFilters destination, ResolutionContext context)
+        public SymbolFilters Convert(IEnumerable<ApiSymbolFilter> source, SymbolFilters destination, ResolutionContext context)
         {
             if (source is null) return SymbolFilters.Empty;
 

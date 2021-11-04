@@ -13,8 +13,8 @@ namespace Outcompute.Trader.Trading.Binance.Tests
         {
             // arrange
             var provider = new ServiceCollection()
-                .AddSingleton<SymbolFilterConverter>()
-                .AddSingleton<SymbolFiltersConverter>()
+                .AddSingleton<ApiSymbolFilterConverter>()
+                .AddSingleton<ApiSymbolFiltersConverter>()
                 .AddAutoMapper(x =>
                 {
                     x.AddProfile<BinanceAutoMapperProfile>();
@@ -23,16 +23,16 @@ namespace Outcompute.Trader.Trading.Binance.Tests
             var mapper = provider.GetRequiredService<IMapper>();
             var source = new[]
             {
-                SymbolFilterModel.Empty with { FilterType = "PRICE_FILTER", MinPrice = 1, MaxPrice = 2, TickSize = 3 },
-                SymbolFilterModel.Empty with { FilterType = "PERCENT_PRICE", MultiplierUp = 1, MultiplierDown = 2, AvgPriceMins = 3 },
-                SymbolFilterModel.Empty with { FilterType = "LOT_SIZE", MinQty = 1, MaxQty = 2, StepSize = 3 },
-                SymbolFilterModel.Empty with { FilterType = "MIN_NOTIONAL", MinNotional = 1, ApplyToMarket = false, AvgPriceMins = 2 },
-                SymbolFilterModel.Empty with { FilterType = "ICEBERG_PARTS", Limit = 1 },
-                SymbolFilterModel.Empty with { FilterType = "MARKET_LOT_SIZE", MinQty = 1, MaxQty = 2, StepSize = 3 },
-                SymbolFilterModel.Empty with { FilterType = "MAX_NUM_ORDERS", MaxNumOrders = 1 },
-                SymbolFilterModel.Empty with { FilterType = "MAX_NUM_ALGO_ORDERS", MaxNumAlgoOrders = 1 },
-                SymbolFilterModel.Empty with { FilterType = "MAX_NUM_ICEBERG_ORDERS", MaxNumIcebergOrders = 1 },
-                SymbolFilterModel.Empty with { FilterType = "MAX_POSITION", MaxPosition = 1 }
+                ApiSymbolFilter.Empty with { FilterType = "PRICE_FILTER", MinPrice = 1, MaxPrice = 2, TickSize = 3 },
+                ApiSymbolFilter.Empty with { FilterType = "PERCENT_PRICE", MultiplierUp = 1, MultiplierDown = 2, AvgPriceMins = 3 },
+                ApiSymbolFilter.Empty with { FilterType = "LOT_SIZE", MinQty = 1, MaxQty = 2, StepSize = 3 },
+                ApiSymbolFilter.Empty with { FilterType = "MIN_NOTIONAL", MinNotional = 1, ApplyToMarket = false, AvgPriceMins = 2 },
+                ApiSymbolFilter.Empty with { FilterType = "ICEBERG_PARTS", Limit = 1 },
+                ApiSymbolFilter.Empty with { FilterType = "MARKET_LOT_SIZE", MinQty = 1, MaxQty = 2, StepSize = 3 },
+                ApiSymbolFilter.Empty with { FilterType = "MAX_NUM_ORDERS", MaxNumOrders = 1 },
+                ApiSymbolFilter.Empty with { FilterType = "MAX_NUM_ALGO_ORDERS", MaxNumAlgoOrders = 1 },
+                ApiSymbolFilter.Empty with { FilterType = "MAX_NUM_ICEBERG_ORDERS", MaxNumIcebergOrders = 1 },
+                ApiSymbolFilter.Empty with { FilterType = "MAX_POSITION", MaxPosition = 1 }
             };
 
             // act

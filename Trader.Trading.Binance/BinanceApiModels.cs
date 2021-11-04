@@ -325,7 +325,7 @@ namespace Outcompute.Trader.Trading.Binance
     internal record CloseUserDataStreamRequest(
         string ListenKey);
 
-    internal record KlineRequestModel(
+    internal record GetKlinesRequest(
         string Symbol,
         string Interval,
         long StartTime,

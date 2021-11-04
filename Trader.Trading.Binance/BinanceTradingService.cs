@@ -186,7 +186,7 @@ namespace Outcompute.Trader.Trading.Binance
         public async Task<IReadOnlyCollection<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime startTime, DateTime endTime, int limit, CancellationToken cancellationToken = default)
         {
             var model = new GetKlines(symbol, interval, startTime, endTime, limit);
-            var input = _mapper.Map<KlineRequestModel>(model);
+            var input = _mapper.Map<GetKlinesRequest>(model);
 
             BinanceApiContext.SkipSigning = true;
 

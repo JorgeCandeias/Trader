@@ -161,7 +161,7 @@ namespace Outcompute.Trader.Trading.Binance
             CreateMap<GetAllOrders, GetAllOrdersRequest>()
                 .ForCtorParam(nameof(GetAllOrdersRequest.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
 
-            CreateMap<GetKlines, KlineRequestModel>();
+            CreateMap<GetKlines, GetKlinesRequest>();
 
             CreateMap<JsonElement[], KlineResponseModel>()
                 .ForCtorParam(nameof(KlineResponseModel.OpenTime), x => x.MapFrom(y => y[0].GetInt64()))

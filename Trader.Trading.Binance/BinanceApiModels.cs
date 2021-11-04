@@ -195,7 +195,7 @@ namespace Outcompute.Trader.Trading.Binance
         long? RecvWindow,
         long Timestamp);
 
-    internal record CancelOrderResponseModel(
+    internal record CancelOrderResponse(
         string Symbol,
         string OrigClientOrderId,
         long OrderId,

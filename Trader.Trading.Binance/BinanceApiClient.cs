@@ -215,7 +215,7 @@ namespace Outcompute.Trader.Trading.Binance
         /// <summary>
         /// Cancels the specified order.
         /// </summary>
-        public async Task<CancelOrderResponseModel> CancelOrderAsync(CancelOrderRequest model, CancellationToken cancellationToken = default)
+        public async Task<CancelOrderResponse> CancelOrderAsync(CancelOrderRequest model, CancellationToken cancellationToken = default)
         {
             _ = model ?? throw new ArgumentNullException(nameof(model));
             _ = model.Symbol ?? throw new ArgumentException($"{nameof(OrderQuery.Symbol)} is required");
@@ -227,7 +227,7 @@ namespace Outcompute.Trader.Trading.Binance
                 .ConfigureAwait(false);
 
             return await output.Content
-                .ReadFromJsonAsync<CancelOrderResponseModel>(_jsonOptions, cancellationToken)
+                .ReadFromJsonAsync<CancelOrderResponse>(_jsonOptions, cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
 

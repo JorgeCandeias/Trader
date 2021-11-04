@@ -115,7 +115,7 @@ namespace Outcompute.Trader.Trading.Binance
                 .ForCtorParam(nameof(CancelOrderRequest.OrigClientOrderId), x => x.MapFrom(y => y.OriginalClientOrderId))
                 .ForCtorParam(nameof(CancelOrderRequest.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
 
-            CreateMap<CancelOrderResponseModel, CancelStandardOrderResult>()
+            CreateMap<CancelOrderResponse, CancelStandardOrderResult>()
                 .ForCtorParam(nameof(CancelStandardOrderResult.OriginalClientOrderId), x => x.MapFrom(y => y.OrigClientOrderId))
                 .ForCtorParam(nameof(CancelStandardOrderResult.OriginalQuantity), x => x.MapFrom(y => y.OrigQty))
                 .ForCtorParam(nameof(CancelStandardOrderResult.ExecutedQuantity), x => x.MapFrom(y => y.ExecutedQty))

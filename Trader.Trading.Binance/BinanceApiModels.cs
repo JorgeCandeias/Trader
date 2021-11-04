@@ -372,7 +372,7 @@ namespace Outcompute.Trader.Trading.Binance
         long? RecvWindow,
         long Timestamp);
 
-    internal record LeftDailyRedemptionQuotaOnFlexibleProductResponseModel(
+    internal record GetLeftDailyRedemptionQuotaOnFlexibleProductResponse(
         string Asset,
         decimal DailyQuota,
         decimal LeftQuota,

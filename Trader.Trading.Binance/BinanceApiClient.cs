@@ -367,14 +367,14 @@ namespace Outcompute.Trader.Trading.Binance
 
         #region Savings Endpoints
 
-        public async Task<LeftDailyRedemptionQuotaOnFlexibleProductResponseModel?> GetLeftDailyRedemptionQuotaOnFlexibleProductAsync(GetLeftDailyRedemptionQuotaOnFlexibleProductRequest model, CancellationToken cancellationToken = default)
+        public async Task<GetLeftDailyRedemptionQuotaOnFlexibleProductResponse?> GetLeftDailyRedemptionQuotaOnFlexibleProductAsync(GetLeftDailyRedemptionQuotaOnFlexibleProductRequest model, CancellationToken cancellationToken = default)
         {
             _ = model ?? throw new ArgumentNullException(nameof(model));
 
             try
             {
                 return await _client
-                    .GetFromJsonAsync<LeftDailyRedemptionQuotaOnFlexibleProductResponseModel>(Combine(new Uri("/sapi/v1/lending/daily/userRedemptionQuota", UriKind.Relative), model), cancellationToken)
+                    .GetFromJsonAsync<GetLeftDailyRedemptionQuotaOnFlexibleProductResponse>(Combine(new Uri("/sapi/v1/lending/daily/userRedemptionQuota", UriKind.Relative), model), cancellationToken)
                     .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
             }
             catch (BinanceCodeException ex) when (ex.BinanceCode == -6001)

@@ -240,7 +240,7 @@ namespace Outcompute.Trader.Trading.Binance
         {
             var model = new RedeemFlexibleProduct(productId, amount, type, null, _clock.UtcNow);
 
-            var input = _mapper.Map<FlexibleProductRedemptionRequestModel>(model);
+            var input = _mapper.Map<RedeemFlexibleProductRequest>(model);
 
             await _client
                 .RedeemFlexibleProductAsync(input, cancellationToken)

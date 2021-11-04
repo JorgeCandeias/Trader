@@ -378,7 +378,7 @@ namespace Outcompute.Trader.Trading.Binance
         decimal LeftQuota,
         decimal MinRedemptionAmount);
 
-    internal record FlexibleProductRedemptionRequestModel(
+    internal record RedeemFlexibleProductRequest(
         string ProductId,
         decimal Amount,
         string Type,

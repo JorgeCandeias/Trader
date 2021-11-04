@@ -393,7 +393,7 @@ namespace Outcompute.Trader.Trading.Binance
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
 
-        public async Task RedeemFlexibleProductAsync(FlexibleProductRedemptionRequestModel model, CancellationToken cancellationToken = default)
+        public async Task RedeemFlexibleProductAsync(RedeemFlexibleProductRequest model, CancellationToken cancellationToken = default)
         {
             _ = model ?? throw new ArgumentNullException(nameof(model));
 

@@ -73,7 +73,7 @@ namespace Outcompute.Trader.Trading.Binance.Handlers
             }
 
             // attempt graceful handling of a binance api error
-            var error = await response.Content.ReadFromJsonAsync<ErrorModel>(null, cancellationToken).ConfigureAwait(false);
+            var error = await response.Content.ReadFromJsonAsync<ApiError>(null, cancellationToken).ConfigureAwait(false);
             if (error is not null && error.Code != 0)
             {
                 throw new BinanceCodeException(error.Code, error.Msg, response.StatusCode);

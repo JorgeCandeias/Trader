@@ -2,7 +2,7 @@
 
 namespace Outcompute.Trader.Trading.Binance
 {
-    internal record ErrorModel(int Code, string Msg);
+    internal record ApiError(int Code, string Msg);
 
     internal record ServerTimeModel(long ServerTime);
 

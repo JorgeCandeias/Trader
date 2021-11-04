@@ -324,7 +324,7 @@ namespace Outcompute.Trader.Trading.Binance
         /// <summary>
         /// Starts a new user data stream and returns the listen key for it.
         /// </summary>
-        public async Task<ListenKeyResponseModel> CreateUserDataStreamAsync(CancellationToken cancellationToken = default)
+        public async Task<CreateUserDataStreamResponse> CreateUserDataStreamAsync(CancellationToken cancellationToken = default)
         {
             var response = await _client
                 .PostAsync(
@@ -336,7 +336,7 @@ namespace Outcompute.Trader.Trading.Binance
             response.EnsureSuccessStatusCode();
 
             return await response.Content
-                .ReadFromJsonAsync<ListenKeyResponseModel>(_jsonOptions, cancellationToken)
+                .ReadFromJsonAsync<CreateUserDataStreamResponse>(_jsonOptions, cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
 

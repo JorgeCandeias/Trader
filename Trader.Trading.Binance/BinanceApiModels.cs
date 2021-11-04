@@ -316,7 +316,7 @@ namespace Outcompute.Trader.Trading.Binance
         bool IsMaker,
         bool IsBestMatch);
 
-    internal record ListenKeyResponseModel(
+    internal record CreateUserDataStreamResponse(
         string ListenKey);
 
     internal record ListenKeyRequestModel(

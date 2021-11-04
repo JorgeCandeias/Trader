@@ -153,7 +153,7 @@ namespace Outcompute.Trader.Trading.Binance
         public async Task<SymbolOrderBookTicker> GetSymbolOrderBookTickerAsync(string symbol, CancellationToken cancellationToken = default)
         {
             var result = await _client
-                .GetFromJsonAsync<SymbolOrderBookTickerModel>(
+                .GetFromJsonAsync<ApiSymbolOrderBookTicker>(
                     new Uri($"/api/v3/ticker/bookTicker?symbol={HttpUtility.UrlEncode(symbol)}", UriKind.Relative),
                     cancellationToken)
                 .ConfigureAwait(false);
@@ -164,7 +164,7 @@ namespace Outcompute.Trader.Trading.Binance
         public async Task<IEnumerable<SymbolOrderBookTicker>> GetSymbolOrderBookTickersAsync(CancellationToken cancellationToken = default)
         {
             var result = await _client
-                .GetFromJsonAsync<IEnumerable<SymbolOrderBookTickerModel>>(
+                .GetFromJsonAsync<IEnumerable<ApiSymbolOrderBookTicker>>(
                     new Uri($"/api/v3/ticker/bookTicker", UriKind.Relative),
                     cancellationToken)
                 .ConfigureAwait(false);

@@ -81,7 +81,7 @@ namespace Outcompute.Trader.Trading.Binance
                 .ForCtorParam(nameof(Trade.Quantity), x => x.MapFrom(y => y.Qty))
                 .ForCtorParam(nameof(Trade.QuoteQuantity), x => x.MapFrom(y => y.QuoteQty));
 
-            CreateMap<SymbolOrderBookTickerModel, SymbolOrderBookTicker>()
+            CreateMap<ApiSymbolOrderBookTicker, SymbolOrderBookTicker>()
                 .ForCtorParam(nameof(SymbolOrderBookTicker.BidQuantity), x => x.MapFrom(y => y.BidQty))
                 .ForCtorParam(nameof(SymbolOrderBookTicker.AskQuantity), x => x.MapFrom(y => y.AskQty));
 

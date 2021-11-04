@@ -107,7 +107,7 @@ namespace Outcompute.Trader.Trading.Binance
         string Symbol,
         decimal Price);
 
-    internal record SymbolOrderBookTickerModel(
+    internal record ApiSymbolOrderBookTicker(
         string Symbol,
         decimal BidPrice,
         decimal BidQty,

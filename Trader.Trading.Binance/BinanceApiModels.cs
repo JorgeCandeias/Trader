@@ -450,4 +450,26 @@ namespace Outcompute.Trader.Trading.Binance
 
     internal record RemoveSwapPoolLiquidityResponse(
         long OperationId);
+
+    internal record GetSwapPoolConfigurationRequest(
+        long? PoolId,
+        long? RecvWindow,
+        long Timestamp);
+
+    internal record GetSwapPoolConfigurationResponse(
+        long PoolId,
+        string PoolName,
+        long UpdateTime,
+        GetSwapPoolConfigurationResponseLiquidity Liquidity,
+        Dictionary<string, GetSwapPoolConfigurationResponseAssetConfigure> AssetConfigure);
+
+    internal record GetSwapPoolConfigurationResponseLiquidity(
+        decimal MinRedeemShare,
+        decimal SlippageTolerance);
+
+    internal record GetSwapPoolConfigurationResponseAssetConfigure(
+        decimal MinAdd,
+        decimal MaxAdd,
+        decimal MinSwap,
+        decimal MaxSwap);
 }

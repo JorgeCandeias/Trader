@@ -199,13 +199,13 @@ namespace Outcompute.Trader.Trading.Binance
         /// <summary>
         /// Gets the status of the specified order.
         /// </summary>
-        public async Task<GetOrderResponseModel> GetOrderAsync(GetOrderRequest model, CancellationToken cancellationToken = default)
+        public async Task<GetOrderResponse> GetOrderAsync(GetOrderRequest model, CancellationToken cancellationToken = default)
         {
             _ = model ?? throw new ArgumentNullException(nameof(model));
             _ = model.Symbol ?? throw new ArgumentException($"{nameof(OrderQuery.Symbol)} is required");
 
             return await _client
-                .GetFromJsonAsync<GetOrderResponseModel>(
+                .GetFromJsonAsync<GetOrderResponse>(
                     Combine(new Uri("/api/v3/order", UriKind.Relative), model),
                     _jsonOptions,
                     cancellationToken)
@@ -248,13 +248,13 @@ namespace Outcompute.Trader.Trading.Binance
         /// <summary>
         /// Gets all open orders.
         /// </summary>
-        public async Task<IEnumerable<GetOrderResponseModel>> GetOpenOrdersAsync(GetOpenOrdersRequestModel model, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<GetOrderResponse>> GetOpenOrdersAsync(GetOpenOrdersRequestModel model, CancellationToken cancellationToken = default)
         {
             _ = model ?? throw new ArgumentNullException(nameof(model));
             _ = model.Symbol ?? throw new ArgumentException($"{nameof(GetOpenOrders.Symbol)} is required");
 
             return await _client
-                .GetFromJsonAsync<IEnumerable<GetOrderResponseModel>>(
+                .GetFromJsonAsync<IEnumerable<GetOrderResponse>>(
                     Combine(new Uri("/api/v3/openOrders", UriKind.Relative), model),
                     _jsonOptions,
                     cancellationToken)
@@ -264,13 +264,13 @@ namespace Outcompute.Trader.Trading.Binance
         /// <summary>
         /// Gets all orders.
         /// </summary>
-        public async Task<IEnumerable<GetOrderResponseModel>> GetAllOrdersAsync(GetAllOrdersRequest model, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<GetOrderResponse>> GetAllOrdersAsync(GetAllOrdersRequest model, CancellationToken cancellationToken = default)
         {
             _ = model ?? throw new ArgumentNullException(nameof(model));
             _ = model.Symbol ?? throw new ArgumentException($"{nameof(GetOpenOrders.Symbol)} is required");
 
             return await _client
-                .GetFromJsonAsync<IEnumerable<GetOrderResponseModel>>(
+                .GetFromJsonAsync<IEnumerable<GetOrderResponse>>(
                     Combine(new Uri("/api/v3/allOrders", UriKind.Relative), model),
                     _jsonOptions,
                     cancellationToken)

@@ -69,7 +69,7 @@ namespace Outcompute.Trader.Trading.Binance
         decimal[][] Bids,
         decimal[][] Asks);
 
-    internal record TradeModel(
+    internal record ApiTrade(
         int Id,
         decimal Price,
         decimal Qty,

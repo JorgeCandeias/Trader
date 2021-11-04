@@ -87,7 +87,7 @@ namespace Outcompute.Trader.Trading.Binance
         public async Task<IEnumerable<Trade>> GetRecentTradesAsync(string symbol, CancellationToken cancellationToken = default)
         {
             var result = await _client
-                .GetFromJsonAsync<TradeModel[]>(
+                .GetFromJsonAsync<ApiTrade[]>(
                     new Uri($"/api/v3/trades?symbol={HttpUtility.UrlEncode(symbol)}", UriKind.Relative),
                     cancellationToken)
                 .ConfigureAwait(false);
@@ -98,7 +98,7 @@ namespace Outcompute.Trader.Trading.Binance
         public async Task<IEnumerable<Trade>> GetHistoricalTradesAsync(string symbol, CancellationToken cancellationToken = default)
         {
             var result = await _client
-                .GetFromJsonAsync<TradeModel[]>(
+                .GetFromJsonAsync<ApiTrade[]>(
                     new Uri($"/api/v3/historicalTrades?symbol={HttpUtility.UrlEncode(symbol)}", UriKind.Relative),
                     cancellationToken)
                 .ConfigureAwait(false);

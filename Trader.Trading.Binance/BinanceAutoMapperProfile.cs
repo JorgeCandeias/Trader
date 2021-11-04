@@ -77,7 +77,7 @@ namespace Outcompute.Trader.Trading.Binance
                 .ForCtorParam(nameof(Symbol.IsOcoAllowed), x => x.MapFrom(y => y.OcoAllowed))
                 .ForCtorParam(nameof(Symbol.IsQuoteOrderQuantityMarketAllowed), x => x.MapFrom(y => y.QuoteOrderQtyMarketAllowed));
 
-            CreateMap<TradeModel, Trade>()
+            CreateMap<ApiTrade, Trade>()
                 .ForCtorParam(nameof(Trade.Quantity), x => x.MapFrom(y => y.Qty))
                 .ForCtorParam(nameof(Trade.QuoteQuantity), x => x.MapFrom(y => y.QuoteQty));
 

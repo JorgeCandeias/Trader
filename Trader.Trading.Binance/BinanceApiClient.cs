@@ -199,7 +199,7 @@ namespace Outcompute.Trader.Trading.Binance
         /// <summary>
         /// Gets the status of the specified order.
         /// </summary>
-        public async Task<GetOrderResponseModel> GetOrderAsync(GetOrderRequestModel model, CancellationToken cancellationToken = default)
+        public async Task<GetOrderResponseModel> GetOrderAsync(GetOrderRequest model, CancellationToken cancellationToken = default)
         {
             _ = model ?? throw new ArgumentNullException(nameof(model));
             _ = model.Symbol ?? throw new ArgumentException($"{nameof(OrderQuery.Symbol)} is required");

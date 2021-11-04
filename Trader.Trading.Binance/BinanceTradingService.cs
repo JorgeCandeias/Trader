@@ -102,7 +102,7 @@ namespace Outcompute.Trader.Trading.Binance
         public async Task<OrderQueryResult> GetOrderAsync(string symbol, long? orderId, string? originalClientOrderId, CancellationToken cancellationToken = default)
         {
             var model = new OrderQuery(symbol, orderId, originalClientOrderId, null, _clock.UtcNow);
-            var input = _mapper.Map<GetOrderRequestModel>(model);
+            var input = _mapper.Map<GetOrderRequest>(model);
 
             var output = await _client
                 .GetOrderAsync(input, cancellationToken)

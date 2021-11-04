@@ -100,9 +100,9 @@ namespace Outcompute.Trader.Trading.Binance
             CreateMap<CreateOrderResponseFill, OrderFill>()
                 .ForCtorParam(nameof(OrderFill.Quantity), x => x.MapFrom(y => y.Qty));
 
-            CreateMap<OrderQuery, GetOrderRequestModel>()
-                .ForCtorParam(nameof(GetOrderRequestModel.OrigClientOrderId), x => x.MapFrom(y => y.OriginalClientOrderId))
-                .ForCtorParam(nameof(GetOrderRequestModel.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
+            CreateMap<OrderQuery, GetOrderRequest>()
+                .ForCtorParam(nameof(GetOrderRequest.OrigClientOrderId), x => x.MapFrom(y => y.OriginalClientOrderId))
+                .ForCtorParam(nameof(GetOrderRequest.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
 
             CreateMap<GetOrderResponseModel, OrderQueryResult>()
                 .ForCtorParam(nameof(OrderQueryResult.OriginalQuantity), x => x.MapFrom(y => y.OrigQty))

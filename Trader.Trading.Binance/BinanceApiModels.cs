@@ -151,7 +151,7 @@ namespace Outcompute.Trader.Trading.Binance
         decimal Commission,
         string CommissionAsset);
 
-    internal record GetOrderRequestModel(
+    internal record GetOrderRequest(
         string Symbol,
         long? OrderId,
         string OrigClientOrderId,

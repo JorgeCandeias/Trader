@@ -151,14 +151,14 @@ namespace Outcompute.Trader.Trading.Binance
         decimal Commission,
         string CommissionAsset);
 
-    internal record GetOrderRequest(
+    internal record GetOrderRequestModel(
         string Symbol,
         long? OrderId,
         string OrigClientOrderId,
         long? RecvWindow,
         long? Timestamp);
 
-    internal record GetAllOrdersRequest(
+    internal record GetAllOrdersRequestModel(
         string Symbol,
         long? OrderId,
         long? StartTime,
@@ -167,7 +167,7 @@ namespace Outcompute.Trader.Trading.Binance
         long? RecvWindow,
         long Timestamp);
 
-    internal record GetOrderResponse(
+    internal record GetOrderResponseModel(
         string Symbol,
         long OrderId,
         long OrderListId,
@@ -187,7 +187,7 @@ namespace Outcompute.Trader.Trading.Binance
         bool IsWorking,
         decimal OrigQuoteOrderQty);
 
-    internal record CancelOrderRequest(
+    internal record CancelOrderRequestModel(
         string Symbol,
         long? OrderId,
         string OrigClientOrderId,
@@ -195,7 +195,7 @@ namespace Outcompute.Trader.Trading.Binance
         long? RecvWindow,
         long Timestamp);
 
-    internal record CancelOrderResponse(
+    internal record CancelOrderResponseModel(
         string Symbol,
         string OrigClientOrderId,
         long OrderId,
@@ -209,6 +209,61 @@ namespace Outcompute.Trader.Trading.Binance
         string TimeInForce,
         string Type,
         string Side);
+
+    internal record CancelAllOrdersRequestModel(
+        string Symbol,
+        long? RecvWindow,
+        long Timestamp);
+
+    internal record CancelAllOrdersResponseModel(
+
+        // shared properties
+        string Symbol,
+        long OrderListId,
+
+        // standard order properties
+        string OrigClientOrderId,
+        long OrderId,
+        string ClientOrderId,
+        decimal Price,
+        decimal OrigQty,
+        decimal ExecutedQty,
+        decimal CummulativeQuoteQty,
+        string Status,
+        string TimeInForce,
+        string Type,
+        string Side,
+
+        // oco order properties
+        string ContingencyType,
+        string ListStatusType,
+        string ListOrderStatus,
+        string ListClientOrderId,
+        long TransactionTime,
+        CancelAllOrdersOrderResponseModel[] Orders,
+        CancellAllOrdersOrderReportResponseModel[] OrderReports);
+
+    internal record CancelAllOrdersOrderResponseModel(
+        string Symbol,
+        long OrderId,
+        string ClientOrderId);
+
+    internal record CancellAllOrdersOrderReportResponseModel(
+        string Symbol,
+        string OrigClientOrderId,
+        long OrderId,
+        long OrderListId,
+        string ClientOrderId,
+        decimal Price,
+        decimal OrigQty,
+        decimal ExecutedQty,
+        decimal CummulativeQuoteQty,
+        string Status,
+        string TimeInForce,
+        string Type,
+        string Side,
+        decimal StopPrice,
+        decimal IcebergQty);
 
     internal record GetOpenOrdersRequestModel(
         string Symbol,

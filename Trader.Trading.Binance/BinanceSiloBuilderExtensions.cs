@@ -74,7 +74,7 @@ namespace Orleans.Hosting
                         {
                             options.AddProfile<BinanceAutoMapperProfile>();
                         })
-                        .AddSingleton<ServerTimeConverter>()
+                        .AddSingleton<ApiServerTimeConverter>()
                         .AddSingleton<TimeZoneInfoConverter>()
                         .AddSingleton<DateTimeConverter>()
                         .AddSingleton<RateLimitConverter>()

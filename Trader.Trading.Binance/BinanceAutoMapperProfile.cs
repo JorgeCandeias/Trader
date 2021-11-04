@@ -41,7 +41,7 @@ namespace Outcompute.Trader.Trading.Binance
 
             // model to base type mappings
             CreateMap<TimeSpan, long>().ConvertUsing<TimeSpanConverter>();
-            CreateMap<ApiServerTime, DateTime>().ConvertUsing<ServerTimeConverter>();
+            CreateMap<ApiServerTime, DateTime>().ConvertUsing<ApiServerTimeConverter>();
             CreateMap<KlineInterval, string>().ConvertUsing<KlineIntervalConverter>();
             CreateMap<OrderType, string>().ConvertUsing<OrderTypeConverter>();
             CreateMap<OrderSide, string>().ConvertUsing<OrderSideConverter>();

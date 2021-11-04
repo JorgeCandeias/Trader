@@ -3,7 +3,7 @@ using System;
 
 namespace Outcompute.Trader.Trading.Binance.Converters
 {
-    internal class ServerTimeConverter : ITypeConverter<ApiServerTime, DateTime>
+    internal class ApiServerTimeConverter : ITypeConverter<ApiServerTime, DateTime>
     {
         public DateTime Convert(ApiServerTime source, DateTime destination, ResolutionContext context)
         {

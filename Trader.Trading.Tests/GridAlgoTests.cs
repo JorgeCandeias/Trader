@@ -24,10 +24,7 @@ namespace Outcompute.Trader.Trading.Tests
             var name = "MyAlgo";
             var logger = NullLogger<GridAlgo>.Instance;
 
-            var options = Options.Create(new GridAlgoOptions
-            {
-                IsOpeningEnabled = false
-            });
+            var options = Mock.Of<IOptionsSnapshot<GridAlgoOptions>>(x => !x.Get(name).IsOpeningEnabled);
 
             var symbol = Symbol.Empty with
             {
@@ -63,10 +60,7 @@ namespace Outcompute.Trader.Trading.Tests
             var name = "MyAlgo";
             var logger = NullLogger<GridAlgo>.Instance;
 
-            var options = Options.Create(new GridAlgoOptions
-            {
-                IsOpeningEnabled = true
-            });
+            var options = Mock.Of<IOptionsSnapshot<GridAlgoOptions>>(x => x.Get(name).IsOpeningEnabled);
 
             var symbol = Symbol.Empty with
             {
@@ -125,10 +119,7 @@ namespace Outcompute.Trader.Trading.Tests
             var name = "MyAlgo";
             var logger = NullLogger<GridAlgo>.Instance;
 
-            var options = Options.Create(new GridAlgoOptions
-            {
-                IsOpeningEnabled = true
-            });
+            var options = Mock.Of<IOptionsSnapshot<GridAlgoOptions>>(x => x.Get(name).IsOpeningEnabled);
 
             var symbol = Symbol.Empty with
             {

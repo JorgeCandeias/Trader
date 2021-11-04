@@ -6,7 +6,6 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Commands;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -18,9 +17,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         private readonly ILogger _logger;
         private readonly ISystemClock _clock;
 
-        public ValueAveragingAlgo(IOptions<ValueAveragingAlgoOptions> options, ILogger<ValueAveragingAlgo> logger, ISystemClock clock)
+        public ValueAveragingAlgo(IOptionsSnapshot<ValueAveragingAlgoOptions> options, ILogger<ValueAveragingAlgo> logger, ISystemClock clock)
         {
-            _options = options.Value;
+            _options = options.Get(Context.Name);
             _logger = logger;
             _clock = clock;
         }
@@ -34,6 +33,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         private decimal _rsiB;
         private decimal _rsiC;
 
+        [SuppressMessage("Major Code Smell", "S3358:Ternary operators should not be nested", Justification = "N/A")]
         public override async Task<IAlgoCommand> GoAsync(CancellationToken cancellationToken = default)
         {
             // get the lastest klines
@@ -62,7 +62,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
                 // place an averaging sell if we hit a sell signal
                 TrySignalSellOrder()
-                    ? SignificantAveragingSell(Context.Ticker, Context.Significant.Orders, _options.MinSellProfitRate, _options.RedeemSavings)
+                    ? _options.ClosingEnabled
+                        ? AveragingSell(Context.Significant.Orders, _options.MinSellProfitRate, _options.RedeemSavings)
+                        : SignificantAveragingSell(Context.Ticker, Context.Significant.Orders, _options.MinSellProfitRate, _options.RedeemSavings)
                     : ClearOpenOrders(Context.Symbol, OrderSide.Sell));
         }
 
@@ -75,8 +77,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         private bool TrySignalBuyOrder()
         {
             return
-                IsOpeningEnabled() &
-                IsAveragingEnabled() &
+                IsBuyingEnabled() &
                 IsTickerLowerThanSafePrice() &
                 IsSmaTrendingDown() &
                 IsTickerBelowSmas() &
@@ -220,13 +221,12 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             return true;
         }
 
-        private bool IsAveragingEnabled()
+        private bool IsBuyingEnabled()
         {
-            // break on disabled averaging
-            if (Context.Significant.Orders.Count > 0 && !_options.IsAveragingEnabled)
+            if (!_options.BuyingEnabled)
             {
                 _logger.LogInformation(
-                    "{Type} {Symbol} has averaging disabled and will not signal a buy order",
+                    "{Type} {Symbol} reports buying is disabled",
                     TypeName, Context.Symbol.Name);
 
                 return false;
@@ -235,25 +235,44 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             return true;
         }
 
-        private bool IsOpeningEnabled()
+        private bool IsSellingEnabled()
         {
-            // break on disabled opening
-            if (Context.Significant.Orders.Count == 0 && !_options.IsOpeningEnabled)
+            if (!_options.SellingEnabled)
             {
                 _logger.LogInformation(
-                    "{Type} {Symbol} has opening disabled and will not signal a buy order",
+                    "{Type} {Symbol} reports selling is disabled",
                     TypeName, Context.Symbol.Name);
 
                 return false;
             }
 
             return true;
+        }
+
+        private bool IsClosingEnabled()
+        {
+            if (_options.ClosingEnabled)
+            {
+                _logger.LogInformation(
+                    "{Type} {Symbol} reports closing is enabled.",
+                    TypeName, Context.Symbol.Name);
+
+                return true;
+            }
+
+            return false;
         }
 
         [SuppressMessage("Blocker Code Smell", "S2178:Short-circuit logic should be used in boolean contexts", Justification = "Indicators")]
         private bool TrySignalSellOrder()
         {
+            if (IsClosingEnabled())
+            {
+                return true;
+            }
+
             var signal =
+                IsSellingEnabled() &
                 IsSmaTrendingUp() &
                 IsTickerAboveSmas() &
                 IsRsiTrendingUp() &

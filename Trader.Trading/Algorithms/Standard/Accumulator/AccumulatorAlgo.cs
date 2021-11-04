@@ -10,9 +10,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Accumulator
     {
         private readonly AccumulatorAlgoOptions _options;
 
-        public AccumulatorAlgo(IOptions<AccumulatorAlgoOptions> options)
+        public AccumulatorAlgo(IOptionsSnapshot<AccumulatorAlgoOptions> options)
         {
-            _options = options.Value;
+            _options = options.Get(Context.Name);
         }
 
         public override Task<IAlgoCommand> GoAsync(CancellationToken cancellationToken = default)

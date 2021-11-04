@@ -27,11 +27,24 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         public decimal? MaxNotional { get; set; }
 
+        /// <summary>
+        /// Whether to allow the algo to buy assets.
+        /// </summary>
         [Required]
-        public bool IsOpeningEnabled { get; set; } = true;
+        public bool BuyingEnabled { get; set; } = true;
 
+        /// <summary>
+        /// Whether to allow the algo to sell assets.
+        /// </summary>
         [Required]
-        public bool IsAveragingEnabled { get; set; } = true;
+        public bool SellingEnabled { get; set; } = true;
+
+        /// <summary>
+        /// When enabled the algo will wait until a single sell of all assets can be placed.
+        /// Use together with <see cref="MinSellProfitRate"/>=0 to wait for closing at cost value.
+        /// </summary>
+        [Required]
+        public bool ClosingEnabled { get; set; } = false;
 
         [Required]
         public bool RedeemSavings { get; set; } = false;

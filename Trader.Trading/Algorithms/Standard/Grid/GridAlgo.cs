@@ -15,10 +15,10 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
         private readonly ILogger _logger;
         private readonly GridAlgoOptions _options;
 
-        public GridAlgo(ILogger<GridAlgo> logger, IOptions<GridAlgoOptions> options)
+        public GridAlgo(ILogger<GridAlgo> logger, IOptionsSnapshot<GridAlgoOptions> options)
         {
             _logger = logger;
-            _options = options.Value;
+            _options = options.Get(Context.Name);
         }
 
         private static string TypeName => nameof(GridAlgo);

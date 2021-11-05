@@ -78,7 +78,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         {
             return
                 IsBuyingEnabled() &
-                IsTickerLowerThanSafePrice() &
+                IsCooled() &
                 IsSmaTrendingDown() &
                 IsTickerBelowSmas() &
                 IsRsiTrendingDown() &
@@ -92,6 +92,23 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
                     TypeName, Context.Symbol.Name, Context.Ticker.ClosePrice, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC);
 
             return TrackingBuy(Context.Symbol, _options.BuyOrderSafetyRatio, _options.BuyQuoteBalanceFraction, _options.MaxNotional, _options.RedeemSavings);
+        }
+
+        private bool IsCooled()
+        {
+            // skip this rule if there are no positions
+            if (Context.Significant.Orders.Count == 0)
+            {
+                return true;
+            }
+
+            var indicator = Context.Significant.Orders.Max!.Time.Add(_options.CooldownPeriod) < _clock.UtcNow;
+
+            _logger.LogInformation(
+                "{Type} {Symbol} reports cooldown period of {Cooldown} since last buy at {LastTime} has passed = {Indicator}",
+                TypeName, Context.Symbol.Name, _options.CooldownPeriod, Context.Significant.Orders.Max.Time, indicator);
+
+            return indicator;
         }
 
         private bool IsRsiTrendingDown()
@@ -180,45 +197,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
                 TypeName, Context.Symbol.Name, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC, indicator);
 
             return indicator;
-        }
-
-        private bool IsTickerLowerThanSafePrice()
-        {
-            // skip this rule if there are no orders to evaluate
-            if (Context.Significant.Orders.Count == 0)
-            {
-                return true;
-            }
-
-            // pin the last significant order
-            var last = Context.Significant.Orders.Max!;
-
-            // skip this rule if the significant total of the last order is under the minimum notional (leftovers)
-            if (last.ExecutedQuantity * last.Price < Context.Symbol.Filters.MinNotional.MinNotional)
-            {
-                return true;
-            }
-
-            // skip this rule if the significant quantity of the last order is under the minimum lot size (leftovers)
-            if (last.ExecutedQuantity < Context.Symbol.Filters.LotSize.MinQuantity)
-            {
-                return true;
-            }
-
-            // break on price not low enough from last significant buy
-            var minPrice = last.Price;
-            var lowPrice = minPrice * _options.PullbackRatio;
-            if (Context.Ticker.ClosePrice > lowPrice)
-            {
-                _logger.LogInformation(
-                    "{Type} {Symbol} detected ticker of {Ticker:F8} is above the low price of {LowPrice:F8} calculated as {PullBackRatio:F8} of the min significant buy price of {MinPrice:F8} and will not signal a buy order",
-                    TypeName, Context.Symbol.Name, Context.Ticker.ClosePrice, lowPrice, _options.PullbackRatio, minPrice);
-
-                return false;
-            }
-
-            // otherwise skip this rule by default
-            return true;
         }
 
         private bool IsBuyingEnabled()

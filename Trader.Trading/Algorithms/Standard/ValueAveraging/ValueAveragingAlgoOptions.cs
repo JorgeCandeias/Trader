@@ -1,4 +1,5 @@
 ﻿using Outcompute.Trader.Models;
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
@@ -90,6 +91,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         [Required]
         public decimal RsiOversoldC { get; set; } = 30m;
+
+        [Required]
+        public TimeSpan CooldownPeriod { get; set; } = TimeSpan.FromDays(1);
 
         public static ValueAveragingAlgoOptions Default { get; } = new ValueAveragingAlgoOptions();
     }

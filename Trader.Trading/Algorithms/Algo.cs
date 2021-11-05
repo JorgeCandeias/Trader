@@ -7,6 +7,7 @@ using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
 using Outcompute.Trader.Trading.Commands.Many;
 using Outcompute.Trader.Trading.Commands.RedeemSavings;
+using Outcompute.Trader.Trading.Commands.RedeemSwapPool;
 using Outcompute.Trader.Trading.Commands.SignificantAveragingSell;
 using Outcompute.Trader.Trading.Commands.TrackingBuy;
 using System.Collections.Generic;
@@ -56,9 +57,9 @@ namespace Outcompute.Trader.Trading.Algorithms
             return new ManyCommand(results);
         }
 
-        public virtual AveragingSellCommand AveragingSell(Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings)
+        public virtual AveragingSellCommand AveragingSell(Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, bool redeemSwapPool)
         {
-            return new AveragingSellCommand(symbol, orders, profitMultiplier, redeemSavings);
+            return new AveragingSellCommand(symbol, orders, profitMultiplier, redeemSavings, redeemSwapPool);
         }
 
         public virtual CreateOrderCommand CreateOrder(Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag)
@@ -71,9 +72,9 @@ namespace Outcompute.Trader.Trading.Algorithms
             return new CancelOrderCommand(symbol, orderId);
         }
 
-        public virtual EnsureSingleOrderCommand EnsureSingleOrder(Symbol symbol, OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings)
+        public virtual EnsureSingleOrderCommand EnsureSingleOrder(Symbol symbol, OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings, bool redeemSwapPool)
         {
-            return new EnsureSingleOrderCommand(symbol, side, type, timeInForce, quantity, price, redeemSavings);
+            return new EnsureSingleOrderCommand(symbol, side, type, timeInForce, quantity, price, redeemSavings, redeemSwapPool);
         }
 
         public virtual ClearOpenOrdersCommand ClearOpenOrders(Symbol symbol, OrderSide side)
@@ -86,9 +87,14 @@ namespace Outcompute.Trader.Trading.Algorithms
             return new RedeemSavingsCommand(asset, amount);
         }
 
-        public virtual SignificantAveragingSellCommand SignificantAveragingSell(Symbol symbol, MiniTicker ticker, IReadOnlyCollection<OrderQueryResult> orders, decimal minimumProfitRate, bool redeemSavings)
+        public virtual RedeemSwapPoolCommand TryRedeemSwapPoolAsync(string asset, decimal amount)
         {
-            return new SignificantAveragingSellCommand(symbol, ticker, orders, minimumProfitRate, redeemSavings);
+            return new RedeemSwapPoolCommand(asset, amount);
+        }
+
+        public virtual SignificantAveragingSellCommand SignificantAveragingSell(Symbol symbol, MiniTicker ticker, IReadOnlyCollection<OrderQueryResult> orders, decimal minimumProfitRate, bool redeemSavings, bool redeemSwapPool)
+        {
+            return new SignificantAveragingSellCommand(symbol, ticker, orders, minimumProfitRate, redeemSavings, redeemSwapPool);
         }
 
         public virtual TrackingBuyCommand TrackingBuy(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings)

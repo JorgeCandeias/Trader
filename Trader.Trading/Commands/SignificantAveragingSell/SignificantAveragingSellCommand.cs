@@ -10,13 +10,14 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
 {
     public class SignificantAveragingSellCommand : IAlgoCommand
     {
-        public SignificantAveragingSellCommand(Symbol symbol, MiniTicker ticker, IReadOnlyCollection<OrderQueryResult> orders, decimal minimumProfitRate, bool redeemSavings)
+        public SignificantAveragingSellCommand(Symbol symbol, MiniTicker ticker, IReadOnlyCollection<OrderQueryResult> orders, decimal minimumProfitRate, bool redeemSavings, bool redeemSwapPool)
         {
             Symbol = symbol ?? throw new ArgumentNullException(nameof(symbol));
             Ticker = ticker ?? throw new ArgumentNullException(nameof(ticker));
             Orders = orders ?? throw new ArgumentNullException(nameof(orders));
             MinimumProfitRate = minimumProfitRate;
             RedeemSavings = redeemSavings;
+            RedeemSwapPool = redeemSwapPool;
 
             foreach (var order in orders)
             {
@@ -36,6 +37,7 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
         public IReadOnlyCollection<OrderQueryResult> Orders { get; }
         public decimal MinimumProfitRate { get; }
         public bool RedeemSavings { get; }
+        public bool RedeemSwapPool { get; }
 
         public Task ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
         {

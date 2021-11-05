@@ -75,7 +75,8 @@ namespace Outcompute.Trader.Trading.Tests
             };
             var profitMultiplier = 1.10m;
             var redeemSavings = false;
-            var command = new AveragingSellCommand(symbol, orders, profitMultiplier, redeemSavings);
+            var redeemSwapPool = false;
+            var command = new AveragingSellCommand(symbol, orders, profitMultiplier, redeemSavings, redeemSwapPool);
 
             // act
             await executor.ExecuteAsync(context, command);

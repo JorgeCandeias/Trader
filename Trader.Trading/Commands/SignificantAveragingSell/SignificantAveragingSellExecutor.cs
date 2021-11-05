@@ -33,7 +33,7 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
             }
             else
             {
-                return new EnsureSingleOrderCommand(command.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, desired.Quantity, desired.Price, command.RedeemSavings)
+                return new EnsureSingleOrderCommand(command.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, desired.Quantity, desired.Price, command.RedeemSavings, command.RedeemSwapPool)
                     .ExecuteAsync(context, cancellationToken);
             }
         }

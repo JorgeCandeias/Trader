@@ -10,12 +10,13 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
 {
     public class AveragingSellCommand : IAlgoCommand
     {
-        public AveragingSellCommand(Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings)
+        public AveragingSellCommand(Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, bool redeemSwapPool)
         {
             Symbol = symbol ?? throw new ArgumentNullException(nameof(symbol));
             Orders = orders ?? throw new ArgumentNullException(nameof(orders));
             ProfitMultiplier = profitMultiplier;
             RedeemSavings = redeemSavings;
+            RedeemSwapPool = redeemSwapPool;
 
             if (orders.Count == 0)
             {
@@ -46,6 +47,7 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
         public IReadOnlyCollection<OrderQueryResult> Orders { get; }
         public decimal ProfitMultiplier { get; }
         public bool RedeemSavings { get; }
+        public bool RedeemSwapPool { get; }
 
         public Task ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
         {

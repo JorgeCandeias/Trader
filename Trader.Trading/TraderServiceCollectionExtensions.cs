@@ -9,6 +9,7 @@ using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
 using Outcompute.Trader.Trading.Commands.Many;
 using Outcompute.Trader.Trading.Commands.RedeemSavings;
+using Outcompute.Trader.Trading.Commands.RedeemSwapPool;
 using Outcompute.Trader.Trading.Commands.SignificantAveragingSell;
 using Outcompute.Trader.Trading.Commands.TrackingBuy;
 using Outcompute.Trader.Trading.Providers;
@@ -71,6 +72,10 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<ITradeProvider, TradeProvider>()
                 .AddOptions<TradeProviderOptions>().ValidateDataAnnotations().Services
 
+                // swap pool provider
+                .AddSingleton<ISwapPoolProvider, SwapPoolProvider>()
+                .AddOptions<SwapPoolOptions>().ValidateDataAnnotations().Services
+
                 // algo context
                 .AddScoped<AlgoContext>()
                 .AddScoped<IAlgoContext>(sp => sp.GetRequiredService<AlgoContext>())
@@ -89,6 +94,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<IAlgoCommandExecutor<RedeemSavingsCommand, RedeemSavingsEvent>, RedeemSavingsExecutor>()
                 .AddSingleton<IAlgoCommandExecutor<SignificantAveragingSellCommand>, SignificantAveragingSellExecutor>()
                 .AddSingleton<IAlgoCommandExecutor<TrackingBuyCommand>, TrackingBuyExecutor>()
+                .AddSingleton<IAlgoCommandExecutor<RedeemSwapPoolCommand, RedeemSwapPoolEvent>, RedeemSwapPoolExecutor>()
 
                 // builtin algos
                 .AddAccumulatorAlgo()

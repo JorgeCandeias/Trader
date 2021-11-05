@@ -6,6 +6,7 @@ using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Commands.RedeemSavings;
+using Outcompute.Trader.Trading.Commands.RedeemSwapPool;
 using Outcompute.Trader.Trading.Commands.TrackingBuy;
 using Outcompute.Trader.Trading.Providers;
 using System.Collections.Generic;

@@ -48,7 +48,7 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
             }
             else
             {
-                await new EnsureSingleOrderCommand(command.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, desired.Quantity, desired.Price, command.RedeemSavings)
+                await new EnsureSingleOrderCommand(command.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, desired.Quantity, desired.Price, command.RedeemSavings, command.RedeemSwapPool)
                     .ExecuteAsync(context, cancellationToken)
                     .ConfigureAwait(false);
             }

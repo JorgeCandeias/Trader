@@ -9,6 +9,7 @@ using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
 using Outcompute.Trader.Trading.Commands.RedeemSavings;
+using Outcompute.Trader.Trading.Commands.RedeemSwapPool;
 using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Collections.Generic;
@@ -75,7 +76,8 @@ namespace Outcompute.Trader.Trading.Tests
             var quantity = 1000m;
             var price = 1234m;
             var redeemSavings = true;
-            var command = new EnsureSingleOrderCommand(symbol, side, type, timeInForce, quantity, price, redeemSavings);
+            var redeemSwapPool = true;
+            var command = new EnsureSingleOrderCommand(symbol, side, type, timeInForce, quantity, price, redeemSavings, redeemSwapPool);
 
             // act
             await executor.ExecuteAsync(context, command);

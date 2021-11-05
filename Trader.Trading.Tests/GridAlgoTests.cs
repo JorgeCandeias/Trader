@@ -9,6 +9,7 @@ using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Commands.ClearOpenOrders;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Commands.RedeemSavings;
+using Outcompute.Trader.Trading.Commands.RedeemSwapPool;
 using Outcompute.Trader.Trading.Providers;
 using System.Threading;
 using System.Threading.Tasks;

@@ -23,12 +23,13 @@ namespace Outcompute.Trader.Trading.Tests
             };
             var profitMultiplier = 1.10m;
             var redeemSavings = true;
+            var redeemSwapPool = true;
             var executor = Mock.Of<IAlgoCommandExecutor<AveragingSellCommand>>();
             var provider = new ServiceCollection()
                 .AddSingleton(executor)
                 .BuildServiceProvider();
             var context = new AlgoContext(provider);
-            var command = new AveragingSellCommand(symbol, orders, profitMultiplier, redeemSavings);
+            var command = new AveragingSellCommand(symbol, orders, profitMultiplier, redeemSavings, redeemSwapPool);
 
             // act
             await command.ExecuteAsync(context);

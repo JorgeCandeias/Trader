@@ -41,7 +41,8 @@ namespace Outcompute.Trader.Trading.Tests
             var orders = Array.Empty<OrderQueryResult>();
             var minimumProfitRate = 1.01m;
             var redeemSavings = false;
-            var command = new SignificantAveragingSellCommand(symbol, ticker, orders, minimumProfitRate, redeemSavings);
+            var redeemSwapPool = true;
+            var command = new SignificantAveragingSellCommand(symbol, ticker, orders, minimumProfitRate, redeemSavings, redeemSwapPool);
 
             // act
             await executor.ExecuteAsync(context, command, CancellationToken.None);
@@ -92,7 +93,8 @@ namespace Outcompute.Trader.Trading.Tests
             };
             var minimumProfitRate = 1.01m;
             var redeemSavings = false;
-            var command = new SignificantAveragingSellCommand(symbol, ticker, orders, minimumProfitRate, redeemSavings);
+            var redeemSwapPool = true;
+            var command = new SignificantAveragingSellCommand(symbol, ticker, orders, minimumProfitRate, redeemSavings, redeemSwapPool);
 
             // act
             await executor.ExecuteAsync(context, command, CancellationToken.None);
@@ -155,7 +157,8 @@ namespace Outcompute.Trader.Trading.Tests
             };
             var minimumProfitRate = 1.01m;
             var redeemSavings = false;
-            var command = new SignificantAveragingSellCommand(symbol, ticker, orders, minimumProfitRate, redeemSavings);
+            var redeemSwapPool = true;
+            var command = new SignificantAveragingSellCommand(symbol, ticker, orders, minimumProfitRate, redeemSavings, redeemSwapPool);
 
             // act
             await executor.ExecuteAsync(context, command, CancellationToken.None);
@@ -222,7 +225,8 @@ namespace Outcompute.Trader.Trading.Tests
             };
             var minimumProfitRate = 1.01m;
             var redeemSavings = false;
-            var command = new SignificantAveragingSellCommand(symbol, ticker, orders, minimumProfitRate, redeemSavings);
+            var redeemSwapPool = true;
+            var command = new SignificantAveragingSellCommand(symbol, ticker, orders, minimumProfitRate, redeemSavings, redeemSwapPool);
 
             // act
             await executor.ExecuteAsync(context, command, CancellationToken.None);
@@ -291,7 +295,8 @@ namespace Outcompute.Trader.Trading.Tests
             };
             var minimumProfitRate = 1.01m;
             var redeemSavings = false;
-            var command = new SignificantAveragingSellCommand(symbol, ticker, orders, minimumProfitRate, redeemSavings);
+            var redeemSwapPool = true;
+            var command = new SignificantAveragingSellCommand(symbol, ticker, orders, minimumProfitRate, redeemSavings, redeemSwapPool);
 
             // act
             await executor.ExecuteAsync(context, command, CancellationToken.None);

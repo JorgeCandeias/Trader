@@ -35,9 +35,9 @@ namespace Outcompute.Trader.Trading.Algorithms
             return Context.Symbol;
         }
 
-        public virtual AveragingSellCommand AveragingSell(IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings)
+        public virtual AveragingSellCommand AveragingSell(IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, bool redeemSwapPool)
         {
-            return AveragingSell(EnsureSymbol(), orders, profitMultiplier, redeemSavings);
+            return AveragingSell(EnsureSymbol(), orders, profitMultiplier, redeemSavings, redeemSwapPool);
         }
 
         public virtual CreateOrderCommand CreateOrder(OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag)
@@ -45,9 +45,9 @@ namespace Outcompute.Trader.Trading.Algorithms
             return CreateOrder(EnsureSymbol(), type, side, timeInForce, quantity, price, tag);
         }
 
-        public virtual EnsureSingleOrderCommand EnsureSingleOrder(OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings)
+        public virtual EnsureSingleOrderCommand EnsureSingleOrder(OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings, bool redeemSwapPool)
         {
-            return EnsureSingleOrder(EnsureSymbol(), side, type, timeInForce, quantity, price, redeemSavings);
+            return EnsureSingleOrder(EnsureSymbol(), side, type, timeInForce, quantity, price, redeemSavings, redeemSwapPool);
         }
 
         public virtual ClearOpenOrdersCommand ClearOpenOrders(OrderSide side)
@@ -55,9 +55,9 @@ namespace Outcompute.Trader.Trading.Algorithms
             return ClearOpenOrders(EnsureSymbol(), side);
         }
 
-        public virtual SignificantAveragingSellCommand SignificantAveragingSell(MiniTicker ticker, IReadOnlyCollection<OrderQueryResult> orders, decimal minimumProfitRate, bool redeemSavings)
+        public virtual SignificantAveragingSellCommand SignificantAveragingSell(MiniTicker ticker, IReadOnlyCollection<OrderQueryResult> orders, decimal minimumProfitRate, bool redeemSavings, bool redeemSwapPool)
         {
-            return SignificantAveragingSell(EnsureSymbol(), ticker, orders, minimumProfitRate, redeemSavings);
+            return SignificantAveragingSell(EnsureSymbol(), ticker, orders, minimumProfitRate, redeemSavings, redeemSwapPool);
         }
 
         public virtual TrackingBuyCommand TrackingBuy(decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings)

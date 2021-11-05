@@ -5,6 +5,7 @@ using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Commands.RedeemSavings;
+using Outcompute.Trader.Trading.Commands.RedeemSwapPool;
 using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Threading;
@@ -98,7 +99,28 @@ namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder
                             "{type} {Name} could not redeem the necessary {Necessary:F8} {Asset} from savings",
                             TypeName, command.Symbol.Name, necessary, sourceAsset);
 
-                        return;
+                        var result2 = await new RedeemSwapPoolCommand(sourceAsset, necessary)
+                            .ExecuteAsync(context, cancellationToken)
+                            .ConfigureAwait(false);
+
+                        if (result2.Success)
+                        {
+                            var delay = _monitor.CurrentValue.SavingsRedemptionDelay;
+
+                            _logger.LogInformation(
+                                "{Type} {Name} redeemed {Redeemed:F8} {Asset} from the swap pool to cover the necessary {Necessary:F8} {Asset} and will wait {Wait} for the operation to complete",
+                                TypeName, command.Symbol.Name, result2.QuoteAmount, sourceAsset, necessary, sourceAsset, delay);
+
+                            await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+                        }
+                        else
+                        {
+                            _logger.LogWarning(
+                                "{type} {Name} could not redeem the necessary {Necessary:F8} {Asset} from a swap pool",
+                                TypeName, command.Symbol.Name, necessary, sourceAsset);
+
+                            return;
+                        }
                     }
                 }
                 else

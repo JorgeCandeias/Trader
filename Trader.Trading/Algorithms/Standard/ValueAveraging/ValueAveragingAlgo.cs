@@ -63,8 +63,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
                 // place an averaging sell if we hit a sell signal
                 TrySignalSellOrder()
                     ? _options.ClosingEnabled
-                        ? AveragingSell(Context.Significant.Orders, _options.MinSellProfitRate, _options.RedeemSavings)
-                        : SignificantAveragingSell(Context.Ticker, Context.Significant.Orders, _options.MinSellProfitRate, _options.RedeemSavings)
+                        ? AveragingSell(Context.Significant.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool)
+                        : SignificantAveragingSell(Context.Ticker, Context.Significant.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool)
                     : ClearOpenOrders(Context.Symbol, OrderSide.Sell));
         }
 

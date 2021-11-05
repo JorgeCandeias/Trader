@@ -190,12 +190,36 @@ namespace Outcompute.Trader.Trading.Providers.Swap
             }
         }
 
-        /*
-        public Task<RedeemSwapPoolEvent> RedeemAsync(string asset, decimal amount)
+        public async Task<RedeemSwapPoolEvent> RedeemAsync(string asset, decimal amount)
         {
-            _liquidities
+            // identify a pool with enough asset share
+            var result = _liquidities.Values
+                .Where(x => x.AssetShare.TryGetValue(asset, out var share) && share >= amount)
+                .Where(x => _cooldowns.GetValueOrDefault(x.PoolId, DateTime.MinValue) < _clock.UtcNow)
+                .OrderBy(x => x.PoolId)
+                .FirstOrDefault();
+
+            if (result is null)
+            {
+                _logger.LogWarning(
+                    "{Type} could not redeem asset {Amount} {Asset} because available pool can be found",
+                    TypeName, amount, asset);
+
+                return RedeemSwapPoolEvent.Failed(asset);
+            }
+
+            // calculate the share fraction to redeem
+            var fraction = (amount / result.AssetShare[asset]) * result.ShareAmount;
+            var baseAsset = result.AssetShare.Single(x => x.Key != asset).Key;
+            var baseAmount = fraction * result.AssetShare[baseAsset];
+
+            // redeem the fraction
+            await _trader.RemoveSwapLiquidityAsync(result.PoolId, SwapPoolLiquidityType.Combination, fraction, _cancellation.Token);
+
+            SetCooldown(result.PoolId);
+
+            return new RedeemSwapPoolEvent(true, asset, amount, baseAsset, baseAmount);
         }
-        */
 
         public Task PingAsync() => Task.CompletedTask;
 

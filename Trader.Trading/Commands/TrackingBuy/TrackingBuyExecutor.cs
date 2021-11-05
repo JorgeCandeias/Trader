@@ -47,7 +47,7 @@ namespace Outcompute.Trader.Trading.Commands.TrackingBuy
             // identify the free balance
             var free = balance.Free
                 + (command.RedeemSavings ? savings.FreeAmount : 0m)
-                + (command.RedeemSwapPool ? pool : 0m);
+                + (command.RedeemSwapPool ? pool.Total : 0m);
 
             // identify the target low price for the first buy
             var lowBuyPrice = ticker.ClosePrice * command.PullbackRatio;

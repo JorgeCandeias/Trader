@@ -6,6 +6,7 @@ using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -211,6 +212,9 @@ namespace Outcompute.Trader.Trading.Providers.Swap
 
             // calculate the share fraction to redeem
             var fraction = (amount / result.AssetShare[asset]) * result.ShareAmount;
+            fraction = Math.Round(fraction, 8);
+
+            // for reporting only
             var baseAsset = result.AssetShare.Single(x => x.Key != asset).Key;
             var baseAmount = fraction * result.AssetShare[baseAsset];
 
@@ -222,13 +226,24 @@ namespace Outcompute.Trader.Trading.Providers.Swap
             return new RedeemSwapPoolEvent(true, result.PoolName, asset, amount, baseAsset, baseAmount);
         }
 
-        public Task<decimal> GetBalanceAsync(string asset)
+        public Task<SwapPoolAssetBalance> GetBalanceAsync(string asset)
         {
-            var balance = _liquidities.Values
-                .SelectMany(x => x.AssetShare.Where(x => x.Key == asset))
-                .Sum(x => x.Value);
+            var builder = ImmutableList.CreateBuilder<SwapPoolAssetBalanceDetail>();
 
-            return Task.FromResult(balance);
+            foreach (var liquidity in _liquidities.Values)
+            {
+                foreach (var share in liquidity.AssetShare)
+                {
+                    if (share.Key == asset)
+                    {
+                        builder.Add(new SwapPoolAssetBalanceDetail(liquidity.PoolName, share.Value));
+                    }
+                }
+            }
+
+            var header = new SwapPoolAssetBalance(asset, builder.Sum(x => x.Amount), builder.ToImmutable());
+
+            return Task.FromResult(header);
         }
 
         public Task PingAsync() => Task.CompletedTask;

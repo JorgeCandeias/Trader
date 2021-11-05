@@ -36,7 +36,8 @@ namespace Outcompute.Trader.Trading.Tests
             var balances = Mock.Of<IBalanceProvider>();
             var savings = Mock.Of<ISavingsProvider>();
             var orders = Mock.Of<IOrderProvider>();
-            var hydrator = new AlgoContextHydrator(exchange, resolver, tickers, balances, savings, orders);
+            var swaps = Mock.Of<ISwapPoolProvider>();
+            var hydrator = new AlgoContextHydrator(exchange, resolver, tickers, balances, savings, orders, swaps);
             var context = new AlgoContext(NullServiceProvider.Instance);
 
             // act
@@ -107,7 +108,9 @@ namespace Outcompute.Trader.Trading.Tests
                 .Setup(x => x.GetOrdersAsync(symbol.Name, CancellationToken.None))
                 .Returns(Task.FromResult<IReadOnlyList<OrderQueryResult>>(new[] { order }));
 
-            var hydrator = new AlgoContextHydrator(exchange, resolver, tickers, balances, savings, orders);
+            var swaps = Mock.Of<ISwapPoolProvider>();
+
+            var hydrator = new AlgoContextHydrator(exchange, resolver, tickers, balances, savings, orders, swaps);
             var context = new AlgoContext(NullServiceProvider.Instance);
 
             // act

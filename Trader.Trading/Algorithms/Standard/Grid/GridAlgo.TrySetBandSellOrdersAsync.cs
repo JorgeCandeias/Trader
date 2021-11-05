@@ -35,34 +35,69 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
                             _logger.LogInformation(
                                 "{Type} {Name} must place {OrderType} {OrderSide} of {Quantity} {Asset} for {Price} {Quote} but there is only {Free} {Asset} available. Will attempt to redeem {Necessary} {Asset} rest from savings.",
                                 TypeName, Context.Name, OrderType.Limit, OrderSide.Sell, band.Quantity, Context.Symbol.BaseAsset, band.ClosePrice, Context.Symbol.QuoteAsset, Context.AssetSpotBalance.Free, Context.Symbol.BaseAsset, necessary, Context.Symbol.BaseAsset);
+
+                            var result = await TryRedeemSavings(Context.Symbol.BaseAsset, necessary)
+                                .ExecuteAsync(Context, cancellationToken)
+                                .ConfigureAwait(false);
+
+                            if (result.Success)
+                            {
+                                _logger.LogInformation(
+                                    "{Type} {Name} redeemed {Amount} {Asset} successfully",
+                                    TypeName, Context.Name, necessary, Context.Symbol.BaseAsset);
+
+                                // let the algo cycle to allow redemption to process
+                                return Noop();
+                            }
+                            else
+                            {
+                                _logger.LogError(
+                                   "{Type} {Name} cannot set band sell order of {Quantity} {Asset} for {Price} {Quote} because there are only {Balance} {Asset} free and savings redemption failed",
+                                    TypeName, Context.Name, band.Quantity, Context.Symbol.BaseAsset, band.ClosePrice, Context.Symbol.QuoteAsset, Context.AssetSpotBalance.Free, Context.Symbol.BaseAsset);
+
+                                if (_options.RedeemSwapPoolSavings)
+                                {
+                                    _logger.LogInformation(
+                                        "{Type} {Name} must place {OrderType} {OrderSide} of {Quantity} {Asset} for {Price} {Quote} but there is only {Free} {Asset} available. Will attempt to redeem {Necessary} {Asset} rest from a swap pool",
+                                        TypeName, Context.Name, OrderType.Limit, OrderSide.Sell, band.Quantity, Context.Symbol.BaseAsset, band.ClosePrice, Context.Symbol.QuoteAsset, Context.AssetSpotBalance.Free, Context.Symbol.BaseAsset, necessary, Context.Symbol.BaseAsset);
+
+                                    var result2 = await TryRedeemSwapPool(Context.Symbol.BaseAsset, necessary)
+                                        .ExecuteAsync(Context, cancellationToken)
+                                        .ConfigureAwait(false);
+
+                                    if (result2.Success)
+                                    {
+                                        _logger.LogInformation(
+                                            "{Type} {Name} redeemed {Amount} {Asset} successfully",
+                                            TypeName, Context.Name, necessary, Context.Symbol.BaseAsset);
+
+                                        // let the algo cycle to allow redemption to process
+                                        return Noop();
+                                    }
+                                    else
+                                    {
+                                        _logger.LogError(
+                                           "{Type} {Name} cannot set band sell order of {Quantity} {Asset} for {Price} {Quote} because there are only {Balance} {Asset} free and swap pool redemption failed",
+                                            TypeName, Context.Name, band.Quantity, Context.Symbol.BaseAsset, band.ClosePrice, Context.Symbol.QuoteAsset, Context.AssetSpotBalance.Free, Context.Symbol.BaseAsset);
+
+                                        return null;
+                                    }
+                                }
+                                else
+                                {
+                                    _logger.LogWarning(
+                                        "{Type} {Name} must place {OrderType} {OrderSide} of {Quantity} {Asset} for {Price} {Quote} but there is only {Free} {Asset} available and swap pool redemption is disabled.",
+                                        TypeName, Context.Name, OrderType.Limit, OrderSide.Sell, band.Quantity, Context.Symbol.BaseAsset, band.ClosePrice, Context.Symbol.QuoteAsset, Context.AssetSpotBalance.Free);
+
+                                    return null;
+                                }
+                            }
                         }
                         else
                         {
                             _logger.LogWarning(
                                 "{Type} {Name} must place {OrderType} {OrderSide} of {Quantity} {Asset} for {Price} {Quote} but there is only {Free} {Asset} available and savings redemption is disabled.",
                                 TypeName, Context.Name, OrderType.Limit, OrderSide.Sell, band.Quantity, Context.Symbol.BaseAsset, band.ClosePrice, Context.Symbol.QuoteAsset, Context.AssetSpotBalance.Free);
-
-                            return null;
-                        }
-
-                        var result = await TryRedeemSavings(Context.Symbol.BaseAsset, necessary)
-                            .ExecuteAsync(Context, cancellationToken)
-                            .ConfigureAwait(false);
-
-                        if (result.Success)
-                        {
-                            _logger.LogInformation(
-                                "{Type} {Name} redeemed {Amount} {Asset} successfully",
-                                TypeName, Context.Name, necessary, Context.Symbol.BaseAsset);
-
-                            // let the algo cycle to allow redemption to process
-                            return Noop();
-                        }
-                        else
-                        {
-                            _logger.LogError(
-                               "{Type} {Name} cannot set band sell order of {Quantity} {Asset} for {Price} {Quote} because there are only {Balance} {Asset} free and savings redemption failed",
-                                TypeName, Context.Name, band.Quantity, Context.Symbol.BaseAsset, band.ClosePrice, Context.Symbol.QuoteAsset, Context.AssetSpotBalance.Free, Context.Symbol.BaseAsset);
 
                             return null;
                         }

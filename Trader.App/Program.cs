@@ -140,6 +140,7 @@ namespace Outcompute.Trader.App
                                     options.IsolatedAssets.Add("BTC");
                                     options.IsolatedAssets.Add("BNB");
                                     options.IsolatedAssets.Add("ETH");
+                                    options.ExcludedAssets.Add("BNB");
                                 })
                                 .AddAlgoType<TestAlgo, TestAlgoOptions>("Test");
                         });

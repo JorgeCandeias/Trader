@@ -60,7 +60,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
 
         private decimal GetFreeBalance()
         {
-            return Context.QuoteSpotBalance.Free + (_options.UseQuoteSavings ? Context.QuoteSavingsBalance.FreeAmount : 0m);
+            return Context.QuoteSpotBalance.Free
+                + (_options.UseQuoteSavings ? Context.QuoteSavingsBalance.FreeAmount : 0m)
+                + (_options.UseQuoteSwapPool ? Context.QuoteSwapPoolBalance.Total : 0m);
         }
 
         private static string CreateTag(string symbol, decimal price)

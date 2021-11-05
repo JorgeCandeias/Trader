@@ -87,7 +87,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             return new RedeemSavingsCommand(asset, amount);
         }
 
-        public virtual RedeemSwapPoolCommand TryRedeemSwapPoolAsync(string asset, decimal amount)
+        public virtual RedeemSwapPoolCommand TryRedeemSwapPool(string asset, decimal amount)
         {
             return new RedeemSwapPoolCommand(asset, amount);
         }

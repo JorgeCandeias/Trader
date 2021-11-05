@@ -7,6 +7,6 @@ namespace Outcompute.Trader.Trading.Providers
     {
         Task<RedeemSwapPoolEvent> RedeemAsync(string asset, decimal amount, CancellationToken cancellationToken = default);
 
-        Task<decimal> GetBalanceAsync(string asset, CancellationToken cancellationToken = default);
+        Task<SwapPoolAssetBalance> GetBalanceAsync(string asset, CancellationToken cancellationToken = default);
     }
 }

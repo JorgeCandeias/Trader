@@ -41,7 +41,13 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
         public bool UseQuoteSavings { get; set; } = false;
 
         [Required]
+        public bool UseQuoteSwapPool { get; set; } = false;
+
+        [Required]
         public bool RedeemAssetSavings { get; set; } = false;
+
+        [Required]
+        public bool RedeemSwapPoolSavings { get; set; } = false;
 
         public decimal? MaxNotional { get; set; }
     }

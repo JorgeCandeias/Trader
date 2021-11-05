@@ -226,6 +226,8 @@ namespace Outcompute.Trader.Trading.Binance
             CreateMap<RemoveSwapPoolLiquidity, RemoveSwapPoolLiquidityRequest>()
                 .ForCtorParam(nameof(RemoveSwapPoolLiquidityRequest.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
 
+            CreateMap<RemoveSwapPoolLiquidityResponse, SwapPoolOperation>();
+
             CreateMap<GetSwapPoolConfigurationResponse, SwapPoolConfiguration>()
                 .ForCtorParam(nameof(SwapPoolConfiguration.Assets), x => x.MapFrom(y => y.AssetConfigure));
 

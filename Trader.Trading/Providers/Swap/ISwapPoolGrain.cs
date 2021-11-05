@@ -9,6 +9,6 @@ namespace Outcompute.Trader.Trading.Providers.Swap
 
         Task<RedeemSwapPoolEvent> RedeemAsync(string asset, decimal amount);
 
-        Task<decimal> GetBalanceAsync(string asset);
+        Task<SwapPoolAssetBalance> GetBalanceAsync(string asset);
     }
 }

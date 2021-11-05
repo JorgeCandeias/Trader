@@ -13,8 +13,9 @@ namespace Outcompute.Trader.Trading.Algorithms
         private readonly IBalanceProvider _balances;
         private readonly ISavingsProvider _savings;
         private readonly IOrderProvider _orders;
+        private readonly ISwapPoolProvider _swaps;
 
-        public AlgoContextHydrator(IExchangeInfoProvider exchange, ISignificantOrderResolver resolver, ITickerProvider tickers, IBalanceProvider balances, ISavingsProvider savings, IOrderProvider orders)
+        public AlgoContextHydrator(IExchangeInfoProvider exchange, ISignificantOrderResolver resolver, ITickerProvider tickers, IBalanceProvider balances, ISavingsProvider savings, IOrderProvider orders, ISwapPoolProvider swaps)
         {
             _exchange = exchange;
             _resolver = resolver;
@@ -22,6 +23,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             _balances = balances;
             _savings = savings;
             _orders = orders;
+            _swaps = swaps;
         }
 
         public Task HydrateSymbolAsync(AlgoContext context, string symbol, CancellationToken cancellationToken = default)
@@ -90,6 +92,14 @@ namespace Outcompute.Trader.Trading.Algorithms
                 .ContinueWith(symbolx => _savings.GetPositionOrZeroAsync(symbolx.Result.QuoteAsset, cancellationToken), cancellationToken, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Default)
                 .Unwrap();
 
+            var assetSwapPoolTask = symbolTask
+                .ContinueWith(symbolx => _swaps.GetBalanceAsync(symbolx.Result.BaseAsset, cancellationToken), cancellationToken, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Default)
+                .Unwrap();
+
+            var quoteSwapPoolTask = symbolTask
+                .ContinueWith(symbolx => _swaps.GetBalanceAsync(symbolx.Result.QuoteAsset, cancellationToken), cancellationToken, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Default)
+                .Unwrap();
+
             var ordersTask = _orders
                 .GetOrdersAsync(symbol, CancellationToken.None);
 
@@ -113,6 +123,12 @@ namespace Outcompute.Trader.Trading.Algorithms
 
             // populate the quote savings balance
             context.QuoteSavingsBalance = await quoteSavingsTask.ConfigureAwait(false);
+
+            // populate the asset swap pool balance
+            context.AssetSwapPoolBalance = await assetSwapPoolTask.ConfigureAwait(false);
+
+            // populate the quote swap pool balance
+            context.QuoteSwapPoolBalance = await quoteSwapPoolTask.ConfigureAwait(false);
 
             // populate orders
             context.Orders = await ordersTask.ConfigureAwait(false);

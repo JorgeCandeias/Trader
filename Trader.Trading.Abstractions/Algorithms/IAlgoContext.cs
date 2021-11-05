@@ -1,4 +1,5 @@
 ﻿using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Collections.Generic;
 
@@ -56,6 +57,18 @@ namespace Outcompute.Trader.Trading.Algorithms
         /// This is only populated if the default symbol is defined.
         /// </summary>
         SavingsPosition QuoteSavingsBalance { get; }
+
+        /// <summary>
+        /// The current swap pool balances for the base asset of the default symbol.
+        /// This is only populated if the default symbol is defined.
+        /// </summary>
+        SwapPoolAssetBalance AssetSwapPoolBalance { get; }
+
+        /// <summary>
+        /// The current swap pool balances for the quote asset of the default symbol.
+        /// This is only populated if the default symbol is defined.
+        /// </summary>
+        SwapPoolAssetBalance QuoteSwapPoolBalance { get; }
 
         /// <summary>
         /// Gets all historial orders for the default symbol.

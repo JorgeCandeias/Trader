@@ -67,6 +67,12 @@ namespace Outcompute.Trader.Trading.Providers.Swap
         {
             var options = _monitor.CurrentValue;
 
+            // skip if auto pooling is disabled
+            if (!options.AutoAddEnabled)
+            {
+                return;
+            }
+
             await LoadAsync();
 
             // get all positive spot balances

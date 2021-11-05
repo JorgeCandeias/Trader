@@ -17,5 +17,10 @@ namespace Outcompute.Trader.Trading.Providers.Swap
         {
             return _factory.GetSwapPoolGrain().RedeemAsync(asset, amount);
         }
+
+        public Task<decimal> GetBalanceAsync(string asset, CancellationToken cancellationToken = default)
+        {
+            return _factory.GetSwapPoolGrain().GetBalanceAsync(asset);
+        }
     }
 }

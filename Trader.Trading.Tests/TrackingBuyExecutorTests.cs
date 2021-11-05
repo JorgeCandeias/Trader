@@ -6,7 +6,6 @@ using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Commands.RedeemSavings;
-using Outcompute.Trader.Trading.Commands.RedeemSwapPool;
 using Outcompute.Trader.Trading.Commands.TrackingBuy;
 using Outcompute.Trader.Trading.Providers;
 using System.Collections.Generic;
@@ -52,7 +51,9 @@ namespace Outcompute.Trader.Trading.Tests
                 .Returns(Task.FromResult<IReadOnlyList<OrderQueryResult>>(new[] { active1 }))
                 .Verifiable();
 
-            var executor = new TrackingBuyExecutor(logger, tickers, balances, savings, orders);
+            var swaps = Mock.Of<ISwapPoolProvider>();
+
+            var executor = new TrackingBuyExecutor(logger, tickers, orders, balances, savings, swaps);
 
             var cancelOrderExecutor = Mock.Of<IAlgoCommandExecutor<CancelOrderCommand>>();
 
@@ -92,7 +93,8 @@ namespace Outcompute.Trader.Trading.Tests
             var targetQuoteBalanceFractionPerBuy = 0.01m;
             var maxNotional = 100m;
             var redeemSavings = true;
-            var command = new TrackingBuyCommand(symbol, pullbackRatio, targetQuoteBalanceFractionPerBuy, maxNotional, redeemSavings);
+            var redeemSwapPool = true;
+            var command = new TrackingBuyCommand(symbol, pullbackRatio, targetQuoteBalanceFractionPerBuy, maxNotional, redeemSavings, redeemSwapPool);
 
             // act
             await executor.ExecuteAsync(context, command);

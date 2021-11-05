@@ -73,15 +73,14 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             return MathSpan.Max(stackalloc int[] { _options.SmaPeriodsA, _options.SmaPeriodsB, _options.SmaPeriodsC, _options.RsiPeriodsA, _options.RsiPeriodsB, _options.RsiPeriodsC });
         }
 
-        [SuppressMessage("Blocker Code Smell", "S2178:Short-circuit logic should be used in boolean contexts", Justification = "Indicators")]
         private bool TrySignalBuyOrder()
         {
             return
-                IsBuyingEnabled() &
-                IsCooled() &
-                IsSmaTrendingDown() &
-                IsTickerBelowSmas() &
-                IsRsiTrendingDown() &
+                IsBuyingEnabled() &&
+                IsCooled() &&
+                IsSmaTrendingDown() &&
+                IsTickerBelowSmas() &&
+                IsRsiTrendingDown() &&
                 IsRsiOversold();
         }
 
@@ -91,7 +90,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
                     "{Type} {Symbol} will signal a buy order for the current state (Ticker = {Ticker:F8}, SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}, RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8})",
                     TypeName, Context.Symbol.Name, Context.Ticker.ClosePrice, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC);
 
-            return TrackingBuy(Context.Symbol, _options.BuyOrderSafetyRatio, _options.BuyQuoteBalanceFraction, _options.MaxNotional, _options.RedeemSavings);
+            return TrackingBuy(Context.Symbol, _options.BuyOrderSafetyRatio, _options.BuyQuoteBalanceFraction, _options.MaxNotional, _options.RedeemSavings, _options.RedeemSwapPool);
         }
 
         private bool IsCooled()
@@ -241,7 +240,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             return false;
         }
 
-        [SuppressMessage("Blocker Code Smell", "S2178:Short-circuit logic should be used in boolean contexts", Justification = "Indicators")]
         private bool TrySignalSellOrder()
         {
             if (IsClosingEnabled())
@@ -250,10 +248,10 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             }
 
             var signal =
-                IsSellingEnabled() &
-                IsSmaTrendingUp() &
-                IsTickerAboveSmas() &
-                IsRsiTrendingUp() &
+                IsSellingEnabled() &&
+                IsSmaTrendingUp() &&
+                IsTickerAboveSmas() &&
+                IsRsiTrendingUp() &&
                 IsRsiOverbought();
 
             if (signal)

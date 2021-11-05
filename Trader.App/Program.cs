@@ -137,9 +137,9 @@ namespace Outcompute.Trader.App
                                 })
                                 .Configure<SwapPoolOptions>(options =>
                                 {
-                                    options.ExclusiveAssets.Add("BTC");
-                                    options.ExclusiveAssets.Add("BNB");
-                                    options.ExclusiveAssets.Add("ETH");
+                                    options.IsolatedAssets.Add("BTC");
+                                    options.IsolatedAssets.Add("BNB");
+                                    options.IsolatedAssets.Add("ETH");
                                 })
                                 .AddAlgoType<TestAlgo, TestAlgoOptions>("Test");
                         });

@@ -20,5 +20,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Accumulator
 
         [Required]
         public bool RedeemSavings { get; set; } = false;
+
+        [Required]
+        public bool RedeemSwapPool { get; set; } = false;
     }
 }

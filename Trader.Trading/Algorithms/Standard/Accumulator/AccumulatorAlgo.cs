@@ -17,7 +17,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Accumulator
 
         public override Task<IAlgoCommand> GoAsync(CancellationToken cancellationToken = default)
         {
-            return TrackingBuy(Context.Symbol, _options.PullbackRatio, _options.TargetQuoteBalanceFractionPerBuy, _options.MaxNotional, _options.RedeemSavings)
+            // todo: replace this algo with the ValueAveragingAlgo with selling disabled in config and then remove this algo
+
+            return TrackingBuy(Context.Symbol, _options.PullbackRatio, _options.TargetQuoteBalanceFractionPerBuy, _options.MaxNotional, _options.RedeemSavings, _options.RedeemSwapPool)
                 .AsTaskResult<IAlgoCommand>();
         }
     }

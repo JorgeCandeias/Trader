@@ -113,7 +113,8 @@ namespace Outcompute.Trader.Trading.Providers.Swap
             var candidates = _configurations.Values
                 .Where(x => _cooldowns.GetValueOrDefault(x.PoolId, DateTime.MinValue) < _clock.UtcNow)
                 .Where(x => x.Assets.All(a => totals.TryGetValue(a.Key, out var balance) && balance >= a.Value.MinAdd))
-                .Where(x => !x.Assets.All(a => options.ExclusiveAssets.Contains(a.Key)))
+                .Where(x => !options.ExcludedAssets.Overlaps(x.Assets.Keys))
+                .Where(x => !x.Assets.All(a => options.IsolatedAssets.Contains(a.Key)))
                 .OrderBy(x => x.PoolId)
                 .ToList();
 
@@ -218,7 +219,16 @@ namespace Outcompute.Trader.Trading.Providers.Swap
 
             SetCooldown(result.PoolId);
 
-            return new RedeemSwapPoolEvent(true, asset, amount, baseAsset, baseAmount);
+            return new RedeemSwapPoolEvent(true, result.PoolName, asset, amount, baseAsset, baseAmount);
+        }
+
+        public Task<decimal> GetBalanceAsync(string asset)
+        {
+            var balance = _liquidities.Values
+                .SelectMany(x => x.AssetShare.Where(x => x.Key == asset))
+                .Sum(x => x.Value);
+
+            return Task.FromResult(balance);
         }
 
         public Task PingAsync() => Task.CompletedTask;

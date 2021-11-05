@@ -251,6 +251,17 @@ namespace Outcompute.Trader.Data.Sql
                 .ConfigureAwait(false);
         }
 
+        public async Task<IEnumerable<Balance>> GetBalancesAsync(CancellationToken cancellationToken = default)
+        {
+            using var connection = new SqlConnection(_options.ConnectionString);
+
+            var entities = await connection
+                .QueryAsync<BalanceEntity>(new CommandDefinition("[dbo].[GetBalances]", null, null, _options.CommandTimeoutAsInteger, CommandType.StoredProcedure, CommandFlags.Buffered, cancellationToken))
+                .ConfigureAwait(false);
+
+            return _mapper.Map<IEnumerable<Balance>>(entities);
+        }
+
         public async Task<Balance?> TryGetBalanceAsync(string asset, CancellationToken cancellationToken = default)
         {
             _ = asset ?? throw new ArgumentNullException(nameof(asset));

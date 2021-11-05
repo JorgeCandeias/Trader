@@ -99,6 +99,7 @@
     <Build Include="Procedures\SetKline.sql" />
     <Build Include="Procedures\SetOrder.sql" />
     <Build Include="Procedures\SetTicker.sql" />
+    <Build Include="Procedures\GetBalances.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Scripts\Script.PostDeployment.sql" />

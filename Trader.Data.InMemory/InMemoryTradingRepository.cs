@@ -141,6 +141,11 @@ namespace Outcompute.Trader.Trading.Data.InMemory
             return _grain.TryGetBalanceAsync(asset);
         }
 
+        public Task<IEnumerable<Balance>> GetBalancesAsync(CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
         #endregion Balances
     }
 }

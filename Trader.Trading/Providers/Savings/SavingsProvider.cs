@@ -25,9 +25,9 @@ namespace Outcompute.Trader.Trading.Providers.Savings
             return _factory.GetSavingsGrain(asset).TryGetQuotaAsync(productId, type);
         }
 
-        public Task RedeemAsync(string asset, string productId, decimal amount, SavingsRedemptionType type, CancellationToken cancellationToken = default)
+        public Task<RedeemSavingsEvent> RedeemAsync(string asset, decimal amount, SavingsRedemptionType type, CancellationToken cancellationToken = default)
         {
-            return _factory.GetSavingsGrain(asset).RedeemAsync(productId, amount, type);
+            return _factory.GetSavingsGrain(asset).RedeemAsync(amount, type);
         }
     }
 }

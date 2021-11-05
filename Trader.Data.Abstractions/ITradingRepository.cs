@@ -40,6 +40,8 @@ namespace Outcompute.Trader.Data
 
         Task SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default);
 
+        Task<IEnumerable<Balance>> GetBalancesAsync(CancellationToken cancellationToken = default);
+
         Task<Balance?> TryGetBalanceAsync(string asset, CancellationToken cancellationToken = default);
 
         #endregion Balances

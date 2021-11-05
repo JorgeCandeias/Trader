@@ -42,7 +42,7 @@ namespace Outcompute.Trader.Trading.Binance
 
         [Required]
         [Range(1, int.MaxValue)]
-        public int MaxConcurrentApiRequests { get; set; } = 1;
+        public int MaxConcurrentApiRequests { get; set; } = 2;
 
         [Required]
         [Range(typeof(TimeSpan), "0.00:00:01.000", "0.01:00:00.000")]

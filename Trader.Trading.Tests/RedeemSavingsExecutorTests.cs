@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Logging.Abstractions;
-using Moq;
+﻿using Moq;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Commands.RedeemSavings;
@@ -20,15 +19,13 @@ namespace Outcompute.Trader.Trading.Tests
             var amount = 123m;
             var position = SavingsPosition.Zero(asset) with { CanRedeem = false };
 
-            var logger = NullLogger<RedeemSavingsExecutor>.Instance;
-
             var savings = Mock.Of<ISavingsProvider>();
             Mock.Get(savings)
                 .Setup(x => x.TryGetPositionAsync(asset, CancellationToken.None))
                 .ReturnsAsync(position)
                 .Verifiable();
 
-            var executor = new RedeemSavingsExecutor(logger, savings);
+            var executor = new RedeemSavingsExecutor(savings);
             var context = AlgoContext.Empty;
             var command = new RedeemSavingsCommand(asset, amount);
 
@@ -49,15 +46,13 @@ namespace Outcompute.Trader.Trading.Tests
             var amount = 123m;
             var position = SavingsPosition.Zero(asset) with { CanRedeem = true, RedeemingAmount = 1m };
 
-            var logger = NullLogger<RedeemSavingsExecutor>.Instance;
-
             var savings = Mock.Of<ISavingsProvider>();
             Mock.Get(savings)
                 .Setup(x => x.TryGetPositionAsync(asset, CancellationToken.None))
                 .ReturnsAsync(position)
                 .Verifiable();
 
-            var executor = new RedeemSavingsExecutor(logger, savings);
+            var executor = new RedeemSavingsExecutor(savings);
             var context = AlgoContext.Empty;
             var command = new RedeemSavingsCommand(asset, amount);
 
@@ -78,15 +73,13 @@ namespace Outcompute.Trader.Trading.Tests
             var amount = 123m;
             var position = SavingsPosition.Zero(asset) with { CanRedeem = true, RedeemingAmount = 0m, FreeAmount = 100m };
 
-            var logger = NullLogger<RedeemSavingsExecutor>.Instance;
-
             var savings = Mock.Of<ISavingsProvider>();
             Mock.Get(savings)
                 .Setup(x => x.TryGetPositionAsync(asset, CancellationToken.None))
                 .ReturnsAsync(position)
                 .Verifiable();
 
-            var executor = new RedeemSavingsExecutor(logger, savings);
+            var executor = new RedeemSavingsExecutor(savings);
             var context = AlgoContext.Empty;
             var command = new RedeemSavingsCommand(asset, amount);
 
@@ -110,8 +103,6 @@ namespace Outcompute.Trader.Trading.Tests
             var position = SavingsPosition.Zero(asset) with { CanRedeem = true, RedeemingAmount = 0m, FreeAmount = 200m, ProductId = productId };
             var quota = SavingsQuota.Zero(asset) with { LeftQuota = 1000m };
 
-            var logger = NullLogger<RedeemSavingsExecutor>.Instance;
-
             var savings = Mock.Of<ISavingsProvider>();
             Mock.Get(savings)
                 .Setup(x => x.TryGetPositionAsync(asset, CancellationToken.None))
@@ -122,10 +113,10 @@ namespace Outcompute.Trader.Trading.Tests
                 .ReturnsAsync(quota)
                 .Verifiable();
             Mock.Get(savings)
-                .Setup(x => x.RedeemAsync(asset, productId, amount, type, CancellationToken.None))
+                .Setup(x => x.RedeemAsync(asset, amount, type, CancellationToken.None))
                 .Verifiable();
 
-            var executor = new RedeemSavingsExecutor(logger, savings);
+            var executor = new RedeemSavingsExecutor(savings);
             var context = AlgoContext.Empty;
             var command = new RedeemSavingsCommand(asset, amount);
 

@@ -10,6 +10,6 @@ namespace Outcompute.Trader.Trading.Providers.Savings
 
         Task<SavingsQuota?> TryGetQuotaAsync(string productId, SavingsRedemptionType type);
 
-        Task RedeemAsync(string productId, decimal amount, SavingsRedemptionType type);
+        Task<RedeemSavingsEvent> RedeemAsync(decimal amount, SavingsRedemptionType type);
     }
 }

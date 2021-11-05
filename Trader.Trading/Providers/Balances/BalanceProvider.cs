@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Providers.Balances
 {
+    // todo: refactor this class so all balances are queried from local replica grains
     internal class BalanceProvider : IBalanceProvider
     {
         private readonly IGrainFactory _factory;
@@ -53,6 +54,11 @@ namespace Outcompute.Trader.Trading.Providers.Balances
             var balances = _mapper.Map<IEnumerable<Balance>>(accountInfo);
 
             return SetBalancesAsync(balances, cancellationToken);
+        }
+
+        public Task<IEnumerable<Balance>> GetBalancesAsync(CancellationToken cancellationToken = default)
+        {
+            return _repository.GetBalancesAsync(cancellationToken);
         }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Timers;
+using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using System;
 using System.Collections.Generic;
@@ -13,17 +15,23 @@ namespace Outcompute.Trader.Trading.Providers.Swap
 {
     internal sealed class SwapPoolGrain : Grain, ISwapPoolGrain, IDisposable
     {
+        private readonly IOptionsMonitor<SwapPoolOptions> _monitor;
         private readonly ILogger _logger;
         private readonly ITradingService _trader;
         private readonly ITimerRegistry _timers;
         private readonly IBalanceProvider _balances;
+        private readonly ISavingsProvider _savings;
+        private readonly ISystemClock _clock;
 
-        public SwapPoolGrain(ILogger<SwapPoolGrain> logger, ITradingService trader, ITimerRegistry timers, IBalanceProvider balances)
+        public SwapPoolGrain(IOptionsMonitor<SwapPoolOptions> monitor, ILogger<SwapPoolGrain> logger, ITradingService trader, ITimerRegistry timers, IBalanceProvider balances, ISavingsProvider savings, ISystemClock clock)
         {
+            _monitor = monitor;
             _logger = logger;
             _trader = trader;
             _timers = timers;
             _balances = balances;
+            _savings = savings;
+            _clock = clock;
         }
 
         private static string TypeName => nameof(SwapPoolGrain);
@@ -36,15 +44,13 @@ namespace Outcompute.Trader.Trading.Providers.Swap
 
         private readonly Dictionary<long, SwapPoolConfiguration> _configurations = new();
 
-        private readonly Dictionary<long, DateTime> _readCooldowns = new();
-
-        private readonly Dictionary<long, DateTime> _writeCooldowns = new();
+        private readonly Dictionary<long, DateTime> _cooldowns = new();
 
         public override async Task OnActivateAsync()
         {
             await LoadAsync();
 
-            _timers.RegisterTimer(this, _ => TickAsync(), null, TimeSpan.FromHours(1), TimeSpan.FromHours(1));
+            _timers.RegisterTimer(this, _ => TickAsync(), null, TimeSpan.FromMinutes(1), TimeSpan.FromMinutes(1));
 
             await base.OnActivateAsync();
         }
@@ -58,27 +64,138 @@ namespace Outcompute.Trader.Trading.Providers.Swap
 
         private async Task TickAsync()
         {
+            var options = _monitor.CurrentValue;
+
             await LoadAsync();
 
-            // get all balances for which there are pools
-            var balances = new Dictionary<string, Balance>();
+            // get all positive spot balances
+            var spots = (await _balances.GetBalancesAsync(_cancellation.Token))
+                .Where(x => x.Free > 0)
+                .ToDictionary(x => x.Asset);
+
+            _logger.LogInformation(
+                "{Type} reports {Count} positive spot balances",
+                TypeName, spots.Count);
+
+            // get user savings positions for known pools
+            var savings = new Dictionary<string, SavingsPosition>();
             foreach (var asset in _configurations.Values.SelectMany(x => x.Assets.Keys).Distinct())
             {
-                balances[asset] = await _balances.GetBalanceOrZeroAsync(asset, _cancellation.Token);
+                // todo: refactor the savings layer so we can get all savings in one go
+                var position = await _savings.GetPositionOrZeroAsync(asset, _cancellation.Token);
+                if (position.FreeAmount > 0)
+                {
+                    savings[position.Asset] = position;
+                }
             }
 
-            // for each pool attempt to allocate balances
-            /*
-            foreach (var pool in _configurations)
+            _logger.LogInformation(
+                "{Type} reports {Count} positive savings balances",
+                TypeName, savings.Count);
+
+            var totals = new Dictionary<string, decimal>();
+            foreach (var asset in _configurations.Values.SelectMany(x => x.Assets.Keys).Distinct())
             {
-                // add to the pool
-                _trader.AddSwapLiquidityAsync(pool.Key, SwapPoolLiquidityType.Combination, )
+                var spotAmount = spots.TryGetValue(asset, out var spot) ? spot.Free : 0m;
+                var savingsAmount = savings.TryGetValue(asset, out var position) ? position.FreeAmount : 0m;
+                var total = spotAmount + savingsAmount;
+                if (total > 0)
+                {
+                    totals[asset] = total;
+                }
             }
-            */
 
-            // get all pools for which we have enough balance to add liquidity to
-            //_configurations.Values.Where(c => c.Assets.All(a => balances.TryGetValue(a.Key, out var balance) && balance.Free >= a.Value.MinAdd))
+            _logger.LogInformation(
+                "{Type} reports {Count} assets with usable amounts",
+                TypeName, totals.Count);
+
+            // select pools to which we can add assets
+            var candidates = _configurations.Values
+                .Where(x => _cooldowns.GetValueOrDefault(x.PoolId, DateTime.MinValue) < _clock.UtcNow)
+                .Where(x => x.Assets.All(a => totals.TryGetValue(a.Key, out var balance) && balance >= a.Value.MinAdd))
+                .Where(x => !x.Assets.All(a => options.ExclusiveAssets.Contains(a.Key)))
+                .OrderBy(x => x.PoolId)
+                .ToList();
+
+            _logger.LogInformation(
+                "{Type} identified {Count} candidate pools",
+                TypeName, candidates.Count);
+
+            // test all pools until we match one
+            foreach (var candidate in candidates)
+            {
+                // test all assets in the pool to ensure they fit requirements
+                foreach (var asset in candidate.Assets)
+                {
+                    // request a preview using the current asset as quote asset
+                    var preview = await _trader.AddSwapPoolLiquidityPreviewAsync(candidate.PoolId, SwapPoolLiquidityType.Combination, asset.Key, totals[asset.Key], _cancellation.Token);
+
+                    // check if the paired asset quantity is also above the min after preview
+                    if (preview.BaseAmount >= candidate.Assets[preview.BaseAsset].MinAdd)
+                    {
+                        // check if there is enough free balance for the base asset as per preview
+                        if (preview.BaseAmount <= totals[preview.BaseAsset])
+                        {
+                            _logger.LogInformation(
+                                "{Type} elected pool {PoolName} for adding assets {QuoteAmount:F8} {QuoteAsset} and {BaseAmount:F8} {BaseAsset}",
+                                TypeName, candidate.PoolName, preview.QuoteAmount, preview.QuoteAsset, preview.BaseAmount, preview.BaseAsset);
+
+                            // check if there is enough quote asset in the spot account
+                            {
+                                var spotAmount = spots.TryGetValue(preview.QuoteAsset, out var spot) ? spot.Free : 0m;
+                                if (spotAmount < preview.QuoteAmount)
+                                {
+                                    var position = savings[preview.QuoteAsset];
+                                    var diff = preview.QuoteAmount - spotAmount;
+                                    await _savings.RedeemAsync(position.Asset, diff, SavingsRedemptionType.Fast, _cancellation.Token);
+
+                                    _logger.LogInformation(
+                                        "{Type} redeemed necessary {Necessary:F8} {Asset} from savings",
+                                        TypeName, diff, position.Asset);
+
+                                    // allow the schedule to cycle
+                                    return;
+                                }
+                            }
+
+                            // check if there is enough base asset in the spot account
+                            {
+                                var spotAmount = spots.TryGetValue(preview.BaseAsset, out var spot) ? spot.Free : 0m;
+                                if (spotAmount < preview.BaseAmount)
+                                {
+                                    var position = savings[preview.BaseAsset];
+                                    var diff = preview.BaseAmount - spotAmount;
+                                    await _savings.RedeemAsync(position.Asset, diff, SavingsRedemptionType.Fast, _cancellation.Token);
+
+                                    _logger.LogInformation(
+                                        "{Type} redeemed necessary {Necessary:F8} {Asset} from savings",
+                                        TypeName, diff, position.Asset);
+
+                                    // allow the schedule to cycle
+                                    return;
+                                }
+                            }
+
+                            // if we got here we can add liquidity
+                            await _trader.AddSwapLiquidityAsync(candidate.PoolId, SwapPoolLiquidityType.Combination, preview.QuoteAsset, preview.QuoteAmount, _cancellation.Token);
+
+                            // bump the cooldown for this pool
+                            SetCooldown(candidate.PoolId);
+
+                            // allow the schedule to cycle
+                            return;
+                        }
+                    }
+                }
+            }
         }
+
+        /*
+        public Task<RedeemSwapPoolEvent> RedeemAsync(string asset, decimal amount)
+        {
+            _liquidities
+        }
+        */
 
         public Task PingAsync() => Task.CompletedTask;
 
@@ -125,6 +242,11 @@ namespace Outcompute.Trader.Trading.Providers.Swap
             _configurations.ReplaceWith(configurations, x => x.PoolId);
 
             _logger.LogInformation("{Type} loaded {Count} Swap Pool Configuration details in {ElapsedMs}ms", TypeName, _configurations.Count, watch.ElapsedMilliseconds);
+        }
+
+        private void SetCooldown(long poolId)
+        {
+            _cooldowns[poolId] = _clock.UtcNow.Add(_monitor.CurrentValue.PoolCooldown);
         }
     }
 }

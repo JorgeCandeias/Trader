@@ -12,5 +12,7 @@ namespace Outcompute.Trader.Trading.Providers
         Task SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default);
 
         Task SetBalancesAsync(AccountInfo accountInfo, CancellationToken cancellationToken = default);
+
+        Task<IEnumerable<Balance>> GetBalancesAsync(CancellationToken cancellationToken = default);
     }
 }

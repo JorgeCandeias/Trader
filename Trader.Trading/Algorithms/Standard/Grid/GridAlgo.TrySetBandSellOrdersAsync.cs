@@ -55,7 +55,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
                                    "{Type} {Name} cannot set band sell order of {Quantity} {Asset} for {Price} {Quote} because there are only {Balance} {Asset} free and savings redemption failed",
                                     TypeName, Context.Name, band.Quantity, Context.Symbol.BaseAsset, band.ClosePrice, Context.Symbol.QuoteAsset, Context.AssetSpotBalance.Free, Context.Symbol.BaseAsset);
 
-                                if (_options.RedeemSwapPoolSavings)
+                                if (_options.RedeemAssetSwapPool)
                                 {
                                     _logger.LogInformation(
                                         "{Type} {Name} must place {OrderType} {OrderSide} of {Quantity} {Asset} for {Price} {Quote} but there is only {Free} {Asset} available. Will attempt to redeem {Necessary} {Asset} rest from a swap pool",

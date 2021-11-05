@@ -137,6 +137,7 @@ namespace Outcompute.Trader.App
                                 })
                                 .Configure<SwapPoolOptions>(options =>
                                 {
+                                    options.AutoAddEnabled = false;
                                     options.IsolatedAssets.Add("BTC");
                                     options.IsolatedAssets.Add("BNB");
                                     options.IsolatedAssets.Add("ETH");

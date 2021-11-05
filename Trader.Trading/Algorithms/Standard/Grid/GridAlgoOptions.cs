@@ -47,7 +47,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Grid
         public bool RedeemAssetSavings { get; set; } = false;
 
         [Required]
-        public bool RedeemSwapPoolSavings { get; set; } = false;
+        public bool RedeemAssetSwapPool { get; set; } = false;
 
         public decimal? MaxNotional { get; set; }
     }

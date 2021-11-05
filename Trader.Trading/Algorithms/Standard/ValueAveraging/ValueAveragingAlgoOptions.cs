@@ -48,10 +48,10 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         public bool ClosingEnabled { get; set; } = false;
 
         [Required]
-        public bool RedeemSavings { get; set; } = true;
+        public bool RedeemSavings { get; set; } = false;
 
         [Required]
-        public bool RedeemSwapPool { get; set; } = true;
+        public bool RedeemSwapPool { get; set; } = false;
 
         [Required]
         public KlineInterval KlineInterval { get; set; } = KlineInterval.Days1;

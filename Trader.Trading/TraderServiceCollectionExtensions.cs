@@ -97,7 +97,6 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<IAlgoCommandExecutor<RedeemSwapPoolCommand, RedeemSwapPoolEvent>, RedeemSwapPoolExecutor>()
 
                 // builtin algos
-                .AddAccumulatorAlgo()
                 .AddValueAveragingAlgo()
                 .AddGridAlgo()
                 .AddPennyAccumulatorAlgo();

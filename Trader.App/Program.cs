@@ -156,23 +156,6 @@ namespace Outcompute.Trader.App
                                     {
                                         options.SomeValue = "SomeValue";
                                     });
-
-                            foreach (var symbol in context.Configuration.GetSection("ValueAveragingSymbols").Get<string[]>())
-                            {
-                                services.AddAlgo<ValueAveragingAlgoOptions>("ValueAveraging", symbol,
-                                    options =>
-                                    {
-                                        options.Symbol = symbol;
-                                        options.DependsOn.Tickers.Add(symbol);
-                                        options.DependsOn.Klines.Add(symbol, KlineInterval.Hours1, 100);
-                                    },
-                                    options =>
-                                    {
-                                        options.RedeemSavings = true;
-                                        options.RedeemSwapPool = false;
-                                        options.KlineInterval = KlineInterval.Hours1;
-                                    });
-                            }
                         });
                 })
                 .RunConsoleAsync();

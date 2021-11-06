@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Providers;
 using System.Linq;
@@ -33,6 +34,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
 
             // get the exchange info
             var symbols = (await _info.GetExchangeInfoAsync(cancellationToken).ConfigureAwait(false)).Symbols
+                .Where(x => x.Status == SymbolStatus.Trading)
+                .Where(x => x.IsSpotTradingAllowed)
                 .Where(x => options.QuoteAssets.Contains(x.QuoteAsset))
                 .ToList();
 
@@ -40,6 +43,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
             var assets = (await _trader.GetSubscribableSavingsProductsAsync(cancellationToken).ConfigureAwait(false))
                 .Where(x => x.CanPurchase)
                 .Select(x => x.Asset)
+                .Union(options.ForcedAssets)
                 .ToHashSet();
 
             // get all usable swap pools

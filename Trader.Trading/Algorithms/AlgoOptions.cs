@@ -51,6 +51,11 @@ namespace Outcompute.Trader.Trading.Algorithms
         /// </summary>
         [Required]
         public AlgoOptionsDependsOn DependsOn { get; } = new AlgoOptionsDependsOn();
+
+        /// <summary>
+        /// The relative run order in the batch.
+        /// </summary>
+        public int BatchOrder { get; set; } = 1000;
     }
 
     public class AlgoOptionsDependsOn

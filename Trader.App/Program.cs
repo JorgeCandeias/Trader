@@ -144,13 +144,43 @@ namespace Outcompute.Trader.App
                                     options.ExcludedAssets.Add("XMR");
                                 })
                                 .AddDiscoveryAlgo(
-                                    options => { },
                                     options =>
                                     {
+                                        options.BatchOrder = int.MaxValue;
+                                    },
+                                    options =>
+                                    {
+                                        options.ForcedAssets.Add("BNB");
                                         options.QuoteAssets.UnionWith(new[] { "BTC", "ETH", "BNB" });
-                                        options.IgnoreSymbols.UnionWith(new[] { "BNBGBP", "BTCGBP", "ETHGBP" });
+                                        options.IgnoreSymbols.UnionWith(new[] { "BNBGBP", "BTCGBP", "ETHGBP", "ETHBTC", "BNBBTC", "BNBETH", "XMRETH" });
                                     })
                                 .AddAlgoType<TestAlgo, TestAlgoOptions>();
+
+                            var templateSection = context.Configuration.GetSection("ValueAveragingTemplate");
+
+                            foreach (var symbol in templateSection.GetSection("Symbols").Get<string[]>())
+                            {
+                                services.AddValueAveragingAlgo(symbol,
+                                    options =>
+                                    {
+                                        templateSection.Bind(options);
+
+                                        options.Symbol = symbol;
+                                        foreach (var item in options.DependsOn.Klines)
+                                        {
+                                            item.Symbol = symbol;
+                                        }
+                                        foreach (var item in options.DependsOn.Klines)
+                                        {
+                                            item.Symbol = symbol;
+                                        }
+                                        options.DependsOn.Tickers.Add(symbol);
+                                    },
+                                    options =>
+                                    {
+                                        templateSection.GetSection("Options").Bind(options);
+                                    });
+                            }
 
 #if DEBUG
                             services

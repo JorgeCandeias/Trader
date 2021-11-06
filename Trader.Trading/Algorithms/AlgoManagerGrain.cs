@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
@@ -77,7 +78,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             var options = _options.CurrentValue;
 
             // execute all algos one by one
-            foreach (var algo in options.Algos)
+            foreach (var algo in options.Algos.OrderBy(x => x.Value.BatchOrder).ThenBy(x => x.Key))
             {
                 // break early on app shutdown
                 if (_lifetime.ApplicationStopping.IsCancellationRequested) return;

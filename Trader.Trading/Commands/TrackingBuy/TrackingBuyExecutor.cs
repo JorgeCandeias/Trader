@@ -81,10 +81,10 @@ namespace Outcompute.Trader.Trading.Commands.TrackingBuy
             // calculate the appropriate quantity to buy
             var quantity = total / lowBuyPrice;
 
-            // round it down to the lot size step
-            quantity = quantity.AdjustQuantityDownToLotStepSize(command.Symbol);
+            // round it up to the lot size step
+            quantity = quantity.AdjustQuantityUpToLotStepSize(command.Symbol);
 
-            // calculat the true notional after adjustments
+            // calculate the true notional after adjustments
             total = quantity * lowBuyPrice;
 
             // check if it still is under the max notional after adjustments - some assets have very high minimum notionals or lot sizes

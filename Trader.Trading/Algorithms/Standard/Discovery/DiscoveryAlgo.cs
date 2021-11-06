@@ -37,6 +37,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
                 .Where(x => x.Status == SymbolStatus.Trading)
                 .Where(x => x.IsSpotTradingAllowed)
                 .Where(x => options.QuoteAssets.Contains(x.QuoteAsset))
+                .Where(x => !options.IgnoreSymbols.Contains(x.Name))
                 .ToList();
 
             // get all usable savings assets
@@ -83,7 +84,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
                 nameof(DiscoveryAlgo), unusedWithSwapPools.Count, unusedWithSwapPools);
 
             // identify used symbols without savings or swap pools
-            var savingsless = used
+            var risky = used
                 .Except(options.IgnoreSymbols)
                 .Except(withSavings)
                 .Except(withSwapPools)
@@ -91,7 +92,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
 
             _logger.LogWarning(
                 "{Type} identified {Count} used symbols without savings or swap pools: {Symbols}",
-                nameof(DiscoveryAlgo), savingsless.Count, savingsless);
+                nameof(DiscoveryAlgo), risky.Count, risky);
 
             return Noop();
         }

@@ -152,7 +152,7 @@ namespace Outcompute.Trader.App
                                     {
                                         options.ForcedAssets.Add("BNB");
                                         options.QuoteAssets.UnionWith(new[] { "BTC", "ETH", "BNB" });
-                                        options.IgnoreSymbols.UnionWith(new[] { "BNBGBP", "BTCGBP", "ETHGBP", "ETHBTC", "BNBBTC", "BNBETH", "XMRETH" });
+                                        options.IgnoreSymbols.UnionWith(new[] { "BNBGBP", "BTCGBP", "ETHGBP", "ETHBTC", "BNBBTC", "BNBETH", "XMRETH", "XMRBNB" });
                                     })
                                 .AddAlgoType<TestAlgo, TestAlgoOptions>();
 

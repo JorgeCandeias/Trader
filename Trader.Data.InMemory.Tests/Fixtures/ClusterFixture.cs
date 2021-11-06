@@ -58,7 +58,9 @@ namespace Outcompute.Trader.Data.InMemory.Tests.Fixtures
                 .AddInMemoryTradingRepository()
                 .ConfigureServices(services =>
                 {
-                    services.AddAlgoType<TestAlgo, TestAlgoOptions>("Test");
+                    services
+                        .AddAlgoType<TestAlgo>("Test")
+                        .AddAlgoOptionsType<TestAlgoOptions>();
                 });
         }
     }

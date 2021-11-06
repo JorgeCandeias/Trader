@@ -7,7 +7,8 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddValueAveragingAlgo(this IServiceCollection services)
         {
             return services
-                .AddAlgoType<ValueAveragingAlgo, ValueAveragingAlgoOptions>("ValueAveraging");
+                .AddAlgoType<ValueAveragingAlgo>("ValueAveraging")
+                .AddAlgoOptionsType<ValueAveragingAlgoOptions>();
         }
     }
 }

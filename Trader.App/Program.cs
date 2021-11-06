@@ -10,7 +10,6 @@ using Orleans.Statistics;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
-using Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Providers;
 using Outcompute.Trader.Trading.Providers.Swap;
@@ -138,14 +137,17 @@ namespace Outcompute.Trader.App
                                 })
                                 .Configure<SwapPoolOptions>(options =>
                                 {
-                                    options.AutoAddEnabled = false;
+                                    options.AutoAddEnabled = true;
                                     options.IsolatedAssets.Add("BTC");
-                                    options.IsolatedAssets.Add("BNB");
                                     options.IsolatedAssets.Add("ETH");
                                     options.ExcludedAssets.Add("BNB");
                                 })
-                                .AddAlgoType<TestAlgo, TestAlgoOptions>("Test")
-                                .AddAlgo<TestAlgoOptions>("Test", "MyTestAlgo",
+                                .AddAlgoType<TestAlgo>()
+                                .AddAlgoOptionsType<TestAlgoOptions>();
+
+#if DEBUG
+                            services
+                                .AddAlgo<TestAlgo, TestAlgoOptions>("MyTestAlgo",
                                     options =>
                                     {
                                         options.DependsOn.Tickers.Add("BTCGBP");
@@ -156,6 +158,7 @@ namespace Outcompute.Trader.App
                                     {
                                         options.SomeValue = "SomeValue";
                                     });
+#endif
                         });
                 })
                 .RunConsoleAsync();

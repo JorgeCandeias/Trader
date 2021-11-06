@@ -65,7 +65,8 @@ namespace Outcompute.Trader.Trading.Tests.Fixtures
                 .ConfigureServices(services =>
                 {
                     services
-                        .AddAlgoType<TestAlgo, TestAlgoOptions>("Test");
+                        .AddAlgoType<TestAlgo>("Test")
+                        .AddAlgoOptionsType<TestAlgoOptions>();
                 });
         }
     }

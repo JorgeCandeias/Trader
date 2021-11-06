@@ -143,7 +143,13 @@ namespace Outcompute.Trader.App
                                     options.ExcludedAssets.Add("BNB");
                                     options.ExcludedAssets.Add("XMR");
                                 })
-                                .AddDiscoveryAlgo()
+                                .AddDiscoveryAlgo(
+                                    options => { },
+                                    options =>
+                                    {
+                                        options.QuoteAssets.UnionWith(new[] { "BTC", "ETH", "BNB" });
+                                        options.IgnoreSymbols.UnionWith(new[] { "BNBGBP", "BTCGBP", "ETHGBP" });
+                                    })
                                 .AddAlgoType<TestAlgo, TestAlgoOptions>();
 
 #if DEBUG

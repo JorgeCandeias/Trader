@@ -42,14 +42,14 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
                 .Select(x => x.Asset)
                 .ToHashSet();
 
+            // get all usable swap pools
+            var pools = await _swaps.GetSwapPoolsAsync(cancellationToken);
+
             // identify all symbols with savings
             var withSavings = symbols
                 .Where(x => assets.Contains(x.QuoteAsset) && assets.Contains(x.BaseAsset))
                 .Select(x => x.Name)
                 .ToHashSet();
-
-            // get all usable swap pools
-            var pools = await _swaps.GetSwapPoolsAsync(cancellationToken);
 
             // identify all symbols with swap pools
             var withSwapPools = symbols
@@ -80,6 +80,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
 
             // identify used symbols without savings or swap pools
             var savingsless = used
+                .Except(options.IgnoreSymbols)
                 .Except(withSavings)
                 .Except(withSwapPools)
                 .ToList();

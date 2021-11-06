@@ -98,7 +98,6 @@ namespace Microsoft.Extensions.DependencyInjection
 
                 // builtin algos
                 .AddValueAveragingAlgo()
-                .AddGridAlgo()
                 .AddPennyAccumulatorAlgo();
         }
     }

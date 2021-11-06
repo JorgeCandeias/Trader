@@ -143,8 +143,8 @@ namespace Outcompute.Trader.App
                                     options.ExcludedAssets.Add("BNB");
                                     options.ExcludedAssets.Add("XMR");
                                 })
-                                .AddAlgoType<TestAlgo>()
-                                .AddAlgoOptionsType<TestAlgoOptions>();
+                                .AddDiscoveryAlgo()
+                                .AddAlgoType<TestAlgo, TestAlgoOptions>();
 
 #if DEBUG
                             services

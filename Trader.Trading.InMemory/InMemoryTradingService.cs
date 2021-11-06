@@ -203,5 +203,10 @@ namespace Outcompute.Trader.Trading.InMemory
         {
             throw new NotImplementedException();
         }
+
+        public Task<IReadOnlyCollection<SavingsProduct>> GetSubscribableSavingsProductsAsync(CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

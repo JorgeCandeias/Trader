@@ -9,6 +9,13 @@ namespace Outcompute.Trader.Trading
 {
     public interface ITradingService
     {
+        #region Savings
+
+        Task<IReadOnlyCollection<SavingsProduct>> GetSubscribableSavingsProductsAsync(
+            CancellationToken cancellationToken = default);
+
+        #endregion Savings
+
         /// <summary>
         /// Enables automatic backoff upon "too many requests" exceptions for the next request as implemented by the provider.
         /// </summary>

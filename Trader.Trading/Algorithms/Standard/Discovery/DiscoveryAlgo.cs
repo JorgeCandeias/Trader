@@ -32,7 +32,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
             var options = _monitor.Get(Context.Name);
 
             // get the exchange info
-            var symbols = (await _info.GetExchangeInfoAsync(cancellationToken).ConfigureAwait(false)).Symbols;
+            var symbols = (await _info.GetExchangeInfoAsync(cancellationToken).ConfigureAwait(false)).Symbols
+                .Where(x => options.QuoteAssets.Contains(x.QuoteAsset))
+                .ToList();
 
             // get all usable savings assets
             var assets = (await _trader.GetSubscribableSavingsProductsAsync(cancellationToken).ConfigureAwait(false))
@@ -40,18 +42,26 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
                 .Select(x => x.Asset)
                 .ToHashSet();
 
+            // identify all symbols with savings
+            var withSavings = symbols
+                .Where(x => assets.Contains(x.QuoteAsset) && assets.Contains(x.BaseAsset))
+                .Select(x => x.Name)
+                .ToHashSet();
+
             // get all usable swap pools
             var pools = await _swaps.GetSwapPoolsAsync(cancellationToken);
+
+            // identify all symbols with swap pools
+            var withSwapPools = symbols
+                .Where(x => pools.Any(p => p.Assets.Contains(x.QuoteAsset) && p.Assets.Contains(x.BaseAsset)))
+                .Select(x => x.Name)
+                .ToHashSet();
 
             // get all symbols in use
             var used = _dependencies.CurrentValue.Symbols;
 
             // identify unused symbols with savings
-            var unusedWithSavings = symbols
-                .Where(x => options.QuoteAssets.Contains(x.QuoteAsset))
-                .Where(x => !options.QuoteAssets.Contains(x.BaseAsset))
-                .Where(x => assets.Contains(x.BaseAsset) && assets.Contains(x.QuoteAsset))
-                .Select(x => x.Name)
+            var unusedWithSavings = withSavings
                 .Except(used)
                 .ToList();
 
@@ -60,11 +70,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
                 nameof(DiscoveryAlgo), unusedWithSavings.Count, unusedWithSavings);
 
             // identify unused symbols with swap pools
-            var unusedWithSwapPools = symbols
-                .Where(x => options.QuoteAssets.Contains(x.QuoteAsset))
-                .Where(x => !options.QuoteAssets.Contains(x.BaseAsset))
-                .Where(x => pools.Any(p => p.Assets.Contains(x.QuoteAsset) && p.Assets.Contains(x.BaseAsset)))
-                .Select(x => x.Name)
+            var unusedWithSwapPools = withSwapPools
                 .Except(used)
                 .ToList();
 
@@ -72,15 +78,14 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
                 "{Type} identified {Count} unused symbols with swap pools: {Symbols}",
                 nameof(DiscoveryAlgo), unusedWithSwapPools.Count, unusedWithSwapPools);
 
-            // identify used symbols without savings
-            var savingsless = symbols
-                .Where(x => used.Contains(x.Name))
-                .Where(x => !assets.Contains(x.QuoteAsset) || !assets.Contains(x.BaseAsset))
-                .Select(x => x.Name)
+            // identify used symbols without savings or swap pools
+            var savingsless = used
+                .Except(withSavings)
+                .Except(withSwapPools)
                 .ToList();
 
             _logger.LogWarning(
-                "{Type} identified {Count} used symbols without savings: {Symbols}",
+                "{Type} identified {Count} used symbols without savings or swap pools: {Symbols}",
                 nameof(DiscoveryAlgo), savingsless.Count, savingsless);
 
             return Noop();

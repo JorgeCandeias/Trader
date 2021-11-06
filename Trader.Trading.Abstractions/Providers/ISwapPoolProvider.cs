@@ -1,4 +1,6 @@
-﻿using System.Threading;
+﻿using Outcompute.Trader.Models;
+using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Providers
@@ -8,5 +10,7 @@ namespace Outcompute.Trader.Trading.Providers
         Task<RedeemSwapPoolEvent> RedeemAsync(string asset, decimal amount, CancellationToken cancellationToken = default);
 
         Task<SwapPoolAssetBalance> GetBalanceAsync(string asset, CancellationToken cancellationToken = default);
+
+        Task<IEnumerable<SwapPool>> GetSwapPoolsAsync(CancellationToken cancellationToken = default);
     }
 }

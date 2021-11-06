@@ -15,14 +15,16 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
         private readonly ITradingService _trader;
         private readonly IOptionsMonitor<AlgoDependencyOptions> _dependencies;
         private readonly IExchangeInfoProvider _info;
+        private readonly ISwapPoolProvider _swaps;
 
-        public DiscoveryAlgo(IOptionsMonitor<DiscoveryAlgoOptions> monitor, ILogger<DiscoveryAlgo> logger, ITradingService trader, IOptionsMonitor<AlgoDependencyOptions> dependencies, IExchangeInfoProvider info)
+        public DiscoveryAlgo(IOptionsMonitor<DiscoveryAlgoOptions> monitor, ILogger<DiscoveryAlgo> logger, ITradingService trader, IOptionsMonitor<AlgoDependencyOptions> dependencies, IExchangeInfoProvider info, ISwapPoolProvider swaps)
         {
             _monitor = monitor;
             _logger = logger;
             _trader = trader;
             _dependencies = dependencies;
             _info = info;
+            _swaps = swaps;
         }
 
         public override async Task<IAlgoCommand> GoAsync(CancellationToken cancellationToken = default)
@@ -38,11 +40,14 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
                 .Select(x => x.Asset)
                 .ToHashSet();
 
+            // get all usable swap pools
+            var pools = await _swaps.GetSwapPoolsAsync(cancellationToken);
+
             // get all symbols in use
             var used = _dependencies.CurrentValue.Symbols;
 
             // identify unused symbols with savings
-            var candidates = symbols
+            var unusedWithSavings = symbols
                 .Where(x => options.QuoteAssets.Contains(x.QuoteAsset))
                 .Where(x => !options.QuoteAssets.Contains(x.BaseAsset))
                 .Where(x => assets.Contains(x.BaseAsset) && assets.Contains(x.QuoteAsset))
@@ -52,7 +57,31 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
 
             _logger.LogInformation(
                 "{Type} identified {Count} unused symbols with savings: {Symbols}",
-                nameof(DiscoveryAlgo), candidates.Count, candidates);
+                nameof(DiscoveryAlgo), unusedWithSavings.Count, unusedWithSavings);
+
+            // identify unused symbols with swap pools
+            var unusedWithSwapPools = symbols
+                .Where(x => options.QuoteAssets.Contains(x.QuoteAsset))
+                .Where(x => !options.QuoteAssets.Contains(x.BaseAsset))
+                .Where(x => pools.Any(p => p.Assets.Contains(x.QuoteAsset) && p.Assets.Contains(x.BaseAsset)))
+                .Select(x => x.Name)
+                .Except(used)
+                .ToList();
+
+            _logger.LogInformation(
+                "{Type} identified {Count} unused symbols with swap pools: {Symbols}",
+                nameof(DiscoveryAlgo), unusedWithSwapPools.Count, unusedWithSwapPools);
+
+            // identify used symbols without savings
+            var savingsless = symbols
+                .Where(x => used.Contains(x.Name))
+                .Where(x => !assets.Contains(x.QuoteAsset) || !assets.Contains(x.BaseAsset))
+                .Select(x => x.Name)
+                .ToList();
+
+            _logger.LogWarning(
+                "{Type} identified {Count} used symbols without savings: {Symbols}",
+                nameof(DiscoveryAlgo), savingsless.Count, savingsless);
 
             return Noop();
         }

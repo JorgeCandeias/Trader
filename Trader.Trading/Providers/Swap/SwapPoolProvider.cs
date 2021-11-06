@@ -1,4 +1,6 @@
 ﻿using Orleans;
+using Outcompute.Trader.Models;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -21,6 +23,11 @@ namespace Outcompute.Trader.Trading.Providers.Swap
         public Task<SwapPoolAssetBalance> GetBalanceAsync(string asset, CancellationToken cancellationToken = default)
         {
             return _factory.GetSwapPoolGrain().GetBalanceAsync(asset);
+        }
+
+        public Task<IEnumerable<SwapPool>> GetSwapPoolsAsync(CancellationToken cancellationToken = default)
+        {
+            return _factory.GetSwapPoolGrain().GetSwapPoolsAsync();
         }
     }
 }

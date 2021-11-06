@@ -1,4 +1,6 @@
 ﻿using Orleans;
+using Outcompute.Trader.Models;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Providers.Swap
@@ -10,5 +12,7 @@ namespace Outcompute.Trader.Trading.Providers.Swap
         Task<RedeemSwapPoolEvent> RedeemAsync(string asset, decimal amount);
 
         Task<SwapPoolAssetBalance> GetBalanceAsync(string asset);
+
+        Task<IEnumerable<SwapPool>> GetSwapPoolsAsync();
     }
 }

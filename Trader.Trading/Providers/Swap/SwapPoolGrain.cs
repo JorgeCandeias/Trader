@@ -39,7 +39,7 @@ namespace Outcompute.Trader.Trading.Providers.Swap
 
         private readonly CancellationTokenSource _cancellation = new();
 
-        private readonly Dictionary<long, SwapPool> _pools = new();
+        private ImmutableList<SwapPool> _pools = ImmutableList<SwapPool>.Empty;
 
         private readonly Dictionary<long, SwapPoolLiquidity> _liquidities = new();
 
@@ -252,6 +252,11 @@ namespace Outcompute.Trader.Trading.Providers.Swap
             return Task.FromResult(header);
         }
 
+        public Task<IEnumerable<SwapPool>> GetSwapPoolsAsync()
+        {
+            return Task.FromResult<IEnumerable<SwapPool>>(_pools);
+        }
+
         public Task PingAsync() => Task.CompletedTask;
 
         public void Dispose()
@@ -272,7 +277,7 @@ namespace Outcompute.Trader.Trading.Providers.Swap
 
             var pools = await _trader.GetSwapPoolsAsync(_cancellation.Token);
 
-            _pools.ReplaceWith(pools, x => x.PoolId);
+            _pools = pools.ToImmutableList();
 
             _logger.LogInformation("{Type} loaded {Count} Swap Pools in {ElapsedMs}ms", TypeName, _pools.Count, watch.ElapsedMilliseconds);
         }

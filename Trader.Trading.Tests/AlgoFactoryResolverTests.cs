@@ -22,6 +22,7 @@ namespace Outcompute.Trader.Trading.Tests
         {
             // arrange
             var provider = new ServiceCollection()
+                .TryAddKeyedServiceCollection()
                 .AddTradingServices()
                 .AddAlgoType<MyAlgo>("MyAlgo")
                 .BuildServiceProvider();

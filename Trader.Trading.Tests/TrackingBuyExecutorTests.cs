@@ -52,6 +52,10 @@ namespace Outcompute.Trader.Trading.Tests
                 .Verifiable();
 
             var swaps = Mock.Of<ISwapPoolProvider>();
+            Mock.Get(swaps)
+                .Setup(x => x.GetBalanceAsync("XYZ", CancellationToken.None))
+                .ReturnsAsync(SwapPoolAssetBalance.Empty)
+                .Verifiable();
 
             var executor = new TrackingBuyExecutor(logger, tickers, orders, balances, savings, swaps);
 
@@ -104,6 +108,7 @@ namespace Outcompute.Trader.Trading.Tests
             Mock.Get(orders).VerifyAll();
             Mock.Get(balances).VerifyAll();
             Mock.Get(savings).VerifyAll();
+            Mock.Get(swaps).VerifyAll();
             Mock.Get(cancelOrderExecutor).Verify(x => x.ExecuteAsync(context, It.Is<CancelOrderCommand>(x => x.Symbol == symbol && x.OrderId == 1), CancellationToken.None));
             Mock.Get(redeemSavingsExecutor).Verify(x => x.ExecuteAsync(context, It.Is<RedeemSavingsCommand>(x => x.Asset == "XYZ" && x.Amount == 19.993856m), CancellationToken.None));
         }

@@ -26,7 +26,7 @@ namespace Outcompute.Trader.Trading.Tests
                     { $"{mapping.AlgosKey}:{name}:{mapping.AlgoOptionsSubKey}:MyValue", value }
                 })
                 .Build();
-            var configurator = new AlgoOptionsConfigurator<TestOptions>(Options.Create(mapping), config);
+            var configurator = new AlgoUserOptionsConfigurator<TestOptions>(Options.Create(mapping), config);
             var options = new TestOptions();
 
             // act

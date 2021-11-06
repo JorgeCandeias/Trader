@@ -4,18 +4,19 @@ using System;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
-    internal class AlgoOptionsConfigurator : IConfigureNamedOptions<AlgoOptions>
+    internal class AlgoUserOptionsConfigurator<TOptions> : IConfigureNamedOptions<TOptions>
+        where TOptions : class
     {
         private readonly AlgoConfigurationMappingOptions _mapping;
         private readonly IConfiguration _config;
 
-        public AlgoOptionsConfigurator(IOptions<AlgoConfigurationMappingOptions> mapping, IConfiguration config)
+        public AlgoUserOptionsConfigurator(IOptions<AlgoConfigurationMappingOptions> mapping, IConfiguration config)
         {
             _mapping = mapping.Value;
             _config = config;
         }
 
-        public void Configure(string name, AlgoOptions options)
+        public void Configure(string name, TOptions options)
         {
             if (name is null)
             {
@@ -34,10 +35,14 @@ namespace Outcompute.Trader.Trading.Algorithms
                 }
             }
 
-            _config.GetSection(_mapping.AlgosKey).GetSection(name).Bind(options);
+            _config
+                .GetSection(_mapping.AlgosKey)
+                .GetSection(name)
+                .GetSection(_mapping.AlgoOptionsSubKey)
+                .Bind(options);
         }
 
-        public void Configure(AlgoOptions options)
+        public void Configure(TOptions options)
         {
             Configure(Options.DefaultName, options);
         }

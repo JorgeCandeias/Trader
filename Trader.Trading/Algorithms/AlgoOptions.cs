@@ -6,7 +6,7 @@ using static System.String;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
-    public class AlgoHostGrainOptions
+    public class AlgoOptions
     {
         /// <summary>
         /// The type name of the algorithm to use.
@@ -50,19 +50,19 @@ namespace Outcompute.Trader.Trading.Algorithms
         /// Describes the data dependencies for this algo instance.
         /// </summary>
         [Required]
-        public AlgoHostGrainOptionsDependsOn DependsOn { get; } = new AlgoHostGrainOptionsDependsOn();
+        public AlgoOptionsDependsOn DependsOn { get; } = new AlgoOptionsDependsOn();
     }
 
-    public class AlgoHostGrainOptionsDependsOn
+    public class AlgoOptionsDependsOn
     {
         public ISet<string> Tickers { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         public ISet<string> Balances { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        public IList<AlgoHostGrainOptionsKline> Klines { get; } = new List<AlgoHostGrainOptionsKline>();
+        public IList<AlgoOptionsDependsOnKline> Klines { get; } = new List<AlgoOptionsDependsOnKline>();
     }
 
-    public class AlgoHostGrainOptionsKline
+    public class AlgoOptionsDependsOnKline
     {
         [Required]
         public string Symbol { get; set; } = Empty;
@@ -74,5 +74,20 @@ namespace Outcompute.Trader.Trading.Algorithms
         [Required]
         [Range(1, int.MaxValue)]
         public int Periods { get; set; } = 100;
+    }
+
+    public static class AlgoOptionsDependsOnKlineExtensions
+    {
+        public static void Add(this IList<AlgoOptionsDependsOnKline> list, string symbol, KlineInterval interval, int periods)
+        {
+            if (list is null) throw new ArgumentNullException(nameof(list));
+
+            list.Add(new AlgoOptionsDependsOnKline
+            {
+                Symbol = symbol,
+                Interval = interval,
+                Periods = periods
+            });
+        }
     }
 }

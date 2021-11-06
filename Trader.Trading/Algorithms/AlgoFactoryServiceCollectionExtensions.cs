@@ -20,7 +20,7 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             return services
                 .AddAlgoType<TAlgo>(typeName)
-                .ConfigureOptions<AlgoOptionsConfigurator<TOptions>>();
+                .ConfigureOptions<AlgoUserOptionsConfigurator<TOptions>>();
         }
     }
 }

@@ -18,6 +18,6 @@ namespace Outcompute.Trader.Trading
         [Required]
         public bool BatchEnabled { get; set; } = true;
 
-        public IDictionary<string, AlgoHostGrainOptions> Algos { get; } = new Dictionary<string, AlgoHostGrainOptions>();
+        public IDictionary<string, AlgoOptions> Algos { get; } = new Dictionary<string, AlgoOptions>();
     }
 }

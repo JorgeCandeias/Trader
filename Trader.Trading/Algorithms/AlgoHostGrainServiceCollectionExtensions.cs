@@ -7,8 +7,8 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddAlgoHostGrain(this IServiceCollection services)
         {
             return services
-                .ConfigureOptions<AlgoHostGrainOptionsConfigurator>()
-                .AddOptions<AlgoHostGrainOptions>()
+                .ConfigureOptions<AlgoOptionsConfigurator>()
+                .AddOptions<AlgoOptions>()
                 .ValidateDataAnnotations()
                 .Services;
         }

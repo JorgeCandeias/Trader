@@ -15,14 +15,14 @@ namespace Outcompute.Trader.Trading.Algorithms
     internal sealed class AlgoHostGrain : Grain, IAlgoHostGrainInternal, IDisposable
     {
         private readonly ILogger _logger;
-        private readonly IOptionsMonitor<AlgoHostGrainOptions> _options;
+        private readonly IOptionsMonitor<AlgoOptions> _options;
         private readonly IReadynessProvider _readyness;
         private readonly IServiceScope _scope;
         private readonly IAlgoContextHydrator _hydrator;
         private readonly IHostApplicationLifetime _lifetime;
         private readonly IAlgoStatisticsPublisher _publisher;
 
-        public AlgoHostGrain(ILogger<AlgoHostGrain> logger, IOptionsMonitor<AlgoHostGrainOptions> options, IReadynessProvider readyness, IAlgoContextHydrator hydrator, IHostApplicationLifetime lifetime, IAlgoStatisticsPublisher publisher, IServiceProvider provider)
+        public AlgoHostGrain(ILogger<AlgoHostGrain> logger, IOptionsMonitor<AlgoOptions> options, IReadynessProvider readyness, IAlgoContextHydrator hydrator, IHostApplicationLifetime lifetime, IAlgoStatisticsPublisher publisher, IServiceProvider provider)
         {
             _logger = logger;
             _options = options;
@@ -122,7 +122,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             return Task.CompletedTask;
         }
 
-        private void StartTicking(AlgoHostGrainOptions options)
+        private void StartTicking(AlgoOptions options)
         {
             if (_timer is null)
             {

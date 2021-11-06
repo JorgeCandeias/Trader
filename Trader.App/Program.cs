@@ -10,6 +10,7 @@ using Orleans.Statistics;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Providers;
 using Outcompute.Trader.Trading.Providers.Swap;
@@ -143,7 +144,35 @@ namespace Outcompute.Trader.App
                                     options.IsolatedAssets.Add("ETH");
                                     options.ExcludedAssets.Add("BNB");
                                 })
-                                .AddAlgoType<TestAlgo, TestAlgoOptions>("Test");
+                                .AddAlgoType<TestAlgo, TestAlgoOptions>("Test")
+                                .AddAlgo<TestAlgoOptions>("Test", "MyTestAlgo",
+                                    options =>
+                                    {
+                                        options.DependsOn.Tickers.Add("BTCGBP");
+                                        options.DependsOn.Balances.Add("BTCGBP");
+                                        options.DependsOn.Klines.Add("BTCGBP", KlineInterval.Days1, 100);
+                                    },
+                                    options =>
+                                    {
+                                        options.SomeValue = "SomeValue";
+                                    });
+
+                            foreach (var symbol in context.Configuration.GetSection("ValueAveragingSymbols").Get<string[]>())
+                            {
+                                services.AddAlgo<ValueAveragingAlgoOptions>("ValueAveraging", symbol,
+                                    options =>
+                                    {
+                                        options.Symbol = symbol;
+                                        options.DependsOn.Tickers.Add(symbol);
+                                        options.DependsOn.Klines.Add(symbol, KlineInterval.Hours1, 100);
+                                    },
+                                    options =>
+                                    {
+                                        options.RedeemSavings = true;
+                                        options.RedeemSwapPool = false;
+                                        options.KlineInterval = KlineInterval.Hours1;
+                                    });
+                            }
                         });
                 })
                 .RunConsoleAsync();

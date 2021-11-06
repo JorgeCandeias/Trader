@@ -122,7 +122,7 @@ namespace Outcompute.Trader.Trading.Providers.Swap
                 .Where(x => x.Assets.All(a => totals.TryGetValue(a.Key, out var balance) && balance >= a.Value.MinAdd))
                 .Where(x => !options.ExcludedAssets.Overlaps(x.Assets.Keys))
                 .Where(x => !x.Assets.All(a => options.IsolatedAssets.Contains(a.Key)))
-                .OrderBy(x => x.PoolId)
+                .OrderByDescending(x => x.PoolId)
                 .ToList();
 
             _logger.LogInformation(

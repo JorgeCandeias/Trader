@@ -141,6 +141,7 @@ namespace Outcompute.Trader.App
                                     options.IsolatedAssets.Add("BTC");
                                     options.IsolatedAssets.Add("ETH");
                                     options.ExcludedAssets.Add("BNB");
+                                    options.ExcludedAssets.Add("XMR");
                                 })
                                 .AddAlgoType<TestAlgo>()
                                 .AddAlgoOptionsType<TestAlgoOptions>();

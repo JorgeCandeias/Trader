@@ -240,9 +240,30 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             return false;
         }
 
+        private bool IsTickerAboveTargetSellPrice()
+        {
+            if (Context.Significant.Orders.Count == 0)
+            {
+                return false;
+            }
+
+            var target = Context.Significant.Orders.Max!.Price * _options.TargetSellProfitRate;
+
+            if (Context.Ticker.ClosePrice >= target)
+            {
+                _logger.LogInformation(
+                    "{Type} {Symbol} reports ticker {Ticker:F8} {Asset} is above the target sell price of {Target:F8} {Asset}",
+                    TypeName, Context.Name, Context.Ticker.ClosePrice, Context.Symbol.QuoteAsset, target, Context.Symbol.QuoteAsset);
+
+                return true;
+            }
+
+            return false;
+        }
+
         private bool TrySignalSellOrder()
         {
-            if (IsClosingEnabled())
+            if (IsClosingEnabled() || IsTickerAboveTargetSellPrice())
             {
                 return true;
             }

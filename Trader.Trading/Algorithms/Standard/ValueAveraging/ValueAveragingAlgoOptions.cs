@@ -12,7 +12,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         [Required]
         [Range(0.01, 1.00)]
-        public decimal BuyOrderSafetyRatio { get; set; } = 1m;
+        public decimal BuyOrderSafetyRatio { get; set; } = 0.999m;
 
         [Required]
         [Range(0.001, 1)]

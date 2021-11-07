@@ -6,6 +6,7 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Commands;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -78,6 +79,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             return
                 IsBuyingEnabled() &&
                 IsCooled() &&
+                IsBelowPullbackPrice() &&
                 IsSmaTrendingDown() &&
                 IsTickerBelowSmas() &&
                 IsRsiTrendingDown() &&
@@ -91,6 +93,30 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
                     TypeName, Context.Symbol.Name, Context.Ticker.ClosePrice, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC);
 
             return TrackingBuy(Context.Symbol, _options.BuyOrderSafetyRatio, _options.BuyQuoteBalanceFraction, _options.MaxNotional, _options.RedeemSavings, _options.RedeemSwapPool);
+        }
+
+        private bool IsBelowPullbackPrice()
+        {
+            // skip this rule if there are no positions to compare to
+            if (Context.Significant.Orders.Count == 0)
+            {
+                return true;
+            }
+
+            // skip this rule if the remaining positions are under the minimum notional (leftovers)
+            if (Context.Significant.Orders.Sum(x => x.Price * x.ExecutedQuantity) < Context.Symbol.Filters.MinNotional.MinNotional)
+            {
+                return true;
+            }
+
+            var price = Context.Significant.Orders.Max!.Price * _options.PullbackRatio;
+            var indicator = Context.Ticker.ClosePrice < price;
+
+            _logger.LogInformation(
+                "{Type} {Name} reports ticker {Ticker:F8} {Asset} below pullback price of {Pullback:F8} {Asset} = {Indicator}",
+                TypeName, Context.Name, Context.Ticker.AssetVolume, Context.Symbol.QuoteAsset, price, Context.Symbol.QuoteAsset, indicator);
+
+            return indicator;
         }
 
         private bool IsCooled()

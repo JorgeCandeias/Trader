@@ -55,7 +55,15 @@ namespace Outcompute.Trader.Trading.Algorithms
         /// <summary>
         /// The relative run order in the batch.
         /// </summary>
+        [Required]
         public int BatchOrder { get; set; } = 1000;
+
+        /// <summary>
+        /// The start time for automatic position calculation.
+        /// Only used when <see cref="Symbol"/> is also defined.
+        /// </summary>
+        [Required]
+        public DateTime StartTime { get; set; } = DateTime.MinValue;
     }
 
     public class AlgoOptionsDependsOn

@@ -39,7 +39,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 // assorted services
                 .AddWatchdogService()
                 .AddSingleton<IReadynessProvider, ReadynessProvider>()
-                .AddSingleton<ISignificantOrderResolver, SignificantOrderResolver>()
+                .AddSingleton<IAutoPositionResolver, AutoPositionResolver>()
                 .AddSingleton<IOrderSynchronizer, OrderSynchronizer>()
                 .AddSingleton<ITradeSynchronizer, TradeSynchronizer>()
                 .AddSingleton<IOrderCodeGenerator, OrderCodeGenerator>()

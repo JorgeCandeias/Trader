@@ -164,7 +164,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             if (!IsNullOrWhiteSpace(options.Symbol))
             {
                 // update the context properties
-                await _hydrator.HydrateAllAsync(_context, options.Symbol, linked.Token);
+                await _hydrator.HydrateAllAsync(_context, options.Symbol, options.StartTime, linked.Token);
 
                 // publish current algo statistics
                 await _publisher.PublishAsync(_context.Significant, _context.Ticker, linked.Token);

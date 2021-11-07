@@ -8,14 +8,14 @@ namespace Outcompute.Trader.Trading.Algorithms
     internal class AlgoContextHydrator : IAlgoContextHydrator
     {
         private readonly IExchangeInfoProvider _exchange;
-        private readonly ISignificantOrderResolver _resolver;
+        private readonly IAutoPositionResolver _resolver;
         private readonly ITickerProvider _tickers;
         private readonly IBalanceProvider _balances;
         private readonly ISavingsProvider _savings;
         private readonly IOrderProvider _orders;
         private readonly ISwapPoolProvider _swaps;
 
-        public AlgoContextHydrator(IExchangeInfoProvider exchange, ISignificantOrderResolver resolver, ITickerProvider tickers, IBalanceProvider balances, ISavingsProvider savings, IOrderProvider orders, ISwapPoolProvider swaps)
+        public AlgoContextHydrator(IExchangeInfoProvider exchange, IAutoPositionResolver resolver, ITickerProvider tickers, IBalanceProvider balances, ISavingsProvider savings, IOrderProvider orders, ISwapPoolProvider swaps)
         {
             _exchange = exchange;
             _resolver = resolver;
@@ -41,7 +41,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             return HydrateSymbolCoreAsync(context, symbol, cancellationToken);
         }
 
-        public Task HydrateAllAsync(AlgoContext context, string symbol, CancellationToken cancellationToken = default)
+        public Task HydrateAllAsync(AlgoContext context, string symbol, DateTime startTime, CancellationToken cancellationToken = default)
         {
             if (context is null)
             {
@@ -53,7 +53,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 throw new ArgumentNullException(nameof(symbol));
             }
 
-            return HydrateAllCoreAsync(context, symbol, cancellationToken);
+            return HydrateAllCoreAsync(context, startTime, symbol, cancellationToken);
         }
 
         private async Task HydrateSymbolCoreAsync(AlgoContext context, string symbol, CancellationToken cancellationToken = default)
@@ -63,14 +63,14 @@ namespace Outcompute.Trader.Trading.Algorithms
                 .ConfigureAwait(false);
         }
 
-        private async Task HydrateAllCoreAsync(AlgoContext context, string symbol, CancellationToken cancellationToken = default)
+        private async Task HydrateAllCoreAsync(AlgoContext context, DateTime startTime, string symbol, CancellationToken cancellationToken = default)
         {
             // fetch all required information in parallel as much as possible
             var symbolTask = _exchange
                 .GetRequiredSymbolAsync(symbol, cancellationToken);
 
             var significantTask = symbolTask
-                .ContinueWith(symbolx => _resolver.ResolveAsync(symbolx.Result, cancellationToken), cancellationToken, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Default)
+                .ContinueWith(symbolx => _resolver.ResolveAsync(symbolx.Result, startTime, cancellationToken), cancellationToken, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Default)
                 .Unwrap();
 
             var tickerTask = _tickers

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
+using System;
 using System.Threading.Tasks;
 
 namespace Trader.Trading.Indicators.Benchmarks
@@ -9,14 +10,16 @@ namespace Trader.Trading.Indicators.Benchmarks
     [MemoryDiagnoser]
     public class SignificantOrderResolverBenchmarks
     {
-        private readonly ISignificantOrderResolver _resolver;
+        private readonly IAutoPositionResolver _resolver;
 
         private readonly Symbol _symbol;
+
+        private readonly DateTime _startTime;
 
         public SignificantOrderResolverBenchmarks()
         {
             var provider = new ServiceCollection()
-                .AddSingleton<ISignificantOrderResolver, SignificantOrderResolver>()
+                .AddSingleton<IAutoPositionResolver, AutoPositionResolver>()
                 .AddLogging()
                 .AddSqlTradingRepository(options =>
                 {
@@ -26,7 +29,7 @@ namespace Trader.Trading.Indicators.Benchmarks
                 .AddModelAutoMapperProfiles()
                 .BuildServiceProvider();
 
-            _resolver = provider.GetRequiredService<ISignificantOrderResolver>();
+            _resolver = provider.GetRequiredService<IAutoPositionResolver>();
 
             _symbol = Symbol.Empty with
             {
@@ -34,12 +37,14 @@ namespace Trader.Trading.Indicators.Benchmarks
                 BaseAsset = "DOGE",
                 QuoteAsset = "BTC"
             };
+
+            _startTime = DateTime.MinValue;
         }
 
         [Benchmark]
         public Task<SignificantResult> ResolveAsync()
         {
-            return _resolver.ResolveAsync(_symbol);
+            return _resolver.ResolveAsync(_symbol, _startTime);
         }
     }
 }

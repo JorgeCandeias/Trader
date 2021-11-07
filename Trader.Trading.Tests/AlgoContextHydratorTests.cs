@@ -3,6 +3,7 @@ using Outcompute.Trader.Core;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Providers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -31,7 +32,7 @@ namespace Outcompute.Trader.Trading.Tests
                 .Returns(Task.FromResult<Symbol?>(symbol))
                 .Verifiable();
 
-            var resolver = Mock.Of<ISignificantOrderResolver>();
+            var resolver = Mock.Of<IAutoPositionResolver>();
             var tickers = Mock.Of<ITickerProvider>();
             var balances = Mock.Of<IBalanceProvider>();
             var savings = Mock.Of<ISavingsProvider>();
@@ -58,6 +59,7 @@ namespace Outcompute.Trader.Trading.Tests
                 BaseAsset = "ABC",
                 QuoteAsset = "XYZ"
             };
+            DateTime startTime = DateTime.Today.AddDays(-10);
 
             var exchange = Mock.Of<IExchangeInfoProvider>();
             Mock.Get(exchange)
@@ -68,9 +70,9 @@ namespace Outcompute.Trader.Trading.Tests
             {
                 Symbol = symbol
             };
-            var resolver = Mock.Of<ISignificantOrderResolver>();
+            var resolver = Mock.Of<IAutoPositionResolver>();
             Mock.Get(resolver)
-                .Setup(x => x.ResolveAsync(symbol, CancellationToken.None))
+                .Setup(x => x.ResolveAsync(symbol, startTime, CancellationToken.None))
                 .Returns(Task.FromResult(significant));
 
             var ticker = MiniTicker.Empty with
@@ -114,7 +116,7 @@ namespace Outcompute.Trader.Trading.Tests
             var context = new AlgoContext(NullServiceProvider.Instance);
 
             // act
-            await hydrator.HydrateAllAsync(context, symbol.Name, CancellationToken.None);
+            await hydrator.HydrateAllAsync(context, symbol.Name, startTime, CancellationToken.None);
 
             // assert
             Assert.Same(symbol, context.Symbol);

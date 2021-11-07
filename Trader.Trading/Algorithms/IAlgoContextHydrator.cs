@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
@@ -7,6 +8,6 @@ namespace Outcompute.Trader.Trading.Algorithms
     {
         Task HydrateSymbolAsync(AlgoContext context, string symbol, CancellationToken cancellationToken = default);
 
-        Task HydrateAllAsync(AlgoContext context, string symbol, CancellationToken cancellationToken = default);
+        Task HydrateAllAsync(AlgoContext context, string symbol, DateTime startTime, CancellationToken cancellationToken = default);
     }
 }

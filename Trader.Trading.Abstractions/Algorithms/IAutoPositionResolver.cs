@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
-    public interface ISignificantOrderResolver
+    public interface IAutoPositionResolver
     {
-        Task<SignificantResult> ResolveAsync(Symbol symbol, CancellationToken cancellationToken = default);
+        Task<SignificantResult> ResolveAsync(Symbol symbol, DateTime startTime, CancellationToken cancellationToken = default);
     }
 
     [Immutable]

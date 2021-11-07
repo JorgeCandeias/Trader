@@ -12,27 +12,30 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
-    internal class SignificantOrderResolver : ISignificantOrderResolver
+    /// <summary>
+    /// Automatically resolves positions on a symbol by calculating lifo pnl from all trades on it.
+    /// </summary>
+    internal class AutoPositionResolver : IAutoPositionResolver
     {
         private readonly ILogger _logger;
         private readonly IOrderProvider _orders;
         private readonly ITradeProvider _trades;
 
-        public SignificantOrderResolver(ILogger<SignificantOrderResolver> logger, IOrderProvider orders, ITradeProvider trades)
+        public AutoPositionResolver(ILogger<AutoPositionResolver> logger, IOrderProvider orders, ITradeProvider trades)
         {
             _logger = logger;
             _orders = orders;
             _trades = trades;
         }
 
-        private static string Name => nameof(SignificantOrderResolver);
+        private static string Name => nameof(AutoPositionResolver);
 
         private sealed record Map(OrderQueryResult Order, AccountTrade Trade)
         {
             public decimal RemainingExecutedQuantity { get; set; }
         }
 
-        public async Task<SignificantResult> ResolveAsync(Symbol symbol, CancellationToken cancellationToken = default)
+        public async Task<SignificantResult> ResolveAsync(Symbol symbol, DateTime startTime, CancellationToken cancellationToken = default)
         {
             var orders = await _orders
                 .GetOrdersByFilterAsync(symbol.Name, null, false, true, cancellationToken)
@@ -42,14 +45,14 @@ namespace Outcompute.Trader.Trading.Algorithms
                 .GetTradesAsync(symbol.Name, cancellationToken)
                 .ConfigureAwait(false);
 
-            return ResolveCore(symbol, orders, trades);
+            return ResolveCore(symbol, startTime, orders, trades);
         }
 
-        private SignificantResult ResolveCore(Symbol symbol, IReadOnlyList<OrderQueryResult> orders, IEnumerable<AccountTrade> trades)
+        private SignificantResult ResolveCore(Symbol symbol, DateTime startTime, IReadOnlyList<OrderQueryResult> orders, IEnumerable<AccountTrade> trades)
         {
             var watch = Stopwatch.StartNew();
 
-            var (mapping, commissions) = Combine(symbol, orders, trades);
+            var (mapping, commissions) = Combine(symbol, orders.Where(x => x.Time >= startTime), trades.Where(x => x.Time >= startTime));
 
             // now prune the significant trades to account interim sales
             using var subjects = ArrayPool<Map>.Shared.RentSegmentWith(mapping);
@@ -101,7 +104,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                         // clear the sale
                         _logger.LogWarning(
                             "{Name} {Symbol} could not fill {Type} {Side} order {OrderId} as there is {Missing} {Asset} missing",
-                            nameof(SignificantOrderResolver), symbol.Name, sell.Order.Type, sell.Order.Side, sell.Order.OrderId, sell.RemainingExecutedQuantity, symbol.BaseAsset);
+                            nameof(AutoPositionResolver), symbol.Name, sell.Order.Type, sell.Order.Side, sell.Order.OrderId, sell.RemainingExecutedQuantity, symbol.BaseAsset);
 
                         sell.RemainingExecutedQuantity = 0m;
                     }
@@ -138,7 +141,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 
             _logger.LogInformation(
                 "{Name} {Symbol} identified {Count} significant orders in {ElapsedMs}ms",
-                nameof(SignificantOrderResolver), symbol.Name, significant.Count, watch.ElapsedMilliseconds);
+                nameof(AutoPositionResolver), symbol.Name, significant.Count, watch.ElapsedMilliseconds);
 
             return new SignificantResult(symbol, significant, profits.ToImmutable(), commissions);
         }

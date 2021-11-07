@@ -10,7 +10,7 @@ using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
 {
-    public class SignificantOrderResolverTests
+    public class AutoPositionResolverTests
     {
         [Fact]
         public async Task ResolvesEmpty()
@@ -22,8 +22,9 @@ namespace Outcompute.Trader.Trading.Tests
                 BaseAsset = "ABC",
                 QuoteAsset = "XYZ"
             };
+            var startTime = DateTime.MinValue;
 
-            var logger = NullLogger<SignificantOrderResolver>.Instance;
+            var logger = NullLogger<AutoPositionResolver>.Instance;
 
             var orders = Array.Empty<OrderQueryResult>();
             var orderProvider = Mock.Of<IOrderProvider>();
@@ -39,10 +40,10 @@ namespace Outcompute.Trader.Trading.Tests
                 .ReturnsAsync(trades)
                 .Verifiable();
 
-            var resolver = new SignificantOrderResolver(logger, orderProvider, tradeProvider);
+            var resolver = new AutoPositionResolver(logger, orderProvider, tradeProvider);
 
             // act
-            var result = await resolver.ResolveAsync(symbol, CancellationToken.None);
+            var result = await resolver.ResolveAsync(symbol, startTime, CancellationToken.None);
 
             // assert
             Assert.NotNull(result);
@@ -62,8 +63,9 @@ namespace Outcompute.Trader.Trading.Tests
                 BaseAsset = "ABC",
                 QuoteAsset = "XYZ"
             };
+            var startTime = DateTime.MinValue;
 
-            var logger = NullLogger<SignificantOrderResolver>.Instance;
+            var logger = NullLogger<AutoPositionResolver>.Instance;
 
             var order1 = OrderQueryResult.Empty with
             {
@@ -112,10 +114,10 @@ namespace Outcompute.Trader.Trading.Tests
                 .ReturnsAsync(trades)
                 .Verifiable();
 
-            var resolver = new SignificantOrderResolver(logger, orderProvider, tradeProvider);
+            var resolver = new AutoPositionResolver(logger, orderProvider, tradeProvider);
 
             // act
-            var result = await resolver.ResolveAsync(symbol, CancellationToken.None);
+            var result = await resolver.ResolveAsync(symbol, startTime, CancellationToken.None);
 
             // assert
             Assert.NotNull(result);

@@ -5,11 +5,11 @@ namespace Outcompute.Trader.Trading.Algorithms
 {
     public static class ISignificantOrderResolverAlgoContextExtensions
     {
-        public static ISignificantOrderResolver GetSignificantOrderResolver(this IAlgoContext context)
+        public static IAutoPositionResolver GetSignificantOrderResolver(this IAlgoContext context)
         {
             if (context is null) throw new ArgumentNullException(nameof(context));
 
-            return context.ServiceProvider.GetRequiredService<ISignificantOrderResolver>();
+            return context.ServiceProvider.GetRequiredService<IAutoPositionResolver>();
         }
     }
 }

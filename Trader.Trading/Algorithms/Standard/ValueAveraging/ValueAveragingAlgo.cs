@@ -263,13 +263,17 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         private bool TrySignalSellOrder()
         {
+            if (!IsSellingEnabled())
+            {
+                return false;
+            }
+
             if (IsClosingEnabled() || IsTickerAboveTargetSellPrice())
             {
                 return true;
             }
 
             var signal =
-                IsSellingEnabled() &&
                 IsSmaTrendingUp() &&
                 IsTickerAboveSmas() &&
                 IsRsiTrendingUp() &&

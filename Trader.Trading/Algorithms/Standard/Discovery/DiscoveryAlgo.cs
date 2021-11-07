@@ -14,11 +14,11 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
         private readonly IOptionsMonitor<DiscoveryAlgoOptions> _monitor;
         private readonly ILogger _logger;
         private readonly ITradingService _trader;
-        private readonly IOptionsMonitor<AlgoDependencyOptions> _dependencies;
+        private readonly IAlgoDependencyResolver _dependencies;
         private readonly IExchangeInfoProvider _info;
         private readonly ISwapPoolProvider _swaps;
 
-        public DiscoveryAlgo(IOptionsMonitor<DiscoveryAlgoOptions> monitor, ILogger<DiscoveryAlgo> logger, ITradingService trader, IOptionsMonitor<AlgoDependencyOptions> dependencies, IExchangeInfoProvider info, ISwapPoolProvider swaps)
+        public DiscoveryAlgo(IOptionsMonitor<DiscoveryAlgoOptions> monitor, ILogger<DiscoveryAlgo> logger, ITradingService trader, IAlgoDependencyResolver dependencies, IExchangeInfoProvider info, ISwapPoolProvider swaps)
         {
             _monitor = monitor;
             _logger = logger;
@@ -63,7 +63,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
                 .ToHashSet();
 
             // get all symbols in use
-            var used = _dependencies.CurrentValue.Symbols;
+            var used = _dependencies.AllSymbols;
 
             // identify unused symbols with savings
             var unusedWithSavings = withSavings

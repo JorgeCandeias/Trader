@@ -17,11 +17,11 @@ namespace Outcompute.Trader.Trading.Providers.Klines
     {
         private readonly KlineProviderOptions _options;
         private readonly ReactiveOptions _reactive;
-        private readonly IOptionsMonitor<AlgoDependencyOptions> _dependencies;
+        private readonly IAlgoDependencyResolver _dependencies;
         private readonly IHostApplicationLifetime _lifetime;
         private readonly IGrainFactory _factory;
 
-        public KlineProviderReplicaGrain(IOptions<KlineProviderOptions> options, IOptions<ReactiveOptions> reactive, IOptionsMonitor<AlgoDependencyOptions> dependencies, IHostApplicationLifetime lifetime, IGrainFactory factory)
+        public KlineProviderReplicaGrain(IOptions<KlineProviderOptions> options, IOptions<ReactiveOptions> reactive, IAlgoDependencyResolver dependencies, IHostApplicationLifetime lifetime, IGrainFactory factory)
         {
             _options = options.Value;
             _reactive = reactive.Value;
@@ -69,7 +69,7 @@ namespace Outcompute.Trader.Trading.Providers.Klines
         {
             (_symbol, _interval) = this.GetPrimaryKeys();
 
-            _periods = _dependencies.CurrentValue.Klines.TryGetValue((_symbol, _interval), out var periods) ? periods : 0;
+            _periods = _dependencies.Klines.TryGetValue((_symbol, _interval), out var periods) ? periods : 0;
 
             await LoadAsync();
 

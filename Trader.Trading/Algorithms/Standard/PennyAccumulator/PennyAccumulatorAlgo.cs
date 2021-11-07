@@ -16,12 +16,12 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.PennyAccumulator
     internal class PennyAccumulatorAlgo : Algo
     {
         private readonly IOptionsMonitor<PennyAccumulatorOptions> _options;
-        private readonly IOptionsMonitor<AlgoDependencyOptions> _dependencies;
+        private readonly IAlgoDependencyResolver _dependencies;
         private readonly ILogger _logger;
         private readonly ITradingService _trader;
         private readonly ISystemClock _clock;
 
-        public PennyAccumulatorAlgo(IOptionsMonitor<PennyAccumulatorOptions> options, IOptionsMonitor<AlgoDependencyOptions> dependencies, ILogger<PennyAccumulatorAlgo> logger, ITradingService trader, ISystemClock clock)
+        public PennyAccumulatorAlgo(IOptionsMonitor<PennyAccumulatorOptions> options, IAlgoDependencyResolver dependencies, ILogger<PennyAccumulatorAlgo> logger, ITradingService trader, ISystemClock clock)
         {
             _options = options;
             _dependencies = dependencies;
@@ -43,7 +43,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.PennyAccumulator
                 "{Name} got {Count} tickers", TypeName, tickers.Count);
 
             // attempt to ignore symbols from other algos
-            var others = _dependencies.CurrentValue.Symbols;
+            var others = _dependencies.Symbols;
 
             _logger.LogInformation(
                 "{Name} ignoring {Count} symbols from other algos",

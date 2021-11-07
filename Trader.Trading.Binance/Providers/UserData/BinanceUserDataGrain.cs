@@ -20,7 +20,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
     internal class BinanceUserDataGrain : Grain, IBinanceUserDataGrain
     {
         private readonly BinanceOptions _options;
-        private readonly IOptionsMonitor<AlgoDependencyOptions> _dependencies;
+        private readonly IAlgoDependencyResolver _dependencies;
         private readonly ILogger _logger;
         private readonly ITradingService _trader;
         private readonly IUserDataStreamClientFactory _streams;
@@ -34,7 +34,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
         private readonly ITradeProvider _trades;
         private readonly ITimerRegistry _timers;
 
-        public BinanceUserDataGrain(IOptions<BinanceOptions> options, IOptionsMonitor<AlgoDependencyOptions> dependencies, ILogger<BinanceUserDataGrain> logger, ITradingService trader, IUserDataStreamClientFactory streams, IOrderSynchronizer orders, ITradeSynchronizer trades, ISystemClock clock, IMapper mapper, IHostApplicationLifetime lifetime, IOrderProvider orderProvider, IBalanceProvider balances, ITradeProvider tradeProvider, ITimerRegistry timers)
+        public BinanceUserDataGrain(IOptions<BinanceOptions> options, IAlgoDependencyResolver dependencies, ILogger<BinanceUserDataGrain> logger, ITradingService trader, IUserDataStreamClientFactory streams, IOrderSynchronizer orders, ITradeSynchronizer trades, ISystemClock clock, IMapper mapper, IHostApplicationLifetime lifetime, IOrderProvider orderProvider, IBalanceProvider balances, ITradeProvider tradeProvider, ITimerRegistry timers)
         {
             _options = options.Value;
             _dependencies = dependencies;
@@ -51,7 +51,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
             _trades = tradeProvider;
             _timers = timers;
 
-            _pusher = new ActionBlock<UserDataStreamMessage>(HandleMessageAsync, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = _dependencies.CurrentValue.Symbols.Count * 2 + 1 });
+            _pusher = new ActionBlock<UserDataStreamMessage>(HandleMessageAsync, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = _dependencies.AllSymbols.Count * 2 + 1 });
         }
 
         private static string Name => nameof(BinanceUserDataGrain);
@@ -144,17 +144,6 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 
         private async Task HandleReportMessageAsync(ExecutionReportUserDataStreamMessage message)
         {
-            var dependencies = _dependencies.CurrentValue;
-
-            if (!dependencies.Symbols.Contains(message.Symbol))
-            {
-                _logger.LogWarning(
-                    "{Name} ignoring {MessageType} for unknown symbol {Symbol}",
-                    Name, nameof(ExecutionReportUserDataStreamMessage), message.Symbol);
-
-                return;
-            }
-
             // first extract the trade from this report if any
             // this must be persisted before the order so concurrent algos can pick up consistent data based on the order
             if (message.ExecutionType == ExecutionType.Trade)
@@ -216,8 +205,6 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
         {
             try
             {
-                var dependencies = _dependencies.CurrentValue;
-
                 // this token will reset the stream on a schedule to compensate for binance misbehaving
                 using var reset = new CancellationTokenSource(_options.UserDataStreamResetPeriod);
                 using var linked = CancellationTokenSource.CreateLinkedTokenSource(reset.Token, _lifetime.ApplicationStopping);
@@ -234,13 +221,13 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
                 await _balances.SetBalancesAsync(accountInfo, linked.Token);
 
                 // sync orders for all symbols
-                foreach (var symbol in dependencies.Symbols)
+                foreach (var symbol in _dependencies.AllSymbols)
                 {
                     await _orderSynchronizer.SynchronizeOrdersAsync(symbol, linked.Token);
                 }
 
                 // sync trades for all symbols
-                foreach (var symbol in dependencies.Symbols)
+                foreach (var symbol in _dependencies.AllSymbols)
                 {
                     await _tradeSynchronizer.SynchronizeTradesAsync(symbol, linked.Token);
                 }

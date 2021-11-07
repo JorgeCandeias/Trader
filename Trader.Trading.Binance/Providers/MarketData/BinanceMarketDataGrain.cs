@@ -14,7 +14,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
     internal class BinanceMarketDataGrain : Grain, IBinanceMarketDataGrain
     {
         private readonly IOptionsMonitor<BinanceOptions> _options;
-        private readonly IOptionsMonitor<AlgoDependencyOptions> _dependencies;
+        private readonly IAlgoDependencyResolver _dependencies;
         private readonly ILogger _logger;
         private readonly IHostApplicationLifetime _lifetime;
         private readonly ITimerRegistry _timers;
@@ -22,7 +22,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         private readonly IKlineSynchronizer _klineSynchronizer;
         private readonly IMarketDataStreamer _streamer;
 
-        public BinanceMarketDataGrain(IOptionsMonitor<BinanceOptions> options, IOptionsMonitor<AlgoDependencyOptions> dependencies, ILogger<BinanceMarketDataGrain> logger, IHostApplicationLifetime lifetime, ITimerRegistry timers, ITickerSynchronizer tickerSynchronizer, IKlineSynchronizer klineSynchronizer, IMarketDataStreamer streamer)
+        public BinanceMarketDataGrain(IOptionsMonitor<BinanceOptions> options, IAlgoDependencyResolver dependencies, ILogger<BinanceMarketDataGrain> logger, IHostApplicationLifetime lifetime, ITimerRegistry timers, ITickerSynchronizer tickerSynchronizer, IKlineSynchronizer klineSynchronizer, IMarketDataStreamer streamer)
         {
             _options = options;
             _dependencies = dependencies;
@@ -44,10 +44,8 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 
         public override Task OnActivateAsync()
         {
-            var dependencies = _dependencies.CurrentValue;
-
             // if there are ticker or kline dependencies then ensure we keep streaming them
-            if (dependencies.Tickers.Count > 0 || dependencies.Klines.Count > 0)
+            if (_dependencies.Symbols.Count + _dependencies.Tickers.Count + _dependencies.Balances.Count + _dependencies.Klines.Count > 0)
             {
                 _timer = _timers.RegisterTimer(this, TickEnsureStreamAsync, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
             }
@@ -102,20 +100,19 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             try
             {
                 var options = _options.CurrentValue;
-                var dependencies = _dependencies.CurrentValue;
 
                 // this helps cancel every local step upon stream failure at any point
                 using var resetCancellation = new CancellationTokenSource(options.MarketDataStreamResetPeriod);
                 using var linkedCancellation = CancellationTokenSource.CreateLinkedTokenSource(resetCancellation.Token, _lifetime.ApplicationStopping);
 
                 // start streaming in the background while we sync from the api
-                var streamTask = Task.Run(() => _streamer.StreamAsync(dependencies.Tickers, dependencies.Klines.Keys, linkedCancellation.Token), linkedCancellation.Token);
+                var streamTask = Task.Run(() => _streamer.StreamAsync(_dependencies.AllSymbols, _dependencies.Klines.Keys, linkedCancellation.Token), linkedCancellation.Token);
 
                 // sync tickers from the api
-                await _tickerSynchronizer.SyncAsync(dependencies.Symbols, linkedCancellation.Token);
+                await _tickerSynchronizer.SyncAsync(_dependencies.AllSymbols, linkedCancellation.Token);
 
                 // sync klines from the api
-                await _klineSynchronizer.SyncAsync(dependencies.Klines.Select(x => (x.Key.Symbol, x.Key.Interval, x.Value)), linkedCancellation.Token);
+                await _klineSynchronizer.SyncAsync(_dependencies.Klines.Select(x => (x.Key.Symbol, x.Key.Interval, x.Value)), linkedCancellation.Token);
 
                 // signal the ready state to allow algos to execute
                 _ready = true;

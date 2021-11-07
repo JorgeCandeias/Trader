@@ -110,7 +110,7 @@ namespace Outcompute.Trader.Trading.Tests
             Mock.Get(savings).VerifyAll();
             Mock.Get(swaps).VerifyAll();
             Mock.Get(cancelOrderExecutor).Verify(x => x.ExecuteAsync(context, It.Is<CancelOrderCommand>(x => x.Symbol == symbol && x.OrderId == 1), CancellationToken.None));
-            Mock.Get(redeemSavingsExecutor).Verify(x => x.ExecuteAsync(context, It.Is<RedeemSavingsCommand>(x => x.Asset == "XYZ" && x.Amount == 19.993856m), CancellationToken.None));
+            Mock.Get(redeemSavingsExecutor).Verify(x => x.ExecuteAsync(context, It.Is<RedeemSavingsCommand>(x => x.Asset == "XYZ" && x.Amount == 20.006189M), CancellationToken.None));
         }
     }
 }

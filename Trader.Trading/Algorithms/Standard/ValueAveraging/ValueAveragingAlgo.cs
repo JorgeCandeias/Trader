@@ -97,6 +97,12 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         private bool IsBelowPullbackPrice()
         {
+            // skip this rule if no pullback is defined
+            if (!_options.PullbackRatio.HasValue)
+            {
+                return true;
+            }
+
             // skip this rule if there are no positions to compare to
             if (Context.Significant.Orders.Count == 0)
             {
@@ -114,7 +120,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
             _logger.LogInformation(
                 "{Type} {Name} reports ticker {Ticker:F8} {Asset} below pullback price of {Pullback:F8} {Asset} = {Indicator}",
-                TypeName, Context.Name, Context.Ticker.AssetVolume, Context.Symbol.QuoteAsset, price, Context.Symbol.QuoteAsset, indicator);
+                TypeName, Context.Name, Context.Ticker.ClosePrice, Context.Symbol.QuoteAsset, price, Context.Symbol.QuoteAsset, indicator);
 
             return indicator;
         }

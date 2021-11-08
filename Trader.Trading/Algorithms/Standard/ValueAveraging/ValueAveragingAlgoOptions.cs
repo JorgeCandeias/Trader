@@ -74,22 +74,22 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         public int RsiPeriodsC { get; set; } = 24;
 
         [Required]
-        public decimal RsiOverboughtA { get; set; } = 70m;
+        public decimal RsiOverboughtA { get; set; } = 80m;
 
         [Required]
-        public decimal RsiOversoldA { get; set; } = 30m;
+        public decimal RsiOversoldA { get; set; } = 20m;
 
         [Required]
-        public decimal RsiOverboughtB { get; set; } = 70m;
+        public decimal RsiOverboughtB { get; set; } = 80m;
 
         [Required]
-        public decimal RsiOversoldB { get; set; } = 30m;
+        public decimal RsiOversoldB { get; set; } = 20m;
 
         [Required]
-        public decimal RsiOverboughtC { get; set; } = 70m;
+        public decimal RsiOverboughtC { get; set; } = 80m;
 
         [Required]
-        public decimal RsiOversoldC { get; set; } = 30m;
+        public decimal RsiOversoldC { get; set; } = 20m;
 
         [Required]
         public TimeSpan CooldownPeriod { get; set; } = TimeSpan.FromDays(1);

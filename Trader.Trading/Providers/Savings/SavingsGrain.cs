@@ -78,6 +78,8 @@ namespace Outcompute.Trader.Trading.Providers.Savings
 
             // signal the ready check
             _ready = true;
+
+            _logger.LogInformation("{Type} is ready", TypeName);
         }
 
         public Task<SavingsPosition?> TryGetPositionAsync(string asset)

@@ -1,6 +1,8 @@
-﻿namespace System.Threading.Tasks
+﻿using System.Collections.Generic;
+
+namespace System.Threading.Tasks
 {
-    public static class TaskExtensions
+    public static class TraderTaskExtensions
     {
         /// <summary>
         /// Creates a task that completes when the given task completes or a timeout is reached.
@@ -23,6 +25,12 @@
             // slow path for regular completion
             var delay = Task.Delay(timeout, cancellationToken).ContinueWith((_, _) => defaultValue, null, cancellationToken, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
             return Task.WhenAny(task, delay).Unwrap();
+        }
+
+        /// <inheritdoc cref="Task.WhenAll(IEnumerable{Task})"/>
+        public static Task WhenAll(this IEnumerable<Task> tasks)
+        {
+            return Task.WhenAll(tasks);
         }
     }
 }

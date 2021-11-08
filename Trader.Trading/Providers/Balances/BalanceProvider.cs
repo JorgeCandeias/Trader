@@ -4,6 +4,7 @@ using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -34,17 +35,17 @@ namespace Outcompute.Trader.Trading.Providers.Balances
         {
             if (balances is null) throw new ArgumentNullException(nameof(balances));
 
-            return SetBalancesCoreAsync(balances);
+            return SetBalancesCoreAsync(balances, cancellationToken);
+        }
 
-            async Task SetBalancesCoreAsync(IEnumerable<Balance> balances)
-            {
-                await _repository.SetBalancesAsync(balances, cancellationToken).ConfigureAwait(false);
+        private async Task SetBalancesCoreAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default)
+        {
+            await _repository.SetBalancesAsync(balances, cancellationToken).ConfigureAwait(false);
 
-                foreach (var balance in balances)
-                {
-                    await _factory.GetBalanceProviderGrain(balance.Asset).SetBalanceAsync(balance).ConfigureAwait(false);
-                }
-            }
+            await balances
+                .Select(balance => _factory.GetBalanceProviderGrain(balance.Asset).SetBalanceAsync(balance))
+                .WhenAll()
+                .ConfigureAwait(false);
         }
 
         public Task SetBalancesAsync(AccountInfo accountInfo, CancellationToken cancellationToken = default)

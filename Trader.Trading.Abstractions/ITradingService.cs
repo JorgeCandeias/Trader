@@ -11,7 +11,9 @@ namespace Outcompute.Trader.Trading
     {
         #region Savings
 
-        Task<IReadOnlyCollection<SavingsProduct>> GetSubscribableSavingsProductsAsync(
+        Task<IReadOnlyCollection<SavingsProduct>> GetSavingsProductsAsync(
+            SavingsStatus status,
+            SavingsFeatured featured,
             CancellationToken cancellationToken = default);
 
         #endregion Savings

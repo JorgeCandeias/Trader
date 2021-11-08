@@ -41,7 +41,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
                 .ToList();
 
             // get all usable savings assets
-            var assets = (await _trader.GetSubscribableSavingsProductsAsync(cancellationToken).ConfigureAwait(false))
+            var assets = (await _trader.GetSavingsProductsAsync(SavingsStatus.Subscribable, SavingsFeatured.All, cancellationToken).ConfigureAwait(false))
                 .Where(x => x.CanPurchase)
                 .Select(x => x.Asset)
                 .Union(options.ForcedAssets)

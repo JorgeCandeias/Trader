@@ -7,11 +7,10 @@ namespace Orleans.Hosting
         public static ISiloBuilder AddTrader(this ISiloBuilder builder)
         {
             return builder
-                .ConfigureApplicationParts(manager => manager.AddApplicationPart(typeof(TraderSiloBuilderExtensions).Assembly).WithReferences())
+                .AddTradingServices()
                 .ConfigureServices((context, services) =>
                 {
                     services
-                        .AddTradingServices()
                         .AddSystemClock()
                         .AddSafeTimerFactory()
                         .AddBase62NumberSerializer()

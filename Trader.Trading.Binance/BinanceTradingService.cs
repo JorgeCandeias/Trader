@@ -247,24 +247,28 @@ namespace Outcompute.Trader.Trading.Binance
                 .ConfigureAwait(false);
         }
 
-        public async Task<IReadOnlyCollection<SavingsProduct>> GetSubscribableSavingsProductsAsync(
+        public async Task<IReadOnlyCollection<SavingsProduct>> GetSavingsProductsAsync(
+            SavingsStatus status,
+            SavingsFeatured featured,
             CancellationToken cancellationToken = default)
         {
-            var page = 0;
+            var page = 1;
             var list = new List<SavingsProduct>();
 
             while (true)
             {
-                var result = await GetFlexibleProductListAsync(SavingsStatus.Subscribable, SavingsFeatured.All, ++page, 100, cancellationToken)
+                // get the page
+                var result = await GetFlexibleProductListAsync(status, featured, page, 100, cancellationToken)
                     .ConfigureAwait(false);
 
+                // keep the items
                 list.AddRange(result);
 
                 // stop if there are no more items to get
                 if (result.Count < 100) break;
 
-                // otherwise keep the items
-                list.AddRange(result);
+                // next page
+                page++;
             }
 
             return list;

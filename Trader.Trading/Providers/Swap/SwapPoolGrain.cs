@@ -155,7 +155,7 @@ namespace Outcompute.Trader.Trading.Providers.Swap
                                 {
                                     var position = savings[preview.QuoteAsset];
                                     var diff = preview.QuoteAmount - spotAmount;
-                                    await _savings.RedeemAsync(position.Asset, diff, SavingsRedemptionType.Fast, _cancellation.Token);
+                                    await _savings.RedeemAsync(position.Asset, diff, _cancellation.Token);
 
                                     _logger.LogInformation(
                                         "{Type} redeemed necessary {Necessary:F8} {Asset} from savings",
@@ -173,7 +173,7 @@ namespace Outcompute.Trader.Trading.Providers.Swap
                                 {
                                     var position = savings[preview.BaseAsset];
                                     var diff = preview.BaseAmount - spotAmount;
-                                    await _savings.RedeemAsync(position.Asset, diff, SavingsRedemptionType.Fast, _cancellation.Token);
+                                    await _savings.RedeemAsync(position.Asset, diff, _cancellation.Token);
 
                                     _logger.LogInformation(
                                         "{Type} redeemed necessary {Necessary:F8} {Asset} from savings",
@@ -256,8 +256,6 @@ namespace Outcompute.Trader.Trading.Providers.Swap
         {
             return Task.FromResult<IEnumerable<SwapPool>>(_pools);
         }
-
-        public Task PingAsync() => Task.CompletedTask;
 
         public void Dispose()
         {

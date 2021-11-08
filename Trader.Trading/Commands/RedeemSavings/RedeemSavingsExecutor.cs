@@ -1,5 +1,4 @@
-﻿using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Algorithms;
+﻿using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Providers;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,7 +16,7 @@ namespace Outcompute.Trader.Trading.Commands.RedeemSavings
 
         public Task<RedeemSavingsEvent> ExecuteAsync(IAlgoContext context, RedeemSavingsCommand command, CancellationToken cancellationToken = default)
         {
-            return _savings.RedeemAsync(command.Asset, command.Amount, SavingsRedemptionType.Fast, cancellationToken);
+            return _savings.RedeemAsync(command.Asset, command.Amount, cancellationToken);
         }
     }
 }

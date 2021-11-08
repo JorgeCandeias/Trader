@@ -17,17 +17,17 @@ namespace Outcompute.Trader.Trading.Providers.Savings
 
         public Task<SavingsPosition?> TryGetPositionAsync(string asset, CancellationToken cancellation = default)
         {
-            return _factory.GetSavingsGrain(asset).TryGetPositionAsync();
+            return _factory.GetSavingsGrain().TryGetPositionAsync(asset);
         }
 
-        public Task<SavingsQuota?> TryGetQuotaAsync(string asset, string productId, SavingsRedemptionType type, CancellationToken cancellationToken = default)
+        public Task<SavingsQuota?> TryGetQuotaAsync(string asset, CancellationToken cancellationToken = default)
         {
-            return _factory.GetSavingsGrain(asset).TryGetQuotaAsync(productId, type);
+            return _factory.GetSavingsGrain().TryGetQuotaAsync(asset);
         }
 
-        public Task<RedeemSavingsEvent> RedeemAsync(string asset, decimal amount, SavingsRedemptionType type, CancellationToken cancellationToken = default)
+        public Task<RedeemSavingsEvent> RedeemAsync(string asset, decimal amount, CancellationToken cancellationToken = default)
         {
-            return _factory.GetSavingsGrain(asset).RedeemAsync(amount, type);
+            return _factory.GetSavingsGrain().RedeemAsync(asset, amount);
         }
     }
 }

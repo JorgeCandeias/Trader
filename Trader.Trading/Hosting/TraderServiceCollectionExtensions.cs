@@ -22,7 +22,7 @@ using Outcompute.Trader.Trading.Providers.Swap;
 using Outcompute.Trader.Trading.Providers.Tickers;
 using Outcompute.Trader.Trading.Providers.Trades;
 using Outcompute.Trader.Trading.Readyness;
-using System;
+using Outcompute.Trader.Trading.Watchdog;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -33,8 +33,12 @@ namespace Microsoft.Extensions.DependencyInjection
             return services
 
                 // add watchdog entires
-                .AddWatchdogEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetGrain<ISwapPoolGrain>(Guid.Empty).PingAsync())
-                .AddWatchdogEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetAlgoManagerGrain().PingAsync())
+                .AddWatchdogEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetSwapPoolGrain().AsReference<IWatchdogGrainExtension>().PingAsync())
+                .AddWatchdogEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetAlgoManagerGrain().AsReference<IWatchdogGrainExtension>().PingAsync())
+                .AddWatchdogEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetSavingsGrain().AsReference<IWatchdogGrainExtension>().PingAsync())
+
+                // add readyness entries
+                .AddReadynessEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetSavingsGrain().IsReadyAsync())
 
                 // assorted services
                 .AddWatchdogService()

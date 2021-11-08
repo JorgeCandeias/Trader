@@ -5,12 +5,11 @@ namespace Orleans
 {
     internal static class SavingsGrainFactoryExtensions
     {
-        public static ISavingsGrain GetSavingsGrain(this IGrainFactory factory, string asset)
+        public static ISavingsGrain GetSavingsGrain(this IGrainFactory factory)
         {
             if (factory is null) throw new ArgumentNullException(nameof(factory));
-            if (asset is null) throw new ArgumentNullException(nameof(asset));
 
-            return factory.GetGrain<ISavingsGrain>(asset);
+            return factory.GetGrain<ISavingsGrain>(Guid.Empty);
         }
     }
 }

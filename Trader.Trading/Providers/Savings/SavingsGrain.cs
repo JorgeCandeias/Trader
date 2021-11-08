@@ -1,13 +1,13 @@
-﻿using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
-using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Algorithms;
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Providers.Savings
@@ -16,110 +16,98 @@ namespace Outcompute.Trader.Trading.Providers.Savings
     {
         private readonly SavingsProviderOptions _options;
         private readonly ILogger _logger;
-        private readonly ISystemClock _clock;
         private readonly ITradingService _trader;
-        private readonly IHostApplicationLifetime _lifetime;
+        private readonly IAlgoDependencyResolver _dependencies;
 
-        public SavingsGrain(IOptions<SavingsProviderOptions> options, ILogger<SavingsGrain> logger, ISystemClock clock, ITradingService trader, IHostApplicationLifetime lifetime)
+        public SavingsGrain(IOptions<SavingsProviderOptions> options, ILogger<SavingsGrain> logger, ITradingService trader, IAlgoDependencyResolver dependencies)
         {
             _options = options.Value;
             _logger = logger;
-            _clock = clock;
             _trader = trader;
-            _lifetime = lifetime;
+            _dependencies = dependencies;
         }
 
         private static string TypeName => nameof(SavingsGrain);
 
-        private string _asset = string.Empty;
-
-        private readonly SavingsRedemptionType[] _redemptionTypes = new[] { SavingsRedemptionType.Fast };
-
         #region Cache
 
-        private ImmutableList<SavingsPosition> _positions = ImmutableList<SavingsPosition>.Empty;
-        private readonly Dictionary<(string ProductId, SavingsRedemptionType Type), SavingsQuota> _quotas = new();
+        private readonly Dictionary<string, SavingsProduct> _products = new();
 
-        private DateTime _expiration = DateTime.MinValue;
+        private readonly Dictionary<string, SavingsPosition> _positions = new();
+
+        private readonly Dictionary<string, SavingsQuota> _quotas = new();
+
+        private readonly CancellationTokenSource _cancellation = new();
+
+        private bool _ready;
 
         #endregion Cache
 
         public override async Task OnActivateAsync()
         {
-            _asset = this.GetPrimaryKeyString();
+            await UpdateAsync();
+
+            RegisterTimer(_ => UpdateAsync(), null, _options.RefreshPeriod, _options.RefreshPeriod);
 
             await base.OnActivateAsync();
         }
 
-        private async ValueTask EnsureUpdatedAsync()
-        {
-            if (_clock.UtcNow < _expiration) return;
-
-            await UpdateAsync();
-
-            _expiration = _clock.UtcNow.Add(_options.SavingsCacheWindow);
-        }
-
-        private void Invalidate()
-        {
-            _expiration = DateTime.MinValue;
-            _positions = ImmutableList<SavingsPosition>.Empty;
-            _quotas.Clear();
-        }
+        public Task<bool> IsReadyAsync() => Task.FromResult(_ready);
 
         private async Task UpdateAsync()
         {
-            var result = await _trader
-                .WithBackoff()
-                .GetFlexibleProductPositionsAsync(_asset, _lifetime.ApplicationStopping);
+            // load all products from the exchange
+            var products = await GetSavingsProductsAsync();
 
-            _positions = result.ToImmutableList();
+            // use only the products for assets we care about
+            products = products
+                .Where(x => _dependencies.AllSymbols.Any(s => s.StartsWith(x.Asset, StringComparison.Ordinal)) || _dependencies.AllSymbols.Any(s => s.EndsWith(x.Asset, StringComparison.Ordinal)))
+                .GroupBy(x => x.Asset)
+                .Select(x => x.Single());
 
-            foreach (var productId in _positions.Select(x => x.ProductId))
+            // get all positions for each product
+            foreach (var product in products)
             {
-                foreach (var type in _redemptionTypes)
-                {
-                    var quota = await _trader
-                        .WithBackoff()
-                        .TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(productId, type, _lifetime.ApplicationStopping);
+                // cache the product
+                _products[product.Asset] = product;
 
-                    if (quota is not null)
-                    {
-                        _quotas[(productId, type)] = quota;
-                    }
-                }
+                await LoadSavingsPositionAsync(product.Asset, product.ProductId);
+
+                await LoadSavingsQuotaAsync(product.Asset, product.ProductId);
             }
+
+            // signal the ready check
+            _ready = true;
         }
 
-        public async Task<SavingsPosition?> TryGetPositionAsync()
+        public Task<SavingsPosition?> TryGetPositionAsync(string asset)
         {
-            await EnsureUpdatedAsync();
+            var result = _positions.TryGetValue(asset, out var value) ? value : null;
 
-            return _positions.Count > 0 ? _positions[0] : null;
+            return Task.FromResult(result);
         }
 
-        public async Task<SavingsQuota?> TryGetQuotaAsync(string productId, SavingsRedemptionType type)
+        public Task<SavingsQuota?> TryGetQuotaAsync(string asset)
         {
-            await EnsureUpdatedAsync();
+            var result = _quotas.TryGetValue(asset, out var value) ? value : null;
 
-            return _quotas.TryGetValue((productId, type), out var value) ? value : null;
+            return Task.FromResult(result);
         }
 
-        public async Task<RedeemSavingsEvent> RedeemAsync(decimal amount, SavingsRedemptionType type)
+        public async Task<RedeemSavingsEvent> RedeemAsync(string asset, decimal amount)
         {
-            // get the current savings for this asset
-            var savings = _positions.SingleOrDefault();
-            if (savings is null)
+            // get the current savings for the asset
+            if (!_positions.TryGetValue(asset, out var position))
             {
                 _logger.LogWarning(
                     "{Type} cannot redeem savings for asset {Asset} because there is no savings product",
-                    TypeName, _asset);
+                    TypeName, asset);
 
                 return new RedeemSavingsEvent(false, 0m);
             }
 
             // check if we can redeem at all - we cant redeem during maintenance windows etc
-            if (!savings.CanRedeem)
+            if (!position.CanRedeem)
             {
                 _logger.LogWarning(
                     "{Type} cannot redeem savings at this time because redeeming is disallowed",
@@ -129,33 +117,33 @@ namespace Outcompute.Trader.Trading.Providers.Savings
             }
 
             // check if there is a redemption in progress
-            if (savings.RedeemingAmount > 0)
+            if (position.RedeemingAmount > 0)
             {
                 _logger.LogWarning(
                     "{Type} will not redeem savings now because a redemption of {RedeemingAmount} {Asset} is in progress",
-                    TypeName, savings.RedeemingAmount, _asset);
+                    TypeName, position.RedeemingAmount, asset);
 
                 return new RedeemSavingsEvent(false, 0m);
             }
 
             // check if there is enough for redemption
-            if (savings.FreeAmount < amount)
+            if (position.FreeAmount < amount)
             {
                 _logger.LogError(
                     "{Type} cannot redeem the necessary {Quantity} {Asset} from savings because they only contain {FreeAmount} {Asset}",
-                    TypeName, amount, _asset, savings.FreeAmount, _asset);
+                    TypeName, amount, asset, position.FreeAmount, asset);
 
                 return new RedeemSavingsEvent(false, 0m);
             }
 
-            var quota = _quotas.TryGetValue((savings.ProductId, SavingsRedemptionType.Fast), out var value) ? value : SavingsQuota.Empty;
+            var quota = _quotas.TryGetValue(asset, out var value) ? value : SavingsQuota.Empty;
 
             // stop if we would exceed the daily quota outright
             if (quota.LeftQuota < amount)
             {
                 _logger.LogError(
                     "{Type} cannot redeem the necessary amount of {Quantity} {Asset} because it exceeds the available quota of {Quota} {Asset}",
-                    TypeName, amount, _asset, quota.LeftQuota, _asset);
+                    TypeName, amount, asset, quota.LeftQuota, asset);
 
                 return new RedeemSavingsEvent(false, 0m);
             }
@@ -163,11 +151,11 @@ namespace Outcompute.Trader.Trading.Providers.Savings
             // bump the necessary value if needed now
             if (amount < quota.MinRedemptionAmount)
             {
-                var bumped = Math.Min(quota.MinRedemptionAmount, savings.FreeAmount);
+                var bumped = Math.Min(quota.MinRedemptionAmount, position.FreeAmount);
 
                 _logger.LogInformation(
                     "{Type} bumped the necessary quantity of {Necessary} {Asset} to {Bumped} {Asset} to enable redemption",
-                    TypeName, amount, _asset, bumped, _asset);
+                    TypeName, amount, asset, bumped, asset);
 
                 amount = bumped;
             }
@@ -175,17 +163,94 @@ namespace Outcompute.Trader.Trading.Providers.Savings
             // if we got here then we can attempt to redeem
             _logger.LogInformation(
                 "{Type} attempting to redeem {Quantity} {Asset} from savings...",
-                TypeName, amount, _asset);
+                TypeName, amount, asset);
 
-            await _trader.RedeemFlexibleProductAsync(savings.ProductId, amount, type);
+            await _trader.RedeemFlexibleProductAsync(position.ProductId, amount, SavingsRedemptionType.Fast);
+
+            AdjustCachedAmounts(asset, -amount);
 
             _logger.LogInformation(
                 "{Type} redeemed {Quantity} {Asset} from savings",
-                TypeName, amount, _asset);
-
-            Invalidate();
+                TypeName, amount, asset);
 
             return new RedeemSavingsEvent(true, amount);
+        }
+
+        private async Task<IEnumerable<SavingsProduct>> GetSavingsProductsAsync()
+        {
+            var watch = Stopwatch.StartNew();
+
+            // get all subscribable products for all assets - there should be only one subscribable per asset
+            var products = await _trader
+                .WithBackoff()
+                .GetSavingsProductsAsync(SavingsStatus.Subscribable, SavingsFeatured.All, _cancellation.Token);
+
+            _logger.LogInformation(
+                "{Type} loaded {Count} savings products in {ElapsedMs}ms",
+                TypeName, products.Count, watch.ElapsedMilliseconds);
+
+            return products;
+        }
+
+        private async Task LoadSavingsPositionAsync(string asset, string productId)
+        {
+            var watch = Stopwatch.StartNew();
+
+            // get the position for the product
+            var positions = await _trader
+                .WithBackoff()
+                .GetFlexibleProductPositionsAsync(asset, _cancellation.Token);
+
+            var position = positions.SingleOrDefault(x => x.ProductId == productId);
+            if (position is not null)
+            {
+                _positions[position.Asset] = position;
+            }
+
+            _logger.LogInformation(
+                "{Type} loaded savings position for {Asset} {Product} in {ElapsedMs}ms",
+                TypeName, asset, productId, watch.ElapsedMilliseconds);
+        }
+
+        private async Task LoadSavingsQuotaAsync(string asset, string productId)
+        {
+            var watch = Stopwatch.StartNew();
+
+            // get the quota for the product
+            var quota = await _trader
+                .WithBackoff()
+                .TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(productId, SavingsRedemptionType.Fast, _cancellation.Token);
+
+            if (quota is not null)
+            {
+                _quotas[quota.Asset] = quota;
+            }
+
+            _logger.LogInformation(
+                "{Type} loaded savings quota for {Asset} {ProductId} in {ElapsedMs}ms",
+                TypeName, asset, productId, watch.ElapsedMilliseconds);
+        }
+
+        private void AdjustCachedAmounts(string asset, decimal amount)
+        {
+            AdjustCachedPosition(asset, amount);
+            AdjustCachedQuota(asset, amount);
+        }
+
+        private void AdjustCachedPosition(string asset, decimal amount)
+        {
+            if (_positions.TryGetValue(asset, out var position))
+            {
+                _positions[asset] = position with { FreeAmount = position.FreeAmount + amount };
+            }
+        }
+
+        private void AdjustCachedQuota(string asset, decimal amount)
+        {
+            if (_quotas.TryGetValue(asset, out var quota))
+            {
+                _quotas[asset] = quota with { LeftQuota = quota.LeftQuota - amount };
+            }
         }
     }
 }

@@ -6,6 +6,7 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -116,6 +117,11 @@ namespace Outcompute.Trader.Trading.Providers.Savings
             _ready = true;
 
             _logger.LogInformation("{Type} is ready", TypeName);
+        }
+
+        public Task<IEnumerable<SavingsPosition>> GetPositionsAsync()
+        {
+            return _positions.Values.ToImmutableList().AsTaskResult<IEnumerable<SavingsPosition>>();
         }
 
         public Task<SavingsPosition?> TryGetPositionAsync(string asset)

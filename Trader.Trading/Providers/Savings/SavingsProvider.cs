@@ -1,6 +1,7 @@
 ﻿using Orleans;
 using Outcompute.Trader.Models;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -13,6 +14,11 @@ namespace Outcompute.Trader.Trading.Providers.Savings
         public SavingsProvider(IGrainFactory factory)
         {
             _factory = factory ?? throw new ArgumentNullException(nameof(factory));
+        }
+
+        public Task<IEnumerable<SavingsPosition>> GetPositionsAsync(CancellationToken cancellationToken = default)
+        {
+            return _factory.GetSavingsGrain().GetPositionsAsync();
         }
 
         public Task<SavingsPosition?> TryGetPositionAsync(string asset, CancellationToken cancellation = default)

@@ -81,7 +81,6 @@ namespace Outcompute.Trader.Trading.Providers.Swap
 
             // get all positive spot balances
             var spots = (await _balances.GetBalancesAsync(_cancellation.Token))
-                .Where(x => x.Free > 0)
                 .ToDictionary(x => x.Asset);
 
             _logger.LogInformation(
@@ -89,32 +88,17 @@ namespace Outcompute.Trader.Trading.Providers.Swap
                 TypeName, spots.Count);
 
             // get user savings positions for known pools
-            var savings = new Dictionary<string, SavingsPosition>();
-            foreach (var asset in _configurations.Values.SelectMany(x => x.Assets.Keys).Distinct())
-            {
-                // todo: refactor the savings layer so we can get all savings in one go
-                var position = await _savings.GetPositionOrZeroAsync(asset, _cancellation.Token);
-                if (position.FreeAmount > 0)
-                {
-                    savings[position.Asset] = position;
-                }
-            }
+            var savings = (await _savings.GetPositionsAsync())
+                .ToDictionary(x => x.Asset);
 
             _logger.LogInformation(
                 "{Type} reports {Count} positive savings balances",
                 TypeName, savings.Count);
 
-            var totals = new Dictionary<string, decimal>();
-            foreach (var asset in _configurations.Values.SelectMany(x => x.Assets.Keys).Distinct())
-            {
-                var spotAmount = spots.TryGetValue(asset, out var spot) ? spot.Free : 0m;
-                var savingsAmount = savings.TryGetValue(asset, out var position) ? position.FreeAmount : 0m;
-                var total = spotAmount + savingsAmount;
-                if (total > 0)
-                {
-                    totals[asset] = total;
-                }
-            }
+            var totals = _configurations.Values
+                .SelectMany(x => x.Assets.Keys)
+                .Distinct()
+                .ToDictionary(x => x, x => spots.GetValueOrDefault(x)?.Free ?? 0m + savings.GetValueOrDefault(x)?.FreeAmount ?? 0m);
 
             _logger.LogInformation(
                 "{Type} reports {Count} assets with usable amounts",
@@ -123,7 +107,7 @@ namespace Outcompute.Trader.Trading.Providers.Swap
             // select pools to which we can add assets
             var candidates = _configurations.Values
                 .Where(x => _cooldowns.GetValueOrDefault(x.PoolId, DateTime.MinValue) < _clock.UtcNow)
-                .Where(x => x.Assets.All(a => totals.TryGetValue(a.Key, out var balance) && balance >= a.Value.MinAdd))
+                .Where(x => x.Assets.All(a => totals[a.Key] >= a.Value.MinAdd))
                 .Where(x => !options.ExcludedAssets.Overlaps(x.Assets.Keys))
                 .Where(x => !x.Assets.All(a => options.IsolatedAssets.Contains(a.Key)))
                 .OrderByDescending(x => x.PoolId)
@@ -142,63 +126,82 @@ namespace Outcompute.Trader.Trading.Providers.Swap
                     // request a preview using the current asset as quote asset
                     var preview = await _trader.AddSwapPoolLiquidityPreviewAsync(candidate.PoolId, SwapPoolLiquidityType.Combination, asset.Key, totals[asset.Key], _cancellation.Token);
 
-                    // check if the paired asset quantity is also above the min after preview
-                    if (preview.BaseAmount >= candidate.Assets[preview.BaseAsset].MinAdd)
-                    {
-                        // check if there is enough free balance for the base asset as per preview
-                        if (preview.BaseAmount <= totals[preview.BaseAsset])
-                        {
-                            _logger.LogInformation(
-                                "{Type} elected pool {PoolName} for adding assets {QuoteAmount:F8} {QuoteAsset} and {BaseAmount:F8} {BaseAsset}",
-                                TypeName, candidate.PoolName, preview.QuoteAmount, preview.QuoteAsset, preview.BaseAmount, preview.BaseAsset);
+                    // 1) check if the paired asset quantity is also above the min after preview
+                    if (preview.BaseAmount < candidate.Assets[preview.BaseAsset].MinAdd) continue;
 
-                            // check if there is enough quote asset in the spot account
-                            {
-                                var spotAmount = spots.TryGetValue(preview.QuoteAsset, out var spot) ? spot.Free : 0m;
-                                if (spotAmount < preview.QuoteAmount)
-                                {
-                                    var position = savings[preview.QuoteAsset];
-                                    var diff = preview.QuoteAmount - spotAmount;
-                                    await _savings.RedeemAsync(position.Asset, diff, _cancellation.Token);
+                    // 2) check if there is enough free balance for the base asset as per preview
+                    if (preview.BaseAmount < totals[preview.BaseAsset]) continue;
 
-                                    _logger.LogInformation(
-                                        "{Type} redeemed necessary {Necessary:F8} {Asset} from savings",
-                                        TypeName, diff, position.Asset);
+                    _logger.LogInformation(
+                        "{Type} elected pool {PoolName} for adding assets {QuoteAmount:F8} {QuoteAsset} and {BaseAmount:F8} {BaseAsset}",
+                        TypeName, candidate.PoolName, preview.QuoteAmount, preview.QuoteAsset, preview.BaseAmount, preview.BaseAsset);
 
-                                    // allow the schedule to cycle
-                                    return;
-                                }
-                            }
+                    // ensure there is enough spot amount for the quote asset by redeeming savings
+                    var (quoteSuccess, quoteRedeemed) = await EnsureSpotAmountAsync(preview.QuoteAsset, preview.QuoteAmount, spots.GetValueOrDefault(preview.QuoteAsset)?.Free ?? 0m, savings.GetValueOrDefault(preview.QuoteAsset)?.FreeAmount ?? 0m);
+                    if (!quoteSuccess) continue;
 
-                            // check if there is enough base asset in the spot account
-                            {
-                                var spotAmount = spots.TryGetValue(preview.BaseAsset, out var spot) ? spot.Free : 0m;
-                                if (spotAmount < preview.BaseAmount)
-                                {
-                                    var position = savings[preview.BaseAsset];
-                                    var diff = preview.BaseAmount - spotAmount;
-                                    await _savings.RedeemAsync(position.Asset, diff, _cancellation.Token);
+                    // ensure there is enough spot amount for the base asset by redeeming savings
+                    var (baseSuccess, baseRedeemed) = await EnsureSpotAmountAsync(preview.BaseAsset, preview.BaseAmount, spots.GetValueOrDefault(preview.BaseAsset)?.Free ?? 0m, savings.GetValueOrDefault(preview.BaseAsset)?.FreeAmount ?? 0m);
+                    if (!baseSuccess) continue;
 
-                                    _logger.LogInformation(
-                                        "{Type} redeemed necessary {Necessary:F8} {Asset} from savings",
-                                        TypeName, diff, position.Asset);
+                    // if any savings were redeem then let the timer cycle to allow the exchange to complete the operation
+                    if (quoteRedeemed || baseRedeemed) return;
 
-                                    // allow the schedule to cycle
-                                    return;
-                                }
-                            }
+                    // if we got here we can add liquidity
+                    await _trader.AddSwapLiquidityAsync(candidate.PoolId, SwapPoolLiquidityType.Combination, preview.QuoteAsset, preview.QuoteAmount, _cancellation.Token);
 
-                            // if we got here we can add liquidity
-                            await _trader.AddSwapLiquidityAsync(candidate.PoolId, SwapPoolLiquidityType.Combination, preview.QuoteAsset, preview.QuoteAmount, _cancellation.Token);
+                    // bump the cooldown for this pool
+                    SetCooldown(candidate.PoolId);
 
-                            // bump the cooldown for this pool
-                            SetCooldown(candidate.PoolId);
-
-                            // allow the schedule to cycle
-                            return;
-                        }
-                    }
+                    // allow the schedule to cycle
+                    return;
                 }
+            }
+        }
+
+        private async ValueTask<(bool Success, bool Redeemed)> EnsureSpotAmountAsync(string asset, decimal targetAmount, decimal spotAmount, decimal savingsAmount)
+        {
+            if (spotAmount >= targetAmount)
+            {
+                return (true, false);
+            }
+
+            var necessary = targetAmount - spotAmount;
+
+            if (!_monitor.CurrentValue.AutoRedeemSavings)
+            {
+                _logger.LogInformation(
+                    "{Type} cannot redeem necessary {Necessary:F8} {Asset} from savings because auto redemption is disabled",
+                    TypeName, necessary, asset);
+
+                return (false, false);
+            }
+
+            if (savingsAmount < necessary)
+            {
+                _logger.LogInformation(
+                    "{Type} cannot redeem necessary {Necessary:F8} {Asset} from savings because there is only {Position:F8} {Asset} available",
+                    TypeName, necessary, asset, savingsAmount, asset);
+
+                return (false, false);
+            }
+
+            var result = await _savings.RedeemAsync(asset, necessary, _cancellation.Token);
+            if (result.Success)
+            {
+                _logger.LogInformation(
+                    "{Type} redeemed {Redeemed:F8} {Asset} from savings to cover the necessary {Necessary:F8} {Asset}",
+                    TypeName, result.Redeemed, asset, necessary, asset);
+
+                return (true, true);
+            }
+            else
+            {
+                _logger.LogInformation(
+                    "{Type} failed to redeem the necessary {Necessary:F8} {Asset} from savings due to unknown reasons",
+                    TypeName, necessary, asset);
+
+                return (false, false);
             }
         }
 

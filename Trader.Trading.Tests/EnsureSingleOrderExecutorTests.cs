@@ -19,7 +19,7 @@ namespace Outcompute.Trader.Trading.Tests
     public class EnsureSingleOrderExecutorTests
     {
         [Fact]
-        public async Task Executes()
+        public async Task RedeemsSavings()
         {
             // arrange
             var logger = NullLogger<EnsureSingleOrderExecutor>.Instance;
@@ -82,14 +82,6 @@ namespace Outcompute.Trader.Trading.Tests
             Mock.Get(cancelOrderExecutor).Verify(x => x.ExecuteAsync(context, It.Is<CancelOrderCommand>(x => x.Symbol == symbol && x.OrderId == 123), CancellationToken.None));
             Mock.Get(balances).VerifyAll();
             Mock.Get(redeemSavingsExecutor).Verify(x => x.ExecuteAsync(context, It.Is<RedeemSavingsCommand>(x => x.Asset == symbol.QuoteAsset && x.Amount == 234000), CancellationToken.None));
-            Mock.Get(createOrderExecutor).Verify(x => x.ExecuteAsync(context, It.Is<CreateOrderCommand>(x =>
-                x.Symbol == symbol &&
-                x.Side == side &&
-                x.Type == type &&
-                x.TimeInForce == timeInForce &&
-                x.Quantity == quantity &&
-                x.Price == price),
-                CancellationToken.None));
         }
     }
 }

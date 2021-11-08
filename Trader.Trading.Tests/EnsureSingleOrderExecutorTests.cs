@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
 using Moq;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
@@ -9,9 +8,7 @@ using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
 using Outcompute.Trader.Trading.Commands.RedeemSavings;
-using Outcompute.Trader.Trading.Commands.RedeemSwapPool;
 using Outcompute.Trader.Trading.Providers;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,8 +22,6 @@ namespace Outcompute.Trader.Trading.Tests
         public async Task Executes()
         {
             // arrange
-            var options = new SavingsOptions { SavingsRedemptionDelay = TimeSpan.Zero };
-            var monitor = Mock.Of<IOptionsMonitor<SavingsOptions>>(x => x.CurrentValue == options);
             var logger = NullLogger<EnsureSingleOrderExecutor>.Instance;
             var symbol = Symbol.Empty with { Name = "ABCXYZ", BaseAsset = "ABC", QuoteAsset = "XYZ" };
 
@@ -50,7 +45,7 @@ namespace Outcompute.Trader.Trading.Tests
                 .Returns(Task.FromResult<IReadOnlyList<OrderQueryResult>>(existing))
                 .Verifiable();
 
-            var executor = new EnsureSingleOrderExecutor(monitor, logger, balances, orders);
+            var executor = new EnsureSingleOrderExecutor(logger, balances, orders);
 
             var cancelOrderExecutor = Mock.Of<IAlgoCommandExecutor<CancelOrderCommand>>();
 

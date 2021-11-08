@@ -4,6 +4,7 @@ using Orleans;
 using Orleans.Timers;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Readyness;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -23,8 +24,9 @@ namespace Outcompute.Trader.Trading.Providers.Swap
         private readonly IBalanceProvider _balances;
         private readonly ISavingsProvider _savings;
         private readonly ISystemClock _clock;
+        private readonly IReadynessProvider _readyness;
 
-        public SwapPoolGrain(IOptionsMonitor<SwapPoolOptions> monitor, ILogger<SwapPoolGrain> logger, ITradingService trader, ITimerRegistry timers, IBalanceProvider balances, ISavingsProvider savings, ISystemClock clock)
+        public SwapPoolGrain(IOptionsMonitor<SwapPoolOptions> monitor, ILogger<SwapPoolGrain> logger, ITradingService trader, ITimerRegistry timers, IBalanceProvider balances, ISavingsProvider savings, ISystemClock clock, IReadynessProvider readyness)
         {
             _monitor = monitor;
             _logger = logger;
@@ -33,6 +35,7 @@ namespace Outcompute.Trader.Trading.Providers.Swap
             _balances = balances;
             _savings = savings;
             _clock = clock;
+            _readyness = readyness;
         }
 
         private static string TypeName => nameof(SwapPoolGrain);
@@ -46,6 +49,8 @@ namespace Outcompute.Trader.Trading.Providers.Swap
         private readonly Dictionary<long, SwapPoolConfiguration> _configurations = new();
 
         private readonly Dictionary<long, DateTime> _cooldowns = new();
+
+        private bool _ready;
 
         public override async Task OnActivateAsync()
         {
@@ -65,13 +70,12 @@ namespace Outcompute.Trader.Trading.Providers.Swap
 
         private async Task TickAsync()
         {
-            var options = _monitor.CurrentValue;
+            // skip if the system is not ready
+            if (!await _readyness.IsReadyAsync()) return;
 
             // skip if auto pooling is disabled
-            if (!options.AutoAddEnabled)
-            {
-                return;
-            }
+            var options = _monitor.CurrentValue;
+            if (!options.AutoAddEnabled) return;
 
             await LoadAsync();
 
@@ -267,6 +271,8 @@ namespace Outcompute.Trader.Trading.Providers.Swap
             await LoadSwapPoolsAsync();
             await LoadSwapPoolLiquiditiesAsync();
             await LoadSwapPoolConfigurationsAsync();
+
+            _ready = true;
         }
 
         private async Task LoadSwapPoolsAsync()
@@ -306,5 +312,7 @@ namespace Outcompute.Trader.Trading.Providers.Swap
         {
             _cooldowns[poolId] = _clock.UtcNow.Add(_monitor.CurrentValue.PoolCooldown);
         }
+
+        public Task<bool> IsReadyAsync() => Task.FromResult(_ready);
     }
 }

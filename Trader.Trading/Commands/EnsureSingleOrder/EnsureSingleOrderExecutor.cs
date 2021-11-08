@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
@@ -15,14 +14,12 @@ namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder
 {
     internal class EnsureSingleOrderExecutor : IAlgoCommandExecutor<EnsureSingleOrderCommand>
     {
-        private readonly IOptionsMonitor<SavingsOptions> _monitor;
         private readonly ILogger _logger;
         private readonly IBalanceProvider _balances;
         private readonly IOrderProvider _orders;
 
-        public EnsureSingleOrderExecutor(IOptionsMonitor<SavingsOptions> monitor, ILogger<EnsureSingleOrderExecutor> logger, IBalanceProvider balances, IOrderProvider orders)
+        public EnsureSingleOrderExecutor(ILogger<EnsureSingleOrderExecutor> logger, IBalanceProvider balances, IOrderProvider orders)
         {
-            _monitor = monitor;
             _logger = logger;
             _balances = balances;
             _orders = orders;
@@ -85,13 +82,11 @@ namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder
 
                     if (result.Success)
                     {
-                        var delay = _monitor.CurrentValue.SavingsRedemptionDelay;
-
                         _logger.LogInformation(
-                            "{Type} {Name} redeemed {Redeemed:F8} {Asset} from savings to cover the necessary {Necessary:F8} {Asset} and will wait {Wait} for the operation to complete",
-                            TypeName, command.Symbol.Name, result.Redeemed, sourceAsset, necessary, sourceAsset, delay);
+                            "{Type} {Name} redeemed {Redeemed:F8} {Asset} from savings to cover the necessary {Necessary:F8} {Asset} and will let the calling algo cycle",
+                            TypeName, command.Symbol.Name, result.Redeemed, sourceAsset, necessary, sourceAsset);
 
-                        await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+                        return;
                     }
                     else
                     {
@@ -105,13 +100,11 @@ namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder
 
                         if (result2.Success)
                         {
-                            var delay = _monitor.CurrentValue.SavingsRedemptionDelay;
-
                             _logger.LogInformation(
-                                "{Type} {Name} redeemed {Redeemed:F8} {Asset} from the swap pool to cover the necessary {Necessary:F8} {Asset} and will wait {Wait} for the operation to complete",
-                                TypeName, command.Symbol.Name, result2.QuoteAmount, sourceAsset, necessary, sourceAsset, delay);
+                                "{Type} {Name} redeemed {Redeemed:F8} {Asset} from the swap pool to cover the necessary {Necessary:F8} {Asset} and will wait let the calling algo cycle",
+                                TypeName, command.Symbol.Name, result2.QuoteAmount, sourceAsset, necessary, sourceAsset);
 
-                            await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+                            return;
                         }
                         else
                         {

@@ -39,6 +39,7 @@ namespace Microsoft.Extensions.DependencyInjection
 
                 // add readyness entries
                 .AddReadynessEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetSavingsGrain().IsReadyAsync())
+                .AddReadynessEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetSwapPoolGrain().IsReadyAsync())
 
                 // assorted services
                 .AddWatchdogService()

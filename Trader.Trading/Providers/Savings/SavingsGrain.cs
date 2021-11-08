@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
+using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using System;
@@ -18,13 +19,15 @@ namespace Outcompute.Trader.Trading.Providers.Savings
         private readonly ILogger _logger;
         private readonly ITradingService _trader;
         private readonly IAlgoDependencyResolver _dependencies;
+        private readonly ISystemClock _clock;
 
-        public SavingsGrain(IOptions<SavingsProviderOptions> options, ILogger<SavingsGrain> logger, ITradingService trader, IAlgoDependencyResolver dependencies)
+        public SavingsGrain(IOptions<SavingsProviderOptions> options, ILogger<SavingsGrain> logger, ITradingService trader, IAlgoDependencyResolver dependencies, ISystemClock clock)
         {
             _options = options.Value;
             _logger = logger;
             _trader = trader;
             _dependencies = dependencies;
+            _clock = clock;
         }
 
         private static string TypeName => nameof(SavingsGrain);
@@ -41,20 +44,53 @@ namespace Outcompute.Trader.Trading.Providers.Savings
 
         private bool _ready;
 
+        private Task? _loadTask;
+
+        private DateTime _nextLoad = DateTime.MinValue;
+
         #endregion Cache
 
         public override async Task OnActivateAsync()
         {
-            await UpdateAsync();
-
-            RegisterTimer(_ => UpdateAsync(), null, _options.RefreshPeriod, _options.RefreshPeriod);
+            RegisterTimer(_ => EnsureLoadAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
 
             await base.OnActivateAsync();
         }
 
+        public override Task OnDeactivateAsync()
+        {
+            _cancellation.Cancel();
+
+            return base.OnDeactivateAsync();
+        }
+
         public Task<bool> IsReadyAsync() => Task.FromResult(_ready);
 
-        private async Task UpdateAsync()
+        private async Task EnsureLoadAsync()
+        {
+            // start loading at the apropriate period
+            if (_loadTask is null && _clock.UtcNow >= _nextLoad)
+            {
+                _loadTask = Task.Run(() => LoadAsync(), _cancellation.Token);
+                return;
+            }
+
+            // observe exceptions
+            if (_loadTask is not null && _loadTask.IsCompleted)
+            {
+                try
+                {
+                    await _loadTask;
+                }
+                finally
+                {
+                    _loadTask = null;
+                    _nextLoad = _clock.UtcNow.Add(_options.RefreshPeriod);
+                }
+            }
+        }
+
+        private async Task LoadAsync()
         {
             // load all products from the exchange
             var products = await GetSavingsProductsAsync();

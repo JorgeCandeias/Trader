@@ -209,16 +209,25 @@ namespace Outcompute.Trader.Trading.Providers.Swap
         {
             // identify a pool with enough asset share
             var result = _liquidities.Values
-                .Where(x => x.AssetShare.TryGetValue(asset, out var share) && share >= amount)
-                .Where(x => _cooldowns.GetValueOrDefault(x.PoolId, DateTime.MinValue) < _clock.UtcNow)
+                .Where(x => x.AssetShare.GetValueOrDefault(asset, 0m) >= amount)
                 .OrderBy(x => x.PoolId)
                 .FirstOrDefault();
 
             if (result is null)
             {
                 _logger.LogWarning(
-                    "{Type} could not redeem asset {Amount} {Asset} because available pool can be found",
+                    "{Type} failed to redeem {Amount} {Asset} because no available pool can be found",
                     TypeName, amount, asset);
+
+                return RedeemSwapPoolEvent.Failed(asset);
+            }
+
+            var cooldown = _cooldowns.GetValueOrDefault(result.PoolId, DateTime.MinValue);
+            if (cooldown > _clock.UtcNow)
+            {
+                _logger.LogWarning(
+                    "{Type} failed to redeem {Amount} {Asset} from pool {PoolName} is on cooldown until {Cooldown}",
+                    TypeName, amount, asset, result.PoolName, cooldown);
 
                 return RedeemSwapPoolEvent.Failed(asset);
             }
@@ -226,6 +235,12 @@ namespace Outcompute.Trader.Trading.Providers.Swap
             // calculate the share fraction to redeem
             var fraction = (amount / result.AssetShare[asset]) * result.ShareAmount;
             fraction = Math.Round(fraction, 8);
+
+            // bump the fraction up to the minimum share redeemable
+            fraction = Math.Max(fraction, _configurations[result.PoolId].Liquidity.MinShareRedemption);
+
+            // bump the fraction down to the full user share available
+            fraction = Math.Min(fraction, result.ShareAmount);
 
             // for reporting only
             var baseAsset = result.AssetShare.Single(x => x.Key != asset).Key;

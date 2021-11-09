@@ -97,11 +97,6 @@ namespace Outcompute.Trader.Trading.InMemory
             return _grain.GetAccountTradesAsync(symbol, fromId, limit);
         }
 
-        public IReadOnlyCollection<SavingsProduct> GetCachedFlexibleProductsByAsset(string asset)
-        {
-            throw new NotImplementedException();
-        }
-
         public Task<IReadOnlyCollection<SavingsProduct>> GetFlexibleProductListAsync(SavingsStatus status, SavingsFeatured featured, long? current, long? size, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();

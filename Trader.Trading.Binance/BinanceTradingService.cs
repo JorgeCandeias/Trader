@@ -8,9 +8,7 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -39,8 +37,6 @@ namespace Outcompute.Trader.Trading.Binance
         }
 
         private static string Name => nameof(BinanceTradingService);
-
-        private ImmutableDictionary<string, ImmutableList<SavingsProduct>> _flexibleProducts = ImmutableDictionary<string, ImmutableList<SavingsProduct>>.Empty;
 
         public ITradingService WithBackoff()
         {
@@ -292,16 +288,6 @@ namespace Outcompute.Trader.Trading.Binance
             return _mapper.Map<IReadOnlyCollection<SavingsProduct>>(output);
         }
 
-        public IReadOnlyCollection<SavingsProduct> GetCachedFlexibleProductsByAsset(string asset)
-        {
-            if (_flexibleProducts.TryGetValue(asset, out var value))
-            {
-                return value;
-            }
-
-            return ImmutableList<SavingsProduct>.Empty;
-        }
-
         public async Task<string> CreateUserDataStreamAsync(CancellationToken cancellationToken = default)
         {
             var output = await _client
@@ -429,7 +415,6 @@ namespace Outcompute.Trader.Trading.Binance
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             await SyncLimitsAsync(cancellationToken).ConfigureAwait(false);
-            await SyncFlexibleProductsAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
@@ -471,33 +456,6 @@ namespace Outcompute.Trader.Trading.Binance
 
                 _usage.SetLimit(limit.Type, limit.TimeSpan, limit.Limit);
             }
-        }
-
-        private async Task SyncFlexibleProductsAsync(CancellationToken cancellationToken)
-        {
-            _logger.LogInformation("{Name} querying flexible products...", Name);
-
-            var page = 0;
-            var list = new List<SavingsProduct>();
-
-            while (true)
-            {
-                var result = await GetFlexibleProductListAsync(SavingsStatus.All, SavingsFeatured.All, ++page, 100, cancellationToken)
-                    .ConfigureAwait(false);
-
-                // stop if there are no more items to get
-                if (result.Count == 0) break;
-
-                _logger.LogInformation("{Name} queried a page with {Count} flexible products...", Name, result.Count);
-
-                // otherwise keep the items
-                list.AddRange(result);
-            }
-
-            _logger.LogInformation("{Name} queried a total of {Count} flexible products", Name, list.Count);
-
-            // keep the items in a safe state for concurrent querying
-            _flexibleProducts = list.GroupBy(x => x.Asset).ToImmutableDictionary(x => x.Key, x => x.ToImmutableList());
         }
 
         #endregion Helpers

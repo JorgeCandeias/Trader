@@ -208,28 +208,6 @@ namespace Outcompute.Trader.Trading.Binance.Tests
         }
 
         [Fact]
-        public void GetCachedFlexibleProductsByAsset()
-        {
-            // arrange
-            var asset = "ABC";
-            var logger = NullLogger<BinanceTradingServiceWithBackoff>.Instance;
-            var savings = (IReadOnlyCollection<SavingsProduct>)ImmutableList<SavingsProduct>.Empty;
-            var trader = Mock.Of<ITradingService>();
-            Mock.Get(trader)
-                .Setup(x => x.GetCachedFlexibleProductsByAsset(asset))
-                .Returns(savings)
-                .Verifiable();
-            var service = new BinanceTradingServiceWithBackoff(logger, trader);
-
-            // act
-            var result = service.GetCachedFlexibleProductsByAsset(asset);
-
-            // assert
-            Assert.Equal(savings, result);
-            Mock.Get(trader).VerifyAll();
-        }
-
-        [Fact]
         public async Task GetExchangeInfoAsync()
         {
             // arrange

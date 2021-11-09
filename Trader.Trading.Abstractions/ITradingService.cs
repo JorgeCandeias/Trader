@@ -113,9 +113,6 @@ namespace Outcompute.Trader.Trading
            long? size,
            CancellationToken cancellationToken = default);
 
-        IReadOnlyCollection<SavingsProduct> GetCachedFlexibleProductsByAsset(
-            string asset);
-
         Task<string> CreateUserDataStreamAsync(
             CancellationToken cancellationToken = default);
 

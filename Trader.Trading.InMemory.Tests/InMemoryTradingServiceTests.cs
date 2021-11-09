@@ -377,23 +377,6 @@ namespace Outcompute.Trader.Trading.InMemory.Tests
         }
 
         [Fact]
-        public void GetsCachedFlexibleProductsByAsset()
-        {
-            // arrange
-            var asset = "ABC";
-
-            var factory = Mock.Of<IGrainFactory>();
-
-            var service = new InMemoryTradingService(factory);
-
-            // act
-            void Test() => service.GetCachedFlexibleProductsByAsset(asset);
-
-            // assert
-            Assert.Throws<NotImplementedException>(Test);
-        }
-
-        [Fact]
         public void GetsFlexibleProductList()
         {
             // arrange

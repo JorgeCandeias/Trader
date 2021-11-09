@@ -201,6 +201,7 @@ namespace Outcompute.Trader.App
                                         options.SomeValue = "SomeValue";
                                     });
 
+                            /*
                             services
                                 .AddArbitrageAlgo(
                                     options =>
@@ -210,6 +211,7 @@ namespace Outcompute.Trader.App
                                     options =>
                                     {
                                     });
+                            */
 #endif
                         });
                 })

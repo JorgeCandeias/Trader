@@ -35,10 +35,7 @@ namespace Outcompute.Trader.Trading.Binance.Tests
             var listenKey = Guid.NewGuid().ToString();
             var time = DateTime.UtcNow;
 
-            var options = Options.Create(new BinanceOptions
-            {
-                UserDataStreamStabilizationPeriod = TimeSpan.Zero
-            });
+            var options = Options.Create(new BinanceOptions());
             var logger = NullLogger<BinanceUserDataGrain>.Instance;
 
             var trader = Mock.Of<ITradingService>(x =>

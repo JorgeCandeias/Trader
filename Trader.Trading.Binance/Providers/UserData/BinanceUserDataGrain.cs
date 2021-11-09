@@ -212,10 +212,6 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
                 // start streaming in the background while we sync from the api
                 var streamTask = Task.Run(() => StreamAsync(linked.Token), linked.Token);
 
-                // wait for a few seconds for the stream to stabilize so we don't miss any incoming data from binance
-                _logger.LogInformation("{Name} waiting {Period} for stream to stabilize...", Name, _options.UserDataStreamStabilizationPeriod);
-                await Task.Delay(_options.UserDataStreamStabilizationPeriod, linked.Token);
-
                 // sync asset balances
                 var accountInfo = await _trader.GetAccountInfoAsync(linked.Token);
                 await _balances.SetBalancesAsync(accountInfo, linked.Token);

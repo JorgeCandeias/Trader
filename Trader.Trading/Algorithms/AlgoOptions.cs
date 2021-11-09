@@ -56,7 +56,7 @@ namespace Outcompute.Trader.Trading.Algorithms
         /// The relative run order in the batch.
         /// </summary>
         [Required]
-        public int BatchOrder { get; set; } = 1000;
+        public int BatchOrder { get; set; } = 0;
 
         /// <summary>
         /// The start time for automatic position calculation.

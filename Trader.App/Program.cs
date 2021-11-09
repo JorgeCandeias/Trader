@@ -134,17 +134,6 @@ namespace Outcompute.Trader.App
                                 {
                                     options.Port = 6002;
                                 })
-                                .AddDiscoveryAlgo(
-                                    options =>
-                                    {
-                                        options.BatchOrder = int.MaxValue;
-                                    },
-                                    options =>
-                                    {
-                                        options.ForcedAssets.Add("BNB");
-                                        options.QuoteAssets.UnionWith(new[] { "BTC", "ETH", "BNB" });
-                                        options.IgnoreSymbols.UnionWith(new[] { "BNBGBP", "BTCGBP", "ETHGBP", "ETHBTC", "BNBBTC", "BNBETH", "XMRETH", "XMRBNB" });
-                                    })
                                 .AddAlgoType<TestAlgo, TestAlgoOptions>();
 
                             var templateSection = context.Configuration.GetSection("ValueAveragingTemplate");

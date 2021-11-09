@@ -490,4 +490,20 @@ namespace Outcompute.Trader.Trading.Binance
         decimal Share,
         decimal Slippage,
         decimal Fee);
+
+    internal record GetSwapPoolQuoteRequest(
+        string QuoteAsset,
+        string BaseAsset,
+        decimal QuoteQty,
+        long? RecvWindow,
+        long Timestamp);
+
+    internal record GetSwapPoolQuoteResponse(
+        string QuoteAsset,
+        string BaseAsset,
+        decimal QuoteQty,
+        decimal BaseQty,
+        decimal Price,
+        decimal Slippage,
+        decimal Fee);
 }

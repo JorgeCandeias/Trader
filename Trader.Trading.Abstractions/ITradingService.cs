@@ -159,5 +159,11 @@ namespace Outcompute.Trader.Trading
             string quoteAsset,
             decimal quoteQuantity,
             CancellationToken cancellationToken = default);
+
+        Task<SwapPoolQuote> GetSwapPoolQuoteAsync(
+            string quoteAsset,
+            string baseAsset,
+            decimal quoteQuantity,
+            CancellationToken cancellationToken = default);
     }
 }

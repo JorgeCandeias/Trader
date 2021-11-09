@@ -504,6 +504,16 @@ namespace Outcompute.Trader.Trading.Binance
                 .ConfigureAwait(false);
         }
 
+        public async Task<GetSwapPoolQuoteResponse> GetSwapPoolQuoteAsync(GetSwapPoolQuoteRequest model, CancellationToken cancellationToken = default)
+        {
+            var uri = Combine(new Uri("/sapi/v1/bswap/quote", UriKind.Relative), model);
+
+            return await _client
+                .GetFromJsonAsync<GetSwapPoolQuoteResponse>(uri, cancellationToken)
+                .WithNullHandling()
+                .ConfigureAwait(false);
+        }
+
         #endregion Swap Endpoints
 
         #region Helpers

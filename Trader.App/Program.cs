@@ -138,6 +138,11 @@ namespace Outcompute.Trader.App
                                 .Configure<SwapPoolOptions>(options =>
                                 {
                                     options.AutoAddEnabled = true;
+                                    options.AutoRedeemSavings = true;
+#if DEBUG
+                                    options.AutoAddEnabled = false;
+                                    options.AutoRedeemSavings = false;
+#endif
                                     options.IsolatedAssets.Add("BTC");
                                     options.IsolatedAssets.Add("ETH");
                                     options.ExcludedAssets.Add("BNB");
@@ -194,6 +199,16 @@ namespace Outcompute.Trader.App
                                     options =>
                                     {
                                         options.SomeValue = "SomeValue";
+                                    });
+
+                            services
+                                .AddArbitrageAlgo(
+                                    options =>
+                                    {
+                                        options.MaxExecutionTime = TimeSpan.FromHours(1);
+                                    },
+                                    options =>
+                                    {
                                     });
 #endif
                         });

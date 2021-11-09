@@ -29,5 +29,10 @@ namespace Outcompute.Trader.Trading.Providers.Swap
         {
             return _factory.GetSwapPoolGrain().GetSwapPoolsAsync();
         }
+
+        public Task<IEnumerable<SwapPoolConfiguration>> GetSwapPoolConfigurationsAsync(CancellationToken cancellationToken = default)
+        {
+            return _factory.GetSwapPoolGrain().GetSwapPoolConfigurationsAsync();
+        }
     }
 }

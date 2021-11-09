@@ -36,4 +36,11 @@ namespace Outcompute.Trader.Trading.Binance
         decimal QuoteQuantity,
         TimeSpan? ReceiveWindow,
         DateTime Timestamp);
+
+    internal record GetSwapPoolQuote(
+        string QuoteAsset,
+        string BaseAsset,
+        decimal QuoteQuantity,
+        TimeSpan? ReceiveWindow,
+        DateTime Timestamp);
 }

@@ -246,6 +246,14 @@ namespace Outcompute.Trader.Trading.Binance
             CreateMap<AddSwapPoolLiquidityPreviewResponse, SwapPoolLiquidityAddPreview>()
                 .ForCtorParam(nameof(SwapPoolLiquidityAddPreview.QuoteAmount), x => x.MapFrom(y => y.QuoteAmt))
                 .ForCtorParam(nameof(SwapPoolLiquidityAddPreview.BaseAmount), x => x.MapFrom(y => y.BaseAmt));
+
+            CreateMap<GetSwapPoolQuote, GetSwapPoolQuoteRequest>()
+                .ForCtorParam(nameof(GetSwapPoolQuoteRequest.QuoteQty), x => x.MapFrom(y => y.QuoteQuantity))
+                .ForCtorParam(nameof(GetSwapPoolQuoteRequest.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
+
+            CreateMap<GetSwapPoolQuoteResponse, SwapPoolQuote>()
+                .ForCtorParam(nameof(SwapPoolQuote.BaseQuantity), x => x.MapFrom(y => y.BaseQty))
+                .ForCtorParam(nameof(SwapPoolQuote.QuoteQuantity), x => x.MapFrom(y => y.QuoteQty));
         }
     }
 }

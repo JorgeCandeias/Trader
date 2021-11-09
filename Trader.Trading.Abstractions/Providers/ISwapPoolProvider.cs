@@ -12,5 +12,7 @@ namespace Outcompute.Trader.Trading.Providers
         Task<SwapPoolAssetBalance> GetBalanceAsync(string asset, CancellationToken cancellationToken = default);
 
         Task<IEnumerable<SwapPool>> GetSwapPoolsAsync(CancellationToken cancellationToken = default);
+
+        Task<IEnumerable<SwapPoolConfiguration>> GetSwapPoolConfigurationsAsync(CancellationToken cancellationToken = default);
     }
 }

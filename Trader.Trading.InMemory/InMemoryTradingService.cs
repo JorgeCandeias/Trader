@@ -208,5 +208,10 @@ namespace Outcompute.Trader.Trading.InMemory
         {
             throw new NotImplementedException();
         }
+
+        public Task<SwapPoolQuote> GetSwapPoolQuoteAsync(string quoteAsset, string baseAsset, decimal quoteQuantity, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

@@ -261,7 +261,12 @@ namespace Outcompute.Trader.Trading.Providers.Swap
 
         public Task<IEnumerable<SwapPool>> GetSwapPoolsAsync()
         {
-            return Task.FromResult<IEnumerable<SwapPool>>(_pools);
+            return _pools.AsTaskResult<IEnumerable<SwapPool>>();
+        }
+
+        public Task<IEnumerable<SwapPoolConfiguration>> GetSwapPoolConfigurationsAsync()
+        {
+            return _configurations.Values.ToImmutableList().AsTaskResult<IEnumerable<SwapPoolConfiguration>>();
         }
 
         public void Dispose()

@@ -14,5 +14,7 @@ namespace Outcompute.Trader.Trading.Providers.Swap
         Task<SwapPoolAssetBalance> GetBalanceAsync(string asset);
 
         Task<IEnumerable<SwapPool>> GetSwapPoolsAsync();
+
+        Task<IEnumerable<SwapPoolConfiguration>> GetSwapPoolConfigurationsAsync();
     }
 }

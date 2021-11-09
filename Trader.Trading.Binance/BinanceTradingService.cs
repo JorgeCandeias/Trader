@@ -437,6 +437,17 @@ namespace Outcompute.Trader.Trading.Binance
             return Task.CompletedTask;
         }
 
+        public async Task<SwapPoolQuote> GetSwapPoolQuoteAsync(string quoteAsset, string baseAsset, decimal quoteQuantity, CancellationToken cancellationToken = default)
+        {
+            var model = new GetSwapPoolQuote(quoteAsset, baseAsset, quoteQuantity, null, _clock.UtcNow);
+
+            var input = _mapper.Map<GetSwapPoolQuoteRequest>(model);
+
+            var output = await _client.GetSwapPoolQuoteAsync(input, cancellationToken).ConfigureAwait(false);
+
+            return _mapper.Map<SwapPoolQuote>(output);
+        }
+
         #region Helpers
 
         private async Task SyncLimitsAsync(CancellationToken cancellationToken)

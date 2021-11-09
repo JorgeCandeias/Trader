@@ -12,7 +12,6 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Providers;
-using Outcompute.Trader.Trading.Providers.Swap;
 using Serilog;
 using Serilog.Events;
 using System;
@@ -134,19 +133,6 @@ namespace Outcompute.Trader.App
                                 .AddTraderDashboard(options =>
                                 {
                                     options.Port = 6002;
-                                })
-                                .Configure<SwapPoolOptions>(options =>
-                                {
-                                    options.AutoAddEnabled = true;
-                                    options.AutoRedeemSavings = true;
-#if DEBUG
-                                    options.AutoAddEnabled = false;
-                                    options.AutoRedeemSavings = false;
-#endif
-                                    options.IsolatedAssets.Add("BTC");
-                                    options.IsolatedAssets.Add("ETH");
-                                    options.ExcludedAssets.Add("BNB");
-                                    options.ExcludedAssets.Add("XMR");
                                 })
                                 .AddDiscoveryAlgo(
                                     options =>

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Configuration;
 using System.Collections.Generic;
 using Xunit;
 

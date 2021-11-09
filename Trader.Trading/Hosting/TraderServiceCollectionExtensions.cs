@@ -12,6 +12,7 @@ using Outcompute.Trader.Trading.Commands.RedeemSavings;
 using Outcompute.Trader.Trading.Commands.RedeemSwapPool;
 using Outcompute.Trader.Trading.Commands.SignificantAveragingSell;
 using Outcompute.Trader.Trading.Commands.TrackingBuy;
+using Outcompute.Trader.Trading.Configuration;
 using Outcompute.Trader.Trading.Providers;
 using Outcompute.Trader.Trading.Providers.Balances;
 using Outcompute.Trader.Trading.Providers.Exchange;
@@ -81,6 +82,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 // swap pool provider
                 .AddSingleton<ISwapPoolProvider, SwapPoolProvider>()
                 .AddOptions<SwapPoolOptions>().ValidateDataAnnotations().Services
+                .ConfigureOptions<SwapPoolOptionsConfigurator>()
 
                 // algo context
                 .AddScoped<AlgoContext>()

@@ -83,6 +83,26 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
                 "{Type} identified {Count} unused symbols with swap pools: {Symbols}",
                 nameof(DiscoveryAlgo), unusedWithSwapPools.Count, unusedWithSwapPools);
 
+            // identify used symbols without savings
+            var usedWithoutSavings = used
+                .Except(options.IgnoreSymbols)
+                .Except(withSavings)
+                .ToList();
+
+            _logger.LogInformation(
+                "{Type} identified {Count} used symbols without savings: {Symbols}",
+                nameof(DiscoveryAlgo), usedWithoutSavings.Count, usedWithoutSavings);
+
+            // identify used symbols without swap pools
+            var usedWithoutSwapPools = used
+                .Except(options.IgnoreSymbols)
+                .Except(withSwapPools)
+                .ToList();
+
+            _logger.LogInformation(
+                "{Type} identified {Count} used symbols without swap pools: {Symbols}",
+                nameof(DiscoveryAlgo), usedWithoutSwapPools.Count, usedWithoutSwapPools);
+
             // identify used symbols without savings or swap pools
             var risky = used
                 .Except(options.IgnoreSymbols)

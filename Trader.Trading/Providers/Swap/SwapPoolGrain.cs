@@ -126,11 +126,25 @@ namespace Outcompute.Trader.Trading.Providers.Swap
                     // request a preview using the current asset as quote asset
                     var preview = await _trader.AddSwapPoolLiquidityPreviewAsync(candidate.PoolId, SwapPoolLiquidityType.Combination, asset.Key, totals[asset.Key], _cancellation.Token);
 
-                    // 1) check if the paired asset quantity is also above the min after preview
-                    if (preview.BaseAmount < candidate.Assets[preview.BaseAsset].MinAdd) continue;
+                    // check if the paired asset quantity is also above the min after preview
+                    if (preview.BaseAmount < candidate.Assets[preview.BaseAsset].MinAdd)
+                    {
+                        continue;
+                    }
 
-                    // 2) check if there is enough free balance for the base asset as per preview
-                    if (preview.BaseAmount < totals[preview.BaseAsset]) continue;
+                    // check if there is enough quote asset usable
+                    var quoteUsable = totals.GetValueOrDefault(preview.QuoteAsset, 0m);
+                    if (quoteUsable < preview.QuoteAmount)
+                    {
+                        continue;
+                    }
+
+                    // check if there is enough base asset usable
+                    var baseUsable = totals.GetValueOrDefault(preview.BaseAsset, 0m);
+                    if (baseUsable < preview.BaseAmount)
+                    {
+                        continue;
+                    }
 
                     _logger.LogInformation(
                         "{Type} elected pool {PoolName} for adding assets {QuoteAmount:F8} {QuoteAsset} and {BaseAmount:F8} {BaseAsset}",
@@ -138,11 +152,17 @@ namespace Outcompute.Trader.Trading.Providers.Swap
 
                     // ensure there is enough spot amount for the quote asset by redeeming savings
                     var (quoteSuccess, quoteRedeemed) = await EnsureSpotAmountAsync(preview.QuoteAsset, preview.QuoteAmount, spots.GetValueOrDefault(preview.QuoteAsset)?.Free ?? 0m, savings.GetValueOrDefault(preview.QuoteAsset)?.FreeAmount ?? 0m);
-                    if (!quoteSuccess) continue;
+                    if (!quoteSuccess)
+                    {
+                        continue;
+                    }
 
                     // ensure there is enough spot amount for the base asset by redeeming savings
                     var (baseSuccess, baseRedeemed) = await EnsureSpotAmountAsync(preview.BaseAsset, preview.BaseAmount, spots.GetValueOrDefault(preview.BaseAsset)?.Free ?? 0m, savings.GetValueOrDefault(preview.BaseAsset)?.FreeAmount ?? 0m);
-                    if (!baseSuccess) continue;
+                    if (!baseSuccess)
+                    {
+                        continue;
+                    }
 
                     // if any savings were redeem then let the timer cycle to allow the exchange to complete the operation
                     if (quoteRedeemed || baseRedeemed) return;

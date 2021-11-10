@@ -75,8 +75,6 @@ namespace Outcompute.Trader.Trading.Algorithms
                     .ConfigureAwait(false);
             }
 
-            var tickerTask = _tickers.GetRequiredTickerAsync(symbol, cancellationToken);
-
             var assetBalanceTask = _balances.GetBalanceOrZeroAsync(context.Symbol.BaseAsset, cancellationToken);
 
             var quoteBalanceTask = _balances.GetBalanceOrZeroAsync(context.Symbol.QuoteAsset, cancellationToken);
@@ -90,9 +88,6 @@ namespace Outcompute.Trader.Trading.Algorithms
             var quoteSwapPoolTask = _swaps.GetBalanceAsync(context.Symbol.QuoteAsset, cancellationToken);
 
             var ordersTask = _orders.GetOrdersAsync(symbol, CancellationToken.None);
-
-            // populate the current ticker
-            context.Ticker = await tickerTask.ConfigureAwait(false);
 
             // populate the asset spot balance
             context.AssetSpotBalance = await assetBalanceTask.ConfigureAwait(false);

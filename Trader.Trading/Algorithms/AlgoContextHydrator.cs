@@ -75,10 +75,6 @@ namespace Outcompute.Trader.Trading.Algorithms
                     .ConfigureAwait(false);
             }
 
-            var assetBalanceTask = _balances.GetBalanceOrZeroAsync(context.Symbol.BaseAsset, cancellationToken);
-
-            var quoteBalanceTask = _balances.GetBalanceOrZeroAsync(context.Symbol.QuoteAsset, cancellationToken);
-
             var assetSavingsTask = _savings.GetPositionOrZeroAsync(context.Symbol.BaseAsset, cancellationToken);
 
             var quoteSavingsTask = _savings.GetPositionOrZeroAsync(context.Symbol.QuoteAsset, cancellationToken);
@@ -88,12 +84,6 @@ namespace Outcompute.Trader.Trading.Algorithms
             var quoteSwapPoolTask = _swaps.GetBalanceAsync(context.Symbol.QuoteAsset, cancellationToken);
 
             var ordersTask = _orders.GetOrdersAsync(symbol, CancellationToken.None);
-
-            // populate the asset spot balance
-            context.AssetSpotBalance = await assetBalanceTask.ConfigureAwait(false);
-
-            // populate the quote spot balance
-            context.QuoteSpotBalance = await quoteBalanceTask.ConfigureAwait(false);
 
             // populate the asset savings balance
             context.AssetSavingsBalance = await assetSavingsTask.ConfigureAwait(false);

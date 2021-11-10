@@ -17,7 +17,7 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Data.Sql
 {
-    internal class SqlTradingRepository : ITradingRepository
+    internal partial class SqlTradingRepository : ITradingRepository
     {
         private readonly SqlTradingRepositoryOptions _options;
         private readonly ILogger _logger;
@@ -34,9 +34,7 @@ namespace Outcompute.Trader.Data.Sql
                 .Handle<SqlException>()
                 .RetryAsync(_options.RetryCount, (ex, retry) =>
                 {
-                    _logger.LogError(ex,
-                        "{Name} handled exception and will retry ({Retry}/{Total})",
-                        Name, retry, _options.RetryCount);
+                    LogHandledExceptionWillRetry(ex, Name, retry, _options.RetryCount);
                 });
         }
 
@@ -124,14 +122,7 @@ namespace Outcompute.Trader.Data.Sql
 
             using var connection = new SqlConnection(_options.ConnectionString);
 
-            await Policy
-                .Handle<SqlException>()
-                .RetryAsync(_options.RetryCount, (ex, retry) =>
-                {
-                    _logger.LogError(ex,
-                        "{Name} handled exception while calling [dbo].[SetOrders] and will retry ({Retry}/{Total})",
-                        Name, retry, _options.RetryCount);
-                })
+            await _retryPolicy
                 .ExecuteAsync(ct => connection
                     .ExecuteAsync(
                         new CommandDefinition(
@@ -483,5 +474,8 @@ namespace Outcompute.Trader.Data.Sql
                     .ConfigureAwait(false);
             }
         }
+
+        [LoggerMessage(0, LogLevel.Error, "{Name} handled exception and will retry ({Retry}/{Total})")]
+        private partial void LogHandledExceptionWillRetry(Exception ex, string name, int retry, int total);
     }
 }

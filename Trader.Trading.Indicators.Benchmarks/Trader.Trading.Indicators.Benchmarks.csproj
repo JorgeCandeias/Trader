@@ -20,6 +20,10 @@
 
 	<ItemGroup>
 	  <PackageReference Include="BenchmarkDotNet" Version="0.13.1" />
+	  <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="6.0.0">
+	    <PrivateAssets>all</PrivateAssets>
+	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	  </PackageReference>
 	  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
 	  <PackageReference Include="SonarAnalyzer.CSharp" Version="8.30.0.37606">
 	    <PrivateAssets>all</PrivateAssets>

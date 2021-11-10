@@ -14,9 +14,9 @@ namespace Outcompute.Trader.Data.Sql.Tests
         private const string ConnectionString = @"server=(localdb)\mssqllocaldb;database=TraderTest";
 
         private static readonly IMapper _mapper = new MapperConfiguration(options =>
-        {
-            options.AddProfile<SqlTradingRepositoryProfile>();
-        }).CreateMapper();
+              {
+                  options.AddProfile<SqlTradingRepositoryProfile>();
+              }).CreateMapper();
 
         private static SqlTradingRepository CreateRepository()
         {

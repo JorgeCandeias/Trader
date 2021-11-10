@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>Outcompute.Trader.Data</RootNamespace>
     <Nullable>enable</Nullable>
     <NeutralLanguage>en-GB</NeutralLanguage>
@@ -9,7 +9,7 @@
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     <AssemblyName>Outcompute.Trader.Data.Abstractions</AssemblyName>
-    <Description>Repository abstractions library of Outcompute Trader, an algorithmic trading framework.</Description>
+    <Description>Repository abstractions library of Outcompute Trader, a real-time algorithmic trading framework.</Description>
   </PropertyGroup>
 
   <ItemGroup>

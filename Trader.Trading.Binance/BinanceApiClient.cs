@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using FastMember;
 using Microsoft.Extensions.ObjectPool;
+using Microsoft.Extensions.Options;
 using Outcompute.Trader.Models;
 using System;
 using System.Collections.Generic;
@@ -19,22 +20,18 @@ namespace Outcompute.Trader.Trading.Binance
 {
     internal class BinanceApiClient
     {
+        private readonly BinanceOptions _options;
         private readonly HttpClient _client;
         private readonly IMapper _mapper;
         private readonly ObjectPool<StringBuilder> _pool;
 
-        public BinanceApiClient(HttpClient client, IMapper mapper, ObjectPool<StringBuilder> pool)
+        public BinanceApiClient(IOptions<BinanceOptions> options, HttpClient client, IMapper mapper, ObjectPool<StringBuilder> pool)
         {
+            _options = options.Value;
             _client = client;
             _mapper = mapper;
             _pool = pool;
         }
-
-        private readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)
-        {
-            PropertyNameCaseInsensitive = false,
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        };
 
         #region General Endpoints
 
@@ -192,7 +189,7 @@ namespace Outcompute.Trader.Trading.Binance
                 .ConfigureAwait(false);
 
             return await response.Content
-                .ReadFromJsonAsync<CreateOrderResponse>(_jsonOptions, cancellationToken)
+                .ReadFromJsonAsync<CreateOrderResponse>(_options.JsonSerializerOptions, cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
 
@@ -207,7 +204,7 @@ namespace Outcompute.Trader.Trading.Binance
             return await _client
                 .GetFromJsonAsync<GetOrderResponse>(
                     Combine(new Uri("/api/v3/order", UriKind.Relative), model),
-                    _jsonOptions,
+                    _options.JsonSerializerOptions,
                     cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
@@ -227,7 +224,7 @@ namespace Outcompute.Trader.Trading.Binance
                 .ConfigureAwait(false);
 
             return await output.Content
-                .ReadFromJsonAsync<CancelOrderResponse>(_jsonOptions, cancellationToken)
+                .ReadFromJsonAsync<CancelOrderResponse>(_options.JsonSerializerOptions, cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
 
@@ -243,7 +240,7 @@ namespace Outcompute.Trader.Trading.Binance
                 .ConfigureAwait(false);
 
             return await response.Content
-                .ReadFromJsonAsync<IEnumerable<CancelAllOrdersResponse>>(_jsonOptions, cancellationToken)
+                .ReadFromJsonAsync<IEnumerable<CancelAllOrdersResponse>>(_options.JsonSerializerOptions, cancellationToken)
                 .WithNullHandling()
                 .ConfigureAwait(false);
         }
@@ -259,7 +256,7 @@ namespace Outcompute.Trader.Trading.Binance
             return await _client
                 .GetFromJsonAsync<IEnumerable<GetOrderResponse>>(
                     Combine(new Uri("/api/v3/openOrders", UriKind.Relative), model),
-                    _jsonOptions,
+                    _options.JsonSerializerOptions,
                     cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
@@ -275,7 +272,7 @@ namespace Outcompute.Trader.Trading.Binance
             return await _client
                 .GetFromJsonAsync<IEnumerable<GetOrderResponse>>(
                     Combine(new Uri("/api/v3/allOrders", UriKind.Relative), model),
-                    _jsonOptions,
+                    _options.JsonSerializerOptions,
                     cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
@@ -290,7 +287,7 @@ namespace Outcompute.Trader.Trading.Binance
             return await _client
                 .GetFromJsonAsync<GetAccountInfoResponse>(
                     Combine(new Uri("/api/v3/account", UriKind.Relative), model),
-                    _jsonOptions,
+                    _options.JsonSerializerOptions,
                     cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
@@ -336,7 +333,7 @@ namespace Outcompute.Trader.Trading.Binance
             response.EnsureSuccessStatusCode();
 
             return await response.Content
-                .ReadFromJsonAsync<CreateUserDataStreamResponse>(_jsonOptions, cancellationToken)
+                .ReadFromJsonAsync<CreateUserDataStreamResponse>(_options.JsonSerializerOptions, cancellationToken)
                 .ConfigureAwait(false) ?? throw new BinanceUnknownResponseException();
         }
 
@@ -463,7 +460,7 @@ namespace Outcompute.Trader.Trading.Binance
             result = result.EnsureSuccessStatusCode();
 
             return await result.Content
-                .ReadFromJsonAsync<AddSwapPoolLiquidityResponse>(_jsonOptions, cancellationToken)
+                .ReadFromJsonAsync<AddSwapPoolLiquidityResponse>(_options.JsonSerializerOptions, cancellationToken)
                 .WithNullHandling()
                 .ConfigureAwait(false);
         }
@@ -479,7 +476,7 @@ namespace Outcompute.Trader.Trading.Binance
             result = result.EnsureSuccessStatusCode();
 
             return await result.Content
-                .ReadFromJsonAsync<RemoveSwapPoolLiquidityResponse>(_jsonOptions, cancellationToken)
+                .ReadFromJsonAsync<RemoveSwapPoolLiquidityResponse>(_options.JsonSerializerOptions, cancellationToken)
                 .WithNullHandling()
                 .ConfigureAwait(false);
         }
@@ -576,7 +573,7 @@ namespace Outcompute.Trader.Trading.Binance
                 .ConfigureAwait(false);
 
             var typed = await response.Content
-                .ReadFromJsonAsync<TResponse>(_jsonOptions, cancellationToken)
+                .ReadFromJsonAsync<TResponse>(_options.JsonSerializerOptions, cancellationToken)
                 .ConfigureAwait(false);
 
             return _mapper.Map<TResult>(typed);

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
 
 namespace Outcompute.Trader.Trading.Binance
 {
@@ -72,5 +73,11 @@ namespace Outcompute.Trader.Trading.Binance
         [Required]
         [Range(typeof(TimeSpan), "0.00:00:00.001", "1.00:00:00.000")]
         public TimeSpan TickerBroadcastDelay { get; set; } = TimeSpan.FromSeconds(1);
+
+        public JsonSerializerOptions JsonSerializerOptions { get; } = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+        {
+            PropertyNameCaseInsensitive = false,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        };
     }
 }

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net5.0</TargetFramework>
+		<TargetFramework>net6.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<NeutralLanguage>en-GB</NeutralLanguage>
 		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
@@ -9,7 +9,7 @@
 		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
 		<AssemblyName>Outcompute.Trader.Trading</AssemblyName>
 		<RootNamespace>Outcompute.Trader.Trading</RootNamespace>
-		<Description>Trading library of Outcompute Trader, an algorithmic trading framework.</Description>
+		<Description>Trading library of Outcompute Trader, a real-time algorithmic trading framework.</Description>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -30,19 +30,19 @@
 		<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.1" />
 		<PackageReference Include="FastMember" Version="1.5.0" />
 		<PackageReference Include="MathNet.Numerics" Version="4.15.0" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="5.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="5.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Http" Version="5.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="5.0.0" />
-		<PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" Version="3.5.0">
+		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" Version="3.5.1">
 		  <PrivateAssets>all</PrivateAssets>
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.Orleans.Core.Abstractions" Version="3.5.0" />
-		<PackageReference Include="Microsoft.Orleans.OrleansRuntime" Version="3.5.0" />
-		<PackageReference Include="OrleansDashboard.Core" Version="3.5.2" />
+		<PackageReference Include="Microsoft.Orleans.Core.Abstractions" Version="3.5.1" />
+		<PackageReference Include="Microsoft.Orleans.OrleansRuntime" Version="3.5.1" />
+		<PackageReference Include="OrleansDashboard.Core" Version="3.6.1" />
 		<PackageReference Include="Polly" Version="7.2.2" />
 		<PackageReference Include="SonarAnalyzer.CSharp" Version="8.30.0.37606">
 			<PrivateAssets>all</PrivateAssets>

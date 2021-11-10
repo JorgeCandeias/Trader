@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31025.194
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.App", "Trader.App\Trader.App.csproj", "{FFDD16E1-EC64-436D-ACDE-2DD9FD8818BC}"
 EndProject
@@ -66,7 +66,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Trading.InMemory.Tes
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Data.InMemory.Tests", "Trader.Data.InMemory.Tests\Trader.Data.InMemory.Tests.csproj", "{EB3BDCD4-5115-4F33-B9AA-FE242CE0817B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Dashboard.Tests", "Trader.Dashboard.Tests\Trader.Dashboard.Tests.csproj", "{AAC512E6-F837-4A22-A345-3EF4C2F3705A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Dashboard.Tests", "Trader.Dashboard.Tests\Trader.Dashboard.Tests.csproj", "{AAC512E6-F837-4A22-A345-3EF4C2F3705A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

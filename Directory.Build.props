@@ -6,6 +6,9 @@
 		<Authors>Jorge Candeias</Authors>
 		<Company>Outcompute Ltd</Company>
 		<Product>Outcompute Trader</Product>
+		<PackageTags>Trading;Exchange;Orleans;Binance</PackageTags>
+		<RepositoryUrl>https://github.com/JorgeCandeias/Trader</RepositoryUrl>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 	</PropertyGroup>
 	<ItemGroup>
 		<None Include="..\Icons\Icon.128x128.png" Pack="true" PackagePath="\" />

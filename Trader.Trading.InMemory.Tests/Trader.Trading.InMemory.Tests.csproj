@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net5.0</TargetFramework>
+		<TargetFramework>net6.0</TargetFramework>
 		<IsPackable>false</IsPackable>
 		<AssemblyName>Outcompute.Trader.Trading.InMemory.Tests</AssemblyName>
 		<RootNamespace>Outcompute.Trader.Trading.InMemory.Tests</RootNamespace>
@@ -24,12 +24,12 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.11.0" />
-		<PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" Version="3.5.0">
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0" />
+		<PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" Version="3.5.1">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.Orleans.TestingHost" Version="3.5.0" />
+		<PackageReference Include="Microsoft.Orleans.TestingHost" Version="3.5.1" />
 		<PackageReference Include="Moq" Version="4.16.1" />
 		<PackageReference Include="SonarAnalyzer.CSharp" Version="8.30.0.37606">
 			<PrivateAssets>all</PrivateAssets>

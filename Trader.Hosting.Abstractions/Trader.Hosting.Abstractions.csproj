@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFramework>net5.0</TargetFramework>
+		<TargetFramework>net6.0</TargetFramework>
 		<RootNamespace>Outcompute.Trader.Hosting</RootNamespace>
 		<Nullable>enable</Nullable>
 		<NeutralLanguage>en-GB</NeutralLanguage>
@@ -8,7 +8,7 @@
 		<EnableNETAnalyzers>true</EnableNETAnalyzers>
 		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
 		<AssemblyName>Outcompute.Trader.Hosting.Abstractions</AssemblyName>
-		<Description>Hosting abstractions library of Outcompute Trader, an algorithmic trading framework.</Description>
+		<Description>Hosting abstractions library of Outcompute Trader, a real-time algorithmic trading framework.</Description>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -16,10 +16,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="5.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
-		<PackageReference Include="Microsoft.Orleans.Runtime.Abstractions" Version="3.5.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Orleans.Runtime.Abstractions" Version="3.5.1" />
 		<PackageReference Include="SonarAnalyzer.CSharp" Version="8.30.0.37606">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

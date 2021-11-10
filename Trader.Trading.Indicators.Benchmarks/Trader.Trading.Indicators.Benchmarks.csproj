@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-		<TargetFramework>net5.0</TargetFramework>
+		<TargetFramework>net6.0</TargetFramework>
 		<NeutralLanguage>en-GB</NeutralLanguage>
 		<Nullable>enable</Nullable>
 		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
@@ -20,7 +20,7 @@
 
 	<ItemGroup>
 	  <PackageReference Include="BenchmarkDotNet" Version="0.13.1" />
-	  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.2" />
+	  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
 	  <PackageReference Include="SonarAnalyzer.CSharp" Version="8.30.0.37606">
 	    <PrivateAssets>all</PrivateAssets>
 	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

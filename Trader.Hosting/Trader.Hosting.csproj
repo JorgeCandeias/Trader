@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFramework>net5.0</TargetFramework>
+		<TargetFramework>net6.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<NeutralLanguage>en-GB</NeutralLanguage>
 		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
@@ -8,14 +8,14 @@
 		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 		<AssemblyName>Outcompute.Trader.Hosting</AssemblyName>
 		<RootNamespace>Outcompute.Trader.Hosting</RootNamespace>
-		<Description>Hosting library of Outcompute Trader, an algorithmic trading framework.</Description>
+		<Description>Hosting library of Outcompute Trader, a real-time algorithmic trading framework.</Description>
 	</PropertyGroup>
 	<ItemGroup>
 		<InternalsVisibleTo Include="Outcompute.Trader.Hosting.Tests" />
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.1" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
 		<PackageReference Include="SonarAnalyzer.CSharp" Version="8.30.0.37606">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

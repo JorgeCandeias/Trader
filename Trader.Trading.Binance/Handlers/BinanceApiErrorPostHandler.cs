@@ -1,12 +1,12 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Outcompute.Trader.Core.Time;
 using System;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Outcompute.Trader.Core.Time;
 
 namespace Outcompute.Trader.Trading.Binance.Handlers
 {
@@ -18,9 +18,9 @@ namespace Outcompute.Trader.Trading.Binance.Handlers
 
         public BinanceApiErrorPostHandler(IOptions<BinanceOptions> options, ILogger<BinanceApiErrorPostHandler> logger, ISystemClock clock)
         {
-            _options = options.Value ?? throw new ArgumentNullException(nameof(options));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+            _options = options.Value;
+            _logger = logger;
+            _clock = clock;
         }
 
         private static string Type => nameof(BinanceApiErrorPostHandler);
@@ -73,7 +73,7 @@ namespace Outcompute.Trader.Trading.Binance.Handlers
             }
 
             // attempt graceful handling of a binance api error
-            var error = await response.Content.ReadFromJsonAsync<ApiError>(null, cancellationToken).ConfigureAwait(false);
+            var error = await response.Content.ReadFromJsonAsync<ApiError>(_options.JsonSerializerOptions, cancellationToken).ConfigureAwait(false);
             if (error is not null && error.Code != 0)
             {
                 throw new BinanceCodeException(error.Code, error.Msg, response.StatusCode);

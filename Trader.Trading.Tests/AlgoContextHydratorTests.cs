@@ -38,11 +38,12 @@ namespace Outcompute.Trader.Trading.Tests
             var savings = Mock.Of<ISavingsProvider>();
             var orders = Mock.Of<IOrderProvider>();
             var swaps = Mock.Of<ISwapPoolProvider>();
-            var hydrator = new AlgoContextHydrator(exchange, resolver, tickers, balances, savings, orders, swaps);
+            var configurators = Array.Empty<IAlgoContextConfigurator<AlgoContext>>();
+            var hydrator = new AlgoContextHydrator(exchange, resolver, tickers, balances, savings, orders, swaps, configurators);
             var context = new AlgoContext(NullServiceProvider.Instance);
 
             // act
-            await hydrator.HydrateSymbolAsync(context, "ABCXYZ", CancellationToken.None);
+            await hydrator.HydrateSymbolAsync(context, name, name, CancellationToken.None);
 
             // assert
             Assert.Same(symbol, context.Symbol);
@@ -53,6 +54,8 @@ namespace Outcompute.Trader.Trading.Tests
         public async Task HydratesAlgoContextAll()
         {
             // arrange
+            var name = "Algo1";
+
             var symbol = Symbol.Empty with
             {
                 Name = "ABCXYZ",
@@ -111,12 +114,13 @@ namespace Outcompute.Trader.Trading.Tests
                 .Returns(Task.FromResult<IReadOnlyList<OrderQueryResult>>(new[] { order }));
 
             var swaps = Mock.Of<ISwapPoolProvider>();
+            var configurators = Array.Empty<IAlgoContextConfigurator<AlgoContext>>();
 
-            var hydrator = new AlgoContextHydrator(exchange, resolver, tickers, balances, savings, orders, swaps);
+            var hydrator = new AlgoContextHydrator(exchange, resolver, tickers, balances, savings, orders, swaps, configurators);
             var context = new AlgoContext(NullServiceProvider.Instance);
 
             // act
-            await hydrator.HydrateAllAsync(context, symbol.Name, startTime, CancellationToken.None);
+            await hydrator.HydrateAllAsync(context, name, symbol.Name, startTime, CancellationToken.None);
 
             // assert
             Assert.Same(symbol, context.Symbol);

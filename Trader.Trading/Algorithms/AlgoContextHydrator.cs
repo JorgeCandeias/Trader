@@ -1,5 +1,6 @@
 ﻿using Outcompute.Trader.Trading.Providers;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,8 +15,9 @@ namespace Outcompute.Trader.Trading.Algorithms
         private readonly ISavingsProvider _savings;
         private readonly IOrderProvider _orders;
         private readonly ISwapPoolProvider _swaps;
+        private readonly IEnumerable<IAlgoContextConfigurator<AlgoContext>> _configurators;
 
-        public AlgoContextHydrator(IExchangeInfoProvider exchange, IAutoPositionResolver resolver, ITickerProvider tickers, IBalanceProvider balances, ISavingsProvider savings, IOrderProvider orders, ISwapPoolProvider swaps)
+        public AlgoContextHydrator(IExchangeInfoProvider exchange, IAutoPositionResolver resolver, ITickerProvider tickers, IBalanceProvider balances, ISavingsProvider savings, IOrderProvider orders, ISwapPoolProvider swaps, IEnumerable<IAlgoContextConfigurator<AlgoContext>> configurators)
         {
             _exchange = exchange;
             _resolver = resolver;
@@ -24,9 +26,10 @@ namespace Outcompute.Trader.Trading.Algorithms
             _savings = savings;
             _orders = orders;
             _swaps = swaps;
+            _configurators = configurators;
         }
 
-        public Task HydrateSymbolAsync(AlgoContext context, string symbol, CancellationToken cancellationToken = default)
+        public Task HydrateSymbolAsync(AlgoContext context, string name, string symbol, CancellationToken cancellationToken = default)
         {
             if (context is null)
             {
@@ -41,7 +44,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             return HydrateSymbolCoreAsync(context, symbol, cancellationToken);
         }
 
-        public Task HydrateAllAsync(AlgoContext context, string symbol, DateTime startTime, CancellationToken cancellationToken = default)
+        public Task HydrateAllAsync(AlgoContext context, string name, string symbol, DateTime startTime, CancellationToken cancellationToken = default)
         {
             if (context is null)
             {
@@ -53,7 +56,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 throw new ArgumentNullException(nameof(symbol));
             }
 
-            return HydrateAllCoreAsync(context, startTime, symbol, cancellationToken);
+            return HydrateAllCoreAsync(context, name, startTime, symbol, cancellationToken);
         }
 
         private async Task HydrateSymbolCoreAsync(AlgoContext context, string symbol, CancellationToken cancellationToken = default)
@@ -63,48 +66,33 @@ namespace Outcompute.Trader.Trading.Algorithms
                 .ConfigureAwait(false);
         }
 
-        private async Task HydrateAllCoreAsync(AlgoContext context, DateTime startTime, string symbol, CancellationToken cancellationToken = default)
+        private async Task HydrateAllCoreAsync(AlgoContext context, string name, DateTime startTime, string symbol, CancellationToken cancellationToken = default)
         {
+            foreach (var configurator in _configurators)
+            {
+                await configurator
+                    .ConfigureAsync(context, name, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
             // fetch all required information in parallel as much as possible
-            var symbolTask = _exchange
-                .GetRequiredSymbolAsync(symbol, cancellationToken);
+            var significantTask = _resolver.ResolveAsync(context.Symbol, startTime, cancellationToken);
 
-            var significantTask = symbolTask
-                .ContinueWith(symbolx => _resolver.ResolveAsync(symbolx.Result, startTime, cancellationToken), cancellationToken, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Default)
-                .Unwrap();
+            var tickerTask = _tickers.GetRequiredTickerAsync(symbol, cancellationToken);
 
-            var tickerTask = _tickers
-                .GetRequiredTickerAsync(symbol, cancellationToken);
+            var assetBalanceTask = _balances.GetBalanceOrZeroAsync(context.Symbol.BaseAsset, cancellationToken);
 
-            var assetBalanceTask = symbolTask
-                .ContinueWith(symbolx => _balances.GetBalanceOrZeroAsync(symbolx.Result.BaseAsset, cancellationToken), cancellationToken, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Default)
-                .Unwrap();
+            var quoteBalanceTask = _balances.GetBalanceOrZeroAsync(context.Symbol.QuoteAsset, cancellationToken);
 
-            var quoteBalanceTask = symbolTask
-                .ContinueWith(symbolx => _balances.GetBalanceOrZeroAsync(symbolx.Result.QuoteAsset, cancellationToken), cancellationToken, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Default)
-                .Unwrap();
+            var assetSavingsTask = _savings.GetPositionOrZeroAsync(context.Symbol.BaseAsset, cancellationToken);
 
-            var assetSavingsTask = symbolTask
-                .ContinueWith(symbolx => _savings.GetPositionOrZeroAsync(symbolx.Result.BaseAsset, cancellationToken), cancellationToken, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Default)
-                .Unwrap();
+            var quoteSavingsTask = _savings.GetPositionOrZeroAsync(context.Symbol.QuoteAsset, cancellationToken);
 
-            var quoteSavingsTask = symbolTask
-                .ContinueWith(symbolx => _savings.GetPositionOrZeroAsync(symbolx.Result.QuoteAsset, cancellationToken), cancellationToken, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Default)
-                .Unwrap();
+            var assetSwapPoolTask = _swaps.GetBalanceAsync(context.Symbol.BaseAsset, cancellationToken);
 
-            var assetSwapPoolTask = symbolTask
-                .ContinueWith(symbolx => _swaps.GetBalanceAsync(symbolx.Result.BaseAsset, cancellationToken), cancellationToken, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Default)
-                .Unwrap();
+            var quoteSwapPoolTask = _swaps.GetBalanceAsync(context.Symbol.QuoteAsset, cancellationToken);
 
-            var quoteSwapPoolTask = symbolTask
-                .ContinueWith(symbolx => _swaps.GetBalanceAsync(symbolx.Result.QuoteAsset, cancellationToken), cancellationToken, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Default)
-                .Unwrap();
-
-            var ordersTask = _orders
-                .GetOrdersAsync(symbol, CancellationToken.None);
-
-            // populate the symbol
-            context.Symbol = await symbolTask.ConfigureAwait(false);
+            var ordersTask = _orders.GetOrdersAsync(symbol, CancellationToken.None);
 
             // populate significant assets
             context.Significant = await significantTask.ConfigureAwait(false);

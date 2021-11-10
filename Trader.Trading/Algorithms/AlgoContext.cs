@@ -19,6 +19,8 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public Symbol Symbol { get; internal set; } = Symbol.Empty;
 
+        public DateTime TickTime { get; internal set; } = DateTime.MinValue;
+
         public IServiceProvider ServiceProvider { get; }
 
         public SignificantResult Significant { get; set; } = SignificantResult.Empty;

@@ -59,7 +59,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             // resolve the symbol if this algo defines it
             if (!IsNullOrWhiteSpace(options.Symbol))
             {
-                await _hydrator.HydrateSymbolAsync(_context, options.Symbol, _lifetime.ApplicationStopping);
+                await _hydrator.HydrateSymbolAsync(_context, _name, options.Symbol, _lifetime.ApplicationStopping);
             }
 
             // resolve the factory for the current algo type and create the algo instance
@@ -164,7 +164,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             if (!IsNullOrWhiteSpace(options.Symbol))
             {
                 // update the context properties
-                await _hydrator.HydrateAllAsync(_context, options.Symbol, options.StartTime, linked.Token);
+                await _hydrator.HydrateAllAsync(_context, _name, options.Symbol, options.StartTime, linked.Token);
 
                 // publish current algo statistics
                 await _publisher.PublishAsync(_context.Significant, _context.Ticker, linked.Token);

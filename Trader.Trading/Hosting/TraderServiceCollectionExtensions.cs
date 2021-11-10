@@ -1,6 +1,7 @@
 ﻿using Orleans;
 using Outcompute.Trader.Trading;
 using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Algorithms.Context.Configurators;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Commands.AveragingSell;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
@@ -87,6 +88,9 @@ namespace Microsoft.Extensions.DependencyInjection
                 // algo context
                 .AddScoped<AlgoContext>()
                 .AddScoped<IAlgoContext>(sp => sp.GetRequiredService<AlgoContext>())
+
+                // algo context configurators in order
+                .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextSymbolConfigurator>()
 
                 // exchange info provider
                 .AddSingleton<IExchangeInfoProvider, ExchangeInfoProvider>()

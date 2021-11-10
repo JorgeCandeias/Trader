@@ -69,7 +69,7 @@ namespace Outcompute.Trader.Trading.Tests
                 .Setup(x => x.TryGetSymbolAsync(symbol.Name, CancellationToken.None))
                 .Returns(Task.FromResult<Symbol?>(symbol));
 
-            var significant = SignificantResult.Empty with
+            var significant = PositionDetails.Empty with
             {
                 Symbol = symbol
             };
@@ -124,7 +124,7 @@ namespace Outcompute.Trader.Trading.Tests
 
             // assert
             Assert.Same(symbol, context.Symbol);
-            Assert.Same(significant, context.Significant);
+            Assert.Same(significant, context.PositionDetails);
             Assert.Same(ticker, context.Ticker);
             Assert.Same(assetBalance, context.AssetSpotBalance);
             Assert.Same(quoteBalance, context.QuoteSpotBalance);

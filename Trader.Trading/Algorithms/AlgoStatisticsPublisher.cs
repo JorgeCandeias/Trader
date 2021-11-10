@@ -21,7 +21,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         private static string TypeName => nameof(AlgoStatisticsPublisher);
 
-        public Task PublishAsync(SignificantResult significant, MiniTicker ticker, CancellationToken cancellationToken = default)
+        public Task PublishAsync(PositionDetails significant, MiniTicker ticker, CancellationToken cancellationToken = default)
         {
             if (significant is null) throw new ArgumentNullException(nameof(significant));
             if (ticker is null) throw new ArgumentNullException(nameof(ticker));
@@ -29,7 +29,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             return PublishCoreAsync(significant, ticker);
         }
 
-        private async Task PublishCoreAsync(SignificantResult significant, MiniTicker ticker)
+        private async Task PublishCoreAsync(PositionDetails significant, MiniTicker ticker)
         {
             _logger.LogInformation(
                 "{Type} {Name} reports Ticker = {Ticker:F8}",

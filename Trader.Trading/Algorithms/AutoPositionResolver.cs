@@ -35,7 +35,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             public decimal RemainingExecutedQuantity { get; set; }
         }
 
-        public async Task<SignificantResult> ResolveAsync(Symbol symbol, DateTime startTime, CancellationToken cancellationToken = default)
+        public async Task<PositionDetails> ResolveAsync(Symbol symbol, DateTime startTime, CancellationToken cancellationToken = default)
         {
             var orders = await _orders
                 .GetOrdersByFilterAsync(symbol.Name, null, false, true, cancellationToken)
@@ -48,7 +48,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             return ResolveCore(symbol, startTime, orders, trades);
         }
 
-        private SignificantResult ResolveCore(Symbol symbol, DateTime startTime, IReadOnlyList<OrderQueryResult> orders, IEnumerable<AccountTrade> trades)
+        private PositionDetails ResolveCore(Symbol symbol, DateTime startTime, IReadOnlyList<OrderQueryResult> orders, IEnumerable<AccountTrade> trades)
         {
             var watch = Stopwatch.StartNew();
 
@@ -143,7 +143,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 "{Name} {Symbol} identified {Count} significant orders in {ElapsedMs}ms",
                 nameof(AutoPositionResolver), symbol.Name, significant.Count, watch.ElapsedMilliseconds);
 
-            return new SignificantResult(symbol, significant, profits.ToImmutable(), commissions);
+            return new PositionDetails(symbol, significant, profits.ToImmutable(), commissions);
         }
 
         private (SortedSet<Map> Mapping, ImmutableList<CommissionEvent> Commissions) Combine(Symbol symbol, IEnumerable<OrderQueryResult> orders, IEnumerable<AccountTrade> trades)

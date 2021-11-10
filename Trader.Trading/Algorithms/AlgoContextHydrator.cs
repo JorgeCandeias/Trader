@@ -56,7 +56,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 throw new ArgumentNullException(nameof(symbol));
             }
 
-            return HydrateAllCoreAsync(context, name, startTime, symbol, cancellationToken);
+            return HydrateAllCoreAsync(context, name, symbol, cancellationToken);
         }
 
         private async Task HydrateSymbolCoreAsync(AlgoContext context, string symbol, CancellationToken cancellationToken = default)
@@ -66,7 +66,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 .ConfigureAwait(false);
         }
 
-        private async Task HydrateAllCoreAsync(AlgoContext context, string name, DateTime startTime, string symbol, CancellationToken cancellationToken = default)
+        private async Task HydrateAllCoreAsync(AlgoContext context, string name, string symbol, CancellationToken cancellationToken = default)
         {
             foreach (var configurator in _configurators)
             {
@@ -74,9 +74,6 @@ namespace Outcompute.Trader.Trading.Algorithms
                     .ConfigureAsync(context, name, cancellationToken)
                     .ConfigureAwait(false);
             }
-
-            // fetch all required information in parallel as much as possible
-            var significantTask = _resolver.ResolveAsync(context.Symbol, startTime, cancellationToken);
 
             var tickerTask = _tickers.GetRequiredTickerAsync(symbol, cancellationToken);
 
@@ -93,9 +90,6 @@ namespace Outcompute.Trader.Trading.Algorithms
             var quoteSwapPoolTask = _swaps.GetBalanceAsync(context.Symbol.QuoteAsset, cancellationToken);
 
             var ordersTask = _orders.GetOrdersAsync(symbol, CancellationToken.None);
-
-            // populate significant assets
-            context.Significant = await significantTask.ConfigureAwait(false);
 
             // populate the current ticker
             context.Ticker = await tickerTask.ConfigureAwait(false);

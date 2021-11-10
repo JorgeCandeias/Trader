@@ -167,7 +167,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 await _hydrator.HydrateAllAsync(_context, _name, options.Symbol, options.StartTime, linked.Token);
 
                 // publish current algo statistics
-                await _publisher.PublishAsync(_context.Significant, _context.Ticker, linked.Token);
+                await _publisher.PublishAsync(_context.PositionDetails, _context.Ticker, linked.Token);
             }
 
             // set as the current context again

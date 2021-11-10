@@ -21,7 +21,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public IServiceProvider ServiceProvider => NullServiceProvider.Instance;
 
-        public SignificantResult Significant => SignificantResult.Empty;
+        public PositionDetails PositionDetails => PositionDetails.Empty;
 
         public MiniTicker Ticker => MiniTicker.Empty;
 

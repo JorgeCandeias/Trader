@@ -26,7 +26,7 @@ namespace Outcompute.Trader.Trading.Algorithms
         /// The current significant asset information for the default symbol.
         /// This is only populated if the default symbol is defined.
         /// </summary>
-        SignificantResult Significant { get; }
+        PositionDetails PositionDetails { get; }
 
         /// <summary>
         /// The current ticker for the default symbol.

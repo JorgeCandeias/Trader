@@ -6,6 +6,6 @@ namespace Outcompute.Trader.Trading.Algorithms
 {
     public interface IAlgoStatisticsPublisher
     {
-        Task PublishAsync(SignificantResult significant, MiniTicker ticker, CancellationToken cancellationToken = default);
+        Task PublishAsync(PositionDetails significant, MiniTicker ticker, CancellationToken cancellationToken = default);
     }
 }

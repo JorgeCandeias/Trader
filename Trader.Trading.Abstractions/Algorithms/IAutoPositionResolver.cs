@@ -9,13 +9,13 @@ namespace Outcompute.Trader.Trading.Algorithms
 {
     public interface IAutoPositionResolver
     {
-        Task<SignificantResult> ResolveAsync(Symbol symbol, DateTime startTime, CancellationToken cancellationToken = default);
+        Task<PositionDetails> ResolveAsync(Symbol symbol, DateTime startTime, CancellationToken cancellationToken = default);
     }
 
     [Immutable]
-    public record SignificantResult(Symbol Symbol, ImmutableSortedSet<OrderQueryResult> Orders, ImmutableList<ProfitEvent> ProfitEvents, ImmutableList<CommissionEvent> CommissionEvents)
+    public record PositionDetails(Symbol Symbol, ImmutableSortedSet<OrderQueryResult> Orders, ImmutableList<ProfitEvent> ProfitEvents, ImmutableList<CommissionEvent> CommissionEvents)
     {
-        public static SignificantResult Empty { get; } = new SignificantResult(
+        public static PositionDetails Empty { get; } = new PositionDetails(
             Symbol.Empty,
             ImmutableSortedSet<OrderQueryResult>.Empty.WithComparer(OrderQueryResult.KeyComparer),
             ImmutableList<ProfitEvent>.Empty,

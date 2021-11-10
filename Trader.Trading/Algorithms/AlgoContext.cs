@@ -23,7 +23,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public IServiceProvider ServiceProvider { get; }
 
-        public SignificantResult Significant { get; set; } = SignificantResult.Empty;
+        public PositionDetails PositionDetails { get; set; } = PositionDetails.Empty;
 
         public MiniTicker Ticker { get; set; } = MiniTicker.Empty;
 

@@ -8,20 +8,13 @@ namespace Outcompute.Trader.Trading.Algorithms.Context.Configurators
 {
     internal class AlgoContextSymbolConfigurator : IAlgoContextConfigurator<AlgoContext>
     {
-        private readonly IExchangeInfoProvider _exchange;
         private readonly IOptionsMonitor<AlgoOptions> _monitor;
+        private readonly IExchangeInfoProvider _exchange;
 
-        public AlgoContextSymbolConfigurator(IExchangeInfoProvider exchange, IOptionsMonitor<AlgoOptions> monitor)
+        public AlgoContextSymbolConfigurator(IOptionsMonitor<AlgoOptions> monitor, IExchangeInfoProvider exchange)
         {
-            _exchange = exchange;
             _monitor = monitor;
-        }
-
-        public async ValueTask ConfigureAsync(AlgoContext context, string symbol, DateTime startTime, CancellationToken cancellationToken = default)
-        {
-            context.Symbol = await _exchange
-                .GetRequiredSymbolAsync(symbol, cancellationToken)
-                .ConfigureAwait(false);
+            _exchange = exchange;
         }
 
         public async ValueTask ConfigureAsync(AlgoContext context, string name, CancellationToken cancellationToken = default)

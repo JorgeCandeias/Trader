@@ -64,8 +64,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
                 // place an averaging sell if we hit a sell signal
                 TrySignalSellOrder()
                     ? _options.ClosingEnabled
-                        ? AveragingSell(Context.Significant.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool)
-                        : SignificantAveragingSell(Context.Ticker, Context.Significant.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool)
+                        ? AveragingSell(Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool)
+                        : SignificantAveragingSell(Context.Ticker, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool)
                     : ClearOpenOrders(Context.Symbol, OrderSide.Sell));
         }
 
@@ -104,18 +104,18 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             }
 
             // skip this rule if there are no positions to compare to
-            if (Context.Significant.Orders.Count == 0)
+            if (Context.PositionDetails.Orders.Count == 0)
             {
                 return true;
             }
 
             // skip this rule if the remaining positions are under the minimum notional (leftovers)
-            if (Context.Significant.Orders.Sum(x => x.Price * x.ExecutedQuantity) < Context.Symbol.Filters.MinNotional.MinNotional)
+            if (Context.PositionDetails.Orders.Sum(x => x.Price * x.ExecutedQuantity) < Context.Symbol.Filters.MinNotional.MinNotional)
             {
                 return true;
             }
 
-            var price = Context.Significant.Orders.Max!.Price * _options.PullbackRatio;
+            var price = Context.PositionDetails.Orders.Max!.Price * _options.PullbackRatio;
             var indicator = Context.Ticker.ClosePrice < price;
 
             _logger.LogInformation(
@@ -128,16 +128,16 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         private bool IsCooled()
         {
             // skip this rule if there are no positions
-            if (Context.Significant.Orders.Count == 0)
+            if (Context.PositionDetails.Orders.Count == 0)
             {
                 return true;
             }
 
-            var indicator = Context.Significant.Orders.Max!.Time.Add(_options.CooldownPeriod) < _clock.UtcNow;
+            var indicator = Context.PositionDetails.Orders.Max!.Time.Add(_options.CooldownPeriod) < _clock.UtcNow;
 
             _logger.LogInformation(
                 "{Type} {Symbol} reports cooldown period of {Cooldown} since last buy at {LastTime} has passed = {Indicator}",
-                TypeName, Context.Symbol.Name, _options.CooldownPeriod, Context.Significant.Orders.Max.Time, indicator);
+                TypeName, Context.Symbol.Name, _options.CooldownPeriod, Context.PositionDetails.Orders.Max.Time, indicator);
 
             return indicator;
         }
@@ -274,12 +274,12 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         private bool IsTickerAboveTargetSellPrice()
         {
-            if (Context.Significant.Orders.Count == 0)
+            if (Context.PositionDetails.Orders.Count == 0)
             {
                 return false;
             }
 
-            var target = Context.Significant.Orders.Max!.Price * _options.TargetSellProfitRate;
+            var target = Context.PositionDetails.Orders.Max!.Price * _options.TargetSellProfitRate;
 
             if (Context.Ticker.ClosePrice >= target)
             {

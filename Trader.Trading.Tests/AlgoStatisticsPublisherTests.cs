@@ -28,7 +28,7 @@ namespace Outcompute.Trader.Trading.Tests
             var publisher = new AlgoStatisticsPublisher(logger, factory);
             var symbol = Symbol.Empty with { Name = "ABCXYZ" };
             var order = OrderQueryResult.Empty with { Symbol = symbol.Name, OrderId = 123 };
-            var significant = SignificantResult.Empty with
+            var significant = PositionDetails.Empty with
             {
                 Symbol = symbol,
                 Orders = ImmutableSortedSet.Create(order)

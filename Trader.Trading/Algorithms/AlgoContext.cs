@@ -1,18 +1,24 @@
-﻿using Outcompute.Trader.Core;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Outcompute.Trader.Core;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
     internal class AlgoContext : IAlgoContext
     {
+        private readonly IEnumerable<IAlgoContextConfigurator<AlgoContext>> _configurators;
+
         public AlgoContext(IServiceProvider serviceProvider)
         {
             ServiceProvider = serviceProvider;
+
+            _configurators = ServiceProvider.GetRequiredService<IEnumerable<IAlgoContextConfigurator<AlgoContext>>>();
         }
 
         public string Name { get; internal set; } = string.Empty;
@@ -40,6 +46,14 @@ namespace Outcompute.Trader.Trading.Algorithms
         public SwapPoolAssetBalance QuoteSwapPoolBalance { get; set; } = SwapPoolAssetBalance.Empty;
 
         public IReadOnlyList<OrderQueryResult> Orders { get; set; } = ImmutableList<OrderQueryResult>.Empty;
+
+        public async ValueTask UpdateAsync(CancellationToken cancellationToken = default)
+        {
+            foreach (var configurator in _configurators)
+            {
+                await configurator.ConfigureAsync(this, Name, cancellationToken).ConfigureAwait(false);
+            }
+        }
 
         #region Static Helpers
 

@@ -2,6 +2,8 @@
 using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
@@ -75,5 +77,10 @@ namespace Outcompute.Trader.Trading.Algorithms
         /// This is only populated if the default symbol is defined.
         /// </summary>
         IReadOnlyList<OrderQueryResult> Orders { get; }
+
+        /// <summary>
+        /// Makes the context self-update to the latest data.
+        /// </summary>
+        ValueTask UpdateAsync(CancellationToken cancellationToken = default);
     }
 }

@@ -4,6 +4,8 @@ using Outcompute.Trader.Trading.Providers;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
@@ -38,5 +40,10 @@ namespace Outcompute.Trader.Trading.Algorithms
         public SwapPoolAssetBalance AssetSwapPoolBalance => SwapPoolAssetBalance.Empty;
 
         public SwapPoolAssetBalance QuoteSwapPoolBalance => SwapPoolAssetBalance.Empty;
+
+        public ValueTask UpdateAsync(CancellationToken cancellationToken = default)
+        {
+            return ValueTask.CompletedTask;
+        }
     }
 }

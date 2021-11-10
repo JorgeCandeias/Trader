@@ -55,7 +55,7 @@
 			<Visible>false</Visible>
 			<LogicalName>wwwroot.css.open-iconic.font.fonts.open-iconic.woff</LogicalName>
 		</EmbeddedResource>
-		<EmbeddedResource Include="..\Trader.Dashboard.WebApp\obj\$(Configuration)\net5.0\scopedcss\bundle\Outcompute.Trader.Dashboard.WebApp.styles.css">
+		<EmbeddedResource Include="..\Trader.Dashboard.WebApp\obj\$(Configuration)\net6.0\scopedcss\bundle\Outcompute.Trader.Dashboard.WebApp.styles.css">
 			<Visible>false</Visible>
 			<LogicalName>wwwroot.Outcompute.Trader.Dashboard.WebApp.styles.css</LogicalName>
 		</EmbeddedResource>

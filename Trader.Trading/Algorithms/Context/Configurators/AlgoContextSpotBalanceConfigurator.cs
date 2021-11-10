@@ -4,11 +4,11 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms.Context.Configurators
 {
-    internal class AlgoContextBalanceConfigurator : IAlgoContextConfigurator<AlgoContext>
+    internal class AlgoContextSpotBalanceConfigurator : IAlgoContextConfigurator<AlgoContext>
     {
         private readonly IBalanceProvider _balances;
 
-        public AlgoContextBalanceConfigurator(IBalanceProvider balances)
+        public AlgoContextSpotBalanceConfigurator(IBalanceProvider balances)
         {
             _balances = balances;
         }

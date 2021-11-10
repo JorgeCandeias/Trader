@@ -96,6 +96,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextSpotBalanceConfigurator>()
                 .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextSavingsConfigurator>()
                 .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextSwapPoolBalanceConfigurator>()
+                .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextOrdersConfigurator>()
 
                 // exchange info provider
                 .AddSingleton<IExchangeInfoProvider, ExchangeInfoProvider>()

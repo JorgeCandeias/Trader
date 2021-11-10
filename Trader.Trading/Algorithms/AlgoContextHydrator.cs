@@ -56,7 +56,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 throw new ArgumentNullException(nameof(symbol));
             }
 
-            return HydrateAllCoreAsync(context, name, symbol, cancellationToken);
+            return HydrateAllCoreAsync(context, name, cancellationToken);
         }
 
         private async Task HydrateSymbolCoreAsync(AlgoContext context, string symbol, CancellationToken cancellationToken = default)
@@ -66,7 +66,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 .ConfigureAwait(false);
         }
 
-        private async Task HydrateAllCoreAsync(AlgoContext context, string name, string symbol, CancellationToken cancellationToken = default)
+        private async Task HydrateAllCoreAsync(AlgoContext context, string name, CancellationToken cancellationToken = default)
         {
             foreach (var configurator in _configurators)
             {
@@ -74,11 +74,6 @@ namespace Outcompute.Trader.Trading.Algorithms
                     .ConfigureAsync(context, name, cancellationToken)
                     .ConfigureAwait(false);
             }
-
-            var ordersTask = _orders.GetOrdersAsync(symbol, CancellationToken.None);
-
-            // populate orders
-            context.Orders = await ordersTask.ConfigureAwait(false);
         }
     }
 }

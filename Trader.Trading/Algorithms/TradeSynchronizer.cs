@@ -9,7 +9,7 @@ using System.Threading.Tasks.Dataflow;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
-    internal class TradeSynchronizer : ITradeSynchronizer
+    internal partial class TradeSynchronizer : ITradeSynchronizer
     {
         private readonly ILogger _logger;
         private readonly ITradingService _trader;
@@ -21,6 +21,8 @@ namespace Outcompute.Trader.Trading.Algorithms
             _trader = trader;
             _provider = provider;
         }
+
+        private static string TypeName { get; } = nameof(TradeSynchronizer);
 
         public async Task SynchronizeTradesAsync(string symbol, CancellationToken cancellationToken = default)
         {
@@ -58,9 +60,14 @@ namespace Outcompute.Trader.Trading.Algorithms
             worker.Complete();
             await worker.Completion;
 
-            _logger.LogInformation(
-                "{Name} {Symbol} pulled {Count} trades up to TradeId {MaxTradeId} in {ElapsedMs}ms",
-                nameof(TradeSynchronizer), symbol, count, tradeId, watch.ElapsedMilliseconds);
+            LogPulledTrades(TypeName, symbol, count, tradeId, watch.ElapsedMilliseconds);
         }
+
+        #region Logging
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Symbol} pulled {Count} trades up to TradeId {MaxTradeId} in {ElapsedMs}ms")]
+        private partial void LogPulledTrades(string type, string symbol, int count, long maxTradeId, long elapsedMs);
+
+        #endregion Logging
     }
 }

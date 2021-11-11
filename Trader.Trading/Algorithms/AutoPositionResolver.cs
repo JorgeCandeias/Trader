@@ -184,9 +184,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 if (quantity != order.ExecutedQuantity)
                 {
                     // we have missing trades if this happened
-                    _logger.LogError(
-                        "{Name} {Symbol} could not match {OrderSide} {OrderType} {OrderId} at {Time} for {ExecutedQuantity} units with total trade quantity of {TradeQuantity}",
-                        TypeName, symbol.Name, order.Side, order.Type, order.OrderId, order.Time, order.ExecutedQuantity, quantity);
+                    LogCouldNotMatchOrder(TypeName, symbol.Name, order.Type, order.Side, order.OrderId, order.Time, order.ExecutedQuantity, quantity);
                 }
             }
 
@@ -217,6 +215,9 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         [LoggerMessage(0, LogLevel.Information, "{TypeName} {Symbol} identified {Count} positions in {ElapsedMs}ms")]
         private partial void LogIdentifiedPositions(string typeName, string symbol, int count, long elapsedMs);
+
+        [LoggerMessage(0, LogLevel.Error, "{TypeName} {Symbol} could not match {OrderType} {OrderSide} {OrderId} at {Time} for {ExecutedQuantity} units with total trade quantity of {TradeQuantity}")]
+        private partial void LogCouldNotMatchOrder(string typeName, string symbol, OrderType orderType, OrderSide orderSide, long orderId, DateTime time, decimal executedQuantity, decimal tradeQuantity);
 
         #endregion Logging
     }

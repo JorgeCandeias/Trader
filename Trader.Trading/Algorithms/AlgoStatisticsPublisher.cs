@@ -66,9 +66,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 
                 var aPnL = pPnl - commissions;
 
-                _logger.LogInformation(
-                    "{Type} {Name} reports Adjusted PnL = {Value:F8}",
-                    TypeName, significant.Symbol.Name, aPnL);
+                LogAdjustedPnL(TypeName, significant.Symbol.Name, aPnL);
             }
 
             // this model is meant for rendering only and will get refactored at some point
@@ -105,6 +103,9 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Quote Commissions = {Value:F8}")]
         private partial void LogQuoteCommissions(string type, string name, decimal value);
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Adjusted PnL = {Value:F8}")]
+        private partial void LogAdjustedPnL(string type, string name, decimal value);
 
         #endregion Logging
     }

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
+using Orleans.Core;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -11,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
-    internal class AlgoManagerGrain : Grain, IAlgoManagerGrain
+    internal partial class AlgoManagerGrain : Grain, IAlgoManagerGrain
     {
         private readonly IOptionsMonitor<TraderOptions> _options;
         private readonly ILogger _logger;
@@ -23,6 +24,8 @@ namespace Outcompute.Trader.Trading.Algorithms
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _lifetime = lifetime ?? throw new ArgumentNullException(nameof(lifetime));
         }
+
+        private static string TypeName => nameof(AlgoManagerGrain);
 
         public override Task OnActivateAsync()
         {
@@ -64,9 +67,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex,
-                        "{Grain} failed to ping target algo grain with identity {Identity}",
-                        nameof(AlgoManagerGrain), grain.GetGrainIdentity());
+                    LogFailedToPingTargetAlgo(ex, TypeName, grain.GetGrainIdentity());
                 }
             }
         }
@@ -122,5 +123,12 @@ namespace Outcompute.Trader.Trading.Algorithms
             }
             return Task.FromResult<IReadOnlyCollection<AlgoInfo>>(builder.ToImmutable());
         }
+
+        #region Logging
+
+        [LoggerMessage(0, LogLevel.Error, "{TypeName} failed to ping target algo grain with identity {Identity}")]
+        private partial void LogFailedToPingTargetAlgo(Exception ex, string typeName, IGrainIdentity identity);
+
+        #endregion Logging
     }
 }

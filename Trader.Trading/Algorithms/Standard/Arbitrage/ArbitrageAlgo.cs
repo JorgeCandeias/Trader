@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms.Standard.Arbitrage
 {
-    internal class ArbitrageAlgo : SymbolAlgo
+    internal partial class ArbitrageAlgo : SymbolAlgo
     {
         private readonly ILogger _logger;
         private readonly ITradingService _trader;
@@ -22,6 +22,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Arbitrage
             _swaps = swaps;
             _info = info;
         }
+
+        private static string TypeName => nameof(ArbitrageAlgo);
 
         protected override async ValueTask<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default)
         {
@@ -41,7 +43,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Arbitrage
 
                 if (symbol is null)
                 {
-                    _logger.LogInformation("Could not find symbol for {Name1} nor {Name2}", name1, name2);
+                    LogCouldNotFindSymbol(TypeName, name1, name2);
 
                     continue;
                 }
@@ -110,5 +112,12 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Arbitrage
                 }
             }
         }
+
+        #region Logging
+
+        [LoggerMessage(0, LogLevel.Information, "{TypeName} could not find symbol for {Name1} nor {Name2}")]
+        private partial void LogCouldNotFindSymbol(string typeName, string name1, string name2);
+
+        #endregion Logging
     }
 }

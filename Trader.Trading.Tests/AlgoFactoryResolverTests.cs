@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Moq;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Commands;
 using System.Threading;
@@ -21,10 +22,13 @@ namespace Outcompute.Trader.Trading.Tests
         public void Resolves()
         {
             // arrange
+            var name = "Algo1";
+            var algoContextFactory = Mock.Of<IAlgoContextFactory>(x => x.Create(name) == AlgoContext.Empty);
+
             var provider = new ServiceCollection()
                 .TryAddKeyedServiceCollection()
-                .AddTradingServices()
                 .AddAlgoType<MyAlgo>("MyAlgo")
+                .AddSingleton(algoContextFactory)
                 .BuildServiceProvider();
 
             var resolver = new AlgoFactoryResolver(provider);
@@ -33,7 +37,7 @@ namespace Outcompute.Trader.Trading.Tests
             var factory = resolver.Resolve("MyAlgo");
 
             // assert
-            var algo = factory.Create("Algo1");
+            var algo = factory.Create(name);
             Assert.IsType<MyAlgo>(algo);
         }
     }

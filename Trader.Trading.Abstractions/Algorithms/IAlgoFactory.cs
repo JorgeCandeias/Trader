@@ -2,6 +2,6 @@
 {
     public interface IAlgoFactory
     {
-        IAlgo Create(string name);
+        (IAlgo Algo, IAlgoContext Context) Create(string name);
     }
 }

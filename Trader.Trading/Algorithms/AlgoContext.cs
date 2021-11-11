@@ -14,18 +14,19 @@ namespace Outcompute.Trader.Trading.Algorithms
     {
         private readonly IEnumerable<IAlgoContextConfigurator<AlgoContext>> _configurators;
 
-        public AlgoContext(IServiceProvider serviceProvider)
+        public AlgoContext(string name, IServiceProvider serviceProvider)
         {
+            Name = name;
             ServiceProvider = serviceProvider;
 
             _configurators = ServiceProvider.GetRequiredService<IEnumerable<IAlgoContextConfigurator<AlgoContext>>>();
         }
 
-        public string Name { get; internal set; } = string.Empty;
+        public string Name { get; }
 
-        public Symbol Symbol { get; internal set; } = Symbol.Empty;
+        public Symbol Symbol { get; set; } = Symbol.Empty;
 
-        public DateTime TickTime { get; internal set; } = DateTime.MinValue;
+        public DateTime TickTime { get; set; } = DateTime.MinValue;
 
         public IServiceProvider ServiceProvider { get; }
 
@@ -57,11 +58,11 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         #region Static Helpers
 
-        public static AlgoContext Empty { get; } = new AlgoContext(NullServiceProvider.Instance);
+        public static AlgoContext Empty { get; } = new AlgoContext(string.Empty, NullServiceProvider.Instance);
 
-        private static readonly AsyncLocal<AlgoContext> _current = new();
+        private static readonly AsyncLocal<IAlgoContext> _current = new();
 
-        internal static AlgoContext Current
+        internal static IAlgoContext Current
         {
             get
             {

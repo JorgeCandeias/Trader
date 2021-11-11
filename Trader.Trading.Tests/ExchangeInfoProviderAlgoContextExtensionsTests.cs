@@ -16,7 +16,7 @@ namespace Outcompute.Trader.Trading.Tests
             var provider = new ServiceCollection()
                 .AddSingleton(exchange)
                 .BuildServiceProvider();
-            var context = new AlgoContext(provider);
+            var context = new AlgoContext("Algo1", provider);
 
             // act
             var result = context.GetExchangeInfoProvider();

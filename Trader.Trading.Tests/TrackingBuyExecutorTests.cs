@@ -73,7 +73,7 @@ namespace Outcompute.Trader.Trading.Tests
                 .AddSingleton(redeemSavingsExecutor)
                 .BuildServiceProvider();
 
-            var context = new AlgoContext(provider);
+            var context = new AlgoContext("Algo1", provider);
 
             var symbol = Symbol.Empty with
             {

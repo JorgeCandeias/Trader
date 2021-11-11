@@ -32,7 +32,7 @@ namespace Outcompute.Trader.Trading.Tests
                 .Verifiable();
             var executor = new CancelOrderExecutor(logger, trader, orders);
             var provider = NullServiceProvider.Instance;
-            var context = new AlgoContext(provider);
+            var context = new AlgoContext("Algo1", provider);
             var command = new CancelOrderCommand(symbol, orderId);
 
             // act

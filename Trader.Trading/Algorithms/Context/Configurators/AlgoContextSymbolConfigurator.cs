@@ -1,8 +1,8 @@
 ﻿using Microsoft.Extensions.Options;
 using Outcompute.Trader.Trading.Providers;
-using System;
 using System.Threading;
 using System.Threading.Tasks;
+using static System.String;
 
 namespace Outcompute.Trader.Trading.Algorithms.Context.Configurators
 {
@@ -21,7 +21,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Context.Configurators
         {
             var options = _monitor.Get(name);
 
-            if (options.Symbol.IsNullOrWhiteSpace())
+            if (IsNullOrEmpty(options.Symbol))
             {
                 return;
             }

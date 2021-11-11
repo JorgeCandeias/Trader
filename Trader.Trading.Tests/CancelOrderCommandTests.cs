@@ -23,7 +23,7 @@ namespace Outcompute.Trader.Trading.Tests
             var provider = new ServiceCollection()
                 .AddSingleton(executor)
                 .BuildServiceProvider();
-            var context = new AlgoContext(provider);
+            var context = new AlgoContext("Algo1", provider);
 
             // act
             await command.ExecuteAsync(context);

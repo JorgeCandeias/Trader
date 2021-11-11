@@ -64,7 +64,7 @@ namespace Outcompute.Trader.Trading.Tests
                 .AddSingleton(createOrderExecutor)
                 .BuildServiceProvider();
 
-            var context = new AlgoContext(provider);
+            var context = new AlgoContext("Algo1", provider);
 
             var type = OrderType.Limit;
             var timeInForce = TimeInForce.GoodTillCanceled;

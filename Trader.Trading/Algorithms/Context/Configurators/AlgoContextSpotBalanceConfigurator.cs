@@ -1,6 +1,7 @@
 ﻿using Outcompute.Trader.Trading.Providers;
 using System.Threading;
 using System.Threading.Tasks;
+using static System.String;
 
 namespace Outcompute.Trader.Trading.Algorithms.Context.Configurators
 {
@@ -15,13 +16,19 @@ namespace Outcompute.Trader.Trading.Algorithms.Context.Configurators
 
         public async ValueTask ConfigureAsync(AlgoContext context, string name, CancellationToken cancellationToken = default)
         {
-            context.AssetSpotBalance = await _balances
-                .GetBalanceOrZeroAsync(context.Symbol.BaseAsset, cancellationToken)
-                .ConfigureAwait(false);
+            if (!IsNullOrEmpty(context.Symbol.Name))
+            {
+                context.AssetSpotBalance = await _balances
+                    .GetBalanceOrZeroAsync(context.Symbol.BaseAsset, cancellationToken)
+                    .ConfigureAwait(false);
+            }
 
-            context.QuoteSpotBalance = await _balances
-                .GetBalanceOrZeroAsync(context.Symbol.QuoteAsset, cancellationToken)
-                .ConfigureAwait(false);
+            if (!IsNullOrEmpty(context.Symbol.Name))
+            {
+                context.QuoteSpotBalance = await _balances
+                    .GetBalanceOrZeroAsync(context.Symbol.QuoteAsset, cancellationToken)
+                    .ConfigureAwait(false);
+            }
         }
     }
 }

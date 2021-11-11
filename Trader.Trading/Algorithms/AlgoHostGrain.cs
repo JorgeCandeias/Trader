@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
@@ -17,27 +16,27 @@ namespace Outcompute.Trader.Trading.Algorithms
         private readonly ILogger _logger;
         private readonly IOptionsMonitor<AlgoOptions> _options;
         private readonly IReadynessProvider _readyness;
-        private readonly IServiceScope _scope;
-        private readonly IAlgoContextHydrator _hydrator;
+        private readonly IServiceProvider _provider;
         private readonly IHostApplicationLifetime _lifetime;
         private readonly IAlgoStatisticsPublisher _publisher;
+        private readonly IAlgoFactoryResolver _resolver;
 
-        public AlgoHostGrain(ILogger<AlgoHostGrain> logger, IOptionsMonitor<AlgoOptions> options, IReadynessProvider readyness, IAlgoContextHydrator hydrator, IHostApplicationLifetime lifetime, IAlgoStatisticsPublisher publisher, IServiceProvider provider)
+        public AlgoHostGrain(ILogger<AlgoHostGrain> logger, IOptionsMonitor<AlgoOptions> options, IReadynessProvider readyness, IHostApplicationLifetime lifetime, IAlgoStatisticsPublisher publisher, IServiceProvider provider, IAlgoFactoryResolver resolver)
         {
             _logger = logger;
             _options = options;
             _readyness = readyness;
-            _hydrator = hydrator;
+            _provider = provider;
             _lifetime = lifetime;
             _publisher = publisher;
-            _scope = provider.CreateScope();
+            _resolver = resolver;
         }
 
         private readonly CancellationTokenSource _cancellation = new();
 
         private string _name = Empty;
         private IAlgo _algo = NullAlgo.Instance;
-        private AlgoContext _context = AlgoContext.Empty;
+        private IAlgoContext _context = AlgoContext.Empty;
         private IDisposable? _timer;
         private bool _ready;
         private bool _loggedNotReady;
@@ -50,23 +49,11 @@ namespace Outcompute.Trader.Trading.Algorithms
             // snapshot the current algo host options
             var options = _options.Get(_name);
 
-            // keep the scoped context for use during result execution
-            _context = _scope.ServiceProvider.GetRequiredService<AlgoContext>();
-
-            // assign as the current context
-            AlgoContext.Current = _context;
-
-            // resolve the symbol if this algo defines it
-            if (!IsNullOrWhiteSpace(options.Symbol))
-            {
-                await _hydrator.HydrateSymbolAsync(_context, _name, options.Symbol, _lifetime.ApplicationStopping);
-            }
-
             // resolve the factory for the current algo type and create the algo instance
-            _algo = _scope.ServiceProvider
-                .GetRequiredService<IAlgoFactoryResolver>()
-                .Resolve(options.Type)
-                .Create(_name);
+            (_algo, _context) = _resolver.Resolve(options.Type).Create(_name);
+
+            // update the context
+            await _context.UpdateAsync(_cancellation.Token);
 
             // run startup work
             await _algo.StartAsync(_cancellation.Token);
@@ -160,12 +147,12 @@ namespace Outcompute.Trader.Trading.Algorithms
             using var limit = new CancellationTokenSource(options.MaxExecutionTime);
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(limit.Token, _cancellation.Token);
 
+            // update the context
+            await _context.UpdateAsync(linked.Token);
+
             // update the context with new information for this tick
             if (!IsNullOrWhiteSpace(options.Symbol))
             {
-                // update the context properties
-                await _hydrator.HydrateAllAsync(_context, _name, options.Symbol, options.StartTime, linked.Token);
-
                 // publish current algo statistics
                 await _publisher.PublishAsync(_context.PositionDetails, _context.Ticker, linked.Token);
             }
@@ -202,7 +189,6 @@ namespace Outcompute.Trader.Trading.Algorithms
         {
             _cancellation.Dispose();
             _timer?.Dispose();
-            _scope.Dispose();
         }
     }
 

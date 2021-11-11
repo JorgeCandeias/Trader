@@ -28,7 +28,7 @@ namespace Outcompute.Trader.Trading.Tests
                 .AddSingleton(executor)
                 .BuildServiceProvider();
 
-            var context = new AlgoContext(provider);
+            var context = new AlgoContext("Algo1", provider);
 
             // act
             await command.ExecuteAsync(context);
@@ -59,7 +59,7 @@ namespace Outcompute.Trader.Trading.Tests
                 .AddSingleton(executor)
                 .BuildServiceProvider();
 
-            var context = new AlgoContext(provider);
+            var context = new AlgoContext("Algo1", provider);
 
             // act
             await command.ExecuteAsync(context);

@@ -67,7 +67,7 @@ namespace Outcompute.Trader.Trading.Tests
                 .AddSingleton(singleOrderCommandExecutor)
                 .BuildServiceProvider();
 
-            var context = new AlgoContext(provider);
+            var context = new AlgoContext("Algo1", provider);
             var orders = new[]
             {
                 OrderQueryResult.Empty with { Symbol = symbol.Name, OrderId = 123, Price = 1100m, ExecutedQuantity = 1000m, Side = OrderSide.Buy },

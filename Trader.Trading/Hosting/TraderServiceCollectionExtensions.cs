@@ -50,7 +50,6 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<IOrderSynchronizer, OrderSynchronizer>()
                 .AddSingleton<ITradeSynchronizer, TradeSynchronizer>()
                 .AddSingleton<IOrderCodeGenerator, OrderCodeGenerator>()
-                .AddSingleton<IAlgoContextHydrator, AlgoContextHydrator>()
                 .AddSingleton<IAlgoStatisticsPublisher, AlgoStatisticsPublisher>()
                 .AddSingleton<IAlgoDependencyResolver, AlgoDependencyResolver>()
                 .AddOptions<AlgoConfigurationMappingOptions>().ValidateDataAnnotations().Services
@@ -85,9 +84,9 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddOptions<SwapPoolOptions>().ValidateDataAnnotations().Services
                 .ConfigureOptions<SwapPoolOptionsConfigurator>()
 
-                // algo context
-                .AddScoped<AlgoContext>()
-                .AddScoped<IAlgoContext>(sp => sp.GetRequiredService<AlgoContext>())
+                // algo context factory
+                .AddTransient(_ => AlgoContext.Current)
+                .AddSingleton<IAlgoContextFactory, AlgoContextFactory>()
 
                 // algo context configurators in order
                 .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextSymbolConfigurator>()

@@ -26,7 +26,7 @@ namespace Outcompute.Trader.Trading.Tests
             var provider = new ServiceCollection()
                 .AddSingleton(clearOpenOrdersExecutor)
                 .BuildServiceProvider();
-            var context = new AlgoContext(provider);
+            var context = new AlgoContext("Algo1", provider);
             var symbol = Symbol.Empty with
             {
                 Name = "ABCXYZ",
@@ -62,7 +62,7 @@ namespace Outcompute.Trader.Trading.Tests
             var provider = new ServiceCollection()
                 .AddSingleton(clearOpenOrdersExecutor)
                 .BuildServiceProvider();
-            var context = new AlgoContext(provider);
+            var context = new AlgoContext("Algo1", provider);
             var symbol = Symbol.Empty with
             {
                 Name = "ABCXYZ",
@@ -114,7 +114,7 @@ namespace Outcompute.Trader.Trading.Tests
             var provider = new ServiceCollection()
                 .AddSingleton(clearOpenOrdersExecutor)
                 .BuildServiceProvider();
-            var context = new AlgoContext(provider);
+            var context = new AlgoContext("Algo1", provider);
             var symbol = Symbol.Empty with
             {
                 Name = "ABCXYZ",
@@ -178,7 +178,7 @@ namespace Outcompute.Trader.Trading.Tests
             var provider = new ServiceCollection()
                 .AddSingleton(clearOpenOrdersExecutor)
                 .BuildServiceProvider();
-            var context = new AlgoContext(provider);
+            var context = new AlgoContext("Algo1", provider);
             var symbol = Symbol.Empty with
             {
                 Name = "ABCXYZ",
@@ -248,7 +248,7 @@ namespace Outcompute.Trader.Trading.Tests
                 .AddSingleton(clearOpenOrdersExecutor)
                 .AddSingleton(ensureSingleOrderExecutor)
                 .BuildServiceProvider();
-            var context = new AlgoContext(provider);
+            var context = new AlgoContext("Algo1", provider);
             var symbol = Symbol.Empty with
             {
                 Name = "ABCXYZ",

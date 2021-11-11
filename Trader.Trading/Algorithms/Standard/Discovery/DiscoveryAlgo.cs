@@ -3,13 +3,14 @@ using Microsoft.Extensions.Options;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Providers;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
 {
-    internal class DiscoveryAlgo : Algo
+    internal partial class DiscoveryAlgo : Algo
     {
         private readonly IOptionsMonitor<DiscoveryAlgoOptions> _monitor;
         private readonly ILogger _logger;
@@ -27,6 +28,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
             _info = info;
             _swaps = swaps;
         }
+
+        private static string TypeName { get; } = nameof(DiscoveryAlgo);
 
         protected override async ValueTask<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default)
         {
@@ -70,18 +73,14 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
                 .Except(used)
                 .ToList();
 
-            _logger.LogInformation(
-                "{Type} identified {Count} unused symbols with savings: {Symbols}",
-                nameof(DiscoveryAlgo), unusedWithSavings.Count, unusedWithSavings);
+            LogIdentifiedUnusedSymbolsWithSavings(TypeName, unusedWithSavings.Count, unusedWithSavings);
 
             // identify unused symbols with swap pools
             var unusedWithSwapPools = withSwapPools
                 .Except(used)
                 .ToList();
 
-            _logger.LogInformation(
-                "{Type} identified {Count} unused symbols with swap pools: {Symbols}",
-                nameof(DiscoveryAlgo), unusedWithSwapPools.Count, unusedWithSwapPools);
+            LogIdentifiedUnusedSymbolsWithSwapPools(TypeName, unusedWithSwapPools.Count, unusedWithSwapPools);
 
             // identify used symbols without savings
             var usedWithoutSavings = used
@@ -116,5 +115,15 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
 
             return Noop();
         }
+
+        #region Logging
+
+        [LoggerMessage(0, LogLevel.Information, "{TypeName} identified {Count} unused symbols with savings: {Symbols}")]
+        private partial void LogIdentifiedUnusedSymbolsWithSavings(string typeName, int count, IEnumerable<string> symbols);
+
+        [LoggerMessage(0, LogLevel.Information, "{TypeName} identified {Count} unused symbols with swap pools: {Symbols}")]
+        private partial void LogIdentifiedUnusedSymbolsWithSwapPools(string typeName, int count, IEnumerable<string> symbols);
+
+        #endregion Logging
     }
 }

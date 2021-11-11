@@ -49,9 +49,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 
                 var uPnL = now - total;
 
-                _logger.LogInformation(
-                    "{Type} {Name} reports Unrealized PnL = {Value:F8} ({Ratio:P8})",
-                    TypeName, significant.Symbol.Name, uPnL, total == 0m ? 0m : uPnL / total);
+                LogUnrealizedPnL(TypeName, significant.Symbol.Name, uPnL, total == 0m ? 0m : uPnL / total);
 
                 var rPnl = significant.ProfitEvents.Sum(x => x.Profit);
 
@@ -101,6 +99,9 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Present Value = {Value:F8}")]
         private partial void LogPresentValue(string type, string name, decimal value);
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Unrealized PnL = {Value:F8} ({Ratio:P8})")]
+        private partial void LogUnrealizedPnL(string type, string name, decimal value, decimal ratio);
 
         #endregion Logging
     }

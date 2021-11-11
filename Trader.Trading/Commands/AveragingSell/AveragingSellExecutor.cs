@@ -77,9 +77,7 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
             // adjust the quantity down to lot size filter
             if (quantity < symbol.Filters.LotSize.StepSize)
             {
-                _logger.LogError(
-                    "{Type} {Name} cannot set sell order for {Quantity} {Asset} because the quantity is under the minimum lot size of {MinLotSize} {Asset}",
-                    TypeName, symbol.Name, quantity, symbol.BaseAsset, symbol.Filters.LotSize.StepSize, symbol.BaseAsset);
+                LogCannotSetSellOrderLotSize(TypeName, symbol.Name, quantity, symbol.BaseAsset, symbol.Filters.LotSize.StepSize);
 
                 return DesiredSell.None;
             }
@@ -136,8 +134,11 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
 
         #region Logging
 
-        [LoggerMessage(0, LogLevel.Warning, "{Type} cannot evaluate desired sell for symbol {Symbol} because there are not enough assets available to sell")]
-        private partial void LogCannotEvaluateDesiredSell(string type, string symbol);
+        [LoggerMessage(0, LogLevel.Warning, "{Type} {Name} cannot evaluate desired sell because there are not enough assets available to sell")]
+        private partial void LogCannotEvaluateDesiredSell(string type, string name);
+
+        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot set sell order for {Quantity} {Asset} because the quantity is under the minimum lot size of {MinLotSize} {Asset}")]
+        private partial void LogCannotSetSellOrderLotSize(string type, string name, decimal quantity, string asset, decimal minLotSize);
 
         #endregion Logging
     }

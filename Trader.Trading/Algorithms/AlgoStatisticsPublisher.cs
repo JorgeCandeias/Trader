@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
-    internal class AlgoStatisticsPublisher : IAlgoStatisticsPublisher
+    internal partial class AlgoStatisticsPublisher : IAlgoStatisticsPublisher
     {
         private readonly ILogger _logger;
         private readonly IGrainFactory _factory;
@@ -31,9 +31,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         private async Task PublishCoreAsync(PositionDetails significant, MiniTicker ticker)
         {
-            _logger.LogInformation(
-                "{Type} {Name} reports Ticker = {Ticker:F8}",
-                TypeName, ticker.Symbol, ticker.ClosePrice);
+            LogTicker(TypeName, ticker.Symbol, ticker.ClosePrice);
 
             if (significant.Orders.Count > 0)
             {
@@ -95,5 +93,12 @@ namespace Outcompute.Trader.Trading.Algorithms
                 .PublishAsync(profit)
                 .ConfigureAwait(false);
         }
+
+        #region Logging
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Ticker = {Ticker:F8}")]
+        private partial void LogTicker(string type, string name, decimal ticker);
+
+        #endregion Logging
     }
 }

@@ -45,9 +45,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 
                 var now = quantity * ticker.ClosePrice;
 
-                _logger.LogInformation(
-                    "{Type} {Name} reports Present Value = {Value:F8}",
-                    TypeName, significant.Symbol.Name, now);
+                LogPresentValue(TypeName, significant.Symbol.Name, now);
 
                 var uPnL = now - total;
 
@@ -100,6 +98,9 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Asset Cost = {Total:F8}")]
         private partial void LogAssetCost(string type, string name, decimal total);
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Present Value = {Value:F8}")]
+        private partial void LogPresentValue(string type, string name, decimal value);
 
         #endregion Logging
     }

@@ -104,9 +104,7 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
             // check if the sell is above the maximum percent filter
             if (price > ticker.ClosePrice * symbol.Filters.PercentPrice.MultiplierUp)
             {
-                _logger.LogError(
-                    "{Type} {Name} cannot set sell order for {Quantity} {Asset} at {Price} {Quote} totalling {Total} {Quote} because it is under the maximum percent filter price of {MaxPrice} {Quote}",
-                    TypeName, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.QuoteAsset, ticker.ClosePrice * symbol.Filters.PercentPrice.MultiplierUp, symbol.QuoteAsset);
+                LogCannotSetSellOrderMaximumPercentFilter(TypeName, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, ticker.ClosePrice * symbol.Filters.PercentPrice.MultiplierUp);
 
                 return DesiredSell.None;
             }
@@ -140,6 +138,9 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
 
         [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot set sell order for {Quantity} {Asset} at {Price} {Quote} totalling {Total} {Quote} because it is under the minimum notional of {MinNotional} {Quote}")]
         private partial void LogCannotSetSellOrderNotional(string type, string name, decimal quantity, string asset, decimal price, string quote, decimal total, decimal minNotional);
+
+        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot set sell order for {Quantity} {Asset} at {Price} {Quote} totalling {Total} {Quote} because it is under the maximum percent filter price of {MaxPrice} {Quote}")]
+        private partial void LogCannotSetSellOrderMaximumPercentFilter(string type, string name, decimal quantity, string asset, decimal price, string quote, decimal total, decimal maxPrice);
 
         #endregion Logging
     }

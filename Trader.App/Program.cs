@@ -11,11 +11,9 @@ using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Commands;
-using Outcompute.Trader.Trading.Providers;
 using Serilog;
 using Serilog.Events;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
@@ -198,23 +196,9 @@ namespace Outcompute.Trader.App
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
-        protected override async ValueTask<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default)
+        protected override ValueTask<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default)
         {
-            var options = _options.Get(_context.Name);
-
-            var end = _clock.UtcNow;
-            var start = end.Subtract(TimeSpan.FromDays(100));
-
-            var klines = await _context.GetKlineProvider().GetKlinesAsync(options.Symbol, KlineInterval.Days1, start, end, cancellationToken).ConfigureAwait(false);
-
-            _logger.LogInformation("{Name} reports SMA7 = {Value}", nameof(TestAlgo), klines.LastSma(x => x.ClosePrice, 7));
-            _logger.LogInformation("{Name} reports SMA25 = {Value}", nameof(TestAlgo), klines.LastSma(x => x.ClosePrice, 25));
-            _logger.LogInformation("{Name} reports SMA99 = {Value}", nameof(TestAlgo), klines.LastSma(x => x.ClosePrice, 99));
-            _logger.LogInformation("{Name} reports RSI6 = {Value}", nameof(TestAlgo), klines.LastRsi(x => x.ClosePrice, 6));
-            _logger.LogInformation("{Name} reports RSI12 = {Value}", nameof(TestAlgo), klines.LastRsi(x => x.ClosePrice, 12));
-            _logger.LogInformation("{Name} reports RSI24 = {Value}", nameof(TestAlgo), klines.LastRsi(x => x.ClosePrice, 24));
-
-            return Noop();
+            return Noop().AsValueTaskResult<IAlgoCommand>();
         }
     }
 

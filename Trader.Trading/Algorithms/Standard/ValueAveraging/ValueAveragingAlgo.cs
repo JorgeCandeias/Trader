@@ -237,9 +237,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         {
             if (_options.ClosingEnabled)
             {
-                _logger.LogInformation(
-                    "{Type} {Symbol} reports closing is enabled.",
-                    TypeName, Context.Symbol.Name);
+                LogClosingEnabled(TypeName, Context.Name);
 
                 return true;
             }
@@ -336,6 +334,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports selling is disabled")]
         private partial void LogSellingDisabled(string type, string name);
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports closing is enabled")]
+        private partial void LogClosingEnabled(string type, string name);
 
         #endregion Logging
     }

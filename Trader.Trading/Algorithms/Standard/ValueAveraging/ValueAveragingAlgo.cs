@@ -225,9 +225,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         {
             if (!_options.SellingEnabled)
             {
-                _logger.LogInformation(
-                    "{Type} {Symbol} reports selling is disabled",
-                    TypeName, Context.Symbol.Name);
+                LogSellingDisabled(TypeName, Context.Name);
 
                 return false;
             }
@@ -335,6 +333,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports buying is disabled")]
         private partial void LogBuyingDisabled(string type, string name);
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports selling is disabled")]
+        private partial void LogSellingDisabled(string type, string name);
 
         #endregion Logging
     }

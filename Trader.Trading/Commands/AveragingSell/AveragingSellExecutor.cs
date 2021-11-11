@@ -96,9 +96,7 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
             // check if the sell is under the minimum notional filter
             if (quantity * price < symbol.Filters.MinNotional.MinNotional)
             {
-                _logger.LogError(
-                    "{Type} {Name} cannot set sell order for {Quantity} {Asset} at {Price} {Quote} totalling {Total} {Quote} because it is under the minimum notional of {MinNotional} {Quote}",
-                    TypeName, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.QuoteAsset, symbol.Filters.MinNotional.MinNotional, symbol.QuoteAsset);
+                LogCannotSetSellOrderNotional(TypeName, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.Filters.MinNotional.MinNotional);
 
                 return DesiredSell.None;
             }
@@ -139,6 +137,9 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
 
         [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot set sell order for {Quantity} {Asset} because the quantity is under the minimum lot size of {MinLotSize} {Asset}")]
         private partial void LogCannotSetSellOrderLotSize(string type, string name, decimal quantity, string asset, decimal minLotSize);
+
+        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot set sell order for {Quantity} {Asset} at {Price} {Quote} totalling {Total} {Quote} because it is under the minimum notional of {MinNotional} {Quote}")]
+        private partial void LogCannotSetSellOrderNotional(string type, string name, decimal quantity, string asset, decimal price, string quote, decimal total, decimal minNotional);
 
         #endregion Logging
     }

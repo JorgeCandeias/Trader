@@ -4,6 +4,7 @@ using Outcompute.Trader.Core;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Commands;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
@@ -131,9 +132,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
             var indicator = Context.PositionDetails.Orders.Max!.Time.Add(_options.CooldownPeriod) < _clock.UtcNow;
 
-            _logger.LogInformation(
-                "{Type} {Symbol} reports cooldown period of {Cooldown} since last buy at {LastTime} has passed = {Indicator}",
-                TypeName, Context.Symbol.Name, _options.CooldownPeriod, Context.PositionDetails.Orders.Max.Time, indicator);
+            LogCooldownPeriod(TypeName, Context.Name, _options.CooldownPeriod, Context.PositionDetails.Orders.Max.Time, indicator);
 
             return indicator;
         }
@@ -319,11 +318,14 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         #region Logging
 
-        [LoggerMessage(0, LogLevel.Information, "{TypeName} {Name} will signal a buy order for the current state (Ticker = {Ticker:F8}, SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}, RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8})")]
-        private partial void LogWillSignalBuyOrderForCurrentState(string typeName, string name, decimal ticker, int smaPeriodsA, decimal smaA, int smaPeriodsB, decimal smaB, int smaPeriodsC, decimal smaC, int rsiPeriodsA, decimal rsiA, int rsiPeriodsB, decimal rsiB, int rsiPeriodsC, decimal rsiC);
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} will signal a buy order for the current state (Ticker = {Ticker:F8}, SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}, RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8})")]
+        private partial void LogWillSignalBuyOrderForCurrentState(string type, string name, decimal ticker, int smaPeriodsA, decimal smaA, int smaPeriodsB, decimal smaB, int smaPeriodsC, decimal smaC, int rsiPeriodsA, decimal rsiA, int rsiPeriodsB, decimal rsiB, int rsiPeriodsC, decimal rsiC);
 
-        [LoggerMessage(0, LogLevel.Information, "{TypeName} {Name} reports ticker {Ticker:F8} {Asset} below pullback price of {Pullback:F8} {Asset} = {Indicator}")]
-        private partial void LogTickerBelowPullback(string typeName, string name, decimal ticker, string asset, decimal pullback, bool indicator);
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports ticker {Ticker:F8} {Asset} below pullback price of {Pullback:F8} {Asset} = {Indicator}")]
+        private partial void LogTickerBelowPullback(string type, string name, decimal ticker, string asset, decimal pullback, bool indicator);
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports cooldown period of {Cooldown} since last buy at {LastTime} has passed = {Indicator}")]
+        private partial void LogCooldownPeriod(string type, string name, TimeSpan cooldown, DateTime lastTime, bool indicator);
 
         #endregion Logging
     }

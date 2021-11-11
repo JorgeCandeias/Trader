@@ -15,7 +15,7 @@ namespace Outcompute.Trader.Trading.Algorithms
     /// <summary>
     /// Automatically resolves positions on a symbol by calculating lifo pnl from all trades on it.
     /// </summary>
-    internal class AutoPositionResolver : IAutoPositionResolver
+    internal partial class AutoPositionResolver : IAutoPositionResolver
     {
         private readonly ILogger _logger;
         private readonly IOrderProvider _orders;
@@ -28,7 +28,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             _trades = trades;
         }
 
-        private static string Name => nameof(AutoPositionResolver);
+        private static string TypeName => nameof(AutoPositionResolver);
 
         private sealed record Map(OrderQueryResult Order, AccountTrade Trade)
         {
@@ -102,9 +102,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                     if (sell.RemainingExecutedQuantity != 0)
                     {
                         // clear the sale
-                        _logger.LogWarning(
-                            "{Name} {Symbol} could not fill {Type} {Side} order {OrderId} as there is {Missing} {Asset} missing",
-                            nameof(AutoPositionResolver), symbol.Name, sell.Order.Type, sell.Order.Side, sell.Order.OrderId, sell.RemainingExecutedQuantity, symbol.BaseAsset);
+                        LogCouldNotFillOrder(TypeName, symbol.Name, sell.Order.Type, sell.Order.Side, sell.Order.OrderId, sell.RemainingExecutedQuantity, symbol.BaseAsset);
 
                         sell.RemainingExecutedQuantity = 0m;
                     }
@@ -190,7 +188,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                     // we have missing trades if this happened
                     _logger.LogError(
                         "{Name} {Symbol} could not match {OrderSide} {OrderType} {OrderId} at {Time} for {ExecutedQuantity} units with total trade quantity of {TradeQuantity}",
-                        Name, symbol.Name, order.Side, order.Type, order.OrderId, order.Time, order.ExecutedQuantity, quantity);
+                        TypeName, symbol.Name, order.Side, order.Type, order.OrderId, order.Time, order.ExecutedQuantity, quantity);
                 }
             }
 
@@ -213,5 +211,12 @@ namespace Outcompute.Trader.Trading.Algorithms
 
             public static MapComparer Instance { get; } = new MapComparer();
         }
+
+        #region Logging
+
+        [LoggerMessage(0, LogLevel.Warning, "{TypeName} {Symbol} could not fill {OrderType} {OrderSide} order {OrderId} as there is {Missing} {Asset} missing")]
+        private partial void LogCouldNotFillOrder(string typeName, string symbol, OrderType orderType, OrderSide orderSide, long orderId, decimal missing, string asset);
+
+        #endregion Logging
     }
 }

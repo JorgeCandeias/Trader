@@ -180,49 +180,51 @@ namespace Outcompute.Trader.App
                 })
                 .RunConsoleAsync();
         }
+    }
 
-        internal class TestAlgo : Algo
+    [ExcludeFromCodeCoverage]
+    internal class TestAlgo : Algo
+    {
+        private readonly IOptionsMonitor<TestAlgoOptions> _options;
+        private readonly ILogger _logger;
+        private readonly IAlgoContext _context;
+        private readonly ISystemClock _clock;
+
+        public TestAlgo(IOptionsMonitor<TestAlgoOptions> options, ILogger<TestAlgo> logger, IAlgoContext context, ISystemClock clock)
         {
-            private readonly IOptionsMonitor<TestAlgoOptions> _options;
-            private readonly ILogger _logger;
-            private readonly IAlgoContext _context;
-            private readonly ISystemClock _clock;
-
-            public TestAlgo(IOptionsMonitor<TestAlgoOptions> options, ILogger<TestAlgo> logger, IAlgoContext context, ISystemClock clock)
-            {
-                _options = options ?? throw new ArgumentNullException(nameof(options));
-                _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-                _context = context ?? throw new ArgumentNullException(nameof(context));
-                _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-            }
-
-            protected override async ValueTask<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default)
-            {
-                var options = _options.Get(_context.Name);
-
-                var end = _clock.UtcNow;
-                var start = end.Subtract(TimeSpan.FromDays(100));
-
-                var klines = await _context.GetKlineProvider().GetKlinesAsync(options.Symbol, KlineInterval.Days1, start, end, cancellationToken).ConfigureAwait(false);
-
-                _logger.LogInformation("{Name} reports SMA7 = {Value}", nameof(TestAlgo), klines.LastSma(x => x.ClosePrice, 7));
-                _logger.LogInformation("{Name} reports SMA25 = {Value}", nameof(TestAlgo), klines.LastSma(x => x.ClosePrice, 25));
-                _logger.LogInformation("{Name} reports SMA99 = {Value}", nameof(TestAlgo), klines.LastSma(x => x.ClosePrice, 99));
-                _logger.LogInformation("{Name} reports RSI6 = {Value}", nameof(TestAlgo), klines.LastRsi(x => x.ClosePrice, 6));
-                _logger.LogInformation("{Name} reports RSI12 = {Value}", nameof(TestAlgo), klines.LastRsi(x => x.ClosePrice, 12));
-                _logger.LogInformation("{Name} reports RSI24 = {Value}", nameof(TestAlgo), klines.LastRsi(x => x.ClosePrice, 24));
-
-                return Noop();
-            }
+            _options = options ?? throw new ArgumentNullException(nameof(options));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
-        public class TestAlgoOptions
+        protected override async ValueTask<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default)
         {
-            [Required]
-            public string SomeValue { get; set; } = "Default";
+            var options = _options.Get(_context.Name);
 
-            [Required]
-            public string Symbol { get; set; } = "BTCGBP";
+            var end = _clock.UtcNow;
+            var start = end.Subtract(TimeSpan.FromDays(100));
+
+            var klines = await _context.GetKlineProvider().GetKlinesAsync(options.Symbol, KlineInterval.Days1, start, end, cancellationToken).ConfigureAwait(false);
+
+            _logger.LogInformation("{Name} reports SMA7 = {Value}", nameof(TestAlgo), klines.LastSma(x => x.ClosePrice, 7));
+            _logger.LogInformation("{Name} reports SMA25 = {Value}", nameof(TestAlgo), klines.LastSma(x => x.ClosePrice, 25));
+            _logger.LogInformation("{Name} reports SMA99 = {Value}", nameof(TestAlgo), klines.LastSma(x => x.ClosePrice, 99));
+            _logger.LogInformation("{Name} reports RSI6 = {Value}", nameof(TestAlgo), klines.LastRsi(x => x.ClosePrice, 6));
+            _logger.LogInformation("{Name} reports RSI12 = {Value}", nameof(TestAlgo), klines.LastRsi(x => x.ClosePrice, 12));
+            _logger.LogInformation("{Name} reports RSI24 = {Value}", nameof(TestAlgo), klines.LastRsi(x => x.ClosePrice, 24));
+
+            return Noop();
         }
+    }
+
+    [ExcludeFromCodeCoverage]
+    internal class TestAlgoOptions
+    {
+        [Required]
+        public string SomeValue { get; set; } = "Default";
+
+        [Required]
+        public string Symbol { get; set; } = "BTCGBP";
     }
 }

@@ -175,18 +175,6 @@ namespace Outcompute.Trader.App
                                     {
                                         options.SomeValue = "SomeValue";
                                     });
-
-                            /*
-                            services
-                                .AddArbitrageAlgo(
-                                    options =>
-                                    {
-                                        options.MaxExecutionTime = TimeSpan.FromHours(1);
-                                    },
-                                    options =>
-                                    {
-                                    });
-                            */
 #endif
                         });
                 })

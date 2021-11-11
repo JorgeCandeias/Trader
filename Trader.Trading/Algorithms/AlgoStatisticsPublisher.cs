@@ -57,9 +57,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 
                 var pPnl = uPnL + rPnl;
 
-                _logger.LogInformation(
-                    "{Type} {Name} reports Present PnL = {Value:F8}",
-                    TypeName, significant.Symbol.Name, pPnl);
+                LogPresentPnl(TypeName, significant.Symbol.Name, pPnl);
 
                 // todo: we need past price history to convert non-quote asset comissions into quote asset comissions for accurate reporting here
                 var commissions = significant.CommissionEvents.Where(x => x.Asset == significant.Symbol.QuoteAsset).Sum(x => x.Commission);
@@ -103,6 +101,9 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Realized PnL = {Value:F8}")]
         private partial void LogRealizedPnL(string type, string name, decimal value);
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Present PnL = {Value:F8}")]
+        private partial void LogPresentPnl(string type, string name, decimal value);
 
         #endregion Logging
     }

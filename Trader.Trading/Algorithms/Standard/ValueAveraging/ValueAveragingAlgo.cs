@@ -213,9 +213,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         {
             if (!_options.BuyingEnabled)
             {
-                _logger.LogInformation(
-                    "{Type} {Symbol} reports buying is disabled",
-                    TypeName, Context.Symbol.Name);
+                LogBuyingDisabled(TypeName, Context.Name);
 
                 return false;
             }
@@ -334,6 +332,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports (RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8}) trending up = {Indicator}")]
         private partial void LogRsiTrendingUp(string type, string name, int rsiPeriodsA, decimal rsiA, int rsiPeriodsB, decimal rsiB, int rsiPeriodsC, decimal rsiC, bool indicator);
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports buying is disabled")]
+        private partial void LogBuyingDisabled(string type, string name);
 
         #endregion Logging
     }

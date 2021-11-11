@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
 {
-    internal class SignificantAveragingSellExecutor : IAlgoCommandExecutor<SignificantAveragingSellCommand>
+    internal partial class SignificantAveragingSellExecutor : IAlgoCommandExecutor<SignificantAveragingSellCommand>
     {
         private readonly ILogger _logger;
 
@@ -18,7 +18,7 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
             _logger = logger;
         }
 
-        private static string TypeName => nameof(SignificantAveragingSellExecutor);
+        private const string TypeName = nameof(SignificantAveragingSellExecutor);
 
         public Task ExecuteAsync(IAlgoContext context, SignificantAveragingSellCommand command, CancellationToken cancellationToken = default)
         {
@@ -71,9 +71,7 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
                     numerator = candidateNumerator;
                     quantity = candidateQuantity;
 
-                    _logger.LogInformation(
-                        "{Type} {Symbol} elected order {OrderId} for sale with significant quantity {Quantity:F8} {Asset} at buy price {Price:F8} {Quote}",
-                        TypeName, command.Symbol.Name, order.OrderId, order.ExecutedQuantity, command.Symbol.BaseAsset, order.Price, command.Symbol.QuoteAsset);
+                    LogElectedOrder(TypeName, command.Symbol.Name, order.OrderId, order.ExecutedQuantity, command.Symbol.BaseAsset, order.Price, command.Symbol.QuoteAsset);
                 }
                 else
                 {
@@ -84,9 +82,7 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
             // skip if no buy orders were elected for selling
             if (count <= 0)
             {
-                _logger.LogInformation(
-                    "{Type} {Symbol} cannot elect any buy orders for selling at a minimum profit rate of {MinimumProfitRate:F8}",
-                    TypeName, command.Symbol.Name, command.MinimumProfitRate);
+                LogCannotElectedBuyOrders(TypeName, command.Symbol.Name, command.MinimumProfitRate);
 
                 return DesiredSell.None;
             }
@@ -94,23 +90,17 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
             // calculate average buy price
             var averagePrice = numerator / quantity;
 
-            _logger.LogInformation(
-                "{Type} {Symbol} elected {Count} orders for sale with total quantity {Quantity:F8} {Asset} at average buy price {Price:F8} {Quote}",
-                TypeName, command.Symbol.Name, count, quantity, command.Symbol.BaseAsset, averagePrice, command.Symbol.QuoteAsset);
+            LogElectedOrders(TypeName, command.Symbol.Name, count, quantity, command.Symbol.BaseAsset, averagePrice, command.Symbol.QuoteAsset);
 
             // adjust the quantity down to the lot size filter
             quantity = quantity.AdjustQuantityDownToLotStepSize(command.Symbol);
 
-            _logger.LogInformation(
-                "{Type} {Symbol} adjusted quantity by lot step size of {LotStepSize} {Asset} down to {Quantity:F8} {Asset}",
-                TypeName, command.Symbol.Name, command.Symbol.Filters.LotSize.StepSize, command.Symbol.BaseAsset, quantity, command.Symbol.BaseAsset);
+            LogAdjustedQuantityByLotStepSize(TypeName, command.Symbol.Name, command.Symbol.Filters.LotSize.StepSize, command.Symbol.BaseAsset, quantity);
 
             // break if the quantity is under the minimum lot size
             if (quantity < command.Symbol.Filters.LotSize.MinQuantity)
             {
-                _logger.LogError(
-                    "{Type} {Name} cannot set sell order for {Quantity} {Asset} because the quantity is under the minimum lot size of {MinLotSize} {Asset}",
-                    TypeName, command.Symbol.Name, quantity, command.Symbol.BaseAsset, command.Symbol.Filters.LotSize.MinQuantity, command.Symbol.BaseAsset);
+                LogCannotSetSellOrder(TypeName, command.Symbol.Name, quantity, command.Symbol.BaseAsset, command.Symbol.Filters.LotSize.MinQuantity);
 
                 return DesiredSell.None;
             }
@@ -118,16 +108,12 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
             // calculate the sell notional
             var total = quantity * command.Ticker.ClosePrice;
 
-            _logger.LogInformation(
-                "{Type} {Symbol} calculated notional of {Total:F8} {Quote} using quantity of {Quantity:F8} {Asset} and ticker of {Price:F8} {Quote}",
-                TypeName, command.Symbol.Name, total, command.Symbol.QuoteAsset, quantity, command.Symbol.BaseAsset, command.Ticker.ClosePrice, command.Symbol.QuoteAsset);
+            LogCalculatedNotional(TypeName, command.Symbol.Name, total, command.Symbol.QuoteAsset, quantity, command.Symbol.BaseAsset, command.Ticker.ClosePrice);
 
             // check if the sell is under the minimum notional filter
             if (total < command.Symbol.Filters.MinNotional.MinNotional)
             {
-                _logger.LogError(
-                    "{Type} {Name} cannot set sell order for {Quantity} {Asset} at {Price} {Quote} totalling {Total} {Quote} because it is under the minimum notional of {MinNotional} {Quote}",
-                    TypeName, command.Symbol.Name, quantity, command.Symbol.BaseAsset, command.Ticker.ClosePrice, command.Symbol.QuoteAsset, quantity * command.Ticker.ClosePrice, command.Symbol.QuoteAsset, command.Symbol.Filters.MinNotional.MinNotional, command.Symbol.QuoteAsset);
+                LogCannotSetSellOrderUnderMinimumNotional(TypeName, command.Symbol.Name, quantity, command.Symbol.BaseAsset, command.Ticker.ClosePrice, command.Symbol.QuoteAsset, quantity * command.Ticker.ClosePrice, command.Symbol.Filters.MinNotional.MinNotional);
 
                 return DesiredSell.None;
             }
@@ -140,5 +126,30 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
         {
             public static readonly DesiredSell None = new(0m, 0m);
         }
+
+        #region Logging
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} elected order {OrderId} for sale with significant quantity {Quantity:F8} {Asset} at buy price {Price:F8} {Quote}")]
+        private partial void LogElectedOrder(string type, string name, long orderId, decimal quantity, string asset, decimal price, string quote);
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} cannot elect any buy orders for selling at a minimum profit rate of {MinimumProfitRate:F8}")]
+        private partial void LogCannotElectedBuyOrders(string type, string name, decimal minimumProfitRate);
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} elected {Count} orders for sale with total quantity {Quantity:F8} {Asset} at average buy price {Price:F8} {Quote}")]
+        private partial void LogElectedOrders(string type, string name, int count, decimal quantity, string asset, decimal price, string quote);
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} adjusted quantity by lot step size of {LotStepSize} {Asset} down to {Quantity:F8} {Asset}")]
+        private partial void LogAdjustedQuantityByLotStepSize(string type, string name, decimal lotStepSize, string asset, decimal quantity);
+
+        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot set sell order for {Quantity} {Asset} because the quantity is under the minimum lot size of {MinLotSize} {Asset}")]
+        private partial void LogCannotSetSellOrder(string type, string name, decimal quantity, string asset, decimal minLotSize);
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} calculated notional of {Total:F8} {Quote} using quantity of {Quantity:F8} {Asset} and ticker of {Price:F8} {Quote}")]
+        private partial void LogCalculatedNotional(string type, string name, decimal total, string quote, decimal quantity, string asset, decimal price);
+
+        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot set sell order for {Quantity} {Asset} at {Price} {Quote} totalling {Total} {Quote} because it is under the minimum notional of {MinNotional} {Quote}")]
+        private partial void LogCannotSetSellOrderUnderMinimumNotional(string type, string name, decimal quantity, string asset, decimal price, string quote, decimal total, decimal minNotional);
+
+        #endregion Logging
     }
 }

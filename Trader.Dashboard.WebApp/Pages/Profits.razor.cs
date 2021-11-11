@@ -36,7 +36,7 @@ namespace Outcompute.Trader.Dashboard.WebApp.Pages
                         .Handle<Exception>()
                         .RetryForeverAsync(ex =>
                         {
-                            Logger.LogError(ex, "{TypeName} failed to query profit", nameof(Profits));
+                            LogFailedToQueryProfit(Logger, ex, nameof(Profits));
                         })
                         .ExecuteAsync(_ => GrainFactory.GetProfitAggregatorGrain().GetProfitsAsync(), token, true);
 
@@ -52,5 +52,8 @@ namespace Outcompute.Trader.Dashboard.WebApp.Pages
             _timer?.Dispose();
             GC.SuppressFinalize(this);
         }
+
+        [LoggerMessage(0, LogLevel.Error, "{TypeName} failed to query profit")]
+        private partial void LogFailedToQueryProfit(ILogger logger, Exception ex, string typeName);
     }
 }

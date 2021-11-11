@@ -77,9 +77,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Arbitrage
 
                 if (relative >= 0.005m)
                 {
-                    _logger.LogInformation(
-                        "{Type} found arbitrage opportunity for symbol {Symbol} by buying spot at {Buy:F8} and swapping at {Sell:F8} for a profit of {Profit:P2}",
-                        nameof(ArbitrageAlgo), symbol.Name, ticker.Price, comparable, relative);
+                    LogFoundArbitrageOpportunity(TypeName, symbol.Name, ticker.Price, comparable, relative);
                 }
             }
         }
@@ -117,6 +115,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Arbitrage
 
         [LoggerMessage(0, LogLevel.Information, "{TypeName} could not find symbol for {Name1} nor {Name2}")]
         private partial void LogCouldNotFindSymbol(string typeName, string name1, string name2);
+
+        [LoggerMessage(0, LogLevel.Information, "{TypeName} found arbitrage opportunity for symbol {Symbol} by buying spot at {Buy:F8} and swapping at {Sell:F8} for a profit of {Profit:P2}")]
+        private partial void LogFoundArbitrageOpportunity(string typeName, string symbol, decimal buy, decimal sell, decimal profit);
 
         #endregion Logging
     }

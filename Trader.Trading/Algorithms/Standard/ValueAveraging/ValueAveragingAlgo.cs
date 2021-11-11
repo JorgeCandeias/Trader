@@ -150,9 +150,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         {
             var indicator = _rsiA < _options.RsiOversoldA && _rsiB < _options.RsiOversoldB && _rsiC < _options.RsiOversoldC;
 
-            _logger.LogInformation(
-                "{Type} {Symbol} reports (RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8}) oversold = {Indicator}",
-                TypeName, Context.Symbol.Name, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC, indicator);
+            LogRsiOversold(TypeName, Context.Name, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC, indicator);
 
             return indicator;
         }
@@ -327,6 +325,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports (RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8}) trending down = {Indicator}")]
         private partial void LogRsi(string type, string name, int rsiPeriodsA, decimal rsiA, int rsiPeriodsB, decimal rsiB, int rsiPeriodsC, decimal rsiC, bool indicator);
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports (RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8}) oversold = {Indicator}")]
+        private partial void LogRsiOversold(string type, string name, int rsiPeriodsA, decimal rsiA, int rsiPeriodsB, decimal rsiB, int rsiPeriodsC, decimal rsiC, bool indicator);
 
         #endregion Logging
     }

@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Commands.AveragingSell
 {
-    internal class AveragingSellExecutor : IAlgoCommandExecutor<AveragingSellCommand>
+    internal partial class AveragingSellExecutor : IAlgoCommandExecutor<AveragingSellCommand>
     {
         private readonly ILogger _logger;
         private readonly IBalanceProvider _balances;
@@ -63,9 +63,7 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
             var total = balance.Free + savings.FreeAmount;
             if (total < quantity)
             {
-                _logger.LogWarning(
-                    "{Type} cannot evaluate desired sell for symbol {Symbol} because there are not enough assets available to sell",
-                    TypeName, symbol.Name);
+                LogCannotEvaluateDesiredSell(TypeName, symbol.Name);
 
                 return DesiredSell.None;
             }
@@ -135,5 +133,12 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
         {
             public static readonly DesiredSell None = new(0m, 0m);
         }
+
+        #region Logging
+
+        [LoggerMessage(0, LogLevel.Warning, "{Type} cannot evaluate desired sell for symbol {Symbol} because there are not enough assets available to sell")]
+        private partial void LogCannotEvaluateDesiredSell(string type, string symbol);
+
+        #endregion Logging
     }
 }

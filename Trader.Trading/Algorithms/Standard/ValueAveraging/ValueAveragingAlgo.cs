@@ -88,7 +88,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         private IAlgoCommand SetTrackingBuy()
         {
-            LogWillSignalBuyOrderForCurrentState(TypeName, Context.Symbol.Name, Context.Ticker.ClosePrice, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC);
+            LogWillSignalBuyOrderForCurrentState(TypeName, Context.Name, Context.Ticker.ClosePrice, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC);
 
             return TrackingBuy(Context.Symbol, _options.BuyOrderSafetyRatio, _options.BuyQuoteBalanceFraction, _options.MaxNotional, _options.RedeemSavings, _options.RedeemSwapPool);
         }
@@ -113,12 +113,10 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
                 return true;
             }
 
-            var price = Context.PositionDetails.Orders.Max!.Price * _options.PullbackRatio;
+            var price = Context.PositionDetails.Orders.Max!.Price * _options.PullbackRatio.Value;
             var indicator = Context.Ticker.ClosePrice < price;
 
-            _logger.LogInformation(
-                "{Type} {Name} reports ticker {Ticker:F8} {Asset} below pullback price of {Pullback:F8} {Asset} = {Indicator}",
-                TypeName, Context.Name, Context.Ticker.ClosePrice, Context.Symbol.QuoteAsset, price, Context.Symbol.QuoteAsset, indicator);
+            LogTickerBelowPullback(TypeName, Context.Name, Context.Ticker.ClosePrice, Context.Symbol.QuoteAsset, price, indicator);
 
             return indicator;
         }
@@ -321,8 +319,11 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         #region Logging
 
-        [LoggerMessage(0, LogLevel.Information, "{TypeName} {Symbol} will signal a buy order for the current state (Ticker = {Ticker:F8}, SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}, RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8})")]
-        private partial void LogWillSignalBuyOrderForCurrentState(string typeName, string symbol, decimal ticker, int smaPeriodsA, decimal smaA, int smaPeriodsB, decimal smaB, int smaPeriodsC, decimal smaC, int rsiPeriodsA, decimal rsiA, int rsiPeriodsB, decimal rsiB, int rsiPeriodsC, decimal rsiC);
+        [LoggerMessage(0, LogLevel.Information, "{TypeName} {Name} will signal a buy order for the current state (Ticker = {Ticker:F8}, SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}, RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8})")]
+        private partial void LogWillSignalBuyOrderForCurrentState(string typeName, string name, decimal ticker, int smaPeriodsA, decimal smaA, int smaPeriodsB, decimal smaB, int smaPeriodsC, decimal smaC, int rsiPeriodsA, decimal rsiA, int rsiPeriodsB, decimal rsiB, int rsiPeriodsC, decimal rsiC);
+
+        [LoggerMessage(0, LogLevel.Information, "{TypeName} {Name} reports ticker {Ticker:F8} {Asset} below pullback price of {Pullback:F8} {Asset} = {Indicator}")]
+        private partial void LogTickerBelowPullback(string typeName, string name, decimal ticker, string asset, decimal pullback, bool indicator);
 
         #endregion Logging
     }

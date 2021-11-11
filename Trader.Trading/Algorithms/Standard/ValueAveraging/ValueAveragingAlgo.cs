@@ -256,9 +256,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
             if (Context.Ticker.ClosePrice >= target)
             {
-                _logger.LogInformation(
-                    "{Type} {Symbol} reports ticker {Ticker:F8} {Asset} is above the target sell price of {Target:F8} {Asset}",
-                    TypeName, Context.Name, Context.Ticker.ClosePrice, Context.Symbol.QuoteAsset, target, Context.Symbol.QuoteAsset);
+                LogTickerAboveTargetSellPrice(TypeName, Context.Name, Context.Ticker.ClosePrice, Context.Symbol.QuoteAsset, target);
 
                 return true;
             }
@@ -337,6 +335,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports closing is enabled")]
         private partial void LogClosingEnabled(string type, string name);
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports ticker {Ticker:F8} {Asset} is above the target sell price of {Target:F8} {Asset}")]
+        private partial void LogTickerAboveTargetSellPrice(string type, string name, decimal ticker, string asset, decimal target);
 
         #endregion Logging
     }

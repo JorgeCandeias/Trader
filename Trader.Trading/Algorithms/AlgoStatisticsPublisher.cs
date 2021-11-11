@@ -41,9 +41,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 
                 var total = significant.Orders.Sum(x => x.Price * x.ExecutedQuantity);
 
-                _logger.LogInformation(
-                    "{Type} {Name} reports Asset Cost = {Total:F8}",
-                    TypeName, significant.Symbol.Name, total);
+                LogAssetCost(TypeName, significant.Symbol.Name, total);
 
                 var now = quantity * ticker.ClosePrice;
 
@@ -99,6 +97,9 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Asset Quantity = {Quantity:F8}")]
         private partial void LogAssetQuantity(string type, string name, decimal quantity);
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Asset Cost = {Total:F8}")]
+        private partial void LogAssetCost(string type, string name, decimal total);
 
         #endregion Logging
     }

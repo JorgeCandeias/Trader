@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 {
-    internal class ValueAveragingAlgo : SymbolAlgo
+    internal partial class ValueAveragingAlgo : SymbolAlgo
     {
         private readonly ValueAveragingAlgoOptions _options;
         private readonly ILogger _logger;
@@ -88,9 +88,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         private IAlgoCommand SetTrackingBuy()
         {
-            _logger.LogInformation(
-                    "{Type} {Symbol} will signal a buy order for the current state (Ticker = {Ticker:F8}, SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}, RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8})",
-                    TypeName, Context.Symbol.Name, Context.Ticker.ClosePrice, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC);
+            LogWillSignalBuyOrderForCurrentState(TypeName, Context.Symbol.Name, Context.Ticker.ClosePrice, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC);
 
             return TrackingBuy(Context.Symbol, _options.BuyOrderSafetyRatio, _options.BuyQuoteBalanceFraction, _options.MaxNotional, _options.RedeemSavings, _options.RedeemSwapPool);
         }
@@ -320,5 +318,12 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
             return signal;
         }
+
+        #region Logging
+
+        [LoggerMessage(0, LogLevel.Information, "{TypeName} {Symbol} will signal a buy order for the current state (Ticker = {Ticker:F8}, SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}, RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8})")]
+        private partial void LogWillSignalBuyOrderForCurrentState(string typeName, string symbol, decimal ticker, int smaPeriodsA, decimal smaA, int smaPeriodsB, decimal smaB, int smaPeriodsC, decimal smaC, int rsiPeriodsA, decimal rsiA, int rsiPeriodsB, decimal rsiB, int rsiPeriodsC, decimal rsiC);
+
+        #endregion Logging
     }
 }

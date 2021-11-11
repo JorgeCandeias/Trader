@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Core.Timers
 {
-    internal sealed class SafeTimer : ISafeTimer
+    internal sealed partial class SafeTimer : ISafeTimer
     {
         private readonly Func<CancellationToken, Task> _callback;
         private readonly TimeSpan _period;
@@ -24,7 +24,7 @@ namespace Outcompute.Trader.Core.Timers
             _timer = new Timer(Handler, null, dueTime, Timeout.InfiniteTimeSpan);
         }
 
-        private static string Name => nameof(SafeTimer);
+        private static string TypeName => nameof(SafeTimer);
         private readonly CancellationTokenSource _cancellation = new();
         private readonly Timer _timer;
 
@@ -42,7 +42,7 @@ namespace Outcompute.Trader.Core.Timers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "{ServiceName} caught exception {Message}", Name, ex.Message);
+                LogHandledException(ex, TypeName, ex.Message);
             }
 
             // schedule the next tick
@@ -87,5 +87,12 @@ namespace Outcompute.Trader.Core.Timers
         }
 
         #endregion Disposable
+
+        #region Logging
+
+        [LoggerMessage(0, LogLevel.Error, "{TypeName} caught exception {Message}")]
+        private partial void LogHandledException(Exception ex, string typeName, string message);
+
+        #endregion Logging
     }
 }

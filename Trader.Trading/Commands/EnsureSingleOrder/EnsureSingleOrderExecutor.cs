@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder
 {
-    internal class EnsureSingleOrderExecutor : IAlgoCommandExecutor<EnsureSingleOrderCommand>
+    internal partial class EnsureSingleOrderExecutor : IAlgoCommandExecutor<EnsureSingleOrderCommand>
     {
         private readonly ILogger _logger;
         private readonly IBalanceProvider _balances;
@@ -25,7 +25,7 @@ namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder
             _orders = orders;
         }
 
-        private static string TypeName => nameof(EnsureSingleOrderExecutor);
+        private const string TypeName = nameof(EnsureSingleOrderExecutor);
 
         public async Task ExecuteAsync(IAlgoContext context, EnsureSingleOrderCommand command, CancellationToken cancellationToken = default)
         {
@@ -82,9 +82,7 @@ namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder
 
                     if (result.Success)
                     {
-                        _logger.LogInformation(
-                            "{Type} {Name} redeemed {Redeemed:F8} {Asset} from savings to cover the necessary {Necessary:F8} {Asset} and will let the calling algo cycle",
-                            TypeName, command.Symbol.Name, result.Redeemed, sourceAsset, necessary, sourceAsset);
+                        LogRedeemedFromSavings(TypeName, command.Symbol.Name, result.Redeemed, sourceAsset, necessary);
 
                         return;
                     }
@@ -132,5 +130,12 @@ namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder
                 .ExecuteAsync(context, cancellationToken)
                 .ConfigureAwait(false);
         }
+
+        #region Logging
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} redeemed {Redeemed:F8} {Asset} from savings to cover the necessary {Necessary:F8} {Asset} and will let the calling algo cycle")]
+        private partial void LogRedeemedFromSavings(string type, string name, decimal redeemed, string asset, decimal necessary);
+
+        #endregion Logging
     }
 }

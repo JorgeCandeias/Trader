@@ -137,9 +137,7 @@ namespace Outcompute.Trader.Trading.Algorithms
                     x.Key.OriginalQuoteOrderQuantity))
                 .ToImmutableSortedSet(OrderQueryResult.KeyComparer);
 
-            _logger.LogInformation(
-                "{Name} {Symbol} identified {Count} significant orders in {ElapsedMs}ms",
-                nameof(AutoPositionResolver), symbol.Name, significant.Count, watch.ElapsedMilliseconds);
+            LogIdentifiedPositions(TypeName, symbol.Name, significant.Count, watch.ElapsedMilliseconds);
 
             return new PositionDetails(symbol, significant, profits.ToImmutable(), commissions);
         }
@@ -216,6 +214,9 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         [LoggerMessage(0, LogLevel.Warning, "{TypeName} {Symbol} could not fill {OrderType} {OrderSide} order {OrderId} as there is {Missing} {Asset} missing")]
         private partial void LogCouldNotFillOrder(string typeName, string symbol, OrderType orderType, OrderSide orderSide, long orderId, decimal missing, string asset);
+
+        [LoggerMessage(0, LogLevel.Information, "{TypeName} {Symbol} identified {Count} positions in {ElapsedMs}ms")]
+        private partial void LogIdentifiedPositions(string typeName, string symbol, int count, long elapsedMs);
 
         #endregion Logging
     }

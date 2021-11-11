@@ -1,6 +1,11 @@
 name: MSBuild
 
-on: [push]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 env:
   # Path to the solution file relative to the root of the project.
@@ -23,6 +28,11 @@ jobs:
         
     - name: Setup .NET Core SDK
       uses: actions/setup-dotnet@v1.8.2
+      
+    - name: Setup .NET Core SDK
+      uses: actions/setup-dotnet@v1.8.2
+      with:
+        dotnet-version: 5.0.402 # required by sonar
     
     - name: Set up JDK 11
       uses: actions/setup-java@v1

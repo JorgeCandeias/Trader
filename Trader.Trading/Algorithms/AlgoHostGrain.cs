@@ -36,7 +36,6 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         private string _name = Empty;
         private IAlgo _algo = NullAlgo.Instance;
-        private IAlgoContext _context = AlgoContext.Empty;
         private IDisposable? _timer;
         private bool _ready;
         private bool _loggedNotReady;
@@ -50,10 +49,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             var options = _options.Get(_name);
 
             // resolve the factory for the current algo type and create the algo instance
-            (_algo, _context) = _resolver.Resolve(options.Type).Create(_name);
-
-            // update the context
-            await _context.UpdateAsync(_cancellation.Token);
+            _algo = _resolver.Resolve(options.Type).Create(_name);
 
             // run startup work
             await _algo.StartAsync(_cancellation.Token);
@@ -147,24 +143,18 @@ namespace Outcompute.Trader.Trading.Algorithms
             using var limit = new CancellationTokenSource(options.MaxExecutionTime);
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(limit.Token, _cancellation.Token);
 
-            // update the context
-            await _context.UpdateAsync(linked.Token);
+            // execute the algo under the limits
+            var result = await _algo.GoAsync(linked.Token);
+
+            // execute the algo result under the limits
+            await result.ExecuteAsync(_algo.Context, linked.Token);
 
             // update the context with new information for this tick
             if (!IsNullOrWhiteSpace(options.Symbol))
             {
                 // publish current algo statistics
-                await _publisher.PublishAsync(_context.PositionDetails, _context.Ticker, linked.Token);
+                await _publisher.PublishAsync(_algo.Context.PositionDetails, _algo.Context.Ticker, linked.Token);
             }
-
-            // set as the current context again
-            AlgoContext.Current = _context;
-
-            // execute the algo under the limits
-            var result = await _algo.GoAsync(linked.Token);
-
-            // execute the algo result under the limits
-            await result.ExecuteAsync(_context, linked.Token);
         }
 
         public Task TickAsync()

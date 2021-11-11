@@ -10,6 +10,8 @@ namespace Outcompute.Trader.Trading.Algorithms
     /// </summary>
     public interface IAlgo
     {
+        IAlgoContext Context { get; }
+
         Task StartAsync(CancellationToken cancellationToken = default);
 
         Task StopAsync(CancellationToken cancellationToken = default);

@@ -32,7 +32,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.PennyAccumulator
 
         private static string TypeName => nameof(PennyAccumulatorAlgo);
 
-        public override async Task<IAlgoCommand> GoAsync(CancellationToken cancellationToken = default)
+        protected override async ValueTask<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default)
         {
             // fetch all tickers
             var tickers = await _trader

@@ -1,5 +1,4 @@
 ﻿using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Commands.AveragingSell;
 using Outcompute.Trader.Trading.Commands.ClearOpenOrders;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
@@ -8,23 +7,11 @@ using Outcompute.Trader.Trading.Commands.SignificantAveragingSell;
 using Outcompute.Trader.Trading.Commands.TrackingBuy;
 using System;
 using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
     public abstract class SymbolAlgo : Algo, ISymbolAlgo
     {
-        public override Task<IAlgoCommand> GoAsync(CancellationToken cancellationToken = default)
-        {
-            return OnExecuteAsync(cancellationToken);
-        }
-
-        protected virtual Task<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default)
-        {
-            return Task.FromResult<IAlgoCommand>(Noop());
-        }
-
         private Symbol EnsureSymbol()
         {
             if (Context.Symbol == Symbol.Empty)

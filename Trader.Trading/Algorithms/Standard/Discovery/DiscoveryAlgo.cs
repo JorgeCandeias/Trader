@@ -28,7 +28,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
             _swaps = swaps;
         }
 
-        public override async Task<IAlgoCommand> GoAsync(CancellationToken cancellationToken = default)
+        protected override async ValueTask<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default)
         {
             var options = _monitor.Get(Context.Name);
 

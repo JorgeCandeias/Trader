@@ -28,7 +28,17 @@ namespace Outcompute.Trader.Trading.Algorithms
             Context = AlgoContext.Current;
         }
 
-        public abstract Task<IAlgoCommand> GoAsync(CancellationToken cancellationToken = default);
+        public async Task<IAlgoCommand> GoAsync(CancellationToken cancellationToken = default)
+        {
+            await Context.UpdateAsync(cancellationToken).ConfigureAwait(false);
+
+            return await OnExecuteAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        protected virtual ValueTask<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default)
+        {
+            return ValueTask.FromResult<IAlgoCommand>(Noop());
+        }
 
         public virtual Task StartAsync(CancellationToken cancellationToken = default)
         {
@@ -40,7 +50,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             return Task.CompletedTask;
         }
 
-        public IAlgoContext Context { get; set; }
+        public IAlgoContext Context { get; }
 
         public virtual NoopAlgoCommand Noop()
         {

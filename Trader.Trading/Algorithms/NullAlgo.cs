@@ -16,6 +16,8 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public static NullAlgo Instance { get; } = new NullAlgo();
 
+        public IAlgoContext Context => AlgoContext.Empty;
+
         public Task StartAsync(CancellationToken cancellationToken = default)
         {
             return Task.CompletedTask;

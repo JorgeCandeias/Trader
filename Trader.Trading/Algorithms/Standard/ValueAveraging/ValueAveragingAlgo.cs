@@ -35,7 +35,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         private decimal _rsiC;
 
         [SuppressMessage("Major Code Smell", "S3358:Ternary operators should not be nested", Justification = "N/A")]
-        public override async Task<IAlgoCommand> GoAsync(CancellationToken cancellationToken = default)
+        protected override async ValueTask<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default)
         {
             // get the lastest klines
             var maxPeriods = GetMaxPeriods();

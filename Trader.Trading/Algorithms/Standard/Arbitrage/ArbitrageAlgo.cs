@@ -23,7 +23,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Arbitrage
             _info = info;
         }
 
-        protected override async Task<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default)
+        protected override async ValueTask<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default)
         {
             var pools = await _swaps.GetSwapPoolConfigurationsAsync(cancellationToken);
 

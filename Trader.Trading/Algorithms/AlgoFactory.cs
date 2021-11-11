@@ -15,7 +15,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             _provider = provider;
         }
 
-        public (IAlgo Algo, IAlgoContext Context) Create(string name)
+        public IAlgo Create(string name)
         {
             if (name is null) throw new ArgumentNullException(nameof(name));
 
@@ -26,9 +26,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             AlgoContext.Current = context;
 
             // resolve the algo instance now
-            var algo = ActivatorUtilities.CreateInstance<TAlgo>(_provider);
-
-            return (algo, context);
+            return ActivatorUtilities.CreateInstance<TAlgo>(_provider);
         }
     }
 }

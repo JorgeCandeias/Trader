@@ -35,7 +35,7 @@ namespace Outcompute.Trader.Trading.Algorithms
         private readonly CancellationTokenSource _cancellation = new();
 
         private string _name = Empty;
-        private IAlgo _algo = NullAlgo.Instance;
+        private IAlgo _algo = NoopAlgo.Instance;
         private IDisposable? _timer;
         private bool _ready;
         private bool _loggedNotReady;

@@ -8,13 +8,13 @@ namespace Outcompute.Trader.Trading.Algorithms
     /// An empty algo that does nothing.
     /// For use with non nullable fields and unit testing.
     /// </summary>
-    public class NullAlgo : IAlgo
+    public class NoopAlgo : IAlgo
     {
-        private NullAlgo()
+        private NoopAlgo()
         {
         }
 
-        public static NullAlgo Instance { get; } = new NullAlgo();
+        public static NoopAlgo Instance { get; } = new NoopAlgo();
 
         public IAlgoContext Context => AlgoContext.Empty;
 

@@ -88,9 +88,7 @@ namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder
                     }
                     else
                     {
-                        _logger.LogWarning(
-                            "{type} {Name} could not redeem the necessary {Necessary:F8} {Asset} from savings",
-                            TypeName, command.Symbol.Name, necessary, sourceAsset);
+                        LogCouldNotRedeemFromSavings(TypeName, command.Symbol.Name, necessary, sourceAsset);
 
                         var result2 = await new RedeemSwapPoolCommand(sourceAsset, necessary)
                             .ExecuteAsync(context, cancellationToken)
@@ -98,17 +96,13 @@ namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder
 
                         if (result2.Success)
                         {
-                            _logger.LogInformation(
-                                "{Type} {Name} redeemed {Redeemed:F8} {Asset} from the swap pool to cover the necessary {Necessary:F8} {Asset} and will wait let the calling algo cycle",
-                                TypeName, command.Symbol.Name, result2.QuoteAmount, sourceAsset, necessary, sourceAsset);
+                            LogRedeemedFromSwapPool(TypeName, command.Symbol.Name, result2.QuoteAmount, sourceAsset, necessary);
 
                             return;
                         }
                         else
                         {
-                            _logger.LogWarning(
-                                "{type} {Name} could not redeem the necessary {Necessary:F8} {Asset} from a swap pool",
-                                TypeName, command.Symbol.Name, necessary, sourceAsset);
+                            LogCouldNotRedeemFromSwapPool(TypeName, command.Symbol.Name, necessary, sourceAsset);
 
                             return;
                         }
@@ -116,9 +110,7 @@ namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder
                 }
                 else
                 {
-                    _logger.LogWarning(
-                        "{Type} {Name} must place {OrderType} {OrderSide} of {Quantity:F8} {Asset} for {Price:F8} {Quote} but there is only {Free:F8} {Asset} available and savings redemption is disabled",
-                        TypeName, command.Symbol.Name, command.Type, command.Side, command.Quantity, command.Symbol.BaseAsset, command.Price, command.Symbol.QuoteAsset, balance.Free, sourceAsset);
+                    LogMustPlaceOrderButRedemptionIsDisabled(TypeName, command.Symbol.Name, command.Type, command.Side, command.Quantity, command.Symbol.BaseAsset, command.Price, command.Symbol.QuoteAsset, balance.Free, sourceAsset);
 
                     return;
                 }
@@ -135,6 +127,18 @@ namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder
 
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} redeemed {Redeemed:F8} {Asset} from savings to cover the necessary {Necessary:F8} {Asset} and will let the calling algo cycle")]
         private partial void LogRedeemedFromSavings(string type, string name, decimal redeemed, string asset, decimal necessary);
+
+        [LoggerMessage(0, LogLevel.Warning, "{Type} {Name} could not redeem the necessary {Necessary:F8} {Asset} from savings")]
+        private partial void LogCouldNotRedeemFromSavings(string type, string name, decimal necessary, string asset);
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} redeemed {Redeemed:F8} {Asset} from the swap pool to cover the necessary {Necessary:F8} {Asset} and will wait let the calling algo cycle")]
+        private partial void LogRedeemedFromSwapPool(string type, string name, decimal redeemed, string asset, decimal necessary);
+
+        [LoggerMessage(0, LogLevel.Warning, "{Type} {Name} could not redeem the necessary {Necessary:F8} {Asset} from a swap pool")]
+        private partial void LogCouldNotRedeemFromSwapPool(string type, string name, decimal necessary, string asset);
+
+        [LoggerMessage(0, LogLevel.Warning, "{Type} {Name} must place {OrderType} {OrderSide} of {Quantity:F8} {Asset} for {Price:F8} {Quote} but there is only {Free:F8} {SourceAsset} available and savings redemption is disabled")]
+        private partial void LogMustPlaceOrderButRedemptionIsDisabled(string type, string name, OrderType orderType, OrderSide orderSide, decimal quantity, string asset, decimal price, string quote, decimal free, string sourceAsset);
 
         #endregion Logging
     }

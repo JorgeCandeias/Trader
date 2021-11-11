@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms.Standard.Arbitrage
 {
-    internal partial class ArbitrageAlgo : SymbolAlgo
+    internal partial class ArbitrageAlgo : Algo
     {
         private readonly ILogger _logger;
         private readonly ITradingService _trader;

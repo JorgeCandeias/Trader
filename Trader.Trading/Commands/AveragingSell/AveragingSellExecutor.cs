@@ -112,9 +112,7 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
             // only sell if the price is at or above the ticker
             if (ticker.ClosePrice < price)
             {
-                _logger.LogInformation(
-                    "{Type} {Name} holding off sell order of {Quantity} {Asset} until price hits {Price} {Quote} ({Percent:P2} of current value of {Ticker} {Quote})",
-                    TypeName, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, price / ticker.ClosePrice, ticker.ClosePrice, symbol.QuoteAsset);
+                LogHoldingOffSellOrder(TypeName, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, price / ticker.ClosePrice, ticker.ClosePrice);
 
                 return DesiredSell.None;
             }
@@ -141,6 +139,9 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
 
         [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot set sell order for {Quantity} {Asset} at {Price} {Quote} totalling {Total} {Quote} because it is under the maximum percent filter price of {MaxPrice} {Quote}")]
         private partial void LogCannotSetSellOrderMaximumPercentFilter(string type, string name, decimal quantity, string asset, decimal price, string quote, decimal total, decimal maxPrice);
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} holding off sell order of {Quantity} {Asset} until price hits {Price} {Quote} ({Percent:P2} of current value of {Ticker} {Quote})")]
+        private partial void LogHoldingOffSellOrder(string type, string name, decimal quantity, string asset, decimal price, string quote, decimal percent, decimal ticker);
 
         #endregion Logging
     }

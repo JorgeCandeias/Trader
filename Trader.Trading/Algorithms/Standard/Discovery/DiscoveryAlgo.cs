@@ -88,9 +88,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
                 .Except(withSavings)
                 .ToList();
 
-            _logger.LogInformation(
-                "{Type} identified {Count} used symbols without savings: {Symbols}",
-                nameof(DiscoveryAlgo), usedWithoutSavings.Count, usedWithoutSavings);
+            LogIdentifiedUsedSymbolsWithoutSavings(TypeName, usedWithoutSavings.Count, usedWithoutSavings);
 
             // identify used symbols without swap pools
             var usedWithoutSwapPools = used
@@ -123,6 +121,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
 
         [LoggerMessage(0, LogLevel.Information, "{TypeName} identified {Count} unused symbols with swap pools: {Symbols}")]
         private partial void LogIdentifiedUnusedSymbolsWithSwapPools(string typeName, int count, IEnumerable<string> symbols);
+
+        [LoggerMessage(0, LogLevel.Information, "{TypeName} identified {Count} used symbols without savings: {Symbols}")]
+        private partial void LogIdentifiedUsedSymbolsWithoutSavings(string typeName, int count, IEnumerable<string> symbols);
 
         #endregion Logging
     }

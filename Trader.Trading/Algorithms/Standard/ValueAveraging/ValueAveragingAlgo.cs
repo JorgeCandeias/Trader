@@ -186,9 +186,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         {
             var indicator = Context.Ticker.ClosePrice > _smaA && Context.Ticker.ClosePrice > _smaB && Context.Ticker.ClosePrice > _smaC;
 
-            _logger.LogInformation(
-                "{Type} {Symbol} reports Ticker {Ticker:F8} above (SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}) = {Indicator}",
-                TypeName, Context.Symbol.Name, Context.Ticker.ClosePrice, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, indicator);
+            LogTickerAboveSmas(TypeName, Context.Name, Context.Ticker.ClosePrice, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, indicator);
 
             return indicator;
         }
@@ -331,6 +329,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports (SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}) trending up = {Indicator}")]
         private partial void LogSmaTrendingUp(string type, string name, int smaPeriodsA, decimal smaA, int smaPeriodsB, decimal smaB, int smaPeriodsC, decimal smaC, bool indicator);
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Ticker {Ticker:F8} above (SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}) = {Indicator}")]
+        private partial void LogTickerAboveSmas(string type, string name, decimal ticker, int smaPeriodsA, decimal smaA, int smaPeriodsB, decimal smaB, int smaPeriodsC, decimal smaC, bool indicator);
 
         #endregion Logging
     }

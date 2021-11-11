@@ -60,7 +60,7 @@ namespace Outcompute.Trader.Data.InMemory.Tests.Fixtures
                 {
                     services
                         .AddAlgoType<TestAlgo>("Test")
-                        .AddAlgoOptionsType<TestAlgoOptions>();
+                        .AddOptionsType<TestAlgoOptions>();
                 });
         }
     }

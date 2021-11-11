@@ -57,6 +57,10 @@ namespace Microsoft.Extensions.DependencyInjection
                 .ConfigureOptions<AlgoDependencyOptionsConfigurator>()
                 .ConfigureOptions<TraderOptionsConfigurator>().AddOptions<TraderOptions>().ValidateDataAnnotations().Services
 
+                // algo options
+                .AddOptions<AlgoOptions>().ValidateDataAnnotations().Services
+                .ConfigureOptions<AlgoOptionsConfigurator>()
+
                 // kline provider
                 .AddSingleton<IKlineProvider, KlineProvider>()
                 .AddOptions<KlineProviderOptions>().ValidateDataAnnotations().Services
@@ -114,6 +118,8 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<IAlgoCommandExecutor<RedeemSwapPoolCommand, RedeemSwapPoolEvent>, RedeemSwapPoolExecutor>()
 
                 // builtin algos
+                .AddAccumulatorAlgoType()
+                .AddArbitrageAlgoType()
                 .AddValueAveragingAlgoType()
                 .AddDiscoveryAlgoType();
         }

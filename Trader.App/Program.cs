@@ -10,6 +10,7 @@ using Orleans.Statistics;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging;
 using Outcompute.Trader.Trading.Commands;
 using Serilog;
 using Serilog.Events;
@@ -132,14 +133,15 @@ namespace Outcompute.Trader.App
                                 {
                                     options.Port = 6002;
                                 })
-                                .AddAlgoType<TestAlgo, TestAlgoOptions>();
+                                .AddAlgoType<TestAlgo>().AddOptionsType<TestAlgoOptions>();
 
                             var templateSection = context.Configuration.GetSection("ValueAveragingTemplate");
 
                             foreach (var symbol in templateSection.GetSection("Symbols").Get<string[]>())
                             {
-                                services.AddValueAveragingAlgo(symbol,
-                                    options =>
+                                services
+                                    .AddValueAveragingAlgo(symbol)
+                                    .ConfigureHostOptions(options =>
                                     {
                                         templateSection.Bind(options);
 
@@ -153,8 +155,8 @@ namespace Outcompute.Trader.App
                                             item.Symbol = symbol;
                                         }
                                         options.DependsOn.Tickers.Add(symbol);
-                                    },
-                                    options =>
+                                    })
+                                    .ConfigureTypeOptions<ValueAveragingAlgoOptions>(options =>
                                     {
                                         templateSection.GetSection("Options").Bind(options);
                                     });
@@ -162,17 +164,19 @@ namespace Outcompute.Trader.App
 
 #if DEBUG
                             services
-                                .AddAlgo<TestAlgo, TestAlgoOptions>("MyTestAlgo",
-                                    options =>
-                                    {
-                                        options.DependsOn.Tickers.Add("BTCGBP");
-                                        options.DependsOn.Balances.Add("BTCGBP");
-                                        options.DependsOn.Klines.Add("BTCGBP", KlineInterval.Days1, 100);
-                                    },
-                                    options =>
-                                    {
-                                        options.SomeValue = "SomeValue";
-                                    });
+                                .AddAlgoType<TestAlgo>()
+                                .AddOptionsType<TestAlgoOptions>()
+                                .AddAlgo<TestAlgo>("MyTestAlgo")
+                                .ConfigureHostOptions(options =>
+                                {
+                                    options.DependsOn.Tickers.Add("BTCGBP");
+                                    options.DependsOn.Balances.Add("BTCGBP");
+                                    options.DependsOn.Klines.Add("BTCGBP", KlineInterval.Days1, 100);
+                                })
+                                .ConfigureTypeOptions<TestAlgoOptions>(options =>
+                                {
+                                    options.SomeValue = "SomeValue";
+                                });
 #endif
                         });
                 })

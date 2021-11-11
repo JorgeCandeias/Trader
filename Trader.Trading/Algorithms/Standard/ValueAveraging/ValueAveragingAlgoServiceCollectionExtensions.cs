@@ -1,21 +1,23 @@
 ﻿using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging;
-using System;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
     public static class ValueAveragingAlgoServiceCollectionExtensions
     {
+        internal const string AlgoTypeName = "ValueAveraging";
+
         public static IServiceCollection AddValueAveragingAlgoType(this IServiceCollection services)
         {
             return services
-                .AddAlgoType<ValueAveragingAlgo>("ValueAveraging")
-                .AddAlgoOptionsType<ValueAveragingAlgoOptions>();
+                .AddAlgoType<ValueAveragingAlgo>(AlgoTypeName)
+                .AddOptionsType<ValueAveragingAlgoOptions>()
+                .Services;
         }
 
-        public static IServiceCollection AddValueAveragingAlgo(this IServiceCollection services, string name, Action<AlgoOptions> configureAlgoOptions, Action<ValueAveragingAlgoOptions> configureUserOptions)
+        public static IAlgoBuilder AddValueAveragingAlgo(this IServiceCollection services, string name)
         {
-            return services.AddAlgo("ValueAveraging", name, configureAlgoOptions, configureUserOptions);
+            return services.AddAlgo(name, AlgoTypeName);
         }
     }
 }

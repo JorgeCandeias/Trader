@@ -1,16 +1,23 @@
 ﻿using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Algorithms.Standard.Accumulator;
-using System;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
     public static class AccumulatorAlgoServiceCollectionExtensions
     {
-        public static IServiceCollection AddAccumulatorAlgo(this IServiceCollection services, Action<AlgoOptions> configureAlgoOptions, Action<AccumulatorAlgoOptions> configureUserOptions)
+        internal const string AlgoTypeName = "Accumulator";
+
+        internal static IServiceCollection AddAccumulatorAlgoType(this IServiceCollection services)
         {
             return services
-                .AddAlgoType<AccumulatorAlgo, AccumulatorAlgoOptions>()
-                .AddAlgo<AccumulatorAlgo, AccumulatorAlgoOptions>("Accumulator", configureAlgoOptions, configureUserOptions);
+                .AddAlgoType<AccumulatorAlgo>(AlgoTypeName)
+                .AddOptionsType<AccumulatorAlgoOptions>()
+                .Services;
+        }
+
+        public static IAlgoBuilder AddAccumulatorAlgo(this IServiceCollection services, string name)
+        {
+            return services.AddAlgo(name, AlgoTypeName);
         }
     }
 }

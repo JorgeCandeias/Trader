@@ -16,8 +16,7 @@ namespace Orleans.Hosting
                         .AddBase62NumberSerializer()
                         .AddModelAutoMapperProfiles()
                         .AddRandomGenerator()
-                        .AddAlgoFactoryResolver()
-                        .AddAlgoHostGrain();
+                        .AddAlgoFactoryResolver();
                 });
         }
     }

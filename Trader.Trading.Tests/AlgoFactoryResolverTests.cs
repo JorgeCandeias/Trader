@@ -27,7 +27,7 @@ namespace Outcompute.Trader.Trading.Tests
 
             var provider = new ServiceCollection()
                 .TryAddKeyedServiceCollection()
-                .AddAlgoType<MyAlgo>("MyAlgo")
+                .AddAlgoType<MyAlgo>("MyAlgo").Services
                 .AddSingleton(algoContextFactory)
                 .BuildServiceProvider();
 

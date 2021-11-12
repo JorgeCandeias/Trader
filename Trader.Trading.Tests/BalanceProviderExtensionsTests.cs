@@ -18,7 +18,7 @@ namespace Outcompute.Trader.Trading.Tests
             var balances = Mock.Of<IBalanceProvider>();
             Mock.Get(balances)
                 .Setup(x => x.TryGetBalanceAsync(asset, CancellationToken.None))
-                .Returns(Task.FromResult<Balance?>(null))
+                .ReturnsAsync(() => null)
                 .Verifiable();
 
             // act
@@ -38,7 +38,7 @@ namespace Outcompute.Trader.Trading.Tests
             var balances = Mock.Of<IBalanceProvider>();
             Mock.Get(balances)
                 .Setup(x => x.TryGetBalanceAsync(asset, CancellationToken.None))
-                .Returns(Task.FromResult<Balance?>(balance))
+                .ReturnsAsync(balance)
                 .Verifiable();
 
             // act
@@ -58,7 +58,7 @@ namespace Outcompute.Trader.Trading.Tests
             var balances = Mock.Of<IBalanceProvider>();
             Mock.Get(balances)
                 .Setup(x => x.TryGetBalanceAsync(asset, CancellationToken.None))
-                .Returns(Task.FromResult<Balance?>(balance))
+                .ReturnsAsync(balance)
                 .Verifiable();
 
             // act
@@ -77,11 +77,11 @@ namespace Outcompute.Trader.Trading.Tests
             var balances = Mock.Of<IBalanceProvider>();
             Mock.Get(balances)
                 .Setup(x => x.TryGetBalanceAsync(asset, CancellationToken.None))
-                .Returns(Task.FromResult<Balance?>(null))
+                .ReturnsAsync(() => null)
                 .Verifiable();
 
             // act
-            Task Test() => balances.GetRequiredBalanceAsync(asset);
+            async Task Test() => await balances!.GetRequiredBalanceAsync(asset!);
 
             // assert
             await Assert.ThrowsAsync<KeyNotFoundException>(Test);

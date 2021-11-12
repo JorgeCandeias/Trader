@@ -23,7 +23,7 @@ namespace Outcompute.Trader.Trading.Commands.CancelOrder
 
         private static string TypeName => nameof(CancelOrderExecutor);
 
-        public async Task ExecuteAsync(IAlgoContext context, CancelOrderCommand command, CancellationToken cancellationToken = default)
+        public async ValueTask ExecuteAsync(IAlgoContext context, CancelOrderCommand command, CancellationToken cancellationToken = default)
         {
             LogStart(_logger, command.Symbol.Name, command.OrderId);
 

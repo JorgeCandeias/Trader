@@ -18,7 +18,7 @@ namespace Outcompute.Trader.Trading.Commands.RedeemSwapPool
         public string Asset { get; }
         public decimal Amount { get; }
 
-        public Task<RedeemSwapPoolEvent> ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
+        public ValueTask<RedeemSwapPoolEvent> ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
         {
             if (context is null) throw new ArgumentNullException(nameof(context));
 
@@ -27,9 +27,9 @@ namespace Outcompute.Trader.Trading.Commands.RedeemSwapPool
                 .ExecuteAsync(context, this, cancellationToken);
         }
 
-        Task IAlgoCommand.ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken)
+        async ValueTask IAlgoCommand.ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken)
         {
-            return ExecuteAsync(context, cancellationToken);
+            await ExecuteAsync(context, cancellationToken).ConfigureAwait(false);
         }
     }
 }

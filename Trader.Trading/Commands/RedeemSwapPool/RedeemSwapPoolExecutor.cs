@@ -14,7 +14,7 @@ namespace Outcompute.Trader.Trading.Commands.RedeemSwapPool
             _provider = provider;
         }
 
-        public Task<RedeemSwapPoolEvent> ExecuteAsync(IAlgoContext context, RedeemSwapPoolCommand command, CancellationToken cancellationToken = default)
+        public ValueTask<RedeemSwapPoolEvent> ExecuteAsync(IAlgoContext context, RedeemSwapPoolCommand command, CancellationToken cancellationToken = default)
         {
             return _provider.RedeemAsync(command.Asset, command.Amount, cancellationToken);
         }

@@ -49,9 +49,9 @@ namespace Outcompute.Trader.Trading.Providers.Balances
             await base.OnActivateAsync();
         }
 
-        public Task<Balance?> TryGetBalanceAsync()
+        public ValueTask<Balance?> TryGetBalanceAsync()
         {
-            return Task.FromResult(_balance);
+            return ValueTask.FromResult(_balance);
         }
 
         private async Task LoadAsync()

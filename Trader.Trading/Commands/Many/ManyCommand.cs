@@ -21,7 +21,7 @@ namespace Outcompute.Trader.Trading.Commands.Many
 
         public IEnumerable<IAlgoCommand> Commands { get; }
 
-        public Task ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
+        public ValueTask ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
         {
             if (context is null) throw new ArgumentNullException(nameof(context));
 

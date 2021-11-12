@@ -24,21 +24,21 @@ namespace Outcompute.Trader.Trading.Providers.Balances
             _mapper = mapper;
         }
 
-        public Task<Balance?> TryGetBalanceAsync(string asset, CancellationToken cancellationToken = default)
+        public ValueTask<Balance?> TryGetBalanceAsync(string asset, CancellationToken cancellationToken = default)
         {
             if (asset is null) throw new ArgumentNullException(nameof(asset));
 
             return _factory.GetBalanceProviderReplicaGrain(asset).TryGetBalanceAsync();
         }
 
-        public Task SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default)
+        public ValueTask SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default)
         {
             if (balances is null) throw new ArgumentNullException(nameof(balances));
 
             return SetBalancesCoreAsync(balances, cancellationToken);
         }
 
-        private async Task SetBalancesCoreAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default)
+        private async ValueTask SetBalancesCoreAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default)
         {
             await _repository.SetBalancesAsync(balances, cancellationToken).ConfigureAwait(false);
 
@@ -48,7 +48,7 @@ namespace Outcompute.Trader.Trading.Providers.Balances
                 .ConfigureAwait(false);
         }
 
-        public Task SetBalancesAsync(AccountInfo accountInfo, CancellationToken cancellationToken = default)
+        public ValueTask SetBalancesAsync(AccountInfo accountInfo, CancellationToken cancellationToken = default)
         {
             if (accountInfo is null) throw new ArgumentNullException(nameof(accountInfo));
 
@@ -57,7 +57,7 @@ namespace Outcompute.Trader.Trading.Providers.Balances
             return SetBalancesAsync(balances, cancellationToken);
         }
 
-        public Task<IEnumerable<Balance>> GetBalancesAsync(CancellationToken cancellationToken = default)
+        public ValueTask<IEnumerable<Balance>> GetBalancesAsync(CancellationToken cancellationToken = default)
         {
             return _repository.GetBalancesAsync(cancellationToken);
         }

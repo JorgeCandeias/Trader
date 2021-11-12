@@ -16,7 +16,7 @@ namespace Outcompute.Trader.Trading.Commands.ClearOpenOrders
             _orders = orders;
         }
 
-        public async Task ExecuteAsync(IAlgoContext context, ClearOpenOrdersCommand command, CancellationToken cancellationToken = default)
+        public async ValueTask ExecuteAsync(IAlgoContext context, ClearOpenOrdersCommand command, CancellationToken cancellationToken = default)
         {
             var orders = await _orders
                 .GetOrdersByFilterAsync(command.Symbol.Name, command.Side, true, null, cancellationToken)

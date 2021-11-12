@@ -1,12 +1,11 @@
-﻿using Outcompute.Trader.Models;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Outcompute.Trader.Trading.Algorithms.Standard.Accumulator
 {
     public class AccumulatorAlgoOptions
     {
         [Required, Range(1, int.MaxValue)]
-        public int RsiPeriods { get; set; } = 6;
+        public int RsiPeriods { get; set; } = 24;
 
         [Required, Range(0, 100)]
         public int RsiOversold { get; set; } = 20;
@@ -15,6 +14,12 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Accumulator
         public int RsiOverbought { get; set; } = 80;
 
         [Required]
-        public KlineInterval RsiInterval { get; set; } = KlineInterval.Days1;
+        public decimal NextBuyRate { get; set; } = 1.01M;
+
+        [Required]
+        public TimeSpan Cooldown { get; set; } = TimeSpan.FromSeconds(5);
+
+        [Required]
+        public decimal TakeProfitDropRate { get; set; } = 0.99M;
     }
 }

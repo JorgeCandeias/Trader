@@ -23,7 +23,7 @@ namespace Outcompute.Trader.Trading.Commands.CreateOrder
 
         private static string TypeName { get; } = nameof(CreateOrderExecutor);
 
-        public async Task ExecuteAsync(IAlgoContext context, CreateOrderCommand command, CancellationToken cancellationToken = default)
+        public async ValueTask ExecuteAsync(IAlgoContext context, CreateOrderCommand command, CancellationToken cancellationToken = default)
         {
             var watch = Stopwatch.StartNew();
 

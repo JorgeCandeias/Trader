@@ -27,7 +27,7 @@ namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder
 
         private const string TypeName = nameof(EnsureSingleOrderExecutor);
 
-        public async Task ExecuteAsync(IAlgoContext context, EnsureSingleOrderCommand command, CancellationToken cancellationToken = default)
+        public async ValueTask ExecuteAsync(IAlgoContext context, EnsureSingleOrderCommand command, CancellationToken cancellationToken = default)
         {
             // get current open orders
             var orders = await _orders

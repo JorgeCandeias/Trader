@@ -215,7 +215,7 @@ namespace Outcompute.Trader.Data.Sql
             return _mapper.Map<IEnumerable<AccountTrade>>(result);
         }
 
-        public async Task SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default)
+        public async ValueTask SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default)
         {
             _ = balances ?? throw new ArgumentNullException(nameof(balances));
 
@@ -242,7 +242,7 @@ namespace Outcompute.Trader.Data.Sql
                 .ConfigureAwait(false);
         }
 
-        public async Task<IEnumerable<Balance>> GetBalancesAsync(CancellationToken cancellationToken = default)
+        public async ValueTask<IEnumerable<Balance>> GetBalancesAsync(CancellationToken cancellationToken = default)
         {
             using var connection = new SqlConnection(_options.ConnectionString);
 
@@ -253,7 +253,7 @@ namespace Outcompute.Trader.Data.Sql
             return _mapper.Map<IEnumerable<Balance>>(entities);
         }
 
-        public async Task<Balance?> TryGetBalanceAsync(string asset, CancellationToken cancellationToken = default)
+        public async ValueTask<Balance?> TryGetBalanceAsync(string asset, CancellationToken cancellationToken = default)
         {
             _ = asset ?? throw new ArgumentNullException(nameof(asset));
 

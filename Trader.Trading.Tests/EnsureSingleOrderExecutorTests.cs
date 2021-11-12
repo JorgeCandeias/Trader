@@ -29,7 +29,7 @@ namespace Outcompute.Trader.Trading.Tests
             var balances = Mock.Of<IBalanceProvider>();
             Mock.Get(balances)
                 .Setup(x => x.TryGetBalanceAsync(symbol.QuoteAsset, CancellationToken.None))
-                .Returns(Task.FromResult<Balance?>(balance))
+                .ReturnsAsync(balance)
                 .Verifiable();
 
             var side = OrderSide.Buy;
@@ -53,7 +53,7 @@ namespace Outcompute.Trader.Trading.Tests
             var redeemSavingsExecutor = Mock.Of<IAlgoCommandExecutor<RedeemSavingsCommand, RedeemSavingsEvent>>();
             Mock.Get(redeemSavingsExecutor)
                 .Setup(x => x.ExecuteAsync(It.IsAny<IAlgoContext>(), It.IsAny<RedeemSavingsCommand>(), CancellationToken.None))
-                .Returns(Task.FromResult(redeemed))
+                .ReturnsAsync(redeemed)
                 .Verifiable();
 
             var createOrderExecutor = Mock.Of<IAlgoCommandExecutor<CreateOrderCommand>>();

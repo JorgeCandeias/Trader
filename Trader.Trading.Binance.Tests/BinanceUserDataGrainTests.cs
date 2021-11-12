@@ -117,7 +117,7 @@ namespace Outcompute.Trader.Trading.Binance.Tests
             Mock.Get(balances)
                 .Setup(x => x.SetBalancesAsync(It.IsAny<IEnumerable<Balance>>(), It.IsAny<CancellationToken>()))
                 .Callback((IEnumerable<Balance> b, CancellationToken ct) => balance = b.Single())
-                .Returns(Task.CompletedTask)
+                .Returns(ValueTask.CompletedTask)
                 .Verifiable();
 
             var tradeProvider = Mock.Of<ITradeProvider>();

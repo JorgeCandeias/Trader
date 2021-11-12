@@ -30,6 +30,16 @@ namespace Outcompute.Trader.Trading.Algorithms
         Symbol Symbol { get; }
 
         /// <summary>
+        /// The default kline interval for the algo.
+        /// </summary>
+        KlineInterval KlineInterval { get; }
+
+        /// <summary>
+        /// The default kline interval periods for the algo.
+        /// </summary>
+        int KlinePeriods { get; }
+
+        /// <summary>
         /// The current significant asset information for the default symbol.
         /// This is only populated if the default symbol is defined.
         /// </summary>
@@ -84,9 +94,14 @@ namespace Outcompute.Trader.Trading.Algorithms
         IReadOnlyList<OrderQueryResult> Orders { get; }
 
         /// <summary>
-        /// Gets the klines for the configured dependencies.
+        /// Gets the klines for the default configuration.
         /// </summary>
-        IDictionary<(string Symbol, KlineInterval Interval), IEnumerable<Kline>> Klines { get; }
+        IReadOnlyCollection<Kline> Klines { get; }
+
+        /// <summary>
+        /// Gets the klines for all configured dependencies.
+        /// </summary>
+        IDictionary<(string Symbol, KlineInterval Interval), IReadOnlyCollection<Kline>> KlineLookup { get; }
 
         /// <summary>
         /// Makes the context self-update to the latest data.

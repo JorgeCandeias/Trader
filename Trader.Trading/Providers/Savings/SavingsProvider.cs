@@ -16,22 +16,22 @@ namespace Outcompute.Trader.Trading.Providers.Savings
             _factory = factory ?? throw new ArgumentNullException(nameof(factory));
         }
 
-        public Task<IEnumerable<SavingsPosition>> GetPositionsAsync(CancellationToken cancellationToken = default)
+        public ValueTask<IEnumerable<SavingsPosition>> GetPositionsAsync(CancellationToken cancellationToken = default)
         {
             return _factory.GetSavingsGrain().GetPositionsAsync();
         }
 
-        public Task<SavingsPosition?> TryGetPositionAsync(string asset, CancellationToken cancellation = default)
+        public ValueTask<SavingsPosition?> TryGetPositionAsync(string asset, CancellationToken cancellation = default)
         {
             return _factory.GetSavingsGrain().TryGetPositionAsync(asset);
         }
 
-        public Task<SavingsQuota?> TryGetQuotaAsync(string asset, CancellationToken cancellationToken = default)
+        public ValueTask<SavingsQuota?> TryGetQuotaAsync(string asset, CancellationToken cancellationToken = default)
         {
             return _factory.GetSavingsGrain().TryGetQuotaAsync(asset);
         }
 
-        public Task<RedeemSavingsEvent> RedeemAsync(string asset, decimal amount, CancellationToken cancellationToken = default)
+        public ValueTask<RedeemSavingsEvent> RedeemAsync(string asset, decimal amount, CancellationToken cancellationToken = default)
         {
             return _factory.GetSavingsGrain().RedeemAsync(asset, amount);
         }

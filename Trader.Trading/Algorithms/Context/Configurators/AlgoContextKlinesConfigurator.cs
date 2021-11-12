@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
+using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms.Context.Configurators
 {
@@ -20,11 +19,31 @@ namespace Outcompute.Trader.Trading.Algorithms.Context.Configurators
         {
             var options = _options.Get(name);
 
+            // populate the default settings
+            context.KlineInterval = options.KlineInterval;
+            context.KlinePeriods = options.KlinePeriods;
+
+            // get klines for the default settings
+            if (!IsNullOrEmpty(context.Symbol.Name) && context.KlineInterval != KlineInterval.None && context.KlinePeriods > 0)
+            {
+                context.KlineLookup[(context.Symbol.Name, context.KlineInterval)] = context.Klines = await _klines
+                    .GetKlinesAsync(context.Symbol.Name, context.KlineInterval, context.TickTime, context.KlinePeriods, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+
+            // get klines for extra dependencies
             foreach (var dependency in options.DependsOn.Klines)
             {
-                context.Klines[(dependency.Symbol, dependency.Interval)] = await _klines
-                    .GetKlinesAsync(dependency.Symbol, dependency.Interval, context.TickTime, dependency.Periods, cancellationToken)
-                    .ConfigureAwait(false);
+                var symbol = dependency.Symbol ?? context.Symbol.Name;
+                var interval = dependency.Interval is not KlineInterval.None ? dependency.Interval : context.KlineInterval;
+                var periods = dependency.Periods is not 0 ? dependency.Periods : context.KlinePeriods;
+
+                if (!IsNullOrEmpty(symbol) && interval != KlineInterval.None && periods > 0)
+                {
+                    context.KlineLookup[(symbol, interval)] = await _klines
+                        .GetKlinesAsync(symbol, interval, context.TickTime, periods, cancellationToken)
+                        .ConfigureAwait(false);
+                }
             }
         }
     }

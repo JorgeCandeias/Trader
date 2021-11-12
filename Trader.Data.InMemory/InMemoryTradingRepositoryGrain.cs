@@ -185,7 +185,7 @@ namespace Outcompute.Trader.Trading.Data.InMemory
             return Task.CompletedTask;
         }
 
-        public Task SetBalancesAsync(ImmutableList<Balance> balances)
+        public ValueTask SetBalancesAsync(ImmutableList<Balance> balances)
         {
             if (balances is null) throw new ArgumentNullException(nameof(balances));
 
@@ -194,16 +194,16 @@ namespace Outcompute.Trader.Trading.Data.InMemory
                 _balances[balance.Asset] = balance;
             }
 
-            return Task.CompletedTask;
+            return ValueTask.CompletedTask;
         }
 
-        public Task<Balance?> TryGetBalanceAsync(string asset)
+        public ValueTask<Balance?> TryGetBalanceAsync(string asset)
         {
             if (asset is null) throw new ArgumentNullException(nameof(asset));
 
             var balance = _balances.TryGetValue(asset, out var value) ? value : null;
 
-            return Task.FromResult(balance);
+            return ValueTask.FromResult(balance);
         }
     }
 }

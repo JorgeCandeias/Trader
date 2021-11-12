@@ -18,7 +18,7 @@ namespace Outcompute.Trader.Trading.Commands.RedeemSavings
         public string Asset { get; }
         public decimal Amount { get; }
 
-        public Task<RedeemSavingsEvent> ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
+        public ValueTask<RedeemSavingsEvent> ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
         {
             if (context is null) throw new ArgumentNullException(nameof(context));
 
@@ -27,9 +27,9 @@ namespace Outcompute.Trader.Trading.Commands.RedeemSavings
                 .ExecuteAsync(context, this, cancellationToken);
         }
 
-        Task IAlgoCommand.ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken)
+        async ValueTask IAlgoCommand.ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken)
         {
-            return ExecuteAsync(context, cancellationToken);
+            await ExecuteAsync(context, cancellationToken).ConfigureAwait(false);
         }
     }
 }

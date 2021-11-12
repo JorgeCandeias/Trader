@@ -250,7 +250,7 @@ namespace Trader.Trading.InMemory.Tests
             var asset = "ABC";
             var balance = Balance.Zero(asset);
             var factory = Mock.Of<IGrainFactory>(x =>
-                x.GetGrain<IInMemoryTradingRepositoryGrain>(Guid.Empty, null).TryGetBalanceAsync(asset) == Task.FromResult(balance));
+                x.GetGrain<IInMemoryTradingRepositoryGrain>(Guid.Empty, null).TryGetBalanceAsync(asset) == ValueTask.FromResult(balance));
             var repository = new InMemoryTradingRepository(factory);
 
             // act

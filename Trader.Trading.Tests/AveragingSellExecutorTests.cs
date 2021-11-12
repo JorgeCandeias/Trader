@@ -48,11 +48,11 @@ namespace Outcompute.Trader.Trading.Tests
 
             var balance = Balance.Zero(symbol.BaseAsset) with { Free = 2000m };
             var balances = Mock.Of<IBalanceProvider>(x =>
-                x.TryGetBalanceAsync(symbol.BaseAsset, CancellationToken.None) == Task.FromResult(balance));
+                x.TryGetBalanceAsync(symbol.BaseAsset, CancellationToken.None) == ValueTask.FromResult(balance));
 
             var position = SavingsPosition.Zero(symbol.BaseAsset);
             var savings = Mock.Of<ISavingsProvider>(x =>
-                x.TryGetPositionAsync(symbol.BaseAsset, CancellationToken.None) == Task.FromResult(position));
+                x.TryGetPositionAsync(symbol.BaseAsset, CancellationToken.None) == ValueTask.FromResult(position));
 
             var ticker = new MiniTicker(symbol.Name, DateTime.Today, 1200, 0, 0, 0, 0, 0);
             var tickers = Mock.Of<ITickerProvider>(x =>

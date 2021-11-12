@@ -2,11 +2,7 @@
 using Outcompute.Trader.Core;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
@@ -30,6 +26,10 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public Symbol Symbol { get; set; } = Symbol.Empty;
 
+        public KlineInterval KlineInterval { get; set; } = KlineInterval.None;
+
+        public int KlinePeriods { get; set; }
+
         public PositionDetails PositionDetails { get; set; } = PositionDetails.Empty;
 
         public MiniTicker Ticker { get; set; } = MiniTicker.Empty;
@@ -48,7 +48,9 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public IReadOnlyList<OrderQueryResult> Orders { get; set; } = ImmutableList<OrderQueryResult>.Empty;
 
-        public IDictionary<(string Symbol, KlineInterval Interval), IEnumerable<Kline>> Klines { get; } = new Dictionary<(string Symbol, KlineInterval Interval), IEnumerable<Kline>>();
+        public IDictionary<(string Symbol, KlineInterval Interval), IReadOnlyCollection<Kline>> KlineLookup { get; } = new Dictionary<(string Symbol, KlineInterval Interval), IReadOnlyCollection<Kline>>();
+
+        public IReadOnlyCollection<Kline> Klines { get; set; }
 
         public async ValueTask UpdateAsync(CancellationToken cancellationToken = default)
         {

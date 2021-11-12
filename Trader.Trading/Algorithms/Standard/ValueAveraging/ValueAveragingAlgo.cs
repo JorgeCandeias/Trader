@@ -1,15 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Outcompute.Trader.Core;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Commands;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 {
@@ -39,10 +33,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         protected override async ValueTask<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default)
         {
             // get the lastest klines
-            var maxPeriods = GetMaxPeriods();
-            var end = _clock.UtcNow;
-            var start = end.Subtract(_options.KlineInterval, maxPeriods);
-            var klines = await Context.GetKlinesAsync(Context.Symbol.Name, _options.KlineInterval, start, end, cancellationToken);
+            var klines = Context.KlineLookup[(Context.Symbol.Name, _options.KlineInterval)];
 
             // calculate the current moving averages
             _smaA = klines.LastSma(x => x.ClosePrice, _options.SmaPeriodsA);
@@ -68,11 +59,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
                         ? AveragingSell(Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool)
                         : SignificantAveragingSell(Context.Ticker, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool)
                     : ClearOpenOrders(Context.Symbol, OrderSide.Sell));
-        }
-
-        private int GetMaxPeriods()
-        {
-            return MathSpan.Max(stackalloc int[] { _options.SmaPeriodsA, _options.SmaPeriodsB, _options.SmaPeriodsC, _options.RsiPeriodsA, _options.RsiPeriodsB, _options.RsiPeriodsC });
         }
 
         private bool TrySignalBuyOrder()

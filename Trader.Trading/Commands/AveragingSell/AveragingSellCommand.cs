@@ -49,7 +49,7 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
         public bool RedeemSavings { get; }
         public bool RedeemSwapPool { get; }
 
-        public Task ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
+        public ValueTask ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
         {
             if (context is null) throw new ArgumentNullException(nameof(context));
 

@@ -18,7 +18,7 @@ namespace Outcompute.Trader.Trading.Commands.ClearOpenOrders
         public Symbol Symbol { get; }
         public OrderSide Side { get; }
 
-        public Task ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
+        public ValueTask ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
         {
             if (context is null) throw new ArgumentNullException(nameof(context));
 

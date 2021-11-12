@@ -127,19 +127,19 @@ namespace Outcompute.Trader.Trading.Data.InMemory
 
         #region Balances
 
-        public Task SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default)
+        public ValueTask SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default)
         {
             if (balances is null) throw new ArgumentNullException(nameof(balances));
 
             return _grain.SetBalancesAsync(balances.ToImmutableList());
         }
 
-        public Task<Balance?> TryGetBalanceAsync(string asset, CancellationToken cancellationToken = default)
+        public ValueTask<Balance?> TryGetBalanceAsync(string asset, CancellationToken cancellationToken = default)
         {
             return _grain.TryGetBalanceAsync(asset);
         }
 
-        public Task<IEnumerable<Balance>> GetBalancesAsync(CancellationToken cancellationToken = default)
+        public ValueTask<IEnumerable<Balance>> GetBalancesAsync(CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }

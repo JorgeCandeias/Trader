@@ -1,8 +1,5 @@
 ﻿using Outcompute.Trader.Models;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using static System.String;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
@@ -15,9 +12,19 @@ namespace Outcompute.Trader.Trading.Algorithms
         public string Type { get; set; } = Empty;
 
         /// <summary>
-        /// The symbol for this algo. Only useful for algos that derive from <see cref="ISymbolAlgo"/>.
+        /// The default symbol for this algo.
         /// </summary>
         public string Symbol { get; set; } = Empty;
+
+        /// <summary>
+        /// The default kline interval for this algo.
+        /// </summary>
+        public KlineInterval KlineInterval { get; set; } = KlineInterval.None;
+
+        /// <summary>
+        /// The default kline periods for this algo.
+        /// </summary>
+        public int KlinePeriods { get; set; }
 
         [Required]
         public bool Enabled { get; set; } = true;
@@ -80,22 +87,17 @@ namespace Outcompute.Trader.Trading.Algorithms
         /// <summary>
         /// Symbol for which to load klines.
         /// </summary>
-        [Required]
-        public string Symbol { get; set; }
+        public string? Symbol { get; set; }
 
         /// <summary>
         /// Interval for which to load klines.
         /// </summary>
-        [Required]
-        [Range(1, int.MaxValue)]
-        public KlineInterval Interval { get; set; } = KlineInterval.Days1;
+        public KlineInterval Interval { get; set; } = KlineInterval.None;
 
         /// <summary>
         /// The rolling number of klines to load.
-        /// </summary>~
-        [Required]
-        [Range(1, int.MaxValue)]
-        public int Periods { get; set; } = 100;
+        /// </summary>
+        public int Periods { get; set; }
     }
 
     public static class AlgoOptionsDependsOnKlineExtensions

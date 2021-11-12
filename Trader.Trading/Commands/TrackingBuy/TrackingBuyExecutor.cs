@@ -36,7 +36,7 @@ namespace Outcompute.Trader.Trading.Commands.TrackingBuy
 
         private static string TypeName => nameof(TrackingBuyExecutor);
 
-        public async Task ExecuteAsync(IAlgoContext context, TrackingBuyCommand command, CancellationToken cancellationToken = default)
+        public async ValueTask ExecuteAsync(IAlgoContext context, TrackingBuyCommand command, CancellationToken cancellationToken = default)
         {
             var ticker = await _tickers.GetRequiredTickerAsync(command.Symbol.Name, cancellationToken).ConfigureAwait(false);
             var orders = await _orders.GetOrdersByFilterAsync(command.Symbol.Name, OrderSide.Buy, true, null, cancellationToken).ConfigureAwait(false);

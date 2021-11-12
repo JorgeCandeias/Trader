@@ -12,6 +12,14 @@
 		<Description>Core library of Outcompute Trader, a real-time algorithmic trading framework.</Description>
 	</PropertyGroup>
 
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	  <NoWarn>1701;1702</NoWarn>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+	  <NoWarn>1701;1702</NoWarn>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<InternalsVisibleTo Include="Outcompute.Trader.Core.Tests" />
 	</ItemGroup>

@@ -7,14 +7,14 @@ namespace Outcompute.Trader.Trading.Providers.Swap
 {
     internal interface ISwapPoolGrain : IGrainWithGuidKey
     {
-        Task<bool> IsReadyAsync();
+        ValueTask<bool> IsReadyAsync();
 
-        Task<RedeemSwapPoolEvent> RedeemAsync(string asset, decimal amount);
+        ValueTask<RedeemSwapPoolEvent> RedeemAsync(string asset, decimal amount);
 
-        Task<SwapPoolAssetBalance> GetBalanceAsync(string asset);
+        ValueTask<SwapPoolAssetBalance> GetBalanceAsync(string asset);
 
-        Task<IEnumerable<SwapPool>> GetSwapPoolsAsync();
+        ValueTask<IEnumerable<SwapPool>> GetSwapPoolsAsync();
 
-        Task<IEnumerable<SwapPoolConfiguration>> GetSwapPoolConfigurationsAsync();
+        ValueTask<IEnumerable<SwapPoolConfiguration>> GetSwapPoolConfigurationsAsync();
     }
 }

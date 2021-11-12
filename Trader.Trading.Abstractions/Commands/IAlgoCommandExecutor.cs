@@ -7,12 +7,12 @@ namespace Outcompute.Trader.Trading.Commands
     public interface IAlgoCommandExecutor<in TAlgoCommand>
         where TAlgoCommand : notnull, IAlgoCommand
     {
-        Task ExecuteAsync(IAlgoContext context, TAlgoCommand command, CancellationToken cancellationToken = default);
+        ValueTask ExecuteAsync(IAlgoContext context, TAlgoCommand command, CancellationToken cancellationToken = default);
     }
 
     public interface IAlgoCommandExecutor<in TAlgoCommand, TResult>
         where TAlgoCommand : notnull, IAlgoCommand
     {
-        Task<TResult> ExecuteAsync(IAlgoContext context, TAlgoCommand command, CancellationToken cancellationToken = default);
+        ValueTask<TResult> ExecuteAsync(IAlgoContext context, TAlgoCommand command, CancellationToken cancellationToken = default);
     }
 }

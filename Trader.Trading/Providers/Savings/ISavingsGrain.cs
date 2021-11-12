@@ -7,14 +7,14 @@ namespace Outcompute.Trader.Trading.Providers.Savings
 {
     internal interface ISavingsGrain : IGrainWithGuidKey
     {
-        Task<bool> IsReadyAsync();
+        ValueTask<bool> IsReadyAsync();
 
-        Task<IEnumerable<SavingsPosition>> GetPositionsAsync();
+        ValueTask<IEnumerable<SavingsPosition>> GetPositionsAsync();
 
-        Task<SavingsPosition?> TryGetPositionAsync(string asset);
+        ValueTask<SavingsPosition?> TryGetPositionAsync(string asset);
 
-        Task<SavingsQuota?> TryGetQuotaAsync(string asset);
+        ValueTask<SavingsQuota?> TryGetQuotaAsync(string asset);
 
-        Task<RedeemSavingsEvent> RedeemAsync(string asset, decimal amount);
+        ValueTask<RedeemSavingsEvent> RedeemAsync(string asset, decimal amount);
     }
 }

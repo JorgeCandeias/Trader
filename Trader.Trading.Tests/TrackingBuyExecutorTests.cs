@@ -34,14 +34,14 @@ namespace Outcompute.Trader.Trading.Tests
             var balances = Mock.Of<IBalanceProvider>();
             Mock.Get(balances)
                 .Setup(x => x.TryGetBalanceAsync("XYZ", CancellationToken.None))
-                .Returns(Task.FromResult<Balance?>(balance))
+                .ReturnsAsync(balance)
                 .Verifiable();
 
             var position = SavingsPosition.Empty with { Asset = "XYZ", FreeAmount = 2990m };
             var savings = Mock.Of<ISavingsProvider>();
             Mock.Get(savings)
                 .Setup(x => x.TryGetPositionAsync("XYZ", CancellationToken.None))
-                .Returns(Task.FromResult<SavingsPosition?>(position))
+                .ReturnsAsync(position)
                 .Verifiable();
 
             var active1 = OrderQueryResult.Empty with { Symbol = "ABCXYZ", OrderId = 1, Side = OrderSide.Buy, Status = OrderStatus.New, Price = 12000m };
@@ -66,7 +66,7 @@ namespace Outcompute.Trader.Trading.Tests
             var redeemed = new RedeemSavingsEvent(true, 20m);
             Mock.Get(redeemSavingsExecutor)
                 .Setup(x => x.ExecuteAsync(It.IsAny<IAlgoContext>(), It.IsAny<RedeemSavingsCommand>(), CancellationToken.None))
-                .Returns(Task.FromResult(redeemed));
+                .ReturnsAsync(redeemed);
 
             var provider = new ServiceCollection()
                 .AddSingleton(cancelOrderExecutor)

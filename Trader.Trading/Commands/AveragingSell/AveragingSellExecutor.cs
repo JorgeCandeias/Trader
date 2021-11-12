@@ -29,7 +29,7 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
 
         private static string TypeName => nameof(AveragingSellExecutor);
 
-        public async Task ExecuteAsync(IAlgoContext context, AveragingSellCommand command, CancellationToken cancellationToken = default)
+        public async ValueTask ExecuteAsync(IAlgoContext context, AveragingSellCommand command, CancellationToken cancellationToken = default)
         {
             // get required data
             var balance = await _balances.GetBalanceOrZeroAsync(command.Symbol.BaseAsset, cancellationToken).ConfigureAwait(false);

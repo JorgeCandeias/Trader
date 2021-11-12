@@ -10,9 +10,9 @@ namespace Outcompute.Trader.Trading.Algorithms
         {
         }
 
-        public Task ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
+        public ValueTask ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
         {
-            return Task.CompletedTask;
+            return ValueTask.CompletedTask;
         }
 
         public static NoopAlgoCommand Instance { get; } = new NoopAlgoCommand();

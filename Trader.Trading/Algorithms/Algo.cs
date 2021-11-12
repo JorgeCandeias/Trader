@@ -6,15 +6,11 @@ using Outcompute.Trader.Trading.Commands.ClearOpenOrders;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
 using Outcompute.Trader.Trading.Commands.Many;
+using Outcompute.Trader.Trading.Commands.MarketSell;
 using Outcompute.Trader.Trading.Commands.RedeemSavings;
 using Outcompute.Trader.Trading.Commands.RedeemSwapPool;
 using Outcompute.Trader.Trading.Commands.SignificantAveragingSell;
 using Outcompute.Trader.Trading.Commands.TrackingBuy;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using static System.String;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
@@ -56,12 +52,12 @@ namespace Outcompute.Trader.Trading.Algorithms
             return NoopAlgoCommand.Instance;
         }
 
-        public virtual ManyCommand Many(IEnumerable<IAlgoCommand> results)
+        public virtual IAlgoCommand Many(IEnumerable<IAlgoCommand> results)
         {
             return new ManyCommand(results);
         }
 
-        public virtual ManyCommand Many(params IAlgoCommand[] results)
+        public virtual IAlgoCommand Many(params IAlgoCommand[] results)
         {
             return new ManyCommand(results);
         }
@@ -118,7 +114,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             return new ClearOpenOrdersCommand(symbol, side);
         }
 
-        public virtual ClearOpenOrdersCommand ClearOpenOrders(OrderSide side)
+        public virtual IAlgoCommand ClearOpenOrders(OrderSide side)
         {
             return ClearOpenOrders(EnsureSymbol(), side);
         }
@@ -148,9 +144,14 @@ namespace Outcompute.Trader.Trading.Algorithms
             return new TrackingBuyCommand(symbol, pullbackRatio, targetQuoteBalanceFractionPerBuy, maxNotional, redeemSavings, redeemSwapPool);
         }
 
-        public virtual TrackingBuyCommand TrackingBuy(decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings, bool redeemSwapPool)
+        public virtual IAlgoCommand TrackingBuy(decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings, bool redeemSwapPool)
         {
             return TrackingBuy(EnsureSymbol(), pullbackRatio, targetQuoteBalanceFractionPerBuy, maxNotional, redeemSavings, redeemSwapPool);
+        }
+
+        public virtual IAlgoCommand MarketSell(Symbol symbol, decimal quantity, bool redeemSavings = false, bool redeemSwapPool = false)
+        {
+            return new MarketSellCommand(symbol, quantity, redeemSavings, redeemSwapPool);
         }
 
         #endregion Command Helpers

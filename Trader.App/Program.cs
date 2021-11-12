@@ -136,7 +136,7 @@ namespace Outcompute.Trader.App
 
                             var templateSection = context.Configuration.GetSection("ValueAveragingTemplate");
 
-                            foreach (var symbol in templateSection.GetSection("Symbols").Get<string[]>())
+                            foreach (var symbol in templateSection.GetSection("Symbols").Get<string[]>() ?? Array.Empty<string>())
                             {
                                 services
                                     .AddValueAveragingAlgo(symbol)

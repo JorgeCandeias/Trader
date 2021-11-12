@@ -20,7 +20,7 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
 
         private const string TypeName = nameof(SignificantAveragingSellExecutor);
 
-        public Task ExecuteAsync(IAlgoContext context, SignificantAveragingSellCommand command, CancellationToken cancellationToken = default)
+        public ValueTask ExecuteAsync(IAlgoContext context, SignificantAveragingSellCommand command, CancellationToken cancellationToken = default)
         {
             // calculate the desired sell
             var desired = CalculateDesiredSell(command);

@@ -47,6 +47,6 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 
         private bool _ready;
 
-        public Task<bool> IsReadyAsync() => Task.FromResult(_ready);
+        public ValueTask<bool> IsReadyAsync() => ValueTask.FromResult(_ready);
     }
 }

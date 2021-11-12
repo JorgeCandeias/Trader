@@ -14,7 +14,7 @@ namespace Outcompute.Trader.Trading.Commands.RedeemSavings
             _savings = savings;
         }
 
-        public Task<RedeemSavingsEvent> ExecuteAsync(IAlgoContext context, RedeemSavingsCommand command, CancellationToken cancellationToken = default)
+        public ValueTask<RedeemSavingsEvent> ExecuteAsync(IAlgoContext context, RedeemSavingsCommand command, CancellationToken cancellationToken = default)
         {
             return _savings.RedeemAsync(command.Asset, command.Amount, cancellationToken);
         }

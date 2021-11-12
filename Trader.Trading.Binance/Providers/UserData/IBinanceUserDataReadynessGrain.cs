@@ -5,6 +5,6 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 {
     internal interface IBinanceUserDataReadynessGrain : IGrainWithGuidKey
     {
-        Task<bool> IsReadyAsync();
+        ValueTask<bool> IsReadyAsync();
     }
 }

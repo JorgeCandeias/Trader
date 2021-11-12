@@ -225,7 +225,7 @@ namespace Outcompute.Trader.Trading.Providers.Swap
             }
         }
 
-        public async Task<RedeemSwapPoolEvent> RedeemAsync(string asset, decimal amount)
+        public async ValueTask<RedeemSwapPoolEvent> RedeemAsync(string asset, decimal amount)
         {
             // identify a pool with enough asset share
             var result = _liquidities.Values
@@ -274,7 +274,7 @@ namespace Outcompute.Trader.Trading.Providers.Swap
             return new RedeemSwapPoolEvent(true, result.PoolName, asset, amount, baseAsset, baseAmount);
         }
 
-        public Task<SwapPoolAssetBalance> GetBalanceAsync(string asset)
+        public ValueTask<SwapPoolAssetBalance> GetBalanceAsync(string asset)
         {
             var builder = ImmutableList.CreateBuilder<SwapPoolAssetBalanceDetail>();
 
@@ -291,17 +291,17 @@ namespace Outcompute.Trader.Trading.Providers.Swap
 
             var header = new SwapPoolAssetBalance(asset, builder.Sum(x => x.Amount), builder.ToImmutable());
 
-            return Task.FromResult(header);
+            return ValueTask.FromResult(header);
         }
 
-        public Task<IEnumerable<SwapPool>> GetSwapPoolsAsync()
+        public ValueTask<IEnumerable<SwapPool>> GetSwapPoolsAsync()
         {
-            return _pools.AsTaskResult<IEnumerable<SwapPool>>();
+            return ValueTask.FromResult<IEnumerable<SwapPool>>(_pools);
         }
 
-        public Task<IEnumerable<SwapPoolConfiguration>> GetSwapPoolConfigurationsAsync()
+        public ValueTask<IEnumerable<SwapPoolConfiguration>> GetSwapPoolConfigurationsAsync()
         {
-            return _configurations.Values.ToImmutableList().AsTaskResult<IEnumerable<SwapPoolConfiguration>>();
+            return ValueTask.FromResult<IEnumerable<SwapPoolConfiguration>>(_configurations.Values.ToImmutableList());
         }
 
         public void Dispose()
@@ -356,6 +356,6 @@ namespace Outcompute.Trader.Trading.Providers.Swap
             _cooldowns[poolId] = _clock.UtcNow.Add(_monitor.CurrentValue.PoolCooldown);
         }
 
-        public Task<bool> IsReadyAsync() => Task.FromResult(_ready);
+        public ValueTask<bool> IsReadyAsync() => ValueTask.FromResult(_ready);
     }
 }

@@ -65,7 +65,7 @@ namespace Outcompute.Trader.Trading.Providers.Savings
             return base.OnDeactivateAsync();
         }
 
-        public Task<bool> IsReadyAsync() => Task.FromResult(_ready);
+        public ValueTask<bool> IsReadyAsync() => ValueTask.FromResult(_ready);
 
         private async Task EnsureLoadAsync()
         {
@@ -119,26 +119,26 @@ namespace Outcompute.Trader.Trading.Providers.Savings
             _logger.LogInformation("{Type} is ready", TypeName);
         }
 
-        public Task<IEnumerable<SavingsPosition>> GetPositionsAsync()
+        public ValueTask<IEnumerable<SavingsPosition>> GetPositionsAsync()
         {
-            return _positions.Values.ToImmutableList().AsTaskResult<IEnumerable<SavingsPosition>>();
+            return ValueTask.FromResult<IEnumerable<SavingsPosition>>(_positions.Values.ToImmutableList());
         }
 
-        public Task<SavingsPosition?> TryGetPositionAsync(string asset)
+        public ValueTask<SavingsPosition?> TryGetPositionAsync(string asset)
         {
             var result = _positions.TryGetValue(asset, out var value) ? value : null;
 
-            return Task.FromResult(result);
+            return ValueTask.FromResult(result);
         }
 
-        public Task<SavingsQuota?> TryGetQuotaAsync(string asset)
+        public ValueTask<SavingsQuota?> TryGetQuotaAsync(string asset)
         {
             var result = _quotas.TryGetValue(asset, out var value) ? value : null;
 
-            return Task.FromResult(result);
+            return ValueTask.FromResult(result);
         }
 
-        public async Task<RedeemSavingsEvent> RedeemAsync(string asset, decimal amount)
+        public async ValueTask<RedeemSavingsEvent> RedeemAsync(string asset, decimal amount)
         {
             // get the current savings for the asset
             if (!_positions.TryGetValue(asset, out var position))

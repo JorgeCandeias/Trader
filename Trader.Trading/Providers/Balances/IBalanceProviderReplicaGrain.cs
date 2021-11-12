@@ -6,6 +6,6 @@ namespace Outcompute.Trader.Trading.Providers.Balances
 {
     public interface IBalanceProviderReplicaGrain : IGrainWithStringKey
     {
-        Task<Balance?> TryGetBalanceAsync();
+        ValueTask<Balance?> TryGetBalanceAsync();
     }
 }

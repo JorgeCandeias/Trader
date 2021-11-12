@@ -7,12 +7,12 @@ namespace Outcompute.Trader.Trading.Providers
 {
     public interface IBalanceProvider
     {
-        Task<Balance?> TryGetBalanceAsync(string asset, CancellationToken cancellationToken = default);
+        ValueTask<Balance?> TryGetBalanceAsync(string asset, CancellationToken cancellationToken = default);
 
-        Task SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default);
+        ValueTask SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default);
 
-        Task SetBalancesAsync(AccountInfo accountInfo, CancellationToken cancellationToken = default);
+        ValueTask SetBalancesAsync(AccountInfo accountInfo, CancellationToken cancellationToken = default);
 
-        Task<IEnumerable<Balance>> GetBalancesAsync(CancellationToken cancellationToken = default);
+        ValueTask<IEnumerable<Balance>> GetBalancesAsync(CancellationToken cancellationToken = default);
     }
 }

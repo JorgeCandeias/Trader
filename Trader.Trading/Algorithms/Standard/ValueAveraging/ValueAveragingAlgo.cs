@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 {
-    internal partial class ValueAveragingAlgo : Algo
+    internal sealed partial class ValueAveragingAlgo : Algo
     {
         private readonly ValueAveragingAlgoOptions _options;
         private readonly ILogger _logger;

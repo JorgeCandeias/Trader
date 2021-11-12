@@ -15,9 +15,9 @@ namespace Microsoft.Extensions.DependencyInjection
                 .Services;
         }
 
-        public static IAlgoBuilder AddDiscoveryAlgo(this IServiceCollection services, string name)
+        public static IAlgoBuilder<IAlgo, DiscoveryAlgoOptions> AddDiscoveryAlgo(this IServiceCollection services, string name)
         {
-            return services.AddAlgo(name, AlgoTypeName);
+            return services.AddAlgo<IAlgo, DiscoveryAlgoOptions>(name, AlgoTypeName);
         }
     }
 }

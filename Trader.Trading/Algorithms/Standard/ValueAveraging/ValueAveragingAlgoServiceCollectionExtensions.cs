@@ -7,7 +7,7 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         internal const string AlgoTypeName = "ValueAveraging";
 
-        public static IServiceCollection AddValueAveragingAlgoType(this IServiceCollection services)
+        internal static IServiceCollection AddValueAveragingAlgoType(this IServiceCollection services)
         {
             return services
                 .AddAlgoType<ValueAveragingAlgo>(AlgoTypeName)
@@ -15,9 +15,9 @@ namespace Microsoft.Extensions.DependencyInjection
                 .Services;
         }
 
-        public static IAlgoBuilder<ValueAveragingAlgoOptions> AddValueAveragingAlgo(this IServiceCollection services, string name)
+        public static IAlgoBuilder<IAlgo, ValueAveragingAlgoOptions> AddValueAveragingAlgo(this IServiceCollection services, string name)
         {
-            return services.AddAlgo<ValueAveragingAlgoOptions>(name, AlgoTypeName);
+            return services.AddAlgo<IAlgo, ValueAveragingAlgoOptions>(name, AlgoTypeName);
         }
     }
 }

@@ -15,9 +15,9 @@ namespace Microsoft.Extensions.DependencyInjection
                 .Services;
         }
 
-        public static IAlgoBuilder AddArbitrageAlgo(this IServiceCollection services, string name)
+        public static IAlgoBuilder<IAlgo, ArbitrageAlgoOptions> AddArbitrageAlgo(this IServiceCollection services, string name)
         {
-            return services.AddAlgo(name, AlgoTypeName);
+            return services.AddAlgo<IAlgo, ArbitrageAlgoOptions>(name, AlgoTypeName);
         }
     }
 }

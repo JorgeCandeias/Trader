@@ -15,9 +15,9 @@ namespace Microsoft.Extensions.DependencyInjection
                 .Services;
         }
 
-        public static IAlgoBuilder AddAccumulatorAlgo(this IServiceCollection services, string name)
+        public static IAlgoBuilder<IAlgo, AccumulatorAlgoOptions> AddAccumulatorAlgo(this IServiceCollection services, string name)
         {
-            return services.AddAlgo(name, AlgoTypeName);
+            return services.AddAlgo<IAlgo, AccumulatorAlgoOptions>(name, AlgoTypeName);
         }
     }
 }

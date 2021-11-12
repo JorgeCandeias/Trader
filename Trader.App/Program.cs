@@ -165,14 +165,14 @@ namespace Outcompute.Trader.App
                             services
                                 .AddAlgoType<TestAlgo>()
                                 .AddOptionsType<TestAlgoOptions>()
-                                .AddAlgo<TestAlgo>("MyTestAlgo")
+                                .AddAlgo("MyTestAlgo")
                                 .ConfigureHostOptions(options =>
                                 {
                                     options.DependsOn.Tickers.Add("BTCGBP");
                                     options.DependsOn.Balances.Add("BTCGBP");
                                     options.DependsOn.Klines.Add("BTCGBP", KlineInterval.Days1, 100);
                                 })
-                                .ConfigureTypeOptions<TestAlgoOptions>(options =>
+                                .ConfigureTypeOptions(options =>
                                 {
                                     options.SomeValue = "SomeValue";
                                 });

@@ -3,92 +3,188 @@ using Orleans.Runtime;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Configuration;
 using System;
-using System.Collections.Generic;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
     public static class AlgoServiceCollectionExtensions
     {
+        #region Shared
+
+        private static void AddAlgoTypeCore<TAlgo>(IServiceCollection services, string type)
+            where TAlgo : IAlgo
+        {
+            services
+                .AddAlgoTypeEntry<TAlgo>(type)
+                .AddSingletonNamedService<IAlgoFactory, AlgoFactory<TAlgo>>(type);
+        }
+
+        private static void AddAlgoCore(IServiceCollection services, string name, string type)
+        {
+            services
+                .AddSingleton<IAlgoEntry>(new AlgoEntry(name))
+                .AddOptions<AlgoOptions>(name)
+                .Configure(options =>
+                {
+                    options.Type = type;
+                })
+                .ValidateDataAnnotations();
+        }
+
+        private static void ConfigureTypeOptionsCore<TOptions>(IServiceCollection services, string name, Action<TOptions> configure)
+            where TOptions : class
+        {
+            services
+                .AddOptions<TOptions>(name)
+                .Configure(configure)
+                .ValidateDataAnnotations();
+        }
+
+        private static IServiceCollection AddAlgoTypeEntry<TAlgo>(this IServiceCollection services, string typeName)
+            where TAlgo : IAlgo
+        {
+            return services.AddSingletonNamedService<IAlgoTypeEntry>(typeName, (sp, k) => new AlgoTypeEntry(typeName, typeof(TAlgo)));
+        }
+
+        internal static IServiceCollection TryAddKeyedServiceCollection(this IServiceCollection services)
+        {
+            services.TryAddSingleton(typeof(IKeyedServiceCollection<,>), typeof(KeyedServiceCollection<,>));
+
+            return services;
+        }
+
+        #endregion Shared
+
+        #region IServiceCollection.AddAlgoType
+
         /// <summary>
         /// Adds the specified algo type to the service provider and returns an <see cref="IAlgoTypeBuilder{TAlgo}"/> for further configuration.
         /// </summary>
         public static IAlgoTypeBuilder AddAlgoType<TAlgo>(this IServiceCollection services)
             where TAlgo : IAlgo
         {
-            var typeName = typeof(TAlgo).AssemblyQualifiedName ?? throw new InvalidOperationException();
+            if (services is null) throw new ArgumentNullException(nameof(services));
 
-            return services.AddAlgoType<TAlgo>(typeName);
+            var type = typeof(TAlgo).AssemblyQualifiedName ?? throw new InvalidOperationException();
+
+            AddAlgoTypeCore<TAlgo>(services, type);
+
+            return new AlgoTypeBuilder(type, services);
         }
 
         /// <summary>
         /// Adds the specified algo type to the service provider and returns an <see cref="IAlgoTypeBuilder{TAlgo}"/> for further configuration.
         /// </summary>
-        public static IAlgoTypeBuilder AddAlgoType<TAlgo>(this IServiceCollection services, string typeName)
+        public static IAlgoTypeBuilder AddAlgoType<TAlgo>(this IServiceCollection services, string type)
             where TAlgo : IAlgo
         {
-            services
-                .AddAlgoTypeEntry<TAlgo>(typeName)
-                .AddSingletonNamedService<IAlgoFactory, AlgoFactory<TAlgo>>(typeName);
+            if (services is null) throw new ArgumentNullException(nameof(services));
+            if (type is null) throw new ArgumentNullException(nameof(type));
 
-            return new AlgoTypeBuilder(typeName, services);
+            AddAlgoTypeCore<TAlgo>(services, type);
+
+            return new AlgoTypeBuilder(type, services);
         }
+
+        #endregion IServiceCollection.AddAlgoType
+
+        #region IAlgoTypeBuilder.AddOptionsType
 
         /// <summary>
         /// Configures automatic named configuration for the specified options type.
         /// </summary>
-        public static IAlgoTypeBuilder AddOptionsType<TOptions>(this IAlgoTypeBuilder builder)
+        public static IAlgoTypeBuilder<TOptions> AddOptionsType<TOptions>(this IAlgoTypeBuilder builder)
             where TOptions : class
         {
             if (builder is null) throw new ArgumentNullException(nameof(builder));
 
             builder.Services.ConfigureOptions<AlgoUserOptionsConfigurator<TOptions>>();
 
-            return builder;
+            return new AlgoTypeBuilder<TOptions>(builder.TypeName, builder.Services);
+        }
+
+        #endregion IAlgoTypeBuilder.AddOptionsType
+
+        #region IServiceCollection.AddAlgo
+
+        public static IAlgoBuilder AddAlgo<TAlgo>(this IServiceCollection services, string name)
+        {
+            var type = typeof(TAlgo).AssemblyQualifiedName ?? throw new InvalidOperationException();
+
+            AddAlgoCore(services, name, type);
+
+            return new AlgoBuilder(name, services);
+        }
+
+        public static IAlgoBuilder<TOptions> AddAlgo<TAlgo, TOptions>(this IServiceCollection services, string name)
+        {
+            var type = typeof(TAlgo).AssemblyQualifiedName ?? throw new InvalidOperationException();
+
+            AddAlgoCore(services, name, type);
+
+            return new AlgoBuilder<TOptions>(name, services);
+        }
+
+        public static IAlgoBuilder AddAlgo(this IServiceCollection services, string name, string type)
+        {
+            AddAlgoCore(services, name, type);
+
+            return new AlgoBuilder(name, services);
+        }
+
+        public static IAlgoBuilder<TOptions> AddAlgo<TOptions>(this IServiceCollection services, string name, string type)
+        {
+            AddAlgoCore(services, name, type);
+
+            return new AlgoBuilder<TOptions>(name, services);
+        }
+
+        #endregion IServiceCollection.AddAlgo
+
+        #region IAlgoTypeBuilder.AddAlgo
+
+        public static IAlgoBuilder AddAlgo(this IAlgoTypeBuilder builder, string name, string type)
+        {
+            if (builder is null) throw new ArgumentNullException(nameof(builder));
+
+            AddAlgoCore(builder.Services, name, type);
+
+            return new AlgoBuilder(name, builder.Services);
         }
 
         public static IAlgoBuilder AddAlgo<TAlgo>(this IAlgoTypeBuilder builder, string name)
         {
             if (builder is null) throw new ArgumentNullException(nameof(builder));
 
-            return builder.Services.AddAlgo<TAlgo>(name);
-        }
-
-        public static IAlgoBuilder AddAlgo<TAlgo>(this IServiceCollection services, string name)
-        {
             var type = typeof(TAlgo).AssemblyQualifiedName ?? throw new InvalidOperationException();
 
-            services
-                .AddSingleton<IAlgoEntry>(new AlgoEntry(name))
-                .AddOptions<AlgoOptions>(name)
-                .Configure(options =>
-                {
-                    options.Type = type;
-                })
-                .ValidateDataAnnotations();
+            AddAlgoCore(builder.Services, name, type);
 
-            return new AlgoBuilder(name, services);
+            return new AlgoBuilder(name, builder.Services);
         }
 
-        public static IAlgoBuilder AddAlgo(this IAlgoTypeBuilder builder, string name, string type)
+        public static IAlgoBuilder<TOptions> AddAlgo<TOptions>(this IAlgoTypeBuilder<TOptions> builder, string name, string type)
         {
             if (builder is null) throw new ArgumentNullException(nameof(builder));
 
-            return builder.AddAlgo(name, type);
+            AddAlgoCore(builder.Services, name, type);
+
+            return new AlgoBuilder<TOptions>(name, builder.Services);
         }
 
-        public static IAlgoBuilder AddAlgo(this IServiceCollection services, string name, string type)
+        public static IAlgoBuilder<TOptions> AddAlgo<TAlgo, TOptions>(this IAlgoTypeBuilder<TOptions> builder, string name)
         {
-            services
-                .AddSingleton<IAlgoEntry>(new AlgoEntry(name))
-                .AddOptions<AlgoOptions>(name)
-                .Configure(options =>
-                {
-                    options.Type = type;
-                })
-                .ValidateDataAnnotations();
+            if (builder is null) throw new ArgumentNullException(nameof(builder));
 
-            return new AlgoBuilder(name, services);
+            var type = typeof(TAlgo).AssemblyQualifiedName ?? throw new InvalidOperationException();
+
+            AddAlgoCore(builder.Services, name, type);
+
+            return new AlgoBuilder<TOptions>(name, builder.Services);
         }
+
+        #endregion IAlgoTypeBuilder.AddAlgo
+
+        #region IAlgoBuilder.ConfigureHostOptions
 
         public static IAlgoBuilder ConfigureHostOptions(this IAlgoBuilder builder, Action<AlgoOptions> configure)
         {
@@ -100,55 +196,42 @@ namespace Microsoft.Extensions.DependencyInjection
             return builder;
         }
 
-        public static IAlgoBuilder ConfigureTypeOptions<TOptions>(this IAlgoBuilder builder, Action<TOptions> configure)
-            where TOptions : class
+        public static IAlgoBuilder<TOptions> ConfigureHostOptions<TOptions>(this IAlgoBuilder<TOptions> builder, Action<AlgoOptions> configure)
         {
             if (builder is null) throw new ArgumentNullException(nameof(builder));
 
             builder.Services
-                .AddOptions<TOptions>(builder.Name)
-                .Configure(configure)
-                .ValidateDataAnnotations();
+                .Configure(builder.Name, configure);
 
             return builder;
         }
 
-        public static IServiceCollection AddAlgos<TSource, TUserOptions>(
-            this IServiceCollection services,
-            IEnumerable<TSource> source,
-            string type,
-            Func<TSource, string> nameFactory,
-            Action<TSource, AlgoOptions> configureAlgoOptions,
-            Action<TSource, TUserOptions> configureUserOptions)
-            where TUserOptions : class, new()
+        #endregion IAlgoBuilder.ConfigureHostOptions
+
+        #region ConfigureTypeOptions
+
+        public static IAlgoBuilder ConfigureTypeOptions<TOptions>(this IAlgoBuilder builder, Action<TOptions> configure)
+            where TOptions : class
         {
-            if (source is null) throw new ArgumentNullException(nameof(source));
-            if (nameFactory is null) throw new ArgumentNullException(nameof(nameFactory));
+            if (builder is null) throw new ArgumentNullException(nameof(builder));
+            if (configure is null) throw new ArgumentNullException(nameof(configure));
 
-            foreach (var item in source)
-            {
-                var name = nameFactory(item);
+            ConfigureTypeOptionsCore(builder.Services, builder.Name, configure);
 
-                services
-                    .AddAlgo(name, type)
-                    .ConfigureHostOptions(options => configureAlgoOptions(item, options))
-                    .ConfigureTypeOptions<TUserOptions>(options => configureUserOptions(item, options));
-            }
-
-            return services;
+            return builder;
         }
 
-        internal static IServiceCollection AddAlgoTypeEntry<TAlgo>(this IServiceCollection services, string typeName)
-            where TAlgo : IAlgo
+        public static IAlgoBuilder<TOptions> ConfigureTypeOptions<TOptions>(this IAlgoBuilder<TOptions> builder, Action<TOptions> configure)
+            where TOptions : class
         {
-            return services.AddSingletonNamedService<IAlgoTypeEntry>(typeName, (sp, k) => new AlgoTypeEntry(typeName, typeof(TAlgo)));
+            if (builder is null) throw new ArgumentNullException(nameof(builder));
+            if (configure is null) throw new ArgumentNullException(nameof(configure));
+
+            ConfigureTypeOptionsCore(builder.Services, builder.Name, configure);
+
+            return builder;
         }
 
-        public static IServiceCollection TryAddKeyedServiceCollection(this IServiceCollection services)
-        {
-            services.TryAddSingleton(typeof(IKeyedServiceCollection<,>), typeof(KeyedServiceCollection<,>));
-
-            return services;
-        }
+        #endregion ConfigureTypeOptions
     }
 }

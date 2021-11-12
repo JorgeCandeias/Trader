@@ -8,4 +8,8 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public IServiceCollection Services { get; }
     }
+
+    public interface IAlgoBuilder<TOptions> : IAlgoBuilder
+    {
+    }
 }

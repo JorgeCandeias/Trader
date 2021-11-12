@@ -10,7 +10,6 @@ using Orleans.Statistics;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
-using Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging;
 using Outcompute.Trader.Trading.Commands;
 using Serilog;
 using Serilog.Events;
@@ -156,7 +155,7 @@ namespace Outcompute.Trader.App
                                         }
                                         options.DependsOn.Tickers.Add(symbol);
                                     })
-                                    .ConfigureTypeOptions<ValueAveragingAlgoOptions>(options =>
+                                    .ConfigureTypeOptions(options =>
                                     {
                                         templateSection.GetSection("Options").Bind(options);
                                     });

@@ -14,4 +14,12 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public IServiceCollection Services { get; }
     }
+
+    internal class AlgoBuilder<TOptions> : AlgoBuilder, IAlgoBuilder<TOptions>
+    {
+        public AlgoBuilder(string name, IServiceCollection services) :
+            base(name, services)
+        {
+        }
+    }
 }

@@ -15,9 +15,9 @@ namespace Microsoft.Extensions.DependencyInjection
                 .Services;
         }
 
-        public static IAlgoBuilder AddValueAveragingAlgo(this IServiceCollection services, string name)
+        public static IAlgoBuilder<ValueAveragingAlgoOptions> AddValueAveragingAlgo(this IServiceCollection services, string name)
         {
-            return services.AddAlgo(name, AlgoTypeName);
+            return services.AddAlgo<ValueAveragingAlgoOptions>(name, AlgoTypeName);
         }
     }
 }

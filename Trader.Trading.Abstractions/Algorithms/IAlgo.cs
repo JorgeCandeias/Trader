@@ -12,10 +12,10 @@ namespace Outcompute.Trader.Trading.Algorithms
     {
         IAlgoContext Context { get; }
 
-        Task StartAsync(CancellationToken cancellationToken = default);
+        ValueTask StartAsync(CancellationToken cancellationToken = default);
 
-        Task StopAsync(CancellationToken cancellationToken = default);
+        ValueTask StopAsync(CancellationToken cancellationToken = default);
 
-        Task<IAlgoCommand> GoAsync(CancellationToken cancellationToken = default);
+        ValueTask<IAlgoCommand> GoAsync(CancellationToken cancellationToken = default);
     }
 }

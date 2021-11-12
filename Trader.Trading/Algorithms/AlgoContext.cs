@@ -24,11 +24,11 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public string Name { get; }
 
-        public Symbol Symbol { get; set; } = Symbol.Empty;
-
-        public DateTime TickTime { get; set; } = DateTime.MinValue;
+        public DateTime TickTime { get; set; }
 
         public IServiceProvider ServiceProvider { get; }
+
+        public Symbol Symbol { get; set; } = Symbol.Empty;
 
         public PositionDetails PositionDetails { get; set; } = PositionDetails.Empty;
 
@@ -47,6 +47,8 @@ namespace Outcompute.Trader.Trading.Algorithms
         public SwapPoolAssetBalance QuoteSwapPoolBalance { get; set; } = SwapPoolAssetBalance.Empty;
 
         public IReadOnlyList<OrderQueryResult> Orders { get; set; } = ImmutableList<OrderQueryResult>.Empty;
+
+        public IDictionary<(string Symbol, KlineInterval Interval), IEnumerable<Kline>> Klines { get; } = new Dictionary<(string Symbol, KlineInterval Interval), IEnumerable<Kline>>();
 
         public async ValueTask UpdateAsync(CancellationToken cancellationToken = default)
         {

@@ -15,14 +15,19 @@ namespace Outcompute.Trader.Trading.Algorithms
         string Name { get; }
 
         /// <summary>
-        /// Provides full symbol information For algos that derive from <see cref="ISymbolAlgo"/>.
+        /// The tick time of the last update.
         /// </summary>
-        Symbol Symbol { get; }
+        DateTime TickTime { get; }
 
         /// <summary>
         /// The service provider for extension methods to use.
         /// </summary>
         IServiceProvider ServiceProvider { get; }
+
+        /// <summary>
+        /// Provides full symbol information For algos that derive from <see cref="ISymbolAlgo"/>.
+        /// </summary>
+        Symbol Symbol { get; }
 
         /// <summary>
         /// The current significant asset information for the default symbol.
@@ -77,6 +82,11 @@ namespace Outcompute.Trader.Trading.Algorithms
         /// This is only populated if the default symbol is defined.
         /// </summary>
         IReadOnlyList<OrderQueryResult> Orders { get; }
+
+        /// <summary>
+        /// Gets the klines for the configured dependencies.
+        /// </summary>
+        IDictionary<(string Symbol, KlineInterval Interval), IEnumerable<Kline>> Klines { get; }
 
         /// <summary>
         /// Makes the context self-update to the latest data.

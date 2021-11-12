@@ -8,14 +8,14 @@ namespace Outcompute.Trader.Trading.Providers.Klines
 {
     internal interface IKlineProviderGrain : IGrainWithStringKey
     {
-        Task<ReactiveResult> GetKlinesAsync();
+        ValueTask<ReactiveResult> GetKlinesAsync();
 
-        Task<ReactiveResult?> TryWaitForKlinesAsync(Guid version, int fromSerial);
+        ValueTask<ReactiveResult?> TryWaitForKlinesAsync(Guid version, int fromSerial);
 
-        Task<Kline?> TryGetKlineAsync(DateTime openTime);
+        ValueTask<Kline?> TryGetKlineAsync(DateTime openTime);
 
-        Task SetKlineAsync(Kline item);
+        ValueTask SetKlineAsync(Kline item);
 
-        Task SetKlinesAsync(IEnumerable<Kline> items);
+        ValueTask SetKlinesAsync(IEnumerable<Kline> items);
     }
 }

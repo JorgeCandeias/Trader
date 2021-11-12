@@ -7,11 +7,11 @@ namespace Outcompute.Trader.Trading.Data.InMemory
 {
     internal interface IInMemoryTradingRepositoryGrain : IGrainWithGuidKey
     {
-        Task<ImmutableSortedSet<Kline>> GetKlinesAsync(string symbol, KlineInterval interval);
+        ValueTask<ImmutableSortedSet<Kline>> GetKlinesAsync(string symbol, KlineInterval interval);
 
-        Task SetKlinesAsync(ImmutableList<Kline> items);
+        ValueTask SetKlinesAsync(ImmutableList<Kline> items);
 
-        Task SetKlineAsync(Kline item);
+        ValueTask SetKlineAsync(Kline item);
 
         Task<ImmutableSortedSet<OrderQueryResult>> GetOrdersAsync(string symbol);
 

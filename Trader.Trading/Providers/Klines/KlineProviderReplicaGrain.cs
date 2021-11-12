@@ -2,11 +2,13 @@
 using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Concurrency;
+using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Providers.Klines
@@ -20,14 +22,16 @@ namespace Outcompute.Trader.Trading.Providers.Klines
         private readonly IAlgoDependencyResolver _dependencies;
         private readonly IHostApplicationLifetime _lifetime;
         private readonly IGrainFactory _factory;
+        private readonly ITradingRepository _repository;
 
-        public KlineProviderReplicaGrain(IOptions<KlineProviderOptions> options, IOptions<ReactiveOptions> reactive, IAlgoDependencyResolver dependencies, IHostApplicationLifetime lifetime, IGrainFactory factory)
+        public KlineProviderReplicaGrain(IOptions<KlineProviderOptions> options, IOptions<ReactiveOptions> reactive, IAlgoDependencyResolver dependencies, IHostApplicationLifetime lifetime, IGrainFactory factory, ITradingRepository repository)
         {
             _options = options.Value;
             _reactive = reactive.Value;
             _dependencies = dependencies;
             _lifetime = lifetime;
             _factory = factory;
+            _repository = repository;
         }
 
         /// <summary>
@@ -58,7 +62,7 @@ namespace Outcompute.Trader.Trading.Providers.Klines
         /// <summary>
         /// Holds the kline cache in a form that is mutable but still convertible to immutable upon request with low overhead.
         /// </summary>
-        private readonly ImmutableSortedSet<Kline>.Builder _klines = ImmutableSortedSet.CreateBuilder(Kline.KeyComparer);
+        private readonly ImmutableSortedSet<Kline>.Builder _klines = ImmutableSortedSet.CreateBuilder(KlineComparer.Key);
 
         /// <summary>
         /// Indexes klines by open time to speed up requests for a single order.
@@ -80,34 +84,41 @@ namespace Outcompute.Trader.Trading.Providers.Klines
             await base.OnActivateAsync();
         }
 
-        public Task<Kline?> TryGetKlineAsync(DateTime openTime)
+        public ValueTask<Kline?> TryGetKlineAsync(DateTime openTime)
         {
-            var kline = _klineByOpenTime.TryGetValue(openTime, out var current) ? current : null;
+            if (_klineByOpenTime.TryGetValue(openTime, out var kline))
+            {
+                return ValueTask.FromResult<Kline?>(kline);
+            }
 
-            return Task.FromResult(kline);
+            return ValueTask.FromResult<Kline?>(null);
         }
 
-        public Task<IReadOnlyList<Kline>> GetKlinesAsync()
+        public ValueTask<IReadOnlyCollection<Kline>> GetKlinesAsync()
         {
-            return Task.FromResult<IReadOnlyList<Kline>>(_klines.ToImmutable());
+            return ValueTask.FromResult<IReadOnlyCollection<Kline>>(_klines.ToImmutable());
         }
 
-        public Task SetKlineAsync(Kline item)
+        public ValueTask<IReadOnlyCollection<Kline>> GetKlinesAsync(DateTime tickTime, int periods)
         {
-            if (item is null) throw new ArgumentNullException(nameof(item));
+            var result = _klines.Reverse().SkipWhile(x => x.OpenTime > tickTime).Take(periods).ToImmutableSortedSet(KlineComparer.Key);
 
-            return SetKlineCoreAsync(item);
+            return ValueTask.FromResult<IReadOnlyCollection<Kline>>(result);
         }
 
-        private async Task SetKlineCoreAsync(Kline item)
+        public async ValueTask SetKlineAsync(Kline item)
         {
+            await _repository.SetKlineAsync(item, _lifetime.ApplicationStopping);
+
             await _factory.GetKlineProviderGrain(_symbol, _interval).SetKlineAsync(item);
 
             Apply(item);
         }
 
-        public async Task SetKlinesAsync(IEnumerable<Kline> items)
+        public async ValueTask SetKlinesAsync(IEnumerable<Kline> items)
         {
+            await _repository.SetKlinesAsync(items, _lifetime.ApplicationStopping);
+
             await _factory.GetKlineProviderGrain(_symbol, _interval).SetKlinesAsync(items);
 
             foreach (var item in items)
@@ -116,9 +127,14 @@ namespace Outcompute.Trader.Trading.Providers.Klines
             }
         }
 
-        public Task<DateTime?> TryGetLastOpenTimeAsync()
+        public ValueTask<DateTime?> TryGetLastOpenTimeAsync()
         {
-            return Task.FromResult(_klines.Max?.OpenTime);
+            if (_klines.Count > 0)
+            {
+                return ValueTask.FromResult<DateTime?>(_klines.Max.OpenTime);
+            }
+
+            return ValueTask.FromResult<DateTime?>(null);
         }
 
         private async Task LoadAsync()

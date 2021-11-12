@@ -19,6 +19,7 @@ namespace Orleans
         public static IKlineProviderReplicaGrain GetKlineProviderReplicaGrain(this IGrainFactory factory, string symbol, KlineInterval interval)
         {
             if (factory is null) throw new ArgumentNullException(nameof(factory));
+            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
             return _lookup.GetOrAdd((symbol, interval), FactoryDelegate, factory);
         }

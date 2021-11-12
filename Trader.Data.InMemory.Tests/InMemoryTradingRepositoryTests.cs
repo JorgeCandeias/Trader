@@ -77,16 +77,16 @@ namespace Trader.Trading.InMemory.Tests
             var start = DateTime.Today.Subtract(TimeSpan.FromDays(10));
             var end = DateTime.Today;
             var kline = Kline.Empty with { Symbol = symbol, Interval = interval, OpenTime = DateTime.Today };
-            var klines = ImmutableSortedSet.Create(Kline.KeyComparer, kline);
+            var klines = ImmutableSortedSet.Create(KlineComparer.Key, kline);
             var factory = Mock.Of<IGrainFactory>(x =>
-                x.GetGrain<IInMemoryTradingRepositoryGrain>(Guid.Empty, null).GetKlinesAsync(symbol, interval) == Task.FromResult(klines));
+                x.GetGrain<IInMemoryTradingRepositoryGrain>(Guid.Empty, null).GetKlinesAsync(symbol, interval) == ValueTask.FromResult(klines));
             var repository = new InMemoryTradingRepository(factory);
 
             // act
             var result = await repository.GetKlinesAsync(symbol, interval, start, end);
 
             // arrange
-            Assert.Collection(result, x => Assert.Same(kline, x));
+            Assert.Collection(result, x => Assert.Equal(kline, x));
         }
 
         [Fact]

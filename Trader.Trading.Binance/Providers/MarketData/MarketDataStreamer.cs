@@ -111,9 +111,9 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                     tickerWorker.Post(message.MiniTicker);
                 }
 
-                if (message.Kline is not null && klineLookup.Contains((message.Kline.Symbol, message.Kline.Interval)))
+                if (message.Kline.HasValue && klineLookup.Contains((message.Kline.Value.Symbol, message.Kline.Value.Interval)))
                 {
-                    klineWorker.Post(message.Kline);
+                    klineWorker.Post(message.Kline.Value);
                 }
             }
         }

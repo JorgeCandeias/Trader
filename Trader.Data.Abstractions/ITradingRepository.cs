@@ -20,11 +20,11 @@ namespace Outcompute.Trader.Data
 
         #region Klines
 
-        Task SetKlineAsync(Kline item, CancellationToken cancellationToken = default);
+        ValueTask SetKlineAsync(Kline item, CancellationToken cancellationToken = default);
 
-        Task SetKlinesAsync(IEnumerable<Kline> items, CancellationToken cancellationToken = default);
+        ValueTask SetKlinesAsync(IEnumerable<Kline> items, CancellationToken cancellationToken = default);
 
-        Task<IEnumerable<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime startOpenTime, DateTime endOpenTime, CancellationToken cancellationToken = default);
+        ValueTask<IEnumerable<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime startOpenTime, DateTime endOpenTime, CancellationToken cancellationToken = default);
 
         #endregion Klines
 

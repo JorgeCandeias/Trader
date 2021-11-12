@@ -21,18 +21,18 @@ namespace Outcompute.Trader.Trading.Data.InMemory
 
         private readonly Dictionary<string, ImmutableSortedSet<OrderQueryResult>.Builder> _orders = new();
 
-        public Task<ImmutableSortedSet<Kline>> GetKlinesAsync(string symbol, KlineInterval interval)
+        public ValueTask<ImmutableSortedSet<Kline>> GetKlinesAsync(string symbol, KlineInterval interval)
         {
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
             var result = _klines.TryGetValue((symbol, interval), out var builder)
                 ? builder.ToImmutable()
-                : ImmutableSortedSet<Kline>.Empty.WithComparer(Kline.KeyComparer);
+                : ImmutableSortedSet<Kline>.Empty.WithComparer(KlineComparer.Key);
 
-            return Task.FromResult(result);
+            return ValueTask.FromResult(result);
         }
 
-        public Task SetKlinesAsync(ImmutableList<Kline> items)
+        public ValueTask SetKlinesAsync(ImmutableList<Kline> items)
         {
             if (items is null) throw new ArgumentNullException(nameof(items));
 
@@ -40,29 +40,27 @@ namespace Outcompute.Trader.Trading.Data.InMemory
             {
                 if (!_klines.TryGetValue((item.Symbol, item.Interval), out var builder))
                 {
-                    _klines[(item.Symbol, item.Interval)] = builder = ImmutableSortedSet.CreateBuilder(Kline.KeyComparer);
+                    _klines[(item.Symbol, item.Interval)] = builder = ImmutableSortedSet.CreateBuilder(KlineComparer.Key);
                 }
 
                 builder.Remove(item);
                 builder.Add(item);
             }
 
-            return Task.CompletedTask;
+            return ValueTask.CompletedTask;
         }
 
-        public Task SetKlineAsync(Kline item)
+        public ValueTask SetKlineAsync(Kline item)
         {
-            if (item is null) throw new ArgumentNullException(nameof(item));
-
             if (!_klines.TryGetValue((item.Symbol, item.Interval), out var builder))
             {
-                _klines[(item.Symbol, item.Interval)] = builder = ImmutableSortedSet.CreateBuilder(Kline.KeyComparer);
+                _klines[(item.Symbol, item.Interval)] = builder = ImmutableSortedSet.CreateBuilder(KlineComparer.Key);
             }
 
             builder.Remove(item);
             builder.Add(item);
 
-            return Task.CompletedTask;
+            return ValueTask.CompletedTask;
         }
 
         public Task<ImmutableSortedSet<OrderQueryResult>> GetOrdersAsync(string symbol)

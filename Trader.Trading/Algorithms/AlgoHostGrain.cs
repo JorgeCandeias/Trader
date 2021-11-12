@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
+using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Trading.Readyness;
 using System;
 using System.Threading;
@@ -20,8 +21,9 @@ namespace Outcompute.Trader.Trading.Algorithms
         private readonly IHostApplicationLifetime _lifetime;
         private readonly IAlgoStatisticsPublisher _publisher;
         private readonly IAlgoFactoryResolver _resolver;
+        private readonly ISystemClock _clock;
 
-        public AlgoHostGrain(ILogger<AlgoHostGrain> logger, IOptionsMonitor<AlgoOptions> options, IReadynessProvider readyness, IHostApplicationLifetime lifetime, IAlgoStatisticsPublisher publisher, IServiceProvider provider, IAlgoFactoryResolver resolver)
+        public AlgoHostGrain(ILogger<AlgoHostGrain> logger, IOptionsMonitor<AlgoOptions> options, IReadynessProvider readyness, IHostApplicationLifetime lifetime, IAlgoStatisticsPublisher publisher, IServiceProvider provider, IAlgoFactoryResolver resolver, ISystemClock clock)
         {
             _logger = logger;
             _options = options;
@@ -30,6 +32,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             _lifetime = lifetime;
             _publisher = publisher;
             _resolver = resolver;
+            _clock = clock;
         }
 
         private readonly CancellationTokenSource _cancellation = new();

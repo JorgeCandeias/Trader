@@ -340,14 +340,7 @@ namespace Outcompute.Trader.Data.Sql
             }
         }
 
-        public Task SetKlineAsync(Kline item, CancellationToken cancellationToken = default)
-        {
-            if (item is null) throw new ArgumentNullException(nameof(item));
-
-            return SetKlineCoreAsync(item, cancellationToken);
-        }
-
-        private async Task SetKlineCoreAsync(Kline item, CancellationToken cancellationToken = default)
+        public async ValueTask SetKlineAsync(Kline item, CancellationToken cancellationToken = default)
         {
             var symbolId = await GetOrAddSymbolAsync(item.Symbol, cancellationToken).ConfigureAwait(false);
 
@@ -374,14 +367,14 @@ namespace Outcompute.Trader.Data.Sql
                 .ConfigureAwait(false);
         }
 
-        public Task SetKlinesAsync(IEnumerable<Kline> items, CancellationToken cancellationToken = default)
+        public ValueTask SetKlinesAsync(IEnumerable<Kline> items, CancellationToken cancellationToken = default)
         {
             if (items is null) throw new ArgumentNullException(nameof(items));
 
             return SetKlinesCoreAsync(items, cancellationToken);
         }
 
-        private async Task SetKlinesCoreAsync(IEnumerable<Kline> items, CancellationToken cancellationToken = default)
+        private async ValueTask SetKlinesCoreAsync(IEnumerable<Kline> items, CancellationToken cancellationToken = default)
         {
             // get the cached ids for the incoming symbols
             var symbolIds = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
@@ -421,7 +414,7 @@ namespace Outcompute.Trader.Data.Sql
                 .ConfigureAwait(false);
         }
 
-        public async Task<IEnumerable<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime startOpenTime, DateTime endOpenTime, CancellationToken cancellationToken = default)
+        public async ValueTask<IEnumerable<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime startOpenTime, DateTime endOpenTime, CancellationToken cancellationToken = default)
         {
             _ = symbol ?? throw new ArgumentNullException(nameof(symbol));
 

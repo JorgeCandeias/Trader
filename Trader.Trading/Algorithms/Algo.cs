@@ -30,26 +30,23 @@ namespace Outcompute.Trader.Trading.Algorithms
             Context = AlgoContext.Current;
         }
 
-        public async Task<IAlgoCommand> GoAsync(CancellationToken cancellationToken = default)
+        public async ValueTask<IAlgoCommand> GoAsync(CancellationToken cancellationToken = default)
         {
             await Context.UpdateAsync(cancellationToken).ConfigureAwait(false);
 
             return await OnExecuteAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        protected virtual ValueTask<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default)
+        protected abstract ValueTask<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default);
+
+        public virtual ValueTask StartAsync(CancellationToken cancellationToken = default)
         {
-            return ValueTask.FromResult<IAlgoCommand>(Noop());
+            return ValueTask.CompletedTask;
         }
 
-        public virtual Task StartAsync(CancellationToken cancellationToken = default)
+        public virtual ValueTask StopAsync(CancellationToken cancellationToken = default)
         {
-            return Task.CompletedTask;
-        }
-
-        public virtual Task StopAsync(CancellationToken cancellationToken = default)
-        {
-            return Task.CompletedTask;
+            return ValueTask.CompletedTask;
         }
 
         public IAlgoContext Context { get; }

@@ -51,33 +51,31 @@ namespace Outcompute.Trader.Trading.Data.InMemory
 
         #region Klines
 
-        public Task<IEnumerable<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime startOpenTime, DateTime endOpenTime, CancellationToken cancellationToken = default)
+        public ValueTask<IEnumerable<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime startOpenTime, DateTime endOpenTime, CancellationToken cancellationToken = default)
         {
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
             return GetKlinesCoreAsync(symbol, interval, startOpenTime, endOpenTime);
         }
 
-        private async Task<IEnumerable<Kline>> GetKlinesCoreAsync(string symbol, KlineInterval interval, DateTime startOpenTime, DateTime endOpenTime)
+        private async ValueTask<IEnumerable<Kline>> GetKlinesCoreAsync(string symbol, KlineInterval interval, DateTime startOpenTime, DateTime endOpenTime)
         {
             var result = await _grain.GetKlinesAsync(symbol, interval).ConfigureAwait(false);
 
             return result
                 .Where(x => x.OpenTime >= startOpenTime && x.OpenTime <= endOpenTime)
-                .ToImmutableSortedSet(Kline.KeyComparer);
+                .ToImmutableSortedSet(KlineComparer.Key);
         }
 
-        public Task SetKlinesAsync(IEnumerable<Kline> items, CancellationToken cancellationToken = default)
+        public ValueTask SetKlinesAsync(IEnumerable<Kline> items, CancellationToken cancellationToken = default)
         {
             if (items is null) throw new ArgumentNullException(nameof(items));
 
             return _grain.SetKlinesAsync(items.ToImmutableList());
         }
 
-        public Task SetKlineAsync(Kline item, CancellationToken cancellationToken = default)
+        public ValueTask SetKlineAsync(Kline item, CancellationToken cancellationToken = default)
         {
-            if (item is null) throw new ArgumentNullException(nameof(item));
-
             return _grain.SetKlineAsync(item);
         }
 

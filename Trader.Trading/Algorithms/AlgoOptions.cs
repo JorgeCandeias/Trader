@@ -77,13 +77,22 @@ namespace Outcompute.Trader.Trading.Algorithms
 
     public class AlgoOptionsDependsOnKline
     {
+        /// <summary>
+        /// Symbol for which to load klines.
+        /// </summary>
         [Required]
-        public string Symbol { get; set; } = Empty;
+        public string Symbol { get; set; }
 
+        /// <summary>
+        /// Interval for which to load klines.
+        /// </summary>
         [Required]
         [Range(1, int.MaxValue)]
         public KlineInterval Interval { get; set; } = KlineInterval.Days1;
 
+        /// <summary>
+        /// The rolling number of klines to load.
+        /// </summary>~
         [Required]
         [Range(1, int.MaxValue)]
         public int Periods { get; set; } = 100;

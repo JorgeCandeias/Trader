@@ -55,7 +55,7 @@ namespace Outcompute.Trader.Trading.Providers.Klines
         /// <summary>
         /// Holds the kline cache in a form that is mutable but still convertible to immutable upon request with low overhead.
         /// </summary>
-        private readonly ImmutableSortedSet<Kline>.Builder _klines = ImmutableSortedSet.CreateBuilder(Kline.KeyComparer);
+        private readonly ImmutableSortedSet<Kline>.Builder _klines = ImmutableSortedSet.CreateBuilder(KlineComparer.Key);
 
         /// <summary>
         /// Indexes klines by open time to speed up requests for a single order.
@@ -65,7 +65,7 @@ namespace Outcompute.Trader.Trading.Providers.Klines
         /// <summary>
         /// Assigns a unique serial number to each kline.
         /// </summary>
-        private readonly Dictionary<Kline, int> _serialByKline = new(Kline.KeyEqualityComparer);
+        private readonly Dictionary<Kline, int> _serialByKline = new(KlineComparer.Key);
 
         /// <summary>
         /// Indexes each kline by it serial number.
@@ -88,31 +88,34 @@ namespace Outcompute.Trader.Trading.Providers.Klines
             await base.OnActivateAsync();
         }
 
-        public Task<Kline?> TryGetKlineAsync(DateTime openTime)
+        public ValueTask<Kline?> TryGetKlineAsync(DateTime openTime)
         {
-            var kline = _klineByOpenTime.TryGetValue(openTime, out var current) ? current : null;
+            if (_klineByOpenTime.TryGetValue(openTime, out var kline))
+            {
+                return ValueTask.FromResult<Kline?>(kline);
+            }
 
-            return Task.FromResult(kline);
+            return ValueTask.FromResult<Kline?>(null);
         }
 
-        public Task<ReactiveResult> GetKlinesAsync()
+        public ValueTask<ReactiveResult> GetKlinesAsync()
         {
-            return Task.FromResult(new ReactiveResult(_version, _serial, _klines.ToImmutable()));
+            return ValueTask.FromResult(new ReactiveResult(_version, _serial, _klines.ToImmutable()));
         }
 
         [NoProfiling]
-        public Task<ReactiveResult?> TryWaitForKlinesAsync(Guid version, int fromSerial)
+        public ValueTask<ReactiveResult?> TryWaitForKlinesAsync(Guid version, int fromSerial)
         {
             // if the versions differ then return the entire data set
             if (version != _version)
             {
-                return Task.FromResult<ReactiveResult?>(new ReactiveResult(_version, _serial, _klines.ToImmutable()));
+                return ValueTask.FromResult<ReactiveResult?>(new ReactiveResult(_version, _serial, _klines.ToImmutable()));
             }
 
             // fulfill the request now if possible
             if (_serial >= fromSerial)
             {
-                var builder = ImmutableSortedSet.CreateBuilder(Kline.KeyComparer);
+                var builder = ImmutableSortedSet.CreateBuilder(KlineComparer.Key);
 
                 for (var i = fromSerial; i <= _serial; i++)
                 {
@@ -122,14 +125,14 @@ namespace Outcompute.Trader.Trading.Providers.Klines
                     }
                 }
 
-                return Task.FromResult<ReactiveResult?>(new ReactiveResult(_version, _serial, builder.ToImmutable()));
+                return ValueTask.FromResult<ReactiveResult?>(new ReactiveResult(_version, _serial, builder.ToImmutable()));
             }
 
             // otherwise let the request wait for more data
-            return GetOrCreateCompletionTask(version, fromSerial).WithDefaultOnTimeout(null, _reactive.ReactivePollingTimeout, _lifetime.ApplicationStopping);
+            return new ValueTask<ReactiveResult?>(GetOrCreateCompletionTask(version, fromSerial).WithDefaultOnTimeout(null, _reactive.ReactivePollingTimeout, _lifetime.ApplicationStopping));
         }
 
-        private async Task LoadAsync()
+        private async ValueTask LoadAsync()
         {
             var result = await _repository.GetKlinesAsync(_symbol, _interval, _clock.UtcNow.Subtract(_interval, _options.MaxCachedKlines + 1), _clock.UtcNow);
 
@@ -139,18 +142,17 @@ namespace Outcompute.Trader.Trading.Providers.Klines
             }
         }
 
-        public Task SetKlineAsync(Kline item)
+        public ValueTask SetKlineAsync(Kline item)
         {
-            if (item is null) throw new ArgumentNullException(nameof(item));
             if (item.Symbol != _symbol) throw new ArgumentOutOfRangeException(nameof(item));
             if (item.Interval != _interval) throw new ArgumentOutOfRangeException(nameof(item));
 
             Apply(item);
 
-            return Task.CompletedTask;
+            return ValueTask.CompletedTask;
         }
 
-        public Task SetKlinesAsync(IEnumerable<Kline> items)
+        public ValueTask SetKlinesAsync(IEnumerable<Kline> items)
         {
             if (items is null) throw new ArgumentNullException(nameof(items));
 
@@ -159,7 +161,7 @@ namespace Outcompute.Trader.Trading.Providers.Klines
                 Apply(item);
             }
 
-            return Task.CompletedTask;
+            return ValueTask.CompletedTask;
         }
 
         private void Apply(Kline item)
@@ -236,7 +238,7 @@ namespace Outcompute.Trader.Trading.Providers.Klines
             else
             {
                 // complete on changes only
-                var builder = ImmutableSortedSet.CreateBuilder(Kline.KeyComparer);
+                var builder = ImmutableSortedSet.CreateBuilder(KlineComparer.Key);
 
                 for (var s = fromSerial; s <= _serial; s++)
                 {

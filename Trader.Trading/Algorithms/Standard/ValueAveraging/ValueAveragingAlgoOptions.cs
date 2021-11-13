@@ -21,7 +21,11 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         [Required]
         [Range(1, 1000000)]
-        public decimal TargetSellProfitRate { get; set; } = 1.10m;
+        public decimal TargetSellProfitRate { get; set; } = 2.0m;
+
+        [Required]
+        [Range(0, 1)]
+        public decimal TrailingStopLossRate { get; set; } = 0.95M;
 
         public decimal? MaxNotional { get; set; }
 

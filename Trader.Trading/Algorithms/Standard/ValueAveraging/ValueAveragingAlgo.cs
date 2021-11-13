@@ -247,6 +247,26 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             return false;
         }
 
+        private bool IsTickerBelowTrailingStopLoss()
+        {
+            if (Context.PositionDetails.Orders.Count == 0)
+            {
+                return false;
+            }
+
+            var order = Context.PositionDetails.Orders.Max!;
+            var high = Context.Klines.Where(x => x.OpenTime >= order.Time).Select(x => x.HighPrice).DefaultIfEmpty(0).Max();
+            var max = Math.Max(order.Price, high);
+            var stop = max * _options.TrailingStopLossRate;
+
+            if (Context.Ticker.ClosePrice <= stop)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         private bool TrySignalSellOrder()
         {
             if (!IsSellingEnabled())
@@ -254,7 +274,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
                 return false;
             }
 
-            if (IsClosingEnabled() || IsTickerAboveTargetSellPrice())
+            if (IsClosingEnabled() || IsTickerAboveTargetSellPrice() || IsTickerBelowTrailingStopLoss())
             {
                 return true;
             }

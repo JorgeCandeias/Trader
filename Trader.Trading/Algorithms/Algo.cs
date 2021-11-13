@@ -79,7 +79,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             return new AveragingSellCommand(symbol, orders, profitMultiplier, redeemSavings, redeemSwapPool);
         }
 
-        public virtual AveragingSellCommand AveragingSell(IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, bool redeemSwapPool)
+        public virtual IAlgoCommand AveragingSell(IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, bool redeemSwapPool)
         {
             return AveragingSell(EnsureSymbol(), orders, profitMultiplier, redeemSavings, redeemSwapPool);
         }
@@ -109,7 +109,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             return EnsureSingleOrder(EnsureSymbol(), side, type, timeInForce, quantity, price, redeemSavings, redeemSwapPool);
         }
 
-        public virtual ClearOpenOrdersCommand ClearOpenOrders(Symbol symbol, OrderSide side)
+        public virtual IAlgoCommand ClearOpenOrders(Symbol symbol, OrderSide side)
         {
             return new ClearOpenOrdersCommand(symbol, side);
         }
@@ -134,7 +134,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             return new SignificantAveragingSellCommand(symbol, ticker, orders, minimumProfitRate, redeemSavings, redeemSwapPool);
         }
 
-        public virtual SignificantAveragingSellCommand SignificantAveragingSell(MiniTicker ticker, IReadOnlyCollection<OrderQueryResult> orders, decimal minimumProfitRate, bool redeemSavings, bool redeemSwapPool)
+        public virtual IAlgoCommand SignificantAveragingSell(MiniTicker ticker, IReadOnlyCollection<OrderQueryResult> orders, decimal minimumProfitRate, bool redeemSavings, bool redeemSwapPool)
         {
             return SignificantAveragingSell(EnsureSymbol(), ticker, orders, minimumProfitRate, redeemSavings, redeemSwapPool);
         }

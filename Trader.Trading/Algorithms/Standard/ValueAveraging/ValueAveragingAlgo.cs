@@ -30,35 +30,32 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         private decimal _rsiC;
 
         [SuppressMessage("Major Code Smell", "S3358:Ternary operators should not be nested", Justification = "N/A")]
-        protected override async ValueTask<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default)
+        protected override ValueTask<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default)
         {
-            // get the lastest klines
-            var klines = Context.KlineLookup[(Context.Symbol.Name, _options.KlineInterval)];
-
             // calculate the current moving averages
-            _smaA = klines.LastSma(x => x.ClosePrice, _options.SmaPeriodsA);
-            _smaB = klines.LastSma(x => x.ClosePrice, _options.SmaPeriodsB);
-            _smaC = klines.LastSma(x => x.ClosePrice, _options.SmaPeriodsC);
+            _smaA = Context.Klines.LastSma(x => x.ClosePrice, _options.SmaPeriodsA);
+            _smaB = Context.Klines.LastSma(x => x.ClosePrice, _options.SmaPeriodsB);
+            _smaC = Context.Klines.LastSma(x => x.ClosePrice, _options.SmaPeriodsC);
 
             // calculate the rsi values
-            _rsiA = klines.LastRsi(x => x.ClosePrice, _options.RsiPeriodsA);
-            _rsiB = klines.LastRsi(x => x.ClosePrice, _options.RsiPeriodsB);
-            _rsiC = klines.LastRsi(x => x.ClosePrice, _options.RsiPeriodsC);
+            _rsiA = Context.Klines.LastRsi(x => x.ClosePrice, _options.RsiPeriodsA);
+            _rsiB = Context.Klines.LastRsi(x => x.ClosePrice, _options.RsiPeriodsB);
+            _rsiC = Context.Klines.LastRsi(x => x.ClosePrice, _options.RsiPeriodsC);
+
+            // decide on buying
+            var buyCommand = TrySignalBuyOrder()
+                ? SetTrackingBuy()
+                : ClearOpenOrders(Context.Symbol, OrderSide.Buy);
+
+            // decide on selling
+            var sellCommand = TrySignalSellOrder()
+                ? _options.ClosingEnabled
+                    ? AveragingSell(Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool)
+                    : SignificantAveragingSell(Context.Ticker, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool)
+                : ClearOpenOrders(Context.Symbol, OrderSide.Sell);
 
             // evaluate signals and return results for them
-            return Many(
-
-                // set a tracking buy if we hit a buy signal
-                TrySignalBuyOrder()
-                    ? SetTrackingBuy()
-                    : ClearOpenOrders(Context.Symbol, OrderSide.Buy),
-
-                // place an averaging sell if we hit a sell signal
-                TrySignalSellOrder()
-                    ? _options.ClosingEnabled
-                        ? AveragingSell(Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool)
-                        : SignificantAveragingSell(Context.Ticker, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool)
-                    : ClearOpenOrders(Context.Symbol, OrderSide.Sell));
+            return ValueTask.FromResult(Many(buyCommand, sellCommand));
         }
 
         private bool TrySignalBuyOrder()

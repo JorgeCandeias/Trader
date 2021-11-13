@@ -1,6 +1,4 @@
-﻿using Outcompute.Trader.Models;
-using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 {
@@ -51,9 +49,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         [Required]
         public bool RedeemSwapPool { get; set; } = false;
-
-        [Required]
-        public KlineInterval KlineInterval { get; set; } = KlineInterval.Days1;
 
         [Required]
         public int SmaPeriodsA { get; set; } = 7;

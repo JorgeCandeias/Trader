@@ -4,9 +4,6 @@ using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Commands.RedeemSavings;
 using Outcompute.Trader.Trading.Providers;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Commands.MarketSell
 {
@@ -37,6 +34,14 @@ namespace Outcompute.Trader.Trading.Commands.MarketSell
             if (quantity < context.Symbol.Filters.LotSize.MinQuantity)
             {
                 LogQuantityLessThanMinLotSize(TypeName, context.Symbol.Name, quantity, context.Symbol.BaseAsset, context.Symbol.Filters.LotSize.MinQuantity);
+                return;
+            }
+
+            // if the total becomes lower than the minimum notional then we cant sell
+            var total = quantity * context.Ticker.ClosePrice;
+            if (total < context.Symbol.Filters.MinNotional.MinNotional)
+            {
+                LogTotalLessThanMinNotional(TypeName, context.Symbol.Name, quantity, context.Symbol.BaseAsset, context.Ticker.ClosePrice, context.Symbol.QuoteAsset, total, context.Symbol.Filters.MinNotional.MinNotional);
                 return;
             }
 
@@ -101,6 +106,9 @@ namespace Outcompute.Trader.Trading.Commands.MarketSell
 
         [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot place order with quantity {Quantity} {Asset} because it is less than the minimum lot size of {MinLotSize} {Asset}")]
         private partial void LogQuantityLessThanMinLotSize(string type, string name, decimal quantity, string asset, decimal minLotSize);
+
+        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot place order with quantity {Quantity} {Asset} and price {Price} {Quote} because the total of {Total} {Quote} is less than the minimum notional of {MinNotional} {Quote}")]
+        private partial void LogTotalLessThanMinNotional(string type, string name, decimal quantity, string asset, decimal price, string quote, decimal total, decimal minNotional);
 
         [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot place order with quantity {Quantity} {Asset} because the free amount from all sources is only {Free} {Asset}")]
         private partial void LogNotEnoughFreeBalance(string type, string name, decimal quantity, string asset, decimal free);

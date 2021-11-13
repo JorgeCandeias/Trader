@@ -1,10 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Orleans;
 using Outcompute.Trader.Models;
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
@@ -37,36 +33,24 @@ namespace Outcompute.Trader.Trading.Algorithms
             {
                 var quantity = significant.Orders.Sum(x => x.ExecutedQuantity);
 
-                LogAssetQuantity(TypeName, significant.Symbol.Name, quantity);
-
                 var total = significant.Orders.Sum(x => x.Price * x.ExecutedQuantity);
 
-                LogAssetCost(TypeName, significant.Symbol.Name, total);
+                var avg = total / quantity;
 
                 var now = quantity * ticker.ClosePrice;
 
-                LogPresentValue(TypeName, significant.Symbol.Name, now);
-
                 var uPnL = now - total;
-
-                LogUnrealizedPnL(TypeName, significant.Symbol.Name, uPnL, total == 0m ? 0m : uPnL / total);
 
                 var rPnl = significant.ProfitEvents.Sum(x => x.Profit);
 
-                LogRealizedPnL(TypeName, significant.Symbol.Name, rPnl);
-
                 var pPnl = uPnL + rPnl;
-
-                LogPresentPnl(TypeName, significant.Symbol.Name, pPnl);
 
                 // we need past price history to convert non-quote asset comissions into quote asset comissions for accurate reporting here
                 var commissions = significant.CommissionEvents.Where(x => x.Asset == significant.Symbol.QuoteAsset).Sum(x => x.Commission);
 
-                LogQuoteCommissions(TypeName, significant.Symbol.Name, commissions);
-
                 var aPnL = pPnl - commissions;
 
-                LogAdjustedPnL(TypeName, significant.Symbol.Name, aPnL);
+                LogStatistics(TypeName, significant.Symbol.Name, quantity, total, avg, now, uPnL, total == 0m ? 0m : uPnL / total, rPnl, pPnl, commissions, aPnL);
             }
 
             // this model is meant for rendering only and will get refactored at some point
@@ -82,6 +66,9 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Ticker = {Ticker:F8}")]
         private partial void LogTicker(string type, string name, decimal ticker);
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Q = {Quantity:F8}, T = {Total:F8}, AVG = {AveragePrice:F8}, PV = {PV:F8}, UPNL = {UPNL:F8} ({UPNLRatio:P8}), RPNL = {RPNL:F8}, PPNL = {PPNL:F8}, QC = {QuoteCommissions:F8}, APNL = {APNL:F8}")]
+        private partial void LogStatistics(string type, string name, decimal quantity, decimal total, decimal averagePrice, decimal pv, decimal upnl, decimal upnlRatio, decimal rpnl, decimal ppnl, decimal quoteCommissions, decimal apnl);
 
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Asset Quantity = {Quantity:F8}")]
         private partial void LogAssetQuantity(string type, string name, decimal quantity);

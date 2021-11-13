@@ -1,16 +1,16 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Outcompute.Trader.Core.Time;
+using Outcompute.Trader.Models;
 using System;
 using System.Globalization;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Outcompute.Trader.Core.Time;
-using Outcompute.Trader.Models;
 
 namespace Outcompute.Trader.Trading.Binance.Handlers
 {
-    internal class BinanceApiUsagePostHandler : DelegatingHandler
+    internal partial class BinanceApiUsagePostHandler : DelegatingHandler
     {
         private readonly BinanceOptions _options;
         private readonly BinanceUsageContext _usage;
@@ -25,7 +25,7 @@ namespace Outcompute.Trader.Trading.Binance.Handlers
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
-        private static string Name => nameof(BinanceApiUsagePostHandler);
+        private const string TypeName = nameof(BinanceApiUsagePostHandler);
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
@@ -54,7 +54,7 @@ namespace Outcompute.Trader.Trading.Binance.Handlers
                     {
                         var weight = int.Parse(item, CultureInfo.InvariantCulture);
 
-                        _usage.SetUsed(RateLimitType.RequestWeight, window, weight);
+                        _usage.SetUsed(RateLimitType.RequestWeight, window, weight, _clock.UtcNow);
                     }
                 }
                 else if (header.Key.StartsWith(_options.UsedOrderCountHeaderPrefix, StringComparison.OrdinalIgnoreCase))
@@ -76,7 +76,7 @@ namespace Outcompute.Trader.Trading.Binance.Handlers
                     {
                         var count = int.Parse(item, CultureInfo.InvariantCulture);
 
-                        _usage.SetUsed(RateLimitType.Orders, window, count);
+                        _usage.SetUsed(RateLimitType.Orders, window, count, _clock.UtcNow);
                     }
                 }
             }
@@ -84,20 +84,22 @@ namespace Outcompute.Trader.Trading.Binance.Handlers
             // analyse the usages
             foreach (var item in _usage.EnumerateAll())
             {
+                // skip expired usages
+                if (item.Updated.Add(item.Window) < _clock.UtcNow)
+                {
+                    continue;
+                }
+
                 var ratio = item.Used / (double)item.Limit;
 
                 if (ratio >= _options.UsageWarningRatio)
                 {
-                    _logger.LogWarning(
-                        "{Name} detected rate limit usage for {RateLimitType} {Window} is at {Usage:P2}",
-                        Name, item.Type, item.Window, ratio);
+                    LogDetectedRateLimitUsage(TypeName, item.Type, item.Window, ratio);
 
                     // force backoff once the safety limit is reached
                     if (ratio >= _options.UsageBackoffRatio)
                     {
-                        _logger.LogWarning(
-                            "{Name} detected rate limit usage for {RateLimitType} {Window} is over the limit of {Limit:P2} and will force backoff",
-                            Name, item.Type, item.Window, _options.UsageBackoffRatio);
+                        LogDetectedRateLimitUsageOverLimit(TypeName, item.Type, item.Window, _options.UsageBackoffRatio);
 
                         TimeSpan retry;
                         var now = _clock.UtcNow;
@@ -118,9 +120,7 @@ namespace Outcompute.Trader.Trading.Binance.Handlers
                         {
                             retry = _options.DefaultBackoffPeriod;
 
-                            _logger.LogError(
-                                "{Name} detected violation of unknown rate window {RateLimitType} {Window} and will force the default backoff of {Backoff}",
-                                Name, item.Type, item.Window, retry);
+                            LogDetectedViolationOfUnknownRateWindow(TypeName, item.Type, item.Window, retry);
                         }
 
                         throw new BinanceTooManyRequestsException(retry);
@@ -130,5 +130,14 @@ namespace Outcompute.Trader.Trading.Binance.Handlers
 
             return response;
         }
+
+        [LoggerMessage(0, LogLevel.Warning, "{TypeName} detected rate limit usage for {RateLimitType} {Window} is at {Usage:P2}")]
+        private partial void LogDetectedRateLimitUsage(string typeName, RateLimitType rateLimitType, TimeSpan window, double usage);
+
+        [LoggerMessage(1, LogLevel.Warning, "{TypeName} detected rate limit usage for {RateLimitType} {Window} is over the limit of {Limit:P2} and will force backoff")]
+        private partial void LogDetectedRateLimitUsageOverLimit(string typeName, RateLimitType rateLimitType, TimeSpan window, double limit);
+
+        [LoggerMessage(2, LogLevel.Error, "{TypeName} detected violation of unknown rate window {RateLimitType} {Window} and will force the default backoff of {Backoff}")]
+        private partial void LogDetectedViolationOfUnknownRateWindow(string typeName, RateLimitType rateLimitType, TimeSpan window, TimeSpan backoff);
     }
 }

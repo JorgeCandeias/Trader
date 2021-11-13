@@ -24,11 +24,14 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         [Required]
         [Range(1, 1000000)]
-        public decimal TakeProfitRate { get; set; } = 2.0m;
+        public decimal TakeProfitRate { get; set; } = 1.10m;
 
         [Required]
         [Range(0, 1)]
-        public decimal TrailingStopLossRate { get; set; } = 0.90M;
+        public decimal TrailingStopLossRate { get; set; } = 0.99M;
+
+        [Required]
+        public bool ElasticStopLossEnabled { get; set; } = true;
 
         public decimal? MaxNotional { get; set; }
 
@@ -37,6 +40,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         /// </summary>
         [Required]
         public bool BuyingEnabled { get; set; } = true;
+
+        [Required]
+        public bool AccumulationEnabled { get; set; } = true;
 
         /// <summary>
         /// Whether to allow the algo to sell assets.

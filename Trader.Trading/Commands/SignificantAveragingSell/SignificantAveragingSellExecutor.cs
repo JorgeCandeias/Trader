@@ -59,12 +59,8 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
                 if (command.Ticker.ClosePrice >= sellPrice)
                 {
                     count = command.Orders.Count - i;
+                    break;
                 }
-            }
-
-            foreach (var order in command.Orders.Reverse().Take(count))
-            {
-                LogElectedOrder(TypeName, command.Symbol.Name, order.OrderId, order.ExecutedQuantity, command.Symbol.BaseAsset, order.Price, command.Symbol.QuoteAsset);
             }
 
             // skip if no buy orders were elected for selling
@@ -75,6 +71,11 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
                 return DesiredSell.None;
             }
 
+            // log details on the orders elected
+            foreach (var order in command.Orders.Reverse().Take(count))
+            {
+                LogElectedOrder(TypeName, command.Symbol.Name, order.OrderId, order.ExecutedQuantity, command.Symbol.BaseAsset, order.Price, command.Symbol.QuoteAsset);
+            }
             LogElectedOrders(TypeName, command.Symbol.Name, count, quantity, command.Symbol.BaseAsset, averagePrice, command.Symbol.QuoteAsset);
 
             // adjust the quantity down to the lot size filter

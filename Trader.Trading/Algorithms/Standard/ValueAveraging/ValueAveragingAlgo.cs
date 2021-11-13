@@ -41,23 +41,16 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             _rsiC = Context.Klines.LastRsi(x => x.ClosePrice, _options.RsiPeriodsC);
 
             // decide on buying
-            if (await TrySignalBuyOrder())
-            {
-                return Many(
-                    ClearOpenOrders(OrderSide.Sell),
-                    SetTrackingBuy());
-            }
+            var buyCommand = await TrySignalBuyOrder()
+                ? SetTrackingBuy()
+                : ClearOpenOrders(OrderSide.Buy);
 
             // decide on selling
-            if (TrySignalSellOrder())
-            {
-                return Many(
-                    ClearOpenOrders(OrderSide.Buy),
-                    SignificantAveragingSell(Context.Ticker, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool));
-                //MarketSell(Context.Symbol, Context.PositionDetails.Orders.Sum(x => x.ExecutedQuantity), _options.RedeemSavings, _options.RedeemSwapPool));
-            }
+            var sellCommand = TrySignalSellOrder()
+                ? SignificantAveragingSell(Context.Ticker, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool)
+                : ClearOpenOrders(OrderSide.Sell);
 
-            return Many(ClearOpenOrders(OrderSide.Buy), ClearOpenOrders(OrderSide.Sell));
+            return Many(buyCommand, sellCommand);
         }
 
         private async ValueTask<bool> TrySignalBuyOrder()
@@ -66,7 +59,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
             if (IsCooled() && IsRsiOversold()) return true;
 
-            if (await IsTickerOnNextStep()) return true;
+            if (IsAccumulationEnabled() && await IsTickerOnNextStep()) return true;
 
             return false;
 
@@ -243,6 +236,18 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             return true;
         }
 
+        private bool IsAccumulationEnabled()
+        {
+            if (!_options.AccumulationEnabled)
+            {
+                LogAccumulationDisabled(TypeName, Context.Name);
+
+                return false;
+            }
+
+            return true;
+        }
+
         private bool IsSellingEnabled()
         {
             if (!_options.SellingEnabled)
@@ -294,16 +299,19 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
                 return false;
             }
 
-            // calculate fixed stop loss based on the last position
-            var last = Context.PositionDetails.Orders.Max!.Price;
-            var stop = last * _options.TrailingStopLossRate;
+            // calculate fixed trailing stop loss based on the highest position
+            var max = Context.PositionDetails.Orders.Max(x => x.Price);
+            var stop = max * _options.TrailingStopLossRate;
 
-            // calculate elastic stop loss if avg position is lower than the last position
-            var avg = Context.PositionDetails.Orders.Sum(x => x.Price * x.ExecutedQuantity) / Context.PositionDetails.Orders.Sum(x => x.ExecutedQuantity);
-            if (avg < last)
+            // calculate elastic stop loss if avg position is lower than the max position
+            if (_options.ElasticStopLossEnabled)
             {
-                var mid = avg + ((last - avg) / 2M);
-                stop = Math.Min(stop, mid);
+                var avg = Context.PositionDetails.Orders.Sum(x => x.Price * x.ExecutedQuantity) / Context.PositionDetails.Orders.Sum(x => x.ExecutedQuantity);
+                if (avg < max)
+                {
+                    var mid = avg + ((max - avg) / 2M);
+                    stop = Math.Min(stop, mid);
+                }
             }
 
             // evaluate stop loss
@@ -328,8 +336,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             }
 
             var signal =
-                IsSmaTrendingUp() &&
-                IsTickerAboveSmas() &&
+                //IsSmaTrendingUp() &&
+                //IsTickerAboveSmas() &&
                 IsRsiTrendingUp() &&
                 IsRsiOverbought();
 
@@ -378,6 +386,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports buying is disabled")]
         private partial void LogBuyingDisabled(string type, string name);
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports accumulation is disabled")]
+        private partial void LogAccumulationDisabled(string type, string name);
 
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports selling is disabled")]
         private partial void LogSellingDisabled(string type, string name);

@@ -32,7 +32,7 @@ namespace Outcompute.Trader.Trading.Binance.Handlers
             }
             catch (BinanceTooManyRequestsException ex)
             {
-                var retryAfterUtc = _clock.UtcNow.Add(ex.RetryAfter);
+                var retryAfterUtc = _clock.UtcNow.Add(ex.RetryAfter).Add(TimeSpan.FromSeconds(1));
                 if (retryAfterUtc > _retryAfterUtc)
                 {
                     _retryAfterUtc = retryAfterUtc;

@@ -3,9 +3,6 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Commands.ClearOpenOrders;
 using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
 {
@@ -46,37 +43,28 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
                 return DesiredSell.None;
             }
 
-            // elect lowest significant orders that fit under the minimum profit rate when sold
+            // todo: refactor this into a faster algorithm
             var count = 0;
-            var numerator = 0m;
-            var quantity = 0m;
-
-            foreach (var order in command.Orders.Reverse())
+            var numerator = 0M;
+            var quantity = 0M;
+            var averagePrice = 0M;
+            for (var i = 0; i < command.Orders.Count; i++)
             {
-                // calculate the candidate average sell price
-                var orderNumerator = order.ExecutedQuantity * order.Price;
-                var orderQuantity = order.ExecutedQuantity;
-                var candidateNumerator = numerator + orderNumerator;
-                var candidateQuantity = quantity + orderQuantity;
-                var candidateAverageBuyPrice = candidateNumerator / candidateQuantity;
-                var candidateSellPrice = candidateAverageBuyPrice * command.MinimumProfitRate;
+                var candidates = command.Orders.Skip(i);
+                numerator = candidates.Sum(x => x.Price * x.ExecutedQuantity);
+                quantity = candidates.Sum(x => x.ExecutedQuantity);
+                averagePrice = numerator / quantity;
+                var sellPrice = averagePrice * command.MinimumProfitRate;
 
-                // adjust the candidate average sell price up to the tick size
-                candidateSellPrice = candidateSellPrice.AdjustPriceUpToTickSize(command.Symbol);
-
-                // elect the order if the candidate average sell price is below the ticker
-                if (candidateSellPrice <= command.Ticker.ClosePrice)
+                if (command.Ticker.ClosePrice >= sellPrice)
                 {
-                    count++;
-                    numerator = candidateNumerator;
-                    quantity = candidateQuantity;
+                    count = command.Orders.Count - i;
+                }
+            }
 
-                    LogElectedOrder(TypeName, command.Symbol.Name, order.OrderId, order.ExecutedQuantity, command.Symbol.BaseAsset, order.Price, command.Symbol.QuoteAsset);
-                }
-                else
-                {
-                    break;
-                }
+            foreach (var order in command.Orders.Reverse().Take(count))
+            {
+                LogElectedOrder(TypeName, command.Symbol.Name, order.OrderId, order.ExecutedQuantity, command.Symbol.BaseAsset, order.Price, command.Symbol.QuoteAsset);
             }
 
             // skip if no buy orders were elected for selling
@@ -86,9 +74,6 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
 
                 return DesiredSell.None;
             }
-
-            // calculate average buy price
-            var averagePrice = numerator / quantity;
 
             LogElectedOrders(TypeName, command.Symbol.Name, count, quantity, command.Symbol.BaseAsset, averagePrice, command.Symbol.QuoteAsset);
 

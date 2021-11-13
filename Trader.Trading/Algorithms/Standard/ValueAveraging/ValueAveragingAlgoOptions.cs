@@ -4,16 +4,19 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 {
     public class ValueAveragingAlgoOptions
     {
+        [Range(1.0, int.MaxValue)]
+        public decimal StepRate { get; set; } = 1.01M;
+
         [Range(0.01, 0.99)]
         public decimal? PullbackRatio { get; set; }
 
         [Required]
         [Range(0.01, 1.00)]
-        public decimal BuyOrderSafetyRatio { get; set; } = 0.999m;
+        public decimal BuyOrderSafetyRatio { get; set; } = 1.0M;
 
         [Required]
         [Range(0.001, 1)]
-        public decimal BuyQuoteBalanceFraction { get; set; } = 0.01m;
+        public decimal BuyQuoteBalanceFraction { get; set; } = 0.001m;
 
         [Required]
         [Range(1, 1000000)]
@@ -21,11 +24,11 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         [Required]
         [Range(1, 1000000)]
-        public decimal TargetSellProfitRate { get; set; } = 2.0m;
+        public decimal TakeProfitRate { get; set; } = 2.0m;
 
         [Required]
         [Range(0, 1)]
-        public decimal TrailingStopLossRate { get; set; } = 0.95M;
+        public decimal TrailingStopLossRate { get; set; } = 0.90M;
 
         public decimal? MaxNotional { get; set; }
 

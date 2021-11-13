@@ -25,8 +25,8 @@ namespace Outcompute.Trader.Trading.Binance
             return Policy
                 .Handle<BinanceTooManyRequestsException>()
                 .WaitAndRetryForeverAsync(
-                    (n, ex, ctx) => ((BinanceTooManyRequestsException)ex).RetryAfter,
-                    (ex, ts, ctx) => { _logger.LogWarning(ex, "Backing off for {TimeSpan}...", ts); return Task.CompletedTask; });
+                    (n, ex, ctx) => ((BinanceTooManyRequestsException)ex).RetryAfter.Add(TimeSpan.FromSeconds(1)),
+                    (ex, ts, ctx) => { _logger.LogWarning(ex, "Backing off for {TimeSpan}...", ts.Add(TimeSpan.FromSeconds(1))); return Task.CompletedTask; });
         }
 
         private Task WaitAndRetryForeverAsync(Func<CancellationToken, Task> action, CancellationToken cancellationToken = default)

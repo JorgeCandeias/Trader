@@ -3,7 +3,6 @@ using Microsoft.Extensions.Options;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Commands;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 {
@@ -29,8 +28,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         private decimal _rsiB;
         private decimal _rsiC;
 
-        [SuppressMessage("Major Code Smell", "S3358:Ternary operators should not be nested", Justification = "N/A")]
-        protected override ValueTask<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default)
+        protected override async ValueTask<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default)
         {
             // calculate the current moving averages
             _smaA = Context.Klines.LastSma(x => x.ClosePrice, _options.SmaPeriodsA);
@@ -43,31 +41,45 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             _rsiC = Context.Klines.LastRsi(x => x.ClosePrice, _options.RsiPeriodsC);
 
             // decide on buying
-            var buyCommand = TrySignalBuyOrder()
-                ? SetTrackingBuy()
-                : ClearOpenOrders(Context.Symbol, OrderSide.Buy);
+            if (await TrySignalBuyOrder())
+            {
+                return Many(
+                    ClearOpenOrders(OrderSide.Sell),
+                    SetTrackingBuy());
+            }
 
             // decide on selling
-            var sellCommand = TrySignalSellOrder()
-                ? _options.ClosingEnabled
-                    ? AveragingSell(Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool)
-                    : SignificantAveragingSell(Context.Ticker, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool)
-                : ClearOpenOrders(Context.Symbol, OrderSide.Sell);
+            if (TrySignalSellOrder())
+            {
+                return Many(
+                    ClearOpenOrders(OrderSide.Buy),
+                    SignificantAveragingSell(Context.Ticker, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool));
+                //MarketSell(Context.Symbol, Context.PositionDetails.Orders.Sum(x => x.ExecutedQuantity), _options.RedeemSavings, _options.RedeemSwapPool));
+            }
 
-            // evaluate signals and return results for them
-            return ValueTask.FromResult(Many(buyCommand, sellCommand));
+            return Many(ClearOpenOrders(OrderSide.Buy), ClearOpenOrders(OrderSide.Sell));
         }
 
-        private bool TrySignalBuyOrder()
+        private async ValueTask<bool> TrySignalBuyOrder()
         {
+            if (!IsBuyingEnabled()) return false;
+
+            if (IsCooled() && IsRsiOversold()) return true;
+
+            if (await IsTickerOnNextStep()) return true;
+
+            return false;
+
+            /*
             return
                 IsBuyingEnabled() &&
                 IsCooled() &&
-                IsBelowPullbackPrice() &&
-                IsSmaTrendingDown() &&
-                IsTickerBelowSmas() &&
-                IsRsiTrendingDown() &&
+                //IsBelowPullbackPrice() &&
+                //IsSmaTrendingDown() &&
+                //IsTickerBelowSmas() &&
+                //IsRsiTrendingDown() &&
                 IsRsiOversold();
+            */
         }
 
         private IAlgoCommand SetTrackingBuy()
@@ -75,6 +87,33 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             LogWillSignalBuyOrderForCurrentState(TypeName, Context.Name, Context.Ticker.ClosePrice, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC);
 
             return TrackingBuy(Context.Symbol, _options.BuyOrderSafetyRatio, _options.BuyQuoteBalanceFraction, _options.MaxNotional, _options.RedeemSavings, _options.RedeemSwapPool);
+        }
+
+        private async ValueTask<bool> IsTickerOnNextStep()
+        {
+            // only evaluate this rule if there are positions
+            if (Context.PositionDetails.Orders.Count == 0)
+            {
+                return false;
+            }
+
+            // only evaluate this rule if the last trade was a buy trade
+            // todo: refactor this into the context
+            var trades = await Context.GetTradeProvider().GetTradesAsync(Context.Symbol.Name);
+            var last = trades.LastOrDefault();
+            if (!(last is not null && last.IsBuyer))
+            {
+                return false;
+            }
+
+            var order = Context.PositionDetails.Orders.Max!;
+            var target = (order.Price * _options.StepRate).AdjustPriceUpToTickSize(Context.Symbol);
+            if (Context.Ticker.ClosePrice >= target)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private bool IsBelowPullbackPrice()
@@ -228,18 +267,19 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             return false;
         }
 
-        private bool IsTickerAboveTargetSellPrice()
+        private bool IsTickerAboveTakeProfitRate()
         {
             if (Context.PositionDetails.Orders.Count == 0)
             {
                 return false;
             }
 
-            var target = Context.PositionDetails.Orders.Max!.Price * _options.TargetSellProfitRate;
+            var avgPrice = Context.PositionDetails.Orders.Sum(x => x.Price * x.ExecutedQuantity) / Context.PositionDetails.Orders.Sum(x => x.ExecutedQuantity);
+            var takePrice = avgPrice * _options.TakeProfitRate;
 
-            if (Context.Ticker.ClosePrice >= target)
+            if (Context.Ticker.ClosePrice >= takePrice)
             {
-                LogTickerAboveTargetSellPrice(TypeName, Context.Name, Context.Ticker.ClosePrice, Context.Symbol.QuoteAsset, target);
+                LogTickerAboveTakeProfitPrice(TypeName, Context.Name, Context.Ticker.ClosePrice, Context.Symbol.QuoteAsset, takePrice);
 
                 return true;
             }
@@ -254,11 +294,19 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
                 return false;
             }
 
-            var order = Context.PositionDetails.Orders.Max!;
-            var high = Context.Klines.Where(x => x.OpenTime >= order.Time).Select(x => x.HighPrice).DefaultIfEmpty(0).Max();
-            var max = Math.Max(order.Price, high);
-            var stop = max * _options.TrailingStopLossRate;
+            // calculate fixed stop loss based on the last position
+            var last = Context.PositionDetails.Orders.Max!.Price;
+            var stop = last * _options.TrailingStopLossRate;
 
+            // calculate elastic stop loss if avg position is lower than the last position
+            var avg = Context.PositionDetails.Orders.Sum(x => x.Price * x.ExecutedQuantity) / Context.PositionDetails.Orders.Sum(x => x.ExecutedQuantity);
+            if (avg < last)
+            {
+                var mid = avg + ((last - avg) / 2M);
+                stop = Math.Min(stop, mid);
+            }
+
+            // evaluate stop loss
             if (Context.Ticker.ClosePrice <= stop)
             {
                 return true;
@@ -274,7 +322,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
                 return false;
             }
 
-            if (IsClosingEnabled() || IsTickerAboveTargetSellPrice() || IsTickerBelowTrailingStopLoss())
+            if (IsClosingEnabled() || IsTickerAboveTakeProfitRate() || IsTickerBelowTrailingStopLoss())
             {
                 return true;
             }
@@ -337,8 +385,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports closing is enabled")]
         private partial void LogClosingEnabled(string type, string name);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports ticker {Ticker:F8} {Asset} is above the target sell price of {Target:F8} {Asset}")]
-        private partial void LogTickerAboveTargetSellPrice(string type, string name, decimal ticker, string asset, decimal target);
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports ticker {Ticker:F8} {Asset} is above the take profit price of {Target:F8} {Asset}")]
+        private partial void LogTickerAboveTakeProfitPrice(string type, string name, decimal ticker, string asset, decimal target);
 
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} signalling sell for current state (Ticker = {Ticker:F8}, SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}, RSI({RsiPeriodsA}) = {RSIA:F8}, RSI({RsiPeriodsB}) = {RSIB:F8}, RSI({RsiPeriodsC}) = {RSIC:F8})")]
         private partial void LogSignallingSell(string type, string name, decimal ticker, int smaPeriodsA, decimal smaA, int smaPeriodsB, decimal smaB, int smaPeriodsC, decimal smaC, int rsiPeriodsA, decimal rsiA, int rsiPeriodsB, decimal rsiB, int rsiPeriodsC, decimal rsiC);

@@ -299,17 +299,17 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
                 return false;
             }
 
-            // calculate fixed trailing stop loss based on the highest position
-            var max = Context.PositionDetails.Orders.Max(x => x.Price);
-            var stop = max * _options.TrailingStopLossRate;
+            // calculate fixed trailing stop loss based on the last position
+            var last = Context.PositionDetails.Orders.Max!.Price;
+            var stop = last * _options.TrailingStopLossRate;
 
-            // calculate elastic stop loss if avg position is lower than the max position
+            // calculate elastic stop loss if avg position is lower than the last position
             if (_options.ElasticStopLossEnabled)
             {
                 var avg = Context.PositionDetails.Orders.Sum(x => x.Price * x.ExecutedQuantity) / Context.PositionDetails.Orders.Sum(x => x.ExecutedQuantity);
-                if (avg < max)
+                if (avg < last)
                 {
-                    var mid = avg + ((max - avg) / 2M);
+                    var mid = avg + ((last - avg) / 2M);
                     stop = Math.Min(stop, mid);
                 }
             }

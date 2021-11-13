@@ -10,14 +10,14 @@ using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Binance.Handlers
 {
-    internal partial class BinanceApiUsagePostHandler : DelegatingHandler
+    internal partial class BinanceApiUsageHandler : DelegatingHandler
     {
         private readonly BinanceOptions _options;
         private readonly BinanceUsageContext _usage;
         private readonly ILogger _logger;
         private readonly ISystemClock _clock;
 
-        public BinanceApiUsagePostHandler(IOptions<BinanceOptions> options, BinanceUsageContext usage, ILogger<BinanceApiUsagePostHandler> logger, ISystemClock clock)
+        public BinanceApiUsageHandler(IOptions<BinanceOptions> options, BinanceUsageContext usage, ILogger<BinanceApiUsageHandler> logger, ISystemClock clock)
         {
             _options = options.Value ?? throw new ArgumentNullException(nameof(options));
             _usage = usage ?? throw new ArgumentNullException(nameof(usage));
@@ -25,7 +25,7 @@ namespace Outcompute.Trader.Trading.Binance.Handlers
             _clock = clock ?? throw new ArgumentNullException(nameof(clock));
         }
 
-        private const string TypeName = nameof(BinanceApiUsagePostHandler);
+        private const string TypeName = nameof(BinanceApiUsageHandler);
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
@@ -33,6 +33,15 @@ namespace Outcompute.Trader.Trading.Binance.Handlers
                 .SendAsync(request, cancellationToken)
                 .ConfigureAwait(false);
 
+            HandleUsageHeaders(response);
+            HandleHighUsage();
+
+            return response;
+        }
+
+        private void HandleUsageHeaders(HttpResponseMessage response)
+        {
+            // keep the usage ratios in the headers for future reference
             foreach (var header in response.Headers)
             {
                 if (header.Key.StartsWith(_options.UsedRequestWeightHeaderPrefix, StringComparison.OrdinalIgnoreCase))
@@ -80,12 +89,17 @@ namespace Outcompute.Trader.Trading.Binance.Handlers
                     }
                 }
             }
+        }
+
+        private void HandleHighUsage()
+        {
+            var now = _clock.UtcNow;
 
             // analyse the usages
             foreach (var item in _usage.EnumerateAll())
             {
                 // skip expired usages
-                if (item.Updated.Add(item.Window) < _clock.UtcNow)
+                if (item.Updated.Add(CalculateRetry(item.Type, item.Window, item.Updated)) <= now)
                 {
                     continue;
                 }
@@ -101,34 +115,36 @@ namespace Outcompute.Trader.Trading.Binance.Handlers
                     {
                         LogDetectedRateLimitUsageOverLimit(TypeName, item.Type, item.Window, _options.UsageBackoffRatio);
 
-                        TimeSpan retry;
-                        var now = _clock.UtcNow;
-
-                        if (item.Window == TimeSpan.FromMinutes(1))
-                        {
-                            retry = now.AddMinutes(1).AddSeconds(-now.Second).Subtract(now);
-                        }
-                        else if (item.Window == TimeSpan.FromHours(1))
-                        {
-                            retry = now.AddHours(1).AddMinutes(-now.Minute).AddSeconds(-now.Second).Subtract(now);
-                        }
-                        else if (item.Window == TimeSpan.FromDays(1))
-                        {
-                            retry = now.AddDays(1).AddHours(-now.Hour).AddMinutes(-now.Minute).AddSeconds(-now.Second).Subtract(now);
-                        }
-                        else
-                        {
-                            retry = _options.DefaultBackoffPeriod;
-
-                            LogDetectedViolationOfUnknownRateWindow(TypeName, item.Type, item.Window, retry);
-                        }
+                        var retry = CalculateRetry(item.Type, item.Window, now).Add(TimeSpan.FromSeconds(1));
 
                         throw new BinanceTooManyRequestsException(retry);
                     }
                 }
             }
+        }
 
-            return response;
+        private TimeSpan CalculateRetry(RateLimitType type, TimeSpan window, DateTime now)
+        {
+            if (window == TimeSpan.FromMinutes(1))
+            {
+                return now.AddMinutes(1).AddSeconds(-now.Second).Subtract(now);
+            }
+            else if (window == TimeSpan.FromHours(1))
+            {
+                return now.AddHours(1).AddMinutes(-now.Minute).AddSeconds(-now.Second).Subtract(now);
+            }
+            else if (window == TimeSpan.FromDays(1))
+            {
+                return now.AddDays(1).AddHours(-now.Hour).AddMinutes(-now.Minute).AddSeconds(-now.Second).Subtract(now);
+            }
+            else
+            {
+                var retry = _options.DefaultBackoffPeriod;
+
+                LogDetectedViolationOfUnknownRateWindow(TypeName, type, window, retry);
+
+                return retry;
+            }
         }
 
         [LoggerMessage(0, LogLevel.Warning, "{TypeName} detected rate limit usage for {RateLimitType} {Window} is at {Usage:P2}")]

@@ -43,10 +43,9 @@ namespace Orleans.Hosting
                         .AddSingleton<IHostedService, BinanceTradingService>(sp => sp.GetRequiredService<BinanceTradingService>())
                         .AddSingleton<BinanceTradingServiceWithBackoff>()
                         .AddSingleton<BinanceApiConcurrencyHandler>()
-                        .AddSingleton<BinanceApiCircuitBreakerHandler>()
                         .AddSingleton<BinanceApiSigningPreHandler>()
                         .AddSingleton<BinanceApiErrorPostHandler>()
-                        .AddSingleton<BinanceApiUsagePostHandler>()
+                        .AddSingleton<BinanceApiUsageHandler>()
                         .AddSingleton<ISigner, Signer>()
                         .AddSingleton<IUserDataStreamClientFactory, BinanceUserDataStreamWssClientFactory>()
                         .AddSingleton<IMarketDataStreamClientFactory, BinanceMarketDataStreamWssClientFactory>()
@@ -63,10 +62,9 @@ namespace Orleans.Hosting
                             x.Timeout = options.Timeout;
                         })
                         .AddHttpMessageHandler<BinanceApiConcurrencyHandler>()
-                        .AddHttpMessageHandler<BinanceApiCircuitBreakerHandler>()
                         .AddHttpMessageHandler<BinanceApiSigningPreHandler>()
                         .AddHttpMessageHandler<BinanceApiErrorPostHandler>()
-                        .AddHttpMessageHandler<BinanceApiUsagePostHandler>()
+                        .AddHttpMessageHandler<BinanceApiUsageHandler>()
                         .Services
 
                         // add auto mapper

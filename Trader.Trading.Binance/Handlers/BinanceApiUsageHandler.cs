@@ -125,7 +125,17 @@ namespace Outcompute.Trader.Trading.Binance.Handlers
 
         private TimeSpan CalculateRetry(RateLimitType type, TimeSpan window, DateTime now)
         {
-            if (window == TimeSpan.FromMinutes(1))
+            if (window == TimeSpan.FromSeconds(10))
+            {
+                // adjust the date to the next 10 second block
+                var current = now.Ticks;
+                var block = TimeSpan.FromSeconds(10).Ticks;
+                var next = (long)Math.Ceiling((double)current / block) * block;
+
+                // the retry is whatever is left to reach that
+                return TimeSpan.FromTicks(next - current);
+            }
+            else if (window == TimeSpan.FromMinutes(1))
             {
                 return now.AddMinutes(1).AddSeconds(-now.Second).Subtract(now);
             }

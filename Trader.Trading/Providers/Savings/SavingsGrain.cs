@@ -1,16 +1,12 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Providers.Savings
 {
@@ -21,21 +17,23 @@ namespace Outcompute.Trader.Trading.Providers.Savings
         private readonly ITradingService _trader;
         private readonly IAlgoDependencyResolver _dependencies;
         private readonly ISystemClock _clock;
+        private readonly IExchangeInfoProvider _exchange;
+        private readonly IHostApplicationLifetime _lifetime;
 
-        public SavingsGrain(IOptions<SavingsProviderOptions> options, ILogger<SavingsGrain> logger, ITradingService trader, IAlgoDependencyResolver dependencies, ISystemClock clock)
+        public SavingsGrain(IOptions<SavingsProviderOptions> options, ILogger<SavingsGrain> logger, ITradingService trader, IAlgoDependencyResolver dependencies, ISystemClock clock, IExchangeInfoProvider exchange, IHostApplicationLifetime lifetime)
         {
             _options = options.Value;
             _logger = logger;
             _trader = trader;
             _dependencies = dependencies;
             _clock = clock;
+            _exchange = exchange;
+            _lifetime = lifetime;
         }
 
         private static string TypeName => nameof(SavingsGrain);
 
         #region Cache
-
-        private readonly Dictionary<string, SavingsProduct> _products = new();
 
         private readonly Dictionary<string, SavingsPosition> _positions = new();
 
@@ -93,24 +91,24 @@ namespace Outcompute.Trader.Trading.Providers.Savings
 
         private async Task LoadAsync()
         {
-            // load all products from the exchange
-            var products = await GetSavingsProductsAsync();
-
-            // use only the products for assets we care about
-            products = products
-                .Where(x => _dependencies.AllSymbols.Any(s => s.StartsWith(x.Asset, StringComparison.Ordinal)) || _dependencies.AllSymbols.Any(s => s.EndsWith(x.Asset, StringComparison.Ordinal)))
-                .GroupBy(x => x.Asset)
-                .Select(x => x.Single());
-
-            // get all positions for each product
-            foreach (var product in products)
+            // discover the unique assets we care about
+            var assets = new HashSet<string>();
+            foreach (var name in _dependencies.AllSymbols)
             {
-                // cache the product
-                _products[product.Asset] = product;
+                var symbol = await _exchange.GetRequiredSymbolAsync(name, _lifetime.ApplicationStopping);
+                assets.Add(symbol.BaseAsset);
+                assets.Add(symbol.QuoteAsset);
+            }
 
-                await LoadSavingsPositionAsync(product.Asset, product.ProductId);
+            // get all positions for each asset
+            foreach (var asset in assets)
+            {
+                var position = await LoadSavingsPositionAsync(asset);
 
-                await LoadSavingsQuotaAsync(product.Asset, product.ProductId);
+                if (position is not null)
+                {
+                    await LoadSavingsQuotaAsync(asset, position.ProductId);
+                }
             }
 
             // signal the ready check
@@ -220,23 +218,7 @@ namespace Outcompute.Trader.Trading.Providers.Savings
             return new RedeemSavingsEvent(true, amount);
         }
 
-        private async Task<IEnumerable<SavingsProduct>> GetSavingsProductsAsync()
-        {
-            var watch = Stopwatch.StartNew();
-
-            // get all subscribable products for all assets - there should be only one subscribable per asset
-            var products = await _trader
-                .WithBackoff()
-                .GetSavingsProductsAsync(SavingsStatus.Subscribable, SavingsFeatured.All, _cancellation.Token);
-
-            _logger.LogInformation(
-                "{Type} loaded {Count} savings products in {ElapsedMs}ms",
-                TypeName, products.Count, watch.ElapsedMilliseconds);
-
-            return products;
-        }
-
-        private async Task LoadSavingsPositionAsync(string asset, string productId)
+        private async Task<SavingsPosition?> LoadSavingsPositionAsync(string asset)
         {
             var watch = Stopwatch.StartNew();
 
@@ -245,15 +227,17 @@ namespace Outcompute.Trader.Trading.Providers.Savings
                 .WithBackoff()
                 .GetFlexibleProductPositionsAsync(asset, _cancellation.Token);
 
-            var position = positions.SingleOrDefault(x => x.ProductId == productId);
+            var position = positions.SingleOrDefault();
             if (position is not null)
             {
                 _positions[position.Asset] = position;
             }
 
             _logger.LogInformation(
-                "{Type} loaded savings position for {Asset} {Product} in {ElapsedMs}ms",
-                TypeName, asset, productId, watch.ElapsedMilliseconds);
+                "{Type} loaded savings position for {Asset} in {ElapsedMs}ms",
+                TypeName, asset, watch.ElapsedMilliseconds);
+
+            return position;
         }
 
         private async Task LoadSavingsQuotaAsync(string asset, string productId)
@@ -271,8 +255,8 @@ namespace Outcompute.Trader.Trading.Providers.Savings
             }
 
             _logger.LogInformation(
-                "{Type} loaded savings quota for {Asset} {ProductId} in {ElapsedMs}ms",
-                TypeName, asset, productId, watch.ElapsedMilliseconds);
+                "{Type} loaded savings quota for {Asset} in {ElapsedMs}ms",
+                TypeName, asset, watch.ElapsedMilliseconds);
         }
 
         private void AdjustCachedAmounts(string asset, decimal amount)

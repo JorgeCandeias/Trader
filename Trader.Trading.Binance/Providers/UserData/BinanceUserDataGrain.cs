@@ -203,42 +203,34 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 
         private async Task ExecuteLongAsync()
         {
-            try
+            // this token will reset the stream on a schedule to compensate for binance misbehaving
+            using var reset = new CancellationTokenSource(_options.UserDataStreamResetPeriod);
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(reset.Token, _lifetime.ApplicationStopping);
+
+            // start streaming in the background while we sync from the api
+            var streamTask = Task.Run(() => StreamAsync(linked.Token), linked.Token);
+
+            // sync asset balances
+            var accountInfo = await _trader.GetAccountInfoAsync(linked.Token);
+            await _balances.SetBalancesAsync(accountInfo, linked.Token);
+
+            // sync orders for all symbols
+            foreach (var symbol in _dependencies.AllSymbols)
             {
-                // this token will reset the stream on a schedule to compensate for binance misbehaving
-                using var reset = new CancellationTokenSource(_options.UserDataStreamResetPeriod);
-                using var linked = CancellationTokenSource.CreateLinkedTokenSource(reset.Token, _lifetime.ApplicationStopping);
-
-                // start streaming in the background while we sync from the api
-                var streamTask = Task.Run(() => StreamAsync(linked.Token), linked.Token);
-
-                // sync asset balances
-                var accountInfo = await _trader.GetAccountInfoAsync(linked.Token);
-                await _balances.SetBalancesAsync(accountInfo, linked.Token);
-
-                // sync orders for all symbols
-                foreach (var symbol in _dependencies.AllSymbols)
-                {
-                    await _orderSynchronizer.SynchronizeOrdersAsync(symbol, linked.Token);
-                }
-
-                // sync trades for all symbols
-                foreach (var symbol in _dependencies.AllSymbols)
-                {
-                    await _tradeSynchronizer.SynchronizeTradesAsync(symbol, linked.Token);
-                }
-
-                // signal that everything is ready
-                _ready = true;
-
-                // keep streaming now
-                await streamTask;
+                await _orderSynchronizer.SynchronizeOrdersAsync(symbol, linked.Token);
             }
-            finally
+
+            // sync trades for all symbols
+            foreach (var symbol in _dependencies.AllSymbols)
             {
-                // if the stream collapses at any point then update the readyness state
-                _ready = false;
+                await _tradeSynchronizer.SynchronizeTradesAsync(symbol, linked.Token);
             }
+
+            // signal that everything is ready
+            _ready = true;
+
+            // keep streaming now
+            await streamTask;
         }
 
         private async Task StreamAsync(CancellationToken cancellationToken)

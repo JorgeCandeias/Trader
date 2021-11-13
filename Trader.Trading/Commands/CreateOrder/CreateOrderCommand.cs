@@ -1,15 +1,12 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Commands.CreateOrder
 {
     public class CreateOrderCommand : IAlgoCommand
     {
-        public CreateOrderCommand(Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag)
+        public CreateOrderCommand(Symbol symbol, OrderType type, OrderSide side, TimeInForce? timeInForce, decimal quantity, decimal? price, string? tag)
         {
             Symbol = symbol ?? throw new ArgumentNullException(nameof(symbol));
             Type = type;
@@ -23,9 +20,9 @@ namespace Outcompute.Trader.Trading.Commands.CreateOrder
         public Symbol Symbol { get; }
         public OrderType Type { get; }
         public OrderSide Side { get; }
-        public TimeInForce TimeInForce { get; }
+        public TimeInForce? TimeInForce { get; }
         public decimal Quantity { get; }
-        public decimal Price { get; }
+        public decimal? Price { get; }
         public string? Tag { get; }
 
         public ValueTask ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)

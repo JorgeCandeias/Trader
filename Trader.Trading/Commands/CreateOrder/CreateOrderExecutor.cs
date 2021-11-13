@@ -3,8 +3,6 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Providers;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Commands.CreateOrder
 {
@@ -43,10 +41,10 @@ namespace Outcompute.Trader.Trading.Commands.CreateOrder
         #region Logging
 
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} placing {OrderType} {OrderSide} order for {Quantity:F8} {Asset} at {Price:F8} {Quote} for a total of {Total:F8} {Quote}")]
-        private partial void LogPlacingOrder(string type, string name, OrderType orderType, OrderSide orderSide, decimal quantity, string asset, decimal price, string quote, decimal total);
+        private partial void LogPlacingOrder(string type, string name, OrderType orderType, OrderSide orderSide, decimal quantity, string asset, decimal? price, string quote, decimal? total);
 
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} placed {OrderType} {OrderSide} order for {Quantity:F8} {Asset} at {Price:F8} {Quote} for a total of {Total:F8} {Quote} in {ElapsedMs}ms")]
-        private partial void LogPlacedOrder(string type, string name, OrderType orderType, OrderSide orderSide, decimal quantity, string asset, decimal price, string quote, decimal total, long elapsedMs);
+        private partial void LogPlacedOrder(string type, string name, OrderType orderType, OrderSide orderSide, decimal quantity, string asset, decimal? price, string quote, decimal? total, long elapsedMs);
 
         #endregion Logging
     }

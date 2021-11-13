@@ -3,6 +3,7 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Commands.RedeemSavings;
+using Outcompute.Trader.Trading.Commands.RedeemSwapPool;
 using Outcompute.Trader.Trading.Providers;
 
 namespace Outcompute.Trader.Trading.Commands.MarketSell
@@ -14,7 +15,7 @@ namespace Outcompute.Trader.Trading.Commands.MarketSell
         private readonly ISwapPoolProvider _swaps;
         private readonly IBalanceProvider _balances;
 
-        public MarketSellCommandExecutor(ILogger logger, ISavingsProvider savings, ISwapPoolProvider swaps, IBalanceProvider balances)
+        public MarketSellCommandExecutor(ILogger<MarketSellCommandExecutor> logger, ISavingsProvider savings, ISwapPoolProvider swaps, IBalanceProvider balances)
         {
             _logger = logger;
             _savings = savings;
@@ -63,9 +64,11 @@ namespace Outcompute.Trader.Trading.Commands.MarketSell
             }
 
             // see if we need to redeem anything
-            var required = Math.Max(quantity - balance.Free, 0);
-            if (required > 0)
+            if (quantity > balance.Free)
             {
+                // we need to redeem up to this from any redemption sources
+                var required = quantity - balance.Free;
+
                 // see if we can redeem the rest from savings
                 if (command.RedeemSavings && savings.FreeAmount > 0)
                 {
@@ -73,30 +76,44 @@ namespace Outcompute.Trader.Trading.Commands.MarketSell
 
                     LogRedeemingSavings(TypeName, context.Symbol.Name, redeeming, context.Symbol.BaseAsset);
 
-                    await new RedeemSavingsCommand(context.Symbol.BaseAsset, redeeming)
+                    var result = await new RedeemSavingsCommand(context.Symbol.BaseAsset, redeeming)
                         .ExecuteAsync(context, cancellationToken)
                         .ConfigureAwait(false);
 
-                    return;
+                    if (result.Success)
+                    {
+                        required -= result.Redeemed;
+                        required = Math.Max(required, 0);
+                    }
                 }
 
                 // see if we can redeem the rest from the swap pool
-                if (command.RedeemSwapPool && pool.Total > 0)
+                if (command.RedeemSwapPool && pool.Total > 0 && required > 0)
                 {
                     var redeeming = Math.Min(pool.Total, required);
 
                     LogRedeemingSwapPool(TypeName, context.Symbol.Name, redeeming, context.Symbol.BaseAsset);
 
-                    await new RedeemSavingsCommand(context.Symbol.BaseAsset, redeeming)
+                    var result = await new RedeemSwapPoolCommand(context.Symbol.BaseAsset, required)
                         .ExecuteAsync(context, cancellationToken)
                         .ConfigureAwait(false);
 
+                    if (result.Success)
+                    {
+                        required -= result.QuoteAmount;
+                        required = Math.Max(required, 0);
+                    }
+                }
+
+                if (required > 0)
+                {
+                    LogCouldNotRedeem(TypeName, context.Symbol.Name, required, context.Symbol.BaseAsset);
                     return;
                 }
             }
 
             // all set
-            await new CreateOrderCommand(context.Symbol, OrderType.Market, OrderSide.Sell, TimeInForce.FillOrKill, quantity, 0, null)
+            await new CreateOrderCommand(context.Symbol, OrderType.Market, OrderSide.Sell, null, quantity, null, null)
                 .ExecuteAsync(context, cancellationToken)
                 .ConfigureAwait(false);
         }
@@ -118,5 +135,8 @@ namespace Outcompute.Trader.Trading.Commands.MarketSell
 
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} attempting to redeem {Quantity} {Asset} from the swap pool")]
         private partial void LogRedeemingSwapPool(string type, string name, decimal quantity, string asset);
+
+        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} could not redeem the required {Quantity} {Asset}")]
+        private partial void LogCouldNotRedeem(string type, string name, decimal quantity, string asset);
     }
 }

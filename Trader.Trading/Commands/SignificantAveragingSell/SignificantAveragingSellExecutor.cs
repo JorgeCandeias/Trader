@@ -43,23 +43,43 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
                 return DesiredSell.None;
             }
 
-            // todo: refactor this into a faster algorithm
+            // first pass - calculate partials for the entire data
             var count = 0;
             var numerator = 0M;
             var quantity = 0M;
-            var averagePrice = 0M;
-            for (var i = 0; i < command.Orders.Count; i++)
+            foreach (var order in command.Orders)
             {
-                var candidates = command.Orders.Skip(i);
-                numerator = candidates.Sum(x => x.Price * x.ExecutedQuantity);
-                quantity = candidates.Sum(x => x.ExecutedQuantity);
-                averagePrice = numerator / quantity;
-                var sellPrice = averagePrice * command.MinimumProfitRate;
+                numerator += order.Price * order.ExecutedQuantity;
+                quantity += order.ExecutedQuantity;
+                count++;
+            }
 
-                if (command.Ticker.ClosePrice >= sellPrice)
+            // shortcut - see if we can sell everything
+            var averagePrice = numerator / quantity;
+            var sellablePrice = averagePrice * command.MinimumProfitRate;
+            if (command.Ticker.ClosePrice < sellablePrice)
+            {
+                // second pass - find sellable group
+                foreach (var order in command.Orders)
                 {
-                    count = command.Orders.Count - i;
-                    break;
+                    // remove this order from the trailing average
+                    numerator -= order.Price * order.ExecutedQuantity;
+                    quantity -= order.ExecutedQuantity;
+                    count--;
+
+                    // if this was the last order then give up
+                    if (count == 0)
+                    {
+                        break;
+                    }
+
+                    // see if the trailing average is sellable
+                    averagePrice = numerator / quantity;
+                    sellablePrice = averagePrice * command.MinimumProfitRate;
+                    if (command.Ticker.ClosePrice >= sellablePrice)
+                    {
+                        break;
+                    }
                 }
             }
 
@@ -72,7 +92,7 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
             }
 
             // log details on the orders elected
-            foreach (var order in command.Orders.Reverse().Take(count))
+            foreach (var order in command.Orders.TakeLast(count))
             {
                 LogElectedOrder(TypeName, command.Symbol.Name, order.OrderId, order.ExecutedQuantity, command.Symbol.BaseAsset, order.Price, command.Symbol.QuoteAsset);
             }
@@ -80,7 +100,6 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
 
             // adjust the quantity down to the lot size filter
             quantity = quantity.AdjustQuantityDownToLotStepSize(command.Symbol);
-
             LogAdjustedQuantityByLotStepSize(TypeName, command.Symbol.Name, command.Symbol.Filters.LotSize.StepSize, command.Symbol.BaseAsset, quantity);
 
             // break if the quantity is under the minimum lot size

@@ -143,7 +143,7 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} elected order {OrderId} for sale with significant quantity {Quantity:F8} {Asset} at buy price {Price:F8} {Quote}")]
         private partial void LogElectedOrder(string type, string name, long orderId, decimal quantity, string asset, decimal price, string quote);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} cannot elect any buy orders for selling at a minimum profit rate of {MinimumProfitRate:F8}")]
+        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot elect any buy orders for selling at a minimum profit rate of {MinimumProfitRate:F8}")]
         private partial void LogCannotElectedBuyOrders(string type, string name, decimal minimumProfitRate);
 
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} elected {Count} orders for sale with total quantity {Quantity:F8} {Asset} at average buy price {Price:F8} {Quote}")]

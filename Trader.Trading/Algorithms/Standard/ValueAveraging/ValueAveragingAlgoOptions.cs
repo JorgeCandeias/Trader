@@ -16,7 +16,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         [Required]
         [Range(0.001, 1)]
-        public decimal BuyQuoteBalanceFraction { get; set; } = 0.001m;
+        public decimal BuyQuoteBalanceFraction { get; set; } = 0.01m;
 
         [Required]
         [Range(1, 1000000)]

@@ -20,7 +20,7 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
         public ValueTask ExecuteAsync(IAlgoContext context, SignificantAveragingSellCommand command, CancellationToken cancellationToken = default)
         {
             // calculate the desired sell
-            var desired = CalculateDesiredSell(command);
+            var desired = CalculateDesiredSell(context, command);
 
             // apply the desired sell
             if (desired == DesiredSell.None)
@@ -32,20 +32,22 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
             {
                 return new MarketSellCommand(context.Symbol, desired.Quantity, command.RedeemSavings, command.RedeemSwapPool)
                     .ExecuteAsync(context, cancellationToken);
-                /*
-                return new EnsureSingleOrderCommand(command.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, desired.Quantity, desired.Price, command.RedeemSavings, command.RedeemSwapPool)
-                    .ExecuteAsync(context, cancellationToken);
-                */
             }
         }
 
-        private DesiredSell CalculateDesiredSell(SignificantAveragingSellCommand command)
+        private DesiredSell CalculateDesiredSell(IAlgoContext context, SignificantAveragingSellCommand command)
         {
             // skip if there is nothing to sell
             if (command.Orders.Count == 0)
             {
                 return DesiredSell.None;
             }
+
+            // calculate total free from all valid sources
+            // this may be less than the target sell due to swap pool fluctuations etc
+            var free = context.AssetSpotBalance.Free
+                + (command.RedeemSavings ? context.AssetSavingsBalance.FreeAmount : 0)
+                + (command.RedeemSwapPool ? context.AssetSwapPoolBalance.Total : 0);
 
             // first pass - calculate partials for the entire data
             var count = 0;
@@ -61,7 +63,7 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
             // shortcut - see if we can sell everything
             var averagePrice = numerator / quantity;
             var sellablePrice = averagePrice * command.MinimumProfitRate;
-            if (command.Ticker.ClosePrice < sellablePrice)
+            if (!(command.Ticker.ClosePrice >= sellablePrice && quantity <= free))
             {
                 // second pass - find sellable group
                 foreach (var order in command.Orders)
@@ -80,7 +82,7 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
                     // see if the trailing average is sellable
                     averagePrice = numerator / quantity;
                     sellablePrice = averagePrice * command.MinimumProfitRate;
-                    if (command.Ticker.ClosePrice >= sellablePrice)
+                    if (command.Ticker.ClosePrice >= sellablePrice && quantity <= free)
                     {
                         break;
                     }

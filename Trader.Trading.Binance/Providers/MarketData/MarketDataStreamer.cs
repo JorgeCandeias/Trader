@@ -12,7 +12,7 @@ using System.Threading.Tasks.Dataflow;
 
 namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 {
-    internal class MarketDataStreamer : IMarketDataStreamer
+    internal partial class MarketDataStreamer : IMarketDataStreamer
     {
         private readonly ILogger _logger;
         private readonly IMapper _mapper;
@@ -48,9 +48,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             streams.UnionWith(tickerLookup.Select(x => $"{x.ToLowerInvariant()}@miniTicker"));
             streams.UnionWith(klineLookup.Select(x => $"{x.Symbol.ToLowerInvariant()}@kline_{_mapper.Map<string>(x.Interval)}"));
 
-            _logger.LogInformation(
-                "{Name} connecting to streams {Streams}...",
-                TypeName, streams);
+            LogConnectingToStreams(TypeName, streams);
 
             using var client = _factory.Create(streams);
 
@@ -69,11 +67,11 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "{Name} failed to push kline {Kline}", TypeName, item);
+                    LogFailedToPushKline(ex, TypeName, item);
                 }
             }, new ExecutionDataflowBlockOptions
             {
-                MaxDegreeOfParallelism = klineLookup.Count
+                MaxDegreeOfParallelism = klineLookup.Count * 2
             });
 
             // this worker action pushes incoming tickers to the system in the background so we dont hold up the binance stream
@@ -87,11 +85,11 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "{Name} failed to push ticker {Ticker}", TypeName, item);
+                    LogFailedToPushTicker(ex, TypeName, item);
                 }
             }, new ExecutionDataflowBlockOptions
             {
-                MaxDegreeOfParallelism = tickerLookup.Count
+                MaxDegreeOfParallelism = tickerLookup.Count * 2
             });
 
             // now we can stream from the exchange
@@ -117,5 +115,14 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                 }
             }
         }
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} connecting to streams {Streams}")]
+        private partial void LogConnectingToStreams(string type, IEnumerable<string> streams);
+
+        [LoggerMessage(1, LogLevel.Error, "{Type} failed to push kline {Kline}")]
+        private partial void LogFailedToPushKline(Exception exception, string type, Kline kline);
+
+        [LoggerMessage(2, LogLevel.Error, "{Type} failed to push ticker {Ticker}")]
+        private partial void LogFailedToPushTicker(Exception exception, string type, MiniTicker ticker);
     }
 }

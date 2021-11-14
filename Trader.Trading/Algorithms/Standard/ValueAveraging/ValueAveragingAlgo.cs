@@ -51,13 +51,19 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         private async ValueTask<bool> TrySignalBuyOrder()
         {
-            if (!IsBuyingEnabled()) return false;
+            var signal =
+                IsBuyingEnabled() &&
+                (
+                    (IsCooled() && IsRsiOversold()) ||
+                    (IsAccumulationEnabled() && await IsTickerOnNextStep())
+                );
 
-            if (IsCooled() && IsRsiOversold()) return true;
+            if (signal)
+            {
+                LogWillSignalBuyOrderForCurrentState(TypeName, Context.Name, Context.Ticker.ClosePrice, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, _options.RsiPeriods, _rsi);
+            }
 
-            if (IsAccumulationEnabled() && await IsTickerOnNextStep()) return true;
-
-            return false;
+            return signal;
         }
 
         private bool TrySignalSellOrder()
@@ -81,8 +87,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         private IAlgoCommand CreateBuy()
         {
-            LogWillSignalBuyOrderForCurrentState(TypeName, Context.Name, Context.Ticker.ClosePrice, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, _options.RsiPeriods, _rsi);
-
             var total = Context.GetQuoteBaseAssetBalance(_options.RedeemSavings, _options.RedeemSwapPool) * _options.BuyQuoteBalanceFraction;
 
             total = total.AdjustTotalUpToMinNotional(Context.Symbol);
@@ -108,8 +112,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             // only evaluate this rule if the last trade was a buy trade
             // todo: refactor this into the context
             var trades = await Context.GetTradeProvider().GetTradesAsync(Context.Symbol.Name);
-            var last = trades.LastOrDefault();
-            if (!(last is not null && last.IsBuyer))
+            if (!(trades.Count > 0 && trades[trades.Count - 1].IsBuyer))
             {
                 return false;
             }
@@ -255,8 +258,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
             return false;
         }
-
-
 
         #region Logging
 

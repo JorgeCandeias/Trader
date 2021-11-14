@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Orleans;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Providers;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
@@ -8,11 +9,17 @@ namespace Outcompute.Trader.Trading.Algorithms
     {
         private readonly ILogger _logger;
         private readonly IGrainFactory _factory;
+        private readonly IBalanceProvider _balances;
+        private readonly ISavingsProvider _savings;
+        private readonly ISwapPoolProvider _swaps;
 
-        public AlgoStatisticsPublisher(ILogger<AlgoStatisticsPublisher> logger, IGrainFactory factory)
+        public AlgoStatisticsPublisher(ILogger<AlgoStatisticsPublisher> logger, IGrainFactory factory, IBalanceProvider balances, ISavingsProvider savings, ISwapPoolProvider swaps)
         {
             _logger = logger;
             _factory = factory;
+            _balances = balances;
+            _savings = savings;
+            _swaps = swaps;
         }
 
         private static string TypeName => nameof(AlgoStatisticsPublisher);
@@ -22,10 +29,10 @@ namespace Outcompute.Trader.Trading.Algorithms
             if (significant is null) throw new ArgumentNullException(nameof(significant));
             if (ticker is null) throw new ArgumentNullException(nameof(ticker));
 
-            return PublishCoreAsync(significant, ticker);
+            return PublishCoreAsync(significant, ticker, cancellationToken);
         }
 
-        private async Task PublishCoreAsync(PositionDetails significant, MiniTicker ticker)
+        private async Task PublishCoreAsync(PositionDetails significant, MiniTicker ticker, CancellationToken cancellationToken)
         {
             LogTicker(TypeName, ticker.Symbol, ticker.ClosePrice);
 
@@ -51,6 +58,20 @@ namespace Outcompute.Trader.Trading.Algorithms
                 var aPnL = pPnl - commissions;
 
                 LogStatistics(TypeName, significant.Symbol.Name, quantity, total, avg, now, uPnL, total == 0m ? 0m : uPnL / total, rPnl, pPnl, commissions, aPnL);
+
+                var spotBalance = await _balances.GetBalanceOrZeroAsync(significant.Symbol.BaseAsset, cancellationToken);
+                var savingsBalance = await _savings.GetPositionOrZeroAsync(significant.Symbol.BaseAsset, cancellationToken);
+                var swapBalance = await _swaps.GetBalanceAsync(significant.Symbol.BaseAsset, cancellationToken);
+                var free = spotBalance.Free + savingsBalance.FreeAmount + swapBalance.Total;
+
+                if (free < quantity)
+                {
+                    LogFreeAmountLessThanPurchased(TypeName, significant.Symbol.Name, free, significant.Symbol.BaseAsset, quantity);
+                }
+                else
+                {
+                    LogFreeAmountExceedsPurchased(TypeName, significant.Symbol.Name, free, significant.Symbol.BaseAsset, quantity, free - quantity);
+                }
             }
 
             // this model is meant for rendering only and will get refactored at some point
@@ -93,6 +114,12 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Adjusted PnL = {Value:F8}")]
         private partial void LogAdjustedPnL(string type, string name, decimal value);
+
+        [LoggerMessage(0, LogLevel.Warning, "{Type} {Name} reports total amount {Free:F8} {Asset} is less than purchased quantity of {Quantity:F8} {Asset}")]
+        private partial void LogFreeAmountLessThanPurchased(string type, string name, decimal free, string asset, decimal quantity);
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports total amount {Free:F8} {Asset} meets or exceeds purchased quantity of {Quantity:F8} {Asset} by {Diff:F8} {Asset})")]
+        private partial void LogFreeAmountExceedsPurchased(string type, string name, decimal free, string asset, decimal quantity, decimal diff);
 
         #endregion Logging
     }

@@ -5,17 +5,12 @@ using Orleans.Timers;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Readyness;
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Providers.Swap
 {
-    internal sealed class SwapPoolGrain : Grain, ISwapPoolGrain, IDisposable
+    internal sealed partial class SwapPoolGrain : Grain, ISwapPoolGrain, IDisposable
     {
         private readonly IOptionsMonitor<SwapPoolOptions> _monitor;
         private readonly ILogger _logger;
@@ -71,51 +66,49 @@ namespace Outcompute.Trader.Trading.Providers.Swap
         private async Task TickAsync()
         {
             // skip if the system is not ready
-            if (!await _readyness.IsReadyAsync()) return;
+            if (!await _readyness.IsReadyAsync())
+            {
+                return;
+            }
 
-            // skip if auto pooling is disabled
-            var options = _monitor.CurrentValue;
-            if (!options.AutoAddEnabled) return;
-
+            // load all the pool information
             await LoadAsync();
+
+            // skip management if auto pooling is disabled
+            var options = _monitor.CurrentValue;
+            if (!options.AutoAddEnabled)
+            {
+                return;
+            }
 
             // get all positive spot balances
             var spots = (await _balances.GetBalancesAsync(_cancellation.Token))
                 .ToDictionary(x => x.Asset);
 
-            _logger.LogInformation(
-                "{Type} reports {Count} positive spot balances",
-                TypeName, spots.Count);
+            LogPositiveSpotBalances(TypeName, spots.Count);
 
             // get user savings positions for known pools
             var savings = (await _savings.GetPositionsAsync())
                 .ToDictionary(x => x.Asset);
 
-            _logger.LogInformation(
-                "{Type} reports {Count} positive savings balances",
-                TypeName, savings.Count);
+            LogPositiveSavingsBalances(TypeName, savings.Count);
 
             var totals = _configurations.Values
                 .SelectMany(x => x.Assets.Keys)
                 .Distinct()
                 .ToDictionary(x => x, x => spots.GetValueOrDefault(x)?.Free ?? 0m + savings.GetValueOrDefault(x)?.FreeAmount ?? 0m);
 
-            _logger.LogInformation(
-                "{Type} reports {Count} assets with usable amounts",
-                TypeName, totals.Count);
+            LogAssetsWithUsableAmounts(TypeName, totals.Count);
 
             // select pools to which we can add assets
             var candidates = _configurations.Values
+                .Where(x => options.Assets.IsSupersetOf(x.Assets.Keys))
                 .Where(x => _cooldowns.GetValueOrDefault(x.PoolId, DateTime.MinValue) < _clock.UtcNow)
                 .Where(x => x.Assets.All(a => totals[a.Key] >= a.Value.MinAdd))
-                .Where(x => !options.ExcludedAssets.Overlaps(x.Assets.Keys))
-                .Where(x => !x.Assets.All(a => options.IsolatedAssets.Contains(a.Key)))
                 .OrderByDescending(x => x.PoolId)
                 .ToList();
 
-            _logger.LogInformation(
-                "{Type} identified {Count} candidate pools",
-                TypeName, candidates.Count);
+            LogCandidatePools(TypeName, candidates.Count);
 
             // test all pools until we match one
             foreach (var candidate in candidates)
@@ -146,9 +139,7 @@ namespace Outcompute.Trader.Trading.Providers.Swap
                         continue;
                     }
 
-                    _logger.LogInformation(
-                        "{Type} elected pool {PoolName} for adding assets {QuoteAmount:F8} {QuoteAsset} and {BaseAmount:F8} {BaseAsset}",
-                        TypeName, candidate.PoolName, preview.QuoteAmount, preview.QuoteAsset, preview.BaseAmount, preview.BaseAsset);
+                    LogElectedPool(TypeName, candidate.PoolName, preview.QuoteAmount, preview.QuoteAsset, preview.BaseAmount, preview.BaseAsset);
 
                     // ensure there is enough spot amount for the quote asset by redeeming savings
                     var (quoteSuccess, quoteRedeemed) = await EnsureSpotAmountAsync(preview.QuoteAsset, preview.QuoteAmount, spots.GetValueOrDefault(preview.QuoteAsset)?.Free ?? 0m, savings.GetValueOrDefault(preview.QuoteAsset)?.FreeAmount ?? 0m);
@@ -190,18 +181,14 @@ namespace Outcompute.Trader.Trading.Providers.Swap
 
             if (!_monitor.CurrentValue.AutoRedeemSavings)
             {
-                _logger.LogInformation(
-                    "{Type} cannot redeem necessary {Necessary:F8} {Asset} from savings because auto redemption is disabled",
-                    TypeName, necessary, asset);
+                LogCannotRedeemNecessaryAutoRedemptionDisabled(TypeName, necessary, asset);
 
                 return (false, false);
             }
 
             if (savingsAmount < necessary)
             {
-                _logger.LogInformation(
-                    "{Type} cannot redeem necessary {Necessary:F8} {Asset} from savings because there is only {Position:F8} {Asset} available",
-                    TypeName, necessary, asset, savingsAmount, asset);
+                LogCannotRedeemNecessaryNotEnoughAvailable(TypeName, necessary, asset, savingsAmount);
 
                 return (false, false);
             }
@@ -209,17 +196,13 @@ namespace Outcompute.Trader.Trading.Providers.Swap
             var result = await _savings.RedeemAsync(asset, necessary, _cancellation.Token);
             if (result.Success)
             {
-                _logger.LogInformation(
-                    "{Type} redeemed {Redeemed:F8} {Asset} from savings to cover the necessary {Necessary:F8} {Asset}",
-                    TypeName, result.Redeemed, asset, necessary, asset);
+                LogRedeemedFromSavingsToCoverNecessary(TypeName, result.Redeemed, asset, necessary);
 
                 return (true, true);
             }
             else
             {
-                _logger.LogInformation(
-                    "{Type} failed to redeem the necessary {Necessary:F8} {Asset} from savings due to unknown reasons",
-                    TypeName, necessary, asset);
+                LogFailedToRedeemNecessaryUnknownReasons(TypeName, necessary, asset);
 
                 return (false, false);
             }
@@ -235,9 +218,7 @@ namespace Outcompute.Trader.Trading.Providers.Swap
 
             if (result is null)
             {
-                _logger.LogWarning(
-                    "{Type} failed to redeem {Amount} {Asset} because no available pool can be found",
-                    TypeName, amount, asset);
+                LogFailedToRedeemNoPoolAvailable(TypeName, amount, asset);
 
                 return RedeemSwapPoolEvent.Failed(asset);
             }
@@ -245,9 +226,7 @@ namespace Outcompute.Trader.Trading.Providers.Swap
             var cooldown = _cooldowns.GetValueOrDefault(result.PoolId, DateTime.MinValue);
             if (cooldown > _clock.UtcNow)
             {
-                _logger.LogWarning(
-                    "{Type} failed to redeem {Amount} {Asset} from pool {PoolName} is on cooldown until {Cooldown}",
-                    TypeName, amount, asset, result.PoolName, cooldown);
+                LogFailedToRedeemPoolOnCooldown(TypeName, amount, asset, result.PoolName, cooldown);
 
                 return RedeemSwapPoolEvent.Failed(asset);
             }
@@ -326,7 +305,7 @@ namespace Outcompute.Trader.Trading.Providers.Swap
 
             _pools = pools.ToImmutableList();
 
-            _logger.LogInformation("{Type} loaded {Count} Swap Pools in {ElapsedMs}ms", TypeName, _pools.Count, watch.ElapsedMilliseconds);
+            LogLoadedSwapPoolsInMs(TypeName, _pools.Count, watch.ElapsedMilliseconds);
         }
 
         private async Task LoadSwapPoolLiquiditiesAsync()
@@ -337,7 +316,7 @@ namespace Outcompute.Trader.Trading.Providers.Swap
 
             _liquidities.ReplaceWith(liquidities, x => x.PoolId);
 
-            _logger.LogInformation("{Type} loaded {Count} Swap Pool Liquidity details in {ElapsedMs}ms", TypeName, _liquidities.Count, watch.ElapsedMilliseconds);
+            LogLoadedSwapPoolLiquiditiesInMs(TypeName, _liquidities.Count, watch.ElapsedMilliseconds);
         }
 
         private async Task LoadSwapPoolConfigurationsAsync()
@@ -348,7 +327,7 @@ namespace Outcompute.Trader.Trading.Providers.Swap
 
             _configurations.ReplaceWith(configurations, x => x.PoolId);
 
-            _logger.LogInformation("{Type} loaded {Count} Swap Pool Configuration details in {ElapsedMs}ms", TypeName, _configurations.Count, watch.ElapsedMilliseconds);
+            LogLoadedSwapPoolConfigurationsInMs(TypeName, _configurations.Count, watch.ElapsedMilliseconds);
         }
 
         private void SetCooldown(long poolId)
@@ -357,5 +336,51 @@ namespace Outcompute.Trader.Trading.Providers.Swap
         }
 
         public ValueTask<bool> IsReadyAsync() => ValueTask.FromResult(_ready);
+
+        #region Logging
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} reports {Count} positive spot balances")]
+        private partial void LogPositiveSpotBalances(string type, int count);
+
+        [LoggerMessage(1, LogLevel.Information, "{Type} reports {Count} positive savings balances")]
+        private partial void LogPositiveSavingsBalances(string type, int count);
+
+        [LoggerMessage(2, LogLevel.Information, "{Type} reports {Count} assets with usable amounts")]
+        private partial void LogAssetsWithUsableAmounts(string type, int count);
+
+        [LoggerMessage(3, LogLevel.Information, "{Type} identified {Count} candidate pools")]
+        private partial void LogCandidatePools(string type, int count);
+
+        [LoggerMessage(4, LogLevel.Information, "{Type} elected pool {PoolName} for adding assets {QuoteAmount:F8} {QuoteAsset} and {BaseAmount:F8} {BaseAsset}")]
+        private partial void LogElectedPool(string type, string poolName, decimal quoteAmount, string quoteAsset, decimal baseAmount, string baseAsset);
+
+        [LoggerMessage(5, LogLevel.Information, "{Type} cannot redeem necessary {Necessary:F8} {Asset} from savings because auto redemption is disabled")]
+        private partial void LogCannotRedeemNecessaryAutoRedemptionDisabled(string type, decimal necessary, string asset);
+
+        [LoggerMessage(6, LogLevel.Error, "{Type} cannot redeem necessary {Necessary:F8} {Asset} from savings because there is only {Position:F8} {Asset} available")]
+        private partial void LogCannotRedeemNecessaryNotEnoughAvailable(string type, decimal necessary, string asset, decimal position);
+
+        [LoggerMessage(7, LogLevel.Information, "{Type} redeemed {Redeemed:F8} {Asset} from savings to cover the necessary {Necessary:F8} {Asset}")]
+        private partial void LogRedeemedFromSavingsToCoverNecessary(string type, decimal redeemed, string asset, decimal necessary);
+
+        [LoggerMessage(8, LogLevel.Error, "{Type} failed to redeem the necessary {Necessary:F8} {Asset} from savings due to unknown reasons")]
+        private partial void LogFailedToRedeemNecessaryUnknownReasons(string type, decimal necessary, string asset);
+
+        [LoggerMessage(9, LogLevel.Error, "{Type} failed to redeem {Amount} {Asset} because no available pool can be found")]
+        private partial void LogFailedToRedeemNoPoolAvailable(string type, decimal amount, string asset);
+
+        [LoggerMessage(10, LogLevel.Warning, "{Type} failed to redeem {Amount} {Asset} from pool {PoolName} is on cooldown until {Cooldown}")]
+        private partial void LogFailedToRedeemPoolOnCooldown(string type, decimal amount, string asset, string poolName, DateTime cooldown);
+
+        [LoggerMessage(11, LogLevel.Information, "{Type} loaded {Count} Swap Pools in {ElapsedMs}ms")]
+        private partial void LogLoadedSwapPoolsInMs(string type, int count, long elapsedMs);
+
+        [LoggerMessage(12, LogLevel.Information, "{Type} loaded {Count} Swap Pool Liquidity details in {ElapsedMs}ms")]
+        private partial void LogLoadedSwapPoolLiquiditiesInMs(string type, int count, long elapsedMs);
+
+        [LoggerMessage(13, LogLevel.Information, "{Type} loaded {Count} Swap Pool Configuration details in {ElapsedMs}ms")]
+        private partial void LogLoadedSwapPoolConfigurationsInMs(string type, int count, long elapsedMs);
+
+        #endregion Logging
     }
 }

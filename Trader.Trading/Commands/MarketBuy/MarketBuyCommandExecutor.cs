@@ -83,6 +83,13 @@ namespace Outcompute.Trader.Trading.Commands.MarketBuy
                     {
                         required -= result.Redeemed;
                         required = Math.Max(required, 0);
+
+                        LogRedeemedSavings(TypeName, context.Symbol.Name, result.Redeemed, context.Symbol.QuoteAsset);
+                    }
+                    else
+                    {
+                        LogFailedToRedeemSavings(TypeName, context.Symbol.Name, redeeming, context.Symbol.QuoteAsset);
+                        return;
                     }
                 }
 
@@ -101,6 +108,13 @@ namespace Outcompute.Trader.Trading.Commands.MarketBuy
                     {
                         required -= result.QuoteAmount;
                         required = Math.Max(required, 0);
+
+                        LogRedeemedSwapPool(TypeName, context.Symbol.Name, result.QuoteAmount, context.Symbol.QuoteAsset);
+                    }
+                    else
+                    {
+                        LogFailedToRedeemSwapPool(TypeName, context.Symbol.Name, redeeming, context.Symbol.QuoteAsset);
+                        return;
                     }
                 }
 
@@ -132,8 +146,20 @@ namespace Outcompute.Trader.Trading.Commands.MarketBuy
         [LoggerMessage(5, LogLevel.Information, "{Type} {Name} attempting to redeem {Quantity} {Asset} from savings")]
         private partial void LogRedeemingSavings(string type, string name, decimal quantity, string asset);
 
+        [LoggerMessage(5, LogLevel.Information, "{Type} {Name} redeemed {Quantity} {Asset} from savings")]
+        private partial void LogRedeemedSavings(string type, string name, decimal quantity, string asset);
+
+        [LoggerMessage(5, LogLevel.Error, "{Type} {Name} failed to redeem {Quantity} {Asset} from savings")]
+        private partial void LogFailedToRedeemSavings(string type, string name, decimal quantity, string asset);
+
         [LoggerMessage(6, LogLevel.Information, "{Type} {Name} attempting to redeem {Quantity} {Asset} from the swap pool")]
         private partial void LogRedeemingSwapPool(string type, string name, decimal quantity, string asset);
+
+        [LoggerMessage(6, LogLevel.Information, "{Type} {Name} redeemed {Quantity} {Asset} from the swap pool")]
+        private partial void LogRedeemedSwapPool(string type, string name, decimal quantity, string asset);
+
+        [LoggerMessage(6, LogLevel.Error, "{Type} {Name} failed to redeem {Quantity} {Asset} from the swap pool")]
+        private partial void LogFailedToRedeemSwapPool(string type, string name, decimal quantity, string asset);
 
         [LoggerMessage(7, LogLevel.Error, "{Type} {Name} could not redeem the required {Quantity} {Asset}")]
         private partial void LogCouldNotRedeem(string type, string name, decimal quantity, string asset);

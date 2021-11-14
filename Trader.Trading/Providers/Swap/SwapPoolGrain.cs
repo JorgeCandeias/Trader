@@ -96,7 +96,7 @@ namespace Outcompute.Trader.Trading.Providers.Swap
             var totals = _configurations.Values
                 .SelectMany(x => x.Assets.Keys)
                 .Distinct()
-                .ToDictionary(x => x, x => spots.GetValueOrDefault(x)?.Free ?? 0m + savings.GetValueOrDefault(x)?.FreeAmount ?? 0m);
+                .ToDictionary(x => x, x => (spots.GetValueOrDefault(x)?.Free ?? 0m) + (savings.GetValueOrDefault(x)?.FreeAmount ?? 0m));
 
             LogAssetsWithUsableAmounts(TypeName, totals.Count);
 

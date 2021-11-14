@@ -9,6 +9,7 @@ using Outcompute.Trader.Trading.Commands.ClearOpenOrders;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
 using Outcompute.Trader.Trading.Commands.Many;
+using Outcompute.Trader.Trading.Commands.MarketBuy;
 using Outcompute.Trader.Trading.Commands.MarketSell;
 using Outcompute.Trader.Trading.Commands.RedeemSavings;
 using Outcompute.Trader.Trading.Commands.RedeemSwapPool;
@@ -120,6 +121,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<IAlgoCommandExecutor<TrackingBuyCommand>, TrackingBuyExecutor>()
                 .AddSingleton<IAlgoCommandExecutor<RedeemSwapPoolCommand, RedeemSwapPoolEvent>, RedeemSwapPoolExecutor>()
                 .AddSingleton<IAlgoCommandExecutor<MarketSellCommand>, MarketSellCommandExecutor>()
+                .AddSingleton<IAlgoCommandExecutor<MarketBuyCommand>, MarketBuyCommandExecutor>()
 
                 // builtin algos
                 .AddAccumulatorAlgoType()

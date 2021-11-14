@@ -18,14 +18,14 @@ namespace Outcompute.Trader.Trading.Algorithms.Context.Configurators
         {
             if (!IsNullOrEmpty(context.Symbol.Name))
             {
-                context.AssetSpotBalance = await _balances
+                context.BaseAssetSpotBalance = await _balances
                     .GetBalanceOrZeroAsync(context.Symbol.BaseAsset, cancellationToken)
                     .ConfigureAwait(false);
             }
 
             if (!IsNullOrEmpty(context.Symbol.Name))
             {
-                context.QuoteSpotBalance = await _balances
+                context.QuoteAssetSpotBalance = await _balances
                     .GetBalanceOrZeroAsync(context.Symbol.QuoteAsset, cancellationToken)
                     .ConfigureAwait(false);
             }

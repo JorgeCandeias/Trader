@@ -55,37 +55,37 @@ namespace Outcompute.Trader.Trading.Algorithms
         /// The current spot balance for the base asset of the default symbol.
         /// This is only populated if the default symbol is defined.
         /// </summary>
-        Balance AssetSpotBalance { get; }
+        Balance BaseAssetSpotBalance { get; }
 
         /// <summary>
         /// The current spot balance for the quote asset of the default symbol.
         /// This is only populated if the default symbol is defined.
         /// </summary>
-        Balance QuoteSpotBalance { get; }
+        Balance QuoteAssetSpotBalance { get; }
 
         /// <summary>
         /// The current savings balance for the base asset of the default symbol.
         /// This is only populated if the default symbol is defined.
         /// </summary>
-        SavingsPosition AssetSavingsBalance { get; }
+        SavingsPosition BaseAssetSavingsBalance { get; }
 
         /// <summary>
         /// The current savings balance for the quote asset of the default symbol.
         /// This is only populated if the default symbol is defined.
         /// </summary>
-        SavingsPosition QuoteSavingsBalance { get; }
+        SavingsPosition QuoteAssetSavingsBalance { get; }
 
         /// <summary>
         /// The current swap pool balances for the base asset of the default symbol.
         /// This is only populated if the default symbol is defined.
         /// </summary>
-        SwapPoolAssetBalance AssetSwapPoolBalance { get; }
+        SwapPoolAssetBalance BaseAssetSwapPoolBalance { get; }
 
         /// <summary>
         /// The current swap pool balances for the quote asset of the default symbol.
         /// This is only populated if the default symbol is defined.
         /// </summary>
-        SwapPoolAssetBalance QuoteSwapPoolBalance { get; }
+        SwapPoolAssetBalance QuoteAssetSwapPoolBalance { get; }
 
         /// <summary>
         /// Gets all historial orders for the default symbol.

@@ -34,17 +34,17 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public MiniTicker Ticker { get; set; } = MiniTicker.Empty;
 
-        public Balance AssetSpotBalance { get; set; } = Balance.Empty;
+        public Balance BaseAssetSpotBalance { get; set; } = Balance.Empty;
 
-        public Balance QuoteSpotBalance { get; set; } = Balance.Empty;
+        public Balance QuoteAssetSpotBalance { get; set; } = Balance.Empty;
 
-        public SavingsPosition AssetSavingsBalance { get; set; } = SavingsPosition.Empty;
+        public SavingsPosition BaseAssetSavingsBalance { get; set; } = SavingsPosition.Empty;
 
-        public SavingsPosition QuoteSavingsBalance { get; set; } = SavingsPosition.Empty;
+        public SavingsPosition QuoteAssetSavingsBalance { get; set; } = SavingsPosition.Empty;
 
-        public SwapPoolAssetBalance AssetSwapPoolBalance { get; set; } = SwapPoolAssetBalance.Empty;
+        public SwapPoolAssetBalance BaseAssetSwapPoolBalance { get; set; } = SwapPoolAssetBalance.Empty;
 
-        public SwapPoolAssetBalance QuoteSwapPoolBalance { get; set; } = SwapPoolAssetBalance.Empty;
+        public SwapPoolAssetBalance QuoteAssetSwapPoolBalance { get; set; } = SwapPoolAssetBalance.Empty;
 
         public IReadOnlyList<OrderQueryResult> Orders { get; set; } = ImmutableList<OrderQueryResult>.Empty;
 

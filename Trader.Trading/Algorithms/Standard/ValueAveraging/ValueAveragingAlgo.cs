@@ -42,7 +42,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
             // decide on buying
             var buyCommand = await TrySignalBuyOrder()
-                ? SetTrackingBuy()
+                ? CreateBuy()
                 : ClearOpenOrders(OrderSide.Buy);
 
             // decide on selling
@@ -75,11 +75,20 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             */
         }
 
-        private IAlgoCommand SetTrackingBuy()
+        private IAlgoCommand CreateBuy()
         {
             LogWillSignalBuyOrderForCurrentState(TypeName, Context.Name, Context.Ticker.ClosePrice, _options.SmaPeriodsA, _smaA, _options.SmaPeriodsB, _smaB, _options.SmaPeriodsC, _smaC, _options.RsiPeriodsA, _rsiA, _options.RsiPeriodsB, _rsiB, _options.RsiPeriodsC, _rsiC);
 
-            return TrackingBuy(Context.Symbol, _options.BuyOrderSafetyRatio, _options.BuyQuoteBalanceFraction, _options.MaxNotional, _options.RedeemSavings, _options.RedeemSwapPool);
+            var total = Context.GetQuoteBaseAssetBalance(_options.RedeemSavings, _options.RedeemSwapPool) * _options.BuyQuoteBalanceFraction;
+
+            if (_options.MaxNotional.HasValue)
+            {
+                total = Math.Max(total, _options.MaxNotional.Value);
+            }
+
+            var quantity = total / Context.Ticker.ClosePrice;
+
+            return MarketBuy(Context.Symbol, quantity, _options.RedeemSavings, _options.RedeemSwapPool);
         }
 
         private async ValueTask<bool> IsTickerOnNextStep()

@@ -135,31 +135,36 @@ namespace Outcompute.Trader.App
                                 })
                                 .AddAlgoType<TestAlgo>().AddOptionsType<TestAlgoOptions>();
 
-                            var templateSection = context.Configuration.GetSection("ValueAveragingTemplate");
+                            var templates = new[] { "ValueAveragingTemplate1", "ValueAveragingTemplate2" };
 
-                            foreach (var symbol in templateSection.GetSection("Symbols").Get<string[]>() ?? Array.Empty<string>())
+                            foreach (var template in templates)
                             {
-                                services
-                                    .AddValueAveragingAlgo(symbol)
-                                    .ConfigureHostOptions(options =>
-                                    {
-                                        templateSection.Bind(options);
+                                var templateSection = context.Configuration.GetSection(template);
 
-                                        options.Symbol = symbol;
-                                        foreach (var item in options.DependsOn.Klines)
+                                foreach (var symbol in templateSection.GetSection("Symbols").Get<string[]>() ?? Array.Empty<string>())
+                                {
+                                    services
+                                        .AddValueAveragingAlgo(symbol)
+                                        .ConfigureHostOptions(options =>
                                         {
-                                            item.Symbol = symbol;
-                                        }
-                                        foreach (var item in options.DependsOn.Klines)
+                                            templateSection.Bind(options);
+
+                                            options.Symbol = symbol;
+                                            foreach (var item in options.DependsOn.Klines)
+                                            {
+                                                item.Symbol = symbol;
+                                            }
+                                            foreach (var item in options.DependsOn.Klines)
+                                            {
+                                                item.Symbol = symbol;
+                                            }
+                                            options.DependsOn.Tickers.Add(symbol);
+                                        })
+                                        .ConfigureTypeOptions(options =>
                                         {
-                                            item.Symbol = symbol;
-                                        }
-                                        options.DependsOn.Tickers.Add(symbol);
-                                    })
-                                    .ConfigureTypeOptions(options =>
-                                    {
-                                        templateSection.GetSection("Options").Bind(options);
-                                    });
+                                            templateSection.GetSection("Options").Bind(options);
+                                        });
+                                }
                             }
 
 #if DEBUG

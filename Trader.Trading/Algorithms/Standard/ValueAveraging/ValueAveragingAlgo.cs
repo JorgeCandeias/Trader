@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Commands;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 {
@@ -26,6 +27,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         private decimal _smaC;
         private decimal _rsi;
 
+        [SuppressMessage("Major Code Smell", "S3358:Ternary operators should not be nested", Justification = "N/A")]
         protected override async ValueTask<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default)
         {
             // calculate the current moving averages
@@ -43,7 +45,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
             // decide on selling
             var sellCommand = TrySignalSellOrder()
-                ? SignificantAveragingSell(Context.Ticker, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool)
+                ? IsClosingEnabled()
+                    ? AveragingSell(Context.Symbol, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool)
+                    : SignificantAveragingSell(Context.Ticker, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool)
                 : ClearOpenOrders(OrderSide.Sell);
 
             return Many(buyCommand, sellCommand);
@@ -70,6 +74,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         {
             var signal =
                 IsSellingEnabled() &&
+                IsPositionNonEmpty() &&
                 (
                     IsClosingEnabled() ||
                     IsTickerAboveTakeProfitRate() ||
@@ -84,6 +89,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
             return signal;
         }
+
+        private bool IsPositionNonEmpty() => Context.PositionDetails.Orders.Count > 0;
 
         private IAlgoCommand CreateBuy()
         {

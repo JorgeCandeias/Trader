@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Outcompute.Trader.Models
+﻿namespace Outcompute.Trader.Models
 {
     public static class SymbolMathExtensions
     {
@@ -16,6 +14,13 @@ namespace Outcompute.Trader.Models
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
             return Math.Ceiling(quantity / symbol.Filters.LotSize.StepSize) * symbol.Filters.LotSize.StepSize;
+        }
+
+        public static decimal AdjustQuantityUpToMinLotSizeQuantity(this decimal quantity, Symbol symbol)
+        {
+            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+
+            return Math.Max(quantity, symbol.Filters.LotSize.MinQuantity);
         }
 
         public static decimal AdjustPriceDownToTickSize(this decimal price, Symbol symbol)

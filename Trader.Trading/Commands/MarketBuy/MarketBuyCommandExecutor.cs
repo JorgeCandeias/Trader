@@ -29,29 +29,31 @@ namespace Outcompute.Trader.Trading.Commands.MarketBuy
 
         public async ValueTask ExecuteAsync(IAlgoContext context, MarketBuyCommand command, CancellationToken cancellationToken = default)
         {
-            // adjust the quantity down by the step size to make a valid order
-            var quantity = command.Quantity.AdjustQuantityDownToLotStepSize(context.Symbol);
-            LogAdjustedQuantity(TypeName, context.Symbol.Name, command.Quantity, context.Symbol.BaseAsset, quantity, context.Symbol.Filters.LotSize.StepSize);
+            var quantity = command.Quantity;
 
-            // if the quantity becomes lower than the minimum lot size then we cant buy
-            if (quantity < context.Symbol.Filters.LotSize.MinQuantity)
-            {
-                LogQuantityLessThanMinLotSize(TypeName, context.Symbol.Name, MyOrderType, MyOrderSide, quantity, context.Symbol.BaseAsset, context.Symbol.Filters.LotSize.MinQuantity);
-                return;
-            }
-
-            // if the total becomes lower than the minimum notional then we cant buy
+            // adjust the quantity up to the min notional to make a valid order
             var total = quantity * context.Ticker.ClosePrice;
-            if (total < context.Symbol.Filters.MinNotional.MinNotional)
-            {
-                LogTotalLessThanMinNotional(TypeName, context.Symbol.Name, MyOrderType, MyOrderSide, quantity, context.Symbol.BaseAsset, context.Ticker.ClosePrice, context.Symbol.QuoteAsset, total, context.Symbol.Filters.MinNotional.MinNotional);
-                return;
-            }
+            total = total.AdjustTotalUpToMinNotional(context.Symbol);
+            var adjusted = total / context.Ticker.ClosePrice;
+            LogAdjustedQuantityToMinNotional(TypeName, context.Symbol.Name, quantity, context.Symbol.BaseAsset, context.Ticker.ClosePrice, context.Symbol.QuoteAsset, total, adjusted, context.Symbol.Filters.MinNotional.MinNotional);
+
+            // adjust the quantity up to the min lot size quantity
+            adjusted = quantity.AdjustQuantityUpToMinLotSizeQuantity(context.Symbol);
+            LogAdjustedQuantityToMinLotSize(TypeName, context.Symbol.BaseAsset, quantity, context.Symbol.BaseAsset, adjusted, context.Symbol.Filters.LotSize.MinQuantity);
+            quantity = adjusted;
+
+            // adjust the quantity up by the step size to make a valid order
+            adjusted = quantity.AdjustQuantityUpToLotStepSize(context.Symbol);
+            LogAdjustedQuantity(TypeName, context.Symbol.Name, quantity, context.Symbol.BaseAsset, adjusted, context.Symbol.Filters.LotSize.StepSize);
+            quantity = adjusted;
 
             // identify the free quote balance
             var free = context.QuoteAssetSpotBalance.Free
                 + (command.RedeemSavings ? context.QuoteAssetSavingsBalance.FreeAmount : 0m)
                 + (command.RedeemSwapPool ? context.QuoteAssetSwapPoolBalance.Total : 0m);
+
+            // calculate the adjusted total
+            total = quantity * context.Ticker.ClosePrice;
 
             // see if there is enough free balance overall
             if (free < total)
@@ -115,25 +117,31 @@ namespace Outcompute.Trader.Trading.Commands.MarketBuy
                 .ConfigureAwait(false);
         }
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} adjusted original quantity of {Quantity} {Asset} down to {AdjustedQuantity} {Asset} by step size {StepSize} {Asset}")]
+        [LoggerMessage(1, LogLevel.Information, "{Type} {Name} adjusted quantity of {Quantity} {Asset} up to {AdjustedQuantity} {Asset} by step size {StepSize} {Asset}")]
         private partial void LogAdjustedQuantity(string type, string name, decimal quantity, string asset, decimal adjustedQuantity, decimal stepSize);
 
-        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot place {OrderType} {OrderSide} order with quantity {Quantity} {Asset} because it is less than the minimum lot size of {MinLotSize} {Asset}")]
+        [LoggerMessage(2, LogLevel.Error, "{Type} {Name} cannot place {OrderType} {OrderSide} order with quantity {Quantity} {Asset} because it is less than the minimum lot size of {MinLotSize} {Asset}")]
         private partial void LogQuantityLessThanMinLotSize(string type, string name, OrderType orderType, OrderSide orderSide, decimal quantity, string asset, decimal minLotSize);
 
-        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot place {OrderType} {OrderSide} order with quantity {Quantity} {Asset} and price {Price} {Quote} because the total of {Total} {Quote} is less than the minimum notional of {MinNotional} {Quote}")]
+        [LoggerMessage(3, LogLevel.Error, "{Type} {Name} cannot place {OrderType} {OrderSide} order with quantity {Quantity} {Asset} and price {Price} {Quote} because the total of {Total} {Quote} is less than the minimum notional of {MinNotional} {Quote}")]
         private partial void LogTotalLessThanMinNotional(string type, string name, OrderType orderType, OrderSide orderSide, decimal quantity, string asset, decimal price, string quote, decimal total, decimal minNotional);
 
-        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot place {OrderType} {OrderSide} order with quantity {Quantity} {Asset} because the free amount from all sources is only {Free} {Asset}")]
+        [LoggerMessage(4, LogLevel.Error, "{Type} {Name} cannot place {OrderType} {OrderSide} order with quantity {Quantity} {Asset} because the free amount from all sources is only {Free} {Asset}")]
         private partial void LogNotEnoughFreeBalance(string type, string name, OrderType orderType, OrderSide orderSide, decimal quantity, string asset, decimal free);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} attempting to redeem {Quantity} {Asset} from savings")]
+        [LoggerMessage(5, LogLevel.Information, "{Type} {Name} attempting to redeem {Quantity} {Asset} from savings")]
         private partial void LogRedeemingSavings(string type, string name, decimal quantity, string asset);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} attempting to redeem {Quantity} {Asset} from the swap pool")]
+        [LoggerMessage(6, LogLevel.Information, "{Type} {Name} attempting to redeem {Quantity} {Asset} from the swap pool")]
         private partial void LogRedeemingSwapPool(string type, string name, decimal quantity, string asset);
 
-        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} could not redeem the required {Quantity} {Asset}")]
+        [LoggerMessage(7, LogLevel.Error, "{Type} {Name} could not redeem the required {Quantity} {Asset}")]
         private partial void LogCouldNotRedeem(string type, string name, decimal quantity, string asset);
+
+        [LoggerMessage(8, LogLevel.Information, "{Type} {Name} adjusted quantity of {Quantity} {Asset} up to up {AdjustedQuantity} {Asset} to comply with min lot size of {MinLotSize} {Asset}")]
+        private partial void LogAdjustedQuantityToMinLotSize(string type, string name, decimal quantity, string asset, decimal adjustedQuantity, decimal minLotSize);
+
+        [LoggerMessage(9, LogLevel.Information, "{Type} {Name} adjusted quantity of {Quantity} {Asset} at {Price} {Quote} for a total of {Total} {Quote} up to {AdjustedQuantity} {Asset} to match min notional of {MinNotional} {Quote}")]
+        private partial void LogAdjustedQuantityToMinNotional(string type, string name, decimal quantity, string asset, decimal price, string quote, decimal total, decimal adjustedQuantity, decimal minNotional);
     }
 }

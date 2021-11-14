@@ -81,6 +81,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
             var total = Context.GetQuoteBaseAssetBalance(_options.RedeemSavings, _options.RedeemSwapPool) * _options.BuyQuoteBalanceFraction;
 
+            total = total.AdjustTotalUpToMinNotional(Context.Symbol);
+
             if (_options.MaxNotional.HasValue)
             {
                 total = Math.Max(total, _options.MaxNotional.Value);

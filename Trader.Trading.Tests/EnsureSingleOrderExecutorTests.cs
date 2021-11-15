@@ -45,7 +45,9 @@ namespace Outcompute.Trader.Trading.Tests
                 .Returns(Task.FromResult<IReadOnlyList<OrderQueryResult>>(existing))
                 .Verifiable();
 
-            var executor = new EnsureSingleOrderExecutor(logger, balances, orders);
+            var tags = Mock.Of<ITagGenerator>(x => x.Generate(symbol.Name, 1234m) == "SomeTag");
+
+            var executor = new EnsureSingleOrderExecutor(logger, balances, orders, tags);
 
             var cancelOrderExecutor = Mock.Of<IAlgoCommandExecutor<CancelOrderCommand>>();
 

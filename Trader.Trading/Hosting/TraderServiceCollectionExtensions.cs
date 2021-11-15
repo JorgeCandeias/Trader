@@ -1,4 +1,6 @@
-﻿using Orleans;
+﻿using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.ObjectPool;
+using Orleans;
 using Outcompute.Trader.Trading;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Algorithms.Context.Configurators;
@@ -34,6 +36,10 @@ namespace Microsoft.Extensions.DependencyInjection
     {
         public static IServiceCollection AddTradingServices(this IServiceCollection services)
         {
+            // add or reuse object pools
+            services.TryAddSingleton<ObjectPoolProvider, DefaultObjectPoolProvider>();
+            services.TryAddSingleton(sp => sp.GetRequiredService<ObjectPoolProvider>().CreateStringBuilderPool());
+
             return services
 
                 // add watchdog entires
@@ -58,6 +64,10 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddOptions<SavingsOptions>().ValidateDataAnnotations().Services
                 .ConfigureOptions<AlgoDependencyOptionsConfigurator>()
                 .ConfigureOptions<TraderOptionsConfigurator>().AddOptions<TraderOptions>().ValidateDataAnnotations().Services
+
+                // tag generator
+                .AddSingleton<ITagGenerator, TagGenerator>()
+                .AddOptions<TagGenerator>().ValidateDataAnnotations().Services
 
                 // algo options
                 .AddOptions<AlgoOptions>().ValidateDataAnnotations().Services

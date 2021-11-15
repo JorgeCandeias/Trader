@@ -14,13 +14,15 @@ namespace Outcompute.Trader.Trading.Commands.MarketBuy
         private readonly ISavingsProvider _savings;
         private readonly ISwapPoolProvider _swaps;
         private readonly IBalanceProvider _balances;
+        private readonly ITagGenerator _tags;
 
-        public MarketBuyCommandExecutor(ILogger<MarketBuyCommandExecutor> logger, ISavingsProvider savings, ISwapPoolProvider swaps, IBalanceProvider balances)
+        public MarketBuyCommandExecutor(ILogger<MarketBuyCommandExecutor> logger, ISavingsProvider savings, ISwapPoolProvider swaps, IBalanceProvider balances, ITagGenerator tags)
         {
             _logger = logger;
             _savings = savings;
             _swaps = swaps;
             _balances = balances;
+            _tags = tags;
         }
 
         private const string TypeName = nameof(MarketBuyCommandExecutor);
@@ -126,7 +128,8 @@ namespace Outcompute.Trader.Trading.Commands.MarketBuy
             }
 
             // all set
-            await new CreateOrderCommand(context.Symbol, MyOrderType, MyOrderSide, null, quantity, null, null)
+            var tag = _tags.Generate(context.Symbol.Name, 0);
+            await new CreateOrderCommand(context.Symbol, MyOrderType, MyOrderSide, null, quantity, null, tag)
                 .ExecuteAsync(context, cancellationToken)
                 .ConfigureAwait(false);
         }

@@ -6,9 +6,6 @@ using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Commands.RedeemSavings;
 using Outcompute.Trader.Trading.Commands.RedeemSwapPool;
 using Outcompute.Trader.Trading.Providers;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder
 {
@@ -17,12 +14,14 @@ namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder
         private readonly ILogger _logger;
         private readonly IBalanceProvider _balances;
         private readonly IOrderProvider _orders;
+        private readonly ITagGenerator _tags;
 
-        public EnsureSingleOrderExecutor(ILogger<EnsureSingleOrderExecutor> logger, IBalanceProvider balances, IOrderProvider orders)
+        public EnsureSingleOrderExecutor(ILogger<EnsureSingleOrderExecutor> logger, IBalanceProvider balances, IOrderProvider orders, ITagGenerator tags)
         {
             _logger = logger;
             _balances = balances;
             _orders = orders;
+            _tags = tags;
         }
 
         private const string TypeName = nameof(EnsureSingleOrderExecutor);
@@ -117,7 +116,7 @@ namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder
             }
 
             // if we got here then we can place the order
-            var tag = $"{command.Symbol.Name}{command.Price:F8}".Replace(".", "", StringComparison.Ordinal);
+            var tag = _tags.Generate(command.Symbol.Name, command.Price);
             await new CreateOrderCommand(command.Symbol, command.Type, command.Side, command.TimeInForce, command.Quantity, command.Price, tag)
                 .ExecuteAsync(context, cancellationToken)
                 .ConfigureAwait(false);

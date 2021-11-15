@@ -95,6 +95,12 @@ namespace Outcompute.Trader.Trading.Algorithms.Context
         IReadOnlyList<OrderQueryResult> Orders { get; }
 
         /// <summary>
+        /// Gets all historial trades for the default symbol.
+        /// This is only populated if the default symbol is defined.
+        /// </summary>
+        IReadOnlyCollection<AccountTrade> Trades { get; }
+
+        /// <summary>
         /// Gets the klines for the default configuration.
         /// </summary>
         IReadOnlyCollection<Kline> Klines { get; }

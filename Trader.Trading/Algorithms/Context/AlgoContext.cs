@@ -50,6 +50,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Context
 
         public IReadOnlyList<OrderQueryResult> Orders { get; set; } = ImmutableList<OrderQueryResult>.Empty;
 
+        public IReadOnlyCollection<AccountTrade> Trades { get; set; } = ImmutableList<AccountTrade>.Empty;
+
         public IDictionary<(string Symbol, KlineInterval Interval), IReadOnlyCollection<Kline>> KlineLookup { get; } = new Dictionary<(string Symbol, KlineInterval Interval), IReadOnlyCollection<Kline>>();
 
         public IReadOnlyCollection<Kline> Klines { get; set; } = ImmutableList<Kline>.Empty;

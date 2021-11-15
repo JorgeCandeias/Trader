@@ -38,7 +38,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
                 .ToHashSet();
 
             // get all usable savings assets
-            var assets = (await _savings.GetPositionsAsync(cancellationToken))
+            var savings = (await _savings.GetProductsAsync(cancellationToken))
                 .Select(x => x.Asset)
                 .ToHashSet();
 
@@ -47,7 +47,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
 
             // identify all symbols with savings
             var withSavings = symbols
-                .Where(x => assets.Contains(x.QuoteAsset) && assets.Contains(x.BaseAsset))
+                .Where(x => savings.Contains(x.QuoteAsset) && savings.Contains(x.BaseAsset))
                 .Select(x => x.Name)
                 .ToHashSet();
 
@@ -59,7 +59,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
 
             // get all symbols in use
             var used = _dependencies.AllSymbols
-                .Intersect(symbols.Select(x => x.QuoteAsset))
+                .Intersect(symbols.Select(x => x.Name))
                 .ToHashSet();
 
             // identify unused symbols with savings

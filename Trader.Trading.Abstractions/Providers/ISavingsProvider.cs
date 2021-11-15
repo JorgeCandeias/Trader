@@ -1,12 +1,11 @@
 ﻿using Outcompute.Trader.Models;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Providers
 {
     public interface ISavingsProvider
     {
+        ValueTask<IReadOnlyList<SavingsProduct>> GetProductsAsync(CancellationToken cancellationToken = default);
+
         ValueTask<IEnumerable<SavingsPosition>> GetPositionsAsync(CancellationToken cancellationToken = default);
 
         ValueTask<SavingsPosition?> TryGetPositionAsync(string asset, CancellationToken cancellation = default);

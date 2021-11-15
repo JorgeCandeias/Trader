@@ -35,6 +35,8 @@ namespace Outcompute.Trader.Trading.Providers.Savings
 
         #region Cache
 
+        private IReadOnlyList<SavingsProduct> _products = ImmutableList<SavingsProduct>.Empty;
+
         private readonly Dictionary<string, SavingsPosition> _positions = new();
 
         private readonly Dictionary<string, SavingsQuota> _quotas = new();
@@ -91,7 +93,12 @@ namespace Outcompute.Trader.Trading.Providers.Savings
 
         private async Task LoadAsync()
         {
-            // discover the unique assets we care about
+            // load all products
+            _products = (await _trader.GetSavingsProductsAsync(SavingsStatus.All, SavingsFeatured.All, _lifetime.ApplicationStopping))
+                .ToImmutableList();
+
+            // load positions for used assets only
+            // note that some products can have positions yet no declaring product (e.g. bnb on binance)
             var assets = new HashSet<string>();
             foreach (var name in _dependencies.AllSymbols)
             {
@@ -116,6 +123,8 @@ namespace Outcompute.Trader.Trading.Providers.Savings
 
             _logger.LogInformation("{Type} is ready", TypeName);
         }
+
+        public ValueTask<IReadOnlyList<SavingsProduct>> GetProductsAsync() => ValueTask.FromResult(_products);
 
         public ValueTask<IEnumerable<SavingsPosition>> GetPositionsAsync()
         {

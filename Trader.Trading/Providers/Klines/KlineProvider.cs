@@ -1,9 +1,5 @@
 ﻿using Orleans;
 using Outcompute.Trader.Models;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Providers.Klines
 {
@@ -16,14 +12,14 @@ namespace Outcompute.Trader.Trading.Providers.Klines
             _factory = factory;
         }
 
-        public ValueTask<IReadOnlyCollection<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, CancellationToken cancellationToken = default)
+        public ValueTask<IReadOnlyList<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, CancellationToken cancellationToken = default)
         {
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
             return _factory.GetKlineProviderReplicaGrain(symbol, interval).GetKlinesAsync();
         }
 
-        public ValueTask<IReadOnlyCollection<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime tickTime, int periods, CancellationToken cancellationToken = default)
+        public ValueTask<IReadOnlyList<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime tickTime, int periods, CancellationToken cancellationToken = default)
         {
             if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 

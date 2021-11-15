@@ -5,11 +5,7 @@ using Orleans.Concurrency;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Providers.Klines
 {
@@ -94,16 +90,16 @@ namespace Outcompute.Trader.Trading.Providers.Klines
             return ValueTask.FromResult<Kline?>(null);
         }
 
-        public ValueTask<IReadOnlyCollection<Kline>> GetKlinesAsync()
+        public ValueTask<IReadOnlyList<Kline>> GetKlinesAsync()
         {
-            return ValueTask.FromResult<IReadOnlyCollection<Kline>>(_klines.ToImmutable());
+            return ValueTask.FromResult<IReadOnlyList<Kline>>(_klines.ToImmutable());
         }
 
-        public ValueTask<IReadOnlyCollection<Kline>> GetKlinesAsync(DateTime tickTime, int periods)
+        public ValueTask<IReadOnlyList<Kline>> GetKlinesAsync(DateTime tickTime, int periods)
         {
             var result = _klines.Reverse().SkipWhile(x => x.OpenTime > tickTime).Take(periods).ToImmutableSortedSet(KlineComparer.Key);
 
-            return ValueTask.FromResult<IReadOnlyCollection<Kline>>(result);
+            return ValueTask.FromResult<IReadOnlyList<Kline>>(result);
         }
 
         public async ValueTask SetKlineAsync(Kline item)

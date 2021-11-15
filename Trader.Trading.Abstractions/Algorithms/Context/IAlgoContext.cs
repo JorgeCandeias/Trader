@@ -98,17 +98,17 @@ namespace Outcompute.Trader.Trading.Algorithms.Context
         /// Gets all historial trades for the default symbol.
         /// This is only populated if the default symbol is defined.
         /// </summary>
-        IReadOnlyCollection<AccountTrade> Trades { get; }
+        IReadOnlyList<AccountTrade> Trades { get; }
 
         /// <summary>
         /// Gets the klines for the default configuration.
         /// </summary>
-        IReadOnlyCollection<Kline> Klines { get; }
+        IReadOnlyList<Kline> Klines { get; }
 
         /// <summary>
         /// Gets the klines for all configured dependencies.
         /// </summary>
-        IDictionary<(string Symbol, KlineInterval Interval), IReadOnlyCollection<Kline>> KlineLookup { get; }
+        IDictionary<(string Symbol, KlineInterval Interval), IReadOnlyList<Kline>> KlineLookup { get; }
 
         /// <summary>
         /// Makes the context self-update to the latest data.

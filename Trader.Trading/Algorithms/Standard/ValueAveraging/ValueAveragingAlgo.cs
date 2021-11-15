@@ -40,7 +40,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             _rsi = Context.Klines.LastRsi(x => x.ClosePrice, _options.RsiPeriods);
 
             // decide on buying
-            var buyCommand = await TrySignalBuyOrder()
+            var buyCommand = TrySignalBuyOrder()
                 ? CreateBuy()
                 : CancelOpenOrders(Context.Symbol, OrderSide.Buy);
 
@@ -54,13 +54,13 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             return Many(buyCommand, sellCommand);
         }
 
-        private async ValueTask<bool> TrySignalBuyOrder()
+        private bool TrySignalBuyOrder()
         {
             var signal =
                 IsBuyingEnabled() &&
                 (
                     (IsCooled() && IsRsiOversold()) ||
-                    (IsAccumulationEnabled() && await IsTickerOnNextStep())
+                    (IsAccumulationEnabled() && IsTickerOnNextStep())
                 );
 
             if (signal)
@@ -109,7 +109,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             return MarketBuy(Context.Symbol, quantity, _options.RedeemSavings, _options.RedeemSwapPool);
         }
 
-        private async ValueTask<bool> IsTickerOnNextStep()
+        private bool IsTickerOnNextStep()
         {
             // only evaluate this rule if there are positions
             if (Context.PositionDetails.Orders.Count == 0)
@@ -118,9 +118,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             }
 
             // only evaluate this rule if the last trade was a buy trade
-            // todo: refactor this into the context
-            var trades = await Context.GetTradeProvider().GetTradesAsync(Context.Symbol.Name);
-            if (!(trades.Count > 0 && trades[trades.Count - 1].IsBuyer))
+            if (!(Context.Trades.Count > 0 && Context.Trades[Context.Trades.Count - 1].IsBuyer))
             {
                 return false;
             }

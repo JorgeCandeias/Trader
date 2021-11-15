@@ -10,6 +10,7 @@
 		<AssemblyName>Outcompute.Trader.Trading.Binance</AssemblyName>
 		<RootNamespace>Outcompute.Trader.Trading.Binance</RootNamespace>
 		<Description>Outcompute Trader exchange provider for Binance</Description>
+		<ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>
 
 	<ItemGroup>

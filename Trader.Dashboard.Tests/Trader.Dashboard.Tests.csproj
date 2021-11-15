@@ -2,12 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-
+	<Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
-
     <AssemblyName>Outcompute.Trader.Dashboard.Tests</AssemblyName>
-
-    <RootNamespace>Outcompute.Trader.Dashboard.Tests</RootNamespace>
+	<ImplicitUsings>enable</ImplicitUsings>
+	<RootNamespace>Outcompute.Trader.Dashboard.Tests</RootNamespace>
+	<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+	<EnableNETAnalyzers>True</EnableNETAnalyzers>
   </PropertyGroup>
 
   <ItemGroup>

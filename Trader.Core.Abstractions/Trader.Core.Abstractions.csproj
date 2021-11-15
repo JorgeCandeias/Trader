@@ -10,6 +10,7 @@
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     <AssemblyName>Outcompute.Trader.Core.Abstractions</AssemblyName>
     <Description>Core abstractions library of Outcompute Trader, a real-time algorithmic trading framework.</Description>
+    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <ItemGroup>

@@ -11,6 +11,7 @@
 		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
 		<IsPackable>true</IsPackable>
 		<Description>An admin dashboard for Outcompute Trader, a real-time algorithmic trading framework.</Description>
+		<ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>
 
 	<ItemGroup>

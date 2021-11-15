@@ -8,6 +8,12 @@
     <AssemblyName>Outcompute.Trader.Data.InMemory.Tests</AssemblyName>
 
     <RootNamespace>Outcompute.Trader.Data.InMemory.Tests</RootNamespace>
+
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+
+    <EnableNETAnalyzers>True</EnableNETAnalyzers>
   </PropertyGroup>
 
   <ItemGroup>

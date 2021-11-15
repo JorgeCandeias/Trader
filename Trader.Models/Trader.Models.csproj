@@ -10,6 +10,7 @@
 		<AssemblyName>Outcompute.Trader.Models</AssemblyName>
 		<RootNamespace>Outcompute.Trader.Models</RootNamespace>
 		<Description>Models library of Outcompute Trader, a real-time algorithmic trading framework.</Description>
+		<ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>
 
 	<ItemGroup>

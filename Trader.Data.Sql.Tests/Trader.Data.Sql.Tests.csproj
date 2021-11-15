@@ -10,6 +10,7 @@
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AssemblyName>Outcompute.Trader.Data.Sql.Tests</AssemblyName>
     <RootNamespace>Outcompute.Trader.Data.Sql.Tests</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

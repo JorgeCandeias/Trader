@@ -9,6 +9,7 @@
 		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
 		<AssemblyName>Outcompute.Trader.Trading.Tests</AssemblyName>
 		<RootNamespace>Outcompute.Trader.Trading.Tests</RootNamespace>
+		<ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

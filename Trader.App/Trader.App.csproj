@@ -12,6 +12,7 @@
     <AssemblyName>Outcompute.Trader.App</AssemblyName>
     <RootNamespace>Outcompute.Trader.App</RootNamespace>
     <Description>Test application of Outcompute Trader, a real-time algorithmic trading framework.</Description>
+    <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <NoWarn>1701;1702;CA1812</NoWarn>

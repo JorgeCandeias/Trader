@@ -10,6 +10,7 @@
 		<AssemblyName>Outcompute.Trader.Core</AssemblyName>
 		<RootNamespace>Outcompute.Trader.Core</RootNamespace>
 		<Description>Core library of Outcompute Trader, a real-time algorithmic trading framework.</Description>
+		<ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

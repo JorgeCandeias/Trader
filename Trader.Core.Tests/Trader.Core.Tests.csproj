@@ -6,7 +6,7 @@
 		<Nullable>enable</Nullable>
 		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 		<EnableNETAnalyzers>true</EnableNETAnalyzers>
-		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
+		<ImplicitUsings>enable</ImplicitUsings>
 		<AssemblyName>Outcompute.Trader.Core.Tests</AssemblyName>
 		<RootNamespace>Outcompute.Trader.Core.Tests</RootNamespace>
 	</PropertyGroup>

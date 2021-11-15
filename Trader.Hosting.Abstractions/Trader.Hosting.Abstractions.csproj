@@ -9,6 +9,7 @@
 		<AnalysisMode>AllEnabledByDefault</AnalysisMode>
 		<AssemblyName>Outcompute.Trader.Hosting.Abstractions</AssemblyName>
 		<Description>Hosting abstractions library of Outcompute Trader, a real-time algorithmic trading framework.</Description>
+		<ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>
 
 	<ItemGroup>

@@ -35,7 +35,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
                 .Where(x => x.IsSpotTradingAllowed)
                 .Where(x => options.QuoteAssets.Contains(x.QuoteAsset))
                 .Where(x => !options.IgnoreSymbols.Contains(x.Name))
-                .ToList();
+                .ToHashSet();
 
             // get all usable savings assets
             var assets = (await _savings.GetPositionsAsync(cancellationToken))
@@ -58,66 +58,63 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
                 .ToHashSet();
 
             // get all symbols in use
-            var used = _dependencies.AllSymbols;
+            var used = _dependencies.AllSymbols
+                .Intersect(symbols.Select(x => x.QuoteAsset))
+                .ToHashSet();
 
             // identify unused symbols with savings
             var unusedWithSavings = withSavings
-                .Except(used)
-                .ToList();
+                .Except(used);
 
-            LogIdentifiedUnusedSymbolsWithSavings(TypeName, unusedWithSavings.Count, unusedWithSavings);
+            LogIdentifiedUnusedSymbolsWithSavings(TypeName, unusedWithSavings);
 
             // identify unused symbols with swap pools
             var unusedWithSwapPools = withSwapPools
-                .Except(used)
-                .ToList();
+                .Except(used);
 
-            LogIdentifiedUnusedSymbolsWithSwapPools(TypeName, unusedWithSwapPools.Count, unusedWithSwapPools);
+            LogIdentifiedUnusedSymbolsWithSwapPools(TypeName, unusedWithSwapPools);
 
             // identify used symbols without savings
             var usedWithoutSavings = used
                 .Except(options.IgnoreSymbols)
-                .Except(withSavings)
-                .ToList();
+                .Except(withSavings);
 
-            LogIdentifiedUsedSymbolsWithoutSavings(TypeName, usedWithoutSavings.Count, usedWithoutSavings);
+            LogIdentifiedUsedSymbolsWithoutSavings(TypeName, usedWithoutSavings);
 
             // identify used symbols without swap pools
             var usedWithoutSwapPools = used
                 .Except(options.IgnoreSymbols)
-                .Except(withSwapPools)
-                .ToList();
+                .Except(withSwapPools);
 
-            LogIdentifiedUsedSymbolsWithoutSwapPools(TypeName, usedWithoutSwapPools.Count, usedWithoutSwapPools);
+            LogIdentifiedUsedSymbolsWithoutSwapPools(TypeName, usedWithoutSwapPools);
 
             // identify used symbols without savings or swap pools
             var risky = used
                 .Except(options.IgnoreSymbols)
                 .Except(withSavings)
-                .Except(withSwapPools)
-                .ToList();
+                .Except(withSwapPools);
 
-            LogIdentifiedUsedSymbolsWithoutSavingsOrSwapPools(TypeName, risky.Count, risky);
+            LogIdentifiedUsedSymbolsWithoutSavingsOrSwapPools(TypeName, risky);
 
             return Noop();
         }
 
         #region Logging
 
-        [LoggerMessage(0, LogLevel.Information, "{TypeName} identified {Count} unused symbols with savings: {Symbols}")]
-        private partial void LogIdentifiedUnusedSymbolsWithSavings(string typeName, int count, IEnumerable<string> symbols);
+        [LoggerMessage(0, LogLevel.Information, "{TypeName} identified unused symbols with savings: {Symbols}")]
+        private partial void LogIdentifiedUnusedSymbolsWithSavings(string typeName, IEnumerable<string> symbols);
 
-        [LoggerMessage(0, LogLevel.Information, "{TypeName} identified {Count} unused symbols with swap pools: {Symbols}")]
-        private partial void LogIdentifiedUnusedSymbolsWithSwapPools(string typeName, int count, IEnumerable<string> symbols);
+        [LoggerMessage(0, LogLevel.Information, "{TypeName} identified unused symbols with swap pools: {Symbols}")]
+        private partial void LogIdentifiedUnusedSymbolsWithSwapPools(string typeName, IEnumerable<string> symbols);
 
-        [LoggerMessage(0, LogLevel.Information, "{TypeName} identified {Count} used symbols without savings: {Symbols}")]
-        private partial void LogIdentifiedUsedSymbolsWithoutSavings(string typeName, int count, IEnumerable<string> symbols);
+        [LoggerMessage(0, LogLevel.Information, "{TypeName} identified used symbols without savings: {Symbols}")]
+        private partial void LogIdentifiedUsedSymbolsWithoutSavings(string typeName, IEnumerable<string> symbols);
 
-        [LoggerMessage(0, LogLevel.Information, "{TypeName} identified {Count} used symbols without swap pools: {Symbols}")]
-        private partial void LogIdentifiedUsedSymbolsWithoutSwapPools(string typeName, int count, IEnumerable<string> symbols);
+        [LoggerMessage(0, LogLevel.Information, "{TypeName} identified used symbols without swap pools: {Symbols}")]
+        private partial void LogIdentifiedUsedSymbolsWithoutSwapPools(string typeName, IEnumerable<string> symbols);
 
-        [LoggerMessage(0, LogLevel.Information, "{TypeName} identified {Count} used symbols without savings or swap pools: {Symbols}")]
-        private partial void LogIdentifiedUsedSymbolsWithoutSavingsOrSwapPools(string typeName, int count, IEnumerable<string> symbols);
+        [LoggerMessage(0, LogLevel.Information, "{TypeName} identified used symbols without savings or swap pools: {Symbols}")]
+        private partial void LogIdentifiedUsedSymbolsWithoutSavingsOrSwapPools(string typeName, IEnumerable<string> symbols);
 
         #endregion Logging
     }

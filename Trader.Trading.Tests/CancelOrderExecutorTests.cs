@@ -2,11 +2,9 @@
 using Moq;
 using Outcompute.Trader.Core;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Providers;
-using System.Threading;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests

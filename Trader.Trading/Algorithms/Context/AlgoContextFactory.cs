@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Outcompute.Trader.Trading.Algorithms
+﻿namespace Outcompute.Trader.Trading.Algorithms.Context
 {
     internal class AlgoContextFactory : IAlgoContextFactory
     {

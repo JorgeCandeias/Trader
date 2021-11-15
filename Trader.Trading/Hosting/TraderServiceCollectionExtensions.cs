@@ -3,6 +3,7 @@ using Microsoft.Extensions.ObjectPool;
 using Orleans;
 using Outcompute.Trader.Trading;
 using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Algorithms.Context.Configurators;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Commands.AveragingSell;

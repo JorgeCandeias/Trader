@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Commands.RedeemSavings;

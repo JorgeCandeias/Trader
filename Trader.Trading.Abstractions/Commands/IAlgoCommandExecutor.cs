@@ -1,4 +1,4 @@
-﻿using Outcompute.Trader.Trading.Algorithms;
+﻿using Outcompute.Trader.Trading.Algorithms.Context;
 using System.Threading;
 using System.Threading.Tasks;
 

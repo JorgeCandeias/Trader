@@ -1,7 +1,4 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-
-namespace Outcompute.Trader.Trading.Algorithms
+﻿namespace Outcompute.Trader.Trading.Algorithms.Context
 {
     public interface IAlgoContextConfigurator<in TAlgoContext>
         where TAlgoContext : IAlgoContext

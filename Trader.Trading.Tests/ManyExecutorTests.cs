@@ -1,5 +1,5 @@
 ﻿using Moq;
-using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Commands.Many;
 using System.Threading;

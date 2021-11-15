@@ -1,4 +1,4 @@
-﻿using Outcompute.Trader.Trading.Algorithms;
+﻿using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Providers;
 
 namespace Outcompute.Trader.Trading.Commands.CancelOpenOrders

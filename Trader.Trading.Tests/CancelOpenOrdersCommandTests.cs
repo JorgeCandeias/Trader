@@ -1,11 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Commands.CancelOpenOrders;
-using System.Threading;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests

@@ -1,7 +1,7 @@
 ﻿using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
 
-namespace Outcompute.Trader.Trading.Algorithms
+namespace Outcompute.Trader.Trading.Algorithms.Context
 {
     public interface IAlgoContext
     {

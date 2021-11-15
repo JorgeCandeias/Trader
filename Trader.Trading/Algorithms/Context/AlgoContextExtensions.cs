@@ -1,4 +1,4 @@
-﻿namespace Outcompute.Trader.Trading.Algorithms
+﻿namespace Outcompute.Trader.Trading.Algorithms.Context
 {
     public static class AlgoContextExtensions
     {

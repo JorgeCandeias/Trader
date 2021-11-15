@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands.CancelOpenOrders;
 using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
 

@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands;
 using System.Diagnostics.CodeAnalysis;
 

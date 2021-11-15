@@ -4,7 +4,7 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
 using System.Collections.Immutable;
 
-namespace Outcompute.Trader.Trading.Algorithms
+namespace Outcompute.Trader.Trading.Algorithms.Context
 {
     internal class AlgoContext : IAlgoContext
     {

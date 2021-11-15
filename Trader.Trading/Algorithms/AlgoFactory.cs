@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Outcompute.Trader.Trading.Algorithms.Context;
 using System;
 
 namespace Outcompute.Trader.Trading.Algorithms

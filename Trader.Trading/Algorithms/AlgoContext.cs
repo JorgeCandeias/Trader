@@ -50,7 +50,7 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public IDictionary<(string Symbol, KlineInterval Interval), IReadOnlyCollection<Kline>> KlineLookup { get; } = new Dictionary<(string Symbol, KlineInterval Interval), IReadOnlyCollection<Kline>>();
 
-        public IReadOnlyCollection<Kline> Klines { get; set; }
+        public IReadOnlyCollection<Kline> Klines { get; set; } = ImmutableList<Kline>.Empty;
 
         public async ValueTask UpdateAsync(CancellationToken cancellationToken = default)
         {

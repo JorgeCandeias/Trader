@@ -29,7 +29,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         private decimal _rsi;
 
         [SuppressMessage("Major Code Smell", "S3358:Ternary operators should not be nested", Justification = "N/A")]
-        protected override async ValueTask<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default)
+        protected override ValueTask<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default)
         {
             // calculate the current moving averages
             _smaA = Context.Klines.LastSma(x => x.ClosePrice, _options.SmaPeriodsA);
@@ -51,7 +51,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
                     : SignificantAveragingSell(Context.Symbol, Context.Ticker, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool)
                 : CancelOpenOrders(Context.Symbol, OrderSide.Sell, 0.01M);
 
-            return Many(buyCommand, sellCommand);
+            return Many(buyCommand, sellCommand).AsValueTaskResult();
         }
 
         private bool TrySignalBuyOrder()

@@ -1,9 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder
 {

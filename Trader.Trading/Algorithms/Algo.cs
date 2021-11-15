@@ -1,8 +1,8 @@
 ﻿using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Commands.AveragingSell;
+using Outcompute.Trader.Trading.Commands.CancelOpenOrders;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
-using Outcompute.Trader.Trading.Commands.ClearOpenOrders;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
 using Outcompute.Trader.Trading.Commands.Many;
@@ -85,9 +85,9 @@ namespace Outcompute.Trader.Trading.Algorithms
             return new EnsureSingleOrderCommand(symbol, side, type, timeInForce, quantity, price, redeemSavings, redeemSwapPool);
         }
 
-        public virtual IAlgoCommand ClearOpenOrders(Symbol symbol, OrderSide side)
+        public virtual IAlgoCommand CancelOpenOrders(Symbol symbol, OrderSide side, decimal? distance = null)
         {
-            return new ClearOpenOrdersCommand(symbol, side);
+            return new CancelOpenOrdersCommand(symbol, side, distance);
         }
 
         public virtual IAlgoCommand TryRedeemSavings(string asset, decimal amount)

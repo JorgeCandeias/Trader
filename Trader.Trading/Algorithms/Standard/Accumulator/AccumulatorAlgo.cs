@@ -26,7 +26,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Accumulator
 
             var buyCommand = TrySignalBuy(options, rsi)
                 ? TrackingBuy(Context.Symbol, 1.000M, 0.001M, null, true, true)
-                : ClearOpenOrders(Context.Symbol, OrderSide.Buy);
+                : CancelOpenOrders(Context.Symbol, OrderSide.Buy);
 
             var sellCommand = TrySignalSell(options)
                 ? MarketSell(Context.Symbol, Context.PositionDetails.Orders.Sum(x => x.ExecutedQuantity), true, true)

@@ -5,7 +5,7 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Commands.AveragingSell;
-using Outcompute.Trader.Trading.Commands.ClearOpenOrders;
+using Outcompute.Trader.Trading.Commands.CancelOpenOrders;
 using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
 using System;
 using System.Threading;
@@ -47,7 +47,7 @@ namespace Outcompute.Trader.Trading.Tests
 
             var executor = new AveragingSellExecutor(logger);
 
-            var clearOpenOrdersCommandExecutor = Mock.Of<IAlgoCommandExecutor<ClearOpenOrdersCommand>>();
+            var clearOpenOrdersCommandExecutor = Mock.Of<IAlgoCommandExecutor<CancelOpenOrdersCommand>>();
             var singleOrderCommandExecutor = Mock.Of<IAlgoCommandExecutor<EnsureSingleOrderCommand>>();
             var provider = new ServiceCollection()
                 .AddSingleton(clearOpenOrdersCommandExecutor)

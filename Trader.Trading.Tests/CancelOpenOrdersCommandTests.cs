@@ -3,14 +3,14 @@ using Moq;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Commands;
-using Outcompute.Trader.Trading.Commands.ClearOpenOrders;
+using Outcompute.Trader.Trading.Commands.CancelOpenOrders;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
 {
-    public class ClearOpenOrdersCommandTests
+    public class CancelOpenOrdersCommandTests
     {
         [Fact]
         public async Task Executes()
@@ -18,8 +18,8 @@ namespace Outcompute.Trader.Trading.Tests
             // arrange
             var symbol = Symbol.Empty with { Name = "ABCXYZ" };
             var side = OrderSide.Sell;
-            var command = new ClearOpenOrdersCommand(symbol, side);
-            var executor = Mock.Of<IAlgoCommandExecutor<ClearOpenOrdersCommand>>();
+            var command = new CancelOpenOrdersCommand(symbol, side);
+            var executor = Mock.Of<IAlgoCommandExecutor<CancelOpenOrdersCommand>>();
             var provider = new ServiceCollection()
                 .AddSingleton(executor)
                 .BuildServiceProvider();

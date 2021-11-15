@@ -6,8 +6,8 @@ using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Algorithms.Context.Configurators;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Commands.AveragingSell;
+using Outcompute.Trader.Trading.Commands.CancelOpenOrders;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
-using Outcompute.Trader.Trading.Commands.ClearOpenOrders;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
 using Outcompute.Trader.Trading.Commands.Many;
@@ -123,7 +123,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 // commands
                 .AddSingleton<IAlgoCommandExecutor<AveragingSellCommand>, AveragingSellExecutor>()
                 .AddSingleton<IAlgoCommandExecutor<CancelOrderCommand>, CancelOrderExecutor>()
-                .AddSingleton<IAlgoCommandExecutor<ClearOpenOrdersCommand>, ClearOpenOrdersExecutor>()
+                .AddSingleton<IAlgoCommandExecutor<CancelOpenOrdersCommand>, CancelOpenOrdersExecutor>()
                 .AddSingleton<IAlgoCommandExecutor<CreateOrderCommand>, CreateOrderExecutor>()
                 .AddSingleton<IAlgoCommandExecutor<EnsureSingleOrderCommand>, EnsureSingleOrderExecutor>()
                 .AddSingleton<IAlgoCommandExecutor<ManyCommand>, ManyExecutor>()
@@ -133,6 +133,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<IAlgoCommandExecutor<RedeemSwapPoolCommand, RedeemSwapPoolEvent>, RedeemSwapPoolExecutor>()
                 .AddSingleton<IAlgoCommandExecutor<MarketSellCommand>, MarketSellCommandExecutor>()
                 .AddSingleton<IAlgoCommandExecutor<MarketBuyCommand>, MarketBuyCommandExecutor>()
+                .AddSingleton<IAlgoCommandExecutor<CancelOpenOrdersCommand>, CancelOpenOrdersExecutor>()
 
                 // builtin algos
                 .AddAccumulatorAlgoType()

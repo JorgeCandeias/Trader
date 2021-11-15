@@ -1,22 +1,20 @@
 ﻿using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Providers;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Commands.ClearOpenOrders
+namespace Outcompute.Trader.Trading.Commands.CancelOpenOrders
 {
-    internal class ClearOpenOrdersExecutor : IAlgoCommandExecutor<ClearOpenOrdersCommand>
+    internal class CancelOpenOrdersExecutor : IAlgoCommandExecutor<CancelOpenOrdersCommand>
     {
         private readonly ITradingService _trader;
         private readonly IOrderProvider _orders;
 
-        public ClearOpenOrdersExecutor(ITradingService trader, IOrderProvider orders)
+        public CancelOpenOrdersExecutor(ITradingService trader, IOrderProvider orders)
         {
             _trader = trader;
             _orders = orders;
         }
 
-        public async ValueTask ExecuteAsync(IAlgoContext context, ClearOpenOrdersCommand command, CancellationToken cancellationToken = default)
+        public async ValueTask ExecuteAsync(IAlgoContext context, CancelOpenOrdersCommand command, CancellationToken cancellationToken = default)
         {
             var orders = await _orders
                 .GetOrdersByFilterAsync(command.Symbol.Name, command.Side, true, null, cancellationToken)
@@ -24,6 +22,16 @@ namespace Outcompute.Trader.Trading.Commands.ClearOpenOrders
 
             foreach (var order in orders)
             {
+                // evaluate the distance rule
+                if (command.Distance.HasValue)
+                {
+                    var distance = Math.Abs((order.Price - context.Ticker.ClosePrice) / context.Ticker.ClosePrice);
+                    if (distance <= command.Distance.Value)
+                    {
+                        continue;
+                    }
+                }
+
                 var cancelled = await _trader
                     .CancelOrderAsync(command.Symbol.Name, order.OrderId, cancellationToken)
                     .ConfigureAwait(false);

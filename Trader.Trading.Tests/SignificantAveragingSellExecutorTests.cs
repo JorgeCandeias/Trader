@@ -4,7 +4,7 @@ using Moq;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Commands;
-using Outcompute.Trader.Trading.Commands.ClearOpenOrders;
+using Outcompute.Trader.Trading.Commands.CancelOpenOrders;
 using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
 using Outcompute.Trader.Trading.Commands.SignificantAveragingSell;
 using System;
@@ -22,7 +22,7 @@ namespace Outcompute.Trader.Trading.Tests
             // arrange
             var logger = NullLogger<SignificantAveragingSellExecutor>.Instance;
             var executor = new SignificantAveragingSellExecutor(logger);
-            var clearOpenOrdersExecutor = Mock.Of<IAlgoCommandExecutor<ClearOpenOrdersCommand>>();
+            var clearOpenOrdersExecutor = Mock.Of<IAlgoCommandExecutor<CancelOpenOrdersCommand>>();
             var provider = new ServiceCollection()
                 .AddSingleton(clearOpenOrdersExecutor)
                 .BuildServiceProvider();
@@ -49,7 +49,7 @@ namespace Outcompute.Trader.Trading.Tests
 
             // assert
             Mock.Get(clearOpenOrdersExecutor)
-                .Verify(x => x.ExecuteAsync(context, It.Is<ClearOpenOrdersCommand>(x => x.Side == OrderSide.Sell && x.Symbol == symbol), CancellationToken.None));
+                .Verify(x => x.ExecuteAsync(context, It.Is<CancelOpenOrdersCommand>(x => x.Side == OrderSide.Sell && x.Symbol == symbol), CancellationToken.None));
         }
 
         [Fact]
@@ -58,7 +58,7 @@ namespace Outcompute.Trader.Trading.Tests
             // arrange
             var logger = NullLogger<SignificantAveragingSellExecutor>.Instance;
             var executor = new SignificantAveragingSellExecutor(logger);
-            var clearOpenOrdersExecutor = Mock.Of<IAlgoCommandExecutor<ClearOpenOrdersCommand>>();
+            var clearOpenOrdersExecutor = Mock.Of<IAlgoCommandExecutor<CancelOpenOrdersCommand>>();
             var provider = new ServiceCollection()
                 .AddSingleton(clearOpenOrdersExecutor)
                 .BuildServiceProvider();
@@ -101,7 +101,7 @@ namespace Outcompute.Trader.Trading.Tests
 
             // assert
             Mock.Get(clearOpenOrdersExecutor)
-                .Verify(x => x.ExecuteAsync(context, It.Is<ClearOpenOrdersCommand>(x => x.Side == OrderSide.Sell && x.Symbol == symbol), CancellationToken.None));
+                .Verify(x => x.ExecuteAsync(context, It.Is<CancelOpenOrdersCommand>(x => x.Side == OrderSide.Sell && x.Symbol == symbol), CancellationToken.None));
         }
 
         [Fact]
@@ -110,7 +110,7 @@ namespace Outcompute.Trader.Trading.Tests
             // arrange
             var logger = NullLogger<SignificantAveragingSellExecutor>.Instance;
             var executor = new SignificantAveragingSellExecutor(logger);
-            var clearOpenOrdersExecutor = Mock.Of<IAlgoCommandExecutor<ClearOpenOrdersCommand>>();
+            var clearOpenOrdersExecutor = Mock.Of<IAlgoCommandExecutor<CancelOpenOrdersCommand>>();
             var provider = new ServiceCollection()
                 .AddSingleton(clearOpenOrdersExecutor)
                 .BuildServiceProvider();
@@ -165,7 +165,7 @@ namespace Outcompute.Trader.Trading.Tests
 
             // assert
             Mock.Get(clearOpenOrdersExecutor)
-                .Verify(x => x.ExecuteAsync(context, It.Is<ClearOpenOrdersCommand>(x => x.Side == OrderSide.Sell && x.Symbol == symbol), CancellationToken.None));
+                .Verify(x => x.ExecuteAsync(context, It.Is<CancelOpenOrdersCommand>(x => x.Side == OrderSide.Sell && x.Symbol == symbol), CancellationToken.None));
         }
 
         [Fact]
@@ -174,7 +174,7 @@ namespace Outcompute.Trader.Trading.Tests
             // arrange
             var logger = NullLogger<SignificantAveragingSellExecutor>.Instance;
             var executor = new SignificantAveragingSellExecutor(logger);
-            var clearOpenOrdersExecutor = Mock.Of<IAlgoCommandExecutor<ClearOpenOrdersCommand>>();
+            var clearOpenOrdersExecutor = Mock.Of<IAlgoCommandExecutor<CancelOpenOrdersCommand>>();
             var provider = new ServiceCollection()
                 .AddSingleton(clearOpenOrdersExecutor)
                 .BuildServiceProvider();
@@ -233,7 +233,7 @@ namespace Outcompute.Trader.Trading.Tests
 
             // assert
             Mock.Get(clearOpenOrdersExecutor)
-                .Verify(x => x.ExecuteAsync(context, It.Is<ClearOpenOrdersCommand>(x => x.Side == OrderSide.Sell && x.Symbol == symbol), CancellationToken.None));
+                .Verify(x => x.ExecuteAsync(context, It.Is<CancelOpenOrdersCommand>(x => x.Side == OrderSide.Sell && x.Symbol == symbol), CancellationToken.None));
         }
 
         [Fact]
@@ -242,7 +242,7 @@ namespace Outcompute.Trader.Trading.Tests
             // arrange
             var logger = NullLogger<SignificantAveragingSellExecutor>.Instance;
             var executor = new SignificantAveragingSellExecutor(logger);
-            var clearOpenOrdersExecutor = Mock.Of<IAlgoCommandExecutor<ClearOpenOrdersCommand>>();
+            var clearOpenOrdersExecutor = Mock.Of<IAlgoCommandExecutor<CancelOpenOrdersCommand>>();
             var ensureSingleOrderExecutor = Mock.Of<IAlgoCommandExecutor<EnsureSingleOrderCommand>>();
             var provider = new ServiceCollection()
                 .AddSingleton(clearOpenOrdersExecutor)

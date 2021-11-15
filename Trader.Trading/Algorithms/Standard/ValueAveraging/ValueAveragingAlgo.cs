@@ -41,14 +41,14 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             // decide on buying
             var buyCommand = await TrySignalBuyOrder()
                 ? CreateBuy()
-                : ClearOpenOrders(Context.Symbol, OrderSide.Buy);
+                : CancelOpenOrders(Context.Symbol, OrderSide.Buy);
 
             // decide on selling
             var sellCommand = TrySignalSellOrder()
                 ? IsClosingEnabled()
                     ? AveragingSell(Context.Symbol, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool, _options.TopUpUnsellablePositionWithBalance)
                     : SignificantAveragingSell(Context.Symbol, Context.Ticker, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool)
-                : ClearOpenOrders(Context.Symbol, OrderSide.Sell);
+                : CancelOpenOrders(Context.Symbol, OrderSide.Sell, 0.01M);
 
             return Many(buyCommand, sellCommand);
         }

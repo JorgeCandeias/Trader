@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
-using Outcompute.Trader.Trading.Commands.ClearOpenOrders;
+using Outcompute.Trader.Trading.Commands.CancelOpenOrders;
 using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
 
 namespace Outcompute.Trader.Trading.Commands.AveragingSell
@@ -25,7 +25,7 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
             // apply the desired sell
             if (desired == DesiredSell.None)
             {
-                await new ClearOpenOrdersCommand(command.Symbol, OrderSide.Sell)
+                await new CancelOpenOrdersCommand(command.Symbol, OrderSide.Sell)
                     .ExecuteAsync(context, cancellationToken)
                     .ConfigureAwait(false);
             }

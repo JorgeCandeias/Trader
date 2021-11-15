@@ -1,16 +1,13 @@
 ﻿using Moq;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
-using Outcompute.Trader.Trading.Commands.ClearOpenOrders;
+using Outcompute.Trader.Trading.Commands.CancelOpenOrders;
 using Outcompute.Trader.Trading.Providers;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
 {
-    public class ClearOpenOrdersExecutorTests
+    public class CancelOpenOrdersExecutorTests
     {
         [Fact]
         public async Task Executes()
@@ -34,9 +31,9 @@ namespace Outcompute.Trader.Trading.Tests
             Mock.Get(orders)
                 .Setup(x => x.SetOrderAsync(cancelled, CancellationToken.None))
                 .Verifiable();
-            var executor = new ClearOpenOrdersExecutor(trader, orders);
+            var executor = new CancelOpenOrdersExecutor(trader, orders);
             var context = AlgoContext.Empty;
-            var command = new ClearOpenOrdersCommand(symbol, side);
+            var command = new CancelOpenOrdersCommand(symbol, side);
 
             // act
             await executor.ExecuteAsync(context, command);

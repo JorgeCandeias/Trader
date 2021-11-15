@@ -151,7 +151,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         private bool IsRsiOversold()
         {
-            var indicator = _rsi < _options.RsiOversold;
+            var indicator = _rsi <= _options.RsiOversold;
 
             LogRsiOversold(TypeName, Context.Name, _options.RsiPeriods, _rsi, indicator);
 
@@ -160,7 +160,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         private bool IsRsiOverbought()
         {
-            var indicator = _rsi > _options.RsiOverbought;
+            var indicator = _rsi >= _options.RsiOverbought;
 
             LogRsiOverbought(TypeName, Context.Name, _options.RsiPeriods, _rsi, indicator);
 

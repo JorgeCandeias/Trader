@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Outcompute.Trader.Trading.Providers.Exchange
 {
@@ -18,5 +17,12 @@ namespace Outcompute.Trader.Trading.Providers.Exchange
         [Required]
         [Range(typeof(TimeSpan), "0.00:00:01.000", "1.00:00:00.000")]
         public TimeSpan PropagationPeriod { get; set; } = TimeSpan.FromSeconds(1);
+
+        /// <summary>
+        /// Timeout for the underlying trader service call.
+        /// </summary>
+        [Required]
+        [Range(typeof(TimeSpan), "0.00:00:01.000", "1.00:00:00.000")]
+        public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(10);
     }
 }

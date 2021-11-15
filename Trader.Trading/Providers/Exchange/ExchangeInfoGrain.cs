@@ -1,10 +1,7 @@
-﻿using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Concurrency;
 using Outcompute.Trader.Models;
-using System;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Providers.Exchange
 {
@@ -13,13 +10,11 @@ namespace Outcompute.Trader.Trading.Providers.Exchange
     {
         private readonly ExchangeInfoOptions _options;
         private readonly ITradingService _trader;
-        private readonly IHostApplicationLifetime _lifetime;
 
-        public ExchangeInfoGrain(IOptions<ExchangeInfoOptions> options, ITradingService trader, IHostApplicationLifetime lifetime)
+        public ExchangeInfoGrain(IOptions<ExchangeInfoOptions> options, ITradingService trader)
         {
             _options = options.Value;
             _trader = trader;
-            _lifetime = lifetime;
         }
 
         private ExchangeInfo _info = ExchangeInfo.Empty;
@@ -36,7 +31,9 @@ namespace Outcompute.Trader.Trading.Providers.Exchange
 
         private async Task Refresh()
         {
-            _info = await _trader.GetExchangeInfoAsync(_lifetime.ApplicationStopping);
+            using var timeout = new CancellationTokenSource(_options.Timeout);
+
+            _info = await _trader.GetExchangeInfoAsync(timeout.Token);
 
             _version = Guid.NewGuid();
         }

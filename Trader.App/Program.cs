@@ -83,7 +83,7 @@ namespace Outcompute.Trader.App
                         })
 
                         .WriteTo.Console()
-                        .WriteTo.Async(x => x.File(@"./logs/log.txt", rollingInterval: RollingInterval.Hour))
+                        //.WriteTo.Async(x => x.File(@"./logs/log.txt", rollingInterval: RollingInterval.Hour, rollOnFileSizeLimit: true))
                         .CreateLogger(), true);
                 })
                 .UseOrleans((context, orleans) =>

@@ -1,9 +1,5 @@
 ﻿using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
@@ -38,6 +34,11 @@ namespace Outcompute.Trader.Trading.Algorithms
         /// The default kline interval periods for the algo.
         /// </summary>
         int KlinePeriods { get; }
+
+        /// <summary>
+        /// The current exchange information.
+        /// </summary>
+        ExchangeInfo ExchangeInfo { get; }
 
         /// <summary>
         /// The current significant asset information for the default symbol.

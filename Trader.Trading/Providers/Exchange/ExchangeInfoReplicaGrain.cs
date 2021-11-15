@@ -32,16 +32,16 @@ namespace Outcompute.Trader.Trading.Providers.Exchange
             await base.OnActivateAsync();
         }
 
-        public Task<ExchangeInfo> GetExchangeInfoAsync()
+        public ValueTask<ExchangeInfo> GetExchangeInfoAsync()
         {
-            return Task.FromResult(_info);
+            return ValueTask.FromResult(_info);
         }
 
-        public Task<Symbol?> TryGetSymbolAsync(string name)
+        public ValueTask<Symbol?> TryGetSymbolAsync(string name)
         {
             var symbol = _symbols.TryGetValue(name, out var value) ? value : null;
 
-            return Task.FromResult(symbol);
+            return ValueTask.FromResult(symbol);
         }
 
         private async Task RefreshAsync()

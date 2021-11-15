@@ -1,7 +1,5 @@
 ﻿using Orleans;
 using Outcompute.Trader.Models;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Providers.Exchange
 {
@@ -14,12 +12,12 @@ namespace Outcompute.Trader.Trading.Providers.Exchange
             _grain = factory.GetExchangeInfoReplicaGrain();
         }
 
-        public Task<ExchangeInfo> GetExchangeInfoAsync(CancellationToken cancellationToken = default)
+        public ValueTask<ExchangeInfo> GetExchangeInfoAsync(CancellationToken cancellationToken = default)
         {
             return _grain.GetExchangeInfoAsync();
         }
 
-        public Task<Symbol?> TryGetSymbolAsync(string name, CancellationToken cancellationToken = default)
+        public ValueTask<Symbol?> TryGetSymbolAsync(string name, CancellationToken cancellationToken = default)
         {
             return _grain.TryGetSymbolAsync(name);
         }

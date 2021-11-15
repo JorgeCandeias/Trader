@@ -30,6 +30,8 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         public int KlinePeriods { get; set; }
 
+        public ExchangeInfo ExchangeInfo { get; set; } = ExchangeInfo.Empty;
+
         public PositionDetails PositionDetails { get; set; } = PositionDetails.Empty;
 
         public MiniTicker Ticker { get; set; } = MiniTicker.Empty;

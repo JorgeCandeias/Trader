@@ -3,10 +3,6 @@ using Microsoft.Extensions.Options;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Providers;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
 {
@@ -16,16 +12,14 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
         private readonly ILogger _logger;
         private readonly ITradingService _trader;
         private readonly IAlgoDependencyResolver _dependencies;
-        private readonly IExchangeInfoProvider _info;
         private readonly ISwapPoolProvider _swaps;
 
-        public DiscoveryAlgo(IOptionsMonitor<DiscoveryAlgoOptions> monitor, ILogger<DiscoveryAlgo> logger, ITradingService trader, IAlgoDependencyResolver dependencies, IExchangeInfoProvider info, ISwapPoolProvider swaps)
+        public DiscoveryAlgo(IOptionsMonitor<DiscoveryAlgoOptions> monitor, ILogger<DiscoveryAlgo> logger, ITradingService trader, IAlgoDependencyResolver dependencies, ISwapPoolProvider swaps)
         {
             _monitor = monitor;
             _logger = logger;
             _trader = trader;
             _dependencies = dependencies;
-            _info = info;
             _swaps = swaps;
         }
 
@@ -36,7 +30,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
             var options = _monitor.Get(Context.Name);
 
             // get the exchange info
-            var symbols = (await _info.GetExchangeInfoAsync(cancellationToken).ConfigureAwait(false)).Symbols
+            var symbols = Context.ExchangeInfo.Symbols
                 .Where(x => x.Status == SymbolStatus.Trading)
                 .Where(x => x.IsSpotTradingAllowed)
                 .Where(x => options.QuoteAssets.Contains(x.QuoteAsset))

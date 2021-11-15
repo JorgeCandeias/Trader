@@ -28,7 +28,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         [Required]
         [Range(0, 1)]
-        public decimal TrailingStopLossRate { get; set; } = 0.95M;
+        public decimal TrailingStopLossRate { get; set; } = 0.99M;
 
         [Required]
         public bool ElasticStopLossEnabled { get; set; } = true;

@@ -65,34 +65,14 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         #region Command Helpers
 
-        private Symbol EnsureSymbol()
+        public virtual IAlgoCommand AveragingSell(Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings = false, bool redeemSwapPool = false, bool topUpUnsellablePositionWithBalance = false)
         {
-            if (IsNullOrEmpty(Context.Symbol.Name))
-            {
-                throw new InvalidOperationException("A default symbol must be defined to use the default symbol command helpers");
-            }
-
-            return Context.Symbol;
-        }
-
-        public virtual IAlgoCommand AveragingSell(Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, bool redeemSwapPool)
-        {
-            return new AveragingSellCommand(symbol, orders, profitMultiplier, redeemSavings, redeemSwapPool);
-        }
-
-        public virtual IAlgoCommand AveragingSell(IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, bool redeemSwapPool)
-        {
-            return AveragingSell(EnsureSymbol(), orders, profitMultiplier, redeemSavings, redeemSwapPool);
+            return new AveragingSellCommand(symbol, orders, profitMultiplier, redeemSavings, redeemSwapPool, topUpUnsellablePositionWithBalance);
         }
 
         public virtual IAlgoCommand CreateOrder(Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag)
         {
             return new CreateOrderCommand(symbol, type, side, timeInForce, quantity, price, tag);
-        }
-
-        public virtual IAlgoCommand CreateOrder(OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag)
-        {
-            return CreateOrder(EnsureSymbol(), type, side, timeInForce, quantity, price, tag);
         }
 
         public virtual IAlgoCommand CancelOrder(Symbol symbol, long orderId)
@@ -105,19 +85,9 @@ namespace Outcompute.Trader.Trading.Algorithms
             return new EnsureSingleOrderCommand(symbol, side, type, timeInForce, quantity, price, redeemSavings, redeemSwapPool);
         }
 
-        public virtual IAlgoCommand EnsureSingleOrder(OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings, bool redeemSwapPool)
-        {
-            return EnsureSingleOrder(EnsureSymbol(), side, type, timeInForce, quantity, price, redeemSavings, redeemSwapPool);
-        }
-
         public virtual IAlgoCommand ClearOpenOrders(Symbol symbol, OrderSide side)
         {
             return new ClearOpenOrdersCommand(symbol, side);
-        }
-
-        public virtual IAlgoCommand ClearOpenOrders(OrderSide side)
-        {
-            return ClearOpenOrders(EnsureSymbol(), side);
         }
 
         public virtual IAlgoCommand TryRedeemSavings(string asset, decimal amount)
@@ -135,19 +105,9 @@ namespace Outcompute.Trader.Trading.Algorithms
             return new SignificantAveragingSellCommand(symbol, ticker, orders, minimumProfitRate, redeemSavings, redeemSwapPool);
         }
 
-        public virtual IAlgoCommand SignificantAveragingSell(MiniTicker ticker, IReadOnlyCollection<OrderQueryResult> orders, decimal minimumProfitRate, bool redeemSavings, bool redeemSwapPool)
-        {
-            return SignificantAveragingSell(EnsureSymbol(), ticker, orders, minimumProfitRate, redeemSavings, redeemSwapPool);
-        }
-
         public virtual IAlgoCommand TrackingBuy(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings, bool redeemSwapPool)
         {
             return new TrackingBuyCommand(symbol, pullbackRatio, targetQuoteBalanceFractionPerBuy, maxNotional, redeemSavings, redeemSwapPool);
-        }
-
-        public virtual IAlgoCommand TrackingBuy(decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings, bool redeemSwapPool)
-        {
-            return TrackingBuy(EnsureSymbol(), pullbackRatio, targetQuoteBalanceFractionPerBuy, maxNotional, redeemSavings, redeemSwapPool);
         }
 
         public virtual IAlgoCommand MarketSell(Symbol symbol, decimal quantity, bool redeemSavings = false, bool redeemSwapPool = false)

@@ -50,13 +50,13 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
             var price = notional / quantity;
 
             // break if there are no assets to sell
-            var total = context.BaseAssetSpotBalance.Free
+            var free = context.BaseAssetSpotBalance.Free
                 + (command.RedeemSavings ? context.BaseAssetSavingsBalance.FreeAmount : 0)
                 + (command.RedeemSwapPool ? context.BaseAssetSwapPoolBalance.Total : 0);
 
-            if (total < quantity)
+            if (free < quantity)
             {
-                LogCannotEvaluateDesiredSell(TypeName, symbol.Name);
+                LogCannotEvaluateDesiredSell(TypeName, symbol.Name, quantity, symbol.BaseAsset, free);
 
                 return DesiredSell.None;
             }
@@ -67,9 +67,30 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
             // break if the quantity falls below the minimum lot size
             if (quantity < symbol.Filters.LotSize.MinQuantity)
             {
-                LogCannotSetSellOrderLotSize(TypeName, symbol.Name, quantity, symbol.BaseAsset, symbol.Filters.LotSize.MinQuantity);
+                // see if we are allowed to top up the sell with leftovers
+                if (command.TopUpUnsellablePositionWithBalance)
+                {
+                    // see if we can top up at all
+                    var required = symbol.Filters.LotSize.MinQuantity - quantity;
+                    var allowed = free - quantity;
+                    if (required <= allowed)
+                    {
+                        LogToppedUp(TypeName, symbol.Name, quantity, symbol.BaseAsset, required, symbol.Filters.LotSize.MinQuantity);
 
-                return DesiredSell.None;
+                        quantity += required;
+                        free -= required;
+                    }
+                    else
+                    {
+                        LogCouldNotTopUpToMinLotSize(TypeName, symbol.Name, quantity, symbol.BaseAsset, required, symbol.Filters.LotSize.MinQuantity, allowed);
+                        return DesiredSell.None;
+                    }
+                }
+                else
+                {
+                    LogCannotSetSellOrderLotSize(TypeName, symbol.Name, quantity, symbol.BaseAsset, symbol.Filters.LotSize.MinQuantity);
+                    return DesiredSell.None;
+                }
             }
 
             // bump the price by the profit multipler so we have a minimum sell price
@@ -84,9 +105,26 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
             // check if the sell is under the minimum notional filter
             if (quantity * price < symbol.Filters.MinNotional.MinNotional)
             {
-                LogCannotSetSellOrderNotional(TypeName, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.Filters.MinNotional.MinNotional);
-
-                return DesiredSell.None;
+                // see if we can adjust the quantity
+                if (command.TopUpUnsellablePositionWithBalance)
+                {
+                    var required = ((symbol.Filters.MinNotional.MinNotional / price) - quantity).AdjustQuantityUpToLotStepSize(context.Symbol);
+                    var allowed = free - quantity;
+                    if (required <= allowed)
+                    {
+                        quantity += required;
+                    }
+                    else
+                    {
+                        LogCouldNotTopUpToMinNotional(TypeName, symbol.Name, quantity, symbol.BaseAsset, required, symbol.Filters.MinNotional.MinNotional, symbol.QuoteAsset, allowed);
+                        return DesiredSell.None;
+                    }
+                }
+                else
+                {
+                    LogCannotSetSellOrderNotional(TypeName, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.Filters.MinNotional.MinNotional);
+                    return DesiredSell.None;
+                }
             }
 
             // check if the sell is above the maximum percent filter
@@ -116,20 +154,29 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
 
         #region Logging
 
-        [LoggerMessage(0, LogLevel.Warning, "{Type} {Name} cannot evaluate desired sell because there are not enough assets available to sell")]
-        private partial void LogCannotEvaluateDesiredSell(string type, string name);
+        [LoggerMessage(0, LogLevel.Warning, "{Type} {Name} cannot evaluate sell order of {Quantity:F8} {Asset} because the free quantity is only {Free:F8} {Asset}")]
+        private partial void LogCannotEvaluateDesiredSell(string type, string name, decimal quantity, string asset, decimal free);
 
-        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot set sell order for {Quantity} {Asset} because the quantity is under the minimum lot size of {MinLotSize} {Asset}")]
+        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot set sell order for {Quantity:F8} {Asset} because the quantity is under the minimum lot size of {MinLotSize:F8} {Asset}")]
         private partial void LogCannotSetSellOrderLotSize(string type, string name, decimal quantity, string asset, decimal minLotSize);
 
-        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot set sell order for {Quantity} {Asset} at {Price} {Quote} totalling {Total} {Quote} because it is under the minimum notional of {MinNotional} {Quote}")]
+        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot set sell order for {Quantity:F8} {Asset} at {Price:F8} {Quote} totalling {Total:F8} {Quote} because it is under the minimum notional of {MinNotional:F8} {Quote}")]
         private partial void LogCannotSetSellOrderNotional(string type, string name, decimal quantity, string asset, decimal price, string quote, decimal total, decimal minNotional);
 
-        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot set sell order for {Quantity} {Asset} at {Price} {Quote} totalling {Total} {Quote} because it is under the maximum percent filter price of {MaxPrice} {Quote}")]
+        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot set sell order for {Quantity:F8} {Asset} at {Price:F8} {Quote} totalling {Total:F8} {Quote} because it is under the maximum percent filter price of {MaxPrice:F8} {Quote}")]
         private partial void LogCannotSetSellOrderMaximumPercentFilter(string type, string name, decimal quantity, string asset, decimal price, string quote, decimal total, decimal maxPrice);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} holding off sell order of {Quantity} {Asset} until price hits {Price} {Quote} ({Percent:P2} of current value of {Ticker} {Quote})")]
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} holding off sell order of {Quantity:F8} {Asset} until price hits {Price:F8} {Quote} ({Percent:P2} of current value of {Ticker:F8} {Quote})")]
         private partial void LogHoldingOffSellOrder(string type, string name, decimal quantity, string asset, decimal price, string quote, decimal percent, decimal ticker);
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} topped up quantity of {Quantity:F8} {Asset} with {Required:F8} {Asset} so it meets the minimum lot size of {MinLotSize:F8} {Asset}")]
+        private partial void LogToppedUp(string type, string name, decimal quantity, string asset, decimal required, decimal minLotSize);
+
+        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} could not top up quantity of {Quantity:F8} {Asset} with {Required:F8} {Asset} to meet the minimum lot size of {MinLotSize:F8} {Asset} because the extra free quantity is only {Allowed:F8} {Asset}")]
+        private partial void LogCouldNotTopUpToMinLotSize(string type, string name, decimal quantity, string asset, decimal required, decimal minLotSize, decimal allowed);
+
+        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} could not top up quantity of {Quantity:F8} {Asset} with {Required:F8} {Asset} to meet the minimum notional of {MinNotional:F8} {Quote} because the extra free quantity is only {Allowed:F8} {Asset}")]
+        private partial void LogCouldNotTopUpToMinNotional(string type, string name, decimal quantity, string asset, decimal required, decimal minNotional, string quote, decimal allowed);
 
         #endregion Logging
     }

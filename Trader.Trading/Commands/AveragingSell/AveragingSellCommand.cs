@@ -1,22 +1,19 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Commands.AveragingSell
 {
     public class AveragingSellCommand : IAlgoCommand
     {
-        public AveragingSellCommand(Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings, bool redeemSwapPool)
+        public AveragingSellCommand(Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings = false, bool redeemSwapPool = false, bool topUpUnsellablePositionWithBalance = false)
         {
             Symbol = symbol ?? throw new ArgumentNullException(nameof(symbol));
             Orders = orders ?? throw new ArgumentNullException(nameof(orders));
             ProfitMultiplier = profitMultiplier;
             RedeemSavings = redeemSavings;
             RedeemSwapPool = redeemSwapPool;
+            TopUpUnsellablePositionWithBalance = topUpUnsellablePositionWithBalance;
 
             if (orders.Count == 0)
             {
@@ -48,6 +45,7 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
         public decimal ProfitMultiplier { get; }
         public bool RedeemSavings { get; }
         public bool RedeemSwapPool { get; }
+        public bool TopUpUnsellablePositionWithBalance { get; }
 
         public ValueTask ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
         {

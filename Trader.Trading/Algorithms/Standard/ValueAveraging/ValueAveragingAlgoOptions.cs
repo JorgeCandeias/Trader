@@ -28,7 +28,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         [Required]
         [Range(0, 1)]
-        public decimal TrailingStopLossRate { get; set; } = 0.99M;
+        public decimal TrailingStopLossRate { get; set; } = 0.95M;
 
         [Required]
         public bool ElasticStopLossEnabled { get; set; } = true;
@@ -64,6 +64,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         public bool RedeemSwapPool { get; set; } = false;
 
         [Required]
+        public bool TopUpUnsellablePositionWithBalance { get; set; } = false;
+
+        [Required]
         public int SmaPeriodsA { get; set; } = 7;
 
         [Required]
@@ -73,7 +76,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         public int SmaPeriodsC { get; set; } = 99;
 
         [Required]
-        public int RsiPeriods { get; set; } = 14;
+        public int RsiPeriods { get; set; } = 6;
 
         [Required]
         public decimal RsiOverbought { get; set; } = 70m;

@@ -2,7 +2,7 @@
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Commands.ClearOpenOrders;
-using Outcompute.Trader.Trading.Commands.MarketSell;
+using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
 
 namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
 {
@@ -30,7 +30,7 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
             }
             else
             {
-                return new MarketSellCommand(context.Symbol, desired.Quantity, command.RedeemSavings, command.RedeemSwapPool)
+                return new EnsureSingleOrderCommand(context.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, desired.Quantity, desired.Price, command.RedeemSavings, command.RedeemSwapPool)
                     .ExecuteAsync(context, cancellationToken);
             }
         }

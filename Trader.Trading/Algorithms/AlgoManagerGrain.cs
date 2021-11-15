@@ -3,12 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Core;
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
@@ -38,7 +33,6 @@ namespace Outcompute.Trader.Trading.Algorithms
             return base.OnActivateAsync();
         }
 
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         private async Task TickPingAllAlgoGrainsAsync(object _)
         {
             // snapshot the current options for this tick
@@ -72,7 +66,6 @@ namespace Outcompute.Trader.Trading.Algorithms
             }
         }
 
-        [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
         private async Task TickExecuteAllAlgosAsync(object _)
         {
             // snapshot the current options for this tick

@@ -10,16 +10,16 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
     {
         private readonly IOptionsMonitor<DiscoveryAlgoOptions> _monitor;
         private readonly ILogger _logger;
-        private readonly ITradingService _trader;
         private readonly IAlgoDependencyResolver _dependencies;
+        private readonly ISavingsProvider _savings;
         private readonly ISwapPoolProvider _swaps;
 
-        public DiscoveryAlgo(IOptionsMonitor<DiscoveryAlgoOptions> monitor, ILogger<DiscoveryAlgo> logger, ITradingService trader, IAlgoDependencyResolver dependencies, ISwapPoolProvider swaps)
+        public DiscoveryAlgo(IOptionsMonitor<DiscoveryAlgoOptions> monitor, ILogger<DiscoveryAlgo> logger, IAlgoDependencyResolver dependencies, ISavingsProvider savings, ISwapPoolProvider swaps)
         {
             _monitor = monitor;
             _logger = logger;
-            _trader = trader;
             _dependencies = dependencies;
+            _savings = savings;
             _swaps = swaps;
         }
 
@@ -38,10 +38,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
                 .ToList();
 
             // get all usable savings assets
-            var assets = (await _trader.GetSavingsProductsAsync(SavingsStatus.Subscribable, SavingsFeatured.All, cancellationToken).ConfigureAwait(false))
-                .Where(x => x.CanPurchase)
+            var assets = (await _savings.GetPositionsAsync(cancellationToken))
                 .Select(x => x.Asset)
-                .Union(options.ForcedAssets)
                 .ToHashSet();
 
             // get all usable swap pools

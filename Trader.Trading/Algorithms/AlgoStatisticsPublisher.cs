@@ -88,37 +88,37 @@ namespace Outcompute.Trader.Trading.Algorithms
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Ticker = {Ticker:F8}")]
         private partial void LogTicker(string type, string name, decimal ticker);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Q = {Quantity:F8}, T = {Total:F8}, AVG = {AveragePrice:F8}, PV = {PV:F8}, UPNL = {UPNL:F8} ({UPNLRatio:P8}), RPNL = {RPNL:F8}, PPNL = {PPNL:F8}, QC = {QuoteCommissions:F8}, APNL = {APNL:F8}")]
+        [LoggerMessage(1, LogLevel.Information, "{Type} {Name} reports Q = {Quantity:F8}, T = {Total:F8}, AVG = {AveragePrice:F8}, PV = {PV:F8}, UPNL = {UPNL:F8} ({UPNLRatio:P8}), RPNL = {RPNL:F8}, PPNL = {PPNL:F8}, QC = {QuoteCommissions:F8}, APNL = {APNL:F8}")]
         private partial void LogStatistics(string type, string name, decimal quantity, decimal total, decimal averagePrice, decimal pv, decimal upnl, decimal upnlRatio, decimal rpnl, decimal ppnl, decimal quoteCommissions, decimal apnl);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Asset Quantity = {Quantity:F8}")]
+        [LoggerMessage(2, LogLevel.Information, "{Type} {Name} reports Asset Quantity = {Quantity:F8}")]
         private partial void LogAssetQuantity(string type, string name, decimal quantity);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Asset Cost = {Total:F8}")]
+        [LoggerMessage(3, LogLevel.Information, "{Type} {Name} reports Asset Cost = {Total:F8}")]
         private partial void LogAssetCost(string type, string name, decimal total);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Present Value = {Value:F8}")]
+        [LoggerMessage(4, LogLevel.Information, "{Type} {Name} reports Present Value = {Value:F8}")]
         private partial void LogPresentValue(string type, string name, decimal value);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Unrealized PnL = {Value:F8} ({Ratio:P8})")]
+        [LoggerMessage(5, LogLevel.Information, "{Type} {Name} reports Unrealized PnL = {Value:F8} ({Ratio:P8})")]
         private partial void LogUnrealizedPnL(string type, string name, decimal value, decimal ratio);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Realized PnL = {Value:F8}")]
+        [LoggerMessage(6, LogLevel.Information, "{Type} {Name} reports Realized PnL = {Value:F8}")]
         private partial void LogRealizedPnL(string type, string name, decimal value);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Present PnL = {Value:F8}")]
+        [LoggerMessage(7, LogLevel.Information, "{Type} {Name} reports Present PnL = {Value:F8}")]
         private partial void LogPresentPnl(string type, string name, decimal value);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Quote Commissions = {Value:F8}")]
+        [LoggerMessage(8, LogLevel.Information, "{Type} {Name} reports Quote Commissions = {Value:F8}")]
         private partial void LogQuoteCommissions(string type, string name, decimal value);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Adjusted PnL = {Value:F8}")]
+        [LoggerMessage(9, LogLevel.Information, "{Type} {Name} reports Adjusted PnL = {Value:F8}")]
         private partial void LogAdjustedPnL(string type, string name, decimal value);
 
-        [LoggerMessage(0, LogLevel.Warning, "{Type} {Name} reports total amount {Free:F8} {Asset} is less than purchased quantity of {Quantity:F8} {Asset}")]
+        [LoggerMessage(10, LogLevel.Warning, "{Type} {Name} reports total amount {Free:F8} {Asset} is less than purchased quantity of {Quantity:F8} {Asset}")]
         private partial void LogFreeAmountLessThanPurchased(string type, string name, decimal free, string asset, decimal quantity);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports total amount {Free:F8} {Asset} meets or exceeds purchased quantity of {Quantity:F8} {Asset} by {Diff:F8} {Asset})")]
+        [LoggerMessage(11, LogLevel.Information, "{Type} {Name} reports total amount {Free:F8} {Asset} meets or exceeds purchased quantity of {Quantity:F8} {Asset} by {Diff:F8} {Asset})")]
         private partial void LogFreeAmountExceedsPurchased(string type, string name, decimal free, string asset, decimal quantity, decimal diff);
 
         #endregion Logging

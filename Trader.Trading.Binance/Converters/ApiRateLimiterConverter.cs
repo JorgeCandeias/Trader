@@ -1,42 +1,40 @@
 ﻿using AutoMapper;
-using System;
 using Outcompute.Trader.Models;
 
-namespace Outcompute.Trader.Trading.Binance.Converters
+namespace Outcompute.Trader.Trading.Binance.Converters;
+
+internal class ApiRateLimiterConverter : ITypeConverter<ApiRateLimiter, RateLimit>
 {
-    internal class ApiRateLimiterConverter : ITypeConverter<ApiRateLimiter, RateLimit>
+    public RateLimit Convert(ApiRateLimiter source, RateLimit destination, ResolutionContext context)
     {
-        public RateLimit Convert(ApiRateLimiter source, RateLimit destination, ResolutionContext context)
+        // quick path for null source
+        if (source is null) return null!;
+
+        // map the rate limit type
+        var type = source.RateLimitType switch
         {
-            // quick path for null source
-            if (source is null) return null!;
+            null => RateLimitType.None,
 
-            // map the rate limit type
-            var type = source.RateLimitType switch
-            {
-                null => RateLimitType.None,
+            "REQUEST_WEIGHT" => RateLimitType.RequestWeight,
+            "ORDERS" => RateLimitType.Orders,
+            "RAW_REQUESTS" => RateLimitType.RawRequests,
 
-                "REQUEST_WEIGHT" => RateLimitType.RequestWeight,
-                "ORDERS" => RateLimitType.Orders,
-                "RAW_REQUESTS" => RateLimitType.RawRequests,
+            _ => throw new AutoMapperMappingException($"{nameof(source.RateLimitType)} '{source.RateLimitType}' is unknown")
+        };
 
-                _ => throw new AutoMapperMappingException($"{nameof(source.RateLimitType)} '{source.RateLimitType}' is unknown")
-            };
+        // map the timespan
+        var timespan = source.Interval switch
+        {
+            null => TimeSpan.Zero,
 
-            // map the timespan
-            var timespan = source.Interval switch
-            {
-                null => TimeSpan.Zero,
+            "MINUTE" => TimeSpan.FromMinutes(source.IntervalNum),
+            "SECOND" => TimeSpan.FromSeconds(source.IntervalNum),
+            "DAY" => TimeSpan.FromDays(source.IntervalNum),
 
-                "MINUTE" => TimeSpan.FromMinutes(source.IntervalNum),
-                "SECOND" => TimeSpan.FromSeconds(source.IntervalNum),
-                "DAY" => TimeSpan.FromDays(source.IntervalNum),
+            _ => throw new AutoMapperMappingException($"{nameof(source.Interval)} '{source.Interval}' is unknown")
+        };
 
-                _ => throw new AutoMapperMappingException($"{nameof(source.Interval)} '{source.Interval}' is unknown")
-            };
-
-            // done
-            return new RateLimit(type, timespan, source.Limit);
-        }
+        // done
+        return new RateLimit(type, timespan, source.Limit);
     }
 }

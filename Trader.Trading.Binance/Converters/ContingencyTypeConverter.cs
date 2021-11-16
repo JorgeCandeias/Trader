@@ -1,32 +1,31 @@
 ﻿using AutoMapper;
 using Outcompute.Trader.Models;
 
-namespace Outcompute.Trader.Trading.Binance.Converters
+namespace Outcompute.Trader.Trading.Binance.Converters;
+
+internal class ContingencyTypeConverter : ITypeConverter<string, ContingencyType>, ITypeConverter<ContingencyType, string>
 {
-    internal class ContingencyTypeConverter : ITypeConverter<string, ContingencyType>, ITypeConverter<ContingencyType, string>
+    public string Convert(ContingencyType source, string destination, ResolutionContext context)
     {
-        public string Convert(ContingencyType source, string destination, ResolutionContext context)
+        return source switch
         {
-            return source switch
-            {
-                ContingencyType.None => null!,
+            ContingencyType.None => null!,
 
-                ContingencyType.Oco => "OCO",
+            ContingencyType.Oco => "OCO",
 
-                _ => throw new AutoMapperMappingException($"Unknown {nameof(ContingencyType)} '{source}'")
-            };
-        }
+            _ => throw new AutoMapperMappingException($"Unknown {nameof(ContingencyType)} '{source}'")
+        };
+    }
 
-        public ContingencyType Convert(string source, ContingencyType destination, ResolutionContext context)
+    public ContingencyType Convert(string source, ContingencyType destination, ResolutionContext context)
+    {
+        return source switch
         {
-            return source switch
-            {
-                null => ContingencyType.None,
+            null => ContingencyType.None,
 
-                "OCO" => ContingencyType.Oco,
+            "OCO" => ContingencyType.Oco,
 
-                _ => throw new AutoMapperMappingException($"Unknown {nameof(ContingencyType)} '{source}'")
-            };
-        }
+            _ => throw new AutoMapperMappingException($"Unknown {nameof(ContingencyType)} '{source}'")
+        };
     }
 }

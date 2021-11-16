@@ -1,35 +1,31 @@
 ﻿using Microsoft.Extensions.Options;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Binance.Handlers
+namespace Outcompute.Trader.Trading.Binance.Handlers;
+
+internal class BinanceApiConcurrencyHandler : DelegatingHandler
 {
-    internal class BinanceApiConcurrencyHandler : DelegatingHandler
+    public BinanceApiConcurrencyHandler(IOptions<BinanceOptions> options)
     {
-        public BinanceApiConcurrencyHandler(IOptions<BinanceOptions> options)
-        {
-            _semaphore = new(options.Value.MaxConcurrentApiRequests);
-        }
+        _semaphore = new(options.Value.MaxConcurrentApiRequests);
+    }
 
-        private readonly SemaphoreSlim _semaphore;
+    private readonly SemaphoreSlim _semaphore;
 
-        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        await _semaphore
+            .WaitAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        try
         {
-            await _semaphore
-                .WaitAsync(cancellationToken)
+            return await base
+                .SendAsync(request, cancellationToken)
                 .ConfigureAwait(false);
-
-            try
-            {
-                return await base
-                    .SendAsync(request, cancellationToken)
-                    .ConfigureAwait(false);
-            }
-            finally
-            {
-                _semaphore.Release();
-            }
+        }
+        finally
+        {
+            _semaphore.Release();
         }
     }
 }

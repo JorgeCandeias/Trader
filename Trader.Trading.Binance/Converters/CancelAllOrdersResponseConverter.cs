@@ -1,20 +1,19 @@
 ﻿using AutoMapper;
 using Outcompute.Trader.Models;
 
-namespace Outcompute.Trader.Trading.Binance.Converters
+namespace Outcompute.Trader.Trading.Binance.Converters;
+
+internal class CancelAllOrdersResponseConverter : ITypeConverter<CancelAllOrdersResponse, CancelOrderResult>
 {
-    internal class CancelAllOrdersResponseConverter : ITypeConverter<CancelAllOrdersResponse, CancelOrderResult>
+    public CancelOrderResult Convert(CancelAllOrdersResponse source, CancelOrderResult destination, ResolutionContext context)
     {
-        public CancelOrderResult Convert(CancelAllOrdersResponse source, CancelOrderResult destination, ResolutionContext context)
+        if (source is null) return null!;
+
+        return source.OrderListId switch
         {
-            if (source is null) return null!;
+            -1 => context.Mapper.Map<CancelStandardOrderResult>(source),
 
-            return source.OrderListId switch
-            {
-                -1 => context.Mapper.Map<CancelStandardOrderResult>(source),
-
-                _ => context.Mapper.Map<CancelOcoOrderResult>(source)
-            };
-        }
+            _ => context.Mapper.Map<CancelOcoOrderResult>(source)
+        };
     }
 }

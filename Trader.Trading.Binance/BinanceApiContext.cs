@@ -1,15 +1,12 @@
-﻿using System.Threading;
+﻿namespace Outcompute.Trader.Trading.Binance;
 
-namespace Outcompute.Trader.Trading.Binance
+internal static class BinanceApiContext
 {
-    internal static class BinanceApiContext
-    {
-        private static readonly AsyncLocal<bool> _skipSigning = new();
+    private static readonly AsyncLocal<bool> _skipSigning = new();
 
-        public static bool SkipSigning
-        {
-            get => _skipSigning.Value;
-            set => _skipSigning.Value = value;
-        }
+    public static bool SkipSigning
+    {
+        get => _skipSigning.Value;
+        set => _skipSigning.Value = value;
     }
 }

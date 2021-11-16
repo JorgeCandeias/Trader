@@ -1,36 +1,34 @@
 ﻿using AutoMapper;
 using Outcompute.Trader.Models;
-using System;
 
-namespace Outcompute.Trader.Trading.Binance.Converters
+namespace Outcompute.Trader.Trading.Binance.Converters;
+
+internal class SavingsRedemptionTypeConverter : ITypeConverter<SavingsRedemptionType, string>, ITypeConverter<string, SavingsRedemptionType>
 {
-    internal class SavingsRedemptionTypeConverter : ITypeConverter<SavingsRedemptionType, string>, ITypeConverter<string, SavingsRedemptionType>
+    public SavingsRedemptionType Convert(string source, SavingsRedemptionType destination, ResolutionContext context)
     {
-        public SavingsRedemptionType Convert(string source, SavingsRedemptionType destination, ResolutionContext context)
+        return source switch
         {
-            return source switch
-            {
-                null => SavingsRedemptionType.None,
+            null => SavingsRedemptionType.None,
 
-                "" => SavingsRedemptionType.None,
-                "FAST" => SavingsRedemptionType.Fast,
-                "NORMAL" => SavingsRedemptionType.Normal,
+            "" => SavingsRedemptionType.None,
+            "FAST" => SavingsRedemptionType.Fast,
+            "NORMAL" => SavingsRedemptionType.Normal,
 
-                _ => throw new ArgumentOutOfRangeException(nameof(source))
-            };
-        }
+            _ => throw new ArgumentOutOfRangeException(nameof(source))
+        };
+    }
 
-        public string Convert(SavingsRedemptionType source, string destination, ResolutionContext context)
+    public string Convert(SavingsRedemptionType source, string destination, ResolutionContext context)
+    {
+        return source switch
         {
-            return source switch
-            {
-                SavingsRedemptionType.None => "",
+            SavingsRedemptionType.None => "",
 
-                SavingsRedemptionType.Fast => "FAST",
-                SavingsRedemptionType.Normal => "NORMAL",
+            SavingsRedemptionType.Fast => "FAST",
+            SavingsRedemptionType.Normal => "NORMAL",
 
-                _ => throw new ArgumentOutOfRangeException(nameof(source))
-            };
-        }
+            _ => throw new ArgumentOutOfRangeException(nameof(source))
+        };
     }
 }

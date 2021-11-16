@@ -1,7 +1,6 @@
-﻿namespace Outcompute.Trader.Trading.Binance.Signing
+﻿namespace Outcompute.Trader.Trading.Binance.Signing;
+
+internal interface ISigner
 {
-    internal interface ISigner
-    {
-        string Sign(string value);
-    }
+    string Sign(string value);
 }

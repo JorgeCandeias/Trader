@@ -1,37 +1,35 @@
 ﻿using AutoMapper;
-using System;
 using Outcompute.Trader.Models;
 
-namespace Outcompute.Trader.Trading.Binance.Converters
+namespace Outcompute.Trader.Trading.Binance.Converters;
+
+internal class TimeInForceConverter : ITypeConverter<TimeInForce, string>, ITypeConverter<string, TimeInForce>
 {
-    internal class TimeInForceConverter : ITypeConverter<TimeInForce, string>, ITypeConverter<string, TimeInForce>
+    public TimeInForce Convert(string source, TimeInForce destination, ResolutionContext context)
     {
-        public TimeInForce Convert(string source, TimeInForce destination, ResolutionContext context)
+        return source switch
         {
-            return source switch
-            {
-                null => TimeInForce.None,
+            null => TimeInForce.None,
 
-                "GTC" => TimeInForce.GoodTillCanceled,
-                "IOC" => TimeInForce.ImmediateOrCancel,
-                "FOK" => TimeInForce.FillOrKill,
+            "GTC" => TimeInForce.GoodTillCanceled,
+            "IOC" => TimeInForce.ImmediateOrCancel,
+            "FOK" => TimeInForce.FillOrKill,
 
-                _ => throw new AutoMapperMappingException($"Unknown {nameof(TimeInForce)} '{source}'")
-            };
-        }
+            _ => throw new AutoMapperMappingException($"Unknown {nameof(TimeInForce)} '{source}'")
+        };
+    }
 
-        public string Convert(TimeInForce source, string destination, ResolutionContext context)
+    public string Convert(TimeInForce source, string destination, ResolutionContext context)
+    {
+        return source switch
         {
-            return source switch
-            {
-                TimeInForce.None => null!,
+            TimeInForce.None => null!,
 
-                TimeInForce.GoodTillCanceled => "GTC",
-                TimeInForce.ImmediateOrCancel => "IOC",
-                TimeInForce.FillOrKill => "FOK",
+            TimeInForce.GoodTillCanceled => "GTC",
+            TimeInForce.ImmediateOrCancel => "IOC",
+            TimeInForce.FillOrKill => "FOK",
 
-                _ => throw new ArgumentOutOfRangeException($"Unknown {nameof(TimeInForce)} '{source}'")
-            };
-        }
+            _ => throw new ArgumentOutOfRangeException($"Unknown {nameof(TimeInForce)} '{source}'")
+        };
     }
 }

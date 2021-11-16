@@ -1,36 +1,35 @@
 ﻿using AutoMapper;
 using Outcompute.Trader.Models;
 
-namespace Outcompute.Trader.Trading.Binance.Converters
+namespace Outcompute.Trader.Trading.Binance.Converters;
+
+internal class OcoOrderStatusConverter : ITypeConverter<string, OcoOrderStatus>, ITypeConverter<OcoOrderStatus, string>
 {
-    internal class OcoOrderStatusConverter : ITypeConverter<string, OcoOrderStatus>, ITypeConverter<OcoOrderStatus, string>
+    public string Convert(OcoOrderStatus source, string destination, ResolutionContext context)
     {
-        public string Convert(OcoOrderStatus source, string destination, ResolutionContext context)
+        return source switch
         {
-            return source switch
-            {
-                OcoOrderStatus.None => null!,
+            OcoOrderStatus.None => null!,
 
-                OcoOrderStatus.Executing => "EXECUTING",
-                OcoOrderStatus.AllDone => "ALL_DONE",
-                OcoOrderStatus.Reject => "REJECT",
+            OcoOrderStatus.Executing => "EXECUTING",
+            OcoOrderStatus.AllDone => "ALL_DONE",
+            OcoOrderStatus.Reject => "REJECT",
 
-                _ => throw new AutoMapperMappingException($"Unknown {nameof(OcoOrderStatus)} '{source}'")
-            };
-        }
+            _ => throw new AutoMapperMappingException($"Unknown {nameof(OcoOrderStatus)} '{source}'")
+        };
+    }
 
-        public OcoOrderStatus Convert(string source, OcoOrderStatus destination, ResolutionContext context)
+    public OcoOrderStatus Convert(string source, OcoOrderStatus destination, ResolutionContext context)
+    {
+        return source switch
         {
-            return source switch
-            {
-                null => OcoOrderStatus.None,
+            null => OcoOrderStatus.None,
 
-                "EXECUTING" => OcoOrderStatus.Executing,
-                "ALL_DONE" => OcoOrderStatus.AllDone,
-                "REJECT" => OcoOrderStatus.Reject,
+            "EXECUTING" => OcoOrderStatus.Executing,
+            "ALL_DONE" => OcoOrderStatus.AllDone,
+            "REJECT" => OcoOrderStatus.Reject,
 
-                _ => throw new AutoMapperMappingException($"Unknown {nameof(OcoOrderStatus)} '{source}'")
-            };
-        }
+            _ => throw new AutoMapperMappingException($"Unknown {nameof(OcoOrderStatus)} '{source}'")
+        };
     }
 }

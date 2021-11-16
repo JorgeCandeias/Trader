@@ -1,23 +1,21 @@
 ﻿using AutoMapper;
-using System;
 using Outcompute.Trader.Models;
 
-namespace Outcompute.Trader.Trading.Binance.Converters
+namespace Outcompute.Trader.Trading.Binance.Converters;
+
+internal class NewOrderResponseTypeConverter : ITypeConverter<NewOrderResponseType, string>
 {
-    internal class NewOrderResponseTypeConverter : ITypeConverter<NewOrderResponseType, string>
+    public string Convert(NewOrderResponseType source, string destination, ResolutionContext context)
     {
-        public string Convert(NewOrderResponseType source, string destination, ResolutionContext context)
+        return source switch
         {
-            return source switch
-            {
-                NewOrderResponseType.None => null!,
+            NewOrderResponseType.None => null!,
 
-                NewOrderResponseType.Acknowledge => "ACK",
-                NewOrderResponseType.Result => "RESULT",
-                NewOrderResponseType.Full => "FULL",
+            NewOrderResponseType.Acknowledge => "ACK",
+            NewOrderResponseType.Result => "RESULT",
+            NewOrderResponseType.Full => "FULL",
 
-                _ => throw new ArgumentOutOfRangeException(nameof(source), source, null)
-            };
-        }
+            _ => throw new ArgumentOutOfRangeException(nameof(source), source, null)
+        };
     }
 }

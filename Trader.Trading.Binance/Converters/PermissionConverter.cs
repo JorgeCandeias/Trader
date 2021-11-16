@@ -1,22 +1,21 @@
 ﻿using AutoMapper;
 using Outcompute.Trader.Models;
 
-namespace Outcompute.Trader.Trading.Binance.Converters
+namespace Outcompute.Trader.Trading.Binance.Converters;
+
+internal class PermissionConverter : ITypeConverter<string, Permission>
 {
-    internal class PermissionConverter : ITypeConverter<string, Permission>
+    public Permission Convert(string source, Permission destination, ResolutionContext context)
     {
-        public Permission Convert(string source, Permission destination, ResolutionContext context)
+        return source switch
         {
-            return source switch
-            {
-                null => Permission.None,
+            null => Permission.None,
 
-                "SPOT" => Permission.Spot,
-                "MARGIN" => Permission.Margin,
-                "LEVERAGED" => Permission.Leveraged,
+            "SPOT" => Permission.Spot,
+            "MARGIN" => Permission.Margin,
+            "LEVERAGED" => Permission.Leveraged,
 
-                _ => throw new AutoMapperMappingException($"Unknown {nameof(Permission)} '{source}'")
-            };
-        }
+            _ => throw new AutoMapperMappingException($"Unknown {nameof(Permission)} '{source}'")
+        };
     }
 }

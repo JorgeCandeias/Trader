@@ -1,15 +1,13 @@
 ﻿using Outcompute.Trader.Trading.Binance.Providers.MarketData;
-using System;
 
-namespace Orleans
+namespace Orleans;
+
+internal static class IBinanceMarketDataGrainFactoryExtensions
 {
-    internal static class IBinanceMarketDataGrainFactoryExtensions
+    public static IBinanceMarketDataGrain GetBinanceMarketDataGrain(this IGrainFactory factory)
     {
-        public static IBinanceMarketDataGrain GetBinanceMarketDataGrain(this IGrainFactory factory)
-        {
-            if (factory is null) throw new ArgumentNullException(nameof(factory));
+        if (factory is null) throw new ArgumentNullException(nameof(factory));
 
-            return factory.GetGrain<IBinanceMarketDataGrain>(Guid.Empty);
-        }
+        return factory.GetGrain<IBinanceMarketDataGrain>(Guid.Empty);
     }
 }

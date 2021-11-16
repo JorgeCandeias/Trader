@@ -1,15 +1,13 @@
 ﻿using Orleans;
-using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Binance.Providers.UserData
+namespace Outcompute.Trader.Trading.Binance.Providers.UserData;
+
+internal interface IBinanceUserDataGrain : IGrainWithGuidKey
 {
-    internal interface IBinanceUserDataGrain : IGrainWithGuidKey
-    {
-        /// <summary>
-        /// Returns <see cref="true"/> if the stream is synchronized, otherwise <see cref="false"/>.
-        /// </summary>
-        ValueTask<bool> IsReadyAsync();
+    /// <summary>
+    /// Returns <see cref="true"/> if the stream is synchronized, otherwise <see cref="false"/>.
+    /// </summary>
+    ValueTask<bool> IsReadyAsync();
 
-        Task PingAsync();
-    }
+    Task PingAsync();
 }

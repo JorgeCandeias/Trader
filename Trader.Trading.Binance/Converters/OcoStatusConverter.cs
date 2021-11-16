@@ -1,36 +1,35 @@
 ﻿using AutoMapper;
 using Outcompute.Trader.Models;
 
-namespace Outcompute.Trader.Trading.Binance.Converters
+namespace Outcompute.Trader.Trading.Binance.Converters;
+
+internal class OcoStatusConverter : ITypeConverter<string, OcoStatus>, ITypeConverter<OcoStatus, string>
 {
-    internal class OcoStatusConverter : ITypeConverter<string, OcoStatus>, ITypeConverter<OcoStatus, string>
+    public string Convert(OcoStatus source, string destination, ResolutionContext context)
     {
-        public string Convert(OcoStatus source, string destination, ResolutionContext context)
+        return source switch
         {
-            return source switch
-            {
-                OcoStatus.None => null!,
+            OcoStatus.None => null!,
 
-                OcoStatus.Response => "RESPONSE",
-                OcoStatus.ExecutionStarted => "EXEC_STARTED",
-                OcoStatus.AllDone => "ALL_DONE",
+            OcoStatus.Response => "RESPONSE",
+            OcoStatus.ExecutionStarted => "EXEC_STARTED",
+            OcoStatus.AllDone => "ALL_DONE",
 
-                _ => throw new AutoMapperMappingException($"Unknown {nameof(OcoStatus)} '{source}'")
-            };
-        }
+            _ => throw new AutoMapperMappingException($"Unknown {nameof(OcoStatus)} '{source}'")
+        };
+    }
 
-        public OcoStatus Convert(string source, OcoStatus destination, ResolutionContext context)
+    public OcoStatus Convert(string source, OcoStatus destination, ResolutionContext context)
+    {
+        return source switch
         {
-            return source switch
-            {
-                null => OcoStatus.None,
+            null => OcoStatus.None,
 
-                "RESPONSE" => OcoStatus.Response,
-                "EXEC_STARTED" => OcoStatus.ExecutionStarted,
-                "ALL_DONE" => OcoStatus.AllDone,
+            "RESPONSE" => OcoStatus.Response,
+            "EXEC_STARTED" => OcoStatus.ExecutionStarted,
+            "ALL_DONE" => OcoStatus.AllDone,
 
-                _ => throw new AutoMapperMappingException($"Unknown {nameof(OcoStatus)} '{source}'")
-            };
-        }
+            _ => throw new AutoMapperMappingException($"Unknown {nameof(OcoStatus)} '{source}'")
+        };
     }
 }

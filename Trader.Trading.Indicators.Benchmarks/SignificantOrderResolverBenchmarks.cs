@@ -25,7 +25,7 @@ namespace Trader.Trading.Indicators.Benchmarks
                 {
                     options.ConnectionString = "server=(localdb)\\mssqllocaldb;database=trader";
                 })
-                .AddSystemClock()
+                .AddTraderCoreServices()
                 .AddModelAutoMapperProfiles()
                 .BuildServiceProvider();
 

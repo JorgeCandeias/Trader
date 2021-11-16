@@ -2,17 +2,12 @@
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
 namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 {
-    internal class KlineSynchronizer : IKlineSynchronizer
+    internal partial class KlineSynchronizer : IKlineSynchronizer
     {
         private readonly ILogger _logger;
         private readonly ISystemClock _clock;
@@ -27,7 +22,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             _trader = trader;
         }
 
-        private static string TypeName => nameof(KlineSynchronizer);
+        private const string TypeName = nameof(KlineSynchronizer);
 
         public Task SyncAsync(IEnumerable<(string Symbol, KlineInterval Interval, int Periods)> windows, CancellationToken cancellationToken)
         {
@@ -38,14 +33,17 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 
         private async Task SyncKlinesCoreAsync(IEnumerable<(string Symbol, KlineInterval Interval, int Periods)> windows, CancellationToken cancellationToken)
         {
-            _logger.LogInformation("{Name} is syncing klines for {Symbols}...", TypeName, windows.Select(x => x.Symbol));
+            LogSyncingKlines(TypeName, windows.Select(x => x.Symbol));
 
             var watch = Stopwatch.StartNew();
 
             var end = _clock.UtcNow;
 
             // batches saving work in the background so we can keep pulling data without waiting
-            var work = new ActionBlock<(string Symbol, KlineInterval Interval, IEnumerable<Kline> Items)>(item => _klines.SetKlinesAsync(item.Symbol, item.Interval, item.Items));
+            var work = new ActionBlock<(string Symbol, KlineInterval Interval, IEnumerable<Kline> Items)>(async item =>
+            {
+                await _klines.SetKlinesAsync(item.Symbol, item.Interval, item.Items);
+            });
 
             // pull everything now
             foreach (var item in windows)
@@ -77,9 +75,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                     // queue the page for saving
                     work.Post((item.Symbol, item.Interval, klines));
 
-                    _logger.LogInformation(
-                        "{Name} paged {Count} klines for {Symbol} {Interval} between {Start} and {End} for a total of {Total} klines",
-                        TypeName, klines.Count, item.Symbol, item.Interval, current, end, total);
+                    LogPagedKlines(TypeName, klines.Count, item.Symbol, item.Interval, current, end, total);
 
                     // break if the page wasnt full
                     // using 10 as leeway as binance occasionaly sends complete pages without filling them by one or two items
@@ -94,9 +90,20 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             work.Complete();
             await work.Completion;
 
-            _logger.LogInformation(
-                "{Name} synced klines for {Symbols} in {ElapsedMs}ms...",
-                TypeName, windows.Select(x => x.Symbol), watch.ElapsedMilliseconds);
+            LogSyncedKlines(TypeName, windows.Select(x => x.Symbol), watch.ElapsedMilliseconds);
         }
+
+        #region Logging
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} is syncing klines for {Symbols}...")]
+        private partial void LogSyncingKlines(string type, IEnumerable<string> symbols);
+
+        [LoggerMessage(1, LogLevel.Information, "{Type} paged {Count} klines for {Symbol} {Interval} between {Start} and {End} for a total of {Total} klines")]
+        private partial void LogPagedKlines(string type, int count, string symbol, KlineInterval interval, DateTime start, DateTime end, int total);
+
+        [LoggerMessage(2, LogLevel.Information, "{Type} synced klines for {Symbols} in {ElapsedMs}ms...")]
+        private partial void LogSyncedKlines(string type, IEnumerable<string> symbols, long elapsedMs);
+
+        #endregion Logging
     }
 }

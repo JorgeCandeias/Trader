@@ -16,20 +16,22 @@ internal class AlgoContextOrdersConfigurator : IAlgoContextConfigurator<AlgoCont
         // populate orders for the default symbol
         if (!IsNullOrEmpty(context.Symbol.Name))
         {
-            context.Orders = await _orders
+            context.OrdersLookup[context.Symbol.Name] = await _orders
                 .GetOrdersAsync(context.Symbol.Name, CancellationToken.None)
                 .ConfigureAwait(false);
         }
 
         // populate orders for the multi symbol list
-        if (context.Symbols.Count > 0)
+        foreach (var symbol in context.Symbols.Keys)
         {
-            foreach (var symbol in context.Symbols.Keys)
+            if (symbol == context.Symbol.Name)
             {
-                context.Orders = await _orders
-                    .GetOrdersAsync(symbol, cancellationToken)
-                    .ConfigureAwait(false);
+                continue;
             }
+
+            context.OrdersLookup[symbol] = await _orders
+                .GetOrdersAsync(symbol, cancellationToken)
+                .ConfigureAwait(false);
         }
     }
 }

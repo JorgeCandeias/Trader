@@ -52,7 +52,7 @@ internal class AlgoContext : IAlgoContext
 
     public SwapPoolAssetBalance QuoteAssetSwapPoolBalance { get; set; } = SwapPoolAssetBalance.Empty;
 
-    public IReadOnlyList<OrderQueryResult> Orders { get; set; } = ImmutableList<OrderQueryResult>.Empty;
+    public IReadOnlyList<OrderQueryResult> Orders => OrdersLookup[Symbol.Name];
 
     public IDictionary<string, IReadOnlyList<OrderQueryResult>> OrdersLookup { get; } = new Dictionary<string, IReadOnlyList<OrderQueryResult>>();
 

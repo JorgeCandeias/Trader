@@ -46,10 +46,15 @@ public interface IAlgoContext
     ExchangeInfo ExchangeInfo { get; }
 
     /// <summary>
-    /// The current significant asset information for the default symbol.
+    /// The current auto calculated positions for the default symbol.
     /// This is only populated if the default symbol is defined.
     /// </summary>
     PositionDetails PositionDetails { get; }
+
+    /// <summary>
+    /// The current auto calculated positions for all configured symbols.
+    /// </summary>
+    IDictionary<string, PositionDetails> PositionDetailsLookup { get; }
 
     /// <summary>
     /// The current ticker for the default symbol.

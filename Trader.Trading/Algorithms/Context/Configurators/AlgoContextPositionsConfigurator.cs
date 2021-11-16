@@ -15,15 +15,32 @@ internal class AlgoContextPositionsConfigurator : IAlgoContextConfigurator<AlgoC
 
     public async ValueTask ConfigureAsync(AlgoContext context, string name, CancellationToken cancellationToken = default)
     {
-        if (IsNullOrEmpty(context.Symbol.Name))
-        {
-            return;
-        }
-
         var options = _options.Get(name);
 
-        context.PositionDetails = await _resolver
-            .ResolveAsync(context.Symbol, options.StartTime, cancellationToken)
-            .ConfigureAwait(false);
+        // populate from the default symbol
+        if (!IsNullOrEmpty(context.Symbol.Name))
+        {
+            context.PositionDetails = await _resolver
+                .ResolveAsync(context.Symbol, options.StartTime, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        // populate from the symbol list
+        if (context.Symbols.Count > 0)
+        {
+            foreach (var symbol in context.Symbols.Keys)
+            {
+                if (symbol == context.Symbol.Name)
+                {
+                    context.PositionDetailsLookup[symbol] = context.PositionDetails;
+                }
+                else
+                {
+                    context.PositionDetailsLookup[symbol] = await _resolver
+                        .ResolveAsync(context.Symbol, options.StartTime, cancellationToken)
+                        .ConfigureAwait(false);
+                }
+            }
+        }
     }
 }

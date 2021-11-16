@@ -36,6 +36,8 @@ internal class AlgoContext : IAlgoContext
 
     public PositionDetails PositionDetails { get; set; } = PositionDetails.Empty;
 
+    public IDictionary<string, PositionDetails> PositionDetailsLookup { get; } = new Dictionary<string, PositionDetails>();
+
     public MiniTicker Ticker { get; set; } = MiniTicker.Empty;
 
     public Balance BaseAssetSpotBalance { get; set; } = Balance.Empty;

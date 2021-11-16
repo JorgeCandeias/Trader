@@ -1,15 +1,12 @@
-﻿using System.Collections.Generic;
+﻿namespace Outcompute.Trader.Core.Serializers;
 
-namespace Outcompute.Trader.Core.Serializers
+public interface IBase62NumberSerializer
 {
-    public interface IBase62NumberSerializer
-    {
-        string Serialize(long value);
+    string Serialize(long value);
 
-        string Serialize(IEnumerable<long> items);
+    string Serialize(IEnumerable<long> items);
 
-        long DeserializeOne(string value);
+    long DeserializeOne(string value);
 
-        IEnumerable<long> DeserializeMany(string values);
-    }
+    IEnumerable<long> DeserializeMany(string values);
 }

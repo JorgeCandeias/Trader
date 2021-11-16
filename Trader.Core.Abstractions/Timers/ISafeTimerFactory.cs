@@ -1,11 +1,6 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
+﻿namespace Outcompute.Trader.Core.Timers;
 
-namespace Outcompute.Trader.Core.Timers
+public interface ISafeTimerFactory
 {
-    public interface ISafeTimerFactory
-    {
-        ISafeTimer Create(Func<CancellationToken, Task> callback, TimeSpan dueTime, TimeSpan period, TimeSpan timeout);
-    }
+    ISafeTimer Create(Func<CancellationToken, Task> callback, TimeSpan dueTime, TimeSpan period, TimeSpan timeout);
 }

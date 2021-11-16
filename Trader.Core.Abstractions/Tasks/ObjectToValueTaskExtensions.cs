@@ -1,13 +1,10 @@
-﻿using System.Threading.Tasks;
+﻿namespace System;
 
-namespace System
+public static class ObjectToValueTaskExtensions
 {
-    public static class ObjectToValueTaskExtensions
+    /// <inheritdoc cref="ValueTask.FromResult{TResult}(TResult)"/>
+    public static ValueTask<T> AsValueTaskResult<T>(this T obj)
     {
-        /// <inheritdoc cref="ValueTask.FromResult{TResult}(TResult)"/>
-        public static ValueTask<T> AsValueTaskResult<T>(this T obj)
-        {
-            return ValueTask.FromResult(obj);
-        }
+        return ValueTask.FromResult(obj);
     }
 }

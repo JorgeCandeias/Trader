@@ -1,9 +1,6 @@
-﻿using System;
+﻿namespace Outcompute.Trader.Core.Time;
 
-namespace Outcompute.Trader.Core.Time
+public interface ISystemClock
 {
-    public interface ISystemClock
-    {
-        DateTime UtcNow { get; }
-    }
+    DateTime UtcNow { get; }
 }

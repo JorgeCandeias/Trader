@@ -1,12 +1,9 @@
-﻿using System.Threading.Tasks;
+﻿namespace System;
 
-namespace System
+public static class ObjectToTaskExtensions
 {
-    public static class ObjectToTaskExtensions
+    public static Task<T> AsTaskResult<T>(this T obj)
     {
-        public static Task<T> AsTaskResult<T>(this T obj)
-        {
-            return Task.FromResult(obj);
-        }
+        return Task.FromResult(obj);
     }
 }

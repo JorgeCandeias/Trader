@@ -1,8 +1,5 @@
-﻿using System;
+﻿namespace Outcompute.Trader.Core.Timers;
 
-namespace Outcompute.Trader.Core.Timers
+public interface ISafeTimer : IDisposable
 {
-    public interface ISafeTimer : IDisposable
-    {
-    }
 }

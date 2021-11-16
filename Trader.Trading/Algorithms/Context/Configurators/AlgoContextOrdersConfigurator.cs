@@ -13,13 +13,23 @@ internal class AlgoContextOrdersConfigurator : IAlgoContextConfigurator<AlgoCont
 
     public async ValueTask ConfigureAsync(AlgoContext context, string name, CancellationToken cancellationToken = default)
     {
-        if (IsNullOrWhiteSpace(context.Symbol.Name))
+        // populate orders for the default symbol
+        if (!IsNullOrEmpty(context.Symbol.Name))
         {
-            return;
+            context.Orders = await _orders
+                .GetOrdersAsync(context.Symbol.Name, CancellationToken.None)
+                .ConfigureAwait(false);
         }
 
-        context.Orders = await _orders
-            .GetOrdersAsync(context.Symbol.Name, CancellationToken.None)
-            .ConfigureAwait(false);
+        // populate orders for the multi symbol list
+        if (context.Symbols.Count > 0)
+        {
+            foreach (var symbol in context.Symbols.Keys)
+            {
+                context.Orders = await _orders
+                    .GetOrdersAsync(symbol, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+        }
     }
 }

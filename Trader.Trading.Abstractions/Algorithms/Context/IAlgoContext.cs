@@ -100,6 +100,11 @@ public interface IAlgoContext
     IReadOnlyList<OrderQueryResult> Orders { get; }
 
     /// <summary>
+    /// Gets all orders for all configured symbols and dependencies.
+    /// </summary>
+    IDictionary<string, IReadOnlyList<OrderQueryResult>> OrdersLookup { get; }
+
+    /// <summary>
     /// Gets all historial trades for the default symbol.
     /// This is only populated if the default symbol is defined.
     /// </summary>
@@ -111,7 +116,7 @@ public interface IAlgoContext
     IReadOnlyList<Kline> Klines { get; }
 
     /// <summary>
-    /// Gets the klines for all configured dependencies.
+    /// Gets the klines for all configured symbols and dependencies.
     /// </summary>
     IDictionary<(string Symbol, KlineInterval Interval), IReadOnlyList<Kline>> KlineLookup { get; }
 

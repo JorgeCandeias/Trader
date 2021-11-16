@@ -2,17 +2,16 @@
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Trading.Data.InMemory;
 
-namespace Orleans
+namespace Orleans;
+
+public static class InMemoryTradingRepositoryClientBuilderExtensions
 {
-    public static class InMemoryTradingRepositoryClientBuilderExtensions
+    public static IClientBuilder AddInMemoryTradingRepository(this IClientBuilder builder)
     {
-        public static IClientBuilder AddInMemoryTradingRepository(this IClientBuilder builder)
-        {
-            return builder
-                .ConfigureServices(services =>
-                {
-                    services.AddSingleton<ITradingRepository, InMemoryTradingRepository>();
-                });
-        }
+        return builder
+            .ConfigureServices(services =>
+            {
+                services.AddSingleton<ITradingRepository, InMemoryTradingRepository>();
+            });
     }
 }

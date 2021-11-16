@@ -102,7 +102,7 @@ internal class SavingsGrain : Grain, ISavingsGrain
         var assets = new HashSet<string>();
         foreach (var name in _dependencies.AllSymbols)
         {
-            var symbol = await _exchange.GetRequiredSymbolAsync(name, _lifetime.ApplicationStopping);
+            var symbol = _exchange.GetRequiredSymbol(name);
             assets.Add(symbol.BaseAsset);
             assets.Add(symbol.QuoteAsset);
         }

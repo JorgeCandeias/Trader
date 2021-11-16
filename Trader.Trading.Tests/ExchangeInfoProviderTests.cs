@@ -4,9 +4,7 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.InMemory;
 using Outcompute.Trader.Trading.Providers;
 using Outcompute.Trader.Trading.Tests.Fixtures;
-using System;
 using System.Collections.Immutable;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
@@ -32,7 +30,7 @@ namespace Outcompute.Trader.Trading.Tests
             var provider = _cluster.ServiceProvider.GetRequiredService<IExchangeInfoProvider>();
 
             // act
-            var result = await provider.GetExchangeInfoAsync();
+            var result = provider.GetExchangeInfo();
 
             // assert
             Assert.NotNull(result);

@@ -4,7 +4,7 @@ namespace Outcompute.Trader.Trading.Providers;
 
 public interface IExchangeInfoProvider
 {
-    ValueTask<ExchangeInfo> GetExchangeInfoAsync(CancellationToken cancellationToken = default);
+    ExchangeInfo GetExchangeInfo();
 
-    ValueTask<Symbol?> TryGetSymbolAsync(string name, CancellationToken cancellationToken = default);
+    Symbol? TryGetSymbol(string name);
 }

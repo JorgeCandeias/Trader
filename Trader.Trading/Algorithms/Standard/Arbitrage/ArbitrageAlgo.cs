@@ -35,8 +35,8 @@ internal partial class ArbitrageAlgo : Algo
             var name2 = $"{assets[1]}{assets[0]}";
 
             var symbol =
-                await _info.TryGetSymbolAsync(name1, cancellationToken) ??
-                await _info.TryGetSymbolAsync(name2, cancellationToken);
+                _info.TryGetSymbol(name1) ??
+                _info.TryGetSymbol(name2);
 
             if (symbol is null)
             {

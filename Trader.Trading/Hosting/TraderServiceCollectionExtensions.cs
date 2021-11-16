@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.ObjectPool;
 using Orleans;
 using Outcompute.Trader.Trading;
@@ -123,7 +124,9 @@ public static class TraderServiceCollectionExtensions
             .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextTradesConfigurator>()
 
             // exchange info provider
-            .AddSingleton<IExchangeInfoProvider, ExchangeInfoProvider>()
+            .AddSingleton<ExchangeInfoProvider>()
+            .AddSingleton<IHostedService>(sp => sp.GetRequiredService<ExchangeInfoProvider>())
+            .AddSingleton<IExchangeInfoProvider>(sp => sp.GetRequiredService<ExchangeInfoProvider>())
             .AddOptions<ExchangeInfoOptions>().ValidateDataAnnotations().Services
 
             // commands

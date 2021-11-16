@@ -11,10 +11,10 @@ internal class AlgoContextExchangeInfoConfigurator : IAlgoContextConfigurator<Al
         _provider = provider;
     }
 
-    public async ValueTask ConfigureAsync(AlgoContext context, string name, CancellationToken cancellationToken = default)
+    public ValueTask ConfigureAsync(AlgoContext context, string name, CancellationToken cancellationToken = default)
     {
-        context.ExchangeInfo = await _provider
-            .GetExchangeInfoAsync(cancellationToken)
-            .ConfigureAwait(false);
+        context.ExchangeInfo = _provider.GetExchangeInfo();
+
+        return ValueTask.CompletedTask;
     }
 }

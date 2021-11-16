@@ -14,24 +14,22 @@ internal class AlgoContextSymbolConfigurator : IAlgoContextConfigurator<AlgoCont
         _exchange = exchange;
     }
 
-    public async ValueTask ConfigureAsync(AlgoContext context, string name, CancellationToken cancellationToken = default)
+    public ValueTask ConfigureAsync(AlgoContext context, string name, CancellationToken cancellationToken = default)
     {
         var options = _monitor.Get(name);
 
         // populate the default symbol
-        if (IsNullOrEmpty(options.Symbol))
+        if (!IsNullOrEmpty(options.Symbol))
         {
-            context.Symbol = await _exchange
-                .GetRequiredSymbolAsync(options.Symbol, cancellationToken)
-                .ConfigureAwait(false);
+            context.Symbol = _exchange.GetRequiredSymbol(options.Symbol);
         }
 
         // populate the symbol set
         foreach (var symbol in options.Symbols)
         {
-            context.Symbols[symbol] = await _exchange
-                .GetRequiredSymbolAsync(symbol, cancellationToken)
-                .ConfigureAwait(false);
+            context.Symbols[symbol] = _exchange.GetRequiredSymbol(symbol);
         }
+
+        return ValueTask.CompletedTask;
     }
 }

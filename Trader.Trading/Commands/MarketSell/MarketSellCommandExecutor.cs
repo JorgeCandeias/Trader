@@ -118,22 +118,22 @@ namespace Outcompute.Trader.Trading.Commands.MarketSell
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} adjusted original quantity of {Quantity} {Asset} down to {AdjustedQuantity} {Asset} by step size {StepSize} {Asset}")]
         private partial void LogAdjustedQuantity(string type, string name, decimal quantity, string asset, decimal adjustedQuantity, decimal stepSize);
 
-        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot place {OrderType} {OrderSide} order with quantity {Quantity} {Asset} because it is less than the minimum lot size of {MinLotSize} {Asset}")]
+        [LoggerMessage(1, LogLevel.Error, "{Type} {Name} cannot place {OrderType} {OrderSide} order with quantity {Quantity} {Asset} because it is less than the minimum lot size of {MinLotSize} {Asset}")]
         private partial void LogQuantityLessThanMinLotSize(string type, string name, OrderType orderType, OrderSide orderSide, decimal quantity, string asset, decimal minLotSize);
 
-        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot place {OrderType} {OrderSide} order with quantity {Quantity} {Asset} and price {Price} {Quote} because the total of {Total} {Quote} is less than the minimum notional of {MinNotional} {Quote}")]
+        [LoggerMessage(2, LogLevel.Error, "{Type} {Name} cannot place {OrderType} {OrderSide} order with quantity {Quantity} {Asset} and price {Price} {Quote} because the total of {Total} {Quote} is less than the minimum notional of {MinNotional} {Quote}")]
         private partial void LogTotalLessThanMinNotional(string type, string name, OrderType orderType, OrderSide orderSide, decimal quantity, string asset, decimal price, string quote, decimal total, decimal minNotional);
 
-        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot place {OrderType} {OrderSide} order with quantity {Quantity} {Asset} because the free amount from all sources is only {Free} {Asset}")]
+        [LoggerMessage(3, LogLevel.Error, "{Type} {Name} cannot place {OrderType} {OrderSide} order with quantity {Quantity} {Asset} because the free amount from all sources is only {Free} {Asset}")]
         private partial void LogNotEnoughFreeBalance(string type, string name, OrderType orderType, OrderSide orderSide, decimal quantity, string asset, decimal free);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} attempting to redeem {Quantity} {Asset} from savings")]
+        [LoggerMessage(4, LogLevel.Information, "{Type} {Name} attempting to redeem {Quantity} {Asset} from savings")]
         private partial void LogRedeemingSavings(string type, string name, decimal quantity, string asset);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} attempting to redeem {Quantity} {Asset} from the swap pool")]
+        [LoggerMessage(5, LogLevel.Information, "{Type} {Name} attempting to redeem {Quantity} {Asset} from the swap pool")]
         private partial void LogRedeemingSwapPool(string type, string name, decimal quantity, string asset);
 
-        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} could not redeem the required {Quantity} {Asset}")]
+        [LoggerMessage(6, LogLevel.Error, "{Type} {Name} could not redeem the required {Quantity} {Asset}")]
         private partial void LogCouldNotRedeem(string type, string name, decimal quantity, string asset);
     }
 }

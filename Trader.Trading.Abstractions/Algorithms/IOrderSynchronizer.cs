@@ -1,10 +1,6 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
+﻿namespace Outcompute.Trader.Trading.Algorithms;
 
-namespace Outcompute.Trader.Trading.Algorithms
+public interface IOrderSynchronizer
 {
-    public interface IOrderSynchronizer
-    {
-        Task SynchronizeOrdersAsync(string symbol, CancellationToken cancellationToken = default);
-    }
+    Task SynchronizeOrdersAsync(string symbol, CancellationToken cancellationToken = default);
 }

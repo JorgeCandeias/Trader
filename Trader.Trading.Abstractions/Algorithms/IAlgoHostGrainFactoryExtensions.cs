@@ -1,15 +1,13 @@
 ﻿using Outcompute.Trader.Trading.Algorithms;
-using System;
 
-namespace Orleans
+namespace Orleans;
+
+public static class IAlgoHostGrainFactoryExtensions
 {
-    public static class IAlgoHostGrainFactoryExtensions
+    public static IAlgoHostGrain GetAlgoHostGrain(this IGrainFactory factory, string name)
     {
-        public static IAlgoHostGrain GetAlgoHostGrain(this IGrainFactory factory, string name)
-        {
-            if (factory is null) throw new ArgumentNullException(nameof(factory));
+        if (factory is null) throw new ArgumentNullException(nameof(factory));
 
-            return factory.GetGrain<IAlgoHostGrain>(name);
-        }
+        return factory.GetGrain<IAlgoHostGrain>(name);
     }
 }

@@ -1,7 +1,6 @@
-﻿namespace Outcompute.Trader.Trading.Commands
+﻿namespace Outcompute.Trader.Trading.Commands;
+
+public interface ITagGenerator
 {
-    public interface ITagGenerator
-    {
-        string Generate(string symbol, decimal price);
-    }
+    string Generate(string symbol, decimal price);
 }

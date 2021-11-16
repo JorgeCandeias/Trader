@@ -1,7 +1,6 @@
-﻿namespace Outcompute.Trader.Trading.Algorithms
+﻿namespace Outcompute.Trader.Trading.Algorithms;
+
+public interface IAlgoFactoryResolver
 {
-    public interface IAlgoFactoryResolver
-    {
-        IAlgoFactory Resolve(string typeName);
-    }
+    IAlgoFactory Resolve(string typeName);
 }

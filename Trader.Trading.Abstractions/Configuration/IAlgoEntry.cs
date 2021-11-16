@@ -1,7 +1,6 @@
-﻿namespace Outcompute.Trader.Trading.Configuration
+﻿namespace Outcompute.Trader.Trading.Configuration;
+
+public interface IAlgoEntry
 {
-    public interface IAlgoEntry
-    {
-        public string Name { get; }
-    }
+    public string Name { get; }
 }

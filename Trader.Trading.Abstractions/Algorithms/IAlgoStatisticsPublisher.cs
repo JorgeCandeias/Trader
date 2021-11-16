@@ -1,11 +1,8 @@
 ﻿using Outcompute.Trader.Models;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Algorithms
+namespace Outcompute.Trader.Trading.Algorithms;
+
+public interface IAlgoStatisticsPublisher
 {
-    public interface IAlgoStatisticsPublisher
-    {
-        Task PublishAsync(PositionDetails significant, MiniTicker ticker, CancellationToken cancellationToken = default);
-    }
+    Task PublishAsync(PositionDetails significant, MiniTicker ticker, CancellationToken cancellationToken = default);
 }

@@ -1,7 +1,6 @@
-﻿namespace Outcompute.Trader.Trading.Algorithms
+﻿namespace Outcompute.Trader.Trading.Algorithms;
+
+public interface IAlgoFactory
 {
-    public interface IAlgoFactory
-    {
-        IAlgo Create(string name);
-    }
+    IAlgo Create(string name);
 }

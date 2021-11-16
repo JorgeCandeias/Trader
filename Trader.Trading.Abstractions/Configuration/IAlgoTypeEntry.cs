@@ -1,11 +1,8 @@
-﻿using System;
+﻿namespace Outcompute.Trader.Trading.Configuration;
 
-namespace Outcompute.Trader.Trading.Configuration
+public interface IAlgoTypeEntry
 {
-    public interface IAlgoTypeEntry
-    {
-        string Name { get; }
+    string Name { get; }
 
-        Type Type { get; }
-    }
+    Type Type { get; }
 }

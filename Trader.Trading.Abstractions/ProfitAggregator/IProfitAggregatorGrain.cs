@@ -1,14 +1,11 @@
 ﻿using Orleans;
 using Outcompute.Trader.Trading.Algorithms;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.ProfitAggregator
+namespace Outcompute.Trader.Trading.ProfitAggregator;
+
+public interface IProfitAggregatorGrain : IGrainWithGuidKey
 {
-    public interface IProfitAggregatorGrain : IGrainWithGuidKey
-    {
-        Task PublishAsync(IEnumerable<Profit> profits);
+    Task PublishAsync(IEnumerable<Profit> profits);
 
-        Task<IEnumerable<Profit>> GetProfitsAsync();
-    }
+    Task<IEnumerable<Profit>> GetProfitsAsync();
 }

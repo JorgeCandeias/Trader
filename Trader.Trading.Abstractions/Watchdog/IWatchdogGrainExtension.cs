@@ -1,10 +1,8 @@
 ﻿using Orleans.Runtime;
-using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Watchdog
+namespace Outcompute.Trader.Trading.Watchdog;
+
+public interface IWatchdogGrainExtension : IGrainExtension
 {
-    public interface IWatchdogGrainExtension : IGrainExtension
-    {
-        Task PingAsync();
-    }
+    Task PingAsync();
 }

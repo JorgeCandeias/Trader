@@ -1,7 +1,6 @@
-﻿namespace Outcompute.Trader.Trading.Algorithms.Context
+﻿namespace Outcompute.Trader.Trading.Algorithms.Context;
+
+public interface IAlgoContextFactory
 {
-    public interface IAlgoContextFactory
-    {
-        IAlgoContext Create(string name);
-    }
+    IAlgoContext Create(string name);
 }

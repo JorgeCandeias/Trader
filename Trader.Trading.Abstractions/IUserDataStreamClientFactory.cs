@@ -1,7 +1,6 @@
-﻿namespace Outcompute.Trader.Trading
+﻿namespace Outcompute.Trader.Trading;
+
+public interface IUserDataStreamClientFactory
 {
-    public interface IUserDataStreamClientFactory
-    {
-        IUserDataStreamClient Create(string listenKey);
-    }
+    IUserDataStreamClient Create(string listenKey);
 }

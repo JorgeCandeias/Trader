@@ -1,15 +1,13 @@
 ﻿using Outcompute.Trader.Trading.ProfitAggregator;
-using System;
 
-namespace Orleans
+namespace Orleans;
+
+public static class IProfitAggregatorLocalGrainFactoryExtensions
 {
-    public static class IProfitAggregatorLocalGrainFactoryExtensions
+    public static IProfitAggregatorLocalGrain GetProfitAggregatorLocalGrain(this IGrainFactory factory)
     {
-        public static IProfitAggregatorLocalGrain GetProfitAggregatorLocalGrain(this IGrainFactory factory)
-        {
-            if (factory is null) throw new ArgumentNullException(nameof(factory));
+        if (factory is null) throw new ArgumentNullException(nameof(factory));
 
-            return factory.GetGrain<IProfitAggregatorLocalGrain>(Guid.Empty);
-        }
+        return factory.GetGrain<IProfitAggregatorLocalGrain>(Guid.Empty);
     }
 }

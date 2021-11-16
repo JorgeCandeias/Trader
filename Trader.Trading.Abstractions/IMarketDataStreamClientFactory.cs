@@ -1,9 +1,6 @@
-﻿using System.Collections.Generic;
+﻿namespace Outcompute.Trader.Trading;
 
-namespace Outcompute.Trader.Trading
+public interface IMarketDataStreamClientFactory
 {
-    public interface IMarketDataStreamClientFactory
-    {
-        IMarketDataStreamClient Create(IReadOnlyCollection<string> streams);
-    }
+    IMarketDataStreamClient Create(IReadOnlyCollection<string> streams);
 }

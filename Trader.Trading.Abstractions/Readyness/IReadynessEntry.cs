@@ -1,11 +1,6 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
+﻿namespace Outcompute.Trader.Trading.Readyness;
 
-namespace Outcompute.Trader.Trading.Readyness
+public interface IReadynessEntry
 {
-    public interface IReadynessEntry
-    {
-        ValueTask<bool> IsReadyAsync(IServiceProvider provider, CancellationToken cancellationToken = default);
-    }
+    ValueTask<bool> IsReadyAsync(IServiceProvider provider, CancellationToken cancellationToken = default);
 }

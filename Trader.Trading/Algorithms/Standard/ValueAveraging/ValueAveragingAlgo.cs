@@ -27,7 +27,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         private decimal _smaC;
         private decimal _rsi;
 
-        protected override ValueTask<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default)
+        protected override IAlgoCommand OnExecute()
         {
             // calculate the current moving averages
             _smaA = Context.Klines.LastSma(x => x.ClosePrice, _options.SmaPeriodsA);
@@ -40,29 +40,37 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             // decide on regular sale
             if (TrySignalSellOrder())
             {
-                return SignificantAveragingSell(Context.Symbol, Context.Ticker, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool).AsValueTaskResult();
+                return Sequence(
+                    CancelOpenOrders(Context.Symbol, OrderSide.Buy),
+                    SignificantAveragingSell(Context.Symbol, Context.Ticker, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool));
             }
 
             // decide on a regular buy
             if (TrySignalBuyOrder())
             {
-                return CreateBuy().AsValueTaskResult();
+                return Sequence(
+                    CancelOpenOrders(Context.Symbol, OrderSide.Sell),
+                    CreateBuy());
             }
 
             // decide on a closing sale
             if (TrySignalClosing())
             {
-                return AveragingSell(Context.Symbol, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool, _options.TopUpUnsellablePositionWithBalance).AsValueTaskResult();
+                return Sequence(
+                    CancelOpenOrders(Context.Symbol, OrderSide.Buy),
+                    AveragingSell(Context.Symbol, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool, _options.TopUpUnsellablePositionWithBalance));
             }
 
             // decide on a stop loss
             if (TrySignalStopLoss())
             {
-                return SignificantAveragingSell(Context.Symbol, Context.Ticker, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool).AsValueTaskResult();
+                return Sequence(
+                    CancelOpenOrders(Context.Symbol, OrderSide.Buy),
+                    SignificantAveragingSell(Context.Symbol, Context.Ticker, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool));
             }
 
             // clear open orders out of range if no decision was made
-            return CancelOpenOrders(Context.Symbol, null, 0.01M).AsValueTaskResult();
+            return CancelOpenOrders(Context.Symbol, null, 0.01M);
         }
 
         private bool TrySignalBuyOrder()

@@ -35,7 +35,15 @@ namespace Outcompute.Trader.Trading.Algorithms
             return await OnExecuteAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        protected abstract ValueTask<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default);
+        protected virtual ValueTask<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default)
+        {
+            return ValueTask.FromResult(OnExecute());
+        }
+
+        protected virtual IAlgoCommand OnExecute()
+        {
+            return Noop();
+        }
 
         public virtual ValueTask StartAsync(CancellationToken cancellationToken = default)
         {

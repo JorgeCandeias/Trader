@@ -2,24 +2,20 @@
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Providers;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Algorithms
+namespace Outcompute.Trader.Trading.Algorithms;
+
+public static class ExchangeInfoProviderAlgoContextExtensions
 {
-    public static class ExchangeInfoProviderAlgoContextExtensions
+    public static IExchangeInfoProvider GetExchangeInfoProvider(this IAlgoContext context)
     {
-        public static IExchangeInfoProvider GetExchangeInfoProvider(this IAlgoContext context)
-        {
-            if (context is null) throw new ArgumentNullException(nameof(context));
+        if (context is null) throw new ArgumentNullException(nameof(context));
 
-            return context.ServiceProvider.GetRequiredService<IExchangeInfoProvider>();
-        }
+        return context.ServiceProvider.GetRequiredService<IExchangeInfoProvider>();
+    }
 
-        public static Task<Symbol> GetRequiredSymbolAsync(this IAlgoContext context, string symbol, CancellationToken cancellationToken = default)
-        {
-            return context.GetExchangeInfoProvider().GetRequiredSymbolAsync(symbol, cancellationToken);
-        }
+    public static Task<Symbol> GetRequiredSymbolAsync(this IAlgoContext context, string symbol, CancellationToken cancellationToken = default)
+    {
+        return context.GetExchangeInfoProvider().GetRequiredSymbolAsync(symbol, cancellationToken);
     }
 }

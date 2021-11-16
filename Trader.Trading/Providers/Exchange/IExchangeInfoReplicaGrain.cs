@@ -1,12 +1,11 @@
 ﻿using Orleans;
 using Outcompute.Trader.Models;
 
-namespace Outcompute.Trader.Trading.Providers.Exchange
-{
-    internal interface IExchangeInfoReplicaGrain : IGrainWithGuidKey
-    {
-        ValueTask<ExchangeInfo> GetExchangeInfoAsync();
+namespace Outcompute.Trader.Trading.Providers.Exchange;
 
-        ValueTask<Symbol?> TryGetSymbolAsync(string name);
-    }
+internal interface IExchangeInfoReplicaGrain : IGrainWithGuidKey
+{
+    ValueTask<ExchangeInfo> GetExchangeInfoAsync();
+
+    ValueTask<Symbol?> TryGetSymbolAsync(string name);
 }

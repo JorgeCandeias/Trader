@@ -1,34 +1,30 @@
 ﻿using Outcompute.Trader.Trading.Providers;
-using System.Threading;
-using System.Threading.Tasks;
-using static System.String;
 
-namespace Outcompute.Trader.Trading.Algorithms.Context.Configurators
+namespace Outcompute.Trader.Trading.Algorithms.Context.Configurators;
+
+internal class AlgoContextSwapPoolBalanceConfigurator : IAlgoContextConfigurator<AlgoContext>
 {
-    internal class AlgoContextSwapPoolBalanceConfigurator : IAlgoContextConfigurator<AlgoContext>
-    {
-        private readonly ISwapPoolProvider _swaps;
+    private readonly ISwapPoolProvider _swaps;
 
-        public AlgoContextSwapPoolBalanceConfigurator(ISwapPoolProvider swaps)
+    public AlgoContextSwapPoolBalanceConfigurator(ISwapPoolProvider swaps)
+    {
+        _swaps = swaps;
+    }
+
+    public async ValueTask ConfigureAsync(AlgoContext context, string name, CancellationToken cancellationToken = default)
+    {
+        if (!IsNullOrEmpty(context.Symbol.BaseAsset))
         {
-            _swaps = swaps;
+            context.BaseAssetSwapPoolBalance = await _swaps
+                .GetBalanceAsync(context.Symbol.BaseAsset, cancellationToken)
+                .ConfigureAwait(false);
         }
 
-        public async ValueTask ConfigureAsync(AlgoContext context, string name, CancellationToken cancellationToken = default)
+        if (!IsNullOrEmpty(context.Symbol.QuoteAsset))
         {
-            if (!IsNullOrEmpty(context.Symbol.BaseAsset))
-            {
-                context.BaseAssetSwapPoolBalance = await _swaps
-                    .GetBalanceAsync(context.Symbol.BaseAsset, cancellationToken)
-                    .ConfigureAwait(false);
-            }
-
-            if (!IsNullOrEmpty(context.Symbol.QuoteAsset))
-            {
-                context.QuoteAssetSwapPoolBalance = await _swaps
-                    .GetBalanceAsync(context.Symbol.QuoteAsset, cancellationToken)
-                    .ConfigureAwait(false);
-            }
+            context.QuoteAssetSwapPoolBalance = await _swaps
+                .GetBalanceAsync(context.Symbol.QuoteAsset, cancellationToken)
+                .ConfigureAwait(false);
         }
     }
 }

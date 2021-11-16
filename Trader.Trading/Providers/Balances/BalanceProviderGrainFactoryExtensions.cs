@@ -1,12 +1,11 @@
 ﻿using Outcompute.Trader.Trading.Providers.Balances;
 
-namespace Orleans
+namespace Orleans;
+
+internal static class BalanceProviderGrainFactoryExtensions
 {
-    internal static class BalanceProviderGrainFactoryExtensions
+    public static IBalanceProviderGrain GetBalanceProviderGrain(this IGrainFactory factory, string asset)
     {
-        public static IBalanceProviderGrain GetBalanceProviderGrain(this IGrainFactory factory, string asset)
-        {
-            return factory.GetGrain<IBalanceProviderGrain>(asset);
-        }
+        return factory.GetGrain<IBalanceProviderGrain>(asset);
     }
 }

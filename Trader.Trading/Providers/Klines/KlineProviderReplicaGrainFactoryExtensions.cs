@@ -1,27 +1,25 @@
 ﻿using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers.Klines;
-using System;
 using System.Collections.Concurrent;
 
-namespace Orleans
+namespace Orleans;
+
+internal static class KlineProviderReplicaGrainFactoryExtensions
 {
-    internal static class KlineProviderReplicaGrainFactoryExtensions
+    private static readonly ConcurrentDictionary<(string Symbol, KlineInterval Interval), IKlineProviderReplicaGrain> _lookup = new();
+
+    private static IKlineProviderReplicaGrain FactoryMethod((string Symbol, KlineInterval Interval) key, IGrainFactory factory)
     {
-        private static readonly ConcurrentDictionary<(string Symbol, KlineInterval Interval), IKlineProviderReplicaGrain> _lookup = new();
+        return factory.GetGrain<IKlineProviderReplicaGrain>($"{key.Symbol}|{key.Interval}");
+    }
 
-        private static IKlineProviderReplicaGrain FactoryMethod((string Symbol, KlineInterval Interval) key, IGrainFactory factory)
-        {
-            return factory.GetGrain<IKlineProviderReplicaGrain>($"{key.Symbol}|{key.Interval}");
-        }
+    private static readonly Func<(string Symbol, KlineInterval Interval), IGrainFactory, IKlineProviderReplicaGrain> FactoryDelegate = FactoryMethod;
 
-        private static readonly Func<(string Symbol, KlineInterval Interval), IGrainFactory, IKlineProviderReplicaGrain> FactoryDelegate = FactoryMethod;
+    public static IKlineProviderReplicaGrain GetKlineProviderReplicaGrain(this IGrainFactory factory, string symbol, KlineInterval interval)
+    {
+        if (factory is null) throw new ArgumentNullException(nameof(factory));
+        if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
-        public static IKlineProviderReplicaGrain GetKlineProviderReplicaGrain(this IGrainFactory factory, string symbol, KlineInterval interval)
-        {
-            if (factory is null) throw new ArgumentNullException(nameof(factory));
-            if (symbol is null) throw new ArgumentNullException(nameof(symbol));
-
-            return _lookup.GetOrAdd((symbol, interval), FactoryDelegate, factory);
-        }
+        return _lookup.GetOrAdd((symbol, interval), FactoryDelegate, factory);
     }
 }

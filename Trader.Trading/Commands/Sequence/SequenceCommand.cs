@@ -1,29 +1,28 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Outcompute.Trader.Trading.Algorithms.Context;
 
-namespace Outcompute.Trader.Trading.Commands.Sequence
+namespace Outcompute.Trader.Trading.Commands.Sequence;
+
+public class SequenceCommand : IAlgoCommand
 {
-    public class SequenceCommand : IAlgoCommand
+    public SequenceCommand(IEnumerable<IAlgoCommand> commands)
     {
-        public SequenceCommand(IEnumerable<IAlgoCommand> commands)
-        {
-            Commands = commands ?? throw new ArgumentNullException(nameof(commands));
-        }
+        Commands = commands ?? throw new ArgumentNullException(nameof(commands));
+    }
 
-        public SequenceCommand(params IAlgoCommand[] results)
-        {
-            Commands = results;
-        }
+    public SequenceCommand(params IAlgoCommand[] results)
+    {
+        Commands = results;
+    }
 
-        public IEnumerable<IAlgoCommand> Commands { get; }
+    public IEnumerable<IAlgoCommand> Commands { get; }
 
-        public ValueTask ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
-        {
-            if (context is null) throw new ArgumentNullException(nameof(context));
+    public ValueTask ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
+    {
+        if (context is null) throw new ArgumentNullException(nameof(context));
 
-            return context.ServiceProvider
-                .GetRequiredService<IAlgoCommandExecutor<SequenceCommand>>()
-                .ExecuteAsync(context, this, cancellationToken);
-        }
+        return context.ServiceProvider
+            .GetRequiredService<IAlgoCommandExecutor<SequenceCommand>>()
+            .ExecuteAsync(context, this, cancellationToken);
     }
 }

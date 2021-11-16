@@ -2,24 +2,23 @@
 using Microsoft.Extensions.Options;
 using Outcompute.Trader.Trading.Configuration;
 
-namespace Outcompute.Trader.Trading.Providers.Swap
+namespace Outcompute.Trader.Trading.Providers.Swap;
+
+internal class SwapPoolOptionsConfigurator : IConfigureOptions<SwapPoolOptions>
 {
-    internal class SwapPoolOptionsConfigurator : IConfigureOptions<SwapPoolOptions>
+    private readonly IOptionsMonitor<AlgoConfigurationMappingOptions> _mappings;
+    private readonly IConfiguration _config;
+
+    public SwapPoolOptionsConfigurator(IOptionsMonitor<AlgoConfigurationMappingOptions> mappings, IConfiguration config)
     {
-        private readonly IOptionsMonitor<AlgoConfigurationMappingOptions> _mappings;
-        private readonly IConfiguration _config;
+        _mappings = mappings;
+        _config = config;
+    }
 
-        public SwapPoolOptionsConfigurator(IOptionsMonitor<AlgoConfigurationMappingOptions> mappings, IConfiguration config)
-        {
-            _mappings = mappings;
-            _config = config;
-        }
-
-        public void Configure(SwapPoolOptions options)
-        {
-            _config
-                .GetSection(_mappings.CurrentValue.SwapPoolKey)
-                .Bind(options);
-        }
+    public void Configure(SwapPoolOptions options)
+    {
+        _config
+            .GetSection(_mappings.CurrentValue.SwapPoolKey)
+            .Bind(options);
     }
 }

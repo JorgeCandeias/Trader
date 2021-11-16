@@ -31,117 +31,116 @@ using Outcompute.Trader.Trading.Providers.Trades;
 using Outcompute.Trader.Trading.Readyness;
 using Outcompute.Trader.Trading.Watchdog;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace Microsoft.Extensions.DependencyInjection;
+
+public static class TraderServiceCollectionExtensions
 {
-    public static class TraderServiceCollectionExtensions
+    public static IServiceCollection AddTradingServices(this IServiceCollection services)
     {
-        public static IServiceCollection AddTradingServices(this IServiceCollection services)
-        {
-            // add or reuse object pools
-            services.TryAddSingleton<ObjectPoolProvider, DefaultObjectPoolProvider>();
-            services.TryAddSingleton(sp => sp.GetRequiredService<ObjectPoolProvider>().CreateStringBuilderPool());
+        // add or reuse object pools
+        services.TryAddSingleton<ObjectPoolProvider, DefaultObjectPoolProvider>();
+        services.TryAddSingleton(sp => sp.GetRequiredService<ObjectPoolProvider>().CreateStringBuilderPool());
 
-            return services
+        return services
 
-                // add watchdog entires
-                .AddWatchdogEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetSwapPoolGrain().AsReference<IWatchdogGrainExtension>().PingAsync())
-                .AddWatchdogEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetAlgoManagerGrain().AsReference<IWatchdogGrainExtension>().PingAsync())
-                .AddWatchdogEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetSavingsGrain().AsReference<IWatchdogGrainExtension>().PingAsync())
+            // add watchdog entires
+            .AddWatchdogEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetSwapPoolGrain().AsReference<IWatchdogGrainExtension>().PingAsync())
+            .AddWatchdogEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetAlgoManagerGrain().AsReference<IWatchdogGrainExtension>().PingAsync())
+            .AddWatchdogEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetSavingsGrain().AsReference<IWatchdogGrainExtension>().PingAsync())
 
-                // add readyness entries
-                .AddReadynessEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetSavingsGrain().IsReadyAsync())
-                .AddReadynessEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetSwapPoolGrain().IsReadyAsync())
+            // add readyness entries
+            .AddReadynessEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetSavingsGrain().IsReadyAsync())
+            .AddReadynessEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetSwapPoolGrain().IsReadyAsync())
 
-                // assorted services
-                .AddWatchdogService()
-                .AddSingleton<IReadynessProvider, ReadynessProvider>()
-                .AddSingleton<IAutoPositionResolver, AutoPositionResolver>()
-                .AddSingleton<IOrderSynchronizer, OrderSynchronizer>()
-                .AddSingleton<ITradeSynchronizer, TradeSynchronizer>()
-                .AddSingleton<IOrderCodeGenerator, OrderCodeGenerator>()
-                .AddSingleton<IAlgoStatisticsPublisher, AlgoStatisticsPublisher>()
-                .AddSingleton<IAlgoDependencyResolver, AlgoDependencyResolver>()
-                .AddOptions<AlgoConfigurationMappingOptions>().ValidateDataAnnotations().Services
-                .AddOptions<SavingsOptions>().ValidateDataAnnotations().Services
-                .ConfigureOptions<AlgoDependencyOptionsConfigurator>()
-                .ConfigureOptions<TraderOptionsConfigurator>().AddOptions<TraderOptions>().ValidateDataAnnotations().Services
+            // assorted services
+            .AddWatchdogService()
+            .AddSingleton<IReadynessProvider, ReadynessProvider>()
+            .AddSingleton<IAutoPositionResolver, AutoPositionResolver>()
+            .AddSingleton<IOrderSynchronizer, OrderSynchronizer>()
+            .AddSingleton<ITradeSynchronizer, TradeSynchronizer>()
+            .AddSingleton<IOrderCodeGenerator, OrderCodeGenerator>()
+            .AddSingleton<IAlgoStatisticsPublisher, AlgoStatisticsPublisher>()
+            .AddSingleton<IAlgoDependencyResolver, AlgoDependencyResolver>()
+            .AddOptions<AlgoConfigurationMappingOptions>().ValidateDataAnnotations().Services
+            .AddOptions<SavingsOptions>().ValidateDataAnnotations().Services
+            .ConfigureOptions<AlgoDependencyOptionsConfigurator>()
+            .ConfigureOptions<TraderOptionsConfigurator>().AddOptions<TraderOptions>().ValidateDataAnnotations().Services
 
-                // tag generator
-                .AddSingleton<ITagGenerator, TagGenerator>()
-                .AddOptions<TagGenerator>().ValidateDataAnnotations().Services
+            // tag generator
+            .AddSingleton<ITagGenerator, TagGenerator>()
+            .AddOptions<TagGenerator>().ValidateDataAnnotations().Services
 
-                // algo options
-                .AddOptions<AlgoOptions>().ValidateDataAnnotations().Services
-                .ConfigureOptions<AlgoOptionsConfigurator>()
+            // algo options
+            .AddOptions<AlgoOptions>().ValidateDataAnnotations().Services
+            .ConfigureOptions<AlgoOptionsConfigurator>()
 
-                // kline provider
-                .AddSingleton<IKlineProvider, KlineProvider>()
-                .AddOptions<KlineProviderOptions>().ValidateDataAnnotations().Services
+            // kline provider
+            .AddSingleton<IKlineProvider, KlineProvider>()
+            .AddOptions<KlineProviderOptions>().ValidateDataAnnotations().Services
 
-                // order provider
-                .AddSingleton<IOrderProvider, OrderProvider>()
-                .AddOptions<OrderProviderOptions>().ValidateDataAnnotations().Services
+            // order provider
+            .AddSingleton<IOrderProvider, OrderProvider>()
+            .AddOptions<OrderProviderOptions>().ValidateDataAnnotations().Services
 
-                // ticker provider
-                .AddSingleton<ITickerProvider, TickerProvider>()
+            // ticker provider
+            .AddSingleton<ITickerProvider, TickerProvider>()
 
-                // savings provider
-                .AddSingleton<ISavingsProvider, SavingsProvider>()
-                .AddOptions<SavingsProviderOptions>().ValidateDataAnnotations().Services
+            // savings provider
+            .AddSingleton<ISavingsProvider, SavingsProvider>()
+            .AddOptions<SavingsProviderOptions>().ValidateDataAnnotations().Services
 
-                // balance provider
-                .AddSingleton<IBalanceProvider, BalanceProvider>()
+            // balance provider
+            .AddSingleton<IBalanceProvider, BalanceProvider>()
 
-                // trade provider
-                .AddSingleton<ITradeProvider, TradeProvider>()
-                .AddOptions<TradeProviderOptions>().ValidateDataAnnotations().Services
+            // trade provider
+            .AddSingleton<ITradeProvider, TradeProvider>()
+            .AddOptions<TradeProviderOptions>().ValidateDataAnnotations().Services
 
-                // swap pool provider
-                .AddSingleton<ISwapPoolProvider, SwapPoolProvider>()
-                .AddOptions<SwapPoolOptions>().ValidateDataAnnotations().Services
-                .ConfigureOptions<SwapPoolOptionsConfigurator>()
+            // swap pool provider
+            .AddSingleton<ISwapPoolProvider, SwapPoolProvider>()
+            .AddOptions<SwapPoolOptions>().ValidateDataAnnotations().Services
+            .ConfigureOptions<SwapPoolOptionsConfigurator>()
 
-                // algo context factory
-                .AddTransient(_ => AlgoContext.Current)
-                .AddSingleton<IAlgoContextFactory, AlgoContextFactory>()
+            // algo context factory
+            .AddTransient(_ => AlgoContext.Current)
+            .AddSingleton<IAlgoContextFactory, AlgoContextFactory>()
 
-                // algo context configurators in order
-                .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextTickTimeConfigurator>()
-                .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextSymbolConfigurator>()
-                .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextPositionsConfigurator>()
-                .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextTickerConfigurator>()
-                .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextSpotBalanceConfigurator>()
-                .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextSavingsConfigurator>()
-                .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextSwapPoolBalanceConfigurator>()
-                .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextOrdersConfigurator>()
-                .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextKlinesConfigurator>()
-                .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextExchangeInfoConfigurator>()
-                .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextTradesConfigurator>()
+            // algo context configurators in order
+            .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextTickTimeConfigurator>()
+            .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextSymbolConfigurator>()
+            .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextPositionsConfigurator>()
+            .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextTickerConfigurator>()
+            .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextSpotBalanceConfigurator>()
+            .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextSavingsConfigurator>()
+            .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextSwapPoolBalanceConfigurator>()
+            .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextOrdersConfigurator>()
+            .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextKlinesConfigurator>()
+            .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextExchangeInfoConfigurator>()
+            .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextTradesConfigurator>()
 
-                // exchange info provider
-                .AddSingleton<IExchangeInfoProvider, ExchangeInfoProvider>()
-                .AddOptions<ExchangeInfoOptions>().ValidateDataAnnotations().Services
+            // exchange info provider
+            .AddSingleton<IExchangeInfoProvider, ExchangeInfoProvider>()
+            .AddOptions<ExchangeInfoOptions>().ValidateDataAnnotations().Services
 
-                // commands
-                .AddSingleton<IAlgoCommandExecutor<AveragingSellCommand>, AveragingSellExecutor>()
-                .AddSingleton<IAlgoCommandExecutor<CancelOrderCommand>, CancelOrderExecutor>()
-                .AddSingleton<IAlgoCommandExecutor<CancelOpenOrdersCommand>, CancelOpenOrdersExecutor>()
-                .AddSingleton<IAlgoCommandExecutor<CreateOrderCommand>, CreateOrderExecutor>()
-                .AddSingleton<IAlgoCommandExecutor<EnsureSingleOrderCommand>, EnsureSingleOrderExecutor>()
-                .AddSingleton<IAlgoCommandExecutor<SequenceCommand>, SequenceExecutor>()
-                .AddSingleton<IAlgoCommandExecutor<RedeemSavingsCommand, RedeemSavingsEvent>, RedeemSavingsExecutor>()
-                .AddSingleton<IAlgoCommandExecutor<SignificantAveragingSellCommand>, SignificantAveragingSellExecutor>()
-                .AddSingleton<IAlgoCommandExecutor<TrackingBuyCommand>, TrackingBuyExecutor>()
-                .AddSingleton<IAlgoCommandExecutor<RedeemSwapPoolCommand, RedeemSwapPoolEvent>, RedeemSwapPoolExecutor>()
-                .AddSingleton<IAlgoCommandExecutor<MarketSellCommand>, MarketSellCommandExecutor>()
-                .AddSingleton<IAlgoCommandExecutor<MarketBuyCommand>, MarketBuyCommandExecutor>()
-                .AddSingleton<IAlgoCommandExecutor<CancelOpenOrdersCommand>, CancelOpenOrdersExecutor>()
+            // commands
+            .AddSingleton<IAlgoCommandExecutor<AveragingSellCommand>, AveragingSellExecutor>()
+            .AddSingleton<IAlgoCommandExecutor<CancelOrderCommand>, CancelOrderExecutor>()
+            .AddSingleton<IAlgoCommandExecutor<CancelOpenOrdersCommand>, CancelOpenOrdersExecutor>()
+            .AddSingleton<IAlgoCommandExecutor<CreateOrderCommand>, CreateOrderExecutor>()
+            .AddSingleton<IAlgoCommandExecutor<EnsureSingleOrderCommand>, EnsureSingleOrderExecutor>()
+            .AddSingleton<IAlgoCommandExecutor<SequenceCommand>, SequenceExecutor>()
+            .AddSingleton<IAlgoCommandExecutor<RedeemSavingsCommand, RedeemSavingsEvent>, RedeemSavingsExecutor>()
+            .AddSingleton<IAlgoCommandExecutor<SignificantAveragingSellCommand>, SignificantAveragingSellExecutor>()
+            .AddSingleton<IAlgoCommandExecutor<TrackingBuyCommand>, TrackingBuyExecutor>()
+            .AddSingleton<IAlgoCommandExecutor<RedeemSwapPoolCommand, RedeemSwapPoolEvent>, RedeemSwapPoolExecutor>()
+            .AddSingleton<IAlgoCommandExecutor<MarketSellCommand>, MarketSellCommandExecutor>()
+            .AddSingleton<IAlgoCommandExecutor<MarketBuyCommand>, MarketBuyCommandExecutor>()
+            .AddSingleton<IAlgoCommandExecutor<CancelOpenOrdersCommand>, CancelOpenOrdersExecutor>()
 
-                // builtin algos
-                .AddAccumulatorAlgoType()
-                .AddArbitrageAlgoType()
-                .AddValueAveragingAlgoType()
-                .AddDiscoveryAlgoType();
-        }
+            // builtin algos
+            .AddAccumulatorAlgoType()
+            .AddArbitrageAlgoType()
+            .AddValueAveragingAlgoType()
+            .AddDiscoveryAlgoType();
     }
 }

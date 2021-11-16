@@ -1,15 +1,13 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace Outcompute.Trader.Trading.Providers.Savings
+namespace Outcompute.Trader.Trading.Providers.Savings;
+
+public class SavingsProviderOptions
 {
-    public class SavingsProviderOptions
-    {
-        /// <summary>
-        /// How long between forced a refresh of the cached savings amounts.
-        /// </summary>
-        [Required]
-        [Range(typeof(TimeSpan), "0.00:00:00.001", "1.00:00:00.000")]
-        public TimeSpan RefreshPeriod { get; set; } = TimeSpan.FromMinutes(10);
-    }
+    /// <summary>
+    /// How long between forced a refresh of the cached savings amounts.
+    /// </summary>
+    [Required]
+    [Range(typeof(TimeSpan), "0.00:00:00.001", "1.00:00:00.000")]
+    public TimeSpan RefreshPeriod { get; set; } = TimeSpan.FromMinutes(10);
 }

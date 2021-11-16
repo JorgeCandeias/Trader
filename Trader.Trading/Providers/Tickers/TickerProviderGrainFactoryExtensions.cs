@@ -1,12 +1,11 @@
 ﻿using Outcompute.Trader.Trading.Providers.Tickers;
 
-namespace Orleans
+namespace Orleans;
+
+internal static class TickerProviderGrainFactoryExtensions
 {
-    internal static class TickerProviderGrainFactoryExtensions
+    public static ITickerProviderGrain GetTickerProviderGrain(this IGrainFactory factory, string symbol)
     {
-        public static ITickerProviderGrain GetTickerProviderGrain(this IGrainFactory factory, string symbol)
-        {
-            return factory.GetGrain<ITickerProviderGrain>(symbol);
-        }
+        return factory.GetGrain<ITickerProviderGrain>(symbol);
     }
 }

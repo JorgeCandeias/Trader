@@ -1,25 +1,24 @@
 ﻿using Orleans;
 using Outcompute.Trader.Models;
 
-namespace Outcompute.Trader.Trading.Providers.Exchange
+namespace Outcompute.Trader.Trading.Providers.Exchange;
+
+internal class ExchangeInfoProvider : IExchangeInfoProvider
 {
-    internal class ExchangeInfoProvider : IExchangeInfoProvider
+    public IExchangeInfoReplicaGrain _grain;
+
+    public ExchangeInfoProvider(IGrainFactory factory)
     {
-        public IExchangeInfoReplicaGrain _grain;
+        _grain = factory.GetExchangeInfoReplicaGrain();
+    }
 
-        public ExchangeInfoProvider(IGrainFactory factory)
-        {
-            _grain = factory.GetExchangeInfoReplicaGrain();
-        }
+    public ValueTask<ExchangeInfo> GetExchangeInfoAsync(CancellationToken cancellationToken = default)
+    {
+        return _grain.GetExchangeInfoAsync();
+    }
 
-        public ValueTask<ExchangeInfo> GetExchangeInfoAsync(CancellationToken cancellationToken = default)
-        {
-            return _grain.GetExchangeInfoAsync();
-        }
-
-        public ValueTask<Symbol?> TryGetSymbolAsync(string name, CancellationToken cancellationToken = default)
-        {
-            return _grain.TryGetSymbolAsync(name);
-        }
+    public ValueTask<Symbol?> TryGetSymbolAsync(string name, CancellationToken cancellationToken = default)
+    {
+        return _grain.TryGetSymbolAsync(name);
     }
 }

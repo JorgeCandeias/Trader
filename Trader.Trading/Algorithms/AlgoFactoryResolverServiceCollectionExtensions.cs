@@ -1,13 +1,12 @@
 ﻿using Outcompute.Trader.Trading.Algorithms;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace Microsoft.Extensions.DependencyInjection;
+
+public static class AlgoFactoryResolverServiceCollectionExtensions
 {
-    public static class AlgoFactoryResolverServiceCollectionExtensions
+    public static IServiceCollection AddAlgoFactoryResolver(this IServiceCollection services)
     {
-        public static IServiceCollection AddAlgoFactoryResolver(this IServiceCollection services)
-        {
-            return services
-                .AddScoped<IAlgoFactoryResolver, AlgoFactoryResolver>();
-        }
+        return services
+            .AddScoped<IAlgoFactoryResolver, AlgoFactoryResolver>();
     }
 }

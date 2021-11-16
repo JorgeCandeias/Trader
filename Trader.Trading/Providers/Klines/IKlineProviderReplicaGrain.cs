@@ -1,20 +1,19 @@
 ﻿using Orleans;
 using Outcompute.Trader.Models;
 
-namespace Outcompute.Trader.Trading.Providers.Klines
+namespace Outcompute.Trader.Trading.Providers.Klines;
+
+public interface IKlineProviderReplicaGrain : IGrainWithStringKey
 {
-    public interface IKlineProviderReplicaGrain : IGrainWithStringKey
-    {
-        ValueTask<IReadOnlyList<Kline>> GetKlinesAsync();
+    ValueTask<IReadOnlyList<Kline>> GetKlinesAsync();
 
-        ValueTask<IReadOnlyList<Kline>> GetKlinesAsync(DateTime tickTime, int periods);
+    ValueTask<IReadOnlyList<Kline>> GetKlinesAsync(DateTime tickTime, int periods);
 
-        ValueTask<Kline?> TryGetKlineAsync(DateTime openTime);
+    ValueTask<Kline?> TryGetKlineAsync(DateTime openTime);
 
-        ValueTask SetKlineAsync(Kline item);
+    ValueTask SetKlineAsync(Kline item);
 
-        ValueTask SetKlinesAsync(IEnumerable<Kline> items);
+    ValueTask SetKlinesAsync(IEnumerable<Kline> items);
 
-        ValueTask<DateTime?> TryGetLastOpenTimeAsync();
-    }
+    ValueTask<DateTime?> TryGetLastOpenTimeAsync();
 }

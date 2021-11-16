@@ -1,12 +1,9 @@
-﻿using System.Threading.Tasks;
+﻿namespace Outcompute.Trader.Trading.Watchdog;
 
-namespace Outcompute.Trader.Trading.Watchdog
+internal class WatchdogGrainExtension : IWatchdogGrainExtension
 {
-    internal class WatchdogGrainExtension : IWatchdogGrainExtension
+    public Task PingAsync()
     {
-        public Task PingAsync()
-        {
-            return Task.CompletedTask;
-        }
+        return Task.CompletedTask;
     }
 }

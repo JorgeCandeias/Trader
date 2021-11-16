@@ -1,12 +1,10 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace Outcompute.Trader.Trading.Providers.Trades
+namespace Outcompute.Trader.Trading.Providers.Trades;
+
+public class TradeProviderOptions
 {
-    public class TradeProviderOptions
-    {
-        [Required]
-        [Range(typeof(TimeSpan), "0.00:00:00.001", "1.00:00:00.000")]
-        public TimeSpan CleanupPeriod { get; set; } = TimeSpan.FromMinutes(1);
-    }
+    [Required]
+    [Range(typeof(TimeSpan), "0.00:00:00.001", "1.00:00:00.000")]
+    public TimeSpan CleanupPeriod { get; set; } = TimeSpan.FromMinutes(1);
 }

@@ -1,21 +1,17 @@
 ﻿using Orleans;
 using Outcompute.Trader.Models;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Providers.Orders
+namespace Outcompute.Trader.Trading.Providers.Orders;
+
+internal interface IOrderProviderGrain : IGrainWithStringKey
 {
-    internal interface IOrderProviderGrain : IGrainWithStringKey
-    {
-        Task<ReactiveResult> GetOrdersAsync();
+    Task<ReactiveResult> GetOrdersAsync();
 
-        Task<ReactiveResult?> TryWaitForOrdersAsync(Guid version, int fromSerial);
+    Task<ReactiveResult?> TryWaitForOrdersAsync(Guid version, int fromSerial);
 
-        Task<OrderQueryResult?> TryGetOrderAsync(long orderId);
+    Task<OrderQueryResult?> TryGetOrderAsync(long orderId);
 
-        Task SetOrderAsync(OrderQueryResult item);
+    Task SetOrderAsync(OrderQueryResult item);
 
-        Task SetOrdersAsync(IEnumerable<OrderQueryResult> items);
-    }
+    Task SetOrdersAsync(IEnumerable<OrderQueryResult> items);
 }

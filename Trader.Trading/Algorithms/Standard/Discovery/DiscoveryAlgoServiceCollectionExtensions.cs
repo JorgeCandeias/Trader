@@ -1,23 +1,22 @@
 ﻿using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Algorithms.Standard.Discovery;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace Microsoft.Extensions.DependencyInjection;
+
+public static class DiscoveryAlgoServiceCollectionExtensions
 {
-    public static class DiscoveryAlgoServiceCollectionExtensions
+    internal const string AlgoTypeName = "Discovery";
+
+    internal static IServiceCollection AddDiscoveryAlgoType(this IServiceCollection services)
     {
-        internal const string AlgoTypeName = "Discovery";
+        return services
+            .AddAlgoType<DiscoveryAlgo>(AlgoTypeName)
+            .AddOptionsType<DiscoveryAlgoOptions>()
+            .Services;
+    }
 
-        internal static IServiceCollection AddDiscoveryAlgoType(this IServiceCollection services)
-        {
-            return services
-                .AddAlgoType<DiscoveryAlgo>(AlgoTypeName)
-                .AddOptionsType<DiscoveryAlgoOptions>()
-                .Services;
-        }
-
-        public static IAlgoBuilder<IAlgo, DiscoveryAlgoOptions> AddDiscoveryAlgo(this IServiceCollection services, string name)
-        {
-            return services.AddAlgo<IAlgo, DiscoveryAlgoOptions>(name, AlgoTypeName);
-        }
+    public static IAlgoBuilder<IAlgo, DiscoveryAlgoOptions> AddDiscoveryAlgo(this IServiceCollection services, string name)
+    {
+        return services.AddAlgo<IAlgo, DiscoveryAlgoOptions>(name, AlgoTypeName);
     }
 }

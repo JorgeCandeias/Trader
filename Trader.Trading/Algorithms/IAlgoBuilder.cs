@@ -1,27 +1,25 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using System;
 
-namespace Outcompute.Trader.Trading.Algorithms
+namespace Outcompute.Trader.Trading.Algorithms;
+
+public interface IAlgoBuilder<TAlgo>
+    where TAlgo : IAlgo
 {
-    public interface IAlgoBuilder<TAlgo>
-        where TAlgo : IAlgo
-    {
-        public string Name { get; }
+    public string Name { get; }
 
-        public IServiceCollection Services { get; }
+    public IServiceCollection Services { get; }
 
-        IAlgoBuilder<TAlgo> ConfigureHostOptions(Action<AlgoOptions> configure);
+    IAlgoBuilder<TAlgo> ConfigureHostOptions(Action<AlgoOptions> configure);
 
-        IAlgoBuilder<TAlgo> ConfigureTypeOptions<TOptions>(Action<TOptions> configure)
-            where TOptions : class;
-    }
+    IAlgoBuilder<TAlgo> ConfigureTypeOptions<TOptions>(Action<TOptions> configure)
+        where TOptions : class;
+}
 
-    public interface IAlgoBuilder<TAlgo, TOptions> : IAlgoBuilder<TAlgo>
-        where TAlgo : IAlgo
-        where TOptions : class
-    {
-        new IAlgoBuilder<TAlgo, TOptions> ConfigureHostOptions(Action<AlgoOptions> configure);
+public interface IAlgoBuilder<TAlgo, TOptions> : IAlgoBuilder<TAlgo>
+    where TAlgo : IAlgo
+    where TOptions : class
+{
+    new IAlgoBuilder<TAlgo, TOptions> ConfigureHostOptions(Action<AlgoOptions> configure);
 
-        IAlgoBuilder<TAlgo, TOptions> ConfigureTypeOptions(Action<TOptions> configure);
-    }
+    IAlgoBuilder<TAlgo, TOptions> ConfigureTypeOptions(Action<TOptions> configure);
 }

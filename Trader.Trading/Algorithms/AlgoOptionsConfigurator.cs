@@ -2,46 +2,44 @@
 using Microsoft.Extensions.Options;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Configuration;
-using System;
 
-namespace Outcompute.Trader.Trading.Algorithms
+namespace Outcompute.Trader.Trading.Algorithms;
+
+internal class AlgoOptionsConfigurator : IConfigureNamedOptions<AlgoOptions>
 {
-    internal class AlgoOptionsConfigurator : IConfigureNamedOptions<AlgoOptions>
+    private readonly AlgoConfigurationMappingOptions _mapping;
+    private readonly IConfiguration _config;
+
+    public AlgoOptionsConfigurator(IOptions<AlgoConfigurationMappingOptions> mapping, IConfiguration config)
     {
-        private readonly AlgoConfigurationMappingOptions _mapping;
-        private readonly IConfiguration _config;
+        _mapping = mapping.Value;
+        _config = config;
+    }
 
-        public AlgoOptionsConfigurator(IOptions<AlgoConfigurationMappingOptions> mapping, IConfiguration config)
+    public void Configure(string name, AlgoOptions options)
+    {
+        if (name is null)
         {
-            _mapping = mapping.Value;
-            _config = config;
+            throw new ArgumentNullException(nameof(name));
         }
 
-        public void Configure(string name, AlgoOptions options)
+        if (name == Options.DefaultName)
         {
-            if (name is null)
+            if (string.IsNullOrWhiteSpace(AlgoContext.Current.Name))
             {
-                throw new ArgumentNullException(nameof(name));
+                throw new InvalidOperationException($"{nameof(AlgoContext)}.{nameof(AlgoContext.Current)}.{nameof(AlgoContext.Current.Name)} must be defined to configure default options");
             }
-
-            if (name == Options.DefaultName)
+            else
             {
-                if (string.IsNullOrWhiteSpace(AlgoContext.Current.Name))
-                {
-                    throw new InvalidOperationException($"{nameof(AlgoContext)}.{nameof(AlgoContext.Current)}.{nameof(AlgoContext.Current.Name)} must be defined to configure default options");
-                }
-                else
-                {
-                    name = AlgoContext.Current.Name;
-                }
+                name = AlgoContext.Current.Name;
             }
-
-            _config.GetSection(_mapping.AlgosKey).GetSection(name).Bind(options);
         }
 
-        public void Configure(AlgoOptions options)
-        {
-            Configure(Options.DefaultName, options);
-        }
+        _config.GetSection(_mapping.AlgosKey).GetSection(name).Bind(options);
+    }
+
+    public void Configure(AlgoOptions options)
+    {
+        Configure(Options.DefaultName, options);
     }
 }

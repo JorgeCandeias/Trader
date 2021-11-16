@@ -1,11 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Outcompute.Trader.Trading.Commands
+namespace Outcompute.Trader.Trading.Commands;
+
+public class TagGeneratorOptions
 {
-    public class TagGeneratorOptions
-    {
-        [Required]
-        [Range(1, int.MaxValue)]
-        public int MaxTagLength { get; set; } = 30;
-    }
+    [Required]
+    [Range(1, int.MaxValue)]
+    public int MaxTagLength { get; set; } = 30;
 }

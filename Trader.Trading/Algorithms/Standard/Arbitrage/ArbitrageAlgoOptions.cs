@@ -1,6 +1,5 @@
-﻿namespace Outcompute.Trader.Trading.Algorithms.Standard.Arbitrage
+﻿namespace Outcompute.Trader.Trading.Algorithms.Standard.Arbitrage;
+
+public class ArbitrageAlgoOptions
 {
-    public class ArbitrageAlgoOptions
-    {
-    }
 }

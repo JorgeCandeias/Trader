@@ -1,75 +1,71 @@
-﻿using System;
-using System.Collections.Generic;
+﻿namespace Outcompute.Trader.Trading.Indicators;
 
-namespace Outcompute.Trader.Trading.Indicators
+/// <summary>
+/// An iterator that calculates the absolute loss between the current value and the previous value over the specified source.
+/// Evaluates to zero if there is no loss.
+/// </summary>
+internal sealed class AbsLossIterator : Iterator<decimal>
 {
-    /// <summary>
-    /// An iterator that calculates the absolute loss between the current value and the previous value over the specified source.
-    /// Evaluates to zero if there is no loss.
-    /// </summary>
-    internal sealed class AbsLossIterator : Iterator<decimal>
+    private readonly IEnumerable<decimal> _source;
+    private readonly IEnumerator<decimal> _enumerator;
+
+    private decimal _last;
+
+    public AbsLossIterator(IEnumerable<decimal> source)
     {
-        private readonly IEnumerable<decimal> _source;
-        private readonly IEnumerator<decimal> _enumerator;
+        _source = source ?? throw new ArgumentNullException(nameof(source));
 
-        private decimal _last;
+        _enumerator = _source.GetEnumerator();
+        _state = 1;
+    }
 
-        public AbsLossIterator(IEnumerable<decimal> source)
+    public override bool MoveNext()
+    {
+        switch (_state)
         {
-            _source = source ?? throw new ArgumentNullException(nameof(source));
+            case 1:
+                if (_enumerator.MoveNext())
+                {
+                    _last = _enumerator.Current;
+                    _current = 0m;
+                    _state = 2;
 
-            _enumerator = _source.GetEnumerator();
-            _state = 1;
+                    return true;
+                }
+                else
+                {
+                    _state = -1;
+
+                    return false;
+                }
+
+            case 2:
+                if (_enumerator.MoveNext())
+                {
+                    var value = _enumerator.Current;
+                    _current = Math.Abs(Math.Min(value - _last, 0m));
+                    _last = value;
+
+                    return true;
+                }
+                else
+                {
+                    _state = -1;
+
+                    return false;
+                }
         }
 
-        public override bool MoveNext()
-        {
-            switch (_state)
-            {
-                case 1:
-                    if (_enumerator.MoveNext())
-                    {
-                        _last = _enumerator.Current;
-                        _current = 0m;
-                        _state = 2;
+        return false;
+    }
 
-                        return true;
-                    }
-                    else
-                    {
-                        _state = -1;
+    protected override Iterator<decimal> Clone() => new AbsLossIterator(_source);
 
-                        return false;
-                    }
+    protected override void Dispose(bool disposing)
+    {
+        _state = -1;
+        _enumerator.Dispose();
 
-                case 2:
-                    if (_enumerator.MoveNext())
-                    {
-                        var value = _enumerator.Current;
-                        _current = Math.Abs(Math.Min(value - _last, 0m));
-                        _last = value;
-
-                        return true;
-                    }
-                    else
-                    {
-                        _state = -1;
-
-                        return false;
-                    }
-            }
-
-            return false;
-        }
-
-        protected override Iterator<decimal> Clone() => new AbsLossIterator(_source);
-
-        protected override void Dispose(bool disposing)
-        {
-            _state = -1;
-            _enumerator.Dispose();
-
-            base.Dispose(disposing);
-        }
+        base.Dispose(disposing);
     }
 }

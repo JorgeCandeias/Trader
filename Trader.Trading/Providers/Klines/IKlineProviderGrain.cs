@@ -1,18 +1,17 @@
 ﻿using Orleans;
 using Outcompute.Trader.Models;
 
-namespace Outcompute.Trader.Trading.Providers.Klines
+namespace Outcompute.Trader.Trading.Providers.Klines;
+
+internal interface IKlineProviderGrain : IGrainWithStringKey
 {
-    internal interface IKlineProviderGrain : IGrainWithStringKey
-    {
-        ValueTask<ReactiveResult> GetKlinesAsync();
+    ValueTask<ReactiveResult> GetKlinesAsync();
 
-        ValueTask<ReactiveResult?> TryWaitForKlinesAsync(Guid version, int fromSerial);
+    ValueTask<ReactiveResult?> TryWaitForKlinesAsync(Guid version, int fromSerial);
 
-        ValueTask<Kline?> TryGetKlineAsync(DateTime openTime);
+    ValueTask<Kline?> TryGetKlineAsync(DateTime openTime);
 
-        ValueTask SetKlineAsync(Kline item);
+    ValueTask SetKlineAsync(Kline item);
 
-        ValueTask SetKlinesAsync(IEnumerable<Kline> items);
-    }
+    ValueTask SetKlinesAsync(IEnumerable<Kline> items);
 }

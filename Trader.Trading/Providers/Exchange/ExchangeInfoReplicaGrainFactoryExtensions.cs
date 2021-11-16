@@ -1,15 +1,13 @@
 ﻿using Outcompute.Trader.Trading.Providers.Exchange;
-using System;
 
-namespace Orleans
+namespace Orleans;
+
+internal static class ExchangeInfoReplicaGrainFactoryExtensions
 {
-    internal static class ExchangeInfoReplicaGrainFactoryExtensions
+    public static IExchangeInfoReplicaGrain GetExchangeInfoReplicaGrain(this IGrainFactory factory)
     {
-        public static IExchangeInfoReplicaGrain GetExchangeInfoReplicaGrain(this IGrainFactory factory)
-        {
-            if (factory is null) throw new ArgumentNullException(nameof(factory));
+        if (factory is null) throw new ArgumentNullException(nameof(factory));
 
-            return factory.GetGrain<IExchangeInfoReplicaGrain>(Guid.Empty);
-        }
+        return factory.GetGrain<IExchangeInfoReplicaGrain>(Guid.Empty);
     }
 }

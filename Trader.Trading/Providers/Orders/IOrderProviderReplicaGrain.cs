@@ -1,20 +1,17 @@
 ﻿using Orleans;
 using Outcompute.Trader.Models;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Providers.Orders
+namespace Outcompute.Trader.Trading.Providers.Orders;
+
+public interface IOrderProviderReplicaGrain : IGrainWithStringKey
 {
-    public interface IOrderProviderReplicaGrain : IGrainWithStringKey
-    {
-        Task<IReadOnlyList<OrderQueryResult>> GetOrdersAsync();
+    Task<IReadOnlyList<OrderQueryResult>> GetOrdersAsync();
 
-        Task<IReadOnlyList<OrderQueryResult>> GetOrdersByFilterAsync(OrderSide? side, bool? transient, bool? significant);
+    Task<IReadOnlyList<OrderQueryResult>> GetOrdersByFilterAsync(OrderSide? side, bool? transient, bool? significant);
 
-        Task<OrderQueryResult?> TryGetOrderAsync(long orderId);
+    Task<OrderQueryResult?> TryGetOrderAsync(long orderId);
 
-        Task SetOrderAsync(OrderQueryResult item);
+    Task SetOrderAsync(OrderQueryResult item);
 
-        Task SetOrdersAsync(IEnumerable<OrderQueryResult> items);
-    }
+    Task SetOrdersAsync(IEnumerable<OrderQueryResult> items);
 }

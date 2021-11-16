@@ -1,54 +1,50 @@
-﻿using System;
-using System.Collections.Generic;
+﻿namespace Outcompute.Trader.Trading.Indicators;
 
-namespace Outcompute.Trader.Trading.Indicators
+/// <summary>
+/// An iterator that calculates the absolute value over the specified source.
+/// </summary>
+internal sealed class AbsIterator : Iterator<decimal>
 {
-    /// <summary>
-    /// An iterator that calculates the absolute value over the specified source.
-    /// </summary>
-    internal sealed class AbsIterator : Iterator<decimal>
+    private readonly IEnumerable<decimal> _source;
+    private readonly IEnumerator<decimal> _enumerator;
+
+    public AbsIterator(IEnumerable<decimal> source)
     {
-        private readonly IEnumerable<decimal> _source;
-        private readonly IEnumerator<decimal> _enumerator;
+        _source = source ?? throw new ArgumentNullException(nameof(source));
 
-        public AbsIterator(IEnumerable<decimal> source)
+        _enumerator = _source.GetEnumerator();
+        _state = 1;
+    }
+
+    public override bool MoveNext()
+    {
+        switch (_state)
         {
-            _source = source ?? throw new ArgumentNullException(nameof(source));
+            case 1:
+                if (_enumerator.MoveNext())
+                {
+                    _current = Math.Abs(_enumerator.Current);
 
-            _enumerator = _source.GetEnumerator();
-            _state = 1;
+                    return true;
+                }
+                else
+                {
+                    _state = -1;
+
+                    return false;
+                }
         }
 
-        public override bool MoveNext()
-        {
-            switch (_state)
-            {
-                case 1:
-                    if (_enumerator.MoveNext())
-                    {
-                        _current = Math.Abs(_enumerator.Current);
+        return false;
+    }
 
-                        return true;
-                    }
-                    else
-                    {
-                        _state = -1;
+    protected override Iterator<decimal> Clone() => new AbsIterator(_source);
 
-                        return false;
-                    }
-            }
+    protected override void Dispose(bool disposing)
+    {
+        _state = -1;
+        _enumerator.Dispose();
 
-            return false;
-        }
-
-        protected override Iterator<decimal> Clone() => new AbsIterator(_source);
-
-        protected override void Dispose(bool disposing)
-        {
-            _state = -1;
-            _enumerator.Dispose();
-
-            base.Dispose(disposing);
-        }
+        base.Dispose(disposing);
     }
 }

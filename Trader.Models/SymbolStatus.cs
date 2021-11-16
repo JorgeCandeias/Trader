@@ -1,14 +1,13 @@
-﻿namespace Outcompute.Trader.Models
+﻿namespace Outcompute.Trader.Models;
+
+public enum SymbolStatus
 {
-    public enum SymbolStatus
-    {
-        None,
-        PreTrading,
-        Trading,
-        PostTrading,
-        EndOfDay,
-        Halt,
-        AuctionMatch,
-        Break
-    }
+    None,
+    PreTrading,
+    Trading,
+    PostTrading,
+    EndOfDay,
+    Halt,
+    AuctionMatch,
+    Break
 }

@@ -1,10 +1,9 @@
-﻿namespace Outcompute.Trader.Models
+﻿namespace Outcompute.Trader.Models;
+
+public enum NewOrderResponseType
 {
-    public enum NewOrderResponseType
-    {
-        None,
-        Acknowledge,
-        Result,
-        Full
-    }
+    None,
+    Acknowledge,
+    Result,
+    Full
 }

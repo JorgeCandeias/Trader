@@ -1,9 +1,6 @@
-﻿using System;
+﻿namespace Outcompute.Trader.Models;
 
-namespace Outcompute.Trader.Models
-{
-    public record CancelAllOrders(
-        string Symbol,
-        TimeSpan? ReceiveWindow,
-        DateTime Timestamp);
-}
+public record CancelAllOrders(
+    string Symbol,
+    TimeSpan? ReceiveWindow,
+    DateTime Timestamp);

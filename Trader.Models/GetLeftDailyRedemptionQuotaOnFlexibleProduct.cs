@@ -1,10 +1,7 @@
-﻿using System;
+﻿namespace Outcompute.Trader.Models;
 
-namespace Outcompute.Trader.Models
-{
-    public record GetLeftDailyRedemptionQuotaOnFlexibleProduct(
-        string ProductId,
-        SavingsRedemptionType Type,
-        TimeSpan? ReceiveWindow,
-        DateTime Timestamp);
-}
+public record GetLeftDailyRedemptionQuotaOnFlexibleProduct(
+    string ProductId,
+    SavingsRedemptionType Type,
+    TimeSpan? ReceiveWindow,
+    DateTime Timestamp);

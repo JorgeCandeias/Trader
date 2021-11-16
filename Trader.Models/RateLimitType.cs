@@ -1,10 +1,9 @@
-﻿namespace Outcompute.Trader.Models
+﻿namespace Outcompute.Trader.Models;
+
+public enum RateLimitType
 {
-    public enum RateLimitType
-    {
-        None,
-        RequestWeight,
-        Orders,
-        RawRequests
-    }
+    None,
+    RequestWeight,
+    Orders,
+    RawRequests
 }

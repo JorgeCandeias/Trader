@@ -1,11 +1,8 @@
-﻿using System;
+﻿namespace Outcompute.Trader.Models;
 
-namespace Outcompute.Trader.Models
-{
-    public record RedeemFlexibleProduct(
-        string ProductId,
-        decimal Amount,
-        SavingsRedemptionType Type,
-        TimeSpan? ReceiveWindow,
-        DateTime Timestamp);
-}
+public record RedeemFlexibleProduct(
+    string ProductId,
+    decimal Amount,
+    SavingsRedemptionType Type,
+    TimeSpan? ReceiveWindow,
+    DateTime Timestamp);

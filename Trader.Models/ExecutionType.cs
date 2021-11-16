@@ -1,13 +1,12 @@
-﻿namespace Outcompute.Trader.Models
+﻿namespace Outcompute.Trader.Models;
+
+public enum ExecutionType
 {
-    public enum ExecutionType
-    {
-        None,
-        New,
-        Cancelled,
-        Replaced,
-        Rejected,
-        Trade,
-        Expired
-    }
+    None,
+    New,
+    Cancelled,
+    Replaced,
+    Rejected,
+    Trade,
+    Expired
 }

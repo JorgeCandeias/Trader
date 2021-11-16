@@ -1,9 +1,8 @@
-﻿namespace Outcompute.Trader.Models
+﻿namespace Outcompute.Trader.Models;
+
+public enum SavingsRedemptionType
 {
-    public enum SavingsRedemptionType
-    {
-        None,
-        Fast,
-        Normal
-    }
+    None,
+    Fast,
+    Normal
 }

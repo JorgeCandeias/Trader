@@ -1,9 +1,8 @@
-﻿namespace Outcompute.Trader.Models
+﻿namespace Outcompute.Trader.Models;
+
+public enum OrderSide
 {
-    public enum OrderSide
-    {
-        None = 0,
-        Buy = 1,
-        Sell = 2
-    }
+    None = 0,
+    Buy = 1,
+    Sell = 2
 }

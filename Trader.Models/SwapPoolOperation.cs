@@ -1,4 +1,3 @@
-﻿namespace Outcompute.Trader.Models
-{
-    public record SwapPoolOperation(long OperationId);
-}
+﻿namespace Outcompute.Trader.Models;
+
+public record SwapPoolOperation(long OperationId);

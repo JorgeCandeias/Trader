@@ -1,17 +1,16 @@
 ﻿using System.Collections.Immutable;
 
-namespace Outcompute.Trader.Models
-{
-    public record OrderBook(
-        int LastUpdateId,
-        ImmutableList<Bid> Bids,
-        ImmutableList<Ask> Asks);
+namespace Outcompute.Trader.Models;
 
-    public record Bid(
-        decimal Price,
-        decimal Quantity);
+public record OrderBook(
+    int LastUpdateId,
+    ImmutableList<Bid> Bids,
+    ImmutableList<Ask> Asks);
 
-    public record Ask(
-        decimal Price,
-        decimal Quantity);
-}
+public record Bid(
+    decimal Price,
+    decimal Quantity);
+
+public record Ask(
+    decimal Price,
+    decimal Quantity);

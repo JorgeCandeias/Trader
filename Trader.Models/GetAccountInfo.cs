@@ -1,8 +1,5 @@
-﻿using System;
+﻿namespace Outcompute.Trader.Models;
 
-namespace Outcompute.Trader.Models
-{
-    public record GetAccountInfo(
-        TimeSpan? ReceiveWindow,
-        DateTime Timestamp);
-}
+public record GetAccountInfo(
+    TimeSpan? ReceiveWindow,
+    DateTime Timestamp);

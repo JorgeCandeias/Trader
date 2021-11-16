@@ -1,10 +1,9 @@
-﻿namespace Outcompute.Trader.Models
+﻿namespace Outcompute.Trader.Models;
+
+public record MarketDataStreamMessage(
+    ExternalError? Error,
+    MiniTicker? MiniTicker,
+    Kline? Kline)
 {
-    public record MarketDataStreamMessage(
-        ExternalError? Error,
-        MiniTicker? MiniTicker,
-        Kline? Kline)
-    {
-        public static MarketDataStreamMessage Empty { get; } = new MarketDataStreamMessage(null, null, null);
-    }
+    public static MarketDataStreamMessage Empty { get; } = new MarketDataStreamMessage(null, null, null);
 }

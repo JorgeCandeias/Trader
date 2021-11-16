@@ -1,10 +1,9 @@
-﻿namespace Outcompute.Trader.Models
+﻿namespace Outcompute.Trader.Models;
+
+public enum SavingsStatus
 {
-    public enum SavingsStatus
-    {
-        None,
-        All,
-        Subscribable,
-        Unsubscribable
-    }
+    None,
+    All,
+    Subscribable,
+    Unsubscribable
 }

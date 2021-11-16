@@ -1,8 +1,7 @@
-﻿namespace Outcompute.Trader.Models
+﻿namespace Outcompute.Trader.Models;
+
+public enum ContingencyType
 {
-    public enum ContingencyType
-    {
-        None,
-        Oco
-    }
+    None,
+    Oco
 }

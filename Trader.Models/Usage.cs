@@ -1,9 +1,6 @@
-﻿using System;
+﻿namespace Outcompute.Trader.Models;
 
-namespace Outcompute.Trader.Models
-{
-    public record Usage(
-        RateLimitType Type,
-        TimeSpan Window,
-        int Count);
-}
+public record Usage(
+    RateLimitType Type,
+    TimeSpan Window,
+    int Count);

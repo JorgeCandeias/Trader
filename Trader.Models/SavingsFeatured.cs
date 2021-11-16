@@ -1,9 +1,8 @@
-﻿namespace Outcompute.Trader.Models
+﻿namespace Outcompute.Trader.Models;
+
+public enum SavingsFeatured
 {
-    public enum SavingsFeatured
-    {
-        None,
-        All,
-        True
-    }
+    None,
+    All,
+    True
 }

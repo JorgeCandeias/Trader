@@ -1,8 +1,7 @@
-﻿namespace Outcompute.Trader.Models
+﻿namespace Outcompute.Trader.Models;
+
+public enum AccountType
 {
-    public enum AccountType
-    {
-        None,
-        Spot
-    }
+    None,
+    Spot
 }

@@ -1,13 +1,10 @@
-﻿using System;
+﻿namespace Outcompute.Trader.Models;
 
-namespace Outcompute.Trader.Models
-{
-    public record Trade(
-        int Id,
-        decimal Price,
-        decimal Quantity,
-        decimal QuoteQuantity,
-        DateTime Time,
-        bool IsBuyerMaker,
-        bool IsBestMatch);
-}
+public record Trade(
+    int Id,
+    decimal Price,
+    decimal Quantity,
+    decimal QuoteQuantity,
+    DateTime Time,
+    bool IsBuyerMaker,
+    bool IsBestMatch);

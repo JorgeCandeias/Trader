@@ -1,10 +1,9 @@
-﻿namespace Outcompute.Trader.Models
+﻿namespace Outcompute.Trader.Models;
+
+public enum OcoStatus
 {
-    public enum OcoStatus
-    {
-        None,
-        Response,
-        ExecutionStarted,
-        AllDone
-    }
+    None,
+    Response,
+    ExecutionStarted,
+    AllDone
 }

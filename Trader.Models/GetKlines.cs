@@ -1,11 +1,8 @@
-﻿using System;
+﻿namespace Outcompute.Trader.Models;
 
-namespace Outcompute.Trader.Models
-{
-    public record GetKlines(
-        string Symbol,
-        KlineInterval Interval,
-        DateTime StartTime,
-        DateTime EndTime,
-        int Limit);
-}
+public record GetKlines(
+    string Symbol,
+    KlineInterval Interval,
+    DateTime StartTime,
+    DateTime EndTime,
+    int Limit);

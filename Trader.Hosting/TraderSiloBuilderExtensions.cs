@@ -13,7 +13,6 @@ public static class TraderSiloBuilderExtensions
                 services
                     .AddSystemClock()
                     .AddSafeTimerFactory()
-                    .AddBase62NumberSerializer()
                     .AddModelAutoMapperProfiles()
                     .AddTraderCoreServices();
             });

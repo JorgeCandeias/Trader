@@ -25,6 +25,9 @@ internal class AlgoDependencyOptionsConfigurator : IConfigureOptions<AlgoDepende
                 // configure symbols from default settings
                 options.Symbols.Add(algo.Value.Symbol);
 
+                // configure symbols from symbol list settings
+                options.Symbols.UnionWith(algo.Value.Symbols);
+
                 // configure tickers from default settings
                 options.Tickers.Add(algo.Value.Symbol);
 

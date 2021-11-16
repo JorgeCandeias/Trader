@@ -8,16 +8,12 @@ using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Providers;
-using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
 namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 {
-    internal class BinanceUserDataGrain : Grain, IBinanceUserDataGrain
+    internal partial class BinanceUserDataGrain : Grain, IBinanceUserDataGrain
     {
         private readonly BinanceOptions _options;
         private readonly IAlgoDependencyResolver _dependencies;
@@ -54,7 +50,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
             _pusher = new ActionBlock<UserDataStreamMessage>(HandleMessageAsync, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = _dependencies.AllSymbols.Count * 2 + 1 });
         }
 
-        private static string Name => nameof(BinanceUserDataGrain);
+        private const string TypeName = nameof(BinanceUserDataGrain);
 
         private string? _listenKey;
 
@@ -76,7 +72,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
         {
             _timer = _timers.RegisterTimer(this, _ => TickEnsureWorkAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
 
-            _logger.LogInformation("{Name} started", Name);
+            LogStarted(TypeName);
 
             return base.OnActivateAsync();
         }
@@ -139,7 +135,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 
             await _balances.SetBalancesAsync(balances, _lifetime.ApplicationStopping);
 
-            _logger.LogInformation("{Name} saved balances for {Assets}", Name, message.Balances.Select(x => x.Asset));
+            LogSavedBalancesForAssets(TypeName, message.Balances.Select(x => x.Asset));
         }
 
         private async Task HandleReportMessageAsync(ExecutionReportUserDataStreamMessage message)
@@ -154,9 +150,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
                     .SetTradeAsync(trade, _lifetime.ApplicationStopping)
                     .ConfigureAwait(false);
 
-                _logger.LogInformation(
-                    "{Name} saved {Symbol} {Side} trade {TradeId}",
-                    Name, message.Symbol, message.OrderSide, message.TradeId);
+                LogSavedTrade(TypeName, message.Symbol, message.OrderSide, message.TradeId);
             }
 
             // now extract the order from this report
@@ -164,9 +158,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 
             await _orders.SetOrderAsync(order);
 
-            _logger.LogInformation(
-                "{Name} saved {Symbol} {Type} {Side} order {OrderId}",
-                Name, message.Symbol, message.OrderType, message.OrderSide, message.OrderId);
+            LogSavedOrder(TypeName, message.Symbol, message.OrderType, message.OrderSide, message.OrderId);
         }
 
         [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Worker")]
@@ -189,13 +181,13 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
                         break;
 
                     default:
-                        _logger.LogWarning("{Name} received unknown message {Message}", Name, message);
+                        LogReceivedUnknownMessage(TypeName, message);
                         break;
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "{Name} failed to publish {Message}", Name, message);
+                LogFailedToPublishMessage(ex, TypeName, message);
             }
 
             return Task.CompletedTask;
@@ -235,13 +227,13 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 
         private async Task StreamAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("{Name} creating user stream key...", Name);
+            LogCreatingUserStreamKey(TypeName);
 
             _listenKey = await _trader.CreateUserDataStreamAsync(cancellationToken);
 
-            _logger.LogInformation("{Name} created user stream with key {ListenKey}", Name, _listenKey);
+            LogCreatedUserStreamKey(TypeName, _listenKey);
 
-            _logger.LogInformation("{Name} connecting user stream with key {ListenKey}...", Name, _listenKey);
+            LogConnectingToUserStreamWithKey(TypeName, _listenKey);
 
             using var client = _streams.Create(_listenKey);
 
@@ -249,7 +241,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
 
             BumpPingTime();
 
-            _logger.LogInformation("{Name} connected user stream with key {ListenKey}", Name, _listenKey);
+            LogConnectedToUserStreamWithKey(TypeName, _listenKey);
 
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -267,5 +259,39 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData
         }
 
         public Task PingAsync() => Task.CompletedTask;
+
+        #region Logging
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} started")]
+        private partial void LogStarted(string type);
+
+        [LoggerMessage(1, LogLevel.Information, "{Type} saved balances for {Assets}")]
+        private partial void LogSavedBalancesForAssets(string type, IEnumerable<string> assets);
+
+        [LoggerMessage(2, LogLevel.Information, "{Type} saved {Symbol} {OrderSide} trade {TradeId}")]
+        private partial void LogSavedTrade(string type, string symbol, OrderSide orderSide, long tradeId);
+
+        [LoggerMessage(3, LogLevel.Information, "{Type} saved {Symbol} {OrderType} {OrderSide} order {OrderId}")]
+        private partial void LogSavedOrder(string type, string symbol, OrderType orderType, OrderSide orderSide, long orderId);
+
+        [LoggerMessage(4, LogLevel.Warning, "{Type} received unknown message {Message}")]
+        private partial void LogReceivedUnknownMessage(string type, UserDataStreamMessage message);
+
+        [LoggerMessage(5, LogLevel.Error, "{Type} failed to publish {Message}")]
+        private partial void LogFailedToPublishMessage(Exception ex, string type, UserDataStreamMessage message);
+
+        [LoggerMessage(6, LogLevel.Information, "{Type} creating user stream key...")]
+        private partial void LogCreatingUserStreamKey(string type);
+
+        [LoggerMessage(7, LogLevel.Information, "{Type} created user stream with key {ListenKey}")]
+        private partial void LogCreatedUserStreamKey(string type, string listenKey);
+
+        [LoggerMessage(8, LogLevel.Information, "{Type} connecting to user stream with key {ListenKey}...")]
+        private partial void LogConnectingToUserStreamWithKey(string type, string listenKey);
+
+        [LoggerMessage(9, LogLevel.Information, "{Type} connected to user stream with key {ListenKey}")]
+        private partial void LogConnectedToUserStreamWithKey(string type, string listenKey);
+
+        #endregion Logging
     }
 }

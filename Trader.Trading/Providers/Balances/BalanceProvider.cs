@@ -2,15 +2,9 @@
 using Orleans;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Providers.Balances
 {
-    // todo: refactor this class so all balances are queried from local replica grains
     internal class BalanceProvider : IBalanceProvider
     {
         private readonly IGrainFactory _factory;

@@ -2,14 +2,10 @@
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
 using Polly;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Binance
 {
-    internal class BinanceTradingServiceWithBackoff : ITradingService
+    internal partial class BinanceTradingServiceWithBackoff : ITradingService
     {
         private readonly ILogger _logger;
         private readonly ITradingService _trader;
@@ -20,13 +16,19 @@ namespace Outcompute.Trader.Trading.Binance
             _trader = trader ?? throw new ArgumentNullException(nameof(trader));
         }
 
+        private const string TypeName = nameof(BinanceTradingServiceWithBackoff);
+
         private IAsyncPolicy CreatePolicy()
         {
             return Policy
                 .Handle<BinanceTooManyRequestsException>()
                 .WaitAndRetryForeverAsync(
                     (n, ex, ctx) => ((BinanceTooManyRequestsException)ex).RetryAfter.Add(TimeSpan.FromSeconds(1)),
-                    (ex, ts, ctx) => { _logger.LogWarning(ex, "Backing off for {TimeSpan}...", ts.Add(TimeSpan.FromSeconds(1))); return Task.CompletedTask; });
+                    (ex, ts, ctx) =>
+                    {
+                        LogBackingOff(ex, TypeName, ts.Add(TimeSpan.FromSeconds(1)));
+                        return Task.CompletedTask;
+                    });
         }
 
         private Task WaitAndRetryForeverAsync(Func<CancellationToken, Task> action, CancellationToken cancellationToken = default)
@@ -185,5 +187,12 @@ namespace Outcompute.Trader.Trading.Binance
         {
             return WaitAndRetryForeverAsync(ct => _trader.GetSwapPoolQuoteAsync(quoteAsset, baseAsset, quoteQuantity, ct), cancellationToken);
         }
+
+        #region Logging
+
+        [LoggerMessage(0, LogLevel.Warning, "{Type} backing off for {TimeSpan}...")]
+        private partial void LogBackingOff(Exception ex, string type, TimeSpan timeSpan);
+
+        #endregion Logging
     }
 }

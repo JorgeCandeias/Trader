@@ -11,7 +11,6 @@ public static class TraderSiloBuilderExtensions
             .ConfigureServices((context, services) =>
             {
                 services
-                    .AddSafeTimerFactory()
                     .AddModelAutoMapperProfiles()
                     .AddTraderCoreServices();
             });

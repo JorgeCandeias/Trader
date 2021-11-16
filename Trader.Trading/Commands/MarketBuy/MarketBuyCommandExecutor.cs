@@ -149,28 +149,28 @@ namespace Outcompute.Trader.Trading.Commands.MarketBuy
         [LoggerMessage(5, LogLevel.Information, "{Type} {Name} attempting to redeem {Quantity} {Asset} from savings")]
         private partial void LogRedeemingSavings(string type, string name, decimal quantity, string asset);
 
-        [LoggerMessage(5, LogLevel.Information, "{Type} {Name} redeemed {Quantity} {Asset} from savings")]
+        [LoggerMessage(6, LogLevel.Information, "{Type} {Name} redeemed {Quantity} {Asset} from savings")]
         private partial void LogRedeemedSavings(string type, string name, decimal quantity, string asset);
 
-        [LoggerMessage(5, LogLevel.Error, "{Type} {Name} failed to redeem {Quantity} {Asset} from savings")]
+        [LoggerMessage(7, LogLevel.Error, "{Type} {Name} failed to redeem {Quantity} {Asset} from savings")]
         private partial void LogFailedToRedeemSavings(string type, string name, decimal quantity, string asset);
 
-        [LoggerMessage(6, LogLevel.Information, "{Type} {Name} attempting to redeem {Quantity} {Asset} from the swap pool")]
+        [LoggerMessage(8, LogLevel.Information, "{Type} {Name} attempting to redeem {Quantity} {Asset} from the swap pool")]
         private partial void LogRedeemingSwapPool(string type, string name, decimal quantity, string asset);
 
-        [LoggerMessage(6, LogLevel.Information, "{Type} {Name} redeemed {Quantity} {Asset} from the swap pool")]
+        [LoggerMessage(9, LogLevel.Information, "{Type} {Name} redeemed {Quantity} {Asset} from the swap pool")]
         private partial void LogRedeemedSwapPool(string type, string name, decimal quantity, string asset);
 
-        [LoggerMessage(6, LogLevel.Error, "{Type} {Name} failed to redeem {Quantity} {Asset} from the swap pool")]
+        [LoggerMessage(10, LogLevel.Error, "{Type} {Name} failed to redeem {Quantity} {Asset} from the swap pool")]
         private partial void LogFailedToRedeemSwapPool(string type, string name, decimal quantity, string asset);
 
-        [LoggerMessage(7, LogLevel.Error, "{Type} {Name} could not redeem the required {Quantity} {Asset}")]
+        [LoggerMessage(11, LogLevel.Error, "{Type} {Name} could not redeem the required {Quantity} {Asset}")]
         private partial void LogCouldNotRedeem(string type, string name, decimal quantity, string asset);
 
-        [LoggerMessage(8, LogLevel.Information, "{Type} {Name} adjusted quantity of {Quantity} {Asset} up to up {AdjustedQuantity} {Asset} to comply with min lot size of {MinLotSize} {Asset}")]
+        [LoggerMessage(12, LogLevel.Information, "{Type} {Name} adjusted quantity of {Quantity} {Asset} up to up {AdjustedQuantity} {Asset} to comply with min lot size of {MinLotSize} {Asset}")]
         private partial void LogAdjustedQuantityToMinLotSize(string type, string name, decimal quantity, string asset, decimal adjustedQuantity, decimal minLotSize);
 
-        [LoggerMessage(9, LogLevel.Information, "{Type} {Name} adjusted quantity of {Quantity} {Asset} at {Price} {Quote} for a total of {Total} {Quote} up to {AdjustedQuantity} {Asset} to match min notional of {MinNotional} {Quote}")]
+        [LoggerMessage(13, LogLevel.Information, "{Type} {Name} adjusted quantity of {Quantity} {Asset} at {Price} {Quote} for a total of {Total} {Quote} up to {AdjustedQuantity} {Asset} to match min notional of {MinNotional} {Quote}")]
         private partial void LogAdjustedQuantityToMinNotional(string type, string name, decimal quantity, string asset, decimal price, string quote, decimal total, decimal adjustedQuantity, decimal minNotional);
     }
 }

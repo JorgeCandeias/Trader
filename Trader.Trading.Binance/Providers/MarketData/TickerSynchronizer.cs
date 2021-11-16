@@ -2,16 +2,12 @@
 using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
 namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 {
-    internal class TickerSynchronizer : ITickerSynchronizer
+    internal partial class TickerSynchronizer : ITickerSynchronizer
     {
         private readonly ILogger _logger;
         private readonly ITickerProvider _tickers;
@@ -26,7 +22,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             _mapper = mapper;
         }
 
-        private static string TypeName => nameof(TickerSynchronizer);
+        private const string TypeName = nameof(TickerSynchronizer);
 
         public Task SyncAsync(IEnumerable<string> symbols, CancellationToken cancellationToken = default)
         {
@@ -37,9 +33,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 
         private async Task SyncCoreAsync(IEnumerable<string> symbols, CancellationToken cancellationToken = default)
         {
-            _logger.LogInformation(
-                "{Name} is syncing tickers for {Symbols}...",
-                TypeName, symbols);
+            LogSyncingTickers(TypeName, symbols);
 
             var watch = Stopwatch.StartNew();
 
@@ -62,18 +56,27 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                 // post for saving in the background
                 work.Post(ticker);
 
-                _logger.LogInformation(
-                    "{Name} synced ticker for {Symbol} in {ElapsedMs}ms",
-                    TypeName, symbol, subWatch.ElapsedMilliseconds);
+                LogSyncedTicker(TypeName, symbol, subWatch.ElapsedMilliseconds);
             }
 
             // wait until all background saving work completes
             work.Complete();
             await work.Completion;
 
-            _logger.LogInformation(
-                "{Name} synced tickers for {Symbols} in {ElapsedMs}ms",
-                TypeName, symbols, watch.ElapsedMilliseconds);
+            LogSyncedTickers(TypeName, symbols, watch.ElapsedMilliseconds);
         }
+
+        #region Logging
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} is syncing tickers for {Symbols}...")]
+        private partial void LogSyncingTickers(string type, IEnumerable<string> symbols);
+
+        [LoggerMessage(1, LogLevel.Information, "{Type} synced ticker for {Symbol} in {ElapsedMs}ms")]
+        private partial void LogSyncedTicker(string type, string symbol, long elapsedMs);
+
+        [LoggerMessage(2, LogLevel.Information, "{Type} synced tickers for {Symbols} in {ElapsedMs}ms")]
+        private partial void LogSyncedTickers(string type, IEnumerable<string> symbols, long elapsedMs);
+
+        #endregion Logging
     }
 }

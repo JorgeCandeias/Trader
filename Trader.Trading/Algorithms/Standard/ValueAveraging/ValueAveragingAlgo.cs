@@ -4,7 +4,6 @@ using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 {
@@ -28,7 +27,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         private decimal _smaC;
         private decimal _rsi;
 
-        [SuppressMessage("Major Code Smell", "S3358:Ternary operators should not be nested", Justification = "N/A")]
         protected override ValueTask<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default)
         {
             // calculate the current moving averages
@@ -39,19 +37,32 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             // calculate the rsi values
             _rsi = Context.Klines.LastRsi(x => x.ClosePrice, _options.RsiPeriods);
 
-            // decide on buying
-            var buyCommand = TrySignalBuyOrder()
-                ? CreateBuy()
-                : CancelOpenOrders(Context.Symbol, OrderSide.Buy);
+            // decide on regular sale
+            if (TrySignalSellOrder())
+            {
+                return SignificantAveragingSell(Context.Symbol, Context.Ticker, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool).AsValueTaskResult();
+            }
 
-            // decide on selling
-            var sellCommand = TrySignalSellOrder()
-                ? IsClosingEnabled()
-                    ? AveragingSell(Context.Symbol, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool, _options.TopUpUnsellablePositionWithBalance)
-                    : SignificantAveragingSell(Context.Symbol, Context.Ticker, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool)
-                : CancelOpenOrders(Context.Symbol, OrderSide.Sell, 0.01M);
+            // decide on a regular buy
+            if (TrySignalBuyOrder())
+            {
+                return CreateBuy().AsValueTaskResult();
+            }
 
-            return Many(buyCommand, sellCommand).AsValueTaskResult();
+            // decide on a closing sale
+            if (TrySignalClosing())
+            {
+                return AveragingSell(Context.Symbol, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool, _options.TopUpUnsellablePositionWithBalance).AsValueTaskResult();
+            }
+
+            // decide on a stop loss
+            if (TrySignalStopLoss())
+            {
+                return SignificantAveragingSell(Context.Symbol, Context.Ticker, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool).AsValueTaskResult();
+            }
+
+            // clear open orders out of range if no decision was made
+            return CancelOpenOrders(Context.Symbol, null, 0.01M).AsValueTaskResult();
         }
 
         private bool TrySignalBuyOrder()
@@ -77,9 +88,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
                 IsSellingEnabled() &&
                 IsPositionNonEmpty() &&
                 (
-                    IsClosingEnabled() ||
                     IsTickerAboveTakeProfitRate() ||
-                    IsTickerBelowTrailingStopLoss() ||
                     IsRsiOverbought()
                 );
 
@@ -89,6 +98,16 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             }
 
             return signal;
+        }
+
+        private bool TrySignalClosing()
+        {
+            return IsSellingEnabled() && IsPositionNonEmpty() && IsClosingEnabled();
+        }
+
+        private bool TrySignalStopLoss()
+        {
+            return IsSellingEnabled() && IsPositionNonEmpty() && IsTickerBelowTrailingStopLoss();
         }
 
         private bool IsPositionNonEmpty() => Context.PositionDetails.Orders.Count > 0;

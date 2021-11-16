@@ -32,7 +32,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Accumulator
                 ? MarketSell(Context.Symbol, Context.PositionDetails.Orders.Sum(x => x.ExecutedQuantity), true, true)
                 : Noop();
 
-            return ValueTask.FromResult(Many(buyCommand, sellCommand));
+            return ValueTask.FromResult(Sequence(buyCommand, sellCommand));
         }
 
         private bool TrySignalSell(AccumulatorAlgoOptions options)

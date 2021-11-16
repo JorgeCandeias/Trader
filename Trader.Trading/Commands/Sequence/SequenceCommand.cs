@@ -1,20 +1,16 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Outcompute.Trader.Trading.Algorithms.Context;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.Commands.Many
+namespace Outcompute.Trader.Trading.Commands.Sequence
 {
-    public class ManyCommand : IAlgoCommand
+    public class SequenceCommand : IAlgoCommand
     {
-        public ManyCommand(IEnumerable<IAlgoCommand> commands)
+        public SequenceCommand(IEnumerable<IAlgoCommand> commands)
         {
             Commands = commands ?? throw new ArgumentNullException(nameof(commands));
         }
 
-        public ManyCommand(params IAlgoCommand[] results)
+        public SequenceCommand(params IAlgoCommand[] results)
         {
             Commands = results;
         }
@@ -26,7 +22,7 @@ namespace Outcompute.Trader.Trading.Commands.Many
             if (context is null) throw new ArgumentNullException(nameof(context));
 
             return context.ServiceProvider
-                .GetRequiredService<IAlgoCommandExecutor<ManyCommand>>()
+                .GetRequiredService<IAlgoCommandExecutor<SequenceCommand>>()
                 .ExecuteAsync(context, this, cancellationToken);
         }
     }

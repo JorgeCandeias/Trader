@@ -11,11 +11,11 @@ using Outcompute.Trader.Trading.Commands.CancelOpenOrders;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
-using Outcompute.Trader.Trading.Commands.Many;
 using Outcompute.Trader.Trading.Commands.MarketBuy;
 using Outcompute.Trader.Trading.Commands.MarketSell;
 using Outcompute.Trader.Trading.Commands.RedeemSavings;
 using Outcompute.Trader.Trading.Commands.RedeemSwapPool;
+using Outcompute.Trader.Trading.Commands.Sequence;
 using Outcompute.Trader.Trading.Commands.SignificantAveragingSell;
 using Outcompute.Trader.Trading.Commands.TrackingBuy;
 using Outcompute.Trader.Trading.Configuration;
@@ -128,7 +128,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton<IAlgoCommandExecutor<CancelOpenOrdersCommand>, CancelOpenOrdersExecutor>()
                 .AddSingleton<IAlgoCommandExecutor<CreateOrderCommand>, CreateOrderExecutor>()
                 .AddSingleton<IAlgoCommandExecutor<EnsureSingleOrderCommand>, EnsureSingleOrderExecutor>()
-                .AddSingleton<IAlgoCommandExecutor<ManyCommand>, ManyExecutor>()
+                .AddSingleton<IAlgoCommandExecutor<SequenceCommand>, SequenceExecutor>()
                 .AddSingleton<IAlgoCommandExecutor<RedeemSavingsCommand, RedeemSavingsEvent>, RedeemSavingsExecutor>()
                 .AddSingleton<IAlgoCommandExecutor<SignificantAveragingSellCommand>, SignificantAveragingSellExecutor>()
                 .AddSingleton<IAlgoCommandExecutor<TrackingBuyCommand>, TrackingBuyExecutor>()

@@ -6,7 +6,7 @@ namespace Outcompute.Trader.Trading.Commands.CancelOpenOrders
 {
     public class CancelOpenOrdersCommand : IAlgoCommand
     {
-        public CancelOpenOrdersCommand(Symbol symbol, OrderSide side, decimal? distance = null)
+        public CancelOpenOrdersCommand(Symbol symbol, OrderSide? side = null, decimal? distance = null)
         {
             Symbol = symbol ?? throw new ArgumentNullException(nameof(symbol));
             Side = side;
@@ -19,7 +19,7 @@ namespace Outcompute.Trader.Trading.Commands.CancelOpenOrders
         }
 
         public Symbol Symbol { get; }
-        public OrderSide Side { get; }
+        public OrderSide? Side { get; }
         public decimal? Distance { get; }
 
         public ValueTask ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)

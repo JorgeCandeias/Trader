@@ -1,24 +1,22 @@
 ﻿using Moq;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands;
-using Outcompute.Trader.Trading.Commands.Many;
-using System.Threading;
-using System.Threading.Tasks;
+using Outcompute.Trader.Trading.Commands.Sequence;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
 {
-    public class ManyExecutorTests
+    public class SequenceExecutorTests
     {
         [Fact]
         public async Task Executes()
         {
             // arrange
-            var executor = new ManyExecutor();
+            var executor = new SequenceExecutor();
             var sub1 = Mock.Of<IAlgoCommand>();
             var sub2 = Mock.Of<IAlgoCommand>();
             var sub3 = Mock.Of<IAlgoCommand>();
-            var command = new ManyCommand(sub1, sub2, sub3);
+            var command = new SequenceCommand(sub1, sub2, sub3);
             var context = AlgoContext.Empty;
 
             // act

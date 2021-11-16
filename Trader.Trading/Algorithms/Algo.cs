@@ -6,11 +6,11 @@ using Outcompute.Trader.Trading.Commands.CancelOpenOrders;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
-using Outcompute.Trader.Trading.Commands.Many;
 using Outcompute.Trader.Trading.Commands.MarketBuy;
 using Outcompute.Trader.Trading.Commands.MarketSell;
 using Outcompute.Trader.Trading.Commands.RedeemSavings;
 using Outcompute.Trader.Trading.Commands.RedeemSwapPool;
+using Outcompute.Trader.Trading.Commands.Sequence;
 using Outcompute.Trader.Trading.Commands.SignificantAveragingSell;
 using Outcompute.Trader.Trading.Commands.TrackingBuy;
 
@@ -54,14 +54,14 @@ namespace Outcompute.Trader.Trading.Algorithms
             return NoopAlgoCommand.Instance;
         }
 
-        public virtual IAlgoCommand Many(IEnumerable<IAlgoCommand> results)
+        public virtual IAlgoCommand Sequence(IEnumerable<IAlgoCommand> results)
         {
-            return new ManyCommand(results);
+            return new SequenceCommand(results);
         }
 
-        public virtual IAlgoCommand Many(params IAlgoCommand[] results)
+        public virtual IAlgoCommand Sequence(params IAlgoCommand[] results)
         {
-            return new ManyCommand(results);
+            return new SequenceCommand(results);
         }
 
         #region Command Helpers
@@ -86,7 +86,7 @@ namespace Outcompute.Trader.Trading.Algorithms
             return new EnsureSingleOrderCommand(symbol, side, type, timeInForce, quantity, price, redeemSavings, redeemSwapPool);
         }
 
-        public virtual IAlgoCommand CancelOpenOrders(Symbol symbol, OrderSide side, decimal? distance = null)
+        public virtual IAlgoCommand CancelOpenOrders(Symbol symbol, OrderSide? side = null, decimal? distance = null)
         {
             return new CancelOpenOrdersCommand(symbol, side, distance);
         }

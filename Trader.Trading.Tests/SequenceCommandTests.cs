@@ -2,12 +2,12 @@
 using Moq;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands;
-using Outcompute.Trader.Trading.Commands.Many;
+using Outcompute.Trader.Trading.Commands.Sequence;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
 {
-    public class ManyCommandTests
+    public class SequenceCommandTests
     {
         [Fact]
         public async Task ExecutesParams()
@@ -17,9 +17,9 @@ namespace Outcompute.Trader.Trading.Tests
             var sub2 = Mock.Of<IAlgoCommand>();
             var sub3 = Mock.Of<IAlgoCommand>();
 
-            var command = new ManyCommand(sub1, sub2, sub3);
+            var command = new SequenceCommand(sub1, sub2, sub3);
 
-            var executor = Mock.Of<IAlgoCommandExecutor<ManyCommand>>();
+            var executor = Mock.Of<IAlgoCommandExecutor<SequenceCommand>>();
 
             var provider = new ServiceCollection()
                 .AddSingleton(executor)
@@ -48,9 +48,9 @@ namespace Outcompute.Trader.Trading.Tests
             var sub3 = Mock.Of<IAlgoCommand>();
             var subs = new List<IAlgoCommand> { sub1, sub2, sub3 };
 
-            var command = new ManyCommand(subs);
+            var command = new SequenceCommand(subs);
 
-            var executor = Mock.Of<IAlgoCommandExecutor<ManyCommand>>();
+            var executor = Mock.Of<IAlgoCommandExecutor<SequenceCommand>>();
 
             var provider = new ServiceCollection()
                 .AddSingleton(executor)

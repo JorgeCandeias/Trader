@@ -1,22 +1,18 @@
-﻿using System;
-using System.Threading;
+﻿namespace Outcompute.Trader.Core;
 
-namespace Outcompute.Trader.Core
+public sealed class DisposableAction : IDisposable
 {
-    public sealed class DisposableAction : IDisposable
+    public static readonly DisposableAction Empty = new(() => { });
+
+    private Action? _disposeAction;
+
+    public DisposableAction(Action disposeAction)
     {
-        public static readonly DisposableAction Empty = new(() => { });
+        _disposeAction = disposeAction ?? throw new ArgumentNullException(nameof(disposeAction));
+    }
 
-        private Action? _disposeAction;
-
-        public DisposableAction(Action disposeAction)
-        {
-            _disposeAction = disposeAction ?? throw new ArgumentNullException(nameof(disposeAction));
-        }
-
-        public void Dispose()
-        {
-            Interlocked.Exchange(ref _disposeAction, null)?.Invoke();
-        }
+    public void Dispose()
+    {
+        Interlocked.Exchange(ref _disposeAction, null)?.Invoke();
     }
 }

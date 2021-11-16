@@ -1,9 +1,6 @@
-﻿using System;
+﻿namespace Outcompute.Trader.Core.Time;
 
-namespace Outcompute.Trader.Core.Time
+public class SystemClock : ISystemClock
 {
-    public class SystemClock : ISystemClock
-    {
-        public DateTime UtcNow => DateTime.UtcNow;
-    }
+    public DateTime UtcNow => DateTime.UtcNow;
 }

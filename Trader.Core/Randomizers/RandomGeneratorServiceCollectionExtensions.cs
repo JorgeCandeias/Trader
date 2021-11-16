@@ -1,12 +1,11 @@
 ﻿using Outcompute.Trader.Core.Randomizers;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace Microsoft.Extensions.DependencyInjection;
+
+public static class RandomGeneratorServiceCollectionExtensions
 {
-    public static class RandomGeneratorServiceCollectionExtensions
+    public static IServiceCollection AddRandomGenerator(this IServiceCollection services)
     {
-        public static IServiceCollection AddRandomGenerator(this IServiceCollection services)
-        {
-            return services.AddSingleton<IRandomGenerator, RandomGenerator>();
-        }
+        return services.AddSingleton<IRandomGenerator, RandomGenerator>();
     }
 }

@@ -1,12 +1,11 @@
 ﻿using Outcompute.Trader.Core.Timers;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace Microsoft.Extensions.DependencyInjection;
+
+public static class SafeTimerServiceCollectionExtensions
 {
-    public static class SafeTimerServiceCollectionExtensions
+    public static IServiceCollection AddSafeTimerFactory(this IServiceCollection services)
     {
-        public static IServiceCollection AddSafeTimerFactory(this IServiceCollection services)
-        {
-            return services.AddSingleton<ISafeTimerFactory, SafeTimerFactory>();
-        }
+        return services.AddSingleton<ISafeTimerFactory, SafeTimerFactory>();
     }
 }

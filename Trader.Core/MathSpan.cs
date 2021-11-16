@@ -1,117 +1,113 @@
-﻿using System;
-using System.Collections.Generic;
+﻿namespace Outcompute.Trader.Core;
 
-namespace Outcompute.Trader.Core
+/// <summary>
+/// Provides helper math functions over <see cref="ReadOnlySpan{T}"/>.
+/// </summary>
+public static class MathSpan
 {
-    /// <summary>
-    /// Provides helper math functions over <see cref="ReadOnlySpan{T}"/>.
-    /// </summary>
-    public static class MathSpan
+    private static void EnsureValuesNotEmpty<T>(ReadOnlySpan<T> values)
     {
-        private static void EnsureValuesNotEmpty<T>(ReadOnlySpan<T> values)
+        if (values.Length <= 0)
         {
-            if (values.Length <= 0)
+            throw new ArgumentOutOfRangeException(nameof(values), $"Parameter '{nameof(values)}' is empty");
+        }
+    }
+
+    public static int Max(ReadOnlySpan<int> values)
+    {
+        EnsureValuesNotEmpty(values);
+
+        var max = values[0];
+        for (var i = 1; i < values.Length; i++)
+        {
+            var value = values[i];
+            if (value > max)
             {
-                throw new ArgumentOutOfRangeException(nameof(values), $"Parameter '{nameof(values)}' is empty");
+                max = value;
             }
         }
+        return max;
+    }
 
-        public static int Max(ReadOnlySpan<int> values)
+    public static decimal Max(ReadOnlySpan<decimal> values)
+    {
+        EnsureValuesNotEmpty(values);
+
+        var max = values[0];
+        for (var i = 1; i < values.Length; i++)
         {
-            EnsureValuesNotEmpty(values);
-
-            var max = values[0];
-            for (var i = 1; i < values.Length; i++)
+            var value = values[i];
+            if (value > max)
             {
-                var value = values[i];
-                if (value > max)
-                {
-                    max = value;
-                }
+                max = value;
             }
-            return max;
         }
+        return max;
+    }
 
-        public static decimal Max(ReadOnlySpan<decimal> values)
+    public static T Max<T>(ReadOnlySpan<T> values)
+        where T : IComparable<T>
+    {
+        EnsureValuesNotEmpty(values);
+
+        var max = values[0];
+        for (var i = 1; i < values.Length; i++)
         {
-            EnsureValuesNotEmpty(values);
-
-            var max = values[0];
-            for (var i = 1; i < values.Length; i++)
+            var value = values[i];
+            if (Comparer<T>.Default.Compare(value, max) > 0)
             {
-                var value = values[i];
-                if (value > max)
-                {
-                    max = value;
-                }
+                max = value;
             }
-            return max;
         }
+        return max;
+    }
 
-        public static T Max<T>(ReadOnlySpan<T> values)
-            where T : IComparable<T>
+    public static int Min(ReadOnlySpan<int> values)
+    {
+        EnsureValuesNotEmpty(values);
+
+        var min = values[0];
+        for (var i = 1; i < values.Length; i++)
         {
-            EnsureValuesNotEmpty(values);
-
-            var max = values[0];
-            for (var i = 1; i < values.Length; i++)
+            var value = values[i];
+            if (value < min)
             {
-                var value = values[i];
-                if (Comparer<T>.Default.Compare(value, max) > 0)
-                {
-                    max = value;
-                }
+                min = value;
             }
-            return max;
         }
+        return min;
+    }
 
-        public static int Min(ReadOnlySpan<int> values)
+    public static decimal Min(ReadOnlySpan<decimal> values)
+    {
+        EnsureValuesNotEmpty(values);
+
+        var min = values[0];
+        for (var i = 1; i < values.Length; i++)
         {
-            EnsureValuesNotEmpty(values);
-
-            var min = values[0];
-            for (var i = 1; i < values.Length; i++)
+            var value = values[i];
+            if (value < min)
             {
-                var value = values[i];
-                if (value < min)
-                {
-                    min = value;
-                }
+                min = value;
             }
-            return min;
         }
+        return min;
+    }
 
-        public static decimal Min(ReadOnlySpan<decimal> values)
+    public static T Min<T>(ReadOnlySpan<T> values)
+        where T : IComparable<T>
+    {
+        EnsureValuesNotEmpty(values);
+
+        var min = values[0];
+        for (var i = 1; i < values.Length; i++)
         {
-            EnsureValuesNotEmpty(values);
-
-            var min = values[0];
-            for (var i = 1; i < values.Length; i++)
+            var value = values[i];
+            if (Comparer<T>.Default.Compare(value, min) < 0)
             {
-                var value = values[i];
-                if (value < min)
-                {
-                    min = value;
-                }
+                min = value;
             }
-            return min;
         }
-
-        public static T Min<T>(ReadOnlySpan<T> values)
-            where T : IComparable<T>
-        {
-            EnsureValuesNotEmpty(values);
-
-            var min = values[0];
-            for (var i = 1; i < values.Length; i++)
-            {
-                var value = values[i];
-                if (Comparer<T>.Default.Compare(value, min) < 0)
-                {
-                    min = value;
-                }
-            }
-            return min;
-        }
+        return min;
     }
 }

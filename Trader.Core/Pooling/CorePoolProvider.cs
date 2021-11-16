@@ -1,9 +1,8 @@
 ﻿using Microsoft.Extensions.ObjectPool;
 
-namespace Outcompute.Trader.Core.Pooling
+namespace Outcompute.Trader.Core.Pooling;
+
+internal static class CorePoolProvider
 {
-    internal static class CorePoolProvider
-    {
-        public static ObjectPoolProvider Default { get; } = new DefaultObjectPoolProvider();
-    }
+    public static ObjectPoolProvider Default { get; } = new DefaultObjectPoolProvider();
 }

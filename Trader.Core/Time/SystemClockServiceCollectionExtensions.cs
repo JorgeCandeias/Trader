@@ -1,12 +1,11 @@
 ﻿using Outcompute.Trader.Core.Time;
 
-namespace Microsoft.Extensions.DependencyInjection
+namespace Microsoft.Extensions.DependencyInjection;
+
+public static class SystemClockServiceCollectionExtensions
 {
-    public static class SystemClockServiceCollectionExtensions
+    public static IServiceCollection AddSystemClock(this IServiceCollection services)
     {
-        public static IServiceCollection AddSystemClock(this IServiceCollection services)
-        {
-            return services.AddSingleton<ISystemClock, SystemClock>();
-        }
+        return services.AddSingleton<ISystemClock, SystemClock>();
     }
 }

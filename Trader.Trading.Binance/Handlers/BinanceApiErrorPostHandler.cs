@@ -1,16 +1,12 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Outcompute.Trader.Core.Time;
-using System;
 using System.Net;
-using System.Net.Http;
 using System.Net.Http.Json;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Binance.Handlers
 {
-    internal class BinanceApiErrorPostHandler : DelegatingHandler
+    internal partial class BinanceApiErrorPostHandler : DelegatingHandler
     {
         private readonly BinanceOptions _options;
         private readonly ILogger _logger;
@@ -23,7 +19,7 @@ namespace Outcompute.Trader.Trading.Binance.Handlers
             _clock = clock;
         }
 
-        private static string Type => nameof(BinanceApiErrorPostHandler);
+        private const string Type = nameof(BinanceApiErrorPostHandler);
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
@@ -44,18 +40,14 @@ namespace Outcompute.Trader.Trading.Binance.Handlers
                 {
                     if (response.Headers.RetryAfter.Date.HasValue && response.Headers.RetryAfter.Date.Value > _clock.UtcNow)
                     {
-                        _logger.LogWarning(
-                            "{Type} received {HttpStatusCode} requesting to wait until {RetryAfterDateTimeOffset}",
-                            Type, response.StatusCode, response.Headers.RetryAfter.Date.Value);
+                        LogReceivedRequestToWaitAfterOffset(Type, response.StatusCode, response.Headers.RetryAfter.Date.Value);
 
                         retryAfter = response.Headers.RetryAfter.Date.Value.Subtract(_clock.UtcNow).Add(TimeSpan.FromSeconds(1));
                         okay = true;
                     }
                     else if (response.Headers.RetryAfter.Delta.HasValue && response.Headers.RetryAfter.Delta.Value > TimeSpan.Zero)
                     {
-                        _logger.LogWarning(
-                            "{Type} received {HttpStatusCode} requesting to wait for {RetryAfter}",
-                            Type, response.StatusCode, response.Headers.RetryAfter.Delta.Value);
+                        LogReceivedRequestToWaitAfterTimeSpan(Type, response.StatusCode, response.Headers.RetryAfter.Delta.Value);
 
                         retryAfter = response.Headers.RetryAfter.Delta.Value.Add(TimeSpan.FromSeconds(1));
                         okay = true;
@@ -64,9 +56,7 @@ namespace Outcompute.Trader.Trading.Binance.Handlers
 
                 if (!okay)
                 {
-                    _logger.LogWarning(
-                        "{Type} received http status code {HttpStatusCode} without a retry-after header and will use a default of {RetryAfter}",
-                        Type, response.StatusCode, retryAfter);
+                    LogReceivedRequestToWaitWithoutRetryAfter(Type, response.StatusCode, retryAfter);
                 }
 
                 throw new BinanceTooManyRequestsException(retryAfter);
@@ -84,5 +74,18 @@ namespace Outcompute.Trader.Trading.Binance.Handlers
 
             return response;
         }
+
+        #region Logging
+
+        [LoggerMessage(0, LogLevel.Warning, "{Type} received {HttpStatusCode} requesting to wait until {RetryAfterDateTimeOffset}")]
+        private partial void LogReceivedRequestToWaitAfterOffset(string type, HttpStatusCode httpStatusCode, DateTimeOffset retryAfterDateTimeOffset);
+
+        [LoggerMessage(1, LogLevel.Warning, "{Type} received {HttpStatusCode} requesting to wait for {RetryAfter}")]
+        private partial void LogReceivedRequestToWaitAfterTimeSpan(string type, HttpStatusCode httpStatusCode, TimeSpan retryAfter);
+
+        [LoggerMessage(2, LogLevel.Warning, "{Type} received http status code {HttpStatusCode} without a retry-after header and will use a default of {RetryAfter}")]
+        private partial void LogReceivedRequestToWaitWithoutRetryAfter(string type, HttpStatusCode httpStatusCode, TimeSpan retryAfter);
+
+        #endregion Logging
     }
 }

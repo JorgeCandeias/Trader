@@ -53,6 +53,7 @@ namespace Outcompute.Trader.Trading.Tests
 
             var context = new AlgoContext("Algo1", provider)
             {
+                Symbol = symbol,
                 BaseAssetSpotBalance = Balance.Zero(symbol.BaseAsset) with { Free = 2000M },
                 BaseAssetSavingsBalance = SavingsPosition.Zero(symbol.BaseAsset),
                 Ticker = new MiniTicker(symbol.Name, DateTime.Today, 1200, 0, 0, 0, 0, 0)

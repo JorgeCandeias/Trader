@@ -41,9 +41,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         [Required]
         public bool BuyingEnabled { get; set; } = true;
 
-        [Required]
-        public bool AccumulationEnabled { get; set; } = true;
-
         /// <summary>
         /// Whether to allow the algo to sell assets.
         /// </summary>

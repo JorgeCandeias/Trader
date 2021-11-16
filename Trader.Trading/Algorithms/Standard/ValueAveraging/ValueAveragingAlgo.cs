@@ -38,7 +38,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             _rsi = Context.Klines.LastRsi(x => x.ClosePrice, _options.RsiPeriods);
 
             // decide on regular sale
-            if (TrySignalSellOrder())
+            if (TrySignalSell())
             {
                 return Sequence(
                     CancelOpenOrders(Context.Symbol, OrderSide.Buy),
@@ -46,7 +46,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             }
 
             // decide on a regular buy
-            if (TrySignalBuyOrder())
+            if (TrySignalBuy())
             {
                 return Sequence(
                     CancelOpenOrders(Context.Symbol, OrderSide.Sell),
@@ -73,15 +73,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             return CancelOpenOrders(Context.Symbol, null, 0.01M);
         }
 
-        private bool TrySignalBuyOrder()
+        private bool TrySignalBuy()
         {
-            var signal =
-                IsBuyingEnabled() &&
-                IsSequentialBuyAllowed() &&
-                (
-                    (IsCooled() && IsRsiOversold()) ||
-                    (IsAccumulationEnabled() && IsTickerOnNextStep())
-                );
+            var signal = IsBuyingEnabled() && IsSequentialBuyAllowed() && IsCooled() && IsRsiOversold();
 
             if (signal)
             {
@@ -91,7 +85,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             return signal;
         }
 
-        private bool TrySignalSellOrder()
+        private bool TrySignalSell()
         {
             var signal =
                 IsSellingEnabled() &&
@@ -153,30 +147,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             return MarketBuy(Context.Symbol, quantity, _options.RedeemSavings, _options.RedeemSwapPool);
         }
 
-        private bool IsTickerOnNextStep()
-        {
-            // only evaluate this rule if there are positions
-            if (Context.PositionDetails.Orders.Count == 0)
-            {
-                return false;
-            }
-
-            // only evaluate this rule if the last trade was a buy trade
-            if (!(Context.Trades.Count > 0 && Context.Trades[Context.Trades.Count - 1].IsBuyer))
-            {
-                return false;
-            }
-
-            var order = Context.PositionDetails.Orders.Max!;
-            var target = (order.Price * _options.StepRate).AdjustPriceUpToTickSize(Context.Symbol);
-            if (Context.Ticker.ClosePrice >= target)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
         private bool IsCooled()
         {
             // skip this rule if there are no positions
@@ -215,18 +185,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             if (!_options.BuyingEnabled)
             {
                 LogBuyingDisabled(TypeName, Context.Name);
-
-                return false;
-            }
-
-            return true;
-        }
-
-        private bool IsAccumulationEnabled()
-        {
-            if (!_options.AccumulationEnabled)
-            {
-                LogAccumulationDisabled(TypeName, Context.Name);
 
                 return false;
             }

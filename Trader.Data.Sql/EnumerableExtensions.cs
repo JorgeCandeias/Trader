@@ -1,32 +1,31 @@
 ﻿using Outcompute.Trader.Data.Sql;
 using System.Data;
 
-namespace System.Collections.Generic
+namespace System.Collections.Generic;
+
+internal static class EnumerableExtensions
 {
-    internal static class EnumerableExtensions
+    public static DataTable ToDataTable<T>(this IEnumerable<T> items)
     {
-        public static DataTable ToDataTable<T>(this IEnumerable<T> items)
+        var table = new DataTable(nameof(T));
+
+        for (var i = 0; i < MemberSetCache<T>.MemberSet.Count; i++)
         {
-            var table = new DataTable(nameof(T));
+            table.Columns.Add(MemberSetCache<T>.MemberSet[i].Name, MemberSetCache<T>.MemberSet[i].Type);
+        }
+
+        foreach (var item in items)
+        {
+            var row = table.NewRow();
 
             for (var i = 0; i < MemberSetCache<T>.MemberSet.Count; i++)
             {
-                table.Columns.Add(MemberSetCache<T>.MemberSet[i].Name, MemberSetCache<T>.MemberSet[i].Type);
+                row[i] = TypeAccessorCache<T>.TypeAccessor[item, MemberSetCache<T>.MemberSet[i].Name];
             }
 
-            foreach (var item in items)
-            {
-                var row = table.NewRow();
-
-                for (var i = 0; i < MemberSetCache<T>.MemberSet.Count; i++)
-                {
-                    row[i] = TypeAccessorCache<T>.TypeAccessor[item, MemberSetCache<T>.MemberSet[i].Name];
-                }
-
-                table.Rows.Add(row);
-            }
-
-            return table;
+            table.Rows.Add(row);
         }
+
+        return table;
     }
 }

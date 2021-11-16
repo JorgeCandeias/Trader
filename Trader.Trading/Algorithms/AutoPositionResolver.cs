@@ -1,14 +1,9 @@
 ﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
-using System;
 using System.Buffers;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms
 {
@@ -213,10 +208,10 @@ namespace Outcompute.Trader.Trading.Algorithms
         [LoggerMessage(0, LogLevel.Warning, "{TypeName} {Symbol} could not fill {OrderType} {OrderSide} order {OrderId} as there is {Missing} {Asset} missing")]
         private partial void LogCouldNotFillOrder(string typeName, string symbol, OrderType orderType, OrderSide orderSide, long orderId, decimal missing, string asset);
 
-        [LoggerMessage(0, LogLevel.Information, "{TypeName} {Symbol} identified {Count} positions in {ElapsedMs}ms")]
+        [LoggerMessage(1, LogLevel.Information, "{TypeName} {Symbol} identified {Count} positions in {ElapsedMs}ms")]
         private partial void LogIdentifiedPositions(string typeName, string symbol, int count, long elapsedMs);
 
-        [LoggerMessage(0, LogLevel.Error, "{TypeName} {Symbol} could not match {OrderType} {OrderSide} {OrderId} at {Time} for {ExecutedQuantity} units with total trade quantity of {TradeQuantity}")]
+        [LoggerMessage(2, LogLevel.Error, "{TypeName} {Symbol} could not match {OrderType} {OrderSide} {OrderId} at {Time} for {ExecutedQuantity} units with total trade quantity of {TradeQuantity}")]
         private partial void LogCouldNotMatchOrder(string typeName, string symbol, OrderType orderType, OrderSide orderSide, long orderId, DateTime time, decimal executedQuantity, decimal tradeQuantity);
 
         #endregion Logging

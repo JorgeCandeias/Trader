@@ -5,10 +5,7 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.ProfitAggregator;
 using Outcompute.Trader.Trading.Providers;
-using System;
 using System.Collections.Immutable;
-using System.Threading;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
@@ -47,7 +44,7 @@ namespace Outcompute.Trader.Trading.Tests
                 .Verifiable();
 
             var publisher = new AlgoStatisticsPublisher(logger, factory, balances, savings, swaps);
-            var order = OrderQueryResult.Empty with { Symbol = symbol.Name, OrderId = 123 };
+            var order = OrderQueryResult.Empty with { Symbol = symbol.Name, OrderId = 123, ExecutedQuantity = 10, Price = 100 };
             var significant = PositionDetails.Empty with
             {
                 Symbol = symbol,

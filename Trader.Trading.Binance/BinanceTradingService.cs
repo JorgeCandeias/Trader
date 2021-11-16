@@ -2,7 +2,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
@@ -14,7 +13,6 @@ namespace Outcompute.Trader.Trading.Binance
     [ExcludeFromCodeCoverage(Justification = "Requires Integration Testing")]
     internal partial class BinanceTradingService : ITradingService, IHostedService
     {
-        private readonly BinanceOptions _options;
         private readonly ILogger _logger;
         private readonly BinanceApiClient _client;
         private readonly BinanceUsageContext _usage;
@@ -22,9 +20,8 @@ namespace Outcompute.Trader.Trading.Binance
         private readonly ISystemClock _clock;
         private readonly IServiceProvider _provider;
 
-        public BinanceTradingService(IOptions<BinanceOptions> options, ILogger<BinanceTradingService> logger, BinanceApiClient client, BinanceUsageContext usage, IMapper mapper, ISystemClock clock, IServiceProvider provider)
+        public BinanceTradingService(ILogger<BinanceTradingService> logger, BinanceApiClient client, BinanceUsageContext usage, IMapper mapper, ISystemClock clock, IServiceProvider provider)
         {
-            _options = options.Value;
             _logger = logger;
             _client = client;
             _usage = usage;

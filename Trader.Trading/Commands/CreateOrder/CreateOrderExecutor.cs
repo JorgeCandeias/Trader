@@ -43,7 +43,7 @@ namespace Outcompute.Trader.Trading.Commands.CreateOrder
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} placing {OrderType} {OrderSide} order for {Quantity:F8} {Asset} at {Price:F8} {Quote} for a total of {Total:F8} {Quote}")]
         private partial void LogPlacingOrder(string type, string name, OrderType orderType, OrderSide orderSide, decimal quantity, string asset, decimal? price, string quote, decimal? total);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} placed {OrderType} {OrderSide} order for {Quantity:F8} {Asset} at {Price:F8} {Quote} for a total of {Total:F8} {Quote} in {ElapsedMs}ms")]
+        [LoggerMessage(1, LogLevel.Information, "{Type} {Name} placed {OrderType} {OrderSide} order for {Quantity:F8} {Asset} at {Price:F8} {Quote} for a total of {Total:F8} {Quote} in {ElapsedMs}ms")]
         private partial void LogPlacedOrder(string type, string name, OrderType orderType, OrderSide orderSide, decimal quantity, string asset, decimal? price, string quote, decimal? total, long elapsedMs);
 
         #endregion Logging

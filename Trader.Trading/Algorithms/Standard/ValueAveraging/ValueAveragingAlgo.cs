@@ -272,55 +272,55 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} will signal a buy order for the current state (Ticker = {Ticker:F8}, SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}, RSI({RsiPeriods}) = {RSI:F8}")]
         private partial void LogWillSignalBuyOrderForCurrentState(string type, string name, decimal ticker, int smaPeriodsA, decimal smaA, int smaPeriodsB, decimal smaB, int smaPeriodsC, decimal smaC, int rsiPeriods, decimal rsi);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports ticker {Ticker:F8} {Asset} below pullback price of {Pullback:F8} {Asset} = {Indicator}")]
+        [LoggerMessage(1, LogLevel.Information, "{Type} {Name} reports ticker {Ticker:F8} {Asset} below pullback price of {Pullback:F8} {Asset} = {Indicator}")]
         private partial void LogTickerBelowPullback(string type, string name, decimal ticker, string asset, decimal pullback, bool indicator);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports cooldown period of {Cooldown} since last buy at {LastTime} has passed = {Indicator}")]
+        [LoggerMessage(2, LogLevel.Information, "{Type} {Name} reports cooldown period of {Cooldown} since last buy at {LastTime} has passed = {Indicator}")]
         private partial void LogCooldownPeriod(string type, string name, TimeSpan cooldown, DateTime lastTime, bool indicator);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports (RSI({RsiPeriods}) = {RSI:F8} trending down = {Indicator}")]
+        [LoggerMessage(3, LogLevel.Information, "{Type} {Name} reports (RSI({RsiPeriods}) = {RSI:F8} trending down = {Indicator}")]
         private partial void LogRsiTrendingDown(string type, string name, int rsiPeriods, decimal rsi, bool indicator);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports (RSI({RsiPeriods}) = {RSI:F8} oversold = {Indicator}")]
+        [LoggerMessage(4, LogLevel.Information, "{Type} {Name} reports (RSI({RsiPeriods}) = {RSI:F8} oversold = {Indicator}")]
         private partial void LogRsiOversold(string type, string name, int rsiPeriods, decimal rsi, bool indicator);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports (SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}) trending down = {Indicator}")]
+        [LoggerMessage(5, LogLevel.Information, "{Type} {Name} reports (SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}) trending down = {Indicator}")]
         private partial void LogSmaTrendingDown(string type, string name, int smaPeriodsA, decimal smaA, int smaPeriodsB, decimal smaB, int smaPeriodsC, decimal smaC, bool indicator);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Ticker {Ticker:F8} below (SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}) = {Indicator}")]
+        [LoggerMessage(6, LogLevel.Information, "{Type} {Name} reports Ticker {Ticker:F8} below (SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}) = {Indicator}")]
         private partial void LogTickerBelowSmas(string type, string name, decimal ticker, int smaPeriodsA, decimal smaA, int smaPeriodsB, decimal smaB, int smaPeriodsC, decimal smaC, bool indicator);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports (SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}) trending up = {Indicator}")]
+        [LoggerMessage(7, LogLevel.Information, "{Type} {Name} reports (SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}) trending up = {Indicator}")]
         private partial void LogSmaTrendingUp(string type, string name, int smaPeriodsA, decimal smaA, int smaPeriodsB, decimal smaB, int smaPeriodsC, decimal smaC, bool indicator);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Ticker {Ticker:F8} above (SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}) = {Indicator}")]
+        [LoggerMessage(8, LogLevel.Information, "{Type} {Name} reports Ticker {Ticker:F8} above (SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}) = {Indicator}")]
         private partial void LogTickerAboveSmas(string type, string name, decimal ticker, int smaPeriodsA, decimal smaA, int smaPeriodsB, decimal smaB, int smaPeriodsC, decimal smaC, bool indicator);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports (RSI({RsiPeriods}) = {RSI:F8} overbought = {Indicator}")]
+        [LoggerMessage(9, LogLevel.Information, "{Type} {Name} reports (RSI({RsiPeriods}) = {RSI:F8} overbought = {Indicator}")]
         private partial void LogRsiOverbought(string type, string name, int rsiPeriods, decimal rsi, bool indicator);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports (RSI({RsiPeriods}) = {RSI:F8} trending up = {Indicator}")]
+        [LoggerMessage(10, LogLevel.Information, "{Type} {Name} reports (RSI({RsiPeriods}) = {RSI:F8} trending up = {Indicator}")]
         private partial void LogRsiTrendingUp(string type, string name, int rsiPeriods, decimal rsi, bool indicator);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports buying is disabled")]
+        [LoggerMessage(11, LogLevel.Information, "{Type} {Name} reports buying is disabled")]
         private partial void LogBuyingDisabled(string type, string name);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports accumulation is disabled")]
+        [LoggerMessage(12, LogLevel.Information, "{Type} {Name} reports accumulation is disabled")]
         private partial void LogAccumulationDisabled(string type, string name);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports selling is disabled")]
+        [LoggerMessage(13, LogLevel.Information, "{Type} {Name} reports selling is disabled")]
         private partial void LogSellingDisabled(string type, string name);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports closing is enabled")]
+        [LoggerMessage(14, LogLevel.Information, "{Type} {Name} reports closing is enabled")]
         private partial void LogClosingEnabled(string type, string name);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports ticker {Ticker:F8} {Asset} is above the take profit price of {Target:F8} {Asset}")]
+        [LoggerMessage(15, LogLevel.Information, "{Type} {Name} reports ticker {Ticker:F8} {Asset} is above the take profit price of {Target:F8} {Asset}")]
         private partial void LogTickerAboveTakeProfitPrice(string type, string name, decimal ticker, string asset, decimal target);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} signalling sell for current state (Ticker = {Ticker:F8}, SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}, RSI({RsiPeriods}) = {RSI:F8})")]
+        [LoggerMessage(16, LogLevel.Information, "{Type} {Name} signalling sell for current state (Ticker = {Ticker:F8}, SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}, RSI({RsiPeriods}) = {RSI:F8})")]
         private partial void LogSignallingSell(string type, string name, decimal ticker, int smaPeriodsA, decimal smaA, int smaPeriodsB, decimal smaB, int smaPeriodsC, decimal smaC, int rsiPeriods, decimal rsi);
 
-        [LoggerMessage(0, LogLevel.Warning, "{Type} {Name} has reached the maximum number of positions {Count}")]
+        [LoggerMessage(17, LogLevel.Warning, "{Type} {Name} has reached the maximum number of positions {Count}")]
         private partial void LogReachedMaxSequentialBuys(string type, string name, int count);
 
         #endregion Logging

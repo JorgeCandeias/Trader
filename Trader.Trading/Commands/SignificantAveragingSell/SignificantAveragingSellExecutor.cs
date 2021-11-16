@@ -143,22 +143,22 @@ namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} elected order {OrderId} for sale with significant quantity {Quantity:F8} {Asset} at buy price {Price:F8} {Quote}")]
         private partial void LogElectedOrder(string type, string name, long orderId, decimal quantity, string asset, decimal price, string quote);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} cannot elect any buy orders for selling at a minimum profit rate of {MinimumProfitRate:F8}")]
+        [LoggerMessage(1, LogLevel.Information, "{Type} {Name} cannot elect any buy orders for selling at a minimum profit rate of {MinimumProfitRate:F8}")]
         private partial void LogCannotElectedBuyOrders(string type, string name, decimal minimumProfitRate);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} elected {Count} orders for sale with total quantity {Quantity:F8} {Asset} at average buy price {Price:F8} {Quote}")]
+        [LoggerMessage(2, LogLevel.Information, "{Type} {Name} elected {Count} orders for sale with total quantity {Quantity:F8} {Asset} at average buy price {Price:F8} {Quote}")]
         private partial void LogElectedOrders(string type, string name, int count, decimal quantity, string asset, decimal price, string quote);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} adjusted quantity by lot step size of {LotStepSize} {Asset} down to {Quantity:F8} {Asset}")]
+        [LoggerMessage(3, LogLevel.Information, "{Type} {Name} adjusted quantity by lot step size of {LotStepSize} {Asset} down to {Quantity:F8} {Asset}")]
         private partial void LogAdjustedQuantityByLotStepSize(string type, string name, decimal lotStepSize, string asset, decimal quantity);
 
-        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot set sell order for {Quantity} {Asset} because the quantity is under the minimum lot size of {MinLotSize} {Asset}")]
+        [LoggerMessage(4, LogLevel.Error, "{Type} {Name} cannot set sell order for {Quantity} {Asset} because the quantity is under the minimum lot size of {MinLotSize} {Asset}")]
         private partial void LogCannotSetSellOrder(string type, string name, decimal quantity, string asset, decimal minLotSize);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} calculated notional of {Total:F8} {Quote} using quantity of {Quantity:F8} {Asset} and ticker of {Price:F8} {Quote}")]
+        [LoggerMessage(5, LogLevel.Information, "{Type} {Name} calculated notional of {Total:F8} {Quote} using quantity of {Quantity:F8} {Asset} and ticker of {Price:F8} {Quote}")]
         private partial void LogCalculatedNotional(string type, string name, decimal total, string quote, decimal quantity, string asset, decimal price);
 
-        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot set sell order for {Quantity} {Asset} at {Price} {Quote} totalling {Total} {Quote} because it is under the minimum notional of {MinNotional} {Quote}")]
+        [LoggerMessage(6, LogLevel.Error, "{Type} {Name} cannot set sell order for {Quantity} {Asset} at {Price} {Quote} totalling {Total} {Quote} because it is under the minimum notional of {MinNotional} {Quote}")]
         private partial void LogCannotSetSellOrderUnderMinimumNotional(string type, string name, decimal quantity, string asset, decimal price, string quote, decimal total, decimal minNotional);
 
         #endregion Logging

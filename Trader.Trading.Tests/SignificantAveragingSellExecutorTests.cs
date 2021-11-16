@@ -237,15 +237,6 @@ namespace Outcompute.Trader.Trading.Tests
         public async Task EnsuresSingleOrderOnSellableOrders()
         {
             // arrange
-            var logger = NullLogger<SignificantAveragingSellExecutor>.Instance;
-            var executor = new SignificantAveragingSellExecutor(logger);
-            var clearOpenOrdersExecutor = Mock.Of<IAlgoCommandExecutor<CancelOpenOrdersCommand>>();
-            var ensureSingleOrderExecutor = Mock.Of<IAlgoCommandExecutor<EnsureSingleOrderCommand>>();
-            var provider = new ServiceCollection()
-                .AddSingleton(clearOpenOrdersExecutor)
-                .AddSingleton(ensureSingleOrderExecutor)
-                .BuildServiceProvider();
-            var context = new AlgoContext("Algo1", provider);
             var symbol = Symbol.Empty with
             {
                 Name = "ABCXYZ",
@@ -268,6 +259,21 @@ namespace Outcompute.Trader.Trading.Tests
                     }
                 }
             };
+
+            var logger = NullLogger<SignificantAveragingSellExecutor>.Instance;
+            var executor = new SignificantAveragingSellExecutor(logger);
+            var clearOpenOrdersExecutor = Mock.Of<IAlgoCommandExecutor<CancelOpenOrdersCommand>>();
+            var ensureSingleOrderExecutor = Mock.Of<IAlgoCommandExecutor<EnsureSingleOrderCommand>>();
+            var provider = new ServiceCollection()
+                .AddSingleton(clearOpenOrdersExecutor)
+                .AddSingleton(ensureSingleOrderExecutor)
+                .BuildServiceProvider();
+            var context = new AlgoContext("Algo1", provider)
+            {
+                Symbol = symbol,
+                BaseAssetSpotBalance = Balance.Zero(symbol.BaseAsset) with { Free = 200m }
+            };
+
             var ticker = MiniTicker.Empty with
             {
                 Symbol = symbol.Name,

@@ -4,14 +4,10 @@ using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Timers;
 using Outcompute.Trader.Trading.Algorithms;
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 {
-    internal class BinanceMarketDataGrain : Grain, IBinanceMarketDataGrain
+    internal partial class BinanceMarketDataGrain : Grain, IBinanceMarketDataGrain
     {
         private readonly IOptionsMonitor<BinanceOptions> _options;
         private readonly IAlgoDependencyResolver _dependencies;
@@ -34,7 +30,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
             _streamer = streamer;
         }
 
-        private static string TypeName => nameof(BinanceMarketDataGrain);
+        private const string TypeName = nameof(BinanceMarketDataGrain);
 
         private Task? _work;
 
@@ -50,7 +46,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
                 _timer = _timers.RegisterTimer(this, TickEnsureStreamAsync, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
             }
 
-            _logger.LogInformation("{Name} started", TypeName);
+            LogStarted(TypeName);
 
             return base.OnActivateAsync();
         }
@@ -59,7 +55,7 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         {
             _timer?.Dispose();
 
-            _logger.LogInformation("{Name} stopped", TypeName);
+            LogStopped(TypeName);
 
             return base.OnDeactivateAsync();
         }
@@ -120,5 +116,15 @@ namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
         }
 
         public Task PingAsync() => Task.CompletedTask;
+
+        #region Logging
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} started")]
+        private partial void LogStarted(string type);
+
+        [LoggerMessage(1, LogLevel.Information, "{Type} stopped")]
+        private partial void LogStopped(string type);
+
+        #endregion Logging
     }
 }

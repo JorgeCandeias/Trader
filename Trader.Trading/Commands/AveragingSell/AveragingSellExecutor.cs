@@ -72,7 +72,7 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
                 {
                     // see if we can top up at all
                     var required = symbol.Filters.LotSize.MinQuantity - quantity;
-                    var allowed = free - quantity;
+                    var allowed = Math.Max(free - quantity, 0);
                     if (required <= allowed)
                     {
                         LogToppedUp(TypeName, symbol.Name, quantity, symbol.BaseAsset, required, symbol.Filters.LotSize.MinQuantity);
@@ -109,7 +109,7 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
                 if (command.TopUpUnsellablePositionWithBalance)
                 {
                     var required = ((symbol.Filters.MinNotional.MinNotional / price) - quantity).AdjustQuantityUpToLotStepSize(context.Symbol);
-                    var allowed = free - quantity;
+                    var allowed = Math.Max(free - quantity, 0);
                     if (required <= allowed)
                     {
                         quantity += required;

@@ -2,9 +2,10 @@
 	@Trades [dbo].[TradeTableParameter] READONLY
 AS
 
+SET XACT_ABORT ON;
 SET NOCOUNT ON;
 
-MERGE INTO [dbo].[Trade] AS [T]
+MERGE INTO [dbo].[Trade] WITH (UPDLOCK, HOLDLOCK) AS [T]
 USING @Trades AS [S]
 ON [S].[SymbolId] = [T].[SymbolId]
 AND [S].[Id] = [T].[Id]

@@ -18,6 +18,7 @@
 	@TakerBuyQuoteAssetVolume DECIMAL (18,8)
 AS
 
+SET XACT_ABORT ON;
 SET NOCOUNT ON;
 
 WITH [Source] AS
@@ -42,7 +43,7 @@ WITH [Source] AS
 		@TakerBuyQuoteAssetVolume AS [TakerBuyQuoteAssetVolume]
 )
 
-MERGE INTO [dbo].[Kline] AS [T]
+MERGE INTO [dbo].[Kline] WITH (UPDLOCK, HOLDLOCK) AS [T]
 USING [Source] AS [S]
 ON [T].[SymbolId] = [S].[SymbolId]
 AND [T].[Interval] = [S].[Interval]

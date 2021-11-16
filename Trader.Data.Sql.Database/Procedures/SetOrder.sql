@@ -19,7 +19,6 @@
     @IsWorking BIT
 AS
 
-SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 SET XACT_ABORT ON;
 SET NOCOUNT ON;
 
@@ -48,7 +47,7 @@ WITH [Source] AS
         @UpdateTime AS [UpdateTime],
         @IsWorking AS [IsWorking]
 )
-MERGE INTO [dbo].[Order] AS [T]
+MERGE INTO [dbo].[Order] WITH (UPDLOCK, HOLDLOCK) AS [T]
 USING [Source] AS [S]
     ON [S].[SymbolId] = [T].[SymbolId]
     AND [S].[OrderId] = [T].[OrderId]

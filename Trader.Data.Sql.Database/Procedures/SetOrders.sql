@@ -2,11 +2,10 @@
     @Orders [dbo].[OrderTableParameter] READONLY
 AS
 
-SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;
 SET XACT_ABORT ON;
 SET NOCOUNT ON;
 
-MERGE INTO [dbo].[Order] AS [T]
+MERGE INTO [dbo].[Order] WITH (UPDLOCK, HOLDLOCK) AS [T]
 USING @Orders AS [S]
     ON [S].[SymbolId] = [T].[SymbolId]
     AND [S].[OrderId] = [T].[OrderId]

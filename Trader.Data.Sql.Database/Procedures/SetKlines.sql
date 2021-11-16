@@ -2,9 +2,10 @@
 	@Klines [dbo].[KlineTableParameter] READONLY
 AS
 
+SET XACT_ABORT ON;
 SET NOCOUNT ON;
 
-MERGE INTO [dbo].[Kline] AS [T]
+MERGE INTO [dbo].[Kline] WITH (UPDLOCK, HOLDLOCK) AS [T]
 USING @Klines AS [S]
 ON [T].[SymbolId] = [S].[SymbolId]
 AND [T].[Interval] = [S].[Interval]

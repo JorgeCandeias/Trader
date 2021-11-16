@@ -9,6 +9,7 @@
 	@QuoteVolume DECIMAL(18,8)
 AS
 
+SET XACT_ABORT ON;
 SET NOCOUNT ON;
 
 DECLARE @SymbolId INT;
@@ -27,7 +28,7 @@ WITH [Source] AS
 		@QuoteVolume AS [QuoteVolume]
 )
 
-MERGE INTO [dbo].[Ticker] AS [T]
+MERGE INTO [dbo].[Ticker] WITH (UPDLOCK, HOLDLOCK) AS [T]
 USING [Source] AS [S]
 ON [T].[SymbolId] = [S].[SymbolId]
 WHEN NOT MATCHED BY TARGET THEN

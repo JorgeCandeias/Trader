@@ -16,7 +16,7 @@ WITH [Source] AS
 	SELECT
 		@Name AS [Name]
 )
-MERGE INTO [dbo].[Symbol] AS [T]
+MERGE INTO [dbo].[Symbol] WITH (UPDLOCK, HOLDLOCK) AS [T]
 USING [Source] AS [S]
 ON [S].[Name] = [T].[Name]
 WHEN NOT MATCHED BY TARGET THEN

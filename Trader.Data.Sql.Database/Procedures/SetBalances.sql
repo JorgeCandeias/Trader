@@ -2,9 +2,10 @@
 	@Balances [dbo].[BalanceTableParameter] READONLY
 AS
 
+SET XACT_ABORT ON;
 SET NOCOUNT ON;
 
-MERGE INTO [dbo].[Balance] AS [T]
+MERGE INTO [dbo].[Balance] WITH (UPDLOCK, HOLDLOCK) AS [T]
 USING @Balances AS [S]
 ON [S].[Asset] = [T].[Asset]
 WHEN NOT MATCHED BY TARGET THEN

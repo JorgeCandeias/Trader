@@ -119,16 +119,16 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
         [LoggerMessage(0, LogLevel.Information, "{TypeName} identified unused symbols with savings: {Symbols}")]
         private partial void LogIdentifiedUnusedSymbolsWithSavings(string typeName, IEnumerable<string> symbols);
 
-        [LoggerMessage(0, LogLevel.Information, "{TypeName} identified unused symbols with swap pools: {Symbols}")]
+        [LoggerMessage(1, LogLevel.Information, "{TypeName} identified unused symbols with swap pools: {Symbols}")]
         private partial void LogIdentifiedUnusedSymbolsWithSwapPools(string typeName, IEnumerable<string> symbols);
 
-        [LoggerMessage(0, LogLevel.Information, "{TypeName} identified used symbols without savings: {Symbols}")]
+        [LoggerMessage(2, LogLevel.Information, "{TypeName} identified used symbols without savings: {Symbols}")]
         private partial void LogIdentifiedUsedSymbolsWithoutSavings(string typeName, IEnumerable<string> symbols);
 
-        [LoggerMessage(0, LogLevel.Information, "{TypeName} identified used symbols without swap pools: {Symbols}")]
+        [LoggerMessage(3, LogLevel.Information, "{TypeName} identified used symbols without swap pools: {Symbols}")]
         private partial void LogIdentifiedUsedSymbolsWithoutSwapPools(string typeName, IEnumerable<string> symbols);
 
-        [LoggerMessage(0, LogLevel.Information, "{TypeName} identified used symbols without savings or swap pools: {Symbols}")]
+        [LoggerMessage(4, LogLevel.Information, "{TypeName} identified used symbols without savings or swap pools: {Symbols}")]
         private partial void LogIdentifiedUsedSymbolsWithoutSavingsOrSwapPools(string typeName, IEnumerable<string> symbols);
 
         #endregion Logging

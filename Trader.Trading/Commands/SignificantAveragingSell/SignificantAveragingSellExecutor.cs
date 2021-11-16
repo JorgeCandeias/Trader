@@ -133,7 +133,7 @@ internal partial class SignificantAveragingSellExecutor : IAlgoCommandExecutor<S
         return new DesiredSell(quantity, command.Ticker.ClosePrice);
     }
 
-    private sealed record DesiredSell(decimal Quantity, decimal Price)
+    private record struct DesiredSell(decimal Quantity, decimal Price)
     {
         public static readonly DesiredSell None = new(0m, 0m);
     }

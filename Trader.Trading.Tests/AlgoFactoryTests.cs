@@ -3,8 +3,6 @@ using Moq;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands;
-using System.Threading;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
@@ -34,7 +32,7 @@ namespace Outcompute.Trader.Trading.Tests
                 .AddTradingServices()
                 .BuildServiceProvider();
 
-            var factory = new AlgoFactory<MyAlgo>(contexts, provider);
+            var factory = new AlgoFactory<MyAlgo>(provider, contexts);
 
             // act
             var algo = factory.Create("Algo1");

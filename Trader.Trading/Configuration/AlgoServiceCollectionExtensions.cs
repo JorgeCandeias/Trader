@@ -14,7 +14,7 @@ public static class AlgoServiceCollectionExtensions
     {
         services
             .AddAlgoTypeEntry<TAlgo>(type)
-            .AddSingletonNamedService<IAlgoFactory, AlgoFactory<TAlgo>>(type);
+            .AddTransientNamedService<IAlgoFactory, AlgoFactory<TAlgo>>(type);
     }
 
     private static void AddAlgoCore(IServiceCollection services, string name, string type)

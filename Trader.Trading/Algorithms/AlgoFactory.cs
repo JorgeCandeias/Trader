@@ -6,23 +6,23 @@ namespace Outcompute.Trader.Trading.Algorithms;
 internal class AlgoFactory<TAlgo> : IAlgoFactory
     where TAlgo : IAlgo
 {
-    private readonly IAlgoContextFactory _factory;
     private readonly IServiceProvider _provider;
+    private readonly IAlgoContextFactory _contexts;
 
-    public AlgoFactory(IAlgoContextFactory factory, IServiceProvider provider)
+    public AlgoFactory(IServiceProvider provider, IAlgoContextFactory contexts)
     {
-        _factory = factory;
         _provider = provider;
+        _contexts = contexts;
     }
 
     public IAlgo Create(string name)
     {
         if (name is null) throw new ArgumentNullException(nameof(name));
 
-        // create a new context
-        var context = _factory.Create(name);
+        // create the scoped context
+        var context = _contexts.Create(name);
 
-        // set it as current in case the algo wants to require it
+        // set it as current in case the base algo requires it
         AlgoContext.Current = context;
 
         // resolve the algo instance now

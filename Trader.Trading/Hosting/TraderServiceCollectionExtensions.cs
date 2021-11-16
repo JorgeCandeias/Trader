@@ -101,9 +101,13 @@ public static class TraderServiceCollectionExtensions
             .AddOptions<SwapPoolOptions>().ValidateDataAnnotations().Services
             .ConfigureOptions<SwapPoolOptionsConfigurator>()
 
-            // algo context factory
-            .AddTransient(_ => AlgoContext.Current)
-            .AddSingleton<IAlgoContextFactory, AlgoContextFactory>()
+            // algo factory resolver
+            .AddScoped<IAlgoFactoryResolver, AlgoFactoryResolver>()
+
+            // algo scope context
+            .AddScoped(sp => sp.GetRequiredService<IAlgoContextLocal>().Context)
+            .AddScoped<IAlgoContextLocal, AlgoContextLocal>()
+            .AddScoped<IAlgoContextFactory, AlgoContextFactory>()
 
             // algo context configurators in order
             .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextTickTimeConfigurator>()

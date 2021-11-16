@@ -1,4 +1,6 @@
-﻿namespace Outcompute.Trader.Trading.Algorithms.Context;
+﻿using Microsoft.Extensions.DependencyInjection;
+
+namespace Outcompute.Trader.Trading.Algorithms.Context;
 
 internal class AlgoContextFactory : IAlgoContextFactory
 {
@@ -11,6 +13,10 @@ internal class AlgoContextFactory : IAlgoContextFactory
 
     public IAlgoContext Create(string name)
     {
-        return new AlgoContext(name, _provider);
+        var context = new AlgoContext(name, _provider);
+
+        _provider.GetRequiredService<IAlgoContextLocal>().Context = context;
+
+        return context;
     }
 }

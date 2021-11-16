@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
@@ -13,7 +14,7 @@ internal sealed class AlgoHostGrain : Grain, IAlgoHostGrainInternal, IDisposable
     private readonly ILogger _logger;
     private readonly IOptionsMonitor<AlgoOptions> _options;
     private readonly IReadynessProvider _readyness;
-    private readonly IServiceProvider _provider;
+    private readonly IServiceScope _scope;
     private readonly IHostApplicationLifetime _lifetime;
     private readonly IAlgoStatisticsPublisher _publisher;
     private readonly IAlgoFactoryResolver _resolver;
@@ -24,11 +25,12 @@ internal sealed class AlgoHostGrain : Grain, IAlgoHostGrainInternal, IDisposable
         _logger = logger;
         _options = options;
         _readyness = readyness;
-        _provider = provider;
         _lifetime = lifetime;
         _publisher = publisher;
         _resolver = resolver;
         _clock = clock;
+
+        _scope = provider.CreateScope();
     }
 
     private readonly CancellationTokenSource _cancellation = new();

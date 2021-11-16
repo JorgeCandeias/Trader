@@ -1,9 +1,6 @@
 ﻿using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
-using static System.String;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -12,7 +9,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <summary>
         /// Adds shared business-to-business model type converter services for the specialized collections.
         /// </summary>
-        public static IServiceCollection AddModelAutoMapperProfiles(this IServiceCollection services)
+        public static IServiceCollection AddModelServices(this IServiceCollection services)
         {
             return services
                 .AddSingleton(typeof(ImmutableSortedOrderSetConverter<>))

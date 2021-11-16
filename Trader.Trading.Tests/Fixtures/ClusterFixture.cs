@@ -81,7 +81,7 @@ namespace Outcompute.Trader.Trading.Tests.Fixtures
                 .ConfigureServices(services =>
                 {
                     services
-                        .AddModelAutoMapperProfiles()
+                        .AddModelServices()
                         .AddTradingServices();
                 });
         }

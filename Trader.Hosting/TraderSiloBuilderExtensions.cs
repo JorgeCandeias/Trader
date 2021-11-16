@@ -11,7 +11,7 @@ public static class TraderSiloBuilderExtensions
             .ConfigureServices((context, services) =>
             {
                 services
-                    .AddModelAutoMapperProfiles()
+                    .AddModelServices()
                     .AddTraderCoreServices();
             });
     }

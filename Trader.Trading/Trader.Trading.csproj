@@ -48,7 +48,7 @@
 		<PackageReference Include="Microsoft.Orleans.OrleansRuntime" Version="3.5.1" />
 		<PackageReference Include="OrleansDashboard.Core" Version="3.6.1" />
 		<PackageReference Include="Polly" Version="7.2.2" />
-		<PackageReference Include="SonarAnalyzer.CSharp" Version="8.31.0.39249">
+		<PackageReference Include="SonarAnalyzer.CSharp" Version="8.32.0.39516">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>

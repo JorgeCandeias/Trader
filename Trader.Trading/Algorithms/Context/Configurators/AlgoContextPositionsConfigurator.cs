@@ -20,7 +20,7 @@ internal class AlgoContextPositionsConfigurator : IAlgoContextConfigurator<AlgoC
         // populate from the default symbol
         if (!IsNullOrEmpty(context.Symbol.Name))
         {
-            context.PositionDetails = await _resolver
+            context.PositionDetailsLookup[context.Symbol.Name] = await _resolver
                 .ResolveAsync(context.Symbol, options.StartTime, cancellationToken)
                 .ConfigureAwait(false);
         }
@@ -32,14 +32,12 @@ internal class AlgoContextPositionsConfigurator : IAlgoContextConfigurator<AlgoC
             {
                 if (symbol.Key == context.Symbol.Name)
                 {
-                    context.PositionDetailsLookup[symbol.Key] = context.PositionDetails;
+                    continue;
                 }
-                else
-                {
-                    context.PositionDetailsLookup[symbol.Key] = await _resolver
-                        .ResolveAsync(symbol.Value, options.StartTime, cancellationToken)
-                        .ConfigureAwait(false);
-                }
+
+                context.PositionDetailsLookup[symbol.Key] = await _resolver
+                    .ResolveAsync(symbol.Value, options.StartTime, cancellationToken)
+                    .ConfigureAwait(false);
             }
         }
     }

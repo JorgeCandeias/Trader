@@ -34,7 +34,7 @@ internal class AlgoContext : IAlgoContext
 
     public ExchangeInfo ExchangeInfo { get; set; } = ExchangeInfo.Empty;
 
-    public PositionDetails PositionDetails { get; set; } = PositionDetails.Empty;
+    public PositionDetails PositionDetails => PositionDetailsLookup[Symbol.Name];
 
     public IDictionary<string, PositionDetails> PositionDetailsLookup { get; } = new Dictionary<string, PositionDetails>();
 

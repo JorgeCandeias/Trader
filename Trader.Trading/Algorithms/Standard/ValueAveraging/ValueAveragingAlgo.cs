@@ -58,7 +58,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
             {
                 return Sequence(
                     CancelOpenOrders(Context.Symbol, OrderSide.Buy),
-                    AveragingSell(Context.Symbol, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool, _options.TopUpUnsellablePositionWithBalance));
+                    AveragingSell(Context.Symbol, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool));
             }
 
             // decide on a stop loss

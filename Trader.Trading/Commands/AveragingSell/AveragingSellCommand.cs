@@ -6,14 +6,13 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
 {
     public class AveragingSellCommand : IAlgoCommand
     {
-        public AveragingSellCommand(Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings = false, bool redeemSwapPool = false, bool topUpUnsellablePositionWithBalance = false)
+        public AveragingSellCommand(Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings = false, bool redeemSwapPool = false)
         {
             Symbol = symbol ?? throw new ArgumentNullException(nameof(symbol));
             Orders = orders ?? throw new ArgumentNullException(nameof(orders));
             ProfitMultiplier = profitMultiplier;
             RedeemSavings = redeemSavings;
             RedeemSwapPool = redeemSwapPool;
-            TopUpUnsellablePositionWithBalance = topUpUnsellablePositionWithBalance;
 
             if (orders.Count == 0)
             {
@@ -45,7 +44,6 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
         public decimal ProfitMultiplier { get; }
         public bool RedeemSavings { get; }
         public bool RedeemSwapPool { get; }
-        public bool TopUpUnsellablePositionWithBalance { get; }
 
         public ValueTask ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
         {

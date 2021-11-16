@@ -64,9 +64,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         public bool RedeemSwapPool { get; set; } = false;
 
         [Required]
-        public bool TopUpUnsellablePositionWithBalance { get; set; } = false;
-
-        [Required]
         public int SmaPeriodsA { get; set; } = 7;
 
         [Required]

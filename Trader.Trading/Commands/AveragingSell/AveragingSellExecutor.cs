@@ -67,30 +67,9 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
             // break if the quantity falls below the minimum lot size
             if (quantity < symbol.Filters.LotSize.MinQuantity)
             {
-                // see if we are allowed to top up the sell with leftovers
-                if (command.TopUpUnsellablePositionWithBalance)
-                {
-                    // see if we can top up at all
-                    var required = symbol.Filters.LotSize.MinQuantity - quantity;
-                    var allowed = Math.Max(free - quantity, 0);
-                    if (required <= allowed)
-                    {
-                        LogToppedUp(TypeName, symbol.Name, quantity, symbol.BaseAsset, required, symbol.Filters.LotSize.MinQuantity);
+                LogCannotSetSellOrderLotSize(TypeName, symbol.Name, quantity, symbol.BaseAsset, symbol.Filters.LotSize.MinQuantity);
 
-                        quantity += required;
-                        free -= required;
-                    }
-                    else
-                    {
-                        LogCouldNotTopUpToMinLotSize(TypeName, symbol.Name, quantity, symbol.BaseAsset, required, symbol.Filters.LotSize.MinQuantity, allowed);
-                        return DesiredSell.None;
-                    }
-                }
-                else
-                {
-                    LogCannotSetSellOrderLotSize(TypeName, symbol.Name, quantity, symbol.BaseAsset, symbol.Filters.LotSize.MinQuantity);
-                    return DesiredSell.None;
-                }
+                return DesiredSell.None;
             }
 
             // bump the price by the profit multipler so we have a minimum sell price
@@ -105,26 +84,9 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
             // check if the sell is under the minimum notional filter
             if (quantity * price < symbol.Filters.MinNotional.MinNotional)
             {
-                // see if we can adjust the quantity
-                if (command.TopUpUnsellablePositionWithBalance)
-                {
-                    var required = ((symbol.Filters.MinNotional.MinNotional / price) - quantity).AdjustQuantityUpToLotStepSize(context.Symbol);
-                    var allowed = Math.Max(free - quantity, 0);
-                    if (required <= allowed)
-                    {
-                        quantity += required;
-                    }
-                    else
-                    {
-                        LogCouldNotTopUpToMinNotional(TypeName, symbol.Name, quantity, symbol.BaseAsset, required, symbol.Filters.MinNotional.MinNotional, symbol.QuoteAsset, allowed);
-                        return DesiredSell.None;
-                    }
-                }
-                else
-                {
-                    LogCannotSetSellOrderNotional(TypeName, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.Filters.MinNotional.MinNotional);
-                    return DesiredSell.None;
-                }
+                LogCannotSetSellOrderNotional(TypeName, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.Filters.MinNotional.MinNotional);
+
+                return DesiredSell.None;
             }
 
             // check if the sell is above the maximum percent filter

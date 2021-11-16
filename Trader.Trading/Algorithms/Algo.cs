@@ -74,9 +74,9 @@ namespace Outcompute.Trader.Trading.Algorithms
 
         #region Command Helpers
 
-        public virtual IAlgoCommand AveragingSell(Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings = false, bool redeemSwapPool = false, bool topUpUnsellablePositionWithBalance = false)
+        public virtual IAlgoCommand AveragingSell(Symbol symbol, IReadOnlyCollection<OrderQueryResult> orders, decimal profitMultiplier, bool redeemSavings = false, bool redeemSwapPool = false)
         {
-            return new AveragingSellCommand(symbol, orders, profitMultiplier, redeemSavings, redeemSwapPool, topUpUnsellablePositionWithBalance);
+            return new AveragingSellCommand(symbol, orders, profitMultiplier, redeemSavings, redeemSwapPool);
         }
 
         public virtual IAlgoCommand CreateOrder(Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag)

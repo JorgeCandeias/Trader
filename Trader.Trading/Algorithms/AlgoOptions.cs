@@ -17,6 +17,11 @@ public class AlgoOptions
     public string Symbol { get; set; } = Empty;
 
     /// <summary>
+    /// A set of symbols for use by this algo.
+    /// </summary>
+    public ISet<string> Symbols { get; } = new HashSet<string>();
+
+    /// <summary>
     /// The default kline interval for this algo.
     /// </summary>
     public KlineInterval KlineInterval { get; set; } = KlineInterval.None;

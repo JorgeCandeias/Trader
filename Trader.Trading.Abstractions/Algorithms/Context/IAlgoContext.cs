@@ -21,9 +21,14 @@ public interface IAlgoContext
     IServiceProvider ServiceProvider { get; }
 
     /// <summary>
-    /// Provides full symbol information For algos that derive from <see cref="ISymbolAlgo"/>.
+    /// Provides full symbol information for the default symbol declared by the algo.
     /// </summary>
     Symbol Symbol { get; }
+
+    /// <summary>
+    /// Provides full symbol information for the symbol list declared by the algo.
+    /// </summary>
+    IDictionary<string, Symbol> Symbols { get; }
 
     /// <summary>
     /// The default kline interval for the algo.

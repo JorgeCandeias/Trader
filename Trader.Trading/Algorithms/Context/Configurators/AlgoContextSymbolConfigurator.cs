@@ -18,13 +18,20 @@ internal class AlgoContextSymbolConfigurator : IAlgoContextConfigurator<AlgoCont
     {
         var options = _monitor.Get(name);
 
+        // populate the default symbol
         if (IsNullOrEmpty(options.Symbol))
         {
-            return;
+            context.Symbol = await _exchange
+                .GetRequiredSymbolAsync(options.Symbol, cancellationToken)
+                .ConfigureAwait(false);
         }
 
-        context.Symbol = await _exchange
-            .GetRequiredSymbolAsync(options.Symbol, cancellationToken)
-            .ConfigureAwait(false);
+        // populate the symbol set
+        foreach (var symbol in options.Symbols)
+        {
+            context.Symbols[symbol] = await _exchange
+                .GetRequiredSymbolAsync(symbol, cancellationToken)
+                .ConfigureAwait(false);
+        }
     }
 }

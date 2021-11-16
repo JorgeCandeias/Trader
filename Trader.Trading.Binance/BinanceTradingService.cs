@@ -12,7 +12,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace Outcompute.Trader.Trading.Binance
 {
     [ExcludeFromCodeCoverage(Justification = "Requires Integration Testing")]
-    internal class BinanceTradingService : ITradingService, IHostedService
+    internal partial class BinanceTradingService : ITradingService, IHostedService
     {
         private readonly BinanceOptions _options;
         private readonly ILogger _logger;

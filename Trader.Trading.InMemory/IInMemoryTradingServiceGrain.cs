@@ -1,57 +1,54 @@
 ﻿using Orleans;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.InMemory
+namespace Outcompute.Trader.Trading.InMemory;
+
+internal interface IInMemoryTradingServiceGrain : IGrainWithGuidKey
 {
-    internal interface IInMemoryTradingServiceGrain : IGrainWithGuidKey
-    {
-        #region Orders
+    #region Orders
 
-        Task<CancelStandardOrderResult> CancelOrderAsync(string symbol, long orderId);
+    Task<CancelStandardOrderResult> CancelOrderAsync(string symbol, long orderId);
 
-        Task<OrderResult> CreateOrderAsync(string symbol, OrderSide side, OrderType type, TimeInForce? timeInForce, decimal? quantity, decimal? quoteOrderQuantity, decimal? price, string? newClientOrderId, decimal? stopPrice, decimal? icebergQuantity);
+    Task<OrderResult> CreateOrderAsync(string symbol, OrderSide side, OrderType type, TimeInForce? timeInForce, decimal? quantity, decimal? quoteOrderQuantity, decimal? price, string? newClientOrderId, decimal? stopPrice, decimal? icebergQuantity);
 
-        Task<IReadOnlyCollection<OrderQueryResult>> GetAllOrdersAsync(string symbol, long? orderId, int? limit);
+    Task<IReadOnlyCollection<OrderQueryResult>> GetAllOrdersAsync(string symbol, long? orderId, int? limit);
 
-        Task<IReadOnlyCollection<OrderQueryResult>> GetOpenOrdersAsync(string symbol);
+    Task<IReadOnlyCollection<OrderQueryResult>> GetOpenOrdersAsync(string symbol);
 
-        Task<OrderQueryResult> GetOrderAsync(string symbol, long? orderId, string? originalClientOrderId);
+    Task<OrderQueryResult> GetOrderAsync(string symbol, long? orderId, string? originalClientOrderId);
 
-        #endregion Orders
+    #endregion Orders
 
-        #region Exchange
+    #region Exchange
 
-        Task<ExchangeInfo> GetExchangeInfoAsync();
+    Task<ExchangeInfo> GetExchangeInfoAsync();
 
-        Task SetExchangeInfoAsync(ExchangeInfo info);
+    Task SetExchangeInfoAsync(ExchangeInfo info);
 
-        #endregion Exchange
+    #endregion Exchange
 
-        Task<IReadOnlyCollection<SavingsPosition>> GetFlexibleProductPositionsAsync(string asset);
+    Task<IReadOnlyCollection<SavingsPosition>> GetFlexibleProductPositionsAsync(string asset);
 
-        Task SetFlexibleProductPositionsAsync(IEnumerable<SavingsPosition> items);
+    Task SetFlexibleProductPositionsAsync(IEnumerable<SavingsPosition> items);
 
-        Task<SavingsQuota?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(
-            string productId,
-            SavingsRedemptionType type);
+    Task<SavingsQuota?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(
+        string productId,
+        SavingsRedemptionType type);
 
-        Task SetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string productId, SavingsRedemptionType type, SavingsQuota item);
+    Task SetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string productId, SavingsRedemptionType type, SavingsQuota item);
 
-        Task Set24hTickerPriceChangeStatisticsAsync(Ticker ticker);
+    Task Set24hTickerPriceChangeStatisticsAsync(Ticker ticker);
 
-        Task<Ticker> Get24hTickerPriceChangeStatisticsAsync(string symbol);
+    Task<Ticker> Get24hTickerPriceChangeStatisticsAsync(string symbol);
 
-        Task<IReadOnlyCollection<Ticker>> Get24hTickerPriceChangeStatisticsAsync();
+    Task<IReadOnlyCollection<Ticker>> Get24hTickerPriceChangeStatisticsAsync();
 
-        Task<AccountInfo> GetAccountInfoAsync();
+    Task<AccountInfo> GetAccountInfoAsync();
 
-        Task SetAccountInfoAsync(AccountInfo info);
+    Task SetAccountInfoAsync(AccountInfo info);
 
-        Task SetAccountTradeAsync(AccountTrade trade);
+    Task SetAccountTradeAsync(AccountTrade trade);
 
-        Task<ImmutableSortedTradeSet> GetAccountTradesAsync(string symbol, long? fromId, int? limit);
-    }
+    Task<ImmutableSortedTradeSet> GetAccountTradesAsync(string symbol, long? fromId, int? limit);
 }

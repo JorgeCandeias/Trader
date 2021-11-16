@@ -1,69 +1,65 @@
 ﻿using Outcompute.Trader.Models;
-using System;
-using System.Threading;
 using System.Threading.Channels;
-using System.Threading.Tasks;
 
-namespace Outcompute.Trader.Trading.InMemory.MarketData
+namespace Outcompute.Trader.Trading.InMemory.MarketData;
+
+public sealed class InMemoryMarketDataStreamClient : IMarketDataStreamClient
 {
-    public sealed class InMemoryMarketDataStreamClient : IMarketDataStreamClient
+    private readonly IDisposable _registration;
+
+    public InMemoryMarketDataStreamClient(IInMemoryMarketDataStreamSender sender)
     {
-        private readonly IDisposable _registration;
+        if (sender is null) throw new ArgumentNullException(nameof(sender));
 
-        public InMemoryMarketDataStreamClient(IInMemoryMarketDataStreamSender sender)
-        {
-            if (sender is null) throw new ArgumentNullException(nameof(sender));
+        _registration = sender.Register((message, ct) => _channel.Writer.WriteAsync(message, ct).AsTask());
+    }
 
-            _registration = sender.Register((message, ct) => _channel.Writer.WriteAsync(message, ct).AsTask());
-        }
+    private readonly Channel<MarketDataStreamMessage> _channel = Channel.CreateUnbounded<MarketDataStreamMessage>();
 
-        private readonly Channel<MarketDataStreamMessage> _channel = Channel.CreateUnbounded<MarketDataStreamMessage>();
+    private CancellationTokenSource? _cancellation;
 
-        private CancellationTokenSource? _cancellation;
+    public Task CloseAsync(CancellationToken cancellationToken = default)
+    {
+        Interlocked.Exchange(ref _cancellation, null)?.Dispose();
 
-        public Task CloseAsync(CancellationToken cancellationToken = default)
-        {
-            Interlocked.Exchange(ref _cancellation, null)?.Dispose();
+        return Task.CompletedTask;
+    }
 
-            return Task.CompletedTask;
-        }
+    public Task ConnectAsync(CancellationToken cancellationToken = default)
+    {
+        Interlocked.Exchange(ref _cancellation, new())?.Dispose();
 
-        public Task ConnectAsync(CancellationToken cancellationToken = default)
-        {
-            Interlocked.Exchange(ref _cancellation, new())?.Dispose();
+        return Task.CompletedTask;
+    }
 
-            return Task.CompletedTask;
-        }
+    public async Task<MarketDataStreamMessage> ReceiveAsync(CancellationToken cancellationToken = default)
+    {
+        if (_cancellation is null) throw new InvalidOperationException();
 
-        public async Task<MarketDataStreamMessage> ReceiveAsync(CancellationToken cancellationToken = default)
-        {
-            if (_cancellation is null) throw new InvalidOperationException();
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(_cancellation.Token, cancellationToken);
 
-            using var linked = CancellationTokenSource.CreateLinkedTokenSource(_cancellation.Token, cancellationToken);
+        return await _channel.Reader.ReadAsync(linked.Token).ConfigureAwait(false);
+    }
 
-            return await _channel.Reader.ReadAsync(linked.Token).ConfigureAwait(false);
-        }
+    private bool _disposed;
 
-        private bool _disposed;
+    private void DisposeCore()
+    {
+        if (_disposed) return;
 
-        private void DisposeCore()
-        {
-            if (_disposed) return;
+        _registration.Dispose();
 
-            _registration.Dispose();
+        _disposed = true;
+    }
 
-            _disposed = true;
-        }
+    public void Dispose()
+    {
+        DisposeCore();
+        GC.SuppressFinalize(this);
+    }
 
-        public void Dispose()
-        {
-            DisposeCore();
-            GC.SuppressFinalize(this);
-        }
-
-        ~InMemoryMarketDataStreamClient()
-        {
-            DisposeCore();
-        }
+    ~InMemoryMarketDataStreamClient()
+    {
+        DisposeCore();
     }
 }

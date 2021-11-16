@@ -4,25 +4,24 @@ using Outcompute.Trader.Trading.InMemory;
 using Outcompute.Trader.Trading.InMemory.MarketData;
 using Outcompute.Trader.Trading.InMemory.UserData;
 
-namespace Orleans.Hosting
+namespace Orleans.Hosting;
+
+public static class InMemoryTradingServiceSiloBuilderExtensions
 {
-    public static class InMemoryTradingServiceSiloBuilderExtensions
+    public static ISiloBuilder AddInMemoryTradingService(this ISiloBuilder builder)
     {
-        public static ISiloBuilder AddInMemoryTradingService(this ISiloBuilder builder)
-        {
-            return builder
-                .ConfigureServices(services =>
-                {
-                    services
-                        .AddSingleton<InMemoryTradingService>()
-                        .AddSingleton<IInMemoryTradingService>(sp => sp.GetRequiredService<InMemoryTradingService>())
-                        .AddSingleton<ITradingService>(sp => sp.GetRequiredService<InMemoryTradingService>())
-                        .AddSingleton<IMarketDataStreamClientFactory, InMemoryMarketDataStreamClientFactory>()
-                        .AddSingleton<IInMemoryMarketDataStreamSender, InMemoryMarketDataStreamSender>()
-                        .AddSingleton<IUserDataStreamClientFactory, InMemoryUserDataStreamClientFactory>()
-                        .AddSingleton<IInMemoryUserDataStreamSender, InMemoryUserDataStreamSender>();
-                })
-                .ConfigureApplicationParts(manager => manager.AddApplicationPart(typeof(InMemoryTradingServiceSiloBuilderExtensions).Assembly).WithReferences());
-        }
+        return builder
+            .ConfigureServices(services =>
+            {
+                services
+                    .AddSingleton<InMemoryTradingService>()
+                    .AddSingleton<IInMemoryTradingService>(sp => sp.GetRequiredService<InMemoryTradingService>())
+                    .AddSingleton<ITradingService>(sp => sp.GetRequiredService<InMemoryTradingService>())
+                    .AddSingleton<IMarketDataStreamClientFactory, InMemoryMarketDataStreamClientFactory>()
+                    .AddSingleton<IInMemoryMarketDataStreamSender, InMemoryMarketDataStreamSender>()
+                    .AddSingleton<IUserDataStreamClientFactory, InMemoryUserDataStreamClientFactory>()
+                    .AddSingleton<IInMemoryUserDataStreamSender, InMemoryUserDataStreamSender>();
+            })
+            .ConfigureApplicationParts(manager => manager.AddApplicationPart(typeof(InMemoryTradingServiceSiloBuilderExtensions).Assembly).WithReferences());
     }
 }

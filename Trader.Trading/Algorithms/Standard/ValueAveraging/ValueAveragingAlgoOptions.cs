@@ -87,8 +87,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         [Required]
         public TimeSpan CooldownPeriod { get; set; } = TimeSpan.FromDays(1);
 
-        [Required]
-        public int MaxSequentialBuys { get; set; } = 5;
+        public int? MaxPositions { get; set; }
 
         public static ValueAveragingAlgoOptions Default { get; } = new ValueAveragingAlgoOptions();
     }

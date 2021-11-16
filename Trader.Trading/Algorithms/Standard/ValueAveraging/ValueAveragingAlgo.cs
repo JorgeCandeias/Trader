@@ -123,15 +123,14 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
 
         private bool IsSequentialBuyAllowed()
         {
-            // get the count of buys in the last x orders
-            var buys = Context.Orders
-                .Where(x => x.ExecutedQuantity > 0)
-                .TakeLast(_options.MaxSequentialBuys)
-                .Count(x => x.Side == OrderSide.Buy);
-
-            if (buys >= _options.MaxSequentialBuys)
+            if (!_options.MaxPositions.HasValue)
             {
-                LogReachedMaxSequentialBuys(TypeName, Context.Name, _options.MaxSequentialBuys);
+                return true;
+            }
+
+            if (Context.PositionDetails.Orders.Count >= _options.MaxPositions)
+            {
+                LogReachedMaxSequentialBuys(TypeName, Context.Name, _options.MaxPositions.Value);
                 return false;
             }
 
@@ -363,7 +362,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging
         [LoggerMessage(0, LogLevel.Information, "{Type} {Name} signalling sell for current state (Ticker = {Ticker:F8}, SMA({SmaPeriodsA}) = {SMAA:F8}, SMA({SmaPeriodsB}) = {SMAB:F8}, SMA({SmaPeriodsC}) = {SMAC:F8}, RSI({RsiPeriods}) = {RSI:F8})")]
         private partial void LogSignallingSell(string type, string name, decimal ticker, int smaPeriodsA, decimal smaA, int smaPeriodsB, decimal smaB, int smaPeriodsC, decimal smaC, int rsiPeriods, decimal rsi);
 
-        [LoggerMessage(0, LogLevel.Warning, "{Type} {Name} has reached the maximum number of sequential buys of {Count}")]
+        [LoggerMessage(0, LogLevel.Warning, "{Type} {Name} has reached the maximum number of positions {Count}")]
         private partial void LogReachedMaxSequentialBuys(string type, string name, int count);
 
         #endregion Logging

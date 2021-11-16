@@ -120,7 +120,7 @@ namespace Outcompute.Trader.Trading.Algorithms
         [LoggerMessage(0, LogLevel.Error, "{TypeName} failed to ping target algo grain with identity {Identity}")]
         private partial void LogFailedToPingTargetAlgo(Exception ex, string typeName, IGrainIdentity identity);
 
-        [LoggerMessage(0, LogLevel.Error, "{TypeName} failed to tick target algo grain with identity {Identity}")]
+        [LoggerMessage(1, LogLevel.Error, "{TypeName} failed to tick target algo grain with identity {Identity}")]
         private partial void LogFailedToTickTargetAlgo(Exception ex, string typeName, IGrainIdentity identity);
 
         #endregion Logging

@@ -2,9 +2,6 @@
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Providers;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Algorithms.Standard.Arbitrage
 {
@@ -114,10 +111,10 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Arbitrage
         [LoggerMessage(0, LogLevel.Information, "{TypeName} could not find symbol for {Name1} nor {Name2}")]
         private partial void LogCouldNotFindSymbol(string typeName, string name1, string name2);
 
-        [LoggerMessage(0, LogLevel.Information, "{TypeName} found arbitrage opportunity for symbol {Symbol} by buying spot at {Buy:F8} and swapping at {Sell:F8} for a profit of {Profit:P2}")]
+        [LoggerMessage(1, LogLevel.Information, "{TypeName} found arbitrage opportunity for symbol {Symbol} by buying spot at {Buy:F8} and swapping at {Sell:F8} for a profit of {Profit:P2}")]
         private partial void LogFoundArbitrageOpportunityBuyingSpot(string typeName, string symbol, decimal buy, decimal sell, decimal profit);
 
-        [LoggerMessage(0, LogLevel.Information, "{TypeName} found arbitrage opportunity for symbol {Symbol} by swapping at {Buy:F8} and selling spot at {Sell:F8} for a profit of {Profit:P2}")]
+        [LoggerMessage(2, LogLevel.Information, "{TypeName} found arbitrage opportunity for symbol {Symbol} by swapping at {Buy:F8} and selling spot at {Sell:F8} for a profit of {Profit:P2}")]
         private partial void LogFoundArbitrageOpportunitySwapping(string typeName, string symbol, decimal buy, decimal sell, decimal profit);
 
         #endregion Logging

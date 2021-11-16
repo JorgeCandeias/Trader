@@ -119,25 +119,25 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell
         [LoggerMessage(0, LogLevel.Warning, "{Type} {Name} cannot evaluate sell order of {Quantity:F8} {Asset} because the free quantity is only {Free:F8} {Asset}")]
         private partial void LogCannotEvaluateDesiredSell(string type, string name, decimal quantity, string asset, decimal free);
 
-        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot set sell order for {Quantity:F8} {Asset} because the quantity is under the minimum lot size of {MinLotSize:F8} {Asset}")]
+        [LoggerMessage(1, LogLevel.Error, "{Type} {Name} cannot set sell order for {Quantity:F8} {Asset} because the quantity is under the minimum lot size of {MinLotSize:F8} {Asset}")]
         private partial void LogCannotSetSellOrderLotSize(string type, string name, decimal quantity, string asset, decimal minLotSize);
 
-        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot set sell order for {Quantity:F8} {Asset} at {Price:F8} {Quote} totalling {Total:F8} {Quote} because it is under the minimum notional of {MinNotional:F8} {Quote}")]
+        [LoggerMessage(2, LogLevel.Error, "{Type} {Name} cannot set sell order for {Quantity:F8} {Asset} at {Price:F8} {Quote} totalling {Total:F8} {Quote} because it is under the minimum notional of {MinNotional:F8} {Quote}")]
         private partial void LogCannotSetSellOrderNotional(string type, string name, decimal quantity, string asset, decimal price, string quote, decimal total, decimal minNotional);
 
-        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} cannot set sell order for {Quantity:F8} {Asset} at {Price:F8} {Quote} totalling {Total:F8} {Quote} because it is under the maximum percent filter price of {MaxPrice:F8} {Quote}")]
+        [LoggerMessage(3, LogLevel.Error, "{Type} {Name} cannot set sell order for {Quantity:F8} {Asset} at {Price:F8} {Quote} totalling {Total:F8} {Quote} because it is under the maximum percent filter price of {MaxPrice:F8} {Quote}")]
         private partial void LogCannotSetSellOrderMaximumPercentFilter(string type, string name, decimal quantity, string asset, decimal price, string quote, decimal total, decimal maxPrice);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} holding off sell order of {Quantity:F8} {Asset} until price hits {Price:F8} {Quote} ({Percent:P2} of current value of {Ticker:F8} {Quote})")]
+        [LoggerMessage(4, LogLevel.Information, "{Type} {Name} holding off sell order of {Quantity:F8} {Asset} until price hits {Price:F8} {Quote} ({Percent:P2} of current value of {Ticker:F8} {Quote})")]
         private partial void LogHoldingOffSellOrder(string type, string name, decimal quantity, string asset, decimal price, string quote, decimal percent, decimal ticker);
 
-        [LoggerMessage(0, LogLevel.Information, "{Type} {Name} topped up quantity of {Quantity:F8} {Asset} with {Required:F8} {Asset} so it meets the minimum lot size of {MinLotSize:F8} {Asset}")]
+        [LoggerMessage(5, LogLevel.Information, "{Type} {Name} topped up quantity of {Quantity:F8} {Asset} with {Required:F8} {Asset} so it meets the minimum lot size of {MinLotSize:F8} {Asset}")]
         private partial void LogToppedUp(string type, string name, decimal quantity, string asset, decimal required, decimal minLotSize);
 
-        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} could not top up quantity of {Quantity:F8} {Asset} with {Required:F8} {Asset} to meet the minimum lot size of {MinLotSize:F8} {Asset} because the extra free quantity is only {Allowed:F8} {Asset}")]
+        [LoggerMessage(6, LogLevel.Error, "{Type} {Name} could not top up quantity of {Quantity:F8} {Asset} with {Required:F8} {Asset} to meet the minimum lot size of {MinLotSize:F8} {Asset} because the extra free quantity is only {Allowed:F8} {Asset}")]
         private partial void LogCouldNotTopUpToMinLotSize(string type, string name, decimal quantity, string asset, decimal required, decimal minLotSize, decimal allowed);
 
-        [LoggerMessage(0, LogLevel.Error, "{Type} {Name} could not top up quantity of {Quantity:F8} {Asset} with {Required:F8} {Asset} to meet the minimum notional of {MinNotional:F8} {Quote} because the extra free quantity is only {Allowed:F8} {Asset}")]
+        [LoggerMessage(7, LogLevel.Error, "{Type} {Name} could not top up quantity of {Quantity:F8} {Asset} with {Required:F8} {Asset} to meet the minimum notional of {MinNotional:F8} {Quote} because the extra free quantity is only {Allowed:F8} {Asset}")]
         private partial void LogCouldNotTopUpToMinNotional(string type, string name, decimal quantity, string asset, decimal required, decimal minNotional, string quote, decimal allowed);
 
         #endregion Logging

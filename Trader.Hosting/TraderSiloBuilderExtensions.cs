@@ -15,7 +15,7 @@ public static class TraderSiloBuilderExtensions
                     .AddSafeTimerFactory()
                     .AddBase62NumberSerializer()
                     .AddModelAutoMapperProfiles()
-                    .AddRandomGenerator();
+                    .AddTraderCoreServices();
             });
     }
 }

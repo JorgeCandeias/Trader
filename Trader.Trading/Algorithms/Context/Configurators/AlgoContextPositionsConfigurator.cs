@@ -28,16 +28,16 @@ internal class AlgoContextPositionsConfigurator : IAlgoContextConfigurator<AlgoC
         // populate from the symbol list
         if (context.Symbols.Count > 0)
         {
-            foreach (var symbol in context.Symbols.Keys)
+            foreach (var symbol in context.Symbols)
             {
-                if (symbol == context.Symbol.Name)
+                if (symbol.Key == context.Symbol.Name)
                 {
-                    context.PositionDetailsLookup[symbol] = context.PositionDetails;
+                    context.PositionDetailsLookup[symbol.Key] = context.PositionDetails;
                 }
                 else
                 {
-                    context.PositionDetailsLookup[symbol] = await _resolver
-                        .ResolveAsync(context.Symbol, options.StartTime, cancellationToken)
+                    context.PositionDetailsLookup[symbol.Key] = await _resolver
+                        .ResolveAsync(symbol.Value, options.StartTime, cancellationToken)
                         .ConfigureAwait(false);
                 }
             }

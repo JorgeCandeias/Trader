@@ -75,16 +75,15 @@ public interface IAlgoContext
     Balance QuoteAssetSpotBalance { get; }
 
     /// <summary>
-    /// The current savings balance for the base asset of the default symbol.
+    /// The current savings balances for the assets of the default symbol.
     /// This is only populated if the default symbol is defined.
     /// </summary>
-    SavingsPosition BaseAssetSavingsBalance { get; }
+    SymbolSavingsPositions Savings { get; }
 
     /// <summary>
-    /// The current savings balance for the quote asset of the default symbol.
-    /// This is only populated if the default symbol is defined.
+    /// Gets all savings positions for all configured symbols.
     /// </summary>
-    SavingsPosition QuoteAssetSavingsBalance { get; }
+    IDictionary<string, SymbolSavingsPositions> SavingsLookup { get; }
 
     /// <summary>
     /// The current swap pool balances for the base asset of the default symbol.
@@ -129,4 +128,9 @@ public interface IAlgoContext
     /// Makes the context self-update to the latest data.
     /// </summary>
     ValueTask UpdateAsync(CancellationToken cancellationToken = default);
+}
+
+public record SymbolSavingsPositions(string Symbol, SavingsPosition BaseAsset, SavingsPosition QuoteAsset)
+{
+    public static SymbolSavingsPositions Empty { get; } = new SymbolSavingsPositions(string.Empty, SavingsPosition.Empty, SavingsPosition.Empty);
 }

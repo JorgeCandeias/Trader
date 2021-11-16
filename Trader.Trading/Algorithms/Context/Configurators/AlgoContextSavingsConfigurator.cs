@@ -1,4 +1,5 @@
-﻿using Outcompute.Trader.Trading.Providers;
+﻿using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Providers;
 
 namespace Outcompute.Trader.Trading.Algorithms.Context.Configurators;
 
@@ -13,18 +14,36 @@ internal class AlgoContextSavingsConfigurator : IAlgoContextConfigurator<AlgoCon
 
     public async ValueTask ConfigureAsync(AlgoContext context, string name, CancellationToken cancellationToken = default)
     {
-        if (!IsNullOrEmpty(context.Symbol.BaseAsset))
+        // populate from the default symbol
+        if (!IsNullOrEmpty(context.Symbol.Name))
         {
-            context.BaseAssetSavingsBalance = await _savings
-                .GetPositionOrZeroAsync(context.Symbol.BaseAsset, cancellationToken)
-                .ConfigureAwait(false);
+            context.Savings = await GetPositionsAsync(context.Symbol, cancellationToken).ConfigureAwait(false);
+
+            context.SavingsLookup[context.Symbol.Name] = context.Savings;
         }
 
-        if (!IsNullOrEmpty(context.Symbol.QuoteAsset))
+        // populate from the symbol list
+        foreach (var symbol in context.Symbols)
         {
-            context.QuoteAssetSavingsBalance = await _savings
-                .GetPositionOrZeroAsync(context.Symbol.QuoteAsset, cancellationToken)
-                .ConfigureAwait(false);
+            if (symbol.Key == context.Symbol.Name)
+            {
+                continue;
+            }
+
+            context.SavingsLookup[symbol.Key] = await GetPositionsAsync(symbol.Value, cancellationToken).ConfigureAwait(false);
         }
+    }
+
+    private async ValueTask<SymbolSavingsPositions> GetPositionsAsync(Symbol symbol, CancellationToken cancellationToken)
+    {
+        var baseAsset = await _savings
+            .GetPositionOrZeroAsync(symbol.BaseAsset, cancellationToken)
+            .ConfigureAwait(false);
+
+        var quoteAsset = await _savings
+            .GetPositionOrZeroAsync(symbol.QuoteAsset, cancellationToken)
+            .ConfigureAwait(false);
+
+        return new SymbolSavingsPositions(symbol.Name, baseAsset, quoteAsset);
     }
 }

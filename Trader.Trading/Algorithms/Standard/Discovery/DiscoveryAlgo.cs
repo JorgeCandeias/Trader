@@ -63,38 +63,53 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery
                 .ToHashSet();
 
             // identify unused symbols with savings
-            var unusedWithSavings = withSavings
-                .Except(used);
+            if (options.ReportSavings)
+            {
+                var unusedWithSavings = withSavings
+                    .Except(used);
 
-            LogIdentifiedUnusedSymbolsWithSavings(TypeName, unusedWithSavings);
+                LogIdentifiedUnusedSymbolsWithSavings(TypeName, unusedWithSavings);
+            }
 
             // identify unused symbols with swap pools
-            var unusedWithSwapPools = withSwapPools
-                .Except(used);
+            if (options.ReportSwapPools)
+            {
+                var unusedWithSwapPools = withSwapPools
+                    .Except(used);
 
-            LogIdentifiedUnusedSymbolsWithSwapPools(TypeName, unusedWithSwapPools);
+                LogIdentifiedUnusedSymbolsWithSwapPools(TypeName, unusedWithSwapPools);
+            }
 
             // identify used symbols without savings
-            var usedWithoutSavings = used
-                .Except(options.IgnoreSymbols)
-                .Except(withSavings);
+            if (options.ReportSavings)
+            {
+                var usedWithoutSavings = used
+                    .Except(options.IgnoreSymbols)
+                    .Except(withSavings);
 
-            LogIdentifiedUsedSymbolsWithoutSavings(TypeName, usedWithoutSavings);
+                LogIdentifiedUsedSymbolsWithoutSavings(TypeName, usedWithoutSavings);
+            }
 
             // identify used symbols without swap pools
-            var usedWithoutSwapPools = used
-                .Except(options.IgnoreSymbols)
-                .Except(withSwapPools);
+            if (options.ReportSwapPools)
+            {
+                var usedWithoutSwapPools = used
+                    .Except(options.IgnoreSymbols)
+                    .Except(withSwapPools);
 
-            LogIdentifiedUsedSymbolsWithoutSwapPools(TypeName, usedWithoutSwapPools);
+                LogIdentifiedUsedSymbolsWithoutSwapPools(TypeName, usedWithoutSwapPools);
+            }
 
             // identify used symbols without savings or swap pools
-            var risky = used
-                .Except(options.IgnoreSymbols)
-                .Except(withSavings)
-                .Except(withSwapPools);
+            if (options.ReportSavings && options.ReportSwapPools)
+            {
+                var risky = used
+                    .Except(options.IgnoreSymbols)
+                    .Except(withSavings)
+                    .Except(withSwapPools);
 
-            LogIdentifiedUsedSymbolsWithoutSavingsOrSwapPools(TypeName, risky);
+                LogIdentifiedUsedSymbolsWithoutSavingsOrSwapPools(TypeName, risky);
+            }
 
             return Noop();
         }

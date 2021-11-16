@@ -6,11 +6,8 @@ using Microsoft.Extensions.Options;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
-using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Binance
 {
@@ -36,7 +33,7 @@ namespace Outcompute.Trader.Trading.Binance
             _provider = provider;
         }
 
-        private static string Name => nameof(BinanceTradingService);
+        private const string TypeName = nameof(BinanceTradingService);
 
         public ITradingService WithBackoff()
         {
@@ -437,7 +434,9 @@ namespace Outcompute.Trader.Trading.Binance
 
         private async Task SyncLimitsAsync(CancellationToken cancellationToken)
         {
-            _logger.LogInformation("{Name} querying exchange rate limits...", Name);
+            LogQueryingExchangeRateLimits(TypeName);
+
+            var watch = Stopwatch.StartNew();
 
             // get the exchange request limits
             var result = await _client
@@ -456,8 +455,20 @@ namespace Outcompute.Trader.Trading.Binance
 
                 _usage.SetLimit(limit.Type, limit.TimeSpan, limit.Limit);
             }
+
+            LogQueriedExchangeRateLimitsInMs(TypeName, watch.ElapsedMilliseconds);
         }
 
         #endregion Helpers
+
+        #region Logging
+
+        [LoggerMessage(0, LogLevel.Information, "{Type} querying exchange rate limits...")]
+        private partial void LogQueryingExchangeRateLimits(string type);
+
+        [LoggerMessage(1, LogLevel.Information, "{Type} queried exchange rate limits in {ElapsedMs}ms")]
+        private partial void LogQueriedExchangeRateLimitsInMs(string type, long elapsedMs);
+
+        #endregion Logging
     }
 }

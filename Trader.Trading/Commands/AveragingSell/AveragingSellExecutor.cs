@@ -98,7 +98,7 @@ internal partial class AveragingSellExecutor : IAlgoCommandExecutor<AveragingSel
         // check if the sell is above the maximum percent filter
         if (price > ticker.ClosePrice * command.Symbol.Filters.PercentPrice.MultiplierUp)
         {
-            LogCannotSetSellOrderMaximumPercentFilter(TypeName, command.Symbol.Name, quantity, command.Symbol.BaseAsset, price, command.Symbol.QuoteAsset, quantity * price, context.Ticker.ClosePrice * command.Symbol.Filters.PercentPrice.MultiplierUp);
+            LogCannotSetSellOrderMaximumPercentFilter(TypeName, command.Symbol.Name, quantity, command.Symbol.BaseAsset, price, command.Symbol.QuoteAsset, quantity * price, ticker.ClosePrice * command.Symbol.Filters.PercentPrice.MultiplierUp);
 
             return DesiredSell.None;
         }
@@ -106,7 +106,7 @@ internal partial class AveragingSellExecutor : IAlgoCommandExecutor<AveragingSel
         // only sell if the price is at or above the ticker
         if (ticker.ClosePrice < price)
         {
-            LogHoldingOffSellOrder(TypeName, command.Symbol.Name, quantity, command.Symbol.BaseAsset, price, command.Symbol.QuoteAsset, price / ticker.ClosePrice, context.Ticker.ClosePrice);
+            LogHoldingOffSellOrder(TypeName, command.Symbol.Name, quantity, command.Symbol.BaseAsset, price, command.Symbol.QuoteAsset, price / ticker.ClosePrice, ticker.ClosePrice);
 
             return DesiredSell.None;
         }

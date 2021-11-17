@@ -16,6 +16,8 @@ internal class CancelOpenOrdersExecutor : IAlgoCommandExecutor<CancelOpenOrdersC
 
     public async ValueTask ExecuteAsync(IAlgoContext context, CancelOpenOrdersCommand command, CancellationToken cancellationToken = default)
     {
+        var ticker = context.Tickers[command.Symbol.Name];
+
         var orders = await _orders
             .GetOrdersByFilterAsync(command.Symbol.Name, command.Side, true, null, cancellationToken)
             .ConfigureAwait(false);
@@ -25,7 +27,7 @@ internal class CancelOpenOrdersExecutor : IAlgoCommandExecutor<CancelOpenOrdersC
             // evaluate the distance rule
             if (command.Distance.HasValue)
             {
-                var distance = Math.Abs((order.Price - context.Ticker.ClosePrice) / context.Ticker.ClosePrice);
+                var distance = Math.Abs((order.Price - ticker.ClosePrice) / ticker.ClosePrice);
                 if (distance <= command.Distance.Value)
                 {
                     continue;

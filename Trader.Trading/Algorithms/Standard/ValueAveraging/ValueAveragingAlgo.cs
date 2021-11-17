@@ -57,7 +57,7 @@ internal sealed partial class ValueAveragingAlgo : Algo
         {
             return Sequence(
                 CancelOpenOrders(Context.Symbol, OrderSide.Buy),
-                AveragingSell(Context.Symbol, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool));
+                AveragingSell(Context.Symbol, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool));
         }
 
         // decide on a stop loss

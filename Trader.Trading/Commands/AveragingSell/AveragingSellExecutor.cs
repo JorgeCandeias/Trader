@@ -20,7 +20,7 @@ internal partial class AveragingSellExecutor : IAlgoCommandExecutor<AveragingSel
     public async ValueTask ExecuteAsync(IAlgoContext context, AveragingSellCommand command, CancellationToken cancellationToken = default)
     {
         // calculate the desired sell
-        var desired = CalculateDesiredSell(context, command, command.Symbol, command.ProfitMultiplier, command.Orders);
+        var desired = CalculateDesiredSell(context, command);
 
         // apply the desired sell
         if (desired == DesiredSell.None)
@@ -37,72 +37,76 @@ internal partial class AveragingSellExecutor : IAlgoCommandExecutor<AveragingSel
         }
     }
 
-    private DesiredSell CalculateDesiredSell(IAlgoContext context, AveragingSellCommand command, Symbol symbol, decimal profitMultiplier, IReadOnlyCollection<OrderQueryResult> orders)
+    private DesiredSell CalculateDesiredSell(IAlgoContext context, AveragingSellCommand command)
     {
+        // get context data for the command symbol
+        var positions = context.PositionDetailsLookup[command.Symbol.Name].Orders;
+        var spots = context.SpotBalances[command.Symbol.Name];
+        var savings = context.Savings[command.Symbol.Name];
+        var ticker = context.Tickers[command.Symbol.Name];
+
         // loop the orders only once and calculate all required stats up front
         var quantity = 0M;
         var notional = 0M;
-        foreach (var order in orders)
+        foreach (var position in positions)
         {
-            quantity += order.ExecutedQuantity;
-            notional += order.ExecutedQuantity * order.Price;
+            quantity += position.ExecutedQuantity;
+            notional += position.ExecutedQuantity * position.Price;
         }
         var price = notional / quantity;
 
         // break if there are no assets to sell
-        var spots = context.SpotBalances[symbol.Name];
-        var savings = context.Savings[symbol.Name];
         var free = spots.BaseAsset.Free
             + (command.RedeemSavings ? savings.BaseAsset.FreeAmount : 0)
             + (command.RedeemSwapPool ? context.BaseAssetSwapPoolBalance.Total : 0);
 
         if (free < quantity)
         {
-            LogCannotEvaluateDesiredSell(TypeName, symbol.Name, quantity, symbol.BaseAsset, free);
+            LogCannotEvaluateDesiredSell(TypeName, command.Symbol.Name, quantity, command.Symbol.BaseAsset, free);
 
             return DesiredSell.None;
         }
 
         // adjust the quantity down to lot size filter so we have a valid order
-        quantity = quantity.AdjustQuantityDownToLotStepSize(context.Symbol);
+        quantity = quantity.AdjustQuantityDownToLotStepSize(command.Symbol);
 
         // break if the quantity falls below the minimum lot size
-        if (quantity < symbol.Filters.LotSize.MinQuantity)
+        if (quantity < command.Symbol.Filters.LotSize.MinQuantity)
         {
-            LogCannotSetSellOrderLotSize(TypeName, symbol.Name, quantity, symbol.BaseAsset, symbol.Filters.LotSize.MinQuantity);
+            LogCannotSetSellOrderLotSize(TypeName, command.Symbol.Name, quantity, command.Symbol.BaseAsset, command.Symbol.Filters.LotSize.MinQuantity);
 
             return DesiredSell.None;
         }
 
         // bump the price by the profit multipler so we have a minimum sell price
-        price *= profitMultiplier;
+        price *= command.ProfitMultiplier;
 
         // adjust the sell price up to the minimum percent filter
-        price = Math.Max(price, context.Ticker.ClosePrice * symbol.Filters.PercentPrice.MultiplierDown);
+        price = Math.Max(price, ticker.ClosePrice * command.Symbol.Filters.PercentPrice.MultiplierDown);
 
         // adjust the sell price up to the tick size
-        price = price.AdjustPriceUpToTickSize(context.Symbol);
+        price = price.AdjustPriceUpToTickSize(command.Symbol);
 
         // check if the sell is under the minimum notional filter
-        if (quantity * price < symbol.Filters.MinNotional.MinNotional)
+        if (quantity * price < command.Symbol.Filters.MinNotional.MinNotional)
         {
-            LogCannotSetSellOrderNotional(TypeName, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, symbol.Filters.MinNotional.MinNotional);
+            LogCannotSetSellOrderNotional(TypeName, command.Symbol.Name, quantity, command.Symbol.BaseAsset, price, command.Symbol.QuoteAsset, quantity * price, command.Symbol.Filters.MinNotional.MinNotional);
 
             return DesiredSell.None;
         }
 
         // check if the sell is above the maximum percent filter
-        if (price > context.Ticker.ClosePrice * symbol.Filters.PercentPrice.MultiplierUp)
+        if (price > ticker.ClosePrice * command.Symbol.Filters.PercentPrice.MultiplierUp)
         {
-            LogCannotSetSellOrderMaximumPercentFilter(TypeName, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, quantity * price, context.Ticker.ClosePrice * symbol.Filters.PercentPrice.MultiplierUp);
+            LogCannotSetSellOrderMaximumPercentFilter(TypeName, command.Symbol.Name, quantity, command.Symbol.BaseAsset, price, command.Symbol.QuoteAsset, quantity * price, context.Ticker.ClosePrice * command.Symbol.Filters.PercentPrice.MultiplierUp);
 
             return DesiredSell.None;
         }
 
         // only sell if the price is at or above the ticker
-        if (context.Ticker.ClosePrice < price)
+        if (ticker.ClosePrice < price)
         {
-            LogHoldingOffSellOrder(TypeName, symbol.Name, quantity, symbol.BaseAsset, price, symbol.QuoteAsset, price / context.Ticker.ClosePrice, context.Ticker.ClosePrice);
+            LogHoldingOffSellOrder(TypeName, command.Symbol.Name, quantity, command.Symbol.BaseAsset, price, command.Symbol.QuoteAsset, price / ticker.ClosePrice, context.Ticker.ClosePrice);
 
             return DesiredSell.None;
         }
@@ -111,7 +115,7 @@ internal partial class AveragingSellExecutor : IAlgoCommandExecutor<AveragingSel
         return new DesiredSell(quantity, price);
     }
 
-    private sealed record DesiredSell(decimal Quantity, decimal Price)
+    private record struct DesiredSell(decimal Quantity, decimal Price)
     {
         public static readonly DesiredSell None = new(0m, 0m);
     }

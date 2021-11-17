@@ -2,11 +2,13 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Commands.AveragingSell;
 using Outcompute.Trader.Trading.Commands.CancelOpenOrders;
 using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
+using System.Collections.Immutable;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
@@ -42,6 +44,12 @@ namespace Outcompute.Trader.Trading.Tests
                 }
             };
 
+            var orders = ImmutableSortedSet.Create(OrderQueryResult.KeyComparer, new[]
+            {
+                OrderQueryResult.Empty with { Symbol = symbol.Name, OrderId = 123, Price = 1100m, ExecutedQuantity = 1000m, Side = OrderSide.Buy },
+                OrderQueryResult.Empty with { Symbol = symbol.Name, OrderId = 124, Price = 1000m, ExecutedQuantity = 1000m, Side = OrderSide.Buy },
+            });
+
             var executor = new AveragingSellExecutor(logger);
 
             var clearOpenOrdersCommandExecutor = Mock.Of<IAlgoCommandExecutor<CancelOpenOrdersCommand>>();
@@ -67,17 +75,14 @@ namespace Outcompute.Trader.Trading.Tests
                     BaseAsset = SavingsPosition.Zero(symbol.BaseAsset),
                     QuoteAsset = SavingsPosition.Zero(symbol.QuoteAsset)
                 } },
-                Tickers = { [symbol.Name] = new MiniTicker(symbol.Name, DateTime.Today, 1200, 0, 0, 0, 0, 0) }
+                Tickers = { [symbol.Name] = new MiniTicker(symbol.Name, DateTime.Today, 1200, 0, 0, 0, 0, 0) },
+                PositionDetailsLookup = { [symbol.Name] = PositionDetails.Empty with { Orders = orders } }
             };
-            var orders = new[]
-            {
-                OrderQueryResult.Empty with { Symbol = symbol.Name, OrderId = 123, Price = 1100m, ExecutedQuantity = 1000m, Side = OrderSide.Buy },
-                OrderQueryResult.Empty with { Symbol = symbol.Name, OrderId = 124, Price = 1000m, ExecutedQuantity = 1000m, Side = OrderSide.Buy },
-            };
+
             var profitMultiplier = 1.10m;
             var redeemSavings = false;
             var redeemSwapPool = false;
-            var command = new AveragingSellCommand(symbol, orders, profitMultiplier, redeemSavings, redeemSwapPool);
+            var command = new AveragingSellCommand(symbol, profitMultiplier, redeemSavings, redeemSwapPool);
 
             // act
             await executor.ExecuteAsync(context, command);

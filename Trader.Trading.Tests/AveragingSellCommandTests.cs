@@ -15,10 +15,6 @@ namespace Outcompute.Trader.Trading.Tests
         {
             // arrange
             var symbol = Symbol.Empty;
-            var orders = new[]
-            {
-                OrderQueryResult.Empty with { Symbol = symbol.Name, OrderId = 123, Side = OrderSide.Buy, ExecutedQuantity = 123m }
-            };
             var profitMultiplier = 1.10m;
             var redeemSavings = true;
             var redeemSwapPool = true;
@@ -27,14 +23,13 @@ namespace Outcompute.Trader.Trading.Tests
                 .AddSingleton(executor)
                 .BuildServiceProvider();
             var context = new AlgoContext("Algo1", provider);
-            var command = new AveragingSellCommand(symbol, orders, profitMultiplier, redeemSavings, redeemSwapPool);
+            var command = new AveragingSellCommand(symbol, profitMultiplier, redeemSavings, redeemSwapPool);
 
             // act
             await command.ExecuteAsync(context);
 
             // assert
             Assert.Equal(symbol, command.Symbol);
-            Assert.Equal(orders, command.Orders);
             Assert.Equal(profitMultiplier, command.ProfitMultiplier);
             Assert.Equal(redeemSavings, command.RedeemSavings);
             Mock.Get(executor).Verify(x => x.ExecuteAsync(context, command, CancellationToken.None));

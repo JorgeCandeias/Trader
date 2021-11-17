@@ -43,8 +43,6 @@ internal class AlgoContext : IAlgoContext
 
     public IDictionary<string, SymbolSwapPoolAssetBalances> SwapPoolBalances { get; } = new Dictionary<string, SymbolSwapPoolAssetBalances>();
 
-    public IReadOnlyList<OrderQueryResult> Orders => OrdersLookup[Symbol.Name];
-
     public IDictionary<string, IReadOnlyList<OrderQueryResult>> OrdersLookup { get; } = new Dictionary<string, IReadOnlyList<OrderQueryResult>>();
 
     public IReadOnlyList<AccountTrade> Trades { get; set; } = ImmutableList<AccountTrade>.Empty;

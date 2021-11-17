@@ -101,7 +101,7 @@ public interface IAlgoContext
     /// Gets all historial orders for the default symbol.
     /// This is only populated if the default symbol is defined.
     /// </summary>
-    IReadOnlyList<OrderQueryResult> Orders { get; }
+    IReadOnlyList<OrderQueryResult> Orders => OrdersLookup[Symbol.Name];
 
     /// <summary>
     /// Gets all orders for all configured symbols and dependencies.

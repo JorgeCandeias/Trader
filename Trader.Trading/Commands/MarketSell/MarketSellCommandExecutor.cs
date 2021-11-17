@@ -27,7 +27,7 @@ internal partial class MarketSellCommandExecutor : IAlgoCommandExecutor<MarketSe
         var ticker = data.Ticker;
         var spots = data.Spot;
         var savings = data.Savings;
-        var swaps = context.SwapPoolBalances[command.Symbol.Name];
+        var swaps = data.SwapPools;
 
         // adjust the quantity down by the step size to make a valid order
         var quantity = command.Quantity.AdjustQuantityDownToLotStepSize(command.Symbol);

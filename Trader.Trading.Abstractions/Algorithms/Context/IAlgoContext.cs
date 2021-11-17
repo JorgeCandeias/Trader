@@ -68,6 +68,11 @@ public interface IAlgoContext
     IDictionary<string, MiniTicker> Tickers { get; }
 
     /// <summary>
+    /// The current spot balance for the assets of the default symbol.
+    /// </summary>
+    SymbolSpotBalances SpotBalance => SpotBalances[Symbol.Name];
+
+    /// <summary>
     /// The current spot balances for all referenced symbols.
     /// </summary>
     IDictionary<string, SymbolSpotBalances> SpotBalances { get; }

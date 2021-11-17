@@ -75,7 +75,7 @@ public interface IAlgoContext
     /// <summary>
     /// Gets all savings positions for all configured symbols.
     /// </summary>
-    IDictionary<string, SymbolSavingsPositions> SavingsLookup { get; }
+    IDictionary<string, SymbolSavingsPositions> Savings { get; }
 
     /// <summary>
     /// The current swap pool balances for the base asset of the default symbol.

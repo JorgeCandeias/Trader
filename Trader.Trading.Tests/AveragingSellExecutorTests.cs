@@ -61,7 +61,7 @@ namespace Outcompute.Trader.Trading.Tests
                         BaseAsset = Balance.Zero(symbol.BaseAsset) with { Free = 2000M }
                     }
                 },
-                SavingsLookup = { [symbol.Name] = SymbolSavingsPositions.Empty with
+                Savings = { [symbol.Name] = SymbolSavingsPositions.Empty with
                 {
                     Symbol = symbol.Name,
                     BaseAsset = SavingsPosition.Zero(symbol.BaseAsset),

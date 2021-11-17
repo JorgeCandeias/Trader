@@ -51,7 +51,7 @@ internal partial class AveragingSellExecutor : IAlgoCommandExecutor<AveragingSel
 
         // break if there are no assets to sell
         var spots = context.SpotBalances[symbol.Name];
-        var savings = context.SavingsLookup[symbol.Name];
+        var savings = context.Savings[symbol.Name];
         var free = spots.BaseAsset.Free
             + (command.RedeemSavings ? savings.BaseAsset.FreeAmount : 0)
             + (command.RedeemSwapPool ? context.BaseAssetSwapPoolBalance.Total : 0);

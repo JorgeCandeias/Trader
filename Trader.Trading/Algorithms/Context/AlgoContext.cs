@@ -36,8 +36,6 @@ internal class AlgoContext : IAlgoContext
 
     public IDictionary<string, AutoPosition> AutoPositions { get; } = new Dictionary<string, AutoPosition>();
 
-    public MiniTicker Ticker => Tickers[Symbol.Name];
-
     public IDictionary<string, MiniTicker> Tickers { get; } = new Dictionary<string, MiniTicker>();
 
     public IDictionary<string, SymbolSpotBalances> SpotBalances { get; } = new Dictionary<string, SymbolSpotBalances>();

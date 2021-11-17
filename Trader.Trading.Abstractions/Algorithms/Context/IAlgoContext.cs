@@ -60,7 +60,7 @@ public interface IAlgoContext
     /// The current ticker for the default symbol.
     /// This is only populated if the default symbol is defined.
     /// </summary>
-    MiniTicker Ticker { get; }
+    MiniTicker Ticker => Tickers[Symbol.Name];
 
     /// <summary>
     /// The current tickers for all configured symbols.

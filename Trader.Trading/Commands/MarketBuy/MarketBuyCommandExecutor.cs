@@ -31,38 +31,41 @@ internal partial class MarketBuyCommandExecutor : IAlgoCommandExecutor<MarketBuy
 
     public async ValueTask ExecuteAsync(IAlgoContext context, MarketBuyCommand command, CancellationToken cancellationToken = default)
     {
-        var quantity = command.Quantity;
+        // get context data for the command symbol
+        var ticker = context.Tickers[command.Symbol.Name];
+        var spots = context.SpotBalances[command.Symbol.Name];
+        var savings = context.Savings[command.Symbol.Name];
 
         // adjust the quantity up to the min notional to make a valid order
-        var total = quantity * context.Ticker.ClosePrice;
-        total = total.AdjustTotalUpToMinNotional(context.Symbol);
-        var adjusted = total / context.Ticker.ClosePrice;
-        LogAdjustedQuantityToMinNotional(TypeName, context.Symbol.Name, quantity, context.Symbol.BaseAsset, context.Ticker.ClosePrice, context.Symbol.QuoteAsset, total, adjusted, context.Symbol.Filters.MinNotional.MinNotional);
+        var quantity = command.Quantity;
+        var total = quantity * ticker.ClosePrice;
+        total = total.AdjustTotalUpToMinNotional(command.Symbol);
+        var adjusted = total / ticker.ClosePrice;
+        LogAdjustedQuantityToMinNotional(TypeName, command.Symbol.Name, quantity, command.Symbol.BaseAsset, ticker.ClosePrice, command.Symbol.QuoteAsset, total, adjusted, command.Symbol.Filters.MinNotional.MinNotional);
 
         // adjust the quantity up to the min lot size quantity
-        adjusted = quantity.AdjustQuantityUpToMinLotSizeQuantity(context.Symbol);
-        LogAdjustedQuantityToMinLotSize(TypeName, context.Symbol.BaseAsset, quantity, context.Symbol.BaseAsset, adjusted, context.Symbol.Filters.LotSize.MinQuantity);
+        adjusted = quantity.AdjustQuantityUpToMinLotSizeQuantity(command.Symbol);
+        LogAdjustedQuantityToMinLotSize(TypeName, command.Symbol.BaseAsset, quantity, command.Symbol.BaseAsset, adjusted, command.Symbol.Filters.LotSize.MinQuantity);
         quantity = adjusted;
 
         // adjust the quantity up by the step size to make a valid order
-        adjusted = quantity.AdjustQuantityUpToLotStepSize(context.Symbol);
-        LogAdjustedQuantity(TypeName, context.Symbol.Name, quantity, context.Symbol.BaseAsset, adjusted, context.Symbol.Filters.LotSize.StepSize);
+        adjusted = quantity.AdjustQuantityUpToLotStepSize(command.Symbol);
+        LogAdjustedQuantity(TypeName, command.Symbol.Name, quantity, command.Symbol.BaseAsset, adjusted, command.Symbol.Filters.LotSize.StepSize);
         quantity = adjusted;
 
         // identify the free quote balance
-        var spots = context.SpotBalances[command.Symbol.Name];
-        var savings = context.Savings[command.Symbol.Name];
+
         var free = spots.QuoteAsset.Free
             + (command.RedeemSavings ? savings.QuoteAsset.FreeAmount : 0m)
             + (command.RedeemSwapPool ? context.QuoteAssetSwapPoolBalance.Total : 0m);
 
         // calculate the adjusted total
-        total = quantity * context.Ticker.ClosePrice;
+        total = quantity * ticker.ClosePrice;
 
         // see if there is enough free balance overall
         if (free < total)
         {
-            LogNotEnoughFreeBalance(TypeName, context.Symbol.Name, MyOrderType, MyOrderSide, total, context.Symbol.QuoteAsset, free);
+            LogNotEnoughFreeBalance(TypeName, command.Symbol.Name, MyOrderType, MyOrderSide, total, command.Symbol.QuoteAsset, free);
             return;
         }
 
@@ -77,9 +80,9 @@ internal partial class MarketBuyCommandExecutor : IAlgoCommandExecutor<MarketBuy
             {
                 var redeeming = Math.Min(savings.QuoteAsset.FreeAmount, required);
 
-                LogRedeemingSavings(TypeName, context.Symbol.Name, redeeming, context.Symbol.QuoteAsset);
+                LogRedeemingSavings(TypeName, command.Symbol.Name, redeeming, command.Symbol.QuoteAsset);
 
-                var result = await new RedeemSavingsCommand(context.Symbol.QuoteAsset, redeeming)
+                var result = await new RedeemSavingsCommand(command.Symbol.QuoteAsset, redeeming)
                     .ExecuteAsync(context, cancellationToken)
                     .ConfigureAwait(false);
 
@@ -88,11 +91,11 @@ internal partial class MarketBuyCommandExecutor : IAlgoCommandExecutor<MarketBuy
                     required -= result.Redeemed;
                     required = Math.Max(required, 0);
 
-                    LogRedeemedSavings(TypeName, context.Symbol.Name, result.Redeemed, context.Symbol.QuoteAsset);
+                    LogRedeemedSavings(TypeName, command.Symbol.Name, result.Redeemed, command.Symbol.QuoteAsset);
                 }
                 else
                 {
-                    LogFailedToRedeemSavings(TypeName, context.Symbol.Name, redeeming, context.Symbol.QuoteAsset);
+                    LogFailedToRedeemSavings(TypeName, command.Symbol.Name, redeeming, command.Symbol.QuoteAsset);
                     return;
                 }
             }
@@ -102,9 +105,9 @@ internal partial class MarketBuyCommandExecutor : IAlgoCommandExecutor<MarketBuy
             {
                 var redeeming = Math.Min(context.QuoteAssetSwapPoolBalance.Total, required);
 
-                LogRedeemingSwapPool(TypeName, context.Symbol.Name, redeeming, context.Symbol.QuoteAsset);
+                LogRedeemingSwapPool(TypeName, command.Symbol.Name, redeeming, command.Symbol.QuoteAsset);
 
-                var result = await new RedeemSwapPoolCommand(context.Symbol.QuoteAsset, required)
+                var result = await new RedeemSwapPoolCommand(command.Symbol.QuoteAsset, required)
                     .ExecuteAsync(context, cancellationToken)
                     .ConfigureAwait(false);
 
@@ -113,25 +116,25 @@ internal partial class MarketBuyCommandExecutor : IAlgoCommandExecutor<MarketBuy
                     required -= result.QuoteAmount;
                     required = Math.Max(required, 0);
 
-                    LogRedeemedSwapPool(TypeName, context.Symbol.Name, result.QuoteAmount, context.Symbol.QuoteAsset);
+                    LogRedeemedSwapPool(TypeName, command.Symbol.Name, result.QuoteAmount, command.Symbol.QuoteAsset);
                 }
                 else
                 {
-                    LogFailedToRedeemSwapPool(TypeName, context.Symbol.Name, redeeming, context.Symbol.QuoteAsset);
+                    LogFailedToRedeemSwapPool(TypeName, command.Symbol.Name, redeeming, command.Symbol.QuoteAsset);
                     return;
                 }
             }
 
             if (required > 0)
             {
-                LogCouldNotRedeem(TypeName, context.Symbol.Name, required, context.Symbol.QuoteAsset);
+                LogCouldNotRedeem(TypeName, command.Symbol.Name, required, command.Symbol.QuoteAsset);
                 return;
             }
         }
 
         // all set
-        var tag = _tags.Generate(context.Symbol.Name, 0);
-        await new CreateOrderCommand(context.Symbol, MyOrderType, MyOrderSide, null, quantity, null, tag)
+        var tag = _tags.Generate(command.Symbol.Name, 0);
+        await new CreateOrderCommand(command.Symbol, MyOrderType, MyOrderSide, null, quantity, null, tag)
             .ExecuteAsync(context, cancellationToken)
             .ConfigureAwait(false);
     }

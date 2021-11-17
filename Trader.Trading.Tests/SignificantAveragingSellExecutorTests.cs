@@ -271,7 +271,13 @@ namespace Outcompute.Trader.Trading.Tests
             var context = new AlgoContext("Algo1", provider)
             {
                 Symbol = symbol,
-                BaseAssetSpotBalance = Balance.Zero(symbol.BaseAsset) with { Free = 200m }
+                SpotBalancesLookup =
+                {
+                    [symbol.Name] = SymbolSpotBalances.Empty with
+                    {
+                        BaseAsset = Balance.Zero(symbol.BaseAsset) with { Free = 200m }
+                    }
+                }
             };
 
             var ticker = MiniTicker.Empty with

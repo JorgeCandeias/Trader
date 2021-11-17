@@ -42,9 +42,7 @@ internal class AlgoContext : IAlgoContext
 
     public IDictionary<string, MiniTicker> Tickers { get; } = new Dictionary<string, MiniTicker>();
 
-    public Balance BaseAssetSpotBalance { get; set; } = Balance.Empty;
-
-    public Balance QuoteAssetSpotBalance { get; set; } = Balance.Empty;
+    public IDictionary<string, SymbolSpotBalances> SpotBalancesLookup { get; } = new Dictionary<string, SymbolSpotBalances>();
 
     public SymbolSavingsPositions Savings => SavingsLookup[Symbol.Name];
 

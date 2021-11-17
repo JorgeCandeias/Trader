@@ -45,8 +45,10 @@ internal partial class SignificantAveragingSellExecutor : IAlgoCommandExecutor<S
 
         // calculate total free from all valid sources
         // this may be less than the target sell due to swap pool fluctuations etc
-        var free = context.BaseAssetSpotBalance.Free
-            + (command.RedeemSavings ? context.Savings.BaseAsset.FreeAmount : 0)
+        var spots = context.SpotBalancesLookup[command.Symbol.Name];
+        var savings = context.SavingsLookup[command.Symbol.Name];
+        var free = spots.BaseAsset.Free
+            + (command.RedeemSavings ? savings.BaseAsset.FreeAmount : 0)
             + (command.RedeemSwapPool ? context.BaseAssetSwapPoolBalance.Total : 0);
 
         // first pass - calculate partials for the entire data

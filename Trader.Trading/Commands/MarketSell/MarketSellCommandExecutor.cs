@@ -49,8 +49,11 @@ internal partial class MarketSellCommandExecutor : IAlgoCommandExecutor<MarketSe
         }
 
         // identify the free balance
-        var free = context.BaseAssetSpotBalance.Free
-            + (command.RedeemSavings ? context.Savings.BaseAsset.FreeAmount : 0m)
+        var spots = context.SpotBalancesLookup[command.Symbol.Name];
+        var savings = context.SavingsLookup[command.Symbol.Name];
+
+        var free = spots.BaseAsset.Free
+            + (command.RedeemSavings ? savings.BaseAsset.FreeAmount : 0m)
             + (command.RedeemSwapPool ? context.BaseAssetSwapPoolBalance.Total : 0m);
 
         // see if there is enough free balance overall
@@ -61,15 +64,15 @@ internal partial class MarketSellCommandExecutor : IAlgoCommandExecutor<MarketSe
         }
 
         // see if we need to redeem anything
-        if (quantity > context.BaseAssetSpotBalance.Free)
+        if (quantity > spots.BaseAsset.Free)
         {
             // we need to redeem up to this from any redemption sources
-            var required = quantity - context.BaseAssetSpotBalance.Free;
+            var required = quantity - spots.BaseAsset.Free;
 
             // see if we can redeem the rest from savings
-            if (command.RedeemSavings && context.Savings.BaseAsset.FreeAmount > 0)
+            if (command.RedeemSavings && savings.BaseAsset.FreeAmount > 0)
             {
-                var redeeming = Math.Min(context.Savings.BaseAsset.FreeAmount, required);
+                var redeeming = Math.Min(savings.BaseAsset.FreeAmount, required);
 
                 LogRedeemingSavings(TypeName, context.Symbol.Name, redeeming, context.Symbol.BaseAsset);
 

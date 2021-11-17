@@ -50,8 +50,10 @@ internal partial class MarketBuyCommandExecutor : IAlgoCommandExecutor<MarketBuy
         quantity = adjusted;
 
         // identify the free quote balance
-        var free = context.QuoteAssetSpotBalance.Free
-            + (command.RedeemSavings ? context.Savings.QuoteAsset.FreeAmount : 0m)
+        var spots = context.SpotBalancesLookup[command.Symbol.Name];
+        var savings = context.SavingsLookup[command.Symbol.Name];
+        var free = spots.QuoteAsset.Free
+            + (command.RedeemSavings ? savings.QuoteAsset.FreeAmount : 0m)
             + (command.RedeemSwapPool ? context.QuoteAssetSwapPoolBalance.Total : 0m);
 
         // calculate the adjusted total
@@ -65,15 +67,15 @@ internal partial class MarketBuyCommandExecutor : IAlgoCommandExecutor<MarketBuy
         }
 
         // see if we need to redeem anything
-        if (total > context.QuoteAssetSpotBalance.Free)
+        if (total > spots.QuoteAsset.Free)
         {
             // we need to redeem up to this from any redemption sources
-            var required = total - context.QuoteAssetSpotBalance.Free;
+            var required = total - spots.QuoteAsset.Free;
 
             // see if we can redeem the rest from savings
-            if (command.RedeemSavings && context.Savings.QuoteAsset.FreeAmount > 0)
+            if (command.RedeemSavings && savings.QuoteAsset.FreeAmount > 0)
             {
-                var redeeming = Math.Min(context.Savings.QuoteAsset.FreeAmount, required);
+                var redeeming = Math.Min(savings.QuoteAsset.FreeAmount, required);
 
                 LogRedeemingSavings(TypeName, context.Symbol.Name, redeeming, context.Symbol.QuoteAsset);
 

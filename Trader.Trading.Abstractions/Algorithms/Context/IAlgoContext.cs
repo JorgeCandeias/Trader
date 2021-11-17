@@ -68,16 +68,9 @@ public interface IAlgoContext
     IDictionary<string, MiniTicker> Tickers { get; }
 
     /// <summary>
-    /// The current spot balance for the base asset of the default symbol.
-    /// This is only populated if the default symbol is defined.
+    /// The current spot balances for all referenced symbols.
     /// </summary>
-    Balance BaseAssetSpotBalance { get; }
-
-    /// <summary>
-    /// The current spot balance for the quote asset of the default symbol.
-    /// This is only populated if the default symbol is defined.
-    /// </summary>
-    Balance QuoteAssetSpotBalance { get; }
+    IDictionary<string, SymbolSpotBalances> SpotBalancesLookup { get; }
 
     /// <summary>
     /// The current savings balances for the assets of the default symbol.
@@ -138,4 +131,9 @@ public interface IAlgoContext
 public record SymbolSavingsPositions(string Symbol, SavingsPosition BaseAsset, SavingsPosition QuoteAsset)
 {
     public static SymbolSavingsPositions Empty { get; } = new SymbolSavingsPositions(string.Empty, SavingsPosition.Empty, SavingsPosition.Empty);
+}
+
+public record SymbolSpotBalances(string Symbol, Balance BaseAsset, Balance QuoteAsset)
+{
+    public static SymbolSpotBalances Empty { get; } = new SymbolSpotBalances(string.Empty, Balance.Empty, Balance.Empty);
 }

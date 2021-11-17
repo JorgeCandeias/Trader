@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Options;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands;
 
 namespace Outcompute.Trader.Trading.Algorithms.Standard.ValueAveraging;
@@ -133,7 +132,11 @@ internal sealed partial class ValueAveragingAlgo : Algo
 
     private IAlgoCommand CreateBuy()
     {
-        var total = Context.GetQuoteBaseAssetBalance(_options.RedeemSavings, _options.RedeemSwapPool) * _options.BuyQuoteBalanceFraction;
+        var total = Context.SpotBalancesLookup[Context.Symbol.Name].QuoteAsset.Free
+            + (_options.RedeemSavings ? Context.SavingsLookup[Context.Symbol.Name].QuoteAsset.FreeAmount : 0)
+            + (_options.RedeemSwapPool ? Context.QuoteAssetSwapPoolBalance.Total : 0);
+
+        total *= _options.BuyQuoteBalanceFraction;
 
         total = total.AdjustTotalUpToMinNotional(Context.Symbol);
 

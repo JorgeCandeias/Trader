@@ -13,18 +13,17 @@ internal class AlgoContextSpotBalanceConfigurator : IAlgoContextConfigurator<Alg
 
     public async ValueTask ConfigureAsync(AlgoContext context, string name, CancellationToken cancellationToken = default)
     {
-        if (!IsNullOrEmpty(context.Symbol.Name))
+        foreach (var symbol in context.Symbols)
         {
-            context.BaseAssetSpotBalance = await _balances
-                .GetBalanceOrZeroAsync(context.Symbol.BaseAsset, cancellationToken)
+            var baseAsset = await _balances
+                .GetBalanceOrZeroAsync(symbol.Value.BaseAsset, cancellationToken)
                 .ConfigureAwait(false);
-        }
 
-        if (!IsNullOrEmpty(context.Symbol.Name))
-        {
-            context.QuoteAssetSpotBalance = await _balances
-                .GetBalanceOrZeroAsync(context.Symbol.QuoteAsset, cancellationToken)
+            var quoteAsset = await _balances
+                .GetBalanceOrZeroAsync(symbol.Value.QuoteAsset, cancellationToken)
                 .ConfigureAwait(false);
+
+            context.SpotBalancesLookup[symbol.Key] = new SymbolSpotBalances(symbol.Key, baseAsset, quoteAsset);
         }
     }
 }

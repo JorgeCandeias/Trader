@@ -32,7 +32,7 @@ internal class AlgoContext : IAlgoContext
 
     public int KlinePeriods { get; set; }
 
-    public ExchangeInfo ExchangeInfo { get; set; } = ExchangeInfo.Empty;
+    public ExchangeInfo Exchange { get; set; } = ExchangeInfo.Empty;
 
     public PositionDetails PositionDetails => PositionDetailsLookup[Symbol.Name];
 

@@ -30,7 +30,7 @@ internal partial class DiscoveryAlgo : Algo
         var options = _monitor.Get(Context.Name);
 
         // get the exchange info
-        var symbols = Context.ExchangeInfo.Symbols
+        var symbols = Context.Exchange.Symbols
             .Where(x => x.Status == SymbolStatus.Trading)
             .Where(x => x.IsSpotTradingAllowed)
             .Where(x => options.QuoteAssets.Contains(x.QuoteAsset))

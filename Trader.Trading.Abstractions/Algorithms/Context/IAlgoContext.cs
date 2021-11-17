@@ -43,7 +43,7 @@ public interface IAlgoContext
     /// <summary>
     /// The current exchange information.
     /// </summary>
-    ExchangeInfo ExchangeInfo { get; }
+    ExchangeInfo Exchange { get; }
 
     /// <summary>
     /// The current auto calculated positions for the default symbol.

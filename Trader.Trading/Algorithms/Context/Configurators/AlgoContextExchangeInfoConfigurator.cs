@@ -13,7 +13,7 @@ internal class AlgoContextExchangeInfoConfigurator : IAlgoContextConfigurator<Al
 
     public ValueTask ConfigureAsync(AlgoContext context, string name, CancellationToken cancellationToken = default)
     {
-        context.ExchangeInfo = _provider.GetExchangeInfo();
+        context.Exchange = _provider.GetExchangeInfo();
 
         return ValueTask.CompletedTask;
     }

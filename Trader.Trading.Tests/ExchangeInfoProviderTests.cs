@@ -1,40 +1,40 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Orleans.TestingHost;
+﻿using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
+using Moq;
+using Orleans;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.InMemory;
-using Outcompute.Trader.Trading.Providers;
-using Outcompute.Trader.Trading.Tests.Fixtures;
+using Outcompute.Trader.Trading.Providers.Exchange;
 using System.Collections.Immutable;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
 {
-    [Collection(nameof(ClusterCollectionFixture))]
     public class ExchangeInfoProviderTests
     {
-        private readonly TestCluster _cluster;
-
-        public ExchangeInfoProviderTests(ClusterFixture cluster)
-        {
-            _cluster = cluster?.Cluster ?? throw new ArgumentNullException(nameof(cluster));
-        }
-
         [Fact]
-        public async Task GetsExchangeInfo()
+        public void GetsExchangeInfo()
         {
             // arrange
             var symbol = Symbol.Empty with { Name = "ABCXYZ" };
             var info = ExchangeInfo.Empty with { Symbols = ImmutableList.Create(symbol) };
-            await _cluster.ServiceProvider.GetRequiredService<IInMemoryTradingService>().SetExchangeInfoAsync(info);
+            var options = Options.Create(new ExchangeInfoOptions());
+            var logger = NullLogger<ExchangeInfoProvider>.Instance;
+            var factory = Mock.Of<IGrainFactory>();
+            Mock.Get(factory)
+                .Setup(x => x.GetGrain<IExchangeInfoGrain>(Guid.Empty, null).GetExchangeInfoAsync())
+                .ReturnsAsync(new ExchangeInfoResult(info, Guid.NewGuid()))
+                .Verifiable();
 
-            var provider = _cluster.ServiceProvider.GetRequiredService<IExchangeInfoProvider>();
+            using var provider = new ExchangeInfoProvider(options, logger, factory);
 
             // act
+            await provider.StartAsync(CancellationToken.None);
             var result = provider.GetExchangeInfo();
 
             // assert
             Assert.NotNull(result);
-            Assert.Contains(result.Symbols, x => x.Name == "ABCXYZ");
+            Assert.Same(info, result);
+            Mock.Get(factory).VerifyAll();
         }
     }
 }

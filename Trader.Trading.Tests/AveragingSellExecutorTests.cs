@@ -44,10 +44,10 @@ namespace Outcompute.Trader.Trading.Tests
                 }
             };
 
-            var orders = ImmutableSortedSet.Create(OrderQueryResult.KeyComparer, new[]
+            var positions = ImmutableSortedSet.Create(PositionKeyComparer.Default, new[]
             {
-                OrderQueryResult.Empty with { Symbol = symbol.Name, OrderId = 123, Price = 1100m, ExecutedQuantity = 1000m, Side = OrderSide.Buy },
-                OrderQueryResult.Empty with { Symbol = symbol.Name, OrderId = 124, Price = 1000m, ExecutedQuantity = 1000m, Side = OrderSide.Buy },
+                Position.Empty with { Symbol = symbol.Name, OrderId = 123, Price = 1100m, Quantity = 1000m },
+                Position.Empty with { Symbol = symbol.Name, OrderId = 124, Price = 1000m, Quantity = 1000m },
             });
 
             var executor = new AveragingSellExecutor(logger);
@@ -66,7 +66,7 @@ namespace Outcompute.Trader.Trading.Tests
                 {
                     new SymbolData(symbol.Name)
                     {
-                        AutoPosition = AutoPosition.Empty with { Orders = orders },
+                        AutoPosition = AutoPosition.Empty with { Positions = positions },
                         Ticker = new MiniTicker(symbol.Name, DateTime.Today, 1200, 0, 0, 0, 0, 0),
                         Spot =
                         {

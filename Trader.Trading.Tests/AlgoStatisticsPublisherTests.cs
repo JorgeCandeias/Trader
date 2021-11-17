@@ -44,11 +44,11 @@ namespace Outcompute.Trader.Trading.Tests
                 .Verifiable();
 
             var publisher = new AlgoStatisticsPublisher(logger, factory, balances, savings, swaps);
-            var order = OrderQueryResult.Empty with { Symbol = symbol.Name, OrderId = 123, ExecutedQuantity = 10, Price = 100 };
+            var position = Position.Empty with { Symbol = symbol.Name, OrderId = 123, Quantity = 10, Price = 100 };
             var significant = AutoPosition.Empty with
             {
                 Symbol = symbol,
-                Orders = ImmutableSortedSet.Create(order)
+                Positions = ImmutableSortedSet.Create(position)
             };
             var ticker = MiniTicker.Empty with { Symbol = "ABCXYZ" };
 

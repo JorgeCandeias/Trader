@@ -3,9 +3,6 @@ using Moq;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Providers;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
@@ -48,7 +45,7 @@ namespace Outcompute.Trader.Trading.Tests
             // assert
             Assert.NotNull(result);
             Assert.Equal(symbol, result.Symbol);
-            Assert.Empty(result.Orders);
+            Assert.Empty(result.Positions);
             Assert.Empty(result.ProfitEvents);
             Assert.Empty(result.CommissionEvents);
         }
@@ -122,7 +119,7 @@ namespace Outcompute.Trader.Trading.Tests
             // assert
             Assert.NotNull(result);
             Assert.Equal(symbol, result.Symbol);
-            Assert.Empty(result.Orders);
+            Assert.Empty(result.Positions);
             Assert.Collection(result.ProfitEvents, x => Assert.Equal(10m, x.Quantity));
             Assert.Collection(result.CommissionEvents,
                 x => Assert.Equal(0m, x.Commission),

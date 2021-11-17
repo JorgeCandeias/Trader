@@ -112,7 +112,7 @@ internal sealed partial class ValueAveragingAlgo : Algo
         return IsSellingEnabled() && IsPositionNonEmpty() && IsTickerBelowTrailingStopLoss();
     }
 
-    private bool IsPositionNonEmpty() => Context.AutoPosition.Orders.Count > 0;
+    private bool IsPositionNonEmpty() => Context.AutoPosition.Positions.Count > 0;
 
     private bool IsSequentialBuyAllowed()
     {
@@ -121,7 +121,7 @@ internal sealed partial class ValueAveragingAlgo : Algo
             return true;
         }
 
-        if (Context.AutoPosition.Orders.Count >= _options.MaxPositions)
+        if (Context.AutoPosition.Positions.Count >= _options.MaxPositions)
         {
             LogReachedMaxSequentialBuys(TypeName, Context.Name, _options.MaxPositions.Value);
             return false;
@@ -153,14 +153,14 @@ internal sealed partial class ValueAveragingAlgo : Algo
     private bool IsCooled()
     {
         // skip this rule if there are no positions
-        if (Context.AutoPosition.Orders.Count == 0)
+        if (Context.AutoPosition.Positions.Count == 0)
         {
             return true;
         }
 
-        var indicator = Context.AutoPosition.Orders.Max!.Time.Add(_options.CooldownPeriod) < _clock.UtcNow;
+        var indicator = Context.AutoPosition.Positions.Max!.Time.Add(_options.CooldownPeriod) < _clock.UtcNow;
 
-        LogCooldownPeriod(TypeName, Context.Name, _options.CooldownPeriod, Context.AutoPosition.Orders.Max.Time, indicator);
+        LogCooldownPeriod(TypeName, Context.Name, _options.CooldownPeriod, Context.AutoPosition.Positions.Max.Time, indicator);
 
         return indicator;
     }
@@ -221,12 +221,12 @@ internal sealed partial class ValueAveragingAlgo : Algo
 
     private bool IsTickerAboveTakeProfitRate()
     {
-        if (Context.AutoPosition.Orders.Count == 0)
+        if (Context.AutoPosition.Positions.Count == 0)
         {
             return false;
         }
 
-        var avgPrice = Context.AutoPosition.Orders.Sum(x => x.Price * x.ExecutedQuantity) / Context.AutoPosition.Orders.Sum(x => x.ExecutedQuantity);
+        var avgPrice = Context.AutoPosition.Positions.Sum(x => x.Price * x.Quantity) / Context.AutoPosition.Positions.Sum(x => x.Quantity);
         var takePrice = avgPrice * _options.TakeProfitRate;
 
         if (Context.Ticker.ClosePrice >= takePrice)
@@ -241,19 +241,19 @@ internal sealed partial class ValueAveragingAlgo : Algo
 
     private bool IsTickerBelowTrailingStopLoss()
     {
-        if (Context.AutoPosition.Orders.Count == 0)
+        if (Context.AutoPosition.Positions.Count == 0)
         {
             return false;
         }
 
         // calculate fixed trailing stop loss based on the last position
-        var last = Context.AutoPosition.Orders.Max!.Price;
+        var last = Context.AutoPosition.Positions.Max!.Price;
         var stop = last * _options.TrailingStopLossRate;
 
         // calculate elastic stop loss if avg position is lower than the last position
         if (_options.ElasticStopLossEnabled)
         {
-            var avg = Context.AutoPosition.Orders.Sum(x => x.Price * x.ExecutedQuantity) / Context.AutoPosition.Orders.Sum(x => x.ExecutedQuantity);
+            var avg = Context.AutoPosition.Positions.Sum(x => x.Price * x.Quantity) / Context.AutoPosition.Positions.Sum(x => x.Quantity);
             if (avg < last)
             {
                 var mid = avg + ((last - avg) / 2M);

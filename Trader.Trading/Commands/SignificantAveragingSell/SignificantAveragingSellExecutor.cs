@@ -39,7 +39,7 @@ internal partial class SignificantAveragingSellExecutor : IAlgoCommandExecutor<S
     {
         // get context info for the command symbol
         var data = context.Data[command.Symbol.Name];
-        var positions = data.AutoPosition.Orders;
+        var positions = data.AutoPosition.Positions;
         var ticker = data.Ticker;
         var spots = data.Spot;
         var savings = data.Savings;
@@ -63,8 +63,8 @@ internal partial class SignificantAveragingSellExecutor : IAlgoCommandExecutor<S
         var quantity = 0M;
         foreach (var position in positions)
         {
-            numerator += position.Price * position.ExecutedQuantity;
-            quantity += position.ExecutedQuantity;
+            numerator += position.Price * position.Quantity;
+            quantity += position.Quantity;
             count++;
         }
 
@@ -77,8 +77,8 @@ internal partial class SignificantAveragingSellExecutor : IAlgoCommandExecutor<S
             foreach (var position in positions)
             {
                 // remove this order from the trailing average
-                numerator -= position.Price * position.ExecutedQuantity;
-                quantity -= position.ExecutedQuantity;
+                numerator -= position.Price * position.Quantity;
+                quantity -= position.Quantity;
                 count--;
 
                 // if this was the last order then give up
@@ -108,7 +108,7 @@ internal partial class SignificantAveragingSellExecutor : IAlgoCommandExecutor<S
         // log details on the orders elected
         foreach (var position in positions.TakeLast(count))
         {
-            LogElectedOrder(TypeName, command.Symbol.Name, position.OrderId, position.ExecutedQuantity, command.Symbol.BaseAsset, position.Price, command.Symbol.QuoteAsset);
+            LogElectedOrder(TypeName, command.Symbol.Name, position.OrderId, position.Quantity, command.Symbol.BaseAsset, position.Price, command.Symbol.QuoteAsset);
         }
         LogElectedOrders(TypeName, command.Symbol.Name, count, quantity, command.Symbol.BaseAsset, averagePrice, command.Symbol.QuoteAsset);
 

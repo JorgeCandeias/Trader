@@ -41,7 +41,7 @@ internal partial class AveragingSellExecutor : IAlgoCommandExecutor<AveragingSel
     {
         // get context data for the command symbol
         var data = context.Data[command.Symbol.Name];
-        var positions = data.AutoPosition.Orders;
+        var positions = data.AutoPosition.Positions;
         var spots = data.Spot;
         var savings = data.Savings;
         var swaps = data.SwapPools;
@@ -52,8 +52,8 @@ internal partial class AveragingSellExecutor : IAlgoCommandExecutor<AveragingSel
         var notional = 0M;
         foreach (var position in positions)
         {
-            quantity += position.ExecutedQuantity;
-            notional += position.ExecutedQuantity * position.Price;
+            quantity += position.Quantity;
+            notional += position.Quantity * position.Price;
         }
         var price = notional / quantity;
 

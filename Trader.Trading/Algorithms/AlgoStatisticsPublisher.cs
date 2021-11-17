@@ -36,11 +36,11 @@ internal partial class AlgoStatisticsPublisher : IAlgoStatisticsPublisher
     {
         LogTicker(TypeName, ticker.Symbol, ticker.ClosePrice);
 
-        if (significant.Orders.Count > 0)
+        if (significant.Positions.Count > 0)
         {
-            var quantity = significant.Orders.Sum(x => x.ExecutedQuantity);
+            var quantity = significant.Positions.Sum(x => x.Quantity);
 
-            var total = significant.Orders.Sum(x => x.Price * x.ExecutedQuantity);
+            var total = significant.Positions.Sum(x => x.Price * x.Quantity);
 
             var avg = total / quantity;
 

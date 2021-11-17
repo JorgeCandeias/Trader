@@ -30,7 +30,7 @@ namespace Outcompute.Trader.Trading.Tests
                 Symbol = symbol.Name,
                 ClosePrice = 50000
             };
-            var orders = ImmutableSortedSet<OrderQueryResult>.Empty;
+            var positions = ImmutableSortedSet<Position>.Empty;
 
             var logger = NullLogger<SignificantAveragingSellExecutor>.Instance;
             var executor = new SignificantAveragingSellExecutor(logger);
@@ -45,7 +45,7 @@ namespace Outcompute.Trader.Trading.Tests
                 {
                     new SymbolData(symbol.Name)
                     {
-                        AutoPosition = AutoPosition.Empty with { Orders = orders },
+                        AutoPosition = AutoPosition.Empty with { Positions = positions },
                         Ticker = ticker
                     }
                 }
@@ -92,13 +92,12 @@ namespace Outcompute.Trader.Trading.Tests
                 Symbol = symbol.Name,
                 ClosePrice = 50000
             };
-            var orders = ImmutableSortedSet.Create(OrderQueryResult.KeyComparer, new[]
+            var positions = ImmutableSortedSet.Create(PositionKeyComparer.Default, new[]
             {
-                OrderQueryResult.Empty with
+                Position.Empty with
                 {
                     Symbol = symbol.Name,
-                    Side = OrderSide.Buy,
-                    ExecutedQuantity = 100m,
+                    Quantity = 100m,
                     Price = 60000m
                 }
             });
@@ -109,7 +108,7 @@ namespace Outcompute.Trader.Trading.Tests
                 {
                     new SymbolData(symbol.Name)
                     {
-                        AutoPosition = AutoPosition.Empty with { Orders = orders },
+                        AutoPosition = AutoPosition.Empty with { Positions = positions },
                         Ticker = ticker
                     }
                 }
@@ -162,20 +161,18 @@ namespace Outcompute.Trader.Trading.Tests
                 ClosePrice = 50000
             };
 
-            var orders = ImmutableSortedSet.Create(OrderQueryResult.KeyComparer, new[]
+            var positions = ImmutableSortedSet.Create(PositionKeyComparer.Default, new[]
             {
-                OrderQueryResult.Empty with
+                Position.Empty with
                 {
                     Symbol = symbol.Name,
-                    Side = OrderSide.Buy,
-                    ExecutedQuantity = 100m,
+                    Quantity = 100m,
                     Price = 50000m
                 },
-                OrderQueryResult.Empty with
+                Position.Empty with
                 {
                     Symbol = symbol.Name,
-                    Side = OrderSide.Buy,
-                    ExecutedQuantity = 100m,
+                    Quantity = 100m,
                     Price = 40000m
                 }
             });
@@ -187,7 +184,7 @@ namespace Outcompute.Trader.Trading.Tests
                 {
                     new SymbolData(symbol.Name)
                     {
-                        AutoPosition = AutoPosition.Empty with { Orders = orders },
+                        AutoPosition = AutoPosition.Empty with { Positions = positions },
                         Ticker = ticker
                     }
                 }
@@ -245,20 +242,18 @@ namespace Outcompute.Trader.Trading.Tests
                 ClosePrice = 50000
             };
 
-            var orders = ImmutableSortedSet.Create(OrderQueryResult.KeyComparer, new[]
+            var positions = ImmutableSortedSet.Create(PositionKeyComparer.Default, new[]
             {
-                OrderQueryResult.Empty with
+                Position.Empty with
                 {
                     Symbol = symbol.Name,
-                    Side = OrderSide.Buy,
-                    ExecutedQuantity = 100m,
+                    Quantity = 100m,
                     Price = 50000m
                 },
-                OrderQueryResult.Empty with
+                Position.Empty with
                 {
                     Symbol = symbol.Name,
-                    Side = OrderSide.Buy,
-                    ExecutedQuantity = 100m,
+                    Quantity = 100m,
                     Price = 40000m
                 }
             });
@@ -270,7 +265,7 @@ namespace Outcompute.Trader.Trading.Tests
                 {
                     new SymbolData(symbol.Name)
                     {
-                        AutoPosition = AutoPosition.Empty with { Orders = orders },
+                        AutoPosition = AutoPosition.Empty with { Positions = positions },
                         Ticker = ticker
                     }
                 }
@@ -331,22 +326,20 @@ namespace Outcompute.Trader.Trading.Tests
                 ClosePrice = 50000
             };
 
-            var orders = ImmutableSortedSet.Create(OrderQueryResult.KeyComparer, new[]
+            var positions = ImmutableSortedSet.Create(PositionKeyComparer.Default, new[]
             {
-                OrderQueryResult.Empty with
+                Position.Empty with
                 {
                     Symbol = symbol.Name,
                     OrderId = 1,
-                    Side = OrderSide.Buy,
-                    ExecutedQuantity = 100m,
+                    Quantity = 100m,
                     Price = 50000m
                 },
-                OrderQueryResult.Empty with
+                Position.Empty with
                 {
                     Symbol = symbol.Name,
                     OrderId = 2,
-                    Side = OrderSide.Buy,
-                    ExecutedQuantity = 100m,
+                    Quantity = 100m,
                     Price = 40000m
                 }
             });
@@ -358,7 +351,7 @@ namespace Outcompute.Trader.Trading.Tests
                 {
                     new SymbolData(symbol.Name)
                     {
-                        AutoPosition = AutoPosition.Empty with { Orders = orders },
+                        AutoPosition = AutoPosition.Empty with { Positions = positions },
                         Ticker = ticker,
                         Spot =
                         {

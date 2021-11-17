@@ -44,7 +44,7 @@ public partial class PortfolioAlgo : Algo
         var lastRsi = decimal.MaxValue;
 
         // evaluate all symbols with no positions
-        foreach (var item in Context.Data.Where(x => x.AutoPosition.Orders.Count == 0))
+        foreach (var item in Context.Data.Where(x => x.AutoPosition.Positions.Count == 0))
         {
             // evaluate the rsi for the symbol
             var rsi = item.Klines.LastRsi(x => x.ClosePrice, _options.Rsi.Periods);
@@ -73,17 +73,17 @@ public partial class PortfolioAlgo : Algo
         var cooldown = _clock.UtcNow.Subtract(_options.Cooldown);
 
         // evaluate symbols with at least one position
-        foreach (var item in Context.Data.Where(x => x.AutoPosition.Orders.Count > 0))
+        foreach (var item in Context.Data.Where(x => x.AutoPosition.Positions.Count > 0))
         {
             // skip symbols on cooldown
-            if (item.AutoPosition.Orders.Max!.Time >= cooldown)
+            if (item.AutoPosition.Positions.Max!.Time >= cooldown)
             {
                 continue;
             }
 
             // evaluate pnl
-            var cost = item.AutoPosition.Orders.Sum(x => x.ExecutedQuantity * x.Price);
-            var pv = item.AutoPosition.Orders.Sum(x => x.ExecutedQuantity * item.Ticker.ClosePrice);
+            var cost = item.AutoPosition.Positions.Sum(x => x.Quantity * x.Price);
+            var pv = item.AutoPosition.Positions.Sum(x => x.Quantity * item.Ticker.ClosePrice);
             var absPnL = pv - cost;
             var relPnL = absPnL / cost;
 

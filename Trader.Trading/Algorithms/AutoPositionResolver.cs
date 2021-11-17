@@ -108,29 +108,14 @@ internal partial class AutoPositionResolver : IAutoPositionResolver
         var significant = subjects.Segment
             .Where(x => x.Order.Side == OrderSide.Buy && x.RemainingExecutedQuantity > 0m)
             .GroupBy(x => x.Order)
-            .Select(x => new OrderQueryResult(
+            .Select(x => new Position(
                 x.Key.Symbol,
                 x.Key.OrderId,
-                x.Key.OrderListId,
-                x.Key.ClientOrderId,
-
                 // market orders will have the price set to zero so we must derive the average from the executed trades
                 x.Key.Price is 0 ? x.Sum(y => y.Trade.Price * y.Trade.Quantity) / x.Sum(y => y.Trade.Quantity) : x.Key.Price,
-
-                x.Key.OriginalQuantity,
                 x.Sum(y => y.RemainingExecutedQuantity),
-                x.Key.CummulativeQuoteQuantity,
-                x.Key.Status,
-                x.Key.TimeInForce,
-                x.Key.Type,
-                x.Key.Side,
-                x.Key.StopPrice,
-                x.Key.IcebergQuantity,
-                x.Key.Time,
-                x.Key.UpdateTime,
-                x.Key.IsWorking,
-                x.Key.OriginalQuoteOrderQuantity))
-            .ToImmutableSortedSet(OrderQueryResult.KeyComparer);
+                x.Key.Time))
+            .ToImmutableSortedSet(PositionKeyComparer.Default);
 
         LogIdentifiedPositions(TypeName, symbol.Name, significant.Count, watch.ElapsedMilliseconds);
 

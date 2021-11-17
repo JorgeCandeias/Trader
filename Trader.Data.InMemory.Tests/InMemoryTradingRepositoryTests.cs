@@ -76,8 +76,13 @@ public class InMemoryTradingRepositoryTests
         var end = DateTime.Today;
         var kline = Kline.Empty with { Symbol = symbol, Interval = interval, OpenTime = DateTime.Today };
         var klines = ImmutableSortedSet.Create(KlineComparer.Key, kline);
-        var factory = Mock.Of<IGrainFactory>(x =>
-            x.GetGrain<IInMemoryTradingRepositoryGrain>(Guid.Empty, null).GetKlinesAsync(symbol, interval) == ValueTask.FromResult(klines));
+
+        var factory = Mock.Of<IGrainFactory>();
+        Mock.Get(factory)
+            .Setup(x => x.GetGrain<IInMemoryTradingRepositoryGrain>(Guid.Empty, null).GetKlinesAsync(symbol, interval))
+            .ReturnsAsync(klines)
+            .Verifiable();
+
         var repository = new InMemoryTradingRepository(factory);
 
         // act
@@ -85,6 +90,7 @@ public class InMemoryTradingRepositoryTests
 
         // arrange
         Assert.Collection(result, x => Assert.Equal(kline, x));
+        Mock.Get(factory).VerifyAll();
     }
 
     [Fact]
@@ -247,8 +253,13 @@ public class InMemoryTradingRepositoryTests
         // arrange
         var asset = "ABC";
         var balance = Balance.Zero(asset);
-        var factory = Mock.Of<IGrainFactory>(x =>
-            x.GetGrain<IInMemoryTradingRepositoryGrain>(Guid.Empty, null).TryGetBalanceAsync(asset) == ValueTask.FromResult(balance));
+
+        var factory = Mock.Of<IGrainFactory>();
+        Mock.Get(factory)
+            .Setup(x => x.GetGrain<IInMemoryTradingRepositoryGrain>(Guid.Empty, null).TryGetBalanceAsync(asset))
+            .ReturnsAsync(balance)
+            .Verifiable();
+
         var repository = new InMemoryTradingRepository(factory);
 
         // act
@@ -256,5 +267,6 @@ public class InMemoryTradingRepositoryTests
 
         // arrange
         Assert.Same(balance, result);
+        Mock.Get(factory).VerifyAll();
     }
 }

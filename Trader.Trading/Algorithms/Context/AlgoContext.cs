@@ -33,8 +33,6 @@ internal class AlgoContext : IAlgoContext
 
     public ExchangeInfo Exchange { get; set; } = ExchangeInfo.Empty;
 
-    public IDictionary<string, AutoPosition> AutoPositions { get; } = new Dictionary<string, AutoPosition>();
-
     public IDictionary<string, MiniTicker> Tickers { get; } = new Dictionary<string, MiniTicker>();
 
     public IDictionary<string, SymbolSpotBalances> SpotBalances { get; } = new Dictionary<string, SymbolSpotBalances>();
@@ -50,6 +48,8 @@ internal class AlgoContext : IAlgoContext
     public IReadOnlyList<Kline> Klines => KlineLookup[(Symbol.Name, KlineInterval)];
 
     public IDictionary<(string Symbol, KlineInterval Interval), IReadOnlyList<Kline>> KlineLookup { get; } = new Dictionary<(string Symbol, KlineInterval Interval), IReadOnlyList<Kline>>();
+
+    public SymbolDataCollection Data { get; } = new SymbolDataCollection();
 
     public async ValueTask UpdateAsync(CancellationToken cancellationToken = default)
     {

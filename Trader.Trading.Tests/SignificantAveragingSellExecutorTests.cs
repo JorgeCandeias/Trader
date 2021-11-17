@@ -44,11 +44,11 @@ namespace Outcompute.Trader.Trading.Tests
                 Tickers = { [symbol.Name] = ticker },
                 SpotBalances = { [symbol.Name] = new SymbolSpotBalances() },
                 SavingsBalances = { [symbol.Name] = SymbolSavingsBalances.Empty },
-                AutoPositions =
+                Data =
                 {
-                    [symbol.Name] = AutoPosition.Empty with
+                    new SymbolData(symbol.Name)
                     {
-                        Orders = orders
+                        AutoPosition = AutoPosition.Empty with { Orders = orders }
                     }
                 }
             };
@@ -94,7 +94,7 @@ namespace Outcompute.Trader.Trading.Tests
                 Symbol = symbol.Name,
                 ClosePrice = 50000
             };
-            var orders = new[]
+            var orders = ImmutableSortedSet.Create(OrderQueryResult.KeyComparer, new[]
             {
                 OrderQueryResult.Empty with
                 {
@@ -103,18 +103,18 @@ namespace Outcompute.Trader.Trading.Tests
                     ExecutedQuantity = 100m,
                     Price = 60000m
                 }
-            };
+            });
             var context = new AlgoContext("Algo1", provider)
             {
                 Symbols = { [symbol.Name] = symbol },
                 SpotBalances = { [symbol.Name] = new SymbolSpotBalances() },
                 SavingsBalances = { [symbol.Name] = SymbolSavingsBalances.Empty },
                 Tickers = { [symbol.Name] = ticker },
-                AutoPositions =
+                Data =
                 {
-                    [symbol.Name] = AutoPosition.Empty with
+                    new SymbolData(symbol.Name)
                     {
-                        Orders = orders.ToImmutableSortedSet()
+                        AutoPosition = AutoPosition.Empty with { Orders = orders }
                     }
                 }
             };
@@ -165,7 +165,8 @@ namespace Outcompute.Trader.Trading.Tests
                 Symbol = symbol.Name,
                 ClosePrice = 50000
             };
-            var orders = new[]
+
+            var orders = ImmutableSortedSet.Create(OrderQueryResult.KeyComparer, new[]
             {
                 OrderQueryResult.Empty with
                 {
@@ -181,7 +182,7 @@ namespace Outcompute.Trader.Trading.Tests
                     ExecutedQuantity = 100m,
                     Price = 40000m
                 }
-            };
+            });
 
             var context = new AlgoContext("Algo1", provider)
             {
@@ -189,11 +190,11 @@ namespace Outcompute.Trader.Trading.Tests
                 Tickers = { [symbol.Name] = ticker },
                 SpotBalances = { [symbol.Name] = new SymbolSpotBalances() },
                 SavingsBalances = { [symbol.Name] = SymbolSavingsBalances.Empty },
-                AutoPositions =
+                Data =
                 {
-                    [symbol.Name] = AutoPosition.Empty with
+                    new SymbolData(symbol.Name)
                     {
-                        Orders = orders.ToImmutableSortedSet(OrderQueryResult.KeyComparer)
+                        AutoPosition = AutoPosition.Empty with { Orders = orders }
                     }
                 }
             };
@@ -249,7 +250,8 @@ namespace Outcompute.Trader.Trading.Tests
                 Symbol = symbol.Name,
                 ClosePrice = 50000
             };
-            var orders = new[]
+
+            var orders = ImmutableSortedSet.Create(OrderQueryResult.KeyComparer, new[]
             {
                 OrderQueryResult.Empty with
                 {
@@ -265,7 +267,7 @@ namespace Outcompute.Trader.Trading.Tests
                     ExecutedQuantity = 100m,
                     Price = 40000m
                 }
-            };
+            });
 
             var context = new AlgoContext("Algo1", provider)
             {
@@ -273,11 +275,11 @@ namespace Outcompute.Trader.Trading.Tests
                 Tickers = { [symbol.Name] = ticker },
                 SpotBalances = { [symbol.Name] = new SymbolSpotBalances() },
                 SavingsBalances = { [symbol.Name] = SymbolSavingsBalances.Empty },
-                AutoPositions =
+                Data =
                 {
-                    [symbol.Name] = AutoPosition.Empty with
+                    new SymbolData(symbol.Name)
                     {
-                        Orders = orders.ToImmutableSortedSet(OrderQueryResult.KeyComparer)
+                        AutoPosition = AutoPosition.Empty with { Orders = orders }
                     }
                 }
             };
@@ -336,6 +338,7 @@ namespace Outcompute.Trader.Trading.Tests
                 Symbol = symbol.Name,
                 ClosePrice = 50000
             };
+
             var orders = ImmutableSortedSet.Create(OrderQueryResult.KeyComparer, new[]
             {
                 OrderQueryResult.Empty with
@@ -360,11 +363,11 @@ namespace Outcompute.Trader.Trading.Tests
             {
                 Symbols = { [symbol.Name] = symbol },
                 Tickers = { [symbol.Name] = ticker },
-                AutoPositions =
+                Data =
                 {
-                    [symbol.Name] = AutoPosition.Empty with
+                    new SymbolData(symbol.Name)
                     {
-                        Orders = orders
+                        AutoPosition = AutoPosition.Empty with { Orders = orders }
                     }
                 },
                 SpotBalances =

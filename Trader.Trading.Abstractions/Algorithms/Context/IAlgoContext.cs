@@ -1,5 +1,6 @@
 ﻿using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
+using System.Collections.ObjectModel;
 
 namespace Outcompute.Trader.Trading.Algorithms.Context;
 
@@ -49,12 +50,7 @@ public interface IAlgoContext
     /// The current auto calculated positions for the default symbol.
     /// This is only populated if the default symbol is defined.
     /// </summary>
-    AutoPosition AutoPosition => AutoPositions[Symbol.Name];
-
-    /// <summary>
-    /// The current auto calculated positions for all configured symbols.
-    /// </summary>
-    IDictionary<string, AutoPosition> AutoPositions { get; }
+    AutoPosition AutoPosition => Data[Symbol.Name].AutoPosition;
 
     /// <summary>
     /// The current ticker for the default symbol.
@@ -125,9 +121,56 @@ public interface IAlgoContext
     IDictionary<(string Symbol, KlineInterval Interval), IReadOnlyList<Kline>> KlineLookup { get; }
 
     /// <summary>
+    /// Gets context data for each declared symbol.
+    /// </summary>
+    SymbolDataCollection Data { get; }
+
+    /// <summary>
     /// Makes the context self-update to the latest data.
     /// </summary>
     ValueTask UpdateAsync(CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// Organizes multiple shards of data for each symbol.
+/// </summary>
+public class SymbolDataCollection : KeyedCollection<string, SymbolData>
+{
+    protected override string GetKeyForItem(SymbolData item)
+    {
+        if (item is null) throw new ArgumentNullException(nameof(item));
+
+        return item.Name;
+    }
+
+    public SymbolData GetOrAdd(string key)
+    {
+        if (TryGetValue(key, out var item))
+        {
+            return item;
+        }
+
+        item = new SymbolData(key);
+
+        Add(item);
+
+        return item;
+    }
+}
+
+/// <summary>
+/// Organizes multiple shards of data for a given symbol.
+/// </summary>
+public class SymbolData
+{
+    public SymbolData(string name)
+    {
+        Name = name ?? throw new ArgumentNullException(nameof(name));
+    }
+
+    public string Name { get; }
+
+    public AutoPosition AutoPosition { get; set; } = AutoPosition.Empty;
 }
 
 public record SymbolSavingsBalances(string Symbol, SavingsBalance BaseAsset, SavingsBalance QuoteAsset)

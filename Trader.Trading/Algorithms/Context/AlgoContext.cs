@@ -37,7 +37,7 @@ internal class AlgoContext : IAlgoContext
 
     public MiniTicker Ticker => Data[Symbol.Name].Ticker;
 
-    public SymbolSpotBalances SpotBalance => Data[Symbol.Name].Spot;
+    public SymbolSpotBalances Spot => Data[Symbol.Name].Spot;
 
     public IDictionary<string, SymbolSavingsBalances> SavingsBalances { get; set; } = new Dictionary<string, SymbolSavingsBalances>();
 

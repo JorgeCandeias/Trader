@@ -59,7 +59,7 @@ public interface IAlgoContext
     /// <summary>
     /// The current spot balance for the assets of the default symbol.
     /// </summary>
-    SymbolSpotBalances SpotBalance { get; }
+    SymbolSpotBalances Spot { get; }
 
     /// <summary>
     /// The current savings balances for the assets of the default symbol.
@@ -165,16 +165,16 @@ public class SymbolData
     public SymbolSpotBalances Spot { get; } = new SymbolSpotBalances();
 }
 
-public record SymbolSavingsBalances(string Symbol, SavingsBalance BaseAsset, SavingsBalance QuoteAsset)
-{
-    public static SymbolSavingsBalances Empty { get; } = new SymbolSavingsBalances(string.Empty, SavingsBalance.Empty, SavingsBalance.Empty);
-}
-
 public class SymbolSpotBalances
 {
     public Balance BaseAsset { get; set; } = Balance.Empty;
 
     public Balance QuoteAsset { get; set; } = Balance.Empty;
+}
+
+public record SymbolSavingsBalances(string Symbol, SavingsBalance BaseAsset, SavingsBalance QuoteAsset)
+{
+    public static SymbolSavingsBalances Empty { get; } = new SymbolSavingsBalances(string.Empty, SavingsBalance.Empty, SavingsBalance.Empty);
 }
 
 public class SymbolSwapPoolAssetBalances

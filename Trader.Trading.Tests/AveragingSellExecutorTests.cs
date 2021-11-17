@@ -75,12 +75,12 @@ namespace Outcompute.Trader.Trading.Tests
                     BaseAsset = SavingsBalance.Zero(symbol.BaseAsset),
                     QuoteAsset = SavingsBalance.Zero(symbol.QuoteAsset)
                 } },
-                Tickers = { [symbol.Name] = new MiniTicker(symbol.Name, DateTime.Today, 1200, 0, 0, 0, 0, 0) },
                 Data =
                 {
                     new SymbolData(symbol.Name)
                     {
-                        AutoPosition = AutoPosition.Empty with { Orders = orders }
+                        AutoPosition = AutoPosition.Empty with { Orders = orders },
+                        Ticker = new MiniTicker(symbol.Name, DateTime.Today, 1200, 0, 0, 0, 0, 0)
                     }
                 }
             };

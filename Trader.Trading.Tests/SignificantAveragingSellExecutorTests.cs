@@ -41,14 +41,14 @@ namespace Outcompute.Trader.Trading.Tests
             var context = new AlgoContext("Algo1", provider)
             {
                 Symbols = { [symbol.Name] = symbol },
-                Tickers = { [symbol.Name] = ticker },
                 SpotBalances = { [symbol.Name] = new SymbolSpotBalances() },
                 SavingsBalances = { [symbol.Name] = SymbolSavingsBalances.Empty },
                 Data =
                 {
                     new SymbolData(symbol.Name)
                     {
-                        AutoPosition = AutoPosition.Empty with { Orders = orders }
+                        AutoPosition = AutoPosition.Empty with { Orders = orders },
+                        Ticker = ticker
                     }
                 }
             };
@@ -109,12 +109,12 @@ namespace Outcompute.Trader.Trading.Tests
                 Symbols = { [symbol.Name] = symbol },
                 SpotBalances = { [symbol.Name] = new SymbolSpotBalances() },
                 SavingsBalances = { [symbol.Name] = SymbolSavingsBalances.Empty },
-                Tickers = { [symbol.Name] = ticker },
                 Data =
                 {
                     new SymbolData(symbol.Name)
                     {
-                        AutoPosition = AutoPosition.Empty with { Orders = orders }
+                        AutoPosition = AutoPosition.Empty with { Orders = orders },
+                        Ticker = ticker
                     }
                 }
             };
@@ -187,14 +187,14 @@ namespace Outcompute.Trader.Trading.Tests
             var context = new AlgoContext("Algo1", provider)
             {
                 Symbols = { [symbol.Name] = symbol },
-                Tickers = { [symbol.Name] = ticker },
                 SpotBalances = { [symbol.Name] = new SymbolSpotBalances() },
                 SavingsBalances = { [symbol.Name] = SymbolSavingsBalances.Empty },
                 Data =
                 {
                     new SymbolData(symbol.Name)
                     {
-                        AutoPosition = AutoPosition.Empty with { Orders = orders }
+                        AutoPosition = AutoPosition.Empty with { Orders = orders },
+                        Ticker = ticker
                     }
                 }
             };
@@ -272,14 +272,14 @@ namespace Outcompute.Trader.Trading.Tests
             var context = new AlgoContext("Algo1", provider)
             {
                 Symbols = { [symbol.Name] = symbol },
-                Tickers = { [symbol.Name] = ticker },
                 SpotBalances = { [symbol.Name] = new SymbolSpotBalances() },
                 SavingsBalances = { [symbol.Name] = SymbolSavingsBalances.Empty },
                 Data =
                 {
                     new SymbolData(symbol.Name)
                     {
-                        AutoPosition = AutoPosition.Empty with { Orders = orders }
+                        AutoPosition = AutoPosition.Empty with { Orders = orders },
+                        Ticker = ticker
                     }
                 }
             };
@@ -362,12 +362,12 @@ namespace Outcompute.Trader.Trading.Tests
             var context = new AlgoContext("Algo1", provider)
             {
                 Symbols = { [symbol.Name] = symbol },
-                Tickers = { [symbol.Name] = ticker },
                 Data =
                 {
                     new SymbolData(symbol.Name)
                     {
-                        AutoPosition = AutoPosition.Empty with { Orders = orders }
+                        AutoPosition = AutoPosition.Empty with { Orders = orders },
+                        Ticker = ticker
                     }
                 },
                 SpotBalances =

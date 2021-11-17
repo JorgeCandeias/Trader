@@ -45,7 +45,7 @@ internal partial class AveragingSellExecutor : IAlgoCommandExecutor<AveragingSel
         var spots = context.SpotBalances[command.Symbol.Name];
         var savings = context.SavingsBalances[command.Symbol.Name];
         var swaps = context.SwapPoolBalances[command.Symbol.Name];
-        var ticker = context.Tickers[command.Symbol.Name];
+        var ticker = data.Ticker;
 
         // loop the orders only once and calculate all required stats up front
         var quantity = 0M;

@@ -23,7 +23,8 @@ internal partial class MarketSellCommandExecutor : IAlgoCommandExecutor<MarketSe
     public async ValueTask ExecuteAsync(IAlgoContext context, MarketSellCommand command, CancellationToken cancellationToken = default)
     {
         // get context data for the command symbol
-        var ticker = context.Tickers[command.Symbol.Name];
+        var data = context.Data[command.Symbol.Name];
+        var ticker = data.Ticker;
         var spots = context.SpotBalances[command.Symbol.Name];
         var savings = context.SavingsBalances[command.Symbol.Name];
         var swaps = context.SwapPoolBalances[command.Symbol.Name];

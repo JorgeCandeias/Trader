@@ -48,20 +48,13 @@ public interface IAlgoContext
 
     /// <summary>
     /// The current auto calculated positions for the default symbol.
-    /// This is only populated if the default symbol is defined.
     /// </summary>
-    AutoPosition AutoPosition => Data[Symbol.Name].AutoPosition;
+    AutoPosition AutoPosition { get; }
 
     /// <summary>
     /// The current ticker for the default symbol.
-    /// This is only populated if the default symbol is defined.
     /// </summary>
-    MiniTicker Ticker => Tickers[Symbol.Name];
-
-    /// <summary>
-    /// The current tickers for all configured symbols.
-    /// </summary>
-    IDictionary<string, MiniTicker> Tickers { get; }
+    MiniTicker Ticker { get; }
 
     /// <summary>
     /// The current spot balance for the assets of the default symbol.
@@ -171,6 +164,8 @@ public class SymbolData
     public string Name { get; }
 
     public AutoPosition AutoPosition { get; set; } = AutoPosition.Empty;
+
+    public MiniTicker Ticker { get; set; } = MiniTicker.Empty;
 }
 
 public record SymbolSavingsBalances(string Symbol, SavingsBalance BaseAsset, SavingsBalance QuoteAsset)

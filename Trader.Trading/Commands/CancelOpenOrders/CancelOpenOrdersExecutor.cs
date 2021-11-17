@@ -16,7 +16,7 @@ internal class CancelOpenOrdersExecutor : IAlgoCommandExecutor<CancelOpenOrdersC
 
     public async ValueTask ExecuteAsync(IAlgoContext context, CancelOpenOrdersCommand command, CancellationToken cancellationToken = default)
     {
-        var ticker = context.Tickers[command.Symbol.Name];
+        var ticker = context.Data[command.Symbol.Name].Ticker;
 
         var orders = await _orders
             .GetOrdersByFilterAsync(command.Symbol.Name, command.Side, true, null, cancellationToken)

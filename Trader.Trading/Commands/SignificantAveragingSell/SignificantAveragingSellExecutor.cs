@@ -40,7 +40,7 @@ internal partial class SignificantAveragingSellExecutor : IAlgoCommandExecutor<S
         // get context info for the command symbol
         var data = context.Data[command.Symbol.Name];
         var positions = data.AutoPosition.Orders;
-        var ticker = context.Tickers[command.Symbol.Name];
+        var ticker = data.Ticker;
         var spots = context.SpotBalances[command.Symbol.Name];
         var savings = context.SavingsBalances[command.Symbol.Name];
         var swaps = context.SwapPoolBalances[command.Symbol.Name];

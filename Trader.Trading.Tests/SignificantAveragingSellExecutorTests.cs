@@ -43,7 +43,7 @@ namespace Outcompute.Trader.Trading.Tests
                 Symbols = { [symbol.Name] = symbol },
                 Tickers = { [symbol.Name] = ticker },
                 SpotBalances = { [symbol.Name] = SymbolSpotBalances.Empty },
-                Savings = { [symbol.Name] = SymbolSavingsBalances.Empty },
+                SavingsBalances = { [symbol.Name] = SymbolSavingsBalances.Empty },
                 AutoPositions =
                 {
                     [symbol.Name] = AutoPosition.Empty with
@@ -108,7 +108,7 @@ namespace Outcompute.Trader.Trading.Tests
             {
                 Symbols = { [symbol.Name] = symbol },
                 SpotBalances = { [symbol.Name] = SymbolSpotBalances.Empty },
-                Savings = { [symbol.Name] = SymbolSavingsBalances.Empty },
+                SavingsBalances = { [symbol.Name] = SymbolSavingsBalances.Empty },
                 Tickers = { [symbol.Name] = ticker },
                 AutoPositions =
                 {
@@ -188,7 +188,7 @@ namespace Outcompute.Trader.Trading.Tests
                 Symbols = { [symbol.Name] = symbol },
                 Tickers = { [symbol.Name] = ticker },
                 SpotBalances = { [symbol.Name] = SymbolSpotBalances.Empty },
-                Savings = { [symbol.Name] = SymbolSavingsBalances.Empty },
+                SavingsBalances = { [symbol.Name] = SymbolSavingsBalances.Empty },
                 AutoPositions =
                 {
                     [symbol.Name] = AutoPosition.Empty with
@@ -272,7 +272,7 @@ namespace Outcompute.Trader.Trading.Tests
                 Symbols = { [symbol.Name] = symbol },
                 Tickers = { [symbol.Name] = ticker },
                 SpotBalances = { [symbol.Name] = SymbolSpotBalances.Empty },
-                Savings = { [symbol.Name] = SymbolSavingsBalances.Empty },
+                SavingsBalances = { [symbol.Name] = SymbolSavingsBalances.Empty },
                 AutoPositions =
                 {
                     [symbol.Name] = AutoPosition.Empty with
@@ -374,7 +374,7 @@ namespace Outcompute.Trader.Trading.Tests
                         BaseAsset = Balance.Zero(symbol.BaseAsset) with { Free = 200m }
                     }
                 },
-                Savings = { [symbol.Name] = SymbolSavingsBalances.Empty }
+                SavingsBalances = { [symbol.Name] = SymbolSavingsBalances.Empty }
             };
 
             var minimumProfitRate = 1.01m;

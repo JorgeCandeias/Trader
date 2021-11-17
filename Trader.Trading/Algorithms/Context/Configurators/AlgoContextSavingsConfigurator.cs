@@ -16,7 +16,7 @@ internal class AlgoContextSavingsConfigurator : IAlgoContextConfigurator<AlgoCon
     {
         foreach (var symbol in context.Symbols)
         {
-            context.Savings[symbol.Key] = await GetPositionsAsync(symbol.Value, cancellationToken).ConfigureAwait(false);
+            context.SavingsBalances[symbol.Key] = await GetPositionsAsync(symbol.Value, cancellationToken).ConfigureAwait(false);
         }
     }
 

@@ -13,17 +13,22 @@ internal class AlgoContextSwapPoolBalanceConfigurator : IAlgoContextConfigurator
 
     public async ValueTask ConfigureAsync(AlgoContext context, string name, CancellationToken cancellationToken = default)
     {
-        if (!IsNullOrEmpty(context.Symbol.BaseAsset))
+        foreach (var symbol in context.Symbols)
         {
-            context.BaseAssetSwapPoolBalance = await _swaps
-                .GetBalanceAsync(context.Symbol.BaseAsset, cancellationToken)
-                .ConfigureAwait(false);
-        }
+            if (!context.SwapPoolBalances.TryGetValue(symbol.Key, out var balances))
+            {
+                context.SwapPoolBalances[symbol.Key] = balances = new SymbolSwapPoolAssetBalances
+                {
+                    Symbol = symbol.Value
+                };
+            }
 
-        if (!IsNullOrEmpty(context.Symbol.QuoteAsset))
-        {
-            context.QuoteAssetSwapPoolBalance = await _swaps
-                .GetBalanceAsync(context.Symbol.QuoteAsset, cancellationToken)
+            balances.BaseAsset = await _swaps
+                .GetBalanceAsync(symbol.Value.BaseAsset, cancellationToken)
+                .ConfigureAwait(false);
+
+            balances.QuoteAsset = await _swaps
+                .GetBalanceAsync(symbol.Value.QuoteAsset, cancellationToken)
                 .ConfigureAwait(false);
         }
     }

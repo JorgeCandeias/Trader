@@ -80,24 +80,22 @@ public interface IAlgoContext
     /// <summary>
     /// The current savings balances for the assets of the default symbol.
     /// </summary>
-    SymbolSavingsBalances SavingsBalances => Savings[Symbol.Name];
+    SymbolSavingsBalances SavingsBalance => SavingsBalances[Symbol.Name];
 
     /// <summary>
     /// Gets all savings balances for all configured symbols.
     /// </summary>
-    IDictionary<string, SymbolSavingsBalances> Savings { get; }
+    IDictionary<string, SymbolSavingsBalances> SavingsBalances { get; }
 
     /// <summary>
-    /// The current swap pool balances for the base asset of the default symbol.
-    /// This is only populated if the default symbol is defined.
+    /// The current swap pool balances for the assets of the default symbol.
     /// </summary>
-    SwapPoolAssetBalance BaseAssetSwapPoolBalance { get; }
+    SymbolSwapPoolAssetBalances SwapPoolBalance => SwapPoolBalances[Symbol.Name];
 
     /// <summary>
-    /// The current swap pool balances for the quote asset of the default symbol.
-    /// This is only populated if the default symbol is defined.
+    /// The current swap pool balances for all configured symbols.
     /// </summary>
-    SwapPoolAssetBalance QuoteAssetSwapPoolBalance { get; }
+    IDictionary<string, SymbolSwapPoolAssetBalances> SwapPoolBalances { get; }
 
     /// <summary>
     /// Gets all historial orders for the default symbol.
@@ -140,4 +138,13 @@ public record SymbolSavingsBalances(string Symbol, SavingsBalance BaseAsset, Sav
 public record SymbolSpotBalances(string Symbol, Balance BaseAsset, Balance QuoteAsset)
 {
     public static SymbolSpotBalances Empty { get; } = new SymbolSpotBalances(string.Empty, Balance.Empty, Balance.Empty);
+}
+
+public class SymbolSwapPoolAssetBalances
+{
+    public Symbol Symbol { get; set; } = Symbol.Empty;
+
+    public SwapPoolAssetBalance BaseAsset { get; set; } = SwapPoolAssetBalance.Empty;
+
+    public SwapPoolAssetBalance QuoteAsset { get; set; } = SwapPoolAssetBalance.Empty;
 }

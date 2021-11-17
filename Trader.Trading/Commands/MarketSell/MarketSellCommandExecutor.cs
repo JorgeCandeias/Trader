@@ -25,7 +25,8 @@ internal partial class MarketSellCommandExecutor : IAlgoCommandExecutor<MarketSe
         // get context data for the command symbol
         var ticker = context.Tickers[command.Symbol.Name];
         var spots = context.SpotBalances[command.Symbol.Name];
-        var savings = context.Savings[command.Symbol.Name];
+        var savings = context.SavingsBalances[command.Symbol.Name];
+        var swaps = context.SwapPoolBalances[command.Symbol.Name];
 
         // adjust the quantity down by the step size to make a valid order
         var quantity = command.Quantity.AdjustQuantityDownToLotStepSize(command.Symbol);
@@ -49,7 +50,7 @@ internal partial class MarketSellCommandExecutor : IAlgoCommandExecutor<MarketSe
         // identify the free balance
         var free = spots.BaseAsset.Free
             + (command.RedeemSavings ? savings.BaseAsset.FreeAmount : 0m)
-            + (command.RedeemSwapPool ? context.BaseAssetSwapPoolBalance.Total : 0m);
+            + (command.RedeemSwapPool ? swaps.BaseAsset.Total : 0m);
 
         // see if there is enough free balance overall
         if (free < quantity)
@@ -83,9 +84,9 @@ internal partial class MarketSellCommandExecutor : IAlgoCommandExecutor<MarketSe
             }
 
             // see if we can redeem the rest from the swap pool
-            if (command.RedeemSwapPool && context.BaseAssetSwapPoolBalance.Total > 0 && required > 0)
+            if (command.RedeemSwapPool && swaps.BaseAsset.Total > 0 && required > 0)
             {
-                var redeeming = Math.Min(context.BaseAssetSwapPoolBalance.Total, required);
+                var redeeming = Math.Min(swaps.BaseAsset.Total, required);
 
                 LogRedeemingSwapPool(TypeName, command.Symbol.Name, redeeming, command.Symbol.BaseAsset);
 

@@ -42,7 +42,8 @@ internal partial class AveragingSellExecutor : IAlgoCommandExecutor<AveragingSel
         // get context data for the command symbol
         var positions = context.AutoPositions[command.Symbol.Name].Orders;
         var spots = context.SpotBalances[command.Symbol.Name];
-        var savings = context.Savings[command.Symbol.Name];
+        var savings = context.SavingsBalances[command.Symbol.Name];
+        var swaps = context.SwapPoolBalances[command.Symbol.Name];
         var ticker = context.Tickers[command.Symbol.Name];
 
         // loop the orders only once and calculate all required stats up front
@@ -58,7 +59,7 @@ internal partial class AveragingSellExecutor : IAlgoCommandExecutor<AveragingSel
         // break if there are no assets to sell
         var free = spots.BaseAsset.Free
             + (command.RedeemSavings ? savings.BaseAsset.FreeAmount : 0)
-            + (command.RedeemSwapPool ? context.BaseAssetSwapPoolBalance.Total : 0);
+            + (command.RedeemSwapPool ? swaps.BaseAsset.Total : 0);
 
         if (free < quantity)
         {

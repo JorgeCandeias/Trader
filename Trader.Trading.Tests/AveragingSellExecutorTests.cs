@@ -69,7 +69,7 @@ namespace Outcompute.Trader.Trading.Tests
                         BaseAsset = Balance.Zero(symbol.BaseAsset) with { Free = 2000M }
                     }
                 },
-                Savings = { [symbol.Name] = SymbolSavingsBalances.Empty with
+                SavingsBalances = { [symbol.Name] = SymbolSavingsBalances.Empty with
                 {
                     Symbol = symbol.Name,
                     BaseAsset = SavingsBalance.Zero(symbol.BaseAsset),

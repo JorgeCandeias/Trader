@@ -41,7 +41,8 @@ internal partial class SignificantAveragingSellExecutor : IAlgoCommandExecutor<S
         var positions = context.AutoPositions[command.Symbol.Name].Orders;
         var ticker = context.Tickers[command.Symbol.Name];
         var spots = context.SpotBalances[command.Symbol.Name];
-        var savings = context.Savings[command.Symbol.Name];
+        var savings = context.SavingsBalances[command.Symbol.Name];
+        var swaps = context.SwapPoolBalances[command.Symbol.Name];
 
         // skip if there is nothing to sell
         if (positions.Count == 0)
@@ -53,7 +54,7 @@ internal partial class SignificantAveragingSellExecutor : IAlgoCommandExecutor<S
         // this may be less than the target sell due to swap pool fluctuations etc
         var free = spots.BaseAsset.Free
             + (command.RedeemSavings ? savings.BaseAsset.FreeAmount : 0)
-            + (command.RedeemSwapPool ? context.BaseAssetSwapPoolBalance.Total : 0);
+            + (command.RedeemSwapPool ? swaps.BaseAsset.Total : 0);
 
         // first pass - calculate partials for the entire data
         var count = 0;

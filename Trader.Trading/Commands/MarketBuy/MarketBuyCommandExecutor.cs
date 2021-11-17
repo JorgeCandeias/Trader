@@ -34,7 +34,8 @@ internal partial class MarketBuyCommandExecutor : IAlgoCommandExecutor<MarketBuy
         // get context data for the command symbol
         var ticker = context.Tickers[command.Symbol.Name];
         var spots = context.SpotBalances[command.Symbol.Name];
-        var savings = context.Savings[command.Symbol.Name];
+        var savings = context.SavingsBalances[command.Symbol.Name];
+        var swaps = context.SwapPoolBalances[command.Symbol.Name];
 
         // adjust the quantity up to the min notional to make a valid order
         var quantity = command.Quantity;
@@ -57,7 +58,7 @@ internal partial class MarketBuyCommandExecutor : IAlgoCommandExecutor<MarketBuy
 
         var free = spots.QuoteAsset.Free
             + (command.RedeemSavings ? savings.QuoteAsset.FreeAmount : 0m)
-            + (command.RedeemSwapPool ? context.QuoteAssetSwapPoolBalance.Total : 0m);
+            + (command.RedeemSwapPool ? swaps.QuoteAsset.Total : 0m);
 
         // calculate the adjusted total
         total = quantity * ticker.ClosePrice;
@@ -101,9 +102,9 @@ internal partial class MarketBuyCommandExecutor : IAlgoCommandExecutor<MarketBuy
             }
 
             // see if we can redeem the rest from the swap pool
-            if (command.RedeemSwapPool && context.QuoteAssetSwapPoolBalance.Total > 0 && required > 0)
+            if (command.RedeemSwapPool && swaps.QuoteAsset.Total > 0 && required > 0)
             {
-                var redeeming = Math.Min(context.QuoteAssetSwapPoolBalance.Total, required);
+                var redeeming = Math.Min(swaps.QuoteAsset.Total, required);
 
                 LogRedeemingSwapPool(TypeName, command.Symbol.Name, redeeming, command.Symbol.QuoteAsset);
 

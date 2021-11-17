@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Outcompute.Trader.Core;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Providers;
 using System.Collections.Immutable;
 
 namespace Outcompute.Trader.Trading.Algorithms.Context;
@@ -40,11 +39,9 @@ internal class AlgoContext : IAlgoContext
 
     public IDictionary<string, SymbolSpotBalances> SpotBalances { get; } = new Dictionary<string, SymbolSpotBalances>();
 
-    public IDictionary<string, SymbolSavingsBalances> Savings { get; set; } = new Dictionary<string, SymbolSavingsBalances>();
+    public IDictionary<string, SymbolSavingsBalances> SavingsBalances { get; set; } = new Dictionary<string, SymbolSavingsBalances>();
 
-    public SwapPoolAssetBalance BaseAssetSwapPoolBalance { get; set; } = SwapPoolAssetBalance.Empty;
-
-    public SwapPoolAssetBalance QuoteAssetSwapPoolBalance { get; set; } = SwapPoolAssetBalance.Empty;
+    public IDictionary<string, SymbolSwapPoolAssetBalances> SwapPoolBalances { get; } = new Dictionary<string, SymbolSwapPoolAssetBalances>();
 
     public IReadOnlyList<OrderQueryResult> Orders => OrdersLookup[Symbol.Name];
 

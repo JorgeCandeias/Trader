@@ -47,7 +47,8 @@ internal partial class BinanceUserDataGrain : Grain, IBinanceUserDataGrain
         _trades = tradeProvider;
         _timers = timers;
 
-        _pusher = new ActionBlock<UserDataStreamMessage>(HandleMessageAsync, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = _dependencies.AllSymbols.Count * 2 + 1 });
+        // todo: refactor this to use backpressure conflation logic
+        _pusher = new ActionBlock<UserDataStreamMessage>(HandleMessageAsync, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = _dependencies.Symbols.Count * 2 + 1 });
     }
 
     private const string TypeName = nameof(BinanceUserDataGrain);
@@ -207,13 +208,13 @@ internal partial class BinanceUserDataGrain : Grain, IBinanceUserDataGrain
         await _balances.SetBalancesAsync(accountInfo, linked.Token);
 
         // sync orders for all symbols
-        foreach (var symbol in _dependencies.AllSymbols)
+        foreach (var symbol in _dependencies.Symbols)
         {
             await _orderSynchronizer.SynchronizeOrdersAsync(symbol, linked.Token);
         }
 
         // sync trades for all symbols
-        foreach (var symbol in _dependencies.AllSymbols)
+        foreach (var symbol in _dependencies.Symbols)
         {
             await _tradeSynchronizer.SynchronizeTradesAsync(symbol, linked.Token);
         }

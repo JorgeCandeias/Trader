@@ -41,7 +41,7 @@ internal partial class BinanceMarketDataGrain : Grain, IBinanceMarketDataGrain
     public override Task OnActivateAsync()
     {
         // if there are ticker or kline dependencies then ensure we keep streaming them
-        if (_dependencies.Symbols.Count + _dependencies.Tickers.Count + _dependencies.Balances.Count + _dependencies.Klines.Count > 0)
+        if (_dependencies.Symbols.Count > 0)
         {
             _timer = _timers.RegisterTimer(this, TickEnsureStreamAsync, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
         }
@@ -100,10 +100,10 @@ internal partial class BinanceMarketDataGrain : Grain, IBinanceMarketDataGrain
         using var linkedCancellation = CancellationTokenSource.CreateLinkedTokenSource(resetCancellation.Token, _lifetime.ApplicationStopping);
 
         // start streaming in the background while we sync from the api
-        var streamTask = Task.Run(() => _streamer.StreamAsync(_dependencies.AllSymbols, _dependencies.Klines.Keys, linkedCancellation.Token), linkedCancellation.Token);
+        var streamTask = Task.Run(() => _streamer.StreamAsync(_dependencies.Symbols, _dependencies.Klines.Keys, linkedCancellation.Token), linkedCancellation.Token);
 
         // sync tickers from the api
-        await _tickerSynchronizer.SyncAsync(_dependencies.AllSymbols, linkedCancellation.Token);
+        await _tickerSynchronizer.SyncAsync(_dependencies.Symbols, linkedCancellation.Token);
 
         // sync klines from the api
         await _klineSynchronizer.SyncAsync(_dependencies.Klines.Select(x => (x.Key.Symbol, x.Key.Interval, x.Value)), linkedCancellation.Token);

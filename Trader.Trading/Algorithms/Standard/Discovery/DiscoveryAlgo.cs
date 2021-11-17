@@ -58,7 +58,7 @@ internal partial class DiscoveryAlgo : Algo
             .ToHashSet();
 
         // get all symbols in use
-        var used = _dependencies.AllSymbols
+        var used = _dependencies.Symbols
             .Intersect(symbols.Select(x => x.Name))
             .ToHashSet();
 

@@ -9,12 +9,7 @@ using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Binance.Providers.UserData;
 using Outcompute.Trader.Trading.Binance.Tests.Fakes;
 using Outcompute.Trader.Trading.Providers;
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Binance.Tests
@@ -126,7 +121,7 @@ namespace Outcompute.Trader.Trading.Binance.Tests
                 .Returns(Task.CompletedTask)
                 .Verifiable();
 
-            var dependencies = Mock.Of<IAlgoDependencyResolver>(x => x.AllSymbols == new HashSet<string>(new[] { symbol.Name }));
+            var dependencies = Mock.Of<IAlgoDependencyResolver>(x => x.Symbols == new HashSet<string>(new[] { symbol.Name }));
 
             var timers = new FakeTimerRegistry();
             var grain = new BinanceUserDataGrain(options, dependencies, logger, trader, streams, orders, trades, clock, mapper, lifetime, orderProvider, balances, tradeProvider, timers);

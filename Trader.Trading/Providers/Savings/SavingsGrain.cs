@@ -100,7 +100,7 @@ internal class SavingsGrain : Grain, ISavingsGrain
         // load positions for used assets only
         // note that some products can have positions yet no declaring product (e.g. bnb on binance)
         var assets = new HashSet<string>();
-        foreach (var name in _dependencies.AllSymbols)
+        foreach (var name in _dependencies.Symbols)
         {
             var symbol = _exchange.GetRequiredSymbol(name);
             assets.Add(symbol.BaseAsset);

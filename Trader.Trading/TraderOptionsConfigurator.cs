@@ -25,7 +25,13 @@ internal class TraderOptionsConfigurator : IConfigureOptions<TraderOptions>
         // apply all settings from configuration
         _config.GetSection(_mapping.TraderKey).Bind(options);
 
-        // apply static configuration from user code
+        // override the vanilla bound values with values from the options configuration system
+        foreach (var name in options.Algos.Keys.ToList())
+        {
+            options.Algos[name] = _monitor.Get(name);
+        }
+
+        // apply static configuration from user code on top
         foreach (var entry in _entries)
         {
             options.Algos[entry.Name] = _monitor.Get(entry.Name);

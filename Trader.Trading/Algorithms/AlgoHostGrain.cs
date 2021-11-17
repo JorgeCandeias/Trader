@@ -1,9 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
-using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Trading.Readyness;
 
 namespace Outcompute.Trader.Trading.Algorithms;
@@ -15,20 +13,14 @@ internal sealed class AlgoHostGrain : Grain, IAlgoHostGrainInternal, IDisposable
     private readonly IOptionsMonitor<AlgoOptions> _options;
     private readonly IReadynessProvider _readyness;
     private readonly IServiceScope _scope;
-    private readonly IHostApplicationLifetime _lifetime;
     private readonly IAlgoStatisticsPublisher _publisher;
-    private readonly IAlgoFactoryResolver _resolver;
-    private readonly ISystemClock _clock;
 
-    public AlgoHostGrain(ILogger<AlgoHostGrain> logger, IOptionsMonitor<AlgoOptions> options, IReadynessProvider readyness, IHostApplicationLifetime lifetime, IAlgoStatisticsPublisher publisher, IServiceProvider provider, IAlgoFactoryResolver resolver, ISystemClock clock)
+    public AlgoHostGrain(ILogger<AlgoHostGrain> logger, IOptionsMonitor<AlgoOptions> options, IReadynessProvider readyness, IAlgoStatisticsPublisher publisher, IServiceProvider provider)
     {
         _logger = logger;
         _options = options;
         _readyness = readyness;
-        _lifetime = lifetime;
         _publisher = publisher;
-        _resolver = resolver;
-        _clock = clock;
 
         _scope = provider.CreateScope();
     }
@@ -50,7 +42,7 @@ internal sealed class AlgoHostGrain : Grain, IAlgoHostGrainInternal, IDisposable
         var options = _options.Get(_name);
 
         // resolve the factory for the current algo type and create the algo instance
-        _algo = _resolver.Resolve(options.Type).Create(_name);
+        _algo = _scope.ServiceProvider.GetRequiredService<IAlgoFactoryResolver>().Resolve(options.Type).Create(_name);
 
         // run startup work
         await _algo.StartAsync(_cancellation.Token);

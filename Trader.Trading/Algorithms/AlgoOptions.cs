@@ -59,12 +59,6 @@ public class AlgoOptions
     public bool BatchEnabled { get; set; } = true;
 
     /// <summary>
-    /// Describes the data dependencies for this algo instance.
-    /// </summary>
-    [Required]
-    public AlgoOptionsDependsOn DependsOn { get; } = new AlgoOptionsDependsOn();
-
-    /// <summary>
     /// The relative run order in the batch.
     /// </summary>
     [Required]
@@ -76,11 +70,4 @@ public class AlgoOptions
     /// </summary>
     [Required]
     public DateTime StartTime { get; set; } = DateTime.MinValue;
-}
-
-public class AlgoOptionsDependsOn
-{
-    public ISet<string> Tickers { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-    public ISet<string> Balances { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 }

@@ -148,7 +148,6 @@ namespace Outcompute.Trader.App
                                             templateSection.Bind(options);
 
                                             options.Symbol = symbol;
-                                            options.DependsOn.Tickers.Add(symbol);
                                         })
                                         .ConfigureTypeOptions(options =>
                                         {
@@ -164,9 +163,6 @@ namespace Outcompute.Trader.App
                                 .AddAlgo("MyTestAlgo")
                                 .ConfigureHostOptions(options =>
                                 {
-                                    options.DependsOn.Tickers.Add("BTCGBP");
-                                    options.DependsOn.Balances.Add("BTCGBP");
-
                                     options.Symbol = "BTCGBP";
                                     options.KlineInterval = KlineInterval.Days1;
                                     options.KlinePeriods = 100;

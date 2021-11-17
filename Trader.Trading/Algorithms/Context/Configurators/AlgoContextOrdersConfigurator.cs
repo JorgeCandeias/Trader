@@ -13,7 +13,6 @@ internal class AlgoContextOrdersConfigurator : IAlgoContextConfigurator<AlgoCont
 
     public async ValueTask ConfigureAsync(AlgoContext context, string name, CancellationToken cancellationToken = default)
     {
-        // populate orders for the multi symbol list
         foreach (var symbol in context.Symbols.Keys)
         {
             context.OrdersLookup[symbol] = await _orders

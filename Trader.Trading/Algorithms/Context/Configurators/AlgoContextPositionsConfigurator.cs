@@ -17,7 +17,6 @@ internal class AlgoContextPositionsConfigurator : IAlgoContextConfigurator<AlgoC
     {
         var options = _options.Get(name);
 
-        // populate from the symbol list
         if (context.Symbols.Count > 0)
         {
             foreach (var symbol in context.Symbols)

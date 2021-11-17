@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Outcompute.Trader.Core;
 using Outcompute.Trader.Models;
-using System.Collections.Immutable;
 
 namespace Outcompute.Trader.Trading.Algorithms.Context;
 
@@ -45,7 +44,7 @@ internal class AlgoContext : IAlgoContext
 
     public IReadOnlyList<OrderQueryResult> Orders => Data[Symbol.Name].Orders;
 
-    public IReadOnlyList<AccountTrade> Trades { get; set; } = ImmutableList<AccountTrade>.Empty;
+    public IReadOnlyList<AccountTrade> Trades => Data[Symbol.Name].Trades;
 
     public IReadOnlyList<Kline> Klines => KlineLookup[(Symbol.Name, KlineInterval)];
 

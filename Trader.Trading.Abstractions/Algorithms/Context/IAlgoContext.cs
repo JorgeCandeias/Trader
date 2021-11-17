@@ -79,7 +79,6 @@ public interface IAlgoContext
 
     /// <summary>
     /// Gets all historial trades for the default symbol.
-    /// This is only populated if the default symbol is defined.
     /// </summary>
     IReadOnlyList<AccountTrade> Trades { get; }
 
@@ -154,6 +153,8 @@ public class SymbolData
     public SymbolSwapPoolAssetBalances SwapPools { get; } = new SymbolSwapPoolAssetBalances();
 
     public IReadOnlyList<OrderQueryResult> Orders { get; set; } = ImmutableList<OrderQueryResult>.Empty;
+
+    public IReadOnlyList<AccountTrade> Trades { get; set; } = ImmutableList<AccountTrade>.Empty;
 }
 
 public class SymbolSpotBalances

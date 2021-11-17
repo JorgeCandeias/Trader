@@ -113,7 +113,7 @@ public static class TraderServiceCollectionExtensions
             // algo context configurators in order
             .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextTickTimeConfigurator>()
             .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextSymbolConfigurator>()
-            .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextPositionsConfigurator>()
+            .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextAutoPositionsConfigurator>()
             .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextTickerConfigurator>()
             .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextSpotBalanceConfigurator>()
             .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextSavingsConfigurator>()

@@ -76,7 +76,7 @@ namespace Outcompute.Trader.Trading.Tests
                     QuoteAsset = SavingsPosition.Zero(symbol.QuoteAsset)
                 } },
                 Tickers = { [symbol.Name] = new MiniTicker(symbol.Name, DateTime.Today, 1200, 0, 0, 0, 0, 0) },
-                PositionDetailsLookup = { [symbol.Name] = PositionDetails.Empty with { Orders = orders } }
+                AutoPositions = { [symbol.Name] = AutoPosition.Empty with { Orders = orders } }
             };
 
             var profitMultiplier = 1.10m;

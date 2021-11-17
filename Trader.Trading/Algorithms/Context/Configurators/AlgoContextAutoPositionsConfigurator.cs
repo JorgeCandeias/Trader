@@ -2,12 +2,12 @@
 
 namespace Outcompute.Trader.Trading.Algorithms.Context.Configurators;
 
-internal class AlgoContextPositionsConfigurator : IAlgoContextConfigurator<AlgoContext>
+internal class AlgoContextAutoPositionsConfigurator : IAlgoContextConfigurator<AlgoContext>
 {
     private readonly IOptionsMonitor<AlgoOptions> _options;
     private readonly IAutoPositionResolver _resolver;
 
-    public AlgoContextPositionsConfigurator(IOptionsMonitor<AlgoOptions> monitor, IAutoPositionResolver resolver)
+    public AlgoContextAutoPositionsConfigurator(IOptionsMonitor<AlgoOptions> monitor, IAutoPositionResolver resolver)
     {
         _options = monitor;
         _resolver = resolver;
@@ -19,7 +19,7 @@ internal class AlgoContextPositionsConfigurator : IAlgoContextConfigurator<AlgoC
 
         foreach (var symbol in context.Symbols)
         {
-            context.PositionDetailsLookup[symbol.Key] = await _resolver
+            context.AutoPositions[symbol.Key] = await _resolver
                 .ResolveAsync(symbol.Value, options.StartTime, cancellationToken)
                 .ConfigureAwait(false);
         }

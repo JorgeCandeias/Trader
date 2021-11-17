@@ -40,7 +40,7 @@ internal partial class AveragingSellExecutor : IAlgoCommandExecutor<AveragingSel
     private DesiredSell CalculateDesiredSell(IAlgoContext context, AveragingSellCommand command)
     {
         // get context data for the command symbol
-        var positions = context.PositionDetailsLookup[command.Symbol.Name].Orders;
+        var positions = context.AutoPositions[command.Symbol.Name].Orders;
         var spots = context.SpotBalances[command.Symbol.Name];
         var savings = context.Savings[command.Symbol.Name];
         var ticker = context.Tickers[command.Symbol.Name];

@@ -42,7 +42,7 @@ namespace Trader.Trading.Indicators.Benchmarks
         }
 
         [Benchmark]
-        public Task<PositionDetails> ResolveAsync()
+        public Task<AutoPosition> ResolveAsync()
         {
             return _resolver.ResolveAsync(_symbol, _startTime);
         }

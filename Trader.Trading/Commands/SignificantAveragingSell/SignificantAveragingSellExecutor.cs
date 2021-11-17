@@ -38,7 +38,7 @@ internal partial class SignificantAveragingSellExecutor : IAlgoCommandExecutor<S
     private DesiredSell CalculateDesiredSell(IAlgoContext context, SignificantAveragingSellCommand command)
     {
         // get context info for the command symbol
-        var positions = context.PositionDetailsLookup[command.Symbol.Name].Orders;
+        var positions = context.AutoPositions[command.Symbol.Name].Orders;
         var ticker = context.Tickers[command.Symbol.Name];
         var spots = context.SpotBalances[command.Symbol.Name];
         var savings = context.Savings[command.Symbol.Name];

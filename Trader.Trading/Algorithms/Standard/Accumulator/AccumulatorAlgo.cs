@@ -29,7 +29,7 @@ internal class AccumulatorAlgo : Algo
             : CancelOpenOrders(Context.Symbol, OrderSide.Buy);
 
         var sellCommand = TrySignalSell(options)
-            ? MarketSell(Context.Symbol, Context.PositionDetails.Orders.Sum(x => x.ExecutedQuantity), true, true)
+            ? MarketSell(Context.Symbol, Context.AutoPosition.Orders.Sum(x => x.ExecutedQuantity), true, true)
             : Noop();
 
         return ValueTask.FromResult(Sequence(buyCommand, sellCommand));
@@ -38,14 +38,14 @@ internal class AccumulatorAlgo : Algo
     private bool TrySignalSell(AccumulatorAlgoOptions options)
     {
         // if there is nothing to sell then skip
-        if (Context.PositionDetails.Orders.Sum(x => x.ExecutedQuantity) < Context.Symbol.Filters.LotSize.MinQuantity)
+        if (Context.AutoPosition.Orders.Sum(x => x.ExecutedQuantity) < Context.Symbol.Filters.LotSize.MinQuantity)
         {
             return false;
         }
 
         // if the ticker is below the take profit drop rate then sell
-        var averageCost = Context.PositionDetails.Orders.Sum(x => x.ExecutedQuantity * x.Price) / Context.PositionDetails.Orders.Sum(x => x.ExecutedQuantity);
-        var takeProfitPrice = Context.PositionDetails.Orders.Max!.Price * options.TakeProfitDropRate;
+        var averageCost = Context.AutoPosition.Orders.Sum(x => x.ExecutedQuantity * x.Price) / Context.AutoPosition.Orders.Sum(x => x.ExecutedQuantity);
+        var takeProfitPrice = Context.AutoPosition.Orders.Max!.Price * options.TakeProfitDropRate;
         var ticker = Context.Ticker.ClosePrice;
         if (ticker <= takeProfitPrice && takeProfitPrice >= averageCost)
         {
@@ -59,19 +59,19 @@ internal class AccumulatorAlgo : Algo
     private bool TrySignalBuy(AccumulatorAlgoOptions options, decimal rsi)
     {
         // if there are no open positions or we only have leftovers then buy when the rsi hits oversold
-        if (Context.PositionDetails.Orders.Sum(x => x.ExecutedQuantity) < Context.Symbol.Filters.LotSize.MinQuantity)
+        if (Context.AutoPosition.Orders.Sum(x => x.ExecutedQuantity) < Context.Symbol.Filters.LotSize.MinQuantity)
         {
             return rsi <= options.RsiOversold;
         }
 
         // if the last buy is within cooldown then refuse to buy
-        if (Context.PositionDetails.Orders.Max!.Time.Add(options.Cooldown) >= _clock.UtcNow)
+        if (Context.AutoPosition.Orders.Max!.Time.Add(options.Cooldown) >= _clock.UtcNow)
         {
             return false;
         }
 
         // if the ticker is above the next buy rate of the last buy then signal the buy
-        if (Context.Ticker.ClosePrice >= Context.PositionDetails.Orders.Max!.Price * options.NextBuyRate)
+        if (Context.Ticker.ClosePrice >= Context.AutoPosition.Orders.Max!.Price * options.NextBuyRate)
         {
             return true;
         }

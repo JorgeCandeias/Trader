@@ -30,7 +30,7 @@ internal partial class AutoPositionResolver : IAutoPositionResolver
         public decimal RemainingExecutedQuantity { get; set; }
     }
 
-    public async Task<PositionDetails> ResolveAsync(Symbol symbol, DateTime startTime, CancellationToken cancellationToken = default)
+    public async Task<AutoPosition> ResolveAsync(Symbol symbol, DateTime startTime, CancellationToken cancellationToken = default)
     {
         var orders = await _orders
             .GetOrdersByFilterAsync(symbol.Name, null, false, true, cancellationToken)
@@ -43,7 +43,7 @@ internal partial class AutoPositionResolver : IAutoPositionResolver
         return ResolveCore(symbol, startTime, orders, trades);
     }
 
-    private PositionDetails ResolveCore(Symbol symbol, DateTime startTime, IReadOnlyList<OrderQueryResult> orders, IEnumerable<AccountTrade> trades)
+    private AutoPosition ResolveCore(Symbol symbol, DateTime startTime, IReadOnlyList<OrderQueryResult> orders, IEnumerable<AccountTrade> trades)
     {
         var watch = Stopwatch.StartNew();
 
@@ -134,7 +134,7 @@ internal partial class AutoPositionResolver : IAutoPositionResolver
 
         LogIdentifiedPositions(TypeName, symbol.Name, significant.Count, watch.ElapsedMilliseconds);
 
-        return new PositionDetails(symbol, significant, profits.ToImmutable(), commissions);
+        return new AutoPosition(symbol, significant, profits.ToImmutable(), commissions);
     }
 
     private (SortedSet<Map> Mapping, ImmutableList<CommissionEvent> Commissions) Combine(Symbol symbol, IEnumerable<OrderQueryResult> orders, IEnumerable<AccountTrade> trades)

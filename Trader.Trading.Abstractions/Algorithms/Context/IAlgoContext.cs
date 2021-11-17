@@ -49,12 +49,12 @@ public interface IAlgoContext
     /// The current auto calculated positions for the default symbol.
     /// This is only populated if the default symbol is defined.
     /// </summary>
-    PositionDetails PositionDetails => PositionDetailsLookup[Symbol.Name];
+    AutoPosition AutoPosition => AutoPositions[Symbol.Name];
 
     /// <summary>
     /// The current auto calculated positions for all configured symbols.
     /// </summary>
-    IDictionary<string, PositionDetails> PositionDetailsLookup { get; }
+    IDictionary<string, AutoPosition> AutoPositions { get; }
 
     /// <summary>
     /// The current ticker for the default symbol.

@@ -44,9 +44,9 @@ namespace Outcompute.Trader.Trading.Tests
                 Tickers = { [symbol.Name] = ticker },
                 SpotBalances = { [symbol.Name] = SymbolSpotBalances.Empty },
                 Savings = { [symbol.Name] = SymbolSavingsPositions.Empty },
-                PositionDetailsLookup =
+                AutoPositions =
                 {
-                    [symbol.Name] = PositionDetails.Empty with
+                    [symbol.Name] = AutoPosition.Empty with
                     {
                         Orders = orders
                     }
@@ -110,9 +110,9 @@ namespace Outcompute.Trader.Trading.Tests
                 SpotBalances = { [symbol.Name] = SymbolSpotBalances.Empty },
                 Savings = { [symbol.Name] = SymbolSavingsPositions.Empty },
                 Tickers = { [symbol.Name] = ticker },
-                PositionDetailsLookup =
+                AutoPositions =
                 {
-                    [symbol.Name] = PositionDetails.Empty with
+                    [symbol.Name] = AutoPosition.Empty with
                     {
                         Orders = orders.ToImmutableSortedSet()
                     }
@@ -189,9 +189,9 @@ namespace Outcompute.Trader.Trading.Tests
                 Tickers = { [symbol.Name] = ticker },
                 SpotBalances = { [symbol.Name] = SymbolSpotBalances.Empty },
                 Savings = { [symbol.Name] = SymbolSavingsPositions.Empty },
-                PositionDetailsLookup =
+                AutoPositions =
                 {
-                    [symbol.Name] = PositionDetails.Empty with
+                    [symbol.Name] = AutoPosition.Empty with
                     {
                         Orders = orders.ToImmutableSortedSet(OrderQueryResult.KeyComparer)
                     }
@@ -273,9 +273,9 @@ namespace Outcompute.Trader.Trading.Tests
                 Tickers = { [symbol.Name] = ticker },
                 SpotBalances = { [symbol.Name] = SymbolSpotBalances.Empty },
                 Savings = { [symbol.Name] = SymbolSavingsPositions.Empty },
-                PositionDetailsLookup =
+                AutoPositions =
                 {
-                    [symbol.Name] = PositionDetails.Empty with
+                    [symbol.Name] = AutoPosition.Empty with
                     {
                         Orders = orders.ToImmutableSortedSet(OrderQueryResult.KeyComparer)
                     }
@@ -360,9 +360,9 @@ namespace Outcompute.Trader.Trading.Tests
             {
                 Symbols = { [symbol.Name] = symbol },
                 Tickers = { [symbol.Name] = ticker },
-                PositionDetailsLookup =
+                AutoPositions =
                 {
-                    [symbol.Name] = PositionDetails.Empty with
+                    [symbol.Name] = AutoPosition.Empty with
                     {
                         Orders = orders
                     }

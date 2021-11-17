@@ -24,7 +24,7 @@ internal partial class AlgoStatisticsPublisher : IAlgoStatisticsPublisher
 
     private static string TypeName => nameof(AlgoStatisticsPublisher);
 
-    public Task PublishAsync(PositionDetails significant, MiniTicker ticker, CancellationToken cancellationToken = default)
+    public Task PublishAsync(AutoPosition significant, MiniTicker ticker, CancellationToken cancellationToken = default)
     {
         if (significant is null) throw new ArgumentNullException(nameof(significant));
         if (ticker is null) throw new ArgumentNullException(nameof(ticker));
@@ -32,7 +32,7 @@ internal partial class AlgoStatisticsPublisher : IAlgoStatisticsPublisher
         return PublishCoreAsync(significant, ticker, cancellationToken);
     }
 
-    private async Task PublishCoreAsync(PositionDetails significant, MiniTicker ticker, CancellationToken cancellationToken)
+    private async Task PublishCoreAsync(AutoPosition significant, MiniTicker ticker, CancellationToken cancellationToken)
     {
         LogTicker(TypeName, ticker.Symbol, ticker.ClosePrice);
 

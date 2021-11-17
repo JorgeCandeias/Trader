@@ -49,7 +49,7 @@ internal partial class MarketSellCommandExecutor : IAlgoCommandExecutor<MarketSe
         }
 
         // identify the free balance
-        var spots = context.SpotBalancesLookup[command.Symbol.Name];
+        var spots = context.SpotBalances[command.Symbol.Name];
         var savings = context.SavingsLookup[command.Symbol.Name];
 
         var free = spots.BaseAsset.Free

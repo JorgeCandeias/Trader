@@ -70,7 +70,7 @@ public interface IAlgoContext
     /// <summary>
     /// The current spot balances for all referenced symbols.
     /// </summary>
-    IDictionary<string, SymbolSpotBalances> SpotBalancesLookup { get; }
+    IDictionary<string, SymbolSpotBalances> SpotBalances { get; }
 
     /// <summary>
     /// The current savings balances for the assets of the default symbol.

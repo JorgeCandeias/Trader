@@ -50,7 +50,7 @@ internal partial class MarketBuyCommandExecutor : IAlgoCommandExecutor<MarketBuy
         quantity = adjusted;
 
         // identify the free quote balance
-        var spots = context.SpotBalancesLookup[command.Symbol.Name];
+        var spots = context.SpotBalances[command.Symbol.Name];
         var savings = context.SavingsLookup[command.Symbol.Name];
         var free = spots.QuoteAsset.Free
             + (command.RedeemSavings ? savings.QuoteAsset.FreeAmount : 0m)

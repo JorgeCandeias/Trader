@@ -23,7 +23,7 @@ internal class AlgoContextSpotBalanceConfigurator : IAlgoContextConfigurator<Alg
                 .GetBalanceOrZeroAsync(symbol.Value.QuoteAsset, cancellationToken)
                 .ConfigureAwait(false);
 
-            context.SpotBalancesLookup[symbol.Key] = new SymbolSpotBalances(symbol.Key, baseAsset, quoteAsset);
+            context.SpotBalances[symbol.Key] = new SymbolSpotBalances(symbol.Key, baseAsset, quoteAsset);
         }
     }
 }

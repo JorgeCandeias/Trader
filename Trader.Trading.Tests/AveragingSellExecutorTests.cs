@@ -62,13 +62,6 @@ namespace Outcompute.Trader.Trading.Tests
             var context = new AlgoContext("Algo1", provider)
             {
                 Symbol = symbol,
-                SpotBalances =
-                {
-                    [symbol.Name] = new SymbolSpotBalances
-                    {
-                        BaseAsset = Balance.Zero(symbol.BaseAsset) with { Free = 2000M }
-                    }
-                },
                 SavingsBalances = { [symbol.Name] = SymbolSavingsBalances.Empty with
                 {
                     Symbol = symbol.Name,
@@ -80,7 +73,11 @@ namespace Outcompute.Trader.Trading.Tests
                     new SymbolData(symbol.Name)
                     {
                         AutoPosition = AutoPosition.Empty with { Orders = orders },
-                        Ticker = new MiniTicker(symbol.Name, DateTime.Today, 1200, 0, 0, 0, 0, 0)
+                        Ticker = new MiniTicker(symbol.Name, DateTime.Today, 1200, 0, 0, 0, 0, 0),
+                        Spot =
+                        {
+                            BaseAsset = Balance.Zero(symbol.BaseAsset) with { Free = 2000M }
+                        }
                     }
                 }
             };

@@ -59,12 +59,7 @@ public interface IAlgoContext
     /// <summary>
     /// The current spot balance for the assets of the default symbol.
     /// </summary>
-    SymbolSpotBalances SpotBalance => SpotBalances[Symbol.Name];
-
-    /// <summary>
-    /// The current spot balances for all referenced symbols.
-    /// </summary>
-    IDictionary<string, SymbolSpotBalances> SpotBalances { get; }
+    SymbolSpotBalances SpotBalance { get; }
 
     /// <summary>
     /// The current savings balances for the assets of the default symbol.
@@ -166,6 +161,8 @@ public class SymbolData
     public AutoPosition AutoPosition { get; set; } = AutoPosition.Empty;
 
     public MiniTicker Ticker { get; set; } = MiniTicker.Empty;
+
+    public SymbolSpotBalances Spot { get; } = new SymbolSpotBalances();
 }
 
 public record SymbolSavingsBalances(string Symbol, SavingsBalance BaseAsset, SavingsBalance QuoteAsset)
@@ -175,8 +172,6 @@ public record SymbolSavingsBalances(string Symbol, SavingsBalance BaseAsset, Sav
 
 public class SymbolSpotBalances
 {
-    public Symbol Symbol { get; set; } = Symbol.Empty;
-
     public Balance BaseAsset { get; set; } = Balance.Empty;
 
     public Balance QuoteAsset { get; set; } = Balance.Empty;

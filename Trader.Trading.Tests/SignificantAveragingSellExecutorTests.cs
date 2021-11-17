@@ -41,7 +41,6 @@ namespace Outcompute.Trader.Trading.Tests
             var context = new AlgoContext("Algo1", provider)
             {
                 Symbols = { [symbol.Name] = symbol },
-                SpotBalances = { [symbol.Name] = new SymbolSpotBalances() },
                 SavingsBalances = { [symbol.Name] = SymbolSavingsBalances.Empty },
                 Data =
                 {
@@ -107,7 +106,6 @@ namespace Outcompute.Trader.Trading.Tests
             var context = new AlgoContext("Algo1", provider)
             {
                 Symbols = { [symbol.Name] = symbol },
-                SpotBalances = { [symbol.Name] = new SymbolSpotBalances() },
                 SavingsBalances = { [symbol.Name] = SymbolSavingsBalances.Empty },
                 Data =
                 {
@@ -187,7 +185,6 @@ namespace Outcompute.Trader.Trading.Tests
             var context = new AlgoContext("Algo1", provider)
             {
                 Symbols = { [symbol.Name] = symbol },
-                SpotBalances = { [symbol.Name] = new SymbolSpotBalances() },
                 SavingsBalances = { [symbol.Name] = SymbolSavingsBalances.Empty },
                 Data =
                 {
@@ -272,7 +269,6 @@ namespace Outcompute.Trader.Trading.Tests
             var context = new AlgoContext("Algo1", provider)
             {
                 Symbols = { [symbol.Name] = symbol },
-                SpotBalances = { [symbol.Name] = new SymbolSpotBalances() },
                 SavingsBalances = { [symbol.Name] = SymbolSavingsBalances.Empty },
                 Data =
                 {
@@ -367,14 +363,11 @@ namespace Outcompute.Trader.Trading.Tests
                     new SymbolData(symbol.Name)
                     {
                         AutoPosition = AutoPosition.Empty with { Orders = orders },
-                        Ticker = ticker
-                    }
-                },
-                SpotBalances =
-                {
-                    [symbol.Name] = new SymbolSpotBalances
-                    {
-                        BaseAsset = Balance.Zero(symbol.BaseAsset) with { Free = 200m }
+                        Ticker = ticker,
+                        Spot =
+                        {
+                            BaseAsset = Balance.Zero(symbol.BaseAsset) with { Free = 200m }
+                        }
                     }
                 },
                 SavingsBalances = { [symbol.Name] = SymbolSavingsBalances.Empty }

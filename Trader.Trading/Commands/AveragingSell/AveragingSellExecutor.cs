@@ -42,7 +42,7 @@ internal partial class AveragingSellExecutor : IAlgoCommandExecutor<AveragingSel
         // get context data for the command symbol
         var data = context.Data[command.Symbol.Name];
         var positions = data.AutoPosition.Orders;
-        var spots = context.SpotBalances[command.Symbol.Name];
+        var spots = data.Spot;
         var savings = context.SavingsBalances[command.Symbol.Name];
         var swaps = context.SwapPoolBalances[command.Symbol.Name];
         var ticker = data.Ticker;

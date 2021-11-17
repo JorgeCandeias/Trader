@@ -15,18 +15,13 @@ internal class AlgoContextSpotBalanceConfigurator : IAlgoContextConfigurator<Alg
     {
         foreach (var symbol in context.Symbols)
         {
-            if (!context.SpotBalances.TryGetValue(symbol.Key, out var balances))
-            {
-                context.SpotBalances[symbol.Key] = balances = new SymbolSpotBalances();
-            }
+            var spot = context.Data.GetOrAdd(symbol.Key).Spot;
 
-            balances.Symbol = symbol.Value;
-
-            balances.BaseAsset = await _balances
+            spot.BaseAsset = await _balances
                 .GetBalanceOrZeroAsync(symbol.Value.BaseAsset, cancellationToken)
                 .ConfigureAwait(false);
 
-            balances.QuoteAsset = await _balances
+            spot.QuoteAsset = await _balances
                 .GetBalanceOrZeroAsync(symbol.Value.QuoteAsset, cancellationToken)
                 .ConfigureAwait(false);
         }

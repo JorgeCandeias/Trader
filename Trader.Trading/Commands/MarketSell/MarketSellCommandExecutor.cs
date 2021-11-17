@@ -25,7 +25,7 @@ internal partial class MarketSellCommandExecutor : IAlgoCommandExecutor<MarketSe
         // get context data for the command symbol
         var data = context.Data[command.Symbol.Name];
         var ticker = data.Ticker;
-        var spots = context.SpotBalances[command.Symbol.Name];
+        var spots = data.Spot;
         var savings = context.SavingsBalances[command.Symbol.Name];
         var swaps = context.SwapPoolBalances[command.Symbol.Name];
 

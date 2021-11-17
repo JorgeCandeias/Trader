@@ -44,8 +44,6 @@ internal class AlgoContext : IAlgoContext
 
     public IDictionary<string, SymbolSpotBalances> SpotBalances { get; } = new Dictionary<string, SymbolSpotBalances>();
 
-    public SymbolSavingsPositions Savings => SavingsLookup[Symbol.Name];
-
     public IDictionary<string, SymbolSavingsPositions> SavingsLookup { get; set; } = new Dictionary<string, SymbolSavingsPositions>();
 
     public SwapPoolAssetBalance BaseAssetSwapPoolBalance { get; set; } = SwapPoolAssetBalance.Empty;

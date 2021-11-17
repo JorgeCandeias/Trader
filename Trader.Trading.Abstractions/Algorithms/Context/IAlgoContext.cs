@@ -73,12 +73,6 @@ public interface IAlgoContext
     IDictionary<string, SymbolSpotBalances> SpotBalances { get; }
 
     /// <summary>
-    /// The current savings balances for the assets of the default symbol.
-    /// This is only populated if the default symbol is defined.
-    /// </summary>
-    SymbolSavingsPositions Savings { get; }
-
-    /// <summary>
     /// Gets all savings positions for all configured symbols.
     /// </summary>
     IDictionary<string, SymbolSavingsPositions> SavingsLookup { get; }

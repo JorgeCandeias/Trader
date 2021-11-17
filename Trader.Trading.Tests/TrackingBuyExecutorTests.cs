@@ -37,10 +37,10 @@ namespace Outcompute.Trader.Trading.Tests
                 .ReturnsAsync(balance)
                 .Verifiable();
 
-            var position = SavingsPosition.Empty with { Asset = "XYZ", FreeAmount = 2990m };
+            var position = SavingsBalance.Empty with { Asset = "XYZ", FreeAmount = 2990m };
             var savings = Mock.Of<ISavingsProvider>();
             Mock.Get(savings)
-                .Setup(x => x.TryGetPositionAsync("XYZ", CancellationToken.None))
+                .Setup(x => x.TryGetBalanceAsync("XYZ", CancellationToken.None))
                 .ReturnsAsync(position)
                 .Verifiable();
 

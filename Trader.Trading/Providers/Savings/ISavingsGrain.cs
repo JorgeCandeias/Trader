@@ -9,9 +9,9 @@ internal interface ISavingsGrain : IGrainWithGuidKey
 
     ValueTask<IReadOnlyList<SavingsProduct>> GetProductsAsync();
 
-    ValueTask<IEnumerable<SavingsPosition>> GetPositionsAsync();
+    ValueTask<IEnumerable<SavingsBalance>> GetBalancesAsync();
 
-    ValueTask<SavingsPosition?> TryGetPositionAsync(string asset);
+    ValueTask<SavingsBalance?> TryGetBalanceAsync(string asset);
 
     ValueTask<SavingsQuota?> TryGetQuotaAsync(string asset);
 

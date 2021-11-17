@@ -384,7 +384,7 @@ namespace Outcompute.Trader.Trading.InMemory.Tests
             var service = new InMemoryTradingService(factory);
 
             // act
-            Task Test() => service.GetFlexibleProductListAsync(SavingsStatus.None, SavingsFeatured.None, null, null, CancellationToken.None);
+            Task Test() => service.GetSavingsProductsAsync(SavingsStatus.None, SavingsFeatured.None, null, null, CancellationToken.None);
 
             // assert
             Assert.ThrowsAsync<NotImplementedException>(Test);
@@ -398,7 +398,7 @@ namespace Outcompute.Trader.Trading.InMemory.Tests
             var service = new InMemoryTradingService(factory);
 
             // act
-            Task Test() => service.GetFlexibleProductPositionsAsync("ABC", CancellationToken.None);
+            Task Test() => service.GetSavingsBalancesAsync("ABC", CancellationToken.None);
 
             // assert
             Assert.ThrowsAsync<NotImplementedException>(Test);
@@ -478,7 +478,7 @@ namespace Outcompute.Trader.Trading.InMemory.Tests
         public async Task SetsFlexibleProductPositions()
         {
             // arrange
-            var position = SavingsPosition.Empty with { Asset = "ABC" };
+            var position = SavingsBalance.Empty with { Asset = "ABC" };
             var positions = new[] { position };
 
             var factory = Mock.Of<IGrainFactory>();

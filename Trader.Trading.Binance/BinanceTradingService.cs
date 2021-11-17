@@ -191,7 +191,7 @@ internal partial class BinanceTradingService : ITradingService, IHostedService
         });
     }
 
-    public async Task<IReadOnlyCollection<SavingsPosition>> GetFlexibleProductPositionsAsync(
+    public async Task<IReadOnlyCollection<SavingsBalance>> GetSavingsBalancesAsync(
         string asset,
         CancellationToken cancellationToken = default)
     {
@@ -203,7 +203,7 @@ internal partial class BinanceTradingService : ITradingService, IHostedService
             .GetFlexibleProductPositionsAsync(input, cancellationToken)
             .ConfigureAwait(false);
 
-        return _mapper.Map<IReadOnlyCollection<SavingsPosition>>(output);
+        return _mapper.Map<IReadOnlyCollection<SavingsBalance>>(output);
     }
 
     public async Task<SavingsQuota?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(
@@ -248,7 +248,7 @@ internal partial class BinanceTradingService : ITradingService, IHostedService
         while (true)
         {
             // get the page
-            var result = await GetFlexibleProductListAsync(status, featured, page, 100, cancellationToken)
+            var result = await GetSavingsProductsAsync(status, featured, page, 100, cancellationToken)
                 .ConfigureAwait(false);
 
             // keep the items
@@ -264,7 +264,7 @@ internal partial class BinanceTradingService : ITradingService, IHostedService
         return list;
     }
 
-    public async Task<IReadOnlyCollection<SavingsProduct>> GetFlexibleProductListAsync(
+    public async Task<IReadOnlyCollection<SavingsProduct>> GetSavingsProductsAsync(
         SavingsStatus status,
         SavingsFeatured featured,
         long? current,

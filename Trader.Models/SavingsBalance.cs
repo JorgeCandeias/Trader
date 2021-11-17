@@ -3,7 +3,7 @@
 namespace Outcompute.Trader.Models;
 
 [Immutable]
-public record SavingsPosition(
+public record SavingsBalance(
     string Asset,
     string ProductId,
     string ProductName,
@@ -19,7 +19,7 @@ public record SavingsPosition(
     decimal TotalInterest,
     bool CanRedeem)
 {
-    public static SavingsPosition Empty { get; } = new(string.Empty, string.Empty, string.Empty, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, true);
+    public static SavingsBalance Empty { get; } = new(string.Empty, string.Empty, string.Empty, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, true);
 
-    public static SavingsPosition Zero(string asset) => new(asset, asset, asset, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, true);
+    public static SavingsBalance Zero(string asset) => new(asset, asset, asset, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, true);
 }

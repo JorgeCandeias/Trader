@@ -69,11 +69,11 @@ namespace Outcompute.Trader.Trading.Tests
                         BaseAsset = Balance.Zero(symbol.BaseAsset) with { Free = 2000M }
                     }
                 },
-                Savings = { [symbol.Name] = SymbolSavingsPositions.Empty with
+                Savings = { [symbol.Name] = SymbolSavingsBalances.Empty with
                 {
                     Symbol = symbol.Name,
-                    BaseAsset = SavingsPosition.Zero(symbol.BaseAsset),
-                    QuoteAsset = SavingsPosition.Zero(symbol.QuoteAsset)
+                    BaseAsset = SavingsBalance.Zero(symbol.BaseAsset),
+                    QuoteAsset = SavingsBalance.Zero(symbol.QuoteAsset)
                 } },
                 Tickers = { [symbol.Name] = new MiniTicker(symbol.Name, DateTime.Today, 1200, 0, 0, 0, 0, 0) },
                 AutoPositions = { [symbol.Name] = AutoPosition.Empty with { Orders = orders } }

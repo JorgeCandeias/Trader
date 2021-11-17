@@ -93,14 +93,14 @@ internal partial class BinanceTradingServiceWithBackoff : ITradingService
         return WaitAndRetryForeverAsync(ct => _trader.GetExchangeInfoAsync(ct), cancellationToken);
     }
 
-    public Task<IReadOnlyCollection<SavingsProduct>> GetFlexibleProductListAsync(SavingsStatus status, SavingsFeatured featured, long? current, long? size, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyCollection<SavingsProduct>> GetSavingsProductsAsync(SavingsStatus status, SavingsFeatured featured, long? current, long? size, CancellationToken cancellationToken = default)
     {
-        return WaitAndRetryForeverAsync(ct => _trader.GetFlexibleProductListAsync(status, featured, current, size, ct), cancellationToken);
+        return WaitAndRetryForeverAsync(ct => _trader.GetSavingsProductsAsync(status, featured, current, size, ct), cancellationToken);
     }
 
-    public Task<IReadOnlyCollection<SavingsPosition>> GetFlexibleProductPositionsAsync(string asset, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyCollection<SavingsBalance>> GetSavingsBalancesAsync(string asset, CancellationToken cancellationToken = default)
     {
-        return WaitAndRetryForeverAsync(ct => _trader.GetFlexibleProductPositionsAsync(asset, ct), cancellationToken);
+        return WaitAndRetryForeverAsync(ct => _trader.GetSavingsBalancesAsync(asset, ct), cancellationToken);
     }
 
     public Task<IReadOnlyCollection<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime startTime, DateTime endTime, int limit, CancellationToken cancellationToken = default)

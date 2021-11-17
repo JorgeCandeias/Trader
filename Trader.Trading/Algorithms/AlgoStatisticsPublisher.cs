@@ -60,7 +60,7 @@ internal partial class AlgoStatisticsPublisher : IAlgoStatisticsPublisher
             LogStatistics(TypeName, significant.Symbol.Name, quantity, total, avg, now, uPnL, total == 0m ? 0m : uPnL / total, rPnl, pPnl, commissions, aPnL);
 
             var spotBalance = await _balances.GetBalanceOrZeroAsync(significant.Symbol.BaseAsset, cancellationToken);
-            var savingsBalance = await _savings.GetPositionOrZeroAsync(significant.Symbol.BaseAsset, cancellationToken);
+            var savingsBalance = await _savings.GetBalanceOrZeroAsync(significant.Symbol.BaseAsset, cancellationToken);
             var swapBalance = await _swaps.GetBalanceAsync(significant.Symbol.BaseAsset, cancellationToken);
             var free = spotBalance.Free + savingsBalance.FreeAmount + swapBalance.Total;
 

@@ -12,6 +12,22 @@ public interface ITradingService
         SavingsFeatured featured,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyCollection<SavingsProduct>> GetSavingsProductsAsync(
+        SavingsStatus status,
+        SavingsFeatured featured,
+        long? current,
+        long? size,
+        CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyCollection<SavingsBalance>> GetSavingsBalancesAsync(
+        string asset,
+        CancellationToken cancellationToken = default);
+
+    Task<SavingsQuota?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(
+        string productId,
+        SavingsRedemptionType type,
+        CancellationToken cancellationToken = default);
+
     #endregion Savings
 
     /// <summary>
@@ -87,27 +103,11 @@ public interface ITradingService
         int limit,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyCollection<SavingsPosition>> GetFlexibleProductPositionsAsync(
-        string asset,
-        CancellationToken cancellationToken = default);
-
-    Task<SavingsQuota?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(
-        string productId,
-        SavingsRedemptionType type,
-        CancellationToken cancellationToken = default);
-
     Task RedeemFlexibleProductAsync(
         string productId,
         decimal amount,
         SavingsRedemptionType type,
         CancellationToken cancellationToken = default);
-
-    Task<IReadOnlyCollection<SavingsProduct>> GetFlexibleProductListAsync(
-       SavingsStatus status,
-       SavingsFeatured featured,
-       long? current,
-       long? size,
-       CancellationToken cancellationToken = default);
 
     Task<string> CreateUserDataStreamAsync(
         CancellationToken cancellationToken = default);

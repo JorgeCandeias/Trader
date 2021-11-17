@@ -6,9 +6,9 @@ public interface ISavingsProvider
 {
     ValueTask<IReadOnlyList<SavingsProduct>> GetProductsAsync(CancellationToken cancellationToken = default);
 
-    ValueTask<IEnumerable<SavingsPosition>> GetPositionsAsync(CancellationToken cancellationToken = default);
+    ValueTask<IEnumerable<SavingsBalance>> GetBalancesAsync(CancellationToken cancellationToken = default);
 
-    ValueTask<SavingsPosition?> TryGetPositionAsync(string asset, CancellationToken cancellation = default);
+    ValueTask<SavingsBalance?> TryGetBalanceAsync(string asset, CancellationToken cancellation = default);
 
     ValueTask<SavingsQuota?> TryGetQuotaAsync(string asset, CancellationToken cancellationToken = default);
 

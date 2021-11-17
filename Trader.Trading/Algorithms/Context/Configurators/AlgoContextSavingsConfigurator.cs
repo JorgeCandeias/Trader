@@ -20,16 +20,16 @@ internal class AlgoContextSavingsConfigurator : IAlgoContextConfigurator<AlgoCon
         }
     }
 
-    private async ValueTask<SymbolSavingsPositions> GetPositionsAsync(Symbol symbol, CancellationToken cancellationToken)
+    private async ValueTask<SymbolSavingsBalances> GetPositionsAsync(Symbol symbol, CancellationToken cancellationToken)
     {
         var baseAsset = await _savings
-            .GetPositionOrZeroAsync(symbol.BaseAsset, cancellationToken)
+            .GetBalanceOrZeroAsync(symbol.BaseAsset, cancellationToken)
             .ConfigureAwait(false);
 
         var quoteAsset = await _savings
-            .GetPositionOrZeroAsync(symbol.QuoteAsset, cancellationToken)
+            .GetBalanceOrZeroAsync(symbol.QuoteAsset, cancellationToken)
             .ConfigureAwait(false);
 
-        return new SymbolSavingsPositions(symbol.Name, baseAsset, quoteAsset);
+        return new SymbolSavingsBalances(symbol.Name, baseAsset, quoteAsset);
     }
 }

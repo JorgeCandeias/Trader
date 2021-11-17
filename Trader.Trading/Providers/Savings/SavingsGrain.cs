@@ -37,7 +37,7 @@ internal class SavingsGrain : Grain, ISavingsGrain
 
     private IReadOnlyList<SavingsProduct> _products = ImmutableList<SavingsProduct>.Empty;
 
-    private readonly Dictionary<string, SavingsPosition> _positions = new();
+    private readonly Dictionary<string, SavingsBalance> _balances = new();
 
     private readonly Dictionary<string, SavingsQuota> _quotas = new();
 
@@ -126,14 +126,14 @@ internal class SavingsGrain : Grain, ISavingsGrain
 
     public ValueTask<IReadOnlyList<SavingsProduct>> GetProductsAsync() => ValueTask.FromResult(_products);
 
-    public ValueTask<IEnumerable<SavingsPosition>> GetPositionsAsync()
+    public ValueTask<IEnumerable<SavingsBalance>> GetBalancesAsync()
     {
-        return ValueTask.FromResult<IEnumerable<SavingsPosition>>(_positions.Values.ToImmutableList());
+        return ValueTask.FromResult<IEnumerable<SavingsBalance>>(_balances.Values.ToImmutableList());
     }
 
-    public ValueTask<SavingsPosition?> TryGetPositionAsync(string asset)
+    public ValueTask<SavingsBalance?> TryGetBalanceAsync(string asset)
     {
-        var result = _positions.TryGetValue(asset, out var value) ? value : null;
+        var result = _balances.TryGetValue(asset, out var value) ? value : null;
 
         return ValueTask.FromResult(result);
     }
@@ -148,7 +148,7 @@ internal class SavingsGrain : Grain, ISavingsGrain
     public async ValueTask<RedeemSavingsEvent> RedeemAsync(string asset, decimal amount)
     {
         // get the current savings for the asset
-        if (!_positions.TryGetValue(asset, out var position))
+        if (!_balances.TryGetValue(asset, out var position))
         {
             _logger.LogWarning(
                 "{Type} cannot redeem savings for asset {Asset} because there is no savings product",
@@ -227,19 +227,19 @@ internal class SavingsGrain : Grain, ISavingsGrain
         return new RedeemSavingsEvent(true, amount);
     }
 
-    private async Task<SavingsPosition?> LoadSavingsPositionAsync(string asset)
+    private async Task<SavingsBalance?> LoadSavingsPositionAsync(string asset)
     {
         var watch = Stopwatch.StartNew();
 
         // get the position for the product
         var positions = await _trader
             .WithBackoff()
-            .GetFlexibleProductPositionsAsync(asset, _cancellation.Token);
+            .GetSavingsBalancesAsync(asset, _cancellation.Token);
 
         var position = positions.SingleOrDefault();
         if (position is not null)
         {
-            _positions[position.Asset] = position;
+            _balances[position.Asset] = position;
         }
 
         _logger.LogInformation(
@@ -276,9 +276,9 @@ internal class SavingsGrain : Grain, ISavingsGrain
 
     private void AdjustCachedPosition(string asset, decimal amount)
     {
-        if (_positions.TryGetValue(asset, out var position))
+        if (_balances.TryGetValue(asset, out var position))
         {
-            _positions[asset] = position with { FreeAmount = position.FreeAmount + amount };
+            _balances[asset] = position with { FreeAmount = position.FreeAmount + amount };
         }
     }
 

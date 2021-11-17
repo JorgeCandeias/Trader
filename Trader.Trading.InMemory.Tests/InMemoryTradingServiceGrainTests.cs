@@ -167,7 +167,7 @@ namespace Outcompute.Trader.Trading.InMemory.Tests
             // arrange
             var clock = Mock.Of<ISystemClock>(x => x.UtcNow == DateTime.UtcNow);
             var service = new InMemoryTradingServiceGrain(clock);
-            var position = SavingsPosition.Empty with { Asset = "ABC", FreeAmount = 123m };
+            var position = SavingsBalance.Empty with { Asset = "ABC", FreeAmount = 123m };
 
             // act
             await service.SetFlexibleProductPositionsAsync(new[] { position });

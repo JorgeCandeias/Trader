@@ -88,7 +88,7 @@ internal sealed partial class SwapPoolGrain : Grain, ISwapPoolGrain, IDisposable
         LogPositiveSpotBalances(TypeName, spots.Count);
 
         // get user savings positions for known pools
-        var savings = (await _savings.GetPositionsAsync())
+        var savings = (await _savings.GetBalancesAsync())
             .ToDictionary(x => x.Asset);
 
         LogPositiveSavingsBalances(TypeName, savings.Count);

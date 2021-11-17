@@ -28,9 +28,9 @@ internal interface IInMemoryTradingServiceGrain : IGrainWithGuidKey
 
     #endregion Exchange
 
-    Task<IReadOnlyCollection<SavingsPosition>> GetFlexibleProductPositionsAsync(string asset);
+    Task<IReadOnlyCollection<SavingsBalance>> GetFlexibleProductPositionsAsync(string asset);
 
-    Task SetFlexibleProductPositionsAsync(IEnumerable<SavingsPosition> items);
+    Task SetFlexibleProductPositionsAsync(IEnumerable<SavingsBalance> items);
 
     Task<SavingsQuota?> TryGetLeftDailyRedemptionQuotaOnFlexibleProductAsync(
         string productId,

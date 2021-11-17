@@ -10,7 +10,7 @@ public interface IInMemoryTradingService : ITradingService
 
     #endregion Exchange
 
-    Task SetFlexibleProductPositionsAsync(IEnumerable<SavingsPosition> items);
+    Task SetFlexibleProductPositionsAsync(IEnumerable<SavingsBalance> items);
 
     Task SetLeftDailyRedemptionQuotaOnFlexibleProductAsync(string productId, SavingsRedemptionType type, SavingsQuota item);
 

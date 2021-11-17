@@ -185,7 +185,7 @@ internal class BinanceAutoMapperProfile : Profile
         CreateMap<GetFlexibleProductPosition, GetFlexibleProductPositionsRequest>()
             .ForCtorParam(nameof(GetFlexibleProductPositionsRequest.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));
 
-        CreateMap<GetFlexibleProductPositionsResponse, SavingsPosition>();
+        CreateMap<GetFlexibleProductPositionsResponse, SavingsBalance>();
 
         CreateMap<GetLeftDailyRedemptionQuotaOnFlexibleProduct, GetLeftDailyRedemptionQuotaOnFlexibleProductRequest>()
             .ForCtorParam(nameof(GetLeftDailyRedemptionQuotaOnFlexibleProductRequest.RecvWindow), x => x.MapFrom(y => y.ReceiveWindow));

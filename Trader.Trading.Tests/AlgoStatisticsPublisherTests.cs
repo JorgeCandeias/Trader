@@ -33,8 +33,8 @@ namespace Outcompute.Trader.Trading.Tests
 
             var savings = Mock.Of<ISavingsProvider>();
             Mock.Get(savings)
-                .Setup(x => x.TryGetPositionAsync(symbol.BaseAsset, CancellationToken.None))
-                .ReturnsAsync(SavingsPosition.Zero(symbol.BaseAsset))
+                .Setup(x => x.TryGetBalanceAsync(symbol.BaseAsset, CancellationToken.None))
+                .ReturnsAsync(SavingsBalance.Zero(symbol.BaseAsset))
                 .Verifiable();
 
             var swaps = Mock.Of<ISwapPoolProvider>();

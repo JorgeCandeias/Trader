@@ -37,7 +37,7 @@ internal class TrackingBuyExecutor : IAlgoCommandExecutor<TrackingBuyCommand>
         var ticker = await _tickers.GetRequiredTickerAsync(command.Symbol.Name, cancellationToken).ConfigureAwait(false);
         var orders = await _orders.GetOrdersByFilterAsync(command.Symbol.Name, OrderSide.Buy, true, null, cancellationToken).ConfigureAwait(false);
         var balance = await _balances.GetRequiredBalanceAsync(command.Symbol.QuoteAsset, cancellationToken).ConfigureAwait(false);
-        var savings = await _savings.GetPositionOrZeroAsync(command.Symbol.QuoteAsset, cancellationToken).ConfigureAwait(false);
+        var savings = await _savings.GetBalanceOrZeroAsync(command.Symbol.QuoteAsset, cancellationToken).ConfigureAwait(false);
         var pool = await _swaps.GetBalanceAsync(command.Symbol.QuoteAsset, cancellationToken).ConfigureAwait(false);
 
         // identify the free balance

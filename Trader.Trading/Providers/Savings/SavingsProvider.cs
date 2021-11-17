@@ -17,14 +17,14 @@ internal class SavingsProvider : ISavingsProvider
         return _factory.GetSavingsGrain().GetProductsAsync();
     }
 
-    public ValueTask<IEnumerable<SavingsPosition>> GetPositionsAsync(CancellationToken cancellationToken = default)
+    public ValueTask<IEnumerable<SavingsBalance>> GetBalancesAsync(CancellationToken cancellationToken = default)
     {
-        return _factory.GetSavingsGrain().GetPositionsAsync();
+        return _factory.GetSavingsGrain().GetBalancesAsync();
     }
 
-    public ValueTask<SavingsPosition?> TryGetPositionAsync(string asset, CancellationToken cancellation = default)
+    public ValueTask<SavingsBalance?> TryGetBalanceAsync(string asset, CancellationToken cancellation = default)
     {
-        return _factory.GetSavingsGrain().TryGetPositionAsync(asset);
+        return _factory.GetSavingsGrain().TryGetBalanceAsync(asset);
     }
 
     public ValueTask<SavingsQuota?> TryGetQuotaAsync(string asset, CancellationToken cancellationToken = default)

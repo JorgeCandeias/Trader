@@ -78,9 +78,14 @@ public interface IAlgoContext
     IDictionary<string, SymbolSpotBalances> SpotBalances { get; }
 
     /// <summary>
-    /// Gets all savings positions for all configured symbols.
+    /// The current savings balances for the assets of the default symbol.
     /// </summary>
-    IDictionary<string, SymbolSavingsPositions> Savings { get; }
+    SymbolSavingsBalances SavingsBalances => Savings[Symbol.Name];
+
+    /// <summary>
+    /// Gets all savings balances for all configured symbols.
+    /// </summary>
+    IDictionary<string, SymbolSavingsBalances> Savings { get; }
 
     /// <summary>
     /// The current swap pool balances for the base asset of the default symbol.
@@ -127,9 +132,9 @@ public interface IAlgoContext
     ValueTask UpdateAsync(CancellationToken cancellationToken = default);
 }
 
-public record SymbolSavingsPositions(string Symbol, SavingsPosition BaseAsset, SavingsPosition QuoteAsset)
+public record SymbolSavingsBalances(string Symbol, SavingsBalance BaseAsset, SavingsBalance QuoteAsset)
 {
-    public static SymbolSavingsPositions Empty { get; } = new SymbolSavingsPositions(string.Empty, SavingsPosition.Empty, SavingsPosition.Empty);
+    public static SymbolSavingsBalances Empty { get; } = new SymbolSavingsBalances(string.Empty, SavingsBalance.Empty, SavingsBalance.Empty);
 }
 
 public record SymbolSpotBalances(string Symbol, Balance BaseAsset, Balance QuoteAsset)

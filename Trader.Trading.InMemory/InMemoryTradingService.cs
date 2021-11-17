@@ -93,12 +93,12 @@ internal class InMemoryTradingService : IInMemoryTradingService
         return _grain.GetAccountTradesAsync(symbol, fromId, limit);
     }
 
-    public Task<IReadOnlyCollection<SavingsProduct>> GetFlexibleProductListAsync(SavingsStatus status, SavingsFeatured featured, long? current, long? size, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyCollection<SavingsProduct>> GetSavingsProductsAsync(SavingsStatus status, SavingsFeatured featured, long? current, long? size, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
-    public Task<IReadOnlyCollection<SavingsPosition>> GetFlexibleProductPositionsAsync(string asset, CancellationToken cancellationToken = default)
+    public Task<IReadOnlyCollection<SavingsBalance>> GetSavingsBalancesAsync(string asset, CancellationToken cancellationToken = default)
     {
         return _grain.GetFlexibleProductPositionsAsync(asset);
     }
@@ -128,7 +128,7 @@ internal class InMemoryTradingService : IInMemoryTradingService
         throw new NotImplementedException();
     }
 
-    public Task SetFlexibleProductPositionsAsync(IEnumerable<SavingsPosition> items)
+    public Task SetFlexibleProductPositionsAsync(IEnumerable<SavingsBalance> items)
     {
         if (items is null) throw new ArgumentNullException(nameof(items));
 

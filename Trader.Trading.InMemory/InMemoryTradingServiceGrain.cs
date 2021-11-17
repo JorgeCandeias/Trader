@@ -18,7 +18,7 @@ internal class InMemoryTradingServiceGrain : Grain, IInMemoryTradingServiceGrain
         _clock = clock;
     }
 
-    private readonly Dictionary<string, Dictionary<string, SavingsPosition>> _positions = new();
+    private readonly Dictionary<string, Dictionary<string, SavingsBalance>> _positions = new();
     private readonly Dictionary<(string, SavingsRedemptionType), SavingsQuota> _quotas = new();
     private readonly Dictionary<string, Dictionary<long, OrderQueryResult>> _orders = new();
     private readonly Dictionary<string, long> _orderIds = new();
@@ -185,24 +185,24 @@ internal class InMemoryTradingServiceGrain : Grain, IInMemoryTradingServiceGrain
 
     #endregion Exchange
 
-    public Task<IReadOnlyCollection<SavingsPosition>> GetFlexibleProductPositionsAsync(string asset)
+    public Task<IReadOnlyCollection<SavingsBalance>> GetFlexibleProductPositionsAsync(string asset)
     {
         if (asset is null) throw new ArgumentNullException(nameof(asset));
 
         var result = _positions.TryGetValue(asset, out var items)
             ? items.Values.ToImmutableList()
-            : ImmutableList<SavingsPosition>.Empty;
+            : ImmutableList<SavingsBalance>.Empty;
 
-        return Task.FromResult<IReadOnlyCollection<SavingsPosition>>(result);
+        return Task.FromResult<IReadOnlyCollection<SavingsBalance>>(result);
     }
 
-    public Task SetFlexibleProductPositionsAsync(IEnumerable<SavingsPosition> items)
+    public Task SetFlexibleProductPositionsAsync(IEnumerable<SavingsBalance> items)
     {
         if (items is null) throw new ArgumentNullException(nameof(items));
 
         foreach (var item in items)
         {
-            _positions.GetOrCreate(item.Asset, () => new Dictionary<string, SavingsPosition>())[item.ProductId] = item;
+            _positions.GetOrCreate(item.Asset, () => new Dictionary<string, SavingsBalance>())[item.ProductId] = item;
         }
 
         return Task.CompletedTask;

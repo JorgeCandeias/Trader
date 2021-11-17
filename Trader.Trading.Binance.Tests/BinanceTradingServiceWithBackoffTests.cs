@@ -238,13 +238,13 @@ namespace Outcompute.Trader.Trading.Binance.Tests
             var savings = (IReadOnlyCollection<SavingsProduct>)ImmutableList<SavingsProduct>.Empty;
             var trader = Mock.Of<ITradingService>();
             Mock.Get(trader)
-                .Setup(x => x.GetFlexibleProductListAsync(status, featured, null, null, CancellationToken.None))
+                .Setup(x => x.GetSavingsProductsAsync(status, featured, null, null, CancellationToken.None))
                 .Returns(Task.FromResult(savings))
                 .Verifiable();
             var service = new BinanceTradingServiceWithBackoff(logger, trader);
 
             // act
-            var result = await service.GetFlexibleProductListAsync(status, featured, null, null);
+            var result = await service.GetSavingsProductsAsync(status, featured, null, null);
 
             // assert
             Assert.Equal(savings, result);
@@ -257,16 +257,16 @@ namespace Outcompute.Trader.Trading.Binance.Tests
             // arrange
             var asset = "ABC";
             var logger = NullLogger<BinanceTradingServiceWithBackoff>.Instance;
-            var savings = (IReadOnlyCollection<SavingsPosition>)ImmutableList<SavingsPosition>.Empty;
+            var savings = (IReadOnlyCollection<SavingsBalance>)ImmutableList<SavingsBalance>.Empty;
             var trader = Mock.Of<ITradingService>();
             Mock.Get(trader)
-                .Setup(x => x.GetFlexibleProductPositionsAsync(asset, CancellationToken.None))
+                .Setup(x => x.GetSavingsBalancesAsync(asset, CancellationToken.None))
                 .Returns(Task.FromResult(savings))
                 .Verifiable();
             var service = new BinanceTradingServiceWithBackoff(logger, trader);
 
             // act
-            var result = await service.GetFlexibleProductPositionsAsync(asset);
+            var result = await service.GetSavingsBalancesAsync(asset);
 
             // assert
             Assert.Equal(savings, result);

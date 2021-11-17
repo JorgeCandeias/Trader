@@ -38,7 +38,9 @@ internal class AlgoContext : IAlgoContext
 
     public IDictionary<string, PositionDetails> PositionDetailsLookup { get; } = new Dictionary<string, PositionDetails>();
 
-    public MiniTicker Ticker { get; set; } = MiniTicker.Empty;
+    public MiniTicker Ticker => Tickers[Symbol.Name];
+
+    public IDictionary<string, MiniTicker> Tickers { get; } = new Dictionary<string, MiniTicker>();
 
     public Balance BaseAssetSpotBalance { get; set; } = Balance.Empty;
 

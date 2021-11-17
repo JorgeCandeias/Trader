@@ -61,7 +61,7 @@ namespace Outcompute.Trader.Trading.Tests
                     BaseAsset = SavingsPosition.Zero(symbol.BaseAsset),
                     QuoteAsset = SavingsPosition.Zero(symbol.QuoteAsset)
                 } },
-                Ticker = new MiniTicker(symbol.Name, DateTime.Today, 1200, 0, 0, 0, 0, 0)
+                Tickers = { [symbol.Name] = new MiniTicker(symbol.Name, DateTime.Today, 1200, 0, 0, 0, 0, 0) }
             };
             var orders = new[]
             {

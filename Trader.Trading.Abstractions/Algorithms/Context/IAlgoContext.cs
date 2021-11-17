@@ -63,6 +63,11 @@ public interface IAlgoContext
     MiniTicker Ticker { get; }
 
     /// <summary>
+    /// The current tickers for all configured symbols.
+    /// </summary>
+    IDictionary<string, MiniTicker> Tickers { get; }
+
+    /// <summary>
     /// The current spot balance for the base asset of the default symbol.
     /// This is only populated if the default symbol is defined.
     /// </summary>

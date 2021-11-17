@@ -122,6 +122,7 @@ public static class TraderServiceCollectionExtensions
             .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextKlinesConfigurator>()
             .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextExchangeInfoConfigurator>()
             .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextTradesConfigurator>()
+            .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextOptionsConfigurator>()
 
             // exchange info provider
             .AddSingleton<ExchangeInfoProvider>()
@@ -148,6 +149,7 @@ public static class TraderServiceCollectionExtensions
             .AddAccumulatorAlgoType()
             .AddArbitrageAlgoType()
             .AddValueAveragingAlgoType()
-            .AddDiscoveryAlgoType();
+            .AddDiscoveryAlgoType()
+            .AddPortfolioAlgoType();
     }
 }

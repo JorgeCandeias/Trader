@@ -28,7 +28,7 @@ internal class AlgoContextKlinesConfigurator : IAlgoContextConfigurator<AlgoCont
         {
             foreach (var symbol in context.Symbols)
             {
-                context.Data.GetOrAdd(symbol.Name).Klines[context.KlineInterval] = await _klines
+                context.Data.GetOrAdd(symbol.Name).Klines = await _klines
                     .GetKlinesAsync(symbol.Name, context.KlineInterval, context.TickTime, context.KlinePeriods, cancellationToken)
                     .ConfigureAwait(false);
             }

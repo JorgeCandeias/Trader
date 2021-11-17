@@ -18,6 +18,8 @@ internal class AlgoContext : IAlgoContext
 
     public string Name { get; }
 
+    public AlgoOptions Options { get; set; } = new AlgoOptions();
+
     public DateTime TickTime { get; set; }
 
     public IServiceProvider ServiceProvider { get; }
@@ -46,7 +48,7 @@ internal class AlgoContext : IAlgoContext
 
     public IReadOnlyList<AccountTrade> Trades => Data[Symbol.Name].Trades;
 
-    public IReadOnlyList<Kline> Klines => Data[Symbol.Name].Klines[KlineInterval];
+    public IReadOnlyList<Kline> Klines => Data[Symbol.Name].Klines;
 
     public SymbolDataCollection Data { get; } = new SymbolDataCollection();
 

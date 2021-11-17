@@ -15,6 +15,8 @@ public class SymbolData
 
     public string Name { get; }
 
+    public Symbol Symbol { get; set; } = Symbol.Empty;
+
     public AutoPosition AutoPosition { get; set; } = AutoPosition.Empty;
 
     public MiniTicker Ticker { get; set; } = MiniTicker.Empty;
@@ -29,5 +31,5 @@ public class SymbolData
 
     public IReadOnlyList<AccountTrade> Trades { get; set; } = ImmutableList<AccountTrade>.Empty;
 
-    public IDictionary<KlineInterval, IReadOnlyList<Kline>> Klines { get; } = new Dictionary<KlineInterval, IReadOnlyList<Kline>>();
+    public IReadOnlyList<Kline> Klines { get; set; } = ImmutableList<Kline>.Empty;
 }

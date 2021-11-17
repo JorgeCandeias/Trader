@@ -19,6 +19,9 @@ public record AutoPosition(Symbol Symbol, ImmutableSortedSet<OrderQueryResult> O
         ImmutableList<CommissionEvent>.Empty);
 }
 
+[Immutable]
+public record Position(string Symbol, long OrderId, decimal Price, decimal Quantity, DateTime Time);
+
 public record Stats(decimal AvgPerHourDay1, decimal AvgPerHourDay7, decimal AvgPerHourDay30, decimal AvgPerDay1, decimal AvgPerDay7, decimal AvgPerDay30)
 {
     public static Stats Zero { get; } = new Stats(0, 0, 0, 0, 0, 0);

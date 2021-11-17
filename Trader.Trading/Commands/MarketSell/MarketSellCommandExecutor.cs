@@ -4,23 +4,16 @@ using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Commands.RedeemSavings;
 using Outcompute.Trader.Trading.Commands.RedeemSwapPool;
-using Outcompute.Trader.Trading.Providers;
 
 namespace Outcompute.Trader.Trading.Commands.MarketSell;
 
 internal partial class MarketSellCommandExecutor : IAlgoCommandExecutor<MarketSellCommand>
 {
     private readonly ILogger _logger;
-    private readonly ISavingsProvider _savings;
-    private readonly ISwapPoolProvider _swaps;
-    private readonly IBalanceProvider _balances;
 
-    public MarketSellCommandExecutor(ILogger<MarketSellCommandExecutor> logger, ISavingsProvider savings, ISwapPoolProvider swaps, IBalanceProvider balances)
+    public MarketSellCommandExecutor(ILogger<MarketSellCommandExecutor> logger)
     {
         _logger = logger;
-        _savings = savings;
-        _swaps = swaps;
-        _balances = balances;
     }
 
     private const string TypeName = nameof(MarketSellCommandExecutor);
@@ -29,29 +22,31 @@ internal partial class MarketSellCommandExecutor : IAlgoCommandExecutor<MarketSe
 
     public async ValueTask ExecuteAsync(IAlgoContext context, MarketSellCommand command, CancellationToken cancellationToken = default)
     {
+        // get context data for the command symbol
+        var ticker = context.Tickers[command.Symbol.Name];
+        var spots = context.SpotBalances[command.Symbol.Name];
+        var savings = context.Savings[command.Symbol.Name];
+
         // adjust the quantity down by the step size to make a valid order
-        var quantity = command.Quantity.AdjustQuantityDownToLotStepSize(context.Symbol);
-        LogAdjustedQuantity(TypeName, context.Symbol.Name, command.Quantity, context.Symbol.BaseAsset, quantity, context.Symbol.Filters.LotSize.StepSize);
+        var quantity = command.Quantity.AdjustQuantityDownToLotStepSize(command.Symbol);
+        LogAdjustedQuantity(TypeName, command.Symbol.Name, command.Quantity, command.Symbol.BaseAsset, quantity, command.Symbol.Filters.LotSize.StepSize);
 
         // if the quantity becomes lower than the minimum lot size then we cant sell
-        if (quantity < context.Symbol.Filters.LotSize.MinQuantity)
+        if (quantity < command.Symbol.Filters.LotSize.MinQuantity)
         {
-            LogQuantityLessThanMinLotSize(TypeName, context.Symbol.Name, MyOrderType, MyOrderSide, quantity, context.Symbol.BaseAsset, context.Symbol.Filters.LotSize.MinQuantity);
+            LogQuantityLessThanMinLotSize(TypeName, command.Symbol.Name, MyOrderType, MyOrderSide, quantity, command.Symbol.BaseAsset, command.Symbol.Filters.LotSize.MinQuantity);
             return;
         }
 
         // if the total becomes lower than the minimum notional then we cant sell
-        var total = quantity * context.Ticker.ClosePrice;
-        if (total < context.Symbol.Filters.MinNotional.MinNotional)
+        var total = quantity * ticker.ClosePrice;
+        if (total < command.Symbol.Filters.MinNotional.MinNotional)
         {
-            LogTotalLessThanMinNotional(TypeName, context.Symbol.Name, MyOrderType, MyOrderSide, quantity, context.Symbol.BaseAsset, context.Ticker.ClosePrice, context.Symbol.QuoteAsset, total, context.Symbol.Filters.MinNotional.MinNotional);
+            LogTotalLessThanMinNotional(TypeName, command.Symbol.Name, MyOrderType, MyOrderSide, quantity, command.Symbol.BaseAsset, ticker.ClosePrice, command.Symbol.QuoteAsset, total, command.Symbol.Filters.MinNotional.MinNotional);
             return;
         }
 
         // identify the free balance
-        var spots = context.SpotBalances[command.Symbol.Name];
-        var savings = context.Savings[command.Symbol.Name];
-
         var free = spots.BaseAsset.Free
             + (command.RedeemSavings ? savings.BaseAsset.FreeAmount : 0m)
             + (command.RedeemSwapPool ? context.BaseAssetSwapPoolBalance.Total : 0m);
@@ -59,7 +54,7 @@ internal partial class MarketSellCommandExecutor : IAlgoCommandExecutor<MarketSe
         // see if there is enough free balance overall
         if (free < quantity)
         {
-            LogNotEnoughFreeBalance(TypeName, context.Symbol.Name, MyOrderType, MyOrderSide, quantity, context.Symbol.BaseAsset, free);
+            LogNotEnoughFreeBalance(TypeName, command.Symbol.Name, MyOrderType, MyOrderSide, quantity, command.Symbol.BaseAsset, free);
             return;
         }
 
@@ -74,9 +69,9 @@ internal partial class MarketSellCommandExecutor : IAlgoCommandExecutor<MarketSe
             {
                 var redeeming = Math.Min(savings.BaseAsset.FreeAmount, required);
 
-                LogRedeemingSavings(TypeName, context.Symbol.Name, redeeming, context.Symbol.BaseAsset);
+                LogRedeemingSavings(TypeName, command.Symbol.Name, redeeming, command.Symbol.BaseAsset);
 
-                var result = await new RedeemSavingsCommand(context.Symbol.BaseAsset, redeeming)
+                var result = await new RedeemSavingsCommand(command.Symbol.BaseAsset, redeeming)
                     .ExecuteAsync(context, cancellationToken)
                     .ConfigureAwait(false);
 
@@ -92,9 +87,9 @@ internal partial class MarketSellCommandExecutor : IAlgoCommandExecutor<MarketSe
             {
                 var redeeming = Math.Min(context.BaseAssetSwapPoolBalance.Total, required);
 
-                LogRedeemingSwapPool(TypeName, context.Symbol.Name, redeeming, context.Symbol.BaseAsset);
+                LogRedeemingSwapPool(TypeName, command.Symbol.Name, redeeming, command.Symbol.BaseAsset);
 
-                var result = await new RedeemSwapPoolCommand(context.Symbol.BaseAsset, required)
+                var result = await new RedeemSwapPoolCommand(command.Symbol.BaseAsset, required)
                     .ExecuteAsync(context, cancellationToken)
                     .ConfigureAwait(false);
 
@@ -107,13 +102,13 @@ internal partial class MarketSellCommandExecutor : IAlgoCommandExecutor<MarketSe
 
             if (required > 0)
             {
-                LogCouldNotRedeem(TypeName, context.Symbol.Name, required, context.Symbol.BaseAsset);
+                LogCouldNotRedeem(TypeName, command.Symbol.Name, required, command.Symbol.BaseAsset);
                 return;
             }
         }
 
         // all set
-        await new CreateOrderCommand(context.Symbol, OrderType.Market, OrderSide.Sell, null, quantity, null, null)
+        await new CreateOrderCommand(command.Symbol, OrderType.Market, OrderSide.Sell, null, quantity, null, null)
             .ExecuteAsync(context, cancellationToken)
             .ConfigureAwait(false);
     }

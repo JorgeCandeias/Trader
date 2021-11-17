@@ -83,39 +83,4 @@ public class AlgoOptionsDependsOn
     public ISet<string> Tickers { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
     public ISet<string> Balances { get; } = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-    public IList<AlgoOptionsDependsOnKline> Klines { get; } = new List<AlgoOptionsDependsOnKline>();
-}
-
-public class AlgoOptionsDependsOnKline
-{
-    /// <summary>
-    /// Symbol for which to load klines.
-    /// </summary>
-    public string? Symbol { get; set; }
-
-    /// <summary>
-    /// Interval for which to load klines.
-    /// </summary>
-    public KlineInterval Interval { get; set; } = KlineInterval.None;
-
-    /// <summary>
-    /// The rolling number of klines to load.
-    /// </summary>
-    public int Periods { get; set; }
-}
-
-public static class AlgoOptionsDependsOnKlineExtensions
-{
-    public static void Add(this IList<AlgoOptionsDependsOnKline> list, string symbol, KlineInterval interval, int periods)
-    {
-        if (list is null) throw new ArgumentNullException(nameof(list));
-
-        list.Add(new AlgoOptionsDependsOnKline
-        {
-            Symbol = symbol,
-            Interval = interval,
-            Periods = periods
-        });
-    }
 }

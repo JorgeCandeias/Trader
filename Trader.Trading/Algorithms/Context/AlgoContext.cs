@@ -58,9 +58,9 @@ internal class AlgoContext : IAlgoContext
 
     public IReadOnlyList<AccountTrade> Trades { get; set; } = ImmutableList<AccountTrade>.Empty;
 
-    public IDictionary<(string Symbol, KlineInterval Interval), IReadOnlyList<Kline>> KlineLookup { get; } = new Dictionary<(string Symbol, KlineInterval Interval), IReadOnlyList<Kline>>();
+    public IReadOnlyList<Kline> Klines => KlineLookup[(Symbol.Name, KlineInterval)];
 
-    public IReadOnlyList<Kline> Klines { get; set; } = ImmutableList<Kline>.Empty;
+    public IDictionary<(string Symbol, KlineInterval Interval), IReadOnlyList<Kline>> KlineLookup { get; } = new Dictionary<(string Symbol, KlineInterval Interval), IReadOnlyList<Kline>>();
 
     public async ValueTask UpdateAsync(CancellationToken cancellationToken = default)
     {

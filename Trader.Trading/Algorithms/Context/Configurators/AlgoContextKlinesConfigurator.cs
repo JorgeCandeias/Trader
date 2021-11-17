@@ -26,7 +26,7 @@ internal class AlgoContextKlinesConfigurator : IAlgoContextConfigurator<AlgoCont
         // get klines for the default settings
         if (!IsNullOrEmpty(context.Symbol.Name) && context.KlineInterval != KlineInterval.None && context.KlinePeriods > 0)
         {
-            context.KlineLookup[(context.Symbol.Name, context.KlineInterval)] = context.Klines = await _klines
+            context.KlineLookup[(context.Symbol.Name, context.KlineInterval)] = await _klines
                 .GetKlinesAsync(context.Symbol.Name, context.KlineInterval, context.TickTime, context.KlinePeriods, cancellationToken)
                 .ConfigureAwait(false);
         }
@@ -36,23 +36,13 @@ internal class AlgoContextKlinesConfigurator : IAlgoContextConfigurator<AlgoCont
         {
             foreach (var symbol in context.Symbols.Keys)
             {
-                context.KlineLookup[(symbol, context.KlineInterval)] = context.Klines = await _klines
+                if (symbol == context.Symbol.Name)
+                {
+                    continue;
+                }
+
+                context.KlineLookup[(symbol, context.KlineInterval)] = await _klines
                     .GetKlinesAsync(symbol, context.KlineInterval, context.TickTime, context.KlinePeriods, cancellationToken)
-                    .ConfigureAwait(false);
-            }
-        }
-
-        // get klines for extra dependencies
-        foreach (var dependency in options.DependsOn.Klines)
-        {
-            var symbol = dependency.Symbol ?? context.Symbol.Name;
-            var interval = dependency.Interval is not KlineInterval.None ? dependency.Interval : context.KlineInterval;
-            var periods = dependency.Periods is not 0 ? dependency.Periods : context.KlinePeriods;
-
-            if (!IsNullOrEmpty(symbol) && interval != KlineInterval.None && periods > 0)
-            {
-                context.KlineLookup[(symbol, interval)] = await _klines
-                    .GetKlinesAsync(symbol, interval, context.TickTime, periods, cancellationToken)
                     .ConfigureAwait(false);
             }
         }

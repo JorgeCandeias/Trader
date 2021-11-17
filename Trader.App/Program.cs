@@ -14,11 +14,8 @@ using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands;
 using Serilog;
 using Serilog.Events;
-using System;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
-using System.Threading;
-using System.Threading.Tasks;
 using EnvironmentName = Microsoft.Extensions.Hosting.EnvironmentName;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
@@ -151,14 +148,6 @@ namespace Outcompute.Trader.App
                                             templateSection.Bind(options);
 
                                             options.Symbol = symbol;
-                                            foreach (var item in options.DependsOn.Klines)
-                                            {
-                                                item.Symbol = symbol;
-                                            }
-                                            foreach (var item in options.DependsOn.Klines)
-                                            {
-                                                item.Symbol = symbol;
-                                            }
                                             options.DependsOn.Tickers.Add(symbol);
                                         })
                                         .ConfigureTypeOptions(options =>
@@ -177,7 +166,10 @@ namespace Outcompute.Trader.App
                                 {
                                     options.DependsOn.Tickers.Add("BTCGBP");
                                     options.DependsOn.Balances.Add("BTCGBP");
-                                    options.DependsOn.Klines.Add("BTCGBP", KlineInterval.Days1, 100);
+
+                                    options.Symbol = "BTCGBP";
+                                    options.KlineInterval = KlineInterval.Days1;
+                                    options.KlinePeriods = 100;
                                 })
                                 .ConfigureTypeOptions(options =>
                                 {

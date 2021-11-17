@@ -1,5 +1,6 @@
 ﻿using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
+using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 
 namespace Outcompute.Trader.Trading.Algorithms.Context;
@@ -73,14 +74,8 @@ public interface IAlgoContext
 
     /// <summary>
     /// Gets all historial orders for the default symbol.
-    /// This is only populated if the default symbol is defined.
     /// </summary>
-    IReadOnlyList<OrderQueryResult> Orders => OrdersLookup[Symbol.Name];
-
-    /// <summary>
-    /// Gets all orders for all configured symbols and dependencies.
-    /// </summary>
-    IDictionary<string, IReadOnlyList<OrderQueryResult>> OrdersLookup { get; }
+    IReadOnlyList<OrderQueryResult> Orders { get; }
 
     /// <summary>
     /// Gets all historial trades for the default symbol.
@@ -157,6 +152,8 @@ public class SymbolData
     public SymbolSavingsBalances Savings { get; } = new SymbolSavingsBalances();
 
     public SymbolSwapPoolAssetBalances SwapPools { get; } = new SymbolSwapPoolAssetBalances();
+
+    public IReadOnlyList<OrderQueryResult> Orders { get; set; } = ImmutableList<OrderQueryResult>.Empty;
 }
 
 public class SymbolSpotBalances

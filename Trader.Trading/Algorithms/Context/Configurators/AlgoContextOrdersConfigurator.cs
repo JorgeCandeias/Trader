@@ -15,7 +15,7 @@ internal class AlgoContextOrdersConfigurator : IAlgoContextConfigurator<AlgoCont
     {
         foreach (var symbol in context.Symbols.Keys)
         {
-            context.OrdersLookup[symbol] = await _orders
+            context.Data.GetOrAdd(symbol).Orders = await _orders
                 .GetOrdersAsync(symbol, cancellationToken)
                 .ConfigureAwait(false);
         }

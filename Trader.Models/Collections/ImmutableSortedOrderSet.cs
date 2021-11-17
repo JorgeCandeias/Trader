@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections;
 using System.Collections.Immutable;
 
 namespace Outcompute.Trader.Models.Collections
 {
+    // todo: remove this class
     public sealed class ImmutableSortedOrderSet : IImmutableSet<OrderQueryResult>
     {
         private readonly ImmutableSortedSet<OrderQueryResult> _set;

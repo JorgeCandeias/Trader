@@ -2,11 +2,13 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Commands.CancelOpenOrders;
 using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
 using Outcompute.Trader.Trading.Commands.SignificantAveragingSell;
+using System.Collections.Immutable;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
@@ -17,13 +19,6 @@ namespace Outcompute.Trader.Trading.Tests
         public async Task ClearsSellOrdersOnNoBuyOrders()
         {
             // arrange
-            var logger = NullLogger<SignificantAveragingSellExecutor>.Instance;
-            var executor = new SignificantAveragingSellExecutor(logger);
-            var clearOpenOrdersExecutor = Mock.Of<IAlgoCommandExecutor<CancelOpenOrdersCommand>>();
-            var provider = new ServiceCollection()
-                .AddSingleton(clearOpenOrdersExecutor)
-                .BuildServiceProvider();
-            var context = new AlgoContext("Algo1", provider);
             var symbol = Symbol.Empty with
             {
                 Name = "ABCXYZ",
@@ -35,11 +30,33 @@ namespace Outcompute.Trader.Trading.Tests
                 Symbol = symbol.Name,
                 ClosePrice = 50000
             };
-            var orders = Array.Empty<OrderQueryResult>();
+            var orders = ImmutableSortedSet<OrderQueryResult>.Empty;
+
+            var logger = NullLogger<SignificantAveragingSellExecutor>.Instance;
+            var executor = new SignificantAveragingSellExecutor(logger);
+            var clearOpenOrdersExecutor = Mock.Of<IAlgoCommandExecutor<CancelOpenOrdersCommand>>();
+            var provider = new ServiceCollection()
+                .AddSingleton(clearOpenOrdersExecutor)
+                .BuildServiceProvider();
+            var context = new AlgoContext("Algo1", provider)
+            {
+                Symbols = { [symbol.Name] = symbol },
+                Tickers = { [symbol.Name] = ticker },
+                SpotBalances = { [symbol.Name] = SymbolSpotBalances.Empty },
+                Savings = { [symbol.Name] = SymbolSavingsPositions.Empty },
+                PositionDetailsLookup =
+                {
+                    [symbol.Name] = PositionDetails.Empty with
+                    {
+                        Orders = orders
+                    }
+                }
+            };
+
             var minimumProfitRate = 1.01m;
             var redeemSavings = false;
             var redeemSwapPool = true;
-            var command = new SignificantAveragingSellCommand(symbol, ticker, orders, minimumProfitRate, redeemSavings, redeemSwapPool);
+            var command = new SignificantAveragingSellCommand(symbol, minimumProfitRate, redeemSavings, redeemSwapPool);
 
             // act
             await executor.ExecuteAsync(context, command, CancellationToken.None);
@@ -59,7 +76,6 @@ namespace Outcompute.Trader.Trading.Tests
             var provider = new ServiceCollection()
                 .AddSingleton(clearOpenOrdersExecutor)
                 .BuildServiceProvider();
-            var context = new AlgoContext("Algo1", provider);
             var symbol = Symbol.Empty with
             {
                 Name = "ABCXYZ",
@@ -88,10 +104,24 @@ namespace Outcompute.Trader.Trading.Tests
                     Price = 60000m
                 }
             };
+            var context = new AlgoContext("Algo1", provider)
+            {
+                Symbols = { [symbol.Name] = symbol },
+                SpotBalances = { [symbol.Name] = SymbolSpotBalances.Empty },
+                Savings = { [symbol.Name] = SymbolSavingsPositions.Empty },
+                Tickers = { [symbol.Name] = ticker },
+                PositionDetailsLookup =
+                {
+                    [symbol.Name] = PositionDetails.Empty with
+                    {
+                        Orders = orders.ToImmutableSortedSet()
+                    }
+                }
+            };
             var minimumProfitRate = 1.01m;
             var redeemSavings = false;
             var redeemSwapPool = true;
-            var command = new SignificantAveragingSellCommand(symbol, ticker, orders, minimumProfitRate, redeemSavings, redeemSwapPool);
+            var command = new SignificantAveragingSellCommand(symbol, minimumProfitRate, redeemSavings, redeemSwapPool);
 
             // act
             await executor.ExecuteAsync(context, command, CancellationToken.None);
@@ -111,7 +141,7 @@ namespace Outcompute.Trader.Trading.Tests
             var provider = new ServiceCollection()
                 .AddSingleton(clearOpenOrdersExecutor)
                 .BuildServiceProvider();
-            var context = new AlgoContext("Algo1", provider);
+
             var symbol = Symbol.Empty with
             {
                 Name = "ABCXYZ",
@@ -152,10 +182,26 @@ namespace Outcompute.Trader.Trading.Tests
                     Price = 40000m
                 }
             };
+
+            var context = new AlgoContext("Algo1", provider)
+            {
+                Symbols = { [symbol.Name] = symbol },
+                Tickers = { [symbol.Name] = ticker },
+                SpotBalances = { [symbol.Name] = SymbolSpotBalances.Empty },
+                Savings = { [symbol.Name] = SymbolSavingsPositions.Empty },
+                PositionDetailsLookup =
+                {
+                    [symbol.Name] = PositionDetails.Empty with
+                    {
+                        Orders = orders.ToImmutableSortedSet(OrderQueryResult.KeyComparer)
+                    }
+                }
+            };
+
             var minimumProfitRate = 1.01m;
             var redeemSavings = false;
             var redeemSwapPool = true;
-            var command = new SignificantAveragingSellCommand(symbol, ticker, orders, minimumProfitRate, redeemSavings, redeemSwapPool);
+            var command = new SignificantAveragingSellCommand(symbol, minimumProfitRate, redeemSavings, redeemSwapPool);
 
             // act
             await executor.ExecuteAsync(context, command, CancellationToken.None);
@@ -175,7 +221,7 @@ namespace Outcompute.Trader.Trading.Tests
             var provider = new ServiceCollection()
                 .AddSingleton(clearOpenOrdersExecutor)
                 .BuildServiceProvider();
-            var context = new AlgoContext("Algo1", provider);
+
             var symbol = Symbol.Empty with
             {
                 Name = "ABCXYZ",
@@ -220,10 +266,26 @@ namespace Outcompute.Trader.Trading.Tests
                     Price = 40000m
                 }
             };
+
+            var context = new AlgoContext("Algo1", provider)
+            {
+                Symbols = { [symbol.Name] = symbol },
+                Tickers = { [symbol.Name] = ticker },
+                SpotBalances = { [symbol.Name] = SymbolSpotBalances.Empty },
+                Savings = { [symbol.Name] = SymbolSavingsPositions.Empty },
+                PositionDetailsLookup =
+                {
+                    [symbol.Name] = PositionDetails.Empty with
+                    {
+                        Orders = orders.ToImmutableSortedSet(OrderQueryResult.KeyComparer)
+                    }
+                }
+            };
+
             var minimumProfitRate = 1.01m;
             var redeemSavings = false;
             var redeemSwapPool = true;
-            var command = new SignificantAveragingSellCommand(symbol, ticker, orders, minimumProfitRate, redeemSavings, redeemSwapPool);
+            var command = new SignificantAveragingSellCommand(symbol, minimumProfitRate, redeemSavings, redeemSwapPool);
 
             // act
             await executor.ExecuteAsync(context, command, CancellationToken.None);
@@ -268,28 +330,18 @@ namespace Outcompute.Trader.Trading.Tests
                 .AddSingleton(clearOpenOrdersExecutor)
                 .AddSingleton(ensureSingleOrderExecutor)
                 .BuildServiceProvider();
-            var context = new AlgoContext("Algo1", provider)
-            {
-                Symbol = symbol,
-                SpotBalances =
-                {
-                    [symbol.Name] = SymbolSpotBalances.Empty with
-                    {
-                        BaseAsset = Balance.Zero(symbol.BaseAsset) with { Free = 200m }
-                    }
-                }
-            };
 
             var ticker = MiniTicker.Empty with
             {
                 Symbol = symbol.Name,
                 ClosePrice = 50000
             };
-            var orders = new[]
+            var orders = ImmutableSortedSet.Create(OrderQueryResult.KeyComparer, new[]
             {
                 OrderQueryResult.Empty with
                 {
                     Symbol = symbol.Name,
+                    OrderId = 1,
                     Side = OrderSide.Buy,
                     ExecutedQuantity = 100m,
                     Price = 50000m
@@ -297,15 +349,38 @@ namespace Outcompute.Trader.Trading.Tests
                 OrderQueryResult.Empty with
                 {
                     Symbol = symbol.Name,
+                    OrderId = 2,
                     Side = OrderSide.Buy,
                     ExecutedQuantity = 100m,
                     Price = 40000m
                 }
+            });
+
+            var context = new AlgoContext("Algo1", provider)
+            {
+                Symbols = { [symbol.Name] = symbol },
+                Tickers = { [symbol.Name] = ticker },
+                PositionDetailsLookup =
+                {
+                    [symbol.Name] = PositionDetails.Empty with
+                    {
+                        Orders = orders
+                    }
+                },
+                SpotBalances =
+                {
+                    [symbol.Name] = SymbolSpotBalances.Empty with
+                    {
+                        BaseAsset = Balance.Zero(symbol.BaseAsset) with { Free = 200m }
+                    }
+                },
+                Savings = { [symbol.Name] = SymbolSavingsPositions.Empty }
             };
+
             var minimumProfitRate = 1.01m;
             var redeemSavings = false;
             var redeemSwapPool = true;
-            var command = new SignificantAveragingSellCommand(symbol, ticker, orders, minimumProfitRate, redeemSavings, redeemSwapPool);
+            var command = new SignificantAveragingSellCommand(symbol, minimumProfitRate, redeemSavings, redeemSwapPool);
 
             // act
             await executor.ExecuteAsync(context, command, CancellationToken.None);

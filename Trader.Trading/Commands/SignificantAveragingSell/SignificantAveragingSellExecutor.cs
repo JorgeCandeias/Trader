@@ -30,23 +30,27 @@ internal partial class SignificantAveragingSellExecutor : IAlgoCommandExecutor<S
         }
         else
         {
-            return new EnsureSingleOrderCommand(context.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, desired.Quantity, desired.Price, command.RedeemSavings, command.RedeemSwapPool)
+            return new EnsureSingleOrderCommand(command.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, desired.Quantity, desired.Price, command.RedeemSavings, command.RedeemSwapPool)
                 .ExecuteAsync(context, cancellationToken);
         }
     }
 
     private DesiredSell CalculateDesiredSell(IAlgoContext context, SignificantAveragingSellCommand command)
     {
+        // get context info for the command symbol
+        var positions = context.PositionDetailsLookup[command.Symbol.Name].Orders;
+        var ticker = context.Tickers[command.Symbol.Name];
+        var spots = context.SpotBalances[command.Symbol.Name];
+        var savings = context.Savings[command.Symbol.Name];
+
         // skip if there is nothing to sell
-        if (command.Orders.Count == 0)
+        if (positions.Count == 0)
         {
             return DesiredSell.None;
         }
 
         // calculate total free from all valid sources
         // this may be less than the target sell due to swap pool fluctuations etc
-        var spots = context.SpotBalances[command.Symbol.Name];
-        var savings = context.Savings[command.Symbol.Name];
         var free = spots.BaseAsset.Free
             + (command.RedeemSavings ? savings.BaseAsset.FreeAmount : 0)
             + (command.RedeemSwapPool ? context.BaseAssetSwapPoolBalance.Total : 0);
@@ -55,24 +59,24 @@ internal partial class SignificantAveragingSellExecutor : IAlgoCommandExecutor<S
         var count = 0;
         var numerator = 0M;
         var quantity = 0M;
-        foreach (var order in command.Orders)
+        foreach (var position in positions)
         {
-            numerator += order.Price * order.ExecutedQuantity;
-            quantity += order.ExecutedQuantity;
+            numerator += position.Price * position.ExecutedQuantity;
+            quantity += position.ExecutedQuantity;
             count++;
         }
 
         // shortcut - see if we can sell everything
         var averagePrice = numerator / quantity;
         var sellablePrice = averagePrice * command.MinimumProfitRate;
-        if (!(command.Ticker.ClosePrice >= sellablePrice && quantity <= free))
+        if (!(ticker.ClosePrice >= sellablePrice && quantity <= free))
         {
             // second pass - find sellable group
-            foreach (var order in command.Orders)
+            foreach (var position in positions)
             {
                 // remove this order from the trailing average
-                numerator -= order.Price * order.ExecutedQuantity;
-                quantity -= order.ExecutedQuantity;
+                numerator -= position.Price * position.ExecutedQuantity;
+                quantity -= position.ExecutedQuantity;
                 count--;
 
                 // if this was the last order then give up
@@ -84,7 +88,7 @@ internal partial class SignificantAveragingSellExecutor : IAlgoCommandExecutor<S
                 // see if the trailing average is sellable
                 averagePrice = numerator / quantity;
                 sellablePrice = averagePrice * command.MinimumProfitRate;
-                if (command.Ticker.ClosePrice >= sellablePrice && quantity <= free)
+                if (ticker.ClosePrice >= sellablePrice && quantity <= free)
                 {
                     break;
                 }
@@ -100,9 +104,9 @@ internal partial class SignificantAveragingSellExecutor : IAlgoCommandExecutor<S
         }
 
         // log details on the orders elected
-        foreach (var order in command.Orders.TakeLast(count))
+        foreach (var position in positions.TakeLast(count))
         {
-            LogElectedOrder(TypeName, command.Symbol.Name, order.OrderId, order.ExecutedQuantity, command.Symbol.BaseAsset, order.Price, command.Symbol.QuoteAsset);
+            LogElectedOrder(TypeName, command.Symbol.Name, position.OrderId, position.ExecutedQuantity, command.Symbol.BaseAsset, position.Price, command.Symbol.QuoteAsset);
         }
         LogElectedOrders(TypeName, command.Symbol.Name, count, quantity, command.Symbol.BaseAsset, averagePrice, command.Symbol.QuoteAsset);
 
@@ -119,20 +123,20 @@ internal partial class SignificantAveragingSellExecutor : IAlgoCommandExecutor<S
         }
 
         // calculate the sell notional
-        var total = quantity * command.Ticker.ClosePrice;
+        var total = quantity * ticker.ClosePrice;
 
-        LogCalculatedNotional(TypeName, command.Symbol.Name, total, command.Symbol.QuoteAsset, quantity, command.Symbol.BaseAsset, command.Ticker.ClosePrice);
+        LogCalculatedNotional(TypeName, command.Symbol.Name, total, command.Symbol.QuoteAsset, quantity, command.Symbol.BaseAsset, ticker.ClosePrice);
 
         // check if the sell is under the minimum notional filter
         if (total < command.Symbol.Filters.MinNotional.MinNotional)
         {
-            LogCannotSetSellOrderUnderMinimumNotional(TypeName, command.Symbol.Name, quantity, command.Symbol.BaseAsset, command.Ticker.ClosePrice, command.Symbol.QuoteAsset, quantity * command.Ticker.ClosePrice, command.Symbol.Filters.MinNotional.MinNotional);
+            LogCannotSetSellOrderUnderMinimumNotional(TypeName, command.Symbol.Name, quantity, command.Symbol.BaseAsset, ticker.ClosePrice, command.Symbol.QuoteAsset, quantity * ticker.ClosePrice, command.Symbol.Filters.MinNotional.MinNotional);
 
             return DesiredSell.None;
         }
 
         // otherwise we now have a valid desired sell
-        return new DesiredSell(quantity, command.Ticker.ClosePrice);
+        return new DesiredSell(quantity, ticker.ClosePrice);
     }
 
     private record struct DesiredSell(decimal Quantity, decimal Price)

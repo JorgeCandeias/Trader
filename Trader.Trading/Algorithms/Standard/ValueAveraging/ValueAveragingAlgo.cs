@@ -41,7 +41,7 @@ internal sealed partial class ValueAveragingAlgo : Algo
         {
             return Sequence(
                 CancelOpenOrders(Context.Symbol, OrderSide.Buy),
-                SignificantAveragingSell(Context.Symbol, Context.Ticker, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool));
+                SignificantAveragingSell(Context.Symbol, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool));
         }
 
         // decide on a regular buy
@@ -65,7 +65,7 @@ internal sealed partial class ValueAveragingAlgo : Algo
         {
             return Sequence(
                 CancelOpenOrders(Context.Symbol, OrderSide.Buy),
-                SignificantAveragingSell(Context.Symbol, Context.Ticker, Context.PositionDetails.Orders, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool));
+                SignificantAveragingSell(Context.Symbol, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool));
         }
 
         // clear open orders out of range if no decision was made

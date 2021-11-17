@@ -154,7 +154,13 @@ internal sealed class AlgoHostGrain : Grain, IAlgoHostGrainInternal, IDisposable
         if (!IsNullOrWhiteSpace(options.Symbol))
         {
             // publish current algo statistics
-            await _publisher.PublishAsync(_algo.Context.PositionDetails, _algo.Context.Ticker, linked.Token);
+            foreach (var symbol in _algo.Context.Symbols)
+            {
+                var positions = _algo.Context.PositionDetailsLookup[symbol.Key];
+                var ticker = _algo.Context.Tickers[symbol.Key];
+
+                await _publisher.PublishAsync(positions, ticker, linked.Token);
+            }
         }
     }
 

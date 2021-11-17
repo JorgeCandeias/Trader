@@ -109,9 +109,9 @@ public abstract class Algo : IAlgo
         return new RedeemSwapPoolCommand(asset, amount);
     }
 
-    public virtual IAlgoCommand SignificantAveragingSell(Symbol symbol, MiniTicker ticker, IReadOnlyCollection<OrderQueryResult> orders, decimal minimumProfitRate, bool redeemSavings, bool redeemSwapPool)
+    public virtual IAlgoCommand SignificantAveragingSell(Symbol symbol, decimal minimumProfitRate, bool redeemSavings, bool redeemSwapPool)
     {
-        return new SignificantAveragingSellCommand(symbol, ticker, orders, minimumProfitRate, redeemSavings, redeemSwapPool);
+        return new SignificantAveragingSellCommand(symbol, minimumProfitRate, redeemSavings, redeemSwapPool);
     }
 
     public virtual IAlgoCommand TrackingBuy(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings, bool redeemSwapPool)

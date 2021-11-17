@@ -64,7 +64,7 @@ public interface IAlgoContext
     /// <summary>
     /// The current savings balances for the assets of the default symbol.
     /// </summary>
-    SymbolSavingsBalances SavingsBalance { get; }
+    SymbolSavingsBalances Savings { get; }
 
     /// <summary>
     /// The current swap pool balances for the assets of the default symbol.

@@ -39,7 +39,7 @@ internal class AlgoContext : IAlgoContext
 
     public SymbolSpotBalances Spot => Data[Symbol.Name].Spot;
 
-    public SymbolSavingsBalances SavingsBalance => Data[Symbol.Name].Savings;
+    public SymbolSavingsBalances Savings => Data[Symbol.Name].Savings;
 
     public IDictionary<string, SymbolSwapPoolAssetBalances> SwapPoolBalances { get; } = new Dictionary<string, SymbolSwapPoolAssetBalances>();
 

@@ -133,7 +133,7 @@ internal sealed partial class ValueAveragingAlgo : Algo
     private IAlgoCommand CreateBuy()
     {
         var total = Context.Spot.QuoteAsset.Free
-            + (_options.RedeemSavings ? Context.SavingsBalance.QuoteAsset.FreeAmount : 0)
+            + (_options.RedeemSavings ? Context.Savings.QuoteAsset.FreeAmount : 0)
             + (_options.RedeemSwapPool ? Context.SwapPoolBalance.QuoteAsset.Total : 0);
 
         total *= _options.BuyQuoteBalanceFraction;

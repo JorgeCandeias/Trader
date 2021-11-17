@@ -35,7 +35,7 @@ internal partial class MarketBuyCommandExecutor : IAlgoCommandExecutor<MarketBuy
         var data = context.Data[command.Symbol.Name];
         var ticker = data.Ticker;
         var spots = data.Spot;
-        var savings = context.SavingsBalances[command.Symbol.Name];
+        var savings = data.Savings;
         var swaps = context.SwapPoolBalances[command.Symbol.Name];
 
         // adjust the quantity up to the min notional to make a valid order

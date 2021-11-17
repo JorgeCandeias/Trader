@@ -41,7 +41,6 @@ namespace Outcompute.Trader.Trading.Tests
             var context = new AlgoContext("Algo1", provider)
             {
                 Symbols = { [symbol.Name] = symbol },
-                SavingsBalances = { [symbol.Name] = SymbolSavingsBalances.Empty },
                 Data =
                 {
                     new SymbolData(symbol.Name)
@@ -106,7 +105,6 @@ namespace Outcompute.Trader.Trading.Tests
             var context = new AlgoContext("Algo1", provider)
             {
                 Symbols = { [symbol.Name] = symbol },
-                SavingsBalances = { [symbol.Name] = SymbolSavingsBalances.Empty },
                 Data =
                 {
                     new SymbolData(symbol.Name)
@@ -185,7 +183,6 @@ namespace Outcompute.Trader.Trading.Tests
             var context = new AlgoContext("Algo1", provider)
             {
                 Symbols = { [symbol.Name] = symbol },
-                SavingsBalances = { [symbol.Name] = SymbolSavingsBalances.Empty },
                 Data =
                 {
                     new SymbolData(symbol.Name)
@@ -269,7 +266,6 @@ namespace Outcompute.Trader.Trading.Tests
             var context = new AlgoContext("Algo1", provider)
             {
                 Symbols = { [symbol.Name] = symbol },
-                SavingsBalances = { [symbol.Name] = SymbolSavingsBalances.Empty },
                 Data =
                 {
                     new SymbolData(symbol.Name)
@@ -369,8 +365,7 @@ namespace Outcompute.Trader.Trading.Tests
                             BaseAsset = Balance.Zero(symbol.BaseAsset) with { Free = 200m }
                         }
                     }
-                },
-                SavingsBalances = { [symbol.Name] = SymbolSavingsBalances.Empty }
+                }
             };
 
             var minimumProfitRate = 1.01m;

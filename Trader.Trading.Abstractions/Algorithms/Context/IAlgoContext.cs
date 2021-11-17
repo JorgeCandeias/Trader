@@ -64,12 +64,7 @@ public interface IAlgoContext
     /// <summary>
     /// The current savings balances for the assets of the default symbol.
     /// </summary>
-    SymbolSavingsBalances SavingsBalance => SavingsBalances[Symbol.Name];
-
-    /// <summary>
-    /// Gets all savings balances for all configured symbols.
-    /// </summary>
-    IDictionary<string, SymbolSavingsBalances> SavingsBalances { get; }
+    SymbolSavingsBalances SavingsBalance { get; }
 
     /// <summary>
     /// The current swap pool balances for the assets of the default symbol.
@@ -163,6 +158,8 @@ public class SymbolData
     public MiniTicker Ticker { get; set; } = MiniTicker.Empty;
 
     public SymbolSpotBalances Spot { get; } = new SymbolSpotBalances();
+
+    public SymbolSavingsBalances Savings { get; } = new SymbolSavingsBalances();
 }
 
 public class SymbolSpotBalances
@@ -172,9 +169,11 @@ public class SymbolSpotBalances
     public Balance QuoteAsset { get; set; } = Balance.Empty;
 }
 
-public record SymbolSavingsBalances(string Symbol, SavingsBalance BaseAsset, SavingsBalance QuoteAsset)
+public class SymbolSavingsBalances
 {
-    public static SymbolSavingsBalances Empty { get; } = new SymbolSavingsBalances(string.Empty, SavingsBalance.Empty, SavingsBalance.Empty);
+    public SavingsBalance BaseAsset { get; set; } = SavingsBalance.Empty;
+
+    public SavingsBalance QuoteAsset { get; set; } = SavingsBalance.Empty;
 }
 
 public class SymbolSwapPoolAssetBalances

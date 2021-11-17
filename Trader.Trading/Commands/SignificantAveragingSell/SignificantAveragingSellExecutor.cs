@@ -42,7 +42,7 @@ internal partial class SignificantAveragingSellExecutor : IAlgoCommandExecutor<S
         var positions = data.AutoPosition.Orders;
         var ticker = data.Ticker;
         var spots = data.Spot;
-        var savings = context.SavingsBalances[command.Symbol.Name];
+        var savings = data.Savings;
         var swaps = context.SwapPoolBalances[command.Symbol.Name];
 
         // skip if there is nothing to sell

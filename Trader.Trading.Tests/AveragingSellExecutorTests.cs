@@ -62,12 +62,6 @@ namespace Outcompute.Trader.Trading.Tests
             var context = new AlgoContext("Algo1", provider)
             {
                 Symbol = symbol,
-                SavingsBalances = { [symbol.Name] = SymbolSavingsBalances.Empty with
-                {
-                    Symbol = symbol.Name,
-                    BaseAsset = SavingsBalance.Zero(symbol.BaseAsset),
-                    QuoteAsset = SavingsBalance.Zero(symbol.QuoteAsset)
-                } },
                 Data =
                 {
                     new SymbolData(symbol.Name)
@@ -77,6 +71,11 @@ namespace Outcompute.Trader.Trading.Tests
                         Spot =
                         {
                             BaseAsset = Balance.Zero(symbol.BaseAsset) with { Free = 2000M }
+                        },
+                        Savings =
+                        {
+                            BaseAsset = SavingsBalance.Zero(symbol.BaseAsset),
+                            QuoteAsset = SavingsBalance.Zero(symbol.QuoteAsset)
                         }
                     }
                 }

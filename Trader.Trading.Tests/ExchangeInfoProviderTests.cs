@@ -12,7 +12,7 @@ namespace Outcompute.Trader.Trading.Tests
     public class ExchangeInfoProviderTests
     {
         [Fact]
-        public void GetsExchangeInfo()
+        public async Task GetsExchangeInfo()
         {
             // arrange
             var symbol = Symbol.Empty with { Name = "ABCXYZ" };

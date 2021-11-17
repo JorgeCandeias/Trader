@@ -1,7 +1,4 @@
 ﻿using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Providers;
-using System.Collections.Immutable;
-using System.Collections.ObjectModel;
 
 namespace Outcompute.Trader.Trading.Algorithms.Context;
 
@@ -96,81 +93,4 @@ public interface IAlgoContext
     /// Makes the context self-update to the latest data.
     /// </summary>
     ValueTask UpdateAsync(CancellationToken cancellationToken = default);
-}
-
-/// <summary>
-/// Organizes multiple shards of data for each symbol.
-/// </summary>
-public class SymbolDataCollection : KeyedCollection<string, SymbolData>
-{
-    protected override string GetKeyForItem(SymbolData item)
-    {
-        if (item is null) throw new ArgumentNullException(nameof(item));
-
-        return item.Name;
-    }
-
-    public SymbolData GetOrAdd(string key)
-    {
-        if (TryGetValue(key, out var item))
-        {
-            return item;
-        }
-
-        item = new SymbolData(key);
-
-        Add(item);
-
-        return item;
-    }
-}
-
-/// <summary>
-/// Organizes multiple shards of data for a given symbol.
-/// </summary>
-public class SymbolData
-{
-    public SymbolData(string name)
-    {
-        Name = name ?? throw new ArgumentNullException(nameof(name));
-    }
-
-    public string Name { get; }
-
-    public AutoPosition AutoPosition { get; set; } = AutoPosition.Empty;
-
-    public MiniTicker Ticker { get; set; } = MiniTicker.Empty;
-
-    public SymbolSpotBalances Spot { get; } = new SymbolSpotBalances();
-
-    public SymbolSavingsBalances Savings { get; } = new SymbolSavingsBalances();
-
-    public SymbolSwapPoolAssetBalances SwapPools { get; } = new SymbolSwapPoolAssetBalances();
-
-    public IReadOnlyList<OrderQueryResult> Orders { get; set; } = ImmutableList<OrderQueryResult>.Empty;
-
-    public IReadOnlyList<AccountTrade> Trades { get; set; } = ImmutableList<AccountTrade>.Empty;
-
-    public IDictionary<KlineInterval, IReadOnlyList<Kline>> Klines { get; } = new Dictionary<KlineInterval, IReadOnlyList<Kline>>();
-}
-
-public class SymbolSpotBalances
-{
-    public Balance BaseAsset { get; set; } = Balance.Empty;
-
-    public Balance QuoteAsset { get; set; } = Balance.Empty;
-}
-
-public class SymbolSavingsBalances
-{
-    public SavingsBalance BaseAsset { get; set; } = SavingsBalance.Empty;
-
-    public SavingsBalance QuoteAsset { get; set; } = SavingsBalance.Empty;
-}
-
-public class SymbolSwapPoolAssetBalances
-{
-    public SwapPoolAssetBalance BaseAsset { get; set; } = SwapPoolAssetBalance.Empty;
-
-    public SwapPoolAssetBalance QuoteAsset { get; set; } = SwapPoolAssetBalance.Empty;
 }

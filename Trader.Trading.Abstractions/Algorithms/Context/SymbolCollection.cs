@@ -14,4 +14,18 @@ public class SymbolCollection : KeyedCollection<string, Symbol>
 
         return item.Name;
     }
+
+    public void AddOrUpdate(Symbol item)
+    {
+        var index = IndexOf(item);
+
+        if (index < 0)
+        {
+            Add(item);
+        }
+        else
+        {
+            SetItem(index, item);
+        }
+    }
 }

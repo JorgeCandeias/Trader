@@ -2,22 +2,18 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
 using Orleans.Statistics;
-using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
-using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands;
 using Serilog;
 using Serilog.Events;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using EnvironmentName = Microsoft.Extensions.Hosting.EnvironmentName;
-using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace Outcompute.Trader.App
 {
@@ -181,22 +177,9 @@ namespace Outcompute.Trader.App
     [ExcludeFromCodeCoverage]
     internal class TestAlgo : Algo
     {
-        private readonly IOptionsMonitor<TestAlgoOptions> _options;
-        private readonly ILogger _logger;
-        private readonly IAlgoContext _context;
-        private readonly ISystemClock _clock;
-
-        public TestAlgo(IOptionsMonitor<TestAlgoOptions> options, ILogger<TestAlgo> logger, IAlgoContext context, ISystemClock clock)
+        protected override IAlgoCommand OnExecute()
         {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _context = context ?? throw new ArgumentNullException(nameof(context));
-            _clock = clock ?? throw new ArgumentNullException(nameof(clock));
-        }
-
-        protected override ValueTask<IAlgoCommand> OnExecuteAsync(CancellationToken cancellationToken = default)
-        {
-            return Noop().AsValueTaskResult<IAlgoCommand>();
+            return Noop();
         }
     }
 

@@ -46,9 +46,7 @@ internal class AlgoContext : IAlgoContext
 
     public IReadOnlyList<AccountTrade> Trades => Data[Symbol.Name].Trades;
 
-    public IReadOnlyList<Kline> Klines => KlineLookup[(Symbol.Name, KlineInterval)];
-
-    public IDictionary<(string Symbol, KlineInterval Interval), IReadOnlyList<Kline>> KlineLookup { get; } = new Dictionary<(string Symbol, KlineInterval Interval), IReadOnlyList<Kline>>();
+    public IReadOnlyList<Kline> Klines => Data[Symbol.Name].Klines[KlineInterval];
 
     public SymbolDataCollection Data { get; } = new SymbolDataCollection();
 

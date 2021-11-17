@@ -88,11 +88,6 @@ public interface IAlgoContext
     IReadOnlyList<Kline> Klines { get; }
 
     /// <summary>
-    /// Gets the klines for all configured symbols and dependencies.
-    /// </summary>
-    IDictionary<(string Symbol, KlineInterval Interval), IReadOnlyList<Kline>> KlineLookup { get; }
-
-    /// <summary>
     /// Gets context data for each declared symbol.
     /// </summary>
     SymbolDataCollection Data { get; }
@@ -155,6 +150,8 @@ public class SymbolData
     public IReadOnlyList<OrderQueryResult> Orders { get; set; } = ImmutableList<OrderQueryResult>.Empty;
 
     public IReadOnlyList<AccountTrade> Trades { get; set; } = ImmutableList<AccountTrade>.Empty;
+
+    public IDictionary<KlineInterval, IReadOnlyList<Kline>> Klines { get; } = new Dictionary<KlineInterval, IReadOnlyList<Kline>>();
 }
 
 public class SymbolSpotBalances

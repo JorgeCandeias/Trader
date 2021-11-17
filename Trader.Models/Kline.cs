@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Outcompute.Trader.Models;
 
+// todo: convert this back to a record class
 [Immutable]
 public readonly record struct Kline(
     string Symbol,

@@ -21,7 +21,17 @@ internal class AlgoContextSymbolConfigurator : IAlgoContextConfigurator<AlgoCont
         // populate the symbol set
         foreach (var symbol in options.Symbols)
         {
-            context.Symbols[symbol] = _exchange.GetRequiredSymbol(symbol);
+            var value = _exchange.GetRequiredSymbol(symbol);
+
+            var index = context.Symbols.IndexOf(value);
+            if (index < 0)
+            {
+                context.Symbols.Add(value);
+            }
+            else
+            {
+                context.Symbols[index] = value;
+            }
         }
 
         // populate the default symbol

@@ -13,10 +13,10 @@ internal class AlgoContextTickerConfigurator : IAlgoContextConfigurator<AlgoCont
 
     public async ValueTask ConfigureAsync(AlgoContext context, string name, CancellationToken cancellationToken = default)
     {
-        foreach (var symbol in context.Symbols.Keys)
+        foreach (var symbol in context.Symbols)
         {
-            context.Data.GetOrAdd(symbol).Ticker = await _tickers
-                .GetRequiredTickerAsync(symbol, cancellationToken)
+            context.Data.GetOrAdd(symbol.Name).Ticker = await _tickers
+                .GetRequiredTickerAsync(symbol.Name, cancellationToken)
                 .ConfigureAwait(false);
         }
     }

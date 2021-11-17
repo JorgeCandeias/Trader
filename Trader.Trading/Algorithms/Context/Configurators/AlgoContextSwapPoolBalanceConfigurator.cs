@@ -15,14 +15,14 @@ internal class AlgoContextSwapPoolBalanceConfigurator : IAlgoContextConfigurator
     {
         foreach (var symbol in context.Symbols)
         {
-            var swaps = context.Data.GetOrAdd(symbol.Key).SwapPools;
+            var swaps = context.Data.GetOrAdd(symbol.Name).SwapPools;
 
             swaps.BaseAsset = await _swaps
-                .GetBalanceAsync(symbol.Value.BaseAsset, cancellationToken)
+                .GetBalanceAsync(symbol.BaseAsset, cancellationToken)
                 .ConfigureAwait(false);
 
             swaps.QuoteAsset = await _swaps
-                .GetBalanceAsync(symbol.Value.QuoteAsset, cancellationToken)
+                .GetBalanceAsync(symbol.QuoteAsset, cancellationToken)
                 .ConfigureAwait(false);
         }
     }

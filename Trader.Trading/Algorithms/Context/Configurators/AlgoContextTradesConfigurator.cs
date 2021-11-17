@@ -15,8 +15,8 @@ internal class AlgoContextTradesConfigurator : IAlgoContextConfigurator<AlgoCont
     {
         foreach (var symbol in context.Symbols)
         {
-            context.Data.GetOrAdd(symbol.Key).Trades = await _trades
-                .GetTradesAsync(context.Symbol.Name, cancellationToken)
+            context.Data.GetOrAdd(symbol.Name).Trades = await _trades
+                .GetTradesAsync(symbol.Name, cancellationToken)
                 .ConfigureAwait(false);
         }
     }

@@ -13,10 +13,10 @@ internal class AlgoContextOrdersConfigurator : IAlgoContextConfigurator<AlgoCont
 
     public async ValueTask ConfigureAsync(AlgoContext context, string name, CancellationToken cancellationToken = default)
     {
-        foreach (var symbol in context.Symbols.Keys)
+        foreach (var symbol in context.Symbols)
         {
-            context.Data.GetOrAdd(symbol).Orders = await _orders
-                .GetOrdersAsync(symbol, cancellationToken)
+            context.Data.GetOrAdd(symbol.Name).Orders = await _orders
+                .GetOrdersAsync(symbol.Name, cancellationToken)
                 .ConfigureAwait(false);
         }
     }

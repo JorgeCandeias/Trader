@@ -15,14 +15,14 @@ internal class AlgoContextSavingsConfigurator : IAlgoContextConfigurator<AlgoCon
     {
         foreach (var symbol in context.Symbols)
         {
-            var savings = context.Data.GetOrAdd(symbol.Key).Savings;
+            var savings = context.Data.GetOrAdd(symbol.Name).Savings;
 
             savings.BaseAsset = await _savings
-                .GetBalanceOrZeroAsync(symbol.Value.BaseAsset, cancellationToken)
+                .GetBalanceOrZeroAsync(symbol.BaseAsset, cancellationToken)
                 .ConfigureAwait(false);
 
             savings.QuoteAsset = await _savings
-                .GetBalanceOrZeroAsync(symbol.Value.QuoteAsset, cancellationToken)
+                .GetBalanceOrZeroAsync(symbol.QuoteAsset, cancellationToken)
                 .ConfigureAwait(false);
         }
     }

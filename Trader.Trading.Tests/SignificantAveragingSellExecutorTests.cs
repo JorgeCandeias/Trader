@@ -40,7 +40,7 @@ namespace Outcompute.Trader.Trading.Tests
                 .BuildServiceProvider();
             var context = new AlgoContext("Algo1", provider)
             {
-                Symbols = { [symbol.Name] = symbol },
+                Symbols = { symbol },
                 Data =
                 {
                     new SymbolData(symbol.Name)
@@ -104,7 +104,7 @@ namespace Outcompute.Trader.Trading.Tests
             });
             var context = new AlgoContext("Algo1", provider)
             {
-                Symbols = { [symbol.Name] = symbol },
+                Symbols = { symbol },
                 Data =
                 {
                     new SymbolData(symbol.Name)
@@ -182,7 +182,7 @@ namespace Outcompute.Trader.Trading.Tests
 
             var context = new AlgoContext("Algo1", provider)
             {
-                Symbols = { [symbol.Name] = symbol },
+                Symbols = { symbol },
                 Data =
                 {
                     new SymbolData(symbol.Name)
@@ -265,7 +265,7 @@ namespace Outcompute.Trader.Trading.Tests
 
             var context = new AlgoContext("Algo1", provider)
             {
-                Symbols = { [symbol.Name] = symbol },
+                Symbols = { symbol },
                 Data =
                 {
                     new SymbolData(symbol.Name)
@@ -353,7 +353,7 @@ namespace Outcompute.Trader.Trading.Tests
 
             var context = new AlgoContext("Algo1", provider)
             {
-                Symbols = { [symbol.Name] = symbol },
+                Symbols = { symbol },
                 Data =
                 {
                     new SymbolData(symbol.Name)

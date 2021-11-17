@@ -156,7 +156,7 @@ internal sealed class AlgoHostGrain : Grain, IAlgoHostGrainInternal, IDisposable
             // publish current algo statistics
             foreach (var symbol in _algo.Context.Symbols)
             {
-                var data = _algo.Context.Data[symbol.Key];
+                var data = _algo.Context.Data[symbol.Name];
 
                 await _publisher.PublishAsync(data.AutoPosition, data.Ticker, linked.Token);
             }

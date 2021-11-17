@@ -26,10 +26,10 @@ internal class AlgoContextKlinesConfigurator : IAlgoContextConfigurator<AlgoCont
         // get klines for the symbol list
         if (context.Symbols.Count > 0 && context.KlineInterval != KlineInterval.None && context.KlinePeriods > 0)
         {
-            foreach (var symbol in context.Symbols.Keys)
+            foreach (var symbol in context.Symbols)
             {
-                context.Data.GetOrAdd(symbol).Klines[context.KlineInterval] = await _klines
-                    .GetKlinesAsync(symbol, context.KlineInterval, context.TickTime, context.KlinePeriods, cancellationToken)
+                context.Data.GetOrAdd(symbol.Name).Klines[context.KlineInterval] = await _klines
+                    .GetKlinesAsync(symbol.Name, context.KlineInterval, context.TickTime, context.KlinePeriods, cancellationToken)
                     .ConfigureAwait(false);
             }
         }

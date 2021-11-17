@@ -19,8 +19,8 @@ internal class AlgoContextAutoPositionsConfigurator : IAlgoContextConfigurator<A
 
         foreach (var symbol in context.Symbols)
         {
-            context.Data.GetOrAdd(symbol.Key).AutoPosition = await _resolver
-                .ResolveAsync(symbol.Value, options.StartTime, cancellationToken)
+            context.Data.GetOrAdd(symbol.Name).AutoPosition = await _resolver
+                .ResolveAsync(symbol, options.StartTime, cancellationToken)
                 .ConfigureAwait(false);
         }
     }

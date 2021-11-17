@@ -64,7 +64,7 @@ namespace Outcompute.Trader.Trading.Tests
                 Symbol = symbol,
                 SpotBalances =
                 {
-                    [symbol.Name] = SymbolSpotBalances.Empty with
+                    [symbol.Name] = new SymbolSpotBalances
                     {
                         BaseAsset = Balance.Zero(symbol.BaseAsset) with { Free = 2000M }
                     }

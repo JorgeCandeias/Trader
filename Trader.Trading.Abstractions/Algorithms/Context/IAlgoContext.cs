@@ -135,9 +135,13 @@ public record SymbolSavingsBalances(string Symbol, SavingsBalance BaseAsset, Sav
     public static SymbolSavingsBalances Empty { get; } = new SymbolSavingsBalances(string.Empty, SavingsBalance.Empty, SavingsBalance.Empty);
 }
 
-public record SymbolSpotBalances(string Symbol, Balance BaseAsset, Balance QuoteAsset)
+public class SymbolSpotBalances
 {
-    public static SymbolSpotBalances Empty { get; } = new SymbolSpotBalances(string.Empty, Balance.Empty, Balance.Empty);
+    public Symbol Symbol { get; set; } = Symbol.Empty;
+
+    public Balance BaseAsset { get; set; } = Balance.Empty;
+
+    public Balance QuoteAsset { get; set; } = Balance.Empty;
 }
 
 public class SymbolSwapPoolAssetBalances

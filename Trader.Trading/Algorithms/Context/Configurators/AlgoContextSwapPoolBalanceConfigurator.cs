@@ -17,11 +17,10 @@ internal class AlgoContextSwapPoolBalanceConfigurator : IAlgoContextConfigurator
         {
             if (!context.SwapPoolBalances.TryGetValue(symbol.Key, out var balances))
             {
-                context.SwapPoolBalances[symbol.Key] = balances = new SymbolSwapPoolAssetBalances
-                {
-                    Symbol = symbol.Value
-                };
+                context.SwapPoolBalances[symbol.Key] = balances = new SymbolSwapPoolAssetBalances();
             }
+
+            balances.Symbol = symbol.Value;
 
             balances.BaseAsset = await _swaps
                 .GetBalanceAsync(symbol.Value.BaseAsset, cancellationToken)

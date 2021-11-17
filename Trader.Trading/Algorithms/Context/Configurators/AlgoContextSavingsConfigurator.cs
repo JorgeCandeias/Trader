@@ -14,20 +14,8 @@ internal class AlgoContextSavingsConfigurator : IAlgoContextConfigurator<AlgoCon
 
     public async ValueTask ConfigureAsync(AlgoContext context, string name, CancellationToken cancellationToken = default)
     {
-        // populate from the default symbol
-        if (!IsNullOrEmpty(context.Symbol.Name))
-        {
-            context.SavingsLookup[context.Symbol.Name] = await GetPositionsAsync(context.Symbol, cancellationToken).ConfigureAwait(false);
-        }
-
-        // populate from the symbol list
         foreach (var symbol in context.Symbols)
         {
-            if (symbol.Key == context.Symbol.Name)
-            {
-                continue;
-            }
-
             context.SavingsLookup[symbol.Key] = await GetPositionsAsync(symbol.Value, cancellationToken).ConfigureAwait(false);
         }
     }

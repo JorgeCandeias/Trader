@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
-using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Configuration;
 
 namespace Outcompute.Trader.Trading.Algorithms;
@@ -18,24 +17,18 @@ internal class AlgoOptionsConfigurator : IConfigureNamedOptions<AlgoOptions>
 
     public void Configure(string name, AlgoOptions options)
     {
-        if (name is null)
+        if (IsNullOrEmpty(name))
         {
-            throw new ArgumentNullException(nameof(name));
-        }
-
-        if (name == Options.DefaultName)
-        {
-            if (string.IsNullOrWhiteSpace(AlgoContext.Current.Name))
-            {
-                throw new InvalidOperationException($"{nameof(AlgoContext)}.{nameof(AlgoContext.Current)}.{nameof(AlgoContext.Current.Name)} must be defined to configure default options");
-            }
-            else
-            {
-                name = AlgoContext.Current.Name;
-            }
+            throw new NotSupportedException();
         }
 
         _config.GetSection(_mapping.AlgosKey).GetSection(name).Bind(options);
+
+        // include the default symbol in the symbol list
+        if (!IsNullOrEmpty(options.Symbol))
+        {
+            options.Symbols.Add(options.Symbol);
+        }
     }
 
     public void Configure(AlgoOptions options)

@@ -17,24 +17,11 @@ internal class AlgoContextPositionsConfigurator : IAlgoContextConfigurator<AlgoC
     {
         var options = _options.Get(name);
 
-        // populate from the default symbol
-        if (!IsNullOrEmpty(context.Symbol.Name))
-        {
-            context.PositionDetailsLookup[context.Symbol.Name] = await _resolver
-                .ResolveAsync(context.Symbol, options.StartTime, cancellationToken)
-                .ConfigureAwait(false);
-        }
-
         // populate from the symbol list
         if (context.Symbols.Count > 0)
         {
             foreach (var symbol in context.Symbols)
             {
-                if (symbol.Key == context.Symbol.Name)
-                {
-                    continue;
-                }
-
                 context.PositionDetailsLookup[symbol.Key] = await _resolver
                     .ResolveAsync(symbol.Value, options.StartTime, cancellationToken)
                     .ConfigureAwait(false);

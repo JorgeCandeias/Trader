@@ -18,16 +18,16 @@ internal class AlgoContextSymbolConfigurator : IAlgoContextConfigurator<AlgoCont
     {
         var options = _monitor.Get(name);
 
-        // populate the default symbol
-        if (!IsNullOrEmpty(options.Symbol))
-        {
-            context.Symbol = _exchange.GetRequiredSymbol(options.Symbol);
-        }
-
         // populate the symbol set
         foreach (var symbol in options.Symbols)
         {
             context.Symbols[symbol] = _exchange.GetRequiredSymbol(symbol);
+        }
+
+        // populate the default symbol
+        if (!IsNullOrEmpty(options.Symbol))
+        {
+            context.Symbol = context.Symbols[options.Symbol];
         }
 
         return ValueTask.CompletedTask;

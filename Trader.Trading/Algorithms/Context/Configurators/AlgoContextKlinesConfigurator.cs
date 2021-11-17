@@ -23,24 +23,11 @@ internal class AlgoContextKlinesConfigurator : IAlgoContextConfigurator<AlgoCont
         context.KlineInterval = options.KlineInterval;
         context.KlinePeriods = options.KlinePeriods;
 
-        // get klines for the default settings
-        if (!IsNullOrEmpty(context.Symbol.Name) && context.KlineInterval != KlineInterval.None && context.KlinePeriods > 0)
-        {
-            context.KlineLookup[(context.Symbol.Name, context.KlineInterval)] = await _klines
-                .GetKlinesAsync(context.Symbol.Name, context.KlineInterval, context.TickTime, context.KlinePeriods, cancellationToken)
-                .ConfigureAwait(false);
-        }
-
         // get klines for the symbol list
         if (context.Symbols.Count > 0 && context.KlineInterval != KlineInterval.None && context.KlinePeriods > 0)
         {
             foreach (var symbol in context.Symbols.Keys)
             {
-                if (symbol == context.Symbol.Name)
-                {
-                    continue;
-                }
-
                 context.KlineLookup[(symbol, context.KlineInterval)] = await _klines
                     .GetKlinesAsync(symbol, context.KlineInterval, context.TickTime, context.KlinePeriods, cancellationToken)
                     .ConfigureAwait(false);

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
@@ -7,7 +8,7 @@ using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Commands.RedeemSavings;
 using Outcompute.Trader.Trading.Commands.RedeemSwapPool;
 using Outcompute.Trader.Trading.Providers;
-using System.Collections.Immutable;
+using System.Buffers;
 
 namespace Outcompute.Trader.Trading.Commands.TrackingBuy;
 
@@ -208,8 +209,11 @@ internal class TrackingBuyExecutor : IAlgoCommandExecutor<TrackingBuyCommand>
         }
     }
 
-    private async Task<IReadOnlyList<OrderQueryResult>> TryCloseLowBuysAsync(IAlgoContext context, Symbol symbol, IReadOnlyList<OrderQueryResult> orders, decimal lowBuyPrice, CancellationToken cancellationToken)
+    private async Task<OrderCollection> TryCloseLowBuysAsync(IAlgoContext context, Symbol symbol, OrderCollection orders, decimal lowBuyPrice, CancellationToken cancellationToken)
     {
+        var buffer = ArrayPool<OrderQueryResult>.Shared.Rent(orders.Count);
+        var count = 0;
+
         // cancel all open buy orders with an open price lower than the lower band to the current price
         foreach (var order in orders.Where(x => x.Side == OrderSide.Buy && x.Price < lowBuyPrice))
         {
@@ -221,14 +225,24 @@ internal class TrackingBuyExecutor : IAlgoCommandExecutor<TrackingBuyCommand>
                 .ExecuteAsync(context, cancellationToken)
                 .ConfigureAwait(false);
 
-            orders = orders.ToImmutableList().Remove(order);
+            buffer[count++] = order;
         }
+
+        if (count > 0)
+        {
+            orders = buffer.Take(count).ToOrderCollection();
+        }
+
+        ArrayPool<OrderQueryResult>.Shared.Return(buffer);
 
         return orders;
     }
 
-    private async Task<IReadOnlyList<OrderQueryResult>> TryCloseHighBuysAsync(IAlgoContext context, Symbol symbol, IReadOnlyList<OrderQueryResult> orders, CancellationToken cancellationToken)
+    private async Task<OrderCollection> TryCloseHighBuysAsync(IAlgoContext context, Symbol symbol, OrderCollection orders, CancellationToken cancellationToken)
     {
+        var buffer = ArrayPool<OrderQueryResult>.Shared.Rent(orders.Count);
+        var count = 0;
+
         foreach (var order in orders.Where(x => x.Side == OrderSide.Buy).OrderBy(x => x.Price).Skip(1))
         {
             _logger.LogInformation(
@@ -239,10 +253,16 @@ internal class TrackingBuyExecutor : IAlgoCommandExecutor<TrackingBuyCommand>
                 .ExecuteAsync(context, cancellationToken)
                 .ConfigureAwait(false);
 
-            orders = orders.ToImmutableList().Remove(order);
+            buffer[count++] = order;
         }
 
-        // let the algo resync if any orders where closed
+        if (count > 0)
+        {
+            orders = buffer.Take(count).ToOrderCollection();
+        }
+
+        ArrayPool<OrderQueryResult>.Shared.Return(buffer);
+
         return orders;
     }
 }

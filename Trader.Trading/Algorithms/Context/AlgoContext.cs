@@ -43,7 +43,7 @@ internal class AlgoContext : IAlgoContext
 
     public SymbolSwapPoolAssetBalances SwapPoolBalance => Data[Symbol.Name].SwapPools;
 
-    public IReadOnlyList<OrderQueryResult> Orders => Data[Symbol.Name].Orders;
+    public SymbolOrders Orders => Data[Symbol.Name].Orders;
 
     public IReadOnlyList<AccountTrade> Trades => Data[Symbol.Name].Trades;
 

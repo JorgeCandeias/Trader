@@ -50,9 +50,9 @@ internal partial class OrderSynchronizer : IOrderSynchronizer
         }
 
         // this worker will publish incoming orders in the background
-        var worker = new ActionBlock<(string Symbol, IEnumerable<OrderQueryResult> Items)>(work =>
+        var worker = new ActionBlock<(string Symbol, IEnumerable<OrderQueryResult> Items)>(async work =>
         {
-            return _orders.SetOrdersAsync(work.Symbol, work.Items, cancellationToken);
+            await _orders.SetOrdersAsync(work.Symbol, work.Items, cancellationToken);
         });
 
         // pull all new or updated orders page by page

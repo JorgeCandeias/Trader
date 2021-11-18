@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Providers;
 using Xunit;
@@ -10,7 +11,7 @@ namespace Outcompute.Trader.Trading.Tests
     public class AutoPositionResolverTests
     {
         [Fact]
-        public async Task ResolvesEmpty()
+        public void ResolvesEmpty()
         {
             // arrange
             var symbol = Symbol.Empty with
@@ -19,28 +20,15 @@ namespace Outcompute.Trader.Trading.Tests
                 BaseAsset = "ABC",
                 QuoteAsset = "XYZ"
             };
+
             var startTime = DateTime.MinValue;
-
             var logger = NullLogger<AutoPositionResolver>.Instance;
-
-            var orders = Array.Empty<OrderQueryResult>();
-            var orderProvider = Mock.Of<IOrderProvider>();
-            Mock.Get(orderProvider)
-                .Setup(x => x.GetOrdersByFilterAsync(symbol.Name, null, false, true, CancellationToken.None))
-                .ReturnsAsync(orders)
-                .Verifiable();
-
+            var orders = OrderCollection.Empty;
             var trades = Array.Empty<AccountTrade>();
-            var tradeProvider = Mock.Of<ITradeProvider>();
-            Mock.Get(tradeProvider)
-                .Setup(x => x.GetTradesAsync(symbol.Name, CancellationToken.None))
-                .ReturnsAsync(trades)
-                .Verifiable();
-
-            var resolver = new AutoPositionResolver(logger, orderProvider, tradeProvider);
+            var resolver = new AutoPositionResolver(logger);
 
             // act
-            var result = await resolver.ResolveAsync(symbol, startTime, CancellationToken.None);
+            var result = resolver.Resolve(symbol, orders, trades, startTime);
 
             // assert
             Assert.NotNull(result);
@@ -51,7 +39,7 @@ namespace Outcompute.Trader.Trading.Tests
         }
 
         [Fact]
-        public async Task ResolvesScenario()
+        public void ResolvesScenario()
         {
             // arrange
             var symbol = Symbol.Empty with
@@ -71,6 +59,7 @@ namespace Outcompute.Trader.Trading.Tests
                 Side = OrderSide.Buy,
                 ExecutedQuantity = 100m
             };
+
             var order2 = OrderQueryResult.Empty with
             {
                 Symbol = symbol.Name,
@@ -78,12 +67,8 @@ namespace Outcompute.Trader.Trading.Tests
                 Side = OrderSide.Sell,
                 ExecutedQuantity = 100m
             };
-            var orders = new[] { order1, order2 };
-            var orderProvider = Mock.Of<IOrderProvider>();
-            Mock.Get(orderProvider)
-                .Setup(x => x.GetOrdersByFilterAsync(symbol.Name, null, false, true, CancellationToken.None))
-                .ReturnsAsync(orders)
-                .Verifiable();
+
+            var orders = new OrderCollection(new[] { order1, order2 });
 
             var trade1 = AccountTrade.Empty with
             {
@@ -111,10 +96,10 @@ namespace Outcompute.Trader.Trading.Tests
                 .ReturnsAsync(trades)
                 .Verifiable();
 
-            var resolver = new AutoPositionResolver(logger, orderProvider, tradeProvider);
+            var resolver = new AutoPositionResolver(logger);
 
             // act
-            var result = await resolver.ResolveAsync(symbol, startTime, CancellationToken.None);
+            var result = resolver.Resolve(symbol, orders, trades, startTime);
 
             // assert
             Assert.NotNull(result);

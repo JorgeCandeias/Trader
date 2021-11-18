@@ -27,7 +27,17 @@ internal class AlgoContextOrdersConfigurator : IAlgoContextConfigurator<AlgoCont
 
     private async ValueTask ApplyAsync(AlgoContext context, Symbol symbol, CancellationToken cancellationToken)
     {
-        context.Data.GetOrAdd(symbol.Name).Orders = await _orders
+        var orders = context.Data.GetOrAdd(symbol.Name).Orders;
+
+        orders.Open = await _orders
+            .GetOrdersByFilterAsync(symbol.Name, null, true, null, cancellationToken)
+            .ConfigureAwait(false);
+
+        orders.Filled = await _orders
+            .GetOrdersByFilterAsync(symbol.Name, null, false, true, cancellationToken)
+            .ConfigureAwait(false);
+
+        orders.Completed = await _orders
             .GetOrdersAsync(symbol.Name, cancellationToken)
             .ConfigureAwait(false);
     }

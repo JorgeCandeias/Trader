@@ -19,18 +19,26 @@ internal class AlgoDependencyOptionsConfigurator : IConfigureOptions<AlgoDepende
         // configure everything in one pass
         foreach (var algo in algos.Algos.Where(x => x.Value.Enabled))
         {
-            // configure symbols
-            options.Symbols.UnionWith(algo.Value.Symbols);
+            // combine the symbol set and the default symbol
+            var symbols = algo.Value.Symbols.AsEnumerable();
 
-            // configure klines
-            if (algo.Value.KlineInterval != KlineInterval.None && algo.Value.KlinePeriods > 0)
+            if (!IsNullOrEmpty(algo.Value.Symbol))
             {
-                foreach (var symbol in algo.Value.Symbols)
+                symbols = symbols.Append(algo.Value.Symbol);
+            }
+
+            // configure from symbol set
+            foreach (var symbol in symbols)
+            {
+                // configure symbols
+                options.Symbols.Add(symbol);
+
+                // configure klines
+                if (algo.Value.KlineInterval != KlineInterval.None
+                    && algo.Value.KlinePeriods > 0
+                    && (!options.Klines.TryGetValue((symbol, algo.Value.KlineInterval), out var periods) || periods < algo.Value.KlinePeriods))
                 {
-                    if (!options.Klines.TryGetValue((symbol, algo.Value.KlineInterval), out var periods) || periods < algo.Value.KlinePeriods)
-                    {
-                        options.Klines[(symbol, algo.Value.KlineInterval)] = algo.Value.KlinePeriods;
-                    }
+                    options.Klines[(symbol, algo.Value.KlineInterval)] = algo.Value.KlinePeriods;
                 }
             }
         }

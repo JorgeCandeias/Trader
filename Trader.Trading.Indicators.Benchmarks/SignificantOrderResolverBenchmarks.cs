@@ -1,10 +1,10 @@
 ﻿using BenchmarkDotNet.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Algorithms.Positions;
 using System;
-using System.Threading.Tasks;
 
 namespace Trader.Trading.Indicators.Benchmarks
 {
@@ -16,6 +16,10 @@ namespace Trader.Trading.Indicators.Benchmarks
         private readonly Symbol _symbol;
 
         private readonly DateTime _startTime;
+
+        private readonly OrderCollection _orders = OrderCollection.Empty;
+
+        private readonly AccountTrade[] _trades = Array.Empty<AccountTrade>();
 
         public SignificantOrderResolverBenchmarks()
         {
@@ -43,9 +47,9 @@ namespace Trader.Trading.Indicators.Benchmarks
         }
 
         [Benchmark]
-        public Task<AutoPosition> ResolveAsync()
+        public AutoPosition Resolve()
         {
-            return _resolver.ResolveAsync(_symbol, _startTime);
+            return _resolver.Resolve(_symbol, _orders, _trades, _startTime);
         }
     }
 }

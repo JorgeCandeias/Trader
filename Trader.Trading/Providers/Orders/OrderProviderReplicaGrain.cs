@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Concurrency;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Models.Collections;
 using System.Collections.Immutable;
 
 namespace Outcompute.Trader.Trading.Providers.Orders;
@@ -59,19 +60,20 @@ internal class OrderProviderReplicaGrain : Grain, IOrderProviderReplicaGrain
         await base.OnActivateAsync();
     }
 
-    public Task<OrderQueryResult?> TryGetOrderAsync(long orderId)
+    public ValueTask<OrderQueryResult?> TryGetOrderAsync(long orderId)
     {
         var order = _orderByOrderId.TryGetValue(orderId, out var current) ? current : null;
 
-        return Task.FromResult(order);
+        return ValueTask.FromResult(order);
     }
 
-    public Task<IReadOnlyList<OrderQueryResult>> GetOrdersAsync()
+    public ValueTask<OrderCollection> GetOrdersAsync()
     {
-        return Task.FromResult<IReadOnlyList<OrderQueryResult>>(_orders.ToImmutable());
+        return ValueTask.FromResult(new OrderCollection(_orders.ToImmutable()));
     }
 
-    public Task<IReadOnlyList<OrderQueryResult>> GetOrdersByFilterAsync(OrderSide? side, bool? transient, bool? significant)
+    // todo: optimize this with specific filters for each used combination
+    public ValueTask<OrderCollection> GetOrdersByFilterAsync(OrderSide? side, bool? transient, bool? significant)
     {
         var query = _orders.AsEnumerable();
 
@@ -92,31 +94,31 @@ internal class OrderProviderReplicaGrain : Grain, IOrderProviderReplicaGrain
 
         var result = query.ToImmutableList();
 
-        return Task.FromResult<IReadOnlyList<OrderQueryResult>>(result);
+        return ValueTask.FromResult(new OrderCollection(result));
     }
 
-    public Task SetOrderAsync(OrderQueryResult item)
+    public ValueTask SetOrderAsync(OrderQueryResult item)
     {
         if (item is null) throw new ArgumentNullException(nameof(item));
 
         return SetOrderCoreAsync(item);
     }
 
-    private async Task SetOrderCoreAsync(OrderQueryResult item)
+    private async ValueTask SetOrderCoreAsync(OrderQueryResult item)
     {
         await _factory.GetOrderProviderGrain(_symbol).SetOrderAsync(item);
 
         Apply(item);
     }
 
-    public Task SetOrdersAsync(IEnumerable<OrderQueryResult> items)
+    public ValueTask SetOrdersAsync(IEnumerable<OrderQueryResult> items)
     {
         if (items is null) throw new ArgumentNullException(nameof(items));
 
         return SetOrdersCoreAsync(items);
     }
 
-    private async Task SetOrdersCoreAsync(IEnumerable<OrderQueryResult> items)
+    private async ValueTask SetOrdersCoreAsync(IEnumerable<OrderQueryResult> items)
     {
         await _factory.GetOrderProviderGrain(_symbol).SetOrdersAsync(items);
 

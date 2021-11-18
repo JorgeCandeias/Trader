@@ -1,17 +1,18 @@
 ﻿using Orleans;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Models.Collections;
 
 namespace Outcompute.Trader.Trading.Providers.Orders;
 
 public interface IOrderProviderReplicaGrain : IGrainWithStringKey
 {
-    Task<IReadOnlyList<OrderQueryResult>> GetOrdersAsync();
+    ValueTask<OrderCollection> GetOrdersAsync();
 
-    Task<IReadOnlyList<OrderQueryResult>> GetOrdersByFilterAsync(OrderSide? side, bool? transient, bool? significant);
+    ValueTask<OrderCollection> GetOrdersByFilterAsync(OrderSide? side, bool? transient, bool? significant);
 
-    Task<OrderQueryResult?> TryGetOrderAsync(long orderId);
+    ValueTask<OrderQueryResult?> TryGetOrderAsync(long orderId);
 
-    Task SetOrderAsync(OrderQueryResult item);
+    ValueTask SetOrderAsync(OrderQueryResult item);
 
-    Task SetOrdersAsync(IEnumerable<OrderQueryResult> items);
+    ValueTask SetOrdersAsync(IEnumerable<OrderQueryResult> items);
 }

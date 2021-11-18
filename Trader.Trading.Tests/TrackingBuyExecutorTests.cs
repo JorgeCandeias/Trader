@@ -2,15 +2,13 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Commands.RedeemSavings;
 using Outcompute.Trader.Trading.Commands.TrackingBuy;
 using Outcompute.Trader.Trading.Providers;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
@@ -45,10 +43,12 @@ namespace Outcompute.Trader.Trading.Tests
                 .Verifiable();
 
             var active1 = OrderQueryResult.Empty with { Symbol = "ABCXYZ", OrderId = 1, Side = OrderSide.Buy, Status = OrderStatus.New, Price = 12000m };
+
             var orders = Mock.Of<IOrderProvider>();
+
             Mock.Get(orders)
                 .Setup(x => x.GetOrdersByFilterAsync("ABCXYZ", OrderSide.Buy, true, null, CancellationToken.None))
-                .Returns(Task.FromResult<IReadOnlyList<OrderQueryResult>>(new[] { active1 }))
+                .ReturnsAsync(new OrderCollection(new[] { active1 }))
                 .Verifiable();
 
             var swaps = Mock.Of<ISwapPoolProvider>();

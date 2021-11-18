@@ -28,7 +28,7 @@ public class SymbolData
 
     public SymbolSwapPoolAssetBalances SwapPools { get; } = new SymbolSwapPoolAssetBalances();
 
-    public IReadOnlyList<OrderQueryResult> Orders { get; set; } = ImmutableList<OrderQueryResult>.Empty;
+    public SymbolOrders Orders { get; } = new SymbolOrders();
 
     public IReadOnlyList<AccountTrade> Trades { get; set; } = ImmutableList<AccountTrade>.Empty;
 

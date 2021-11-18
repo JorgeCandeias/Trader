@@ -15,25 +15,25 @@ internal class AlgoContextAutoPositionsConfigurator : IAlgoContextConfigurator<A
         _resolver = resolver;
     }
 
-    public async ValueTask ConfigureAsync(AlgoContext context, string name, CancellationToken cancellationToken = default)
+    public ValueTask ConfigureAsync(AlgoContext context, string name, CancellationToken cancellationToken = default)
     {
         var options = _options.Get(name);
 
         foreach (var symbol in context.Symbols)
         {
-            await ApplyAsync(context, symbol, options, cancellationToken).ConfigureAwait(false);
+            Apply(context, symbol, options);
         }
 
         if (!IsNullOrEmpty(context.Symbol.Name) && !context.Symbols.Contains(context.Symbol.Name))
         {
-            await ApplyAsync(context, context.Symbol, options, cancellationToken).ConfigureAwait(false);
+            Apply(context, context.Symbol, options);
         }
+
+        return ValueTask.CompletedTask;
     }
 
-    private async ValueTask ApplyAsync(AlgoContext context, Symbol symbol, AlgoOptions options, CancellationToken cancellationToken)
+    private void Apply(AlgoContext context, Symbol symbol, AlgoOptions options)
     {
-        context.Data.GetOrAdd(symbol.Name).AutoPosition = await _resolver
-            .ResolveAsync(symbol, options.StartTime, cancellationToken)
-            .ConfigureAwait(false);
+        context.Data.GetOrAdd(symbol.Name).AutoPosition = _resolver.Resolve(symbol, context.Orders.Filled, context.Trades, options.StartTime);
     }
 }

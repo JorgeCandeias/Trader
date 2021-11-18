@@ -73,7 +73,7 @@ public interface IAlgoContext
     /// <summary>
     /// Gets all historial orders for the default symbol.
     /// </summary>
-    IReadOnlyList<OrderQueryResult> Orders { get; }
+    SymbolOrders Orders { get; }
 
     /// <summary>
     /// Gets all historial trades for the default symbol.

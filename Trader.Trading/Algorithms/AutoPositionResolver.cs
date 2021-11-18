@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms.Positions;
-using Outcompute.Trader.Trading.Providers;
 using System.Buffers;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -14,15 +14,10 @@ namespace Outcompute.Trader.Trading.Algorithms;
 internal partial class AutoPositionResolver : IAutoPositionResolver
 {
     private readonly ILogger _logger;
-    private readonly IOrderProvider _orders;
-    private readonly ITradeProvider _trades;
 
-    // todo: the resolver should take orders and trades from the resolve method instead so the configurator can take them from the context
-    public AutoPositionResolver(ILogger<AutoPositionResolver> logger, IOrderProvider orders, ITradeProvider trades)
+    public AutoPositionResolver(ILogger<AutoPositionResolver> logger)
     {
         _logger = logger;
-        _orders = orders;
-        _trades = trades;
     }
 
     private static string TypeName => nameof(AutoPositionResolver);
@@ -32,20 +27,7 @@ internal partial class AutoPositionResolver : IAutoPositionResolver
         public decimal RemainingExecutedQuantity { get; set; }
     }
 
-    public async Task<AutoPosition> ResolveAsync(Symbol symbol, DateTime startTime, CancellationToken cancellationToken = default)
-    {
-        var orders = await _orders
-            .GetOrdersByFilterAsync(symbol.Name, null, false, true, cancellationToken)
-            .ConfigureAwait(false);
-
-        var trades = await _trades
-            .GetTradesAsync(symbol.Name, cancellationToken)
-            .ConfigureAwait(false);
-
-        return ResolveCore(symbol, startTime, orders, trades);
-    }
-
-    private AutoPosition ResolveCore(Symbol symbol, DateTime startTime, IReadOnlyList<OrderQueryResult> orders, IEnumerable<AccountTrade> trades)
+    public AutoPosition Resolve(Symbol symbol, OrderCollection orders, IEnumerable<AccountTrade> trades, DateTime startTime)
     {
         var watch = Stopwatch.StartNew();
 

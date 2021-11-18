@@ -6,12 +6,8 @@ using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
 using Orleans.Statistics;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Algorithms;
-using Outcompute.Trader.Trading.Commands;
 using Serilog;
 using Serilog.Events;
-using System.ComponentModel.DataAnnotations;
 using System.Diagnostics.CodeAnalysis;
 using EnvironmentName = Microsoft.Extensions.Hosting.EnvironmentName;
 
@@ -126,8 +122,7 @@ namespace Outcompute.Trader.App
                                 .AddTraderDashboard(options =>
                                 {
                                     options.Port = 6002;
-                                })
-                                .AddAlgoType<TestAlgo>().AddOptionsType<TestAlgoOptions>();
+                                });
 
                             var templates = new[] { "ValueAveragingTemplate1", "ValueAveragingTemplate2" };
 
@@ -152,45 +147,9 @@ namespace Outcompute.Trader.App
                                         });
                                 }
                             }
-
-#if DEBUG
-                            services
-                                .AddAlgoType<TestAlgo>()
-                                .AddOptionsType<TestAlgoOptions>()
-                                .AddAlgo("MyTestAlgo")
-                                .ConfigureHostOptions(options =>
-                                {
-                                    options.Symbol = "BTCGBP";
-                                    options.KlineInterval = KlineInterval.Days1;
-                                    options.KlinePeriods = 100;
-                                })
-                                .ConfigureTypeOptions(options =>
-                                {
-                                    options.SomeValue = "SomeValue";
-                                });
-#endif
                         });
                 })
                 .RunConsoleAsync();
         }
-    }
-
-    [ExcludeFromCodeCoverage]
-    internal class TestAlgo : Algo
-    {
-        protected override IAlgoCommand OnExecute()
-        {
-            return Noop();
-        }
-    }
-
-    [ExcludeFromCodeCoverage]
-    internal class TestAlgoOptions
-    {
-        [Required]
-        public string SomeValue { get; set; } = "Default";
-
-        [Required]
-        public string Symbol { get; set; } = "BTCGBP";
     }
 }

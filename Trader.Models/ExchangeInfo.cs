@@ -1,5 +1,6 @@
 ﻿using Orleans.Concurrency;
 using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Outcompute.Trader.Models;
 
@@ -70,6 +71,32 @@ public record Symbol(
         false,
         SymbolFilters.Empty,
         ImmutableList<Permission>.Empty);
+
+    public static IComparer<Symbol> NameComparer { get; } = new NameComparerInternal();
+
+    private sealed class NameComparerInternal : IComparer<Symbol>, IEqualityComparer<Symbol>
+    {
+        public int Compare(Symbol? x, Symbol? y)
+        {
+            if (x is null) return y is null ? 0 : -1;
+            if (y is null) return 1;
+
+            return StringComparer.Ordinal.Compare(x.Name, y.Name);
+        }
+
+        public bool Equals(Symbol? x, Symbol? y)
+        {
+            if (x is null) return y is null;
+            if (y is null) return false;
+
+            return StringComparer.Ordinal.Equals(x.Name, y.Name);
+        }
+
+        public int GetHashCode([DisallowNull] Symbol obj)
+        {
+            return obj.Name.GetHashCode(StringComparison.Ordinal);
+        }
+    }
 }
 
 [Immutable]

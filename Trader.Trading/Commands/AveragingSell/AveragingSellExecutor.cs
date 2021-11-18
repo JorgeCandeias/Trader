@@ -23,13 +23,7 @@ internal partial class AveragingSellExecutor : IAlgoCommandExecutor<AveragingSel
         var desired = CalculateDesiredSell(context, command);
 
         // apply the desired sell
-        if (desired == DesiredSell.None)
-        {
-            await new CancelOpenOrdersCommand(command.Symbol, OrderSide.Sell)
-                .ExecuteAsync(context, cancellationToken)
-                .ConfigureAwait(false);
-        }
-        else
+        if (desired != DesiredSell.None)
         {
             await new EnsureSingleOrderCommand(command.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, desired.Quantity, desired.Price, command.RedeemSavings, command.RedeemSwapPool)
                 .ExecuteAsync(context, cancellationToken)

@@ -26,7 +26,7 @@ internal class AlgoContext : IAlgoContext
 
     public Symbol Symbol { get; set; } = Symbol.Empty;
 
-    public SymbolCollection Symbols { get; } = new SymbolCollection();
+    public SymbolSet Symbols { get; } = new SymbolSet();
 
     public KlineInterval KlineInterval { get; set; } = KlineInterval.None;
 

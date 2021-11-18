@@ -14,13 +14,13 @@ public class PortfolioAlgoOptions
     public decimal MinRequiredRelativeValueForTopUpBuy { get; set; } = 1.10M;
 
     [Required, Range(0, int.MaxValue)]
-    public decimal RelativeValueForPanicSell { get; set; } = 1.01M;
+    public decimal RelativeValueForPanicSell { get; set; } = 1.02M;
 
     [Required, Range(0, int.MaxValue)]
     public decimal BuyQuoteBalanceFraction { get; set; } = 0.001M;
 
     [Required, Range(0, int.MaxValue)]
-    public decimal MinSellRate { get; set; } = 1.00M;
+    public decimal MinSellRate { get; set; } = 1.01M;
 
     [Range(0, int.MaxValue)]
     public decimal? MaxNotional { get; set; }

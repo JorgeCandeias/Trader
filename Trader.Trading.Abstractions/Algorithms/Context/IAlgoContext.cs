@@ -29,7 +29,7 @@ public interface IAlgoContext
     /// <summary>
     /// Provides full symbol information for the symbol list declared by the algo.
     /// </summary>
-    SymbolCollection Symbols { get; }
+    SymbolSet Symbols { get; }
 
     /// <summary>
     /// The default kline interval for the algo.

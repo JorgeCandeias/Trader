@@ -142,16 +142,13 @@ internal sealed class AlgoHostGrain : Grain, IAlgoHostGrainInternal, IDisposable
         // execute the algo result under the limits
         await result.ExecuteAsync(_algo.Context, linked.Token);
 
-        // update the context with new information for this tick
-        if (!IsNullOrWhiteSpace(options.Symbol))
+        // todo: refactor this into a post-execution registration set called by the algo base class itself
+        // publish current algo statistics
+        foreach (var symbol in _algo.Context.Symbols)
         {
-            // publish current algo statistics
-            foreach (var symbol in _algo.Context.Symbols)
-            {
-                var data = _algo.Context.Data[symbol.Name];
+            var data = _algo.Context.Data[symbol.Name];
 
-                await _publisher.PublishAsync(data.AutoPosition, data.Ticker, linked.Token);
-            }
+            await _publisher.PublishAsync(data.AutoPosition, data.Ticker, linked.Token);
         }
     }
 

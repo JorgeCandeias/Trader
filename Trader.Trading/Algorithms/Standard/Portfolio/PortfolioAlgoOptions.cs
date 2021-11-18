@@ -20,7 +20,7 @@ public class PortfolioAlgoOptions
     public decimal BuyQuoteBalanceFraction { get; set; } = 0.001M;
 
     [Required, Range(0, int.MaxValue)]
-    public decimal MinSellRate { get; set; } = 1.0M;
+    public decimal MinSellRate { get; set; } = 1.00M;
 
     [Range(0, int.MaxValue)]
     public decimal? MaxNotional { get; set; }

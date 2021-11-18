@@ -113,16 +113,16 @@ public static class TraderServiceCollectionExtensions
 
             // algo context configurators in order
             .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextTickTimeConfigurator>()
+            .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextExchangeInfoConfigurator>()
             .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextSymbolConfigurator>()
-            .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextAutoPositionsConfigurator>()
             .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextTickerConfigurator>()
             .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextSpotBalanceConfigurator>()
             .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextSavingsConfigurator>()
             .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextSwapPoolBalanceConfigurator>()
             .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextOrdersConfigurator>()
-            .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextKlinesConfigurator>()
-            .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextExchangeInfoConfigurator>()
             .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextTradesConfigurator>()
+            .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextKlinesConfigurator>()
+            .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextAutoPositionsConfigurator>()
 
             // exchange info provider
             .AddSingleton<ExchangeInfoProvider>()

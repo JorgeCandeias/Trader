@@ -20,7 +20,9 @@ internal class AlgoContextAutoPositionsConfigurator : IAlgoContextConfigurator<A
 
         foreach (var symbol in context.Symbols)
         {
-            context.Data.GetOrAdd(symbol.Name).AutoPosition = _resolver.Resolve(symbol, context.Orders.Filled, context.Trades, options.StartTime);
+            var data = context.Data[symbol.Name];
+
+            context.Data.GetOrAdd(symbol.Name).AutoPosition = _resolver.Resolve(symbol, data.Orders.Filled, data.Trades, options.StartTime);
         }
 
         return ValueTask.CompletedTask;

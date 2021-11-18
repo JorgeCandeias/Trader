@@ -87,17 +87,12 @@ internal class KlineProviderGrain : Grain, IKlineProviderGrain
 
     public ValueTask<Kline?> TryGetKlineAsync(DateTime openTime)
     {
-        if (_klineByOpenTime.TryGetValue(openTime, out var kline))
-        {
-            return ValueTask.FromResult<Kline?>(kline);
-        }
-
-        return ValueTask.FromResult<Kline?>(null);
+        return new(_klineByOpenTime.GetValueOrDefault(openTime));
     }
 
     public ValueTask<ReactiveResult> GetKlinesAsync()
     {
-        return ValueTask.FromResult(new ReactiveResult(_version, _serial, _klines.ToImmutable()));
+        return new(CreateSnapshot());
     }
 
     [NoProfiling]
@@ -106,27 +101,37 @@ internal class KlineProviderGrain : Grain, IKlineProviderGrain
         // if the versions differ then return the entire data set
         if (version != _version)
         {
-            return ValueTask.FromResult<ReactiveResult?>(new ReactiveResult(_version, _serial, _klines.ToImmutable()));
+            return new(CreateSnapshot());
         }
 
         // fulfill the request now if possible
         if (_serial >= fromSerial)
         {
-            var builder = ImmutableSortedSet.CreateBuilder(KlineComparer.Key);
-
-            for (var i = fromSerial; i <= _serial; i++)
-            {
-                if (_klineBySerial.TryGetValue(i, out var kline))
-                {
-                    builder.Add(kline);
-                }
-            }
-
-            return ValueTask.FromResult<ReactiveResult?>(new ReactiveResult(_version, _serial, builder.ToImmutable()));
+            return new(CreateUpdate(fromSerial));
         }
 
         // otherwise let the request wait for more data
         return new ValueTask<ReactiveResult?>(GetOrCreateCompletionTask(version, fromSerial).WithDefaultOnTimeout(null, _reactive.ReactivePollingTimeout, _lifetime.ApplicationStopping));
+    }
+
+    private ReactiveResult CreateSnapshot()
+    {
+        return new ReactiveResult(_version, _serial, _klines.ToImmutable().AsKlineCollection());
+    }
+
+    private ReactiveResult CreateUpdate(int fromSerial)
+    {
+        var builder = ImmutableSortedSet.CreateBuilder(KlineComparer.Key);
+
+        for (var i = fromSerial; i <= _serial; i++)
+        {
+            if (_klineBySerial.TryGetValue(i, out var kline))
+            {
+                builder.Add(kline);
+            }
+        }
+
+        return new ReactiveResult(_version, _serial, builder.ToImmutable().AsKlineCollection());
     }
 
     private async ValueTask LoadAsync()
@@ -230,22 +235,12 @@ internal class KlineProviderGrain : Grain, IKlineProviderGrain
         if (version != _version)
         {
             // complete on data reset
-            completion.SetResult(new ReactiveResult(_version, _serial, _klines.ToImmutable()));
+            completion.SetResult(CreateSnapshot());
         }
         else
         {
             // complete on changes only
-            var builder = ImmutableSortedSet.CreateBuilder(KlineComparer.Key);
-
-            for (var s = fromSerial; s <= _serial; s++)
-            {
-                if (_klineBySerial.TryGetValue(s, out var kline))
-                {
-                    builder.Add(kline);
-                }
-            }
-
-            completion.SetResult(new ReactiveResult(_version, _serial, builder.ToImmutable()));
+            completion.SetResult(CreateUpdate(fromSerial));
         }
     }
 

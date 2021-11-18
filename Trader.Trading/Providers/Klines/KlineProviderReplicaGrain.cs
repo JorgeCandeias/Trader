@@ -4,6 +4,7 @@ using Orleans;
 using Orleans.Concurrency;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms;
 using System.Collections.Immutable;
 
@@ -82,24 +83,17 @@ internal class KlineProviderReplicaGrain : Grain, IKlineProviderReplicaGrain
 
     public ValueTask<Kline?> TryGetKlineAsync(DateTime openTime)
     {
-        if (_klineByOpenTime.TryGetValue(openTime, out var kline))
-        {
-            return ValueTask.FromResult<Kline?>(kline);
-        }
-
-        return ValueTask.FromResult<Kline?>(null);
+        return new(_klineByOpenTime.GetValueOrDefault(openTime));
     }
 
-    public ValueTask<IReadOnlyList<Kline>> GetKlinesAsync()
+    public ValueTask<KlineCollection> GetKlinesAsync()
     {
-        return ValueTask.FromResult<IReadOnlyList<Kline>>(_klines.ToImmutable());
+        return new(_klines.ToImmutable().AsKlineCollection());
     }
 
-    public ValueTask<IReadOnlyList<Kline>> GetKlinesAsync(DateTime tickTime, int periods)
+    public ValueTask<KlineCollection> GetKlinesAsync(DateTime tickTime, int periods)
     {
-        var result = _klines.Reverse().SkipWhile(x => x.OpenTime > tickTime).Take(periods).ToImmutableSortedSet(KlineComparer.Key);
-
-        return ValueTask.FromResult<IReadOnlyList<Kline>>(result);
+        return new(_klines.Where(x => x.OpenTime <= tickTime).TakeLast(periods).ToImmutableList().AsKlineCollection());
     }
 
     public async ValueTask SetKlineAsync(Kline item)
@@ -125,12 +119,7 @@ internal class KlineProviderReplicaGrain : Grain, IKlineProviderReplicaGrain
 
     public ValueTask<DateTime?> TryGetLastOpenTimeAsync()
     {
-        if (_klines.Count > 0)
-        {
-            return ValueTask.FromResult<DateTime?>(_klines.Max.OpenTime);
-        }
-
-        return ValueTask.FromResult<DateTime?>(null);
+        return new(_klines.Max?.OpenTime ?? null);
     }
 
     private async Task LoadAsync()

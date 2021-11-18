@@ -1,5 +1,6 @@
 ﻿using Orleans;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Models.Collections;
 
 namespace Outcompute.Trader.Trading.Providers.Klines;
 
@@ -12,14 +13,14 @@ internal class KlineProvider : IKlineProvider
         _factory = factory;
     }
 
-    public ValueTask<IReadOnlyList<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, CancellationToken cancellationToken = default)
+    public ValueTask<KlineCollection> GetKlinesAsync(string symbol, KlineInterval interval, CancellationToken cancellationToken = default)
     {
         if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
         return _factory.GetKlineProviderReplicaGrain(symbol, interval).GetKlinesAsync();
     }
 
-    public ValueTask<IReadOnlyList<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime tickTime, int periods, CancellationToken cancellationToken = default)
+    public ValueTask<KlineCollection> GetKlinesAsync(string symbol, KlineInterval interval, DateTime tickTime, int periods, CancellationToken cancellationToken = default)
     {
         if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 

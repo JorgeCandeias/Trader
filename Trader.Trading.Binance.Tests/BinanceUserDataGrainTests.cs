@@ -118,7 +118,7 @@ namespace Outcompute.Trader.Trading.Binance.Tests
             var tradeProvider = Mock.Of<ITradeProvider>();
             Mock.Get(tradeProvider)
                 .Setup(x => x.SetTradeAsync(trade, It.IsAny<CancellationToken>()))
-                .Returns(Task.CompletedTask)
+                .Returns(ValueTask.CompletedTask)
                 .Verifiable();
 
             var dependencies = Mock.Of<IAlgoDependencyResolver>(x => x.Symbols == new HashSet<string>(new[] { symbol.Name }));

@@ -1,6 +1,7 @@
 ﻿using Orleans;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Models.Collections;
 
 namespace Outcompute.Trader.Trading.Providers.Trades;
 
@@ -15,21 +16,21 @@ internal class TradeProvider : ITradeProvider
         _repository = repository;
     }
 
-    public Task<IReadOnlyList<AccountTrade>> GetTradesAsync(string symbol, CancellationToken cancellationToken = default)
+    public ValueTask<TradeCollection> GetTradesAsync(string symbol, CancellationToken cancellationToken = default)
     {
         if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
         return _factory.GetTradeProviderReplicaGrain(symbol).GetTradesAsync();
     }
 
-    public Task SetTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default)
+    public ValueTask SetTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default)
     {
         if (trade is null) throw new ArgumentNullException(nameof(trade));
 
         return SetTradeCoreAsync(trade, cancellationToken);
     }
 
-    private async Task SetTradeCoreAsync(AccountTrade trade, CancellationToken cancellationToken = default)
+    private async ValueTask SetTradeCoreAsync(AccountTrade trade, CancellationToken cancellationToken = default)
     {
         await _repository
             .SetTradeAsync(trade, cancellationToken)
@@ -40,12 +41,12 @@ internal class TradeProvider : ITradeProvider
             .SetTradeAsync(trade);
     }
 
-    public Task<AccountTrade?> TryGetTradeAsync(string symbol, long tradeId, CancellationToken cancellationToken = default)
+    public ValueTask<AccountTrade?> TryGetTradeAsync(string symbol, long tradeId, CancellationToken cancellationToken = default)
     {
         return _factory.GetTradeProviderReplicaGrain(symbol).TryGetTradeAsync(tradeId);
     }
 
-    public Task SetTradesAsync(string symbol, IEnumerable<AccountTrade> trades, CancellationToken cancellationToken = default)
+    public ValueTask SetTradesAsync(string symbol, IEnumerable<AccountTrade> trades, CancellationToken cancellationToken = default)
     {
         if (symbol is null) throw new ArgumentNullException(nameof(symbol));
         if (trades is null) throw new ArgumentNullException(nameof(trades));
@@ -58,7 +59,7 @@ internal class TradeProvider : ITradeProvider
         return SetTradesCoreAsync(symbol, trades, cancellationToken);
     }
 
-    private async Task SetTradesCoreAsync(string symbol, IEnumerable<AccountTrade> trades, CancellationToken cancellationToken = default)
+    private async ValueTask SetTradesCoreAsync(string symbol, IEnumerable<AccountTrade> trades, CancellationToken cancellationToken = default)
     {
         await _repository
             .SetTradesAsync(trades, cancellationToken)

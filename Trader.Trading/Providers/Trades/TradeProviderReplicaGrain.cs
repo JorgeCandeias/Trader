@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Concurrency;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Models.Collections;
 using System.Collections.Immutable;
 
 namespace Outcompute.Trader.Trading.Providers.Trades;
@@ -59,40 +60,40 @@ internal class TradeProviderReplicaGrain : Grain, ITradeProviderReplicaGrain
         await base.OnActivateAsync();
     }
 
-    public Task<AccountTrade?> TryGetTradeAsync(long tradeId)
+    public ValueTask<AccountTrade?> TryGetTradeAsync(long tradeId)
     {
         var trade = _tradeByTradeId.TryGetValue(tradeId, out var current) ? current : null;
 
-        return Task.FromResult(trade);
+        return ValueTask.FromResult(trade);
     }
 
-    public Task<IReadOnlyList<AccountTrade>> GetTradesAsync()
+    public ValueTask<TradeCollection> GetTradesAsync()
     {
-        return Task.FromResult<IReadOnlyList<AccountTrade>>(_trades.ToImmutable());
+        return ValueTask.FromResult(new TradeCollection(_trades.ToImmutable()));
     }
 
-    public Task SetTradeAsync(AccountTrade trade)
+    public ValueTask SetTradeAsync(AccountTrade trade)
     {
         if (trade is null) throw new ArgumentNullException(nameof(trade));
 
         return SetTradeCoreAsync(trade);
     }
 
-    private async Task SetTradeCoreAsync(AccountTrade trade)
+    private async ValueTask SetTradeCoreAsync(AccountTrade trade)
     {
         await _factory.GetTradeProviderGrain(_symbol).SetTradeAsync(trade);
 
         Apply(trade);
     }
 
-    public Task SetTradesAsync(IEnumerable<AccountTrade> trades)
+    public ValueTask SetTradesAsync(IEnumerable<AccountTrade> trades)
     {
         if (trades is null) throw new ArgumentNullException(nameof(trades));
 
         return SetTradesCoreAsync(trades);
     }
 
-    private async Task SetTradesCoreAsync(IEnumerable<AccountTrade> trades)
+    private async ValueTask SetTradesCoreAsync(IEnumerable<AccountTrade> trades)
     {
         await _factory.GetTradeProviderGrain(_symbol).SetTradesAsync(trades);
 

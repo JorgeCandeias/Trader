@@ -89,7 +89,7 @@ namespace Outcompute.Trader.Trading.Tests
                 Commission = 0m
             };
 
-            var trades = new[] { trade1, trade2 };
+            var trades = new TradeCollection(new[] { trade1, trade2 });
             var tradeProvider = Mock.Of<ITradeProvider>();
             Mock.Get(tradeProvider)
                 .Setup(x => x.GetTradesAsync(symbol.Name, CancellationToken.None))

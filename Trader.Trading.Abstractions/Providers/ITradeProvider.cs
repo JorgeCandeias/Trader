@@ -1,4 +1,5 @@
 ﻿using Outcompute.Trader.Models;
+using Outcompute.Trader.Models.Collections;
 
 namespace Outcompute.Trader.Trading.Providers;
 
@@ -7,20 +8,20 @@ public interface ITradeProvider
     /// <summary>
     /// Publishes the specified trade.
     /// </summary>
-    Task SetTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default);
+    ValueTask SetTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Publishers the specified trades.
     /// </summary>
-    Task SetTradesAsync(string symbol, IEnumerable<AccountTrade> trades, CancellationToken cancellationToken = default);
+    ValueTask SetTradesAsync(string symbol, IEnumerable<AccountTrade> trades, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets all trades for the specified symbol.
     /// </summary>
-    Task<IReadOnlyList<AccountTrade>> GetTradesAsync(string symbol, CancellationToken cancellationToken = default);
+    ValueTask<TradeCollection> GetTradesAsync(string symbol, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the trade with the specified parameters.
     /// </summary>
-    Task<AccountTrade?> TryGetTradeAsync(string symbol, long tradeId, CancellationToken cancellationToken = default);
+    ValueTask<AccountTrade?> TryGetTradeAsync(string symbol, long tradeId, CancellationToken cancellationToken = default);
 }

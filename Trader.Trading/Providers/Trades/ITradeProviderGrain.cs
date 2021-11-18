@@ -5,13 +5,13 @@ namespace Outcompute.Trader.Trading.Providers.Trades;
 
 internal interface ITradeProviderGrain : IGrainWithStringKey
 {
-    Task<ReactiveResult> GetTradesAsync();
+    ValueTask<ReactiveResult> GetTradesAsync();
 
-    Task<ReactiveResult?> TryWaitForTradesAsync(Guid version, int fromSerial);
+    ValueTask<ReactiveResult?> TryWaitForTradesAsync(Guid version, int fromSerial);
 
-    Task<AccountTrade?> TryGetTradeAsync(long tradeId);
+    ValueTask<AccountTrade?> TryGetTradeAsync(long tradeId);
 
-    Task SetTradeAsync(AccountTrade trade);
+    ValueTask SetTradeAsync(AccountTrade trade);
 
-    Task SetTradesAsync(IEnumerable<AccountTrade> trades);
+    ValueTask SetTradesAsync(IEnumerable<AccountTrade> trades);
 }

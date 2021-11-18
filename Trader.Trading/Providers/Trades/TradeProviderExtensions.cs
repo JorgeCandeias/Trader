@@ -2,6 +2,7 @@
 
 public static class TradeProviderExtensions
 {
+    // todo: move this logic effort to the replica grain
     public static Task<long?> TryGetLastTradeIdAsync(this ITradeProvider provider, string symbol, CancellationToken cancellationToken = default)
     {
         if (provider is null) throw new ArgumentNullException(nameof(provider));

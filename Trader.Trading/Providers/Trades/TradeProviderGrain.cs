@@ -5,6 +5,7 @@ using Orleans.Concurrency;
 using OrleansDashboard;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Models.Collections;
 using System.Buffers;
 using System.Collections.Immutable;
 
@@ -73,19 +74,19 @@ internal class TradeProviderGrain : Grain, ITradeProviderGrain
         await base.OnActivateAsync();
     }
 
-    public Task<AccountTrade?> TryGetTradeAsync(long tradeId)
+    public ValueTask<AccountTrade?> TryGetTradeAsync(long tradeId)
     {
         var trade = _tradeByTradeId.TryGetValue(tradeId, out var current) ? current : null;
 
-        return Task.FromResult(trade);
+        return ValueTask.FromResult(trade);
     }
 
     /// <summary>
     /// Gets all cached trades.
     /// </summary>
-    public Task<ReactiveResult> GetTradesAsync()
+    public ValueTask<ReactiveResult> GetTradesAsync()
     {
-        return Task.FromResult(new ReactiveResult(_version, _serial, _trades.ToImmutable()));
+        return ValueTask.FromResult(new ReactiveResult(_version, _serial, _trades.ToImmutable().AsTradeCollection()));
     }
 
     /// <summary>
@@ -93,12 +94,12 @@ internal class TradeProviderGrain : Grain, ITradeProviderGrain
     /// If the specified version is different from the current version then returns all trades along with the current version.
     /// </summary>
     [NoProfiling]
-    public Task<ReactiveResult?> TryWaitForTradesAsync(Guid version, int fromSerial)
+    public ValueTask<ReactiveResult?> TryWaitForTradesAsync(Guid version, int fromSerial)
     {
         // if the versions differ then return the entire data set
         if (version != _version)
         {
-            return Task.FromResult<ReactiveResult?>(new ReactiveResult(_version, _serial, _trades.ToImmutable()));
+            return new ValueTask<ReactiveResult?>(new ReactiveResult(_version, _serial, _trades.ToImmutable().AsTradeCollection()));
         }
 
         // fulfill the request now if possible
@@ -114,11 +115,11 @@ internal class TradeProviderGrain : Grain, ITradeProviderGrain
                 }
             }
 
-            return Task.FromResult<ReactiveResult?>(new ReactiveResult(_version, _serial, builder.ToImmutable()));
+            return new ValueTask<ReactiveResult?>(new ReactiveResult(_version, _serial, new TradeCollection(builder.ToImmutable())));
         }
 
         // otherwise let the request wait for more data
-        return GetOrCreateCompletionTask(version, fromSerial).WithDefaultOnTimeout(null, _reactive.ReactivePollingTimeout, _lifetime.ApplicationStopping);
+        return new ValueTask<ReactiveResult?>(GetOrCreateCompletionTask(version, fromSerial).WithDefaultOnTimeout(null, _reactive.ReactivePollingTimeout, _lifetime.ApplicationStopping));
     }
 
     /// <summary>
@@ -137,16 +138,16 @@ internal class TradeProviderGrain : Grain, ITradeProviderGrain
     /// <summary>
     /// Saves the trades to the cache and notifies all pending reactive pollers.
     /// </summary>
-    public Task SetTradeAsync(AccountTrade trade)
+    public ValueTask SetTradeAsync(AccountTrade trade)
     {
         if (trade is null) throw new ArgumentNullException(nameof(trade));
 
         Apply(trade);
 
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
-    public Task SetTradesAsync(IEnumerable<AccountTrade> trades)
+    public ValueTask SetTradesAsync(IEnumerable<AccountTrade> trades)
     {
         if (trades is null) throw new ArgumentNullException(nameof(trades));
 
@@ -155,7 +156,7 @@ internal class TradeProviderGrain : Grain, ITradeProviderGrain
             Apply(trade);
         }
 
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
     private void Apply(AccountTrade trade)
@@ -223,7 +224,7 @@ internal class TradeProviderGrain : Grain, ITradeProviderGrain
         if (version != _version)
         {
             // complete on data reset
-            completion.SetResult(new ReactiveResult(_version, _serial, _trades.ToImmutable()));
+            completion.SetResult(new ReactiveResult(_version, _serial, _trades.ToImmutable().AsTradeCollection()));
         }
         else
         {
@@ -238,7 +239,7 @@ internal class TradeProviderGrain : Grain, ITradeProviderGrain
                 }
             }
 
-            completion.SetResult(new ReactiveResult(_version, _serial, builder.ToImmutable()));
+            completion.SetResult(new ReactiveResult(_version, _serial, builder.ToImmutable().AsTradeCollection()));
         }
     }
 

@@ -1,4 +1,5 @@
 ﻿using Outcompute.Trader.Models;
+using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms.Positions;
 using System.Collections.Immutable;
 
@@ -7,6 +8,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Context;
 /// <summary>
 /// Organizes multiple shards of data for a given symbol.
 /// </summary>
+[SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "N/A")]
 public class SymbolData
 {
     public SymbolData(string name)
@@ -30,7 +32,7 @@ public class SymbolData
 
     public SymbolOrders Orders { get; } = new SymbolOrders();
 
-    public IReadOnlyList<AccountTrade> Trades { get; set; } = ImmutableList<AccountTrade>.Empty;
+    public TradeCollection Trades { get; set; } = TradeCollection.Empty;
 
     public IReadOnlyList<Kline> Klines { get; set; } = ImmutableList<Kline>.Empty;
 }

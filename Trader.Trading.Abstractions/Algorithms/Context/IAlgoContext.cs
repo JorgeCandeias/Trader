@@ -1,4 +1,5 @@
 ﻿using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Algorithms.Positions;
 
 namespace Outcompute.Trader.Trading.Algorithms.Context;
 

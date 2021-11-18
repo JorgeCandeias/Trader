@@ -2,13 +2,12 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Algorithms.Context;
+using Outcompute.Trader.Trading.Algorithms.Positions;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Commands.AveragingSell;
 using Outcompute.Trader.Trading.Commands.CancelOpenOrders;
 using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
-using System.Collections.Immutable;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
@@ -44,7 +43,7 @@ namespace Outcompute.Trader.Trading.Tests
                 }
             };
 
-            var positions = ImmutableSortedSet.Create(PositionKeyComparer.Default, new[]
+            var positions = new PositionCollection(new[]
             {
                 Position.Empty with { Symbol = symbol.Name, OrderId = 123, Price = 1100m, Quantity = 1000m },
                 Position.Empty with { Symbol = symbol.Name, OrderId = 124, Price = 1000m, Quantity = 1000m },

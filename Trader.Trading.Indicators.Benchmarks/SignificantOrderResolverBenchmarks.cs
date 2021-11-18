@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Algorithms.Positions;
 using System;
 using System.Threading.Tasks;
 

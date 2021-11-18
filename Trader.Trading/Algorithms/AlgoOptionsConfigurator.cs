@@ -23,12 +23,6 @@ internal class AlgoOptionsConfigurator : IConfigureNamedOptions<AlgoOptions>
         }
 
         _config.GetSection(_mapping.AlgosKey).GetSection(name).Bind(options);
-
-        // include the default symbol in the symbol list
-        if (!IsNullOrEmpty(options.Symbol))
-        {
-            options.Symbols.Add(options.Symbol);
-        }
     }
 
     public void Configure(AlgoOptions options)

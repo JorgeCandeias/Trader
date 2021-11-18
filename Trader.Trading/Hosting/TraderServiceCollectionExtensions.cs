@@ -6,6 +6,7 @@ using Outcompute.Trader.Trading;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Algorithms.Context.Configurators;
+using Outcompute.Trader.Trading.Algorithms.Positions;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Commands.AveragingSell;
 using Outcompute.Trader.Trading.Commands.CancelOpenOrders;
@@ -122,7 +123,6 @@ public static class TraderServiceCollectionExtensions
             .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextKlinesConfigurator>()
             .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextExchangeInfoConfigurator>()
             .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextTradesConfigurator>()
-            .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextOptionsConfigurator>()
 
             // exchange info provider
             .AddSingleton<ExchangeInfoProvider>()

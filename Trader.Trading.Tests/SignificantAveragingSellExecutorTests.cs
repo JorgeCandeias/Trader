@@ -2,13 +2,12 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Algorithms.Context;
+using Outcompute.Trader.Trading.Algorithms.Positions;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Commands.CancelOpenOrders;
 using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
 using Outcompute.Trader.Trading.Commands.SignificantAveragingSell;
-using System.Collections.Immutable;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
@@ -30,7 +29,7 @@ namespace Outcompute.Trader.Trading.Tests
                 Symbol = symbol.Name,
                 ClosePrice = 50000
             };
-            var positions = ImmutableSortedSet<Position>.Empty;
+            var positions = PositionCollection.Empty;
 
             var logger = NullLogger<SignificantAveragingSellExecutor>.Instance;
             var executor = new SignificantAveragingSellExecutor(logger);
@@ -92,7 +91,8 @@ namespace Outcompute.Trader.Trading.Tests
                 Symbol = symbol.Name,
                 ClosePrice = 50000
             };
-            var positions = ImmutableSortedSet.Create(PositionKeyComparer.Default, new[]
+
+            var positions = new PositionCollection(new[]
             {
                 Position.Empty with
                 {
@@ -101,6 +101,7 @@ namespace Outcompute.Trader.Trading.Tests
                     Price = 60000m
                 }
             });
+
             var context = new AlgoContext("Algo1", provider)
             {
                 Symbols = { symbol },
@@ -161,7 +162,7 @@ namespace Outcompute.Trader.Trading.Tests
                 ClosePrice = 50000
             };
 
-            var positions = ImmutableSortedSet.Create(PositionKeyComparer.Default, new[]
+            var positions = new PositionCollection(new[]
             {
                 Position.Empty with
                 {
@@ -242,7 +243,7 @@ namespace Outcompute.Trader.Trading.Tests
                 ClosePrice = 50000
             };
 
-            var positions = ImmutableSortedSet.Create(PositionKeyComparer.Default, new[]
+            var positions = new PositionCollection(new[]
             {
                 Position.Empty with
                 {
@@ -326,7 +327,7 @@ namespace Outcompute.Trader.Trading.Tests
                 ClosePrice = 50000
             };
 
-            var positions = ImmutableSortedSet.Create(PositionKeyComparer.Default, new[]
+            var positions = new PositionCollection(new[]
             {
                 Position.Empty with
                 {

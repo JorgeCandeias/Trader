@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Algorithms.Positions;
 using Outcompute.Trader.Trading.Providers;
 using System.Buffers;
 using System.Collections.Immutable;
@@ -16,6 +17,7 @@ internal partial class AutoPositionResolver : IAutoPositionResolver
     private readonly IOrderProvider _orders;
     private readonly ITradeProvider _trades;
 
+    // todo: the resolver should take orders and trades from the resolve method instead so the configurator can take them from the context
     public AutoPositionResolver(ILogger<AutoPositionResolver> logger, IOrderProvider orders, ITradeProvider trades)
     {
         _logger = logger;
@@ -105,7 +107,7 @@ internal partial class AutoPositionResolver : IAutoPositionResolver
         }
 
         // keep only buy orders with some quantity left to sell
-        var significant = subjects.Segment
+        var positions = subjects.Segment
             .Where(x => x.Order.Side == OrderSide.Buy && x.RemainingExecutedQuantity > 0m)
             .GroupBy(x => x.Order)
             .Select(x => new Position(
@@ -115,11 +117,13 @@ internal partial class AutoPositionResolver : IAutoPositionResolver
                 x.Key.Price is 0 ? x.Sum(y => y.Trade.Price * y.Trade.Quantity) / x.Sum(y => y.Trade.Quantity) : x.Key.Price,
                 x.Sum(y => y.RemainingExecutedQuantity),
                 x.Key.Time))
-            .ToImmutableSortedSet(PositionKeyComparer.Default);
+            .OrderBy(x => x.Symbol)
+            .ThenBy(x => x.OrderId)
+            .ToPositionCollection();
 
-        LogIdentifiedPositions(TypeName, symbol.Name, significant.Count, watch.ElapsedMilliseconds);
+        LogIdentifiedPositions(TypeName, symbol.Name, positions.Count, watch.ElapsedMilliseconds);
 
-        return new AutoPosition(symbol, significant, profits.ToImmutable(), commissions);
+        return new AutoPosition(symbol, positions, profits.ToImmutable(), commissions);
     }
 
     private (SortedSet<Map> Mapping, ImmutableList<CommissionEvent> Commissions) Combine(Symbol symbol, IEnumerable<OrderQueryResult> orders, IEnumerable<AccountTrade> trades)

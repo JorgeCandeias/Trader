@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Outcompute.Trader.Core;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Algorithms.Positions;
 
 namespace Outcompute.Trader.Trading.Algorithms.Context;
 
@@ -17,8 +18,6 @@ internal class AlgoContext : IAlgoContext
     }
 
     public string Name { get; }
-
-    public AlgoOptions Options { get; set; } = new AlgoOptions();
 
     public DateTime TickTime { get; set; }
 

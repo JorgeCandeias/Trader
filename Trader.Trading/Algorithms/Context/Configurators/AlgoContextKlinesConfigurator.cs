@@ -28,10 +28,21 @@ internal class AlgoContextKlinesConfigurator : IAlgoContextConfigurator<AlgoCont
         {
             foreach (var symbol in context.Symbols)
             {
-                context.Data.GetOrAdd(symbol.Name).Klines = await _klines
-                    .GetKlinesAsync(symbol.Name, context.KlineInterval, context.TickTime, context.KlinePeriods, cancellationToken)
-                    .ConfigureAwait(false);
+                await ApplyAsync(context, symbol, cancellationToken).ConfigureAwait(false);
             }
         }
+
+        // get klines for the default symbol
+        if (!IsNullOrEmpty(context.Symbol.Name) && context.KlineInterval != KlineInterval.None && context.KlinePeriods > 0)
+        {
+            await ApplyAsync(context, context.Symbol, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    private async ValueTask ApplyAsync(AlgoContext context, Symbol symbol, CancellationToken cancellationToken)
+    {
+        context.Data.GetOrAdd(symbol.Name).Klines = await _klines
+            .GetKlinesAsync(symbol.Name, context.KlineInterval, context.TickTime, context.KlinePeriods, cancellationToken)
+            .ConfigureAwait(false);
     }
 }

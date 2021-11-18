@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
+using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Algorithms.Positions;
 
 namespace Outcompute.Trader.Trading.Algorithms.Context.Configurators;
 
@@ -19,9 +21,19 @@ internal class AlgoContextAutoPositionsConfigurator : IAlgoContextConfigurator<A
 
         foreach (var symbol in context.Symbols)
         {
-            context.Data.GetOrAdd(symbol.Name).AutoPosition = await _resolver
-                .ResolveAsync(symbol, options.StartTime, cancellationToken)
-                .ConfigureAwait(false);
+            await ApplyAsync(context, symbol, options, cancellationToken).ConfigureAwait(false);
         }
+
+        if (!IsNullOrEmpty(context.Symbol.Name) && !context.Symbols.Contains(context.Symbol.Name))
+        {
+            await ApplyAsync(context, context.Symbol, options, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    private async ValueTask ApplyAsync(AlgoContext context, Symbol symbol, AlgoOptions options, CancellationToken cancellationToken)
+    {
+        context.Data.GetOrAdd(symbol.Name).AutoPosition = await _resolver
+            .ResolveAsync(symbol, options.StartTime, cancellationToken)
+            .ConfigureAwait(false);
     }
 }

@@ -3,6 +3,7 @@ using Moq;
 using Orleans;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Algorithms.Positions;
 using Outcompute.Trader.Trading.ProfitAggregator;
 using Outcompute.Trader.Trading.Providers;
 using System.Collections.Immutable;
@@ -48,7 +49,7 @@ namespace Outcompute.Trader.Trading.Tests
             var significant = AutoPosition.Empty with
             {
                 Symbol = symbol,
-                Positions = ImmutableSortedSet.Create(position)
+                Positions = new PositionCollection(new[] { position })
             };
             var ticker = MiniTicker.Empty with { Symbol = "ABCXYZ" };
 

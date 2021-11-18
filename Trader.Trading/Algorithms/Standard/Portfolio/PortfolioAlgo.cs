@@ -76,7 +76,7 @@ public partial class PortfolioAlgo : Algo
         foreach (var item in Context.Data.Where(x => x.AutoPosition.Positions.Count > 0))
         {
             // skip symbols on cooldown
-            if (item.AutoPosition.Positions.Max!.Time >= cooldown)
+            if (item.AutoPosition.Positions.Last.Time >= cooldown)
             {
                 continue;
             }

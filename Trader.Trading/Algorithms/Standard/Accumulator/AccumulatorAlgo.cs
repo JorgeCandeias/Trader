@@ -45,7 +45,7 @@ internal class AccumulatorAlgo : Algo
 
         // if the ticker is below the take profit drop rate then sell
         var averageCost = Context.AutoPosition.Positions.Sum(x => x.Quantity * x.Price) / Context.AutoPosition.Positions.Sum(x => x.Quantity);
-        var takeProfitPrice = Context.AutoPosition.Positions.Max!.Price * options.TakeProfitDropRate;
+        var takeProfitPrice = Context.AutoPosition.Positions.Last.Price * options.TakeProfitDropRate;
         var ticker = Context.Ticker.ClosePrice;
         if (ticker <= takeProfitPrice && takeProfitPrice >= averageCost)
         {
@@ -65,13 +65,13 @@ internal class AccumulatorAlgo : Algo
         }
 
         // if the last buy is within cooldown then refuse to buy
-        if (Context.AutoPosition.Positions.Max!.Time.Add(options.Cooldown) >= _clock.UtcNow)
+        if (Context.AutoPosition.Positions.Last.Time.Add(options.Cooldown) >= _clock.UtcNow)
         {
             return false;
         }
 
         // if the ticker is above the next buy rate of the last buy then signal the buy
-        if (Context.Ticker.ClosePrice >= Context.AutoPosition.Positions.Max!.Price * options.NextBuyRate)
+        if (Context.Ticker.ClosePrice >= Context.AutoPosition.Positions.Last.Price * options.NextBuyRate)
         {
             return true;
         }

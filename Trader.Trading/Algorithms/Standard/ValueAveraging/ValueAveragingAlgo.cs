@@ -158,9 +158,9 @@ internal sealed partial class ValueAveragingAlgo : Algo
             return true;
         }
 
-        var indicator = Context.AutoPosition.Positions.Max!.Time.Add(_options.CooldownPeriod) < _clock.UtcNow;
+        var indicator = Context.AutoPosition.Positions.Last.Time.Add(_options.CooldownPeriod) < _clock.UtcNow;
 
-        LogCooldownPeriod(TypeName, Context.Name, _options.CooldownPeriod, Context.AutoPosition.Positions.Max.Time, indicator);
+        LogCooldownPeriod(TypeName, Context.Name, _options.CooldownPeriod, Context.AutoPosition.Positions.Last.Time, indicator);
 
         return indicator;
     }
@@ -247,7 +247,7 @@ internal sealed partial class ValueAveragingAlgo : Algo
         }
 
         // calculate fixed trailing stop loss based on the last position
-        var last = Context.AutoPosition.Positions.Max!.Price;
+        var last = Context.AutoPosition.Positions.Last.Price;
         var stop = last * _options.TrailingStopLossRate;
 
         // calculate elastic stop loss if avg position is lower than the last position

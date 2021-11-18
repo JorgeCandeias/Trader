@@ -143,6 +143,7 @@ namespace Outcompute.Trader.App
                                         {
                                             templateSection.Bind(options);
 
+                                            options.Symbols.Clear();
                                             options.Symbol = symbol;
                                         })
                                         .ConfigureTypeOptions(options =>

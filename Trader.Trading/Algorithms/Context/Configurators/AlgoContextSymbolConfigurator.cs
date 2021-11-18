@@ -31,6 +31,10 @@ internal class AlgoContextSymbolConfigurator : IAlgoContextConfigurator<AlgoCont
         if (!IsNullOrEmpty(options.Symbol))
         {
             context.Symbol = _exchange.GetRequiredSymbol(options.Symbol);
+
+            // include the default symbol in the symbol set
+            context.Symbols.AddOrUpdate(context.Symbol);
+            context.Data.GetOrAdd(context.Symbol.Name).Symbol = context.Symbol;
         }
 
         return ValueTask.CompletedTask;

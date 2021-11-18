@@ -1,5 +1,4 @@
-﻿using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Providers;
+﻿using Outcompute.Trader.Trading.Providers;
 
 namespace Outcompute.Trader.Trading.Algorithms.Context.Configurators;
 
@@ -16,25 +15,15 @@ internal class AlgoContextSpotBalanceConfigurator : IAlgoContextConfigurator<Alg
     {
         foreach (var symbol in context.Symbols)
         {
-            await ApplyAsync(context, symbol, cancellationToken).ConfigureAwait(false);
+            var spot = context.Data.GetOrAdd(symbol.Name).Spot;
+
+            spot.BaseAsset = await _balances
+                .GetBalanceOrZeroAsync(symbol.BaseAsset, cancellationToken)
+                .ConfigureAwait(false);
+
+            spot.QuoteAsset = await _balances
+                .GetBalanceOrZeroAsync(symbol.QuoteAsset, cancellationToken)
+                .ConfigureAwait(false);
         }
-
-        if (!IsNullOrEmpty(context.Symbol.Name) && !context.Symbols.Contains(context.Symbol.Name))
-        {
-            await ApplyAsync(context, context.Symbol, cancellationToken).ConfigureAwait(false);
-        }
-    }
-
-    private async ValueTask ApplyAsync(AlgoContext context, Symbol symbol, CancellationToken cancellationToken)
-    {
-        var spot = context.Data.GetOrAdd(symbol.Name).Spot;
-
-        spot.BaseAsset = await _balances
-            .GetBalanceOrZeroAsync(symbol.BaseAsset, cancellationToken)
-            .ConfigureAwait(false);
-
-        spot.QuoteAsset = await _balances
-            .GetBalanceOrZeroAsync(symbol.QuoteAsset, cancellationToken)
-            .ConfigureAwait(false);
     }
 }

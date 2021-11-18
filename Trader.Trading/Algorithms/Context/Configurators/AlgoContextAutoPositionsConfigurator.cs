@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Options;
-using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Positions;
 
 namespace Outcompute.Trader.Trading.Algorithms.Context.Configurators;
@@ -21,19 +20,9 @@ internal class AlgoContextAutoPositionsConfigurator : IAlgoContextConfigurator<A
 
         foreach (var symbol in context.Symbols)
         {
-            Apply(context, symbol, options);
-        }
-
-        if (!IsNullOrEmpty(context.Symbol.Name) && !context.Symbols.Contains(context.Symbol.Name))
-        {
-            Apply(context, context.Symbol, options);
+            context.Data.GetOrAdd(symbol.Name).AutoPosition = _resolver.Resolve(symbol, context.Orders.Filled, context.Trades, options.StartTime);
         }
 
         return ValueTask.CompletedTask;
-    }
-
-    private void Apply(AlgoContext context, Symbol symbol, AlgoOptions options)
-    {
-        context.Data.GetOrAdd(symbol.Name).AutoPosition = _resolver.Resolve(symbol, context.Orders.Filled, context.Trades, options.StartTime);
     }
 }

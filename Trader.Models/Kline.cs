@@ -3,9 +3,8 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Outcompute.Trader.Models;
 
-// todo: convert this back to a record class
 [Immutable]
-public readonly record struct Kline(
+public record Kline(
     string Symbol,
     KlineInterval Interval,
     DateTime OpenTime,
@@ -31,32 +30,38 @@ public abstract class KlineComparer : IEqualityComparer<Kline>, IComparer<Kline>
 {
     public static KlineComparer Key { get; } = new KlineKeyComparer();
 
-    public abstract int Compare(Kline x, Kline y);
+    public abstract int Compare(Kline? x, Kline? y);
 
-    public abstract bool Equals(Kline x, Kline y);
+    public abstract bool Equals(Kline? x, Kline? y);
 
     public abstract int GetHashCode([DisallowNull] Kline obj);
 }
 
 internal class KlineKeyComparer : KlineComparer
 {
-    public override int Compare(Kline x, Kline y)
+    public override int Compare(Kline? x, Kline? y)
     {
-        var bySymbol = Comparer<string>.Default.Compare(x.Symbol, y.Symbol);
+        if (x is null) return y is null ? 0 : -1;
+        if (y is null) return 1;
+
+        var bySymbol = StringComparer.Ordinal.Compare(x.Symbol, y.Symbol);
         if (bySymbol != 0) return bySymbol;
 
-        var byInterval = Comparer<KlineInterval>.Default.Compare(x.Interval, y.Interval);
+        var byInterval = x.Interval.CompareTo(y.Interval);
         if (byInterval != 0) return byInterval;
 
-        return Comparer<DateTime>.Default.Compare(x.OpenTime, y.OpenTime);
+        return x.OpenTime.CompareTo(y.OpenTime);
     }
 
-    public override bool Equals(Kline x, Kline y)
+    public override bool Equals(Kline? x, Kline? y)
     {
+        if (x is null) return y is null;
+        if (y is null) return false;
+
         return
-            EqualityComparer<string>.Default.Equals(x.Symbol, y.Symbol) &&
-            EqualityComparer<KlineInterval>.Default.Equals(x.Interval, y.Interval) &&
-            EqualityComparer<DateTime>.Default.Equals(x.OpenTime, y.OpenTime);
+            StringComparer.Ordinal.Equals(x.Symbol, y.Symbol) &&
+            x.Interval == y.Interval &&
+            x.OpenTime == y.OpenTime;
     }
 
     public override int GetHashCode([DisallowNull] Kline obj)

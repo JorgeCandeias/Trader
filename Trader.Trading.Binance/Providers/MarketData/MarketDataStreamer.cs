@@ -104,9 +104,9 @@ internal partial class MarketDataStreamer : IMarketDataStreamer
                 tickerWorker.Post(message.MiniTicker);
             }
 
-            if (message.Kline.HasValue && klineLookup.Contains((message.Kline.Value.Symbol, message.Kline.Value.Interval)))
+            if (message.Kline is not null && klineLookup.Contains((message.Kline.Symbol, message.Kline.Interval)))
             {
-                klineWorker.Post(message.Kline.Value);
+                klineWorker.Post(message.Kline);
             }
         }
     }

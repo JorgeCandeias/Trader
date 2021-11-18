@@ -5,8 +5,6 @@ using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers.Klines;
-using System;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
@@ -41,10 +39,10 @@ namespace Outcompute.Trader.Trading.Tests
             var result = await grain.TryGetKlineAsync(item.OpenTime);
 
             // assert
-            Assert.True(result.HasValue);
-            Assert.Equal(item.Symbol, result.Value.Symbol);
-            Assert.Equal(item.Interval, result.Value.Interval);
-            Assert.Equal(item.OpenTime, result.Value.OpenTime);
+            Assert.NotNull(result);
+            Assert.Equal(item.Symbol, result!.Symbol);
+            Assert.Equal(item.Interval, result.Interval);
+            Assert.Equal(item.OpenTime, result.OpenTime);
         }
 
         [Fact]

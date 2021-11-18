@@ -1,7 +1,6 @@
 ﻿using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms.Positions;
-using System.Collections.Immutable;
 
 namespace Outcompute.Trader.Trading.Algorithms.Context;
 
@@ -34,5 +33,5 @@ public class SymbolData
 
     public TradeCollection Trades { get; set; } = TradeCollection.Empty;
 
-    public IReadOnlyList<Kline> Klines { get; set; } = ImmutableList<Kline>.Empty;
+    public KlineCollection Klines { get; set; } = KlineCollection.Empty;
 }

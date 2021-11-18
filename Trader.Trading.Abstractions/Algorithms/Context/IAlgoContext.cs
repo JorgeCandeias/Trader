@@ -84,7 +84,7 @@ public interface IAlgoContext
     /// <summary>
     /// Gets the klines for the default configuration.
     /// </summary>
-    IReadOnlyList<Kline> Klines { get; }
+    KlineCollection Klines { get; }
 
     /// <summary>
     /// Gets context data for each declared symbol.

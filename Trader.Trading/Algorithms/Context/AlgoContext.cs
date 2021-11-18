@@ -48,7 +48,7 @@ internal class AlgoContext : IAlgoContext
 
     public TradeCollection Trades => Data[Symbol.Name].Trades;
 
-    public IReadOnlyList<Kline> Klines => Data[Symbol.Name].Klines;
+    public KlineCollection Klines => Data[Symbol.Name].Klines;
 
     public SymbolDataCollection Data { get; } = new SymbolDataCollection();
 

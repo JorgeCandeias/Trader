@@ -15,9 +15,26 @@ public class SymbolCollection : KeyedCollection<string, Symbol>
         return item.Name;
     }
 
+    private int IndexOfKey(Symbol item)
+    {
+        var key = GetKeyForItem(item);
+
+        var index = -1;
+        for (var i = 0; i < Items.Count; i++)
+        {
+            if (GetKeyForItem(Items[i]) == key)
+            {
+                index = i;
+                break;
+            }
+        }
+
+        return index;
+    }
+
     public void AddOrUpdate(Symbol item)
     {
-        var index = IndexOf(item);
+        var index = IndexOfKey(item);
 
         if (index < 0)
         {
@@ -25,7 +42,7 @@ public class SymbolCollection : KeyedCollection<string, Symbol>
         }
         else
         {
-            SetItem(index, item);
+            this[index] = item;
         }
     }
 }

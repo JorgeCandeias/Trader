@@ -1,4 +1,6 @@
-﻿namespace Outcompute.Trader.Models;
+﻿using Outcompute.Trader.Models;
+
+namespace System;
 
 public static class SymbolMathExtensions
 {

@@ -11,10 +11,19 @@ public class PortfolioAlgoOptions
     public decimal ReinforcementRate { get; set; } = 1.10M;
 
     [Required, Range(0, int.MaxValue)]
-    public decimal MinRequiredRelativePnLForTopUpBuy { get; set; } = 1.10M;
+    public decimal MinRequiredRelativeValueForTopUpBuy { get; set; } = 1.10M;
 
     [Required, Range(0, int.MaxValue)]
-    public decimal RelativePnlForPanicSell { get; set; } = 1.01M;
+    public decimal RelativeValueForPanicSell { get; set; } = 1.01M;
+
+    [Required, Range(0, int.MaxValue)]
+    public decimal BuyQuoteBalanceFraction { get; set; } = 0.001M;
+
+    [Required, Range(0, int.MaxValue)]
+    public decimal MinSellRate { get; set; } = 1.0M;
+
+    [Range(0, int.MaxValue)]
+    public decimal? MaxNotional { get; set; }
 
     [Required, Range(typeof(TimeSpan), "0.00:00:01.000", "365.00:00:00.000")]
     public TimeSpan Cooldown { get; set; } = TimeSpan.FromDays(1);

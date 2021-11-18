@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands;
+using System.Buffers;
 
 namespace Outcompute.Trader.Trading.Algorithms.Standard.Portfolio;
 
@@ -25,14 +26,21 @@ public partial class PortfolioAlgo : Algo
 
     protected override IAlgoCommand OnExecute()
     {
-        if (TryElectTopUpBuy(out var elected))
+        if (TryElectTopUpBuy(out var elected) || TryElectEntryBuy(out elected))
         {
-            // do something
+            return CreateBuy(elected);
         }
 
-        if (TryElectEntryBuy(out elected))
+        if (TryElectPanicSell(out var items))
         {
-            // do something
+            var commands = new List<IAlgoCommand>(items.Length);
+
+            foreach (var item in items)
+            {
+                commands.Add(AveragingSell(item.Symbol, _options.MinSellRate, _options.UseSavings, _options.UseSwapPools));
+            }
+
+            return Sequence(commands);
         }
 
         return Noop();
@@ -40,6 +48,8 @@ public partial class PortfolioAlgo : Algo
 
     private bool TryElectEntryBuy(out SymbolData elected)
     {
+        LogEvaluatingSymbolsForEntryBuy(TypeName);
+
         elected = null!;
         var lastRsi = decimal.MaxValue;
 
@@ -48,11 +58,25 @@ public partial class PortfolioAlgo : Algo
         {
             // evaluate the rsi for the symbol
             var rsi = item.Klines.LastRsi(x => x.ClosePrice, _options.Rsi.Periods);
-            if (rsi <= _options.Rsi.Oversold && rsi < lastRsi)
+
+            // skip symbol with rsi above oversold
+            if (rsi > _options.Rsi.Oversold)
             {
-                elected = item;
-                lastRsi = rsi;
+                LogSkippedSymbolWithRsiAboveOversold(TypeName, item.Symbol.Name, _options.Rsi.Periods, rsi, _options.Rsi.Oversold);
+                continue;
             }
+
+            // skip symbol with rsi above current candidate
+            if (elected is not null && rsi > lastRsi)
+            {
+                LogSkippedSymbolWithRsiAboveCandidate(TypeName, item.Symbol.Name, _options.Rsi.Periods, rsi, lastRsi, elected.Symbol.Name);
+                continue;
+            }
+
+            // if we got here then we have a new candidate
+            elected = item;
+            lastRsi = rsi;
+            LogSelectedNewCandidateForEntryBuy(TypeName, item.Symbol.Name, _options.Rsi.Periods, rsi);
         }
 
         if (elected is null)
@@ -60,42 +84,44 @@ public partial class PortfolioAlgo : Algo
             return false;
         }
 
-        LogSelectedSymbolForEntryBuy(TypeName, elected.Name, elected.Ticker.ClosePrice, elected.Symbol.QuoteAsset, lastRsi);
+        LogElectedSymbolForEntryBuy(TypeName, elected.Name, elected.Ticker.ClosePrice, elected.Symbol.QuoteAsset, lastRsi);
         return true;
     }
 
     private bool TryElectTopUpBuy(out SymbolData elected)
     {
-        elected = null!;
-        var lastRelPnL = decimal.MinValue;
-        var lastRsi = decimal.MaxValue;
+        LogEvaluatingSymbolsForTopUpBuy(TypeName);
 
-        var cooldown = _clock.UtcNow.Subtract(_options.Cooldown);
+        elected = null!;
+        var highRelValue = decimal.MinValue;
+        var lowRsi = decimal.MaxValue;
+        var now = _clock.UtcNow;
 
         // evaluate symbols with at least one position
         foreach (var item in Context.Data.Where(x => x.AutoPosition.Positions.Count > 0))
         {
             // skip symbols on cooldown
-            if (item.AutoPosition.Positions.Last.Time >= cooldown)
+            var cooldown = item.AutoPosition.Positions.Last.Time.Add(_options.Cooldown);
+            if (cooldown > now)
             {
+                LogSkippedSymbolOnCooldown(TypeName, item.Symbol.Name, cooldown);
                 continue;
             }
 
             // evaluate pnl
-            var cost = item.AutoPosition.Positions.Sum(x => x.Quantity * x.Price);
-            var pv = item.AutoPosition.Positions.Sum(x => x.Quantity * item.Ticker.ClosePrice);
-            var absPnL = pv - cost;
-            var relPnL = absPnL / cost;
+            var stats = item.AutoPosition.Positions.GetStats(item.Ticker.ClosePrice);
 
             // skip symbols below min required for top up
-            if (relPnL < _options.MinRequiredRelativePnLForTopUpBuy)
+            if (stats.RelativeValue < _options.MinRequiredRelativeValueForTopUpBuy)
             {
+                LogSkippedSymbolWithLowRelativeValue(TypeName, item.Symbol.Name, stats.RelativeValue, _options.MinRequiredRelativeValueForTopUpBuy);
                 continue;
             }
 
             // skip symbols below the highest candidate yet
-            if (elected is not null && relPnL <= lastRelPnL)
+            if (elected is not null && stats.RelativeValue <= highRelValue)
             {
+                LogSkippedSymbolWithLowerRelativeValueThanCandidate(TypeName, item.Symbol.Name, stats.RelativeValue, highRelValue, elected.Symbol.Name);
                 continue;
             }
 
@@ -105,19 +131,22 @@ public partial class PortfolioAlgo : Algo
             // skip symbols with not low enough rsi
             if (rsi > _options.Rsi.Oversold)
             {
+                LogSkippedSymbolWithRsiAboveOversold(TypeName, item.Symbol.Name, _options.Rsi.Periods, rsi, _options.Rsi.Oversold);
                 continue;
             }
 
             // skip symbols with rsi not lower than the highest candidate yet
-            if (elected is not null && rsi > lastRsi)
+            if (elected is not null && rsi > lowRsi)
             {
+                LogSkippedSymbolWithRsiAboveCandidate(TypeName, item.Symbol.Name, _options.Rsi.Periods, rsi, lowRsi, elected.Symbol.Name);
                 continue;
             }
 
             // if we got here then we have a new candidate
             elected = item;
-            lastRelPnL = relPnL;
-            lastRsi = rsi;
+            highRelValue = stats.RelativeValue;
+            lowRsi = rsi;
+            LogSelectedNewCandidateForTopUpBuy(TypeName, item.Symbol.Name, stats.RelativeValue, _options.Rsi.Periods, rsi);
         }
 
         if (elected is null)
@@ -125,28 +154,98 @@ public partial class PortfolioAlgo : Algo
             return false;
         }
 
-        LogSelectedSymbolForTopUpBuy(TypeName, elected.Name, elected.Ticker.ClosePrice, elected.Symbol.QuoteAsset, lastRelPnL, lastRsi);
+        LogElectedSymbolForTopUpBuy(TypeName, elected.Name, elected.Ticker.ClosePrice, elected.Symbol.QuoteAsset, highRelValue, lowRsi);
         return true;
     }
 
-    /*
-    private bool TryElectPanicSell(out SymbolData elected)
+    private bool TryElectPanicSell(out SymbolData[] elected)
     {
+        var buffer = ArrayPool<SymbolData>.Shared.Rent(Context.Data.Count);
+        var count = 0;
+
         // evaluate symbols with at least two positions
-        foreach (var item in Context.Data.Where(x => x.AutoPosition.Orders.Count >= 2))
+        foreach (var item in Context.Data.Where(x => x.AutoPosition.Positions.Count >= 2))
         {
-            // calculate stats
+            // calculate the stats vs the current price
+            var stats = item.AutoPosition.Positions.GetStats(item.Ticker.ClosePrice);
+
+            // flag symbols with relative value lower than minimum threshold
+            if (stats.RelativeValue <= _options.RelativeValueForPanicSell)
+            {
+                buffer[count++] = item;
+                LogElectedSymbolForStopLoss(TypeName, item.Symbol.Name, stats.RelativeValue);
+            }
         }
+
+        if (count > 0)
+        {
+            elected = buffer[0..count];
+            ArrayPool<SymbolData>.Shared.Return(buffer);
+            return true;
+        }
+
+        elected = Array.Empty<SymbolData>();
+        ArrayPool<SymbolData>.Shared.Return(buffer);
+        return false;
     }
-    */
+
+    private IAlgoCommand CreateBuy(SymbolData item)
+    {
+        var total = item.Spot.QuoteAsset.Free
+            + (_options.UseSavings ? item.Savings.QuoteAsset.FreeAmount : 0)
+            + (_options.UseSwapPools ? item.SwapPools.QuoteAsset.Total : 0);
+
+        total *= _options.BuyQuoteBalanceFraction;
+
+        total = total.AdjustTotalUpToMinNotional(item.Symbol);
+
+        if (_options.MaxNotional.HasValue)
+        {
+            total = Math.Max(total, _options.MaxNotional.Value);
+        }
+
+        var quantity = total / item.Ticker.ClosePrice;
+
+        return MarketBuy(item.Symbol, quantity, _options.UseSavings, _options.UseSwapPools);
+    }
 
     #region Logging
 
-    [LoggerMessage(0, LogLevel.Information, "{Type} selected symbol {Symbol} for entry buy with ticker {Ticker:F8} {Quote} and RSI {Rsi:F8}")]
-    private partial void LogSelectedSymbolForEntryBuy(string type, string symbol, decimal ticker, string quote, decimal rsi);
+    [LoggerMessage(0, LogLevel.Information, "{Type} elected symbol {Symbol} for entry buy with ticker {Ticker:F8} {Quote} and RSI {Rsi:F8}")]
+    private partial void LogElectedSymbolForEntryBuy(string type, string symbol, decimal ticker, string quote, decimal rsi);
 
-    [LoggerMessage(1, LogLevel.Information, "{Type} selected symbol {Symbol} for top up buy with ticker {Ticker:F8} {Quote}, RelPnL = {RelPnL:P8}, RSI {Rsi:F8}")]
-    private partial void LogSelectedSymbolForTopUpBuy(string type, string symbol, decimal ticker, string quote, decimal relPnL, decimal rsi);
+    [LoggerMessage(1, LogLevel.Information, "{Type} elected symbol {Symbol} for top up buy with ticker {Ticker:F8} {Quote}, Relative Value = {RelValue:P8}, RSI {Rsi:F8}")]
+    private partial void LogElectedSymbolForTopUpBuy(string type, string symbol, decimal ticker, string quote, decimal relValue, decimal rsi);
+
+    [LoggerMessage(2, LogLevel.Information, "{Type} skipped symbol {Symbol} on cooldown until {Cooldown}")]
+    private partial void LogSkippedSymbolOnCooldown(string type, string symbol, DateTime cooldown);
+
+    [LoggerMessage(3, LogLevel.Information, "{Type} skipped symbol {Symbol} with Relative Value {RelValue:P2} lower than minimum {MinRelValue:P2} for top up buy")]
+    private partial void LogSkippedSymbolWithLowRelativeValue(string type, string symbol, decimal relValue, decimal minRelValue);
+
+    [LoggerMessage(4, LogLevel.Information, "{Type} skipped symbol {Symbol} with Relative Value {RelValue:P2} lower than candidate {HighRelValue:P2} from symbol {HighSymbol}")]
+    private partial void LogSkippedSymbolWithLowerRelativeValueThanCandidate(string type, string symbol, decimal relValue, decimal highRelValue, string highSymbol);
+
+    [LoggerMessage(5, LogLevel.Information, "{Type} skipped symbol {Symbol} with RSI({Periods}) {RSI:F8} above oversold of {Oversold:F8}")]
+    private partial void LogSkippedSymbolWithRsiAboveOversold(string type, string symbol, int periods, decimal rsi, decimal oversold);
+
+    [LoggerMessage(6, LogLevel.Information, "{Type} skipped symbol {Symbol} with RSI({Periods}) {RSI:F8} higher than candidate {LowRSI:F8} from symbol {LowSymbol}")]
+    private partial void LogSkippedSymbolWithRsiAboveCandidate(string type, string symbol, int periods, decimal rsi, decimal lowRsi, string lowSymbol);
+
+    [LoggerMessage(7, LogLevel.Information, "{Type} selected new candidate symbol for top up buy {Symbol} with Relative Value = {RelValue:F8} and RSI({Periods}) = {RSI:F8}")]
+    private partial void LogSelectedNewCandidateForTopUpBuy(string type, string symbol, decimal relValue, decimal periods, decimal rsi);
+
+    [LoggerMessage(8, LogLevel.Information, "{Type} evaluating symbols for a top up buy")]
+    private partial void LogEvaluatingSymbolsForTopUpBuy(string type);
+
+    [LoggerMessage(9, LogLevel.Information, "{Type} evaluating symbols for an entry buy")]
+    private partial void LogEvaluatingSymbolsForEntryBuy(string type);
+
+    [LoggerMessage(10, LogLevel.Information, "{Type} selected new candidate symbol for entry buy {Symbol} with RSI({Periods}) = {RSI:F8}")]
+    private partial void LogSelectedNewCandidateForEntryBuy(string type, string symbol, decimal periods, decimal rsi);
+
+    [LoggerMessage(11, LogLevel.Warning, "{Type} elected symbol {Symbol} for stop loss with Relative Value = {RelValue:P8}")]
+    private partial void LogElectedSymbolForStopLoss(string type, string symbol, decimal relValue);
 
     #endregion Logging
 }

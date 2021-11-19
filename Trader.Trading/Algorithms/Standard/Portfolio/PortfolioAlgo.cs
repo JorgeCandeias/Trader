@@ -191,16 +191,20 @@ public partial class PortfolioAlgo : Algo
         // evaluate symbols with at least two positions
         foreach (var item in Context.Data.Where(x => x.AutoPosition.Positions.Count >= 2))
         {
-            // only look at symbols with enough to sell
-
             // calculate the stats vs the current price
             var stats = item.AutoPosition.Positions.GetStats(item.Ticker.ClosePrice);
+
+            // only look at symbols with enough to sell
+            if (stats.TotalQuantity < item.Symbol.Filters.LotSize.MinQuantity || stats.TotalCost < item.Symbol.Filters.MinNotional.MinNotional)
+            {
+                continue;
+            }
 
             // flag symbols with relative value lower than minimum threshold
             if (stats.RelativeValue <= _options.RelativeValueForPanicSell)
             {
                 buffer[count++] = item;
-                LogElectedSymbolForStopLoss(TypeName, item.Symbol.Name, stats.RelativeValue);
+                LogElectedSymbolForStopLoss(TypeName, item.Symbol.Name, stats.RelativePnL);
             }
         }
 
@@ -271,8 +275,8 @@ public partial class PortfolioAlgo : Algo
     [LoggerMessage(10, LogLevel.Information, "{Type} selected new candidate symbol for entry buy {Symbol} with RSI({Periods}) = {RSI:F8}")]
     private partial void LogSelectedNewCandidateForEntryBuy(string type, string symbol, decimal periods, decimal rsi);
 
-    [LoggerMessage(11, LogLevel.Warning, "{Type} elected symbol {Symbol} for stop loss with Relative Value = {RelValue:P8}")]
-    private partial void LogElectedSymbolForStopLoss(string type, string symbol, decimal relValue);
+    [LoggerMessage(11, LogLevel.Warning, "{Type} elected symbol {Symbol} for stop loss with PnL = {PnL:P8}")]
+    private partial void LogElectedSymbolForStopLoss(string type, string symbol, decimal pnl);
 
     [LoggerMessage(12, LogLevel.Information, "{Type} skipped symbol {Symbol} with quantity {Quantity:F8} under min lot size {MinLotSize:F8}")]
     private partial void LogSkippedSymbolWithQuantityUnderMinLotSize(string type, string symbol, decimal quantity, decimal minLotSize);

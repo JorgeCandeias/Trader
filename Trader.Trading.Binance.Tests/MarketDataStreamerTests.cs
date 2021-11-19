@@ -4,9 +4,6 @@ using Moq;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Binance.Providers.MarketData;
 using Outcompute.Trader.Trading.Providers;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Binance.Tests
@@ -16,7 +13,7 @@ namespace Outcompute.Trader.Trading.Binance.Tests
         [Fact]
         public async Task Streams()
         {
-            using var cancellation = new CancellationTokenSource();
+            using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
             // arrange
             var logger = NullLogger<MarketDataStreamer>.Instance;
@@ -40,14 +37,27 @@ namespace Outcompute.Trader.Trading.Binance.Tests
                 .Verifiable();
 
             var klineProvider = Mock.Of<IKlineProvider>();
+
+            var received = new TaskCompletionSource<MiniTicker>();
+            using var reg = cancellation.Token.Register(() => received.TrySetCanceled());
+
             var tickerProvider = Mock.Of<ITickerProvider>();
+            Mock.Get(tickerProvider)
+                .Setup(x => x.SetTickerAsync(It.IsAny<MiniTicker>(), cancellation.Token))
+                .Callback((MiniTicker ticker, CancellationToken ct) =>
+                {
+                    received.TrySetResult(ticker);
+                })
+                .Returns(Task.CompletedTask)
+                .Verifiable();
+
             var streamer = new MarketDataStreamer(logger, mapper, factory, klineProvider, tickerProvider);
             var tickers = new HashSet<string>(new[] { symbol });
             var klines = new HashSet<(string, KlineInterval)>(new[] { (symbol, KlineInterval.Days1) });
 
             // act - start streaming
             var task = streamer.StreamAsync(tickers, klines, cancellation.Token);
-            await Task.Delay(100);
+            await received.Task;
 
             // assert
             Mock.Get(tickerProvider).Verify(x => x.SetTickerAsync(ticker, cancellation.Token));

@@ -36,19 +36,24 @@ namespace Outcompute.Trader.Trading.Binance.Tests
                 .Returns(client)
                 .Verifiable();
 
-            var klineProvider = Mock.Of<IKlineProvider>();
-
-            var received = new TaskCompletionSource<MiniTicker>();
-            using var reg = cancellation.Token.Register(() => received.TrySetCanceled());
+            var receivedTicker = new TaskCompletionSource();
+            using var reg1 = cancellation.Token.Register(() => receivedTicker.TrySetCanceled());
 
             var tickerProvider = Mock.Of<ITickerProvider>();
             Mock.Get(tickerProvider)
-                .Setup(x => x.SetTickerAsync(It.IsAny<MiniTicker>(), cancellation.Token))
-                .Callback((MiniTicker ticker, CancellationToken ct) =>
-                {
-                    received.TrySetResult(ticker);
-                })
+                .Setup(x => x.SetTickerAsync(ticker, cancellation.Token))
+                .Callback(() => receivedTicker.TrySetResult())
                 .Returns(Task.CompletedTask)
+                .Verifiable();
+
+            var receivedKline = new TaskCompletionSource();
+            using var reg2 = cancellation.Token.Register(() => receivedKline.TrySetCanceled());
+
+            var klineProvider = Mock.Of<IKlineProvider>();
+            Mock.Get(klineProvider)
+                .Setup(x => x.SetKlineAsync(kline, cancellation.Token))
+                .Callback(() => receivedKline.TrySetResult())
+                .Returns(ValueTask.CompletedTask)
                 .Verifiable();
 
             var streamer = new MarketDataStreamer(logger, mapper, factory, klineProvider, tickerProvider);
@@ -57,7 +62,8 @@ namespace Outcompute.Trader.Trading.Binance.Tests
 
             // act - start streaming
             var task = streamer.StreamAsync(tickers, klines, cancellation.Token);
-            await received.Task;
+            await receivedTicker.Task;
+            await receivedKline.Task;
 
             // assert
             Mock.Get(tickerProvider).Verify(x => x.SetTickerAsync(ticker, cancellation.Token));

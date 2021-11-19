@@ -61,7 +61,7 @@ public partial class PortfolioAlgo : Algo
             // only look at symbols under the min lot size or min notional
             if (!(stats.TotalQuantity < item.Symbol.Filters.LotSize.MinQuantity || stats.TotalCost < item.Symbol.Filters.MinNotional.MinNotional))
             {
-                LogSkippedSymbolWithQuantityAndNotionalAboveMin(TypeName, item.Symbol.Name, stats.TotalCost, item.Symbol.Filters.LotSize.MinQuantity, item.Symbol.BaseAsset, item.Symbol.Filters.MinNotional.MinNotional, item.Symbol.QuoteAsset);
+                LogSkippedSymbolWithQuantityAndNotionalAboveMin(TypeName, item.Symbol.Name, stats.TotalQuantity, item.Symbol.Filters.LotSize.MinQuantity, item.Symbol.BaseAsset, stats.TotalCost, item.Symbol.Filters.MinNotional.MinNotional, item.Symbol.QuoteAsset);
                 continue;
             }
 
@@ -284,8 +284,8 @@ public partial class PortfolioAlgo : Algo
     [LoggerMessage(13, LogLevel.Information, "{Type} skipped symbol {Symbol} with cost {Cost:F8} under min notional {MinNotional:F8}")]
     private partial void LogSkippedSymbolWithCostUnderMinNotional(string type, string symbol, decimal cost, decimal minNotional);
 
-    [LoggerMessage(14, LogLevel.Information, "{Type} skipped symbol {Symbol} with {Cost:F8} above min {MinLotSize:F8} {Asset} and notional about min {MinNotional:F8} {Quote}")]
-    private partial void LogSkippedSymbolWithQuantityAndNotionalAboveMin(string type, string symbol, decimal cost, decimal minLotSize, string asset, decimal minNotional, string quote);
+    [LoggerMessage(14, LogLevel.Information, "{Type} skipped symbol {Symbol} with quantity {Quantity:F8} above min {MinLotSize:F8} {Asset} and notional {Cost:F8} above min {MinNotional:F8} {Quote}")]
+    private partial void LogSkippedSymbolWithQuantityAndNotionalAboveMin(string type, string symbol, decimal quantity, decimal minLotSize, string asset, decimal cost, decimal minNotional, string quote);
 
     [LoggerMessage(15, LogLevel.Information, "{Type} evaluating symbols for stop loss")]
     private partial void LogEvaluatingSymbolForStopLoss(string type);

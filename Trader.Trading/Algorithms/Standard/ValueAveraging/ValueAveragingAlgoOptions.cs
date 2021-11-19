@@ -73,7 +73,7 @@ public class ValueAveragingAlgoOptions
     public int RsiPeriods { get; set; } = 6;
 
     [Required]
-    public decimal RsiOverbought { get; set; } = 80m;
+    public decimal RsiOverbought { get; set; } = 70m;
 
     [Required]
     public decimal RsiOversold { get; set; } = 20m;

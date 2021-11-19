@@ -36,6 +36,12 @@ internal sealed partial class ValueAveragingAlgo : Algo
         // calculate the rsi values
         _rsi = Context.Klines.LastRsi(x => x.ClosePrice, _options.RsiPeriods);
 
+        // only handle symbol with negative pnl - the portfolio algo will handle it if positive
+        if (Context.AutoPosition.Positions.GetStats(Context.Ticker.ClosePrice).AbsolutePnL >= 0)
+        {
+            return Noop();
+        }
+
         // decide on regular sale
         if (TrySignalSell())
         {

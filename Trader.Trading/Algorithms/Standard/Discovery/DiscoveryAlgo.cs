@@ -62,6 +62,14 @@ internal partial class DiscoveryAlgo : Algo
             .Intersect(symbols.Select(x => x.Name))
             .ToHashSet();
 
+        // identify unused symbols
+        var unused = symbols
+            .Select(x => x.Name)
+            .Except(used)
+            .ToHashSet();
+
+        LogIdentifiedUnusedSymbols(TypeName, unused);
+
         // identify unused symbols with savings
         if (options.ReportSavings)
         {
@@ -130,6 +138,9 @@ internal partial class DiscoveryAlgo : Algo
 
     [LoggerMessage(4, LogLevel.Information, "{TypeName} identified used symbols without savings or swap pools: {Symbols}")]
     private partial void LogIdentifiedUsedSymbolsWithoutSavingsOrSwapPools(string typeName, IEnumerable<string> symbols);
+
+    [LoggerMessage(5, LogLevel.Information, "{TypeName} identified unused symbols: {Symbols}")]
+    private partial void LogIdentifiedUnusedSymbols(string typeName, IEnumerable<string> symbols);
 
     #endregion Logging
 }

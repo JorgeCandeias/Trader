@@ -65,10 +65,9 @@ internal partial class DiscoveryAlgo : Algo
         // identify unused symbols
         var unused = symbols
             .Select(x => x.Name)
-            .Except(used)
-            .ToHashSet();
+            .Except(used);
 
-        LogIdentifiedUnusedSymbols(TypeName, unused);
+        LogIdentifiedUnusedSymbols(TypeName, unused.OrderBy(x => x));
 
         // identify unused symbols with savings
         if (options.ReportSavings)
@@ -76,7 +75,7 @@ internal partial class DiscoveryAlgo : Algo
             var unusedWithSavings = withSavings
                 .Except(used);
 
-            LogIdentifiedUnusedSymbolsWithSavings(TypeName, unusedWithSavings);
+            LogIdentifiedUnusedSymbolsWithSavings(TypeName, unusedWithSavings.OrderBy(x => x));
         }
 
         // identify unused symbols with swap pools
@@ -85,7 +84,7 @@ internal partial class DiscoveryAlgo : Algo
             var unusedWithSwapPools = withSwapPools
                 .Except(used);
 
-            LogIdentifiedUnusedSymbolsWithSwapPools(TypeName, unusedWithSwapPools);
+            LogIdentifiedUnusedSymbolsWithSwapPools(TypeName, unusedWithSwapPools.OrderBy(x => x));
         }
 
         // identify used symbols without savings
@@ -95,7 +94,7 @@ internal partial class DiscoveryAlgo : Algo
                 .Except(options.IgnoreSymbols)
                 .Except(withSavings);
 
-            LogIdentifiedUsedSymbolsWithoutSavings(TypeName, usedWithoutSavings);
+            LogIdentifiedUsedSymbolsWithoutSavings(TypeName, usedWithoutSavings.OrderBy(x => x));
         }
 
         // identify used symbols without swap pools
@@ -105,7 +104,7 @@ internal partial class DiscoveryAlgo : Algo
                 .Except(options.IgnoreSymbols)
                 .Except(withSwapPools);
 
-            LogIdentifiedUsedSymbolsWithoutSwapPools(TypeName, usedWithoutSwapPools);
+            LogIdentifiedUsedSymbolsWithoutSwapPools(TypeName, usedWithoutSwapPools.OrderBy(x => x));
         }
 
         // identify used symbols without savings or swap pools
@@ -116,7 +115,7 @@ internal partial class DiscoveryAlgo : Algo
                 .Except(withSavings)
                 .Except(withSwapPools);
 
-            LogIdentifiedUsedSymbolsWithoutSavingsOrSwapPools(TypeName, risky);
+            LogIdentifiedUsedSymbolsWithoutSavingsOrSwapPools(TypeName, risky.OrderBy(x => x));
         }
 
         return Noop();

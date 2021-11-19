@@ -10,6 +10,10 @@ namespace Outcompute.Trader.Models.Collections
         {
         }
 
+        public OrderCollection(params OrderQueryResult[] items) : base(items)
+        {
+        }
+
         public static OrderCollection Empty { get; } = new OrderCollection(Array.Empty<OrderQueryResult>());
     }
 }

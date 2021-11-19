@@ -1,13 +1,11 @@
 ﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
-using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Commands.RedeemSavings;
 using Outcompute.Trader.Trading.Commands.RedeemSwapPool;
-using Outcompute.Trader.Trading.Providers;
 using System.Buffers;
 
 namespace Outcompute.Trader.Trading.Commands.TrackingBuy;
@@ -15,31 +13,22 @@ namespace Outcompute.Trader.Trading.Commands.TrackingBuy;
 internal class TrackingBuyExecutor : IAlgoCommandExecutor<TrackingBuyCommand>
 {
     private readonly ILogger _logger;
-    private readonly ITickerProvider _tickers;
-    private readonly IOrderProvider _orders;
-    private readonly IBalanceProvider _balances;
-    private readonly ISavingsProvider _savings;
-    private readonly ISwapPoolProvider _swaps;
 
-    public TrackingBuyExecutor(ILogger<TrackingBuyExecutor> logger, ITickerProvider tickers, IOrderProvider orders, IBalanceProvider balances, ISavingsProvider savings, ISwapPoolProvider swaps)
+    public TrackingBuyExecutor(ILogger<TrackingBuyExecutor> logger)
     {
         _logger = logger;
-        _tickers = tickers;
-        _orders = orders;
-        _balances = balances;
-        _savings = savings;
-        _swaps = swaps;
     }
 
     private static string TypeName => nameof(TrackingBuyExecutor);
 
     public async ValueTask ExecuteAsync(IAlgoContext context, TrackingBuyCommand command, CancellationToken cancellationToken = default)
     {
-        var ticker = await _tickers.GetRequiredTickerAsync(command.Symbol.Name, cancellationToken).ConfigureAwait(false);
-        var orders = await _orders.GetOrdersByFilterAsync(command.Symbol.Name, OrderSide.Buy, true, null, cancellationToken).ConfigureAwait(false);
-        var balance = await _balances.GetRequiredBalanceAsync(command.Symbol.QuoteAsset, cancellationToken).ConfigureAwait(false);
-        var savings = await _savings.GetBalanceOrZeroAsync(command.Symbol.QuoteAsset, cancellationToken).ConfigureAwait(false);
-        var pool = await _swaps.GetBalanceAsync(command.Symbol.QuoteAsset, cancellationToken).ConfigureAwait(false);
+        var data = context.Data[command.Symbol.Name];
+        var ticker = data.Ticker;
+        var orders = data.Orders.Open.Where(x => x.Side == OrderSide.Buy).ToOrderCollection();
+        var balance = data.Spot.QuoteAsset;
+        var savings = data.Savings.QuoteAsset;
+        var pool = data.SwapPools.QuoteAsset;
 
         // identify the free balance
         var free = balance.Free
@@ -230,7 +219,7 @@ internal class TrackingBuyExecutor : IAlgoCommandExecutor<TrackingBuyCommand>
 
         if (count > 0)
         {
-            orders = buffer.Take(count).ToOrderCollection();
+            orders = orders.Except(buffer.Take(count)).ToOrderCollection();
         }
 
         ArrayPool<OrderQueryResult>.Shared.Return(buffer);
@@ -258,7 +247,7 @@ internal class TrackingBuyExecutor : IAlgoCommandExecutor<TrackingBuyCommand>
 
         if (count > 0)
         {
-            orders = buffer.Take(count).ToOrderCollection();
+            orders = orders.Except(buffer.Take(count)).ToOrderCollection();
         }
 
         ArrayPool<OrderQueryResult>.Shared.Return(buffer);

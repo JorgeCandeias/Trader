@@ -19,62 +19,6 @@ namespace Outcompute.Trader.Trading.Tests
         public async Task ExecutesWithSavingsRedemption()
         {
             // arrange
-            var logger = NullLogger<TrackingBuyExecutor>.Instance;
-
-            var ticker = MiniTicker.Empty with { Symbol = "ABCXYZ", ClosePrice = 12345.678m };
-            var tickers = Mock.Of<ITickerProvider>();
-            Mock.Get(tickers)
-                .Setup(x => x.TryGetTickerAsync("ABCXYZ", CancellationToken.None))
-                .Returns(Task.FromResult<MiniTicker?>(ticker))
-                .Verifiable();
-
-            var balance = Balance.Empty with { Asset = "XYZ", Free = 10m };
-            var balances = Mock.Of<IBalanceProvider>();
-            Mock.Get(balances)
-                .Setup(x => x.TryGetBalanceAsync("XYZ", CancellationToken.None))
-                .ReturnsAsync(balance)
-                .Verifiable();
-
-            var position = SavingsBalance.Empty with { Asset = "XYZ", FreeAmount = 2990m };
-            var savings = Mock.Of<ISavingsProvider>();
-            Mock.Get(savings)
-                .Setup(x => x.TryGetBalanceAsync("XYZ", CancellationToken.None))
-                .ReturnsAsync(position)
-                .Verifiable();
-
-            var active1 = OrderQueryResult.Empty with { Symbol = "ABCXYZ", OrderId = 1, Side = OrderSide.Buy, Status = OrderStatus.New, Price = 12000m };
-
-            var orders = Mock.Of<IOrderProvider>();
-
-            Mock.Get(orders)
-                .Setup(x => x.GetOrdersByFilterAsync("ABCXYZ", OrderSide.Buy, true, null, CancellationToken.None))
-                .ReturnsAsync(new OrderCollection(new[] { active1 }))
-                .Verifiable();
-
-            var swaps = Mock.Of<ISwapPoolProvider>();
-            Mock.Get(swaps)
-                .Setup(x => x.GetBalanceAsync("XYZ", CancellationToken.None))
-                .ReturnsAsync(SwapPoolAssetBalance.Empty)
-                .Verifiable();
-
-            var executor = new TrackingBuyExecutor(logger, tickers, orders, balances, savings, swaps);
-
-            var cancelOrderExecutor = Mock.Of<IAlgoCommandExecutor<CancelOrderCommand>>();
-
-            var redeemSavingsExecutor = Mock.Of<IAlgoCommandExecutor<RedeemSavingsCommand, RedeemSavingsEvent>>();
-
-            var redeemed = new RedeemSavingsEvent(true, 20m);
-            Mock.Get(redeemSavingsExecutor)
-                .Setup(x => x.ExecuteAsync(It.IsAny<IAlgoContext>(), It.IsAny<RedeemSavingsCommand>(), CancellationToken.None))
-                .ReturnsAsync(redeemed);
-
-            var provider = new ServiceCollection()
-                .AddSingleton(cancelOrderExecutor)
-                .AddSingleton(redeemSavingsExecutor)
-                .BuildServiceProvider();
-
-            var context = new AlgoContext("Algo1", provider);
-
             var symbol = Symbol.Empty with
             {
                 Name = "ABCXYZ",
@@ -93,6 +37,32 @@ namespace Outcompute.Trader.Trading.Tests
                 }
             };
 
+            var executor = new TrackingBuyExecutor(NullLogger<TrackingBuyExecutor>.Instance);
+
+            var cancelOrderExecutor = Mock.Of<IAlgoCommandExecutor<CancelOrderCommand>>();
+
+            var redeemSavingsExecutor = Mock.Of<IAlgoCommandExecutor<RedeemSavingsCommand, RedeemSavingsEvent>>();
+
+            var redeemed = new RedeemSavingsEvent(true, 20m);
+            Mock.Get(redeemSavingsExecutor)
+                .Setup(x => x.ExecuteAsync(It.IsAny<IAlgoContext>(), It.IsAny<RedeemSavingsCommand>(), CancellationToken.None))
+                .ReturnsAsync(redeemed);
+
+            var provider = new ServiceCollection()
+                .AddSingleton(cancelOrderExecutor)
+                .AddSingleton(redeemSavingsExecutor)
+                .BuildServiceProvider();
+
+            var context = new AlgoContext("Algo1", provider);
+            context.Data.GetOrAdd(symbol.Name).Ticker = MiniTicker.Empty with { Symbol = symbol.Name, ClosePrice = 12345.678m };
+            context.Data.GetOrAdd(symbol.Name).Spot.QuoteAsset = Balance.Empty with { Asset = symbol.QuoteAsset, Free = 10m };
+            context.Data.GetOrAdd(symbol.Name).Savings.QuoteAsset = SavingsBalance.Empty with { Asset = symbol.QuoteAsset, FreeAmount = 2990m };
+            context.Data.GetOrAdd(symbol.Name).Orders.Open = new OrderCollection(new[]
+            {
+                OrderQueryResult.Empty with { Symbol = symbol.Name, OrderId = 1, Side = OrderSide.Buy, Status = OrderStatus.New, Price = 12000m }
+            });
+            context.Data.GetOrAdd(symbol.Name).SwapPools.QuoteAsset = SwapPoolAssetBalance.Empty with { Total = 0 };
+
             var pullbackRatio = 0.999m;
             var targetQuoteBalanceFractionPerBuy = 0.01m;
             var maxNotional = 100m;
@@ -104,13 +74,8 @@ namespace Outcompute.Trader.Trading.Tests
             await executor.ExecuteAsync(context, command);
 
             // assert
-            Mock.Get(tickers).VerifyAll();
-            Mock.Get(orders).VerifyAll();
-            Mock.Get(balances).VerifyAll();
-            Mock.Get(savings).VerifyAll();
-            Mock.Get(swaps).VerifyAll();
             Mock.Get(cancelOrderExecutor).Verify(x => x.ExecuteAsync(context, It.Is<CancelOrderCommand>(x => x.Symbol == symbol && x.OrderId == 1), CancellationToken.None));
-            Mock.Get(redeemSavingsExecutor).Verify(x => x.ExecuteAsync(context, It.Is<RedeemSavingsCommand>(x => x.Asset == "XYZ" && x.Amount == 20.006189M), CancellationToken.None));
+            Mock.Get(redeemSavingsExecutor).Verify(x => x.ExecuteAsync(context, It.Is<RedeemSavingsCommand>(x => x.Asset == symbol.QuoteAsset && x.Amount == 20.006189M), CancellationToken.None));
         }
     }
 }

@@ -1,11 +1,11 @@
-﻿using System.Collections.ObjectModel;
+﻿using Outcompute.Trader.Models.Collections;
 
 namespace Outcompute.Trader.Trading.Algorithms.Context
 {
     /// <summary>
     /// Organizes multiple shards of data for each symbol.
     /// </summary>
-    public class SymbolDataCollection : KeyedCollection<string, SymbolData>
+    public class SymbolDataCollection : SortedKeyedCollection<string, SymbolData>
     {
         protected override string GetKeyForItem(SymbolData item)
         {

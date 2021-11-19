@@ -30,7 +30,7 @@ namespace Outcompute.Trader.Trading.Tests
 
             // assert
             Assert.Equal(symbol, command.Symbol);
-            Assert.Equal(profitMultiplier, command.ProfitMultiplier);
+            Assert.Equal(profitMultiplier, command.MinSellRate);
             Assert.Equal(redeemSavings, command.RedeemSavings);
             Mock.Get(executor).Verify(x => x.ExecuteAsync(context, command, CancellationToken.None));
         }

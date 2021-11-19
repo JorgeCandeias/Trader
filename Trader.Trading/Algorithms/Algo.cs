@@ -74,9 +74,9 @@ public abstract class Algo : IAlgo
 
     #region Command Helpers
 
-    public virtual IAlgoCommand AveragingSell(Symbol symbol, decimal profitMultiplier, bool redeemSavings = false, bool redeemSwapPool = false)
+    public virtual IAlgoCommand AveragingSell(Symbol symbol, decimal minSellRate, bool redeemSavings = false, bool redeemSwapPool = false)
     {
-        return new AveragingSellCommand(symbol, profitMultiplier, redeemSavings, redeemSwapPool);
+        return new AveragingSellCommand(symbol, minSellRate, redeemSavings, redeemSwapPool);
     }
 
     public virtual IAlgoCommand CreateOrder(Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag)

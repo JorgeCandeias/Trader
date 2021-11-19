@@ -75,7 +75,7 @@ internal partial class AveragingSellExecutor : IAlgoCommandExecutor<AveragingSel
         }
 
         // bump the price by the profit multipler so we have a minimum sell price
-        price *= command.ProfitMultiplier;
+        price *= command.MinSellRate;
 
         // adjust the sell price up to the minimum percent filter
         price = Math.Max(price, ticker.ClosePrice * command.Symbol.Filters.PercentPrice.MultiplierDown);

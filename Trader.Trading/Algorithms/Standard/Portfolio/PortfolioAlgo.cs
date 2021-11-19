@@ -53,9 +53,18 @@ public partial class PortfolioAlgo : Algo
         elected = null!;
         var lastRsi = decimal.MaxValue;
 
-        // evaluate all symbols with no positions
-        foreach (var item in Context.Data.Where(x => x.AutoPosition.Positions.Count == 0))
+        foreach (var item in Context.Data)
         {
+            // evaluate pnl
+            var stats = item.AutoPosition.Positions.GetStats(item.Ticker.ClosePrice);
+
+            // only look at symbols under the min lot size or min notional
+            if (!(stats.TotalQuantity < item.Symbol.Filters.LotSize.MinQuantity || stats.TotalCost < item.Symbol.Filters.MinNotional.MinNotional))
+            {
+                LogSkippedSymbolWithQuantityAndNotionalAboveMin(TypeName, item.Symbol.Name, stats.TotalCost, item.Symbol.Filters.LotSize.MinQuantity, item.Symbol.BaseAsset, item.Symbol.Filters.MinNotional.MinNotional, item.Symbol.QuoteAsset);
+                continue;
+            }
+
             // evaluate the rsi for the symbol
             var rsi = item.Klines.LastRsi(x => x.ClosePrice, _options.Rsi.Periods);
 
@@ -98,8 +107,25 @@ public partial class PortfolioAlgo : Algo
         var now = _clock.UtcNow;
 
         // evaluate symbols with at least one position
-        foreach (var item in Context.Data.Where(x => x.AutoPosition.Positions.Count > 0))
+        foreach (var item in Context.Data)
         {
+            // evaluate pnl
+            var stats = item.AutoPosition.Positions.GetStats(item.Ticker.ClosePrice);
+
+            // skip symbols under the min lot size - leftovers are handled by the entry signal
+            if (stats.TotalQuantity < item.Symbol.Filters.LotSize.MinQuantity)
+            {
+                LogSkippedSymbolWithQuantityUnderMinLotSize(TypeName, item.Symbol.Name, stats.TotalQuantity, item.Symbol.Filters.LotSize.MinQuantity);
+                continue;
+            }
+
+            // skip symbols under the min notional - leftovers are handled by the entry signal
+            if (stats.TotalCost < item.Symbol.Filters.MinNotional.MinNotional)
+            {
+                LogSkippedSymbolWithCostUnderMinNotional(TypeName, item.Symbol.Name, stats.TotalCost, item.Symbol.Filters.MinNotional.MinNotional);
+                continue;
+            }
+
             // skip symbols on cooldown
             var cooldown = item.AutoPosition.Positions.Last.Time.Add(_options.Cooldown);
             if (cooldown > now)
@@ -107,9 +133,6 @@ public partial class PortfolioAlgo : Algo
                 LogSkippedSymbolOnCooldown(TypeName, item.Symbol.Name, cooldown);
                 continue;
             }
-
-            // evaluate pnl
-            var stats = item.AutoPosition.Positions.GetStats(item.Ticker.ClosePrice);
 
             // skip symbols below min required for top up
             if (stats.RelativeValue < _options.MinRequiredRelativeValueForTopUpBuy)
@@ -160,12 +183,16 @@ public partial class PortfolioAlgo : Algo
 
     private bool TryElectPanicSell(out SymbolData[] elected)
     {
+        LogEvaluatingSymbolForStopLoss(TypeName);
+
         var buffer = ArrayPool<SymbolData>.Shared.Rent(Context.Data.Count);
         var count = 0;
 
         // evaluate symbols with at least two positions
         foreach (var item in Context.Data.Where(x => x.AutoPosition.Positions.Count >= 2))
         {
+            // only look at symbols with enough to sell
+
             // calculate the stats vs the current price
             var stats = item.AutoPosition.Positions.GetStats(item.Ticker.ClosePrice);
 
@@ -246,6 +273,18 @@ public partial class PortfolioAlgo : Algo
 
     [LoggerMessage(11, LogLevel.Warning, "{Type} elected symbol {Symbol} for stop loss with Relative Value = {RelValue:P8}")]
     private partial void LogElectedSymbolForStopLoss(string type, string symbol, decimal relValue);
+
+    [LoggerMessage(12, LogLevel.Information, "{Type} skipped symbol {Symbol} with quantity {Quantity:F8} under min lot size {MinLotSize:F8}")]
+    private partial void LogSkippedSymbolWithQuantityUnderMinLotSize(string type, string symbol, decimal quantity, decimal minLotSize);
+
+    [LoggerMessage(13, LogLevel.Information, "{Type} skipped symbol {Symbol} with cost {Cost:F8} under min notional {MinNotional:F8}")]
+    private partial void LogSkippedSymbolWithCostUnderMinNotional(string type, string symbol, decimal cost, decimal minNotional);
+
+    [LoggerMessage(14, LogLevel.Information, "{Type} skipped symbol {Symbol} with {Cost:F8} above min {MinLotSize:F8} {Asset} and notional about min {MinNotional:F8} {Quote}")]
+    private partial void LogSkippedSymbolWithQuantityAndNotionalAboveMin(string type, string symbol, decimal cost, decimal minLotSize, string asset, decimal minNotional, string quote);
+
+    [LoggerMessage(15, LogLevel.Information, "{Type} evaluating symbols for stop loss")]
+    private partial void LogEvaluatingSymbolForStopLoss(string type);
 
     #endregion Logging
 }

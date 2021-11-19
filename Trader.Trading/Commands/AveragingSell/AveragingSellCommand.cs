@@ -6,16 +6,16 @@ namespace Outcompute.Trader.Trading.Commands.AveragingSell;
 
 public class AveragingSellCommand : IAlgoCommand
 {
-    public AveragingSellCommand(Symbol symbol, decimal profitMultiplier, bool redeemSavings = false, bool redeemSwapPool = false)
+    public AveragingSellCommand(Symbol symbol, decimal minSellRate, bool redeemSavings = false, bool redeemSwapPool = false)
     {
         Symbol = symbol ?? throw new ArgumentNullException(nameof(symbol));
-        ProfitMultiplier = profitMultiplier;
+        MinSellRate = minSellRate;
         RedeemSavings = redeemSavings;
         RedeemSwapPool = redeemSwapPool;
     }
 
     public Symbol Symbol { get; }
-    public decimal ProfitMultiplier { get; }
+    public decimal MinSellRate { get; }
     public bool RedeemSavings { get; }
     public bool RedeemSwapPool { get; }
 

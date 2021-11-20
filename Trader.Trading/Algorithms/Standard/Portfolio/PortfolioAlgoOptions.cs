@@ -8,10 +8,7 @@ public class PortfolioAlgoOptions
     public decimal BalanceFractionPerBuy { get; set; } = 0.001M;
 
     [Required, Range(0, int.MaxValue)]
-    public decimal ReinforcementRate { get; set; } = 1.10M;
-
-    [Required, Range(0, int.MaxValue)]
-    public decimal MinRequiredRelativeValueForTopUpBuy { get; set; } = 1.10M;
+    public decimal MinRequiredRelativeValueForTopUpBuy { get; set; } = 1.05M;
 
     [Required, Range(0, int.MaxValue)]
     public decimal RelativeValueForPanicSell { get; set; } = 1.02M;
@@ -36,6 +33,11 @@ public class PortfolioAlgoOptions
 
     [Required]
     public PortfolioAlgoOptionsRsi Rsi { get; } = new PortfolioAlgoOptionsRsi();
+
+    /// <summary>
+    /// Set of symbols to never issue sells against, even for stop loss.
+    /// </summary>
+    public ISet<string> NeverSellSymbols { get; } = new HashSet<string>();
 }
 
 public class PortfolioAlgoOptionsRsi

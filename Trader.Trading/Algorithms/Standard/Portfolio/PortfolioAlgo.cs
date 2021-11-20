@@ -191,6 +191,13 @@ public partial class PortfolioAlgo : Algo
         // evaluate symbols with at least two positions
         foreach (var item in Context.Data.Where(x => x.AutoPosition.Positions.Count >= 2))
         {
+            // skip symbols to never sell
+            if (_options.NeverSellSymbols.Contains(item.Symbol.Name))
+            {
+                LogSkippedSymbolOnNeverSellSet(TypeName, item.Symbol.Name);
+                continue;
+            }
+
             // calculate the stats vs the current price
             var stats = item.AutoPosition.Positions.GetStats(item.Ticker.ClosePrice);
 
@@ -289,6 +296,9 @@ public partial class PortfolioAlgo : Algo
 
     [LoggerMessage(15, LogLevel.Information, "{Type} evaluating symbols for stop loss")]
     private partial void LogEvaluatingSymbolForStopLoss(string type);
+
+    [LoggerMessage(16, LogLevel.Information, "{Type} skipped symbol {Symbol} on the never sell set")]
+    private partial void LogSkippedSymbolOnNeverSellSet(string type, string symbol);
 
     #endregion Logging
 }

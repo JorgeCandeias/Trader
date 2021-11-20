@@ -8,10 +8,7 @@ public class PortfolioAlgoOptions
     public decimal BalanceFractionPerBuy { get; set; } = 0.001M;
 
     [Required, Range(0, int.MaxValue)]
-    public decimal MinRequiredRelativeValueForTopUpBuy { get; set; } = 1.05M;
-
-    [Required, Range(0, int.MaxValue)]
-    public decimal RelativeValueForPanicSell { get; set; } = 1.02M;
+    public decimal MinChangeFromLastPositionPriceRequiredForTopUpBuy { get; set; } = 1.01M;
 
     [Required, Range(0, int.MaxValue)]
     public decimal BuyQuoteBalanceFraction { get; set; } = 0.001M;

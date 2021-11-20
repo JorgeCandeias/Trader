@@ -179,9 +179,10 @@ public partial class PortfolioAlgo : Algo
             }
 
             // skip symbols below min required for top up
-            if (stats.RelativeValue < _options.MinRequiredRelativeValueForTopUpBuy)
+            var minPrice = item.AutoPosition.Positions.Last.Price * _options.MinChangeFromLastPositionPriceRequiredForTopUpBuy;
+            if (item.Ticker.ClosePrice < minPrice)
             {
-                LogSkippedSymbolWithLowRelativeValue(TypeName, item.Symbol.Name, stats.RelativeValue, _options.MinRequiredRelativeValueForTopUpBuy);
+                LogSkippedSymbolWithPriceNotHighEnough(TypeName, item.Symbol.Name, item.Ticker.ClosePrice, minPrice, _options.MinChangeFromLastPositionPriceRequiredForTopUpBuy, item.AutoPosition.Positions.Last.Price);
                 continue;
             }
 
@@ -256,8 +257,8 @@ public partial class PortfolioAlgo : Algo
     [LoggerMessage(2, LogLevel.Information, "{Type} skipped symbol {Symbol} on cooldown until {Cooldown}")]
     private partial void LogSkippedSymbolOnCooldown(string type, string symbol, DateTime cooldown);
 
-    [LoggerMessage(3, LogLevel.Information, "{Type} skipped symbol {Symbol} with Relative Value {RelValue:P2} lower than minimum {MinRelValue:P2} for top up buy")]
-    private partial void LogSkippedSymbolWithLowRelativeValue(string type, string symbol, decimal relValue, decimal minRelValue);
+    [LoggerMessage(3, LogLevel.Information, "{Type} skipped symbol {Symbol} with Ticker {Ticker:F8} lower than minimum {MinPrice:F8} as {Rate:P2} of last position price {LastPrice:F8}")]
+    private partial void LogSkippedSymbolWithPriceNotHighEnough(string type, string symbol, decimal ticker, decimal minPrice, decimal rate, decimal lastPrice);
 
     [LoggerMessage(4, LogLevel.Information, "{Type} skipped symbol {Symbol} with Relative Value {RelValue:P2} lower than candidate {HighRelValue:P2} from symbol {HighSymbol}")]
     private partial void LogSkippedSymbolWithLowerRelativeValueThanCandidate(string type, string symbol, decimal relValue, decimal highRelValue, string highSymbol);

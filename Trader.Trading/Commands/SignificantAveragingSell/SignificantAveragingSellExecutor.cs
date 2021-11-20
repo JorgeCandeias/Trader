@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
-using Outcompute.Trader.Trading.Commands.CancelOpenOrders;
 using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
 
 namespace Outcompute.Trader.Trading.Commands.SignificantAveragingSell;
@@ -22,17 +21,13 @@ internal partial class SignificantAveragingSellExecutor : IAlgoCommandExecutor<S
         // calculate the desired sell
         var desired = CalculateDesiredSell(context, command);
 
-        // apply the desired sell
         if (desired == DesiredSell.None)
         {
-            return new CancelOpenOrdersCommand(command.Symbol, OrderSide.Sell, 0.01M)
-                .ExecuteAsync(context, cancellationToken);
+            return ValueTask.CompletedTask;
         }
-        else
-        {
-            return new EnsureSingleOrderCommand(command.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, desired.Quantity, desired.Price, command.RedeemSavings, command.RedeemSwapPool)
-                .ExecuteAsync(context, cancellationToken);
-        }
+
+        return new EnsureSingleOrderCommand(command.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, desired.Quantity, desired.Price, command.RedeemSavings, command.RedeemSwapPool)
+            .ExecuteAsync(context, cancellationToken);
     }
 
     private DesiredSell CalculateDesiredSell(IAlgoContext context, SignificantAveragingSellCommand command)

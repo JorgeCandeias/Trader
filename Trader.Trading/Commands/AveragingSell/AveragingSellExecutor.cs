@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
-using Outcompute.Trader.Trading.Commands.CancelOpenOrders;
 using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
 
 namespace Outcompute.Trader.Trading.Commands.AveragingSell;
@@ -17,18 +16,17 @@ internal partial class AveragingSellExecutor : IAlgoCommandExecutor<AveragingSel
 
     private static string TypeName => nameof(AveragingSellExecutor);
 
-    public async ValueTask ExecuteAsync(IAlgoContext context, AveragingSellCommand command, CancellationToken cancellationToken = default)
+    public ValueTask ExecuteAsync(IAlgoContext context, AveragingSellCommand command, CancellationToken cancellationToken = default)
     {
-        // calculate the desired sell
         var desired = CalculateDesiredSell(context, command);
 
-        // apply the desired sell
-        if (desired != DesiredSell.None)
+        if (desired == DesiredSell.None)
         {
-            await new EnsureSingleOrderCommand(command.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, desired.Quantity, desired.Price, command.RedeemSavings, command.RedeemSwapPool)
-                .ExecuteAsync(context, cancellationToken)
-                .ConfigureAwait(false);
+            return ValueTask.CompletedTask;
         }
+
+        return new EnsureSingleOrderCommand(command.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, desired.Quantity, desired.Price, command.RedeemSavings, command.RedeemSwapPool)
+            .ExecuteAsync(context, cancellationToken);
     }
 
     private DesiredSell CalculateDesiredSell(IAlgoContext context, AveragingSellCommand command)

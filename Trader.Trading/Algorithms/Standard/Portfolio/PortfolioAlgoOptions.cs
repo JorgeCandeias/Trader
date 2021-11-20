@@ -32,7 +32,7 @@ public class PortfolioAlgoOptions
     public bool UseSwapPools { get; set; }
 
     [Required]
-    public PortfolioAlgoOptionsRsi Rsi { get; } = new PortfolioAlgoOptionsRsi();
+    public PortfolioAlgoOptionsRsis Rsi { get; } = new PortfolioAlgoOptionsRsis();
 
     /// <summary>
     /// Set of symbols to never issue sells against, even for stop loss.
@@ -40,11 +40,29 @@ public class PortfolioAlgoOptions
     public ISet<string> NeverSellSymbols { get; } = new HashSet<string>();
 }
 
-public class PortfolioAlgoOptionsRsi
+public class PortfolioAlgoOptionsRsis
+{
+    [Required]
+    public PortfolioAlgoOptionsRsiBuy Buy { get; } = new PortfolioAlgoOptionsRsiBuy();
+
+    [Required]
+    public PortfolioAlgoOptionsRsiSell Sell { get; } = new PortfolioAlgoOptionsRsiSell();
+}
+
+public class PortfolioAlgoOptionsRsiBuy
 {
     [Required]
     public int Periods { get; set; } = 6;
 
     [Required]
     public decimal Oversold { get; set; } = 30M;
+}
+
+public class PortfolioAlgoOptionsRsiSell
+{
+    [Required]
+    public int Periods { get; set; } = 12;
+
+    [Required]
+    public decimal Overbought { get; set; } = 95M;
 }

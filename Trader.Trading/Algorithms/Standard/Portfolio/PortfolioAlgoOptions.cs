@@ -41,7 +41,7 @@ public class PortfolioAlgoOptions
 public class PortfolioAlgoOptionsRsi
 {
     [Required]
-    public int Periods { get; set; } = 12;
+    public int Periods { get; set; } = 6;
 
     [Required]
     public decimal Oversold { get; set; } = 30M;

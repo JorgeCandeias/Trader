@@ -74,8 +74,7 @@ internal sealed partial class ValueAveragingAlgo : Algo
                 SignificantAveragingSell(Context.Symbol, _options.MinSellProfitRate, _options.RedeemSavings, _options.RedeemSwapPool));
         }
 
-        // clear open orders out of range if no decision was made
-        return CancelOpenOrders(Context.Symbol, null, 0.01M);
+        return Noop();
     }
 
     private bool TrySignalBuy()

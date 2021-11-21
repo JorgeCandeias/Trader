@@ -7,17 +7,29 @@ public class PortfolioAlgoOptions
     [Required, Range(0, 1)]
     public decimal BalanceFractionPerBuy { get; set; } = 0.001M;
 
-    [Required, Range(0, int.MaxValue)]
+    [Required, Range(0, double.MaxValue)]
     public decimal MinChangeFromLastPositionPriceRequiredForTopUpBuy { get; set; } = 1.01M;
 
-    [Required, Range(0, int.MaxValue)]
+    [Required, Range(0, 1)]
     public decimal BuyQuoteBalanceFraction { get; set; } = 0.001M;
 
-    [Required]
-    public bool SellingEnabled { get; set; } = false;
+    /// <summary>
+    /// Pad buy orders with this rate (before adjustments) to ensure that the resulting quantity is sellable.
+    /// </summary>
+    [Required, Range(0, 1)]
+    public decimal FeeRate { get; set; } = 0.001M;
 
-    [Required, Range(0, int.MaxValue)]
-    public decimal MinSellRate { get; set; } = 1.01M;
+    /// <summary>
+    /// Whether selling logic is enabled.
+    /// </summary>
+    [Required]
+    public bool SellingEnabled { get; set; } = true;
+
+    /// <summary>
+    /// The minimum profit rate at which to sell an asset as compared to its average cost.
+    /// </summary>
+    [Required, Range(0, double.MaxValue)]
+    public decimal MinSellRate { get; set; } = 2M;
 
     /// <summary>
     /// Whether to enable stop loss logic.
@@ -76,13 +88,13 @@ public class PortfolioAlgoOptionsRsiBuy
     public int Periods { get; set; } = 6;
 
     /// <summary>
-    /// RSI threshold at which to perfrom entry buys.
+    /// RSI threshold under which to perfrom entry buys.
     /// </summary>
     [Required]
     public decimal Oversold { get; set; } = 30M;
 
     /// <summary>
-    /// RSI threshold at which never to perform top up buys.
+    /// RSI threshold above which never to perform top up buys.
     /// </summary>
     [Required]
     public decimal Overbought { get; set; } = 70M;
@@ -97,7 +109,7 @@ public class PortfolioAlgoOptionsRsiSell
     public int Periods { get; set; } = 12;
 
     /// <summary>
-    /// RSI threshold at which to perform a sell.
+    /// RSI threshold above which to perform a sell.
     /// </summary>
     [Required]
     public decimal Overbought { get; set; } = 95M;

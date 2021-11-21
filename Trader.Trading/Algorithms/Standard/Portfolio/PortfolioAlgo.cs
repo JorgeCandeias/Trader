@@ -316,6 +316,7 @@ public partial class PortfolioAlgo : Algo
 
     private IAlgoCommand CreateBuy(SymbolData item)
     {
+        // calculate the notional to use for buying
         var total = item.Spot.QuoteAsset.Free
             + (_options.UseSavings ? item.Savings.QuoteAsset.FreeAmount : 0)
             + (_options.UseSwapPools ? item.SwapPools.QuoteAsset.Total : 0);
@@ -329,7 +330,17 @@ public partial class PortfolioAlgo : Algo
             total = Math.Max(total, _options.MaxNotional.Value);
         }
 
+        // calculate the quantity from the notional
         var quantity = total / item.Ticker.ClosePrice;
+
+        // adjust the quantity up to the min lot size
+        quantity = quantity.AdjustQuantityUpToMinLotSizeQuantity(item.Symbol);
+
+        // pad the order with the fee
+        quantity *= (1 + _options.FeeRate);
+
+        // adjust again to the step size
+        quantity = quantity.AdjustQuantityUpToLotStepSize(item.Symbol);
 
         return MarketBuy(item.Symbol, quantity, _options.UseSavings, _options.UseSwapPools);
     }
@@ -377,7 +388,7 @@ public partial class PortfolioAlgo : Algo
     [LoggerMessage(12, LogLevel.Information, "{Type} skipped symbol {Symbol} with quantity {Quantity:F8} {Asset} under min lot size {MinLotSize:F8}")]
     private partial void LogSkippedSymbolWithQuantityUnderMinLotSize(string type, string symbol, decimal quantity, string asset, decimal minLotSize);
 
-    [LoggerMessage(13, LogLevel.Information, "{Type} skipped symbol {Symbol} with cost {Notional:F8} under min notional {MinNotional:F8}")]
+    [LoggerMessage(13, LogLevel.Information, "{Type} skipped symbol {Symbol} with present notional {Notional:F8} under min notional {MinNotional:F8}")]
     private partial void LogSkippedSymbolWithNotionalUnderMinNotional(string type, string symbol, decimal notional, decimal minNotional);
 
     [LoggerMessage(14, LogLevel.Information, "{Type} skipped symbol {Symbol} with quantity {Quantity:F8} {Asset} above min {MinLotSize:F8} {Asset} and notional {Cost:F8} above min {MinNotional:F8} {Quote}")]

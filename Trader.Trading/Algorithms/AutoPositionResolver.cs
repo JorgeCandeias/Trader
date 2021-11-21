@@ -29,6 +29,8 @@ internal partial class AutoPositionResolver : IAutoPositionResolver
 
     public AutoPosition Resolve(Symbol symbol, OrderCollection orders, IEnumerable<AccountTrade> trades, DateTime startTime)
     {
+        // todo: validate that the symbols are consistent between all arguments
+
         var watch = Stopwatch.StartNew();
 
         var (mapping, commissions) = Combine(symbol, orders.Where(x => x.Time >= startTime), trades.Where(x => x.Time >= startTime));
@@ -93,7 +95,7 @@ internal partial class AutoPositionResolver : IAutoPositionResolver
             .Where(x => x.Order.Side == OrderSide.Buy && x.RemainingExecutedQuantity > 0m)
             .GroupBy(x => x.Order)
             .Select(x => new Position(
-                x.Key.Symbol,
+                symbol,
                 x.Key.OrderId,
                 // market orders will have the price set to zero so we must derive the average from the executed trades
                 x.Key.Price is 0 ? x.Sum(y => y.Trade.Price * y.Trade.Quantity) / x.Sum(y => y.Trade.Quantity) : x.Key.Price,

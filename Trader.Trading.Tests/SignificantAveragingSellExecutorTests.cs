@@ -96,7 +96,7 @@ namespace Outcompute.Trader.Trading.Tests
             {
                 Position.Empty with
                 {
-                    Symbol = symbol.Name,
+                    Symbol = symbol,
                     Quantity = 100m,
                     Price = 60000m
                 }
@@ -166,13 +166,13 @@ namespace Outcompute.Trader.Trading.Tests
             {
                 Position.Empty with
                 {
-                    Symbol = symbol.Name,
+                    Symbol = symbol,
                     Quantity = 100m,
                     Price = 50000m
                 },
                 Position.Empty with
                 {
-                    Symbol = symbol.Name,
+                    Symbol = symbol,
                     Quantity = 100m,
                     Price = 40000m
                 }
@@ -247,13 +247,13 @@ namespace Outcompute.Trader.Trading.Tests
             {
                 Position.Empty with
                 {
-                    Symbol = symbol.Name,
+                    Symbol = symbol,
                     Quantity = 100m,
                     Price = 50000m
                 },
                 Position.Empty with
                 {
-                    Symbol = symbol.Name,
+                    Symbol = symbol,
                     Quantity = 100m,
                     Price = 40000m
                 }
@@ -331,14 +331,14 @@ namespace Outcompute.Trader.Trading.Tests
             {
                 Position.Empty with
                 {
-                    Symbol = symbol.Name,
+                    Symbol = symbol,
                     OrderId = 1,
                     Quantity = 100m,
                     Price = 50000m
                 },
                 Position.Empty with
                 {
-                    Symbol = symbol.Name,
+                    Symbol = symbol,
                     OrderId = 2,
                     Quantity = 100m,
                     Price = 40000m

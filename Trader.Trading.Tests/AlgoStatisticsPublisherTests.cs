@@ -45,7 +45,7 @@ namespace Outcompute.Trader.Trading.Tests
                 .Verifiable();
 
             var publisher = new AlgoStatisticsPublisher(logger, factory, balances, savings, swaps);
-            var position = Position.Empty with { Symbol = symbol.Name, OrderId = 123, Quantity = 10, Price = 100 };
+            var position = Position.Empty with { Symbol = symbol, OrderId = 123, Quantity = 10, Price = 100 };
             var significant = AutoPosition.Empty with
             {
                 Symbol = symbol,

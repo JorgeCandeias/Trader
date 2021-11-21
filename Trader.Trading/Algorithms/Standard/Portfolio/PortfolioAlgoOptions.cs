@@ -13,8 +13,29 @@ public class PortfolioAlgoOptions
     [Required, Range(0, int.MaxValue)]
     public decimal BuyQuoteBalanceFraction { get; set; } = 0.001M;
 
+    [Required]
+    public bool SellingEnabled { get; set; } = false;
+
     [Required, Range(0, int.MaxValue)]
     public decimal MinSellRate { get; set; } = 1.01M;
+
+    /// <summary>
+    /// Whether to enable stop loss logic.
+    /// </summary>
+    [Required]
+    public bool StopLossEnabled { get; set; } = true;
+
+    /// <summary>
+    /// When the current price falls from the last position price by this rate, a market sell order for all sellable assets will be placed.
+    /// </summary>
+    [Required, Range(0, 1)]
+    public decimal StopLossRateFromLastPosition { get; set; } = 0.90M;
+
+    /// <summary>
+    /// When stop loss is triggered, the sell order will only be placed if all assets can be sold at least at the this markup from their average cost.
+    /// </summary>
+    [Required, Range(0, int.MaxValue)]
+    public decimal MinStopLossProfitRate { get; set; } = 1.01M;
 
     [Range(0, int.MaxValue)]
     public decimal? MaxNotional { get; set; }

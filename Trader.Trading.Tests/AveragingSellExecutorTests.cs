@@ -45,8 +45,8 @@ namespace Outcompute.Trader.Trading.Tests
 
             var positions = new PositionCollection(new[]
             {
-                Position.Empty with { Symbol = symbol.Name, OrderId = 123, Price = 1100m, Quantity = 1000m },
-                Position.Empty with { Symbol = symbol.Name, OrderId = 124, Price = 1000m, Quantity = 1000m },
+                Position.Empty with { Symbol = symbol, OrderId = 123, Price = 1100m, Quantity = 1000m },
+                Position.Empty with { Symbol = symbol, OrderId = 124, Price = 1000m, Quantity = 1000m },
             });
 
             var executor = new AveragingSellExecutor(logger);

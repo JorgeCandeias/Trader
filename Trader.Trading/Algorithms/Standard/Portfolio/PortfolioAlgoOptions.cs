@@ -69,9 +69,15 @@ public class PortfolioAlgoOptionsRsiBuy
 
 public class PortfolioAlgoOptionsRsiSell
 {
+    /// <summary>
+    /// Periods for sell RSI calculation.
+    /// </summary>
     [Required]
     public int Periods { get; set; } = 12;
 
+    /// <summary>
+    /// RSI threshold at which to perform a sell.
+    /// </summary>
     [Required]
     public decimal Overbought { get; set; } = 95M;
 }

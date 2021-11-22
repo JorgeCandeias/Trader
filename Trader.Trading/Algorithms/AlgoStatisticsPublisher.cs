@@ -63,15 +63,15 @@ internal partial class AlgoStatisticsPublisher : IAlgoStatisticsPublisher
             var spotBalance = await _balances.GetBalanceOrZeroAsync(significant.Symbol.BaseAsset, cancellationToken);
             var savingsBalance = await _savings.GetBalanceOrZeroAsync(significant.Symbol.BaseAsset, cancellationToken);
             var swapBalance = await _swaps.GetBalanceAsync(significant.Symbol.BaseAsset, cancellationToken);
-            var free = spotBalance.Free + savingsBalance.FreeAmount + swapBalance.Total;
+            var balance = spotBalance.Total + savingsBalance.TotalAmount + swapBalance.Total;
 
-            if (free < quantity)
+            if (balance < quantity)
             {
-                LogFreeAmountLessThanPurchased(TypeName, significant.Symbol.Name, free, significant.Symbol.BaseAsset, quantity);
+                LogFreeAmountLessThanPurchased(TypeName, significant.Symbol.Name, balance, significant.Symbol.BaseAsset, quantity);
             }
             else
             {
-                LogFreeAmountExceedsPurchased(TypeName, significant.Symbol.Name, free, significant.Symbol.BaseAsset, quantity, free - quantity);
+                LogFreeAmountExceedsPurchased(TypeName, significant.Symbol.Name, balance, significant.Symbol.BaseAsset, quantity, balance - quantity);
             }
         }
 
@@ -116,8 +116,8 @@ internal partial class AlgoStatisticsPublisher : IAlgoStatisticsPublisher
     [LoggerMessage(9, LogLevel.Information, "{Type} {Name} reports Adjusted PnL = {Value:F8}")]
     private partial void LogAdjustedPnL(string type, string name, decimal value);
 
-    [LoggerMessage(10, LogLevel.Warning, "{Type} {Name} reports total amount {Free:F8} {Asset} is less than purchased quantity of {Quantity:F8} {Asset}")]
-    private partial void LogFreeAmountLessThanPurchased(string type, string name, decimal free, string asset, decimal quantity);
+    [LoggerMessage(10, LogLevel.Warning, "{Type} {Name} reports total amount {Total:F8} {Asset} is less than purchased quantity of {Quantity:F8} {Asset}")]
+    private partial void LogFreeAmountLessThanPurchased(string type, string name, decimal total, string asset, decimal quantity);
 
     [LoggerMessage(11, LogLevel.Information, "{Type} {Name} reports total amount {Free:F8} {Asset} meets or exceeds purchased quantity of {Quantity:F8} {Asset} by {Diff:F8} {Asset})")]
     private partial void LogFreeAmountExceedsPurchased(string type, string name, decimal free, string asset, decimal quantity, decimal diff);

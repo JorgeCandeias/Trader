@@ -36,9 +36,11 @@ internal sealed partial class ValueAveragingAlgo : Algo
         // calculate the rsi values
         _rsi = Context.Klines.LastRsi(x => x.ClosePrice, _options.RsiPeriods);
 
-        // only handle symbol with negative pnl - the portfolio algo will handle it if positive
-        if (Context.AutoPosition.Positions.GetStats(Context.Ticker.ClosePrice).AbsolutePnL >= 0)
+        // only handle symbol with negative pnl - this algo is designed for recovery not investment
+        var stats = Context.AutoPosition.Positions.GetStats(Context.Ticker.ClosePrice);
+        if (stats.RelativePnL >= 0)
         {
+            LogIgnoredSymbolWithNonNegativePnl(TypeName, Context.Name, Context.Symbol.Name, stats.RelativePnL);
             return Noop();
         }
 
@@ -330,6 +332,9 @@ internal sealed partial class ValueAveragingAlgo : Algo
 
     [LoggerMessage(17, LogLevel.Warning, "{Type} {Name} has reached the maximum number of positions {Count}")]
     private partial void LogReachedMaxSequentialBuys(string type, string name, int count);
+
+    [LoggerMessage(18, LogLevel.Warning, "{Type} {Name} ignored symbol {Symbol} with non-negative pnl of {PNL:P2}")]
+    private partial void LogIgnoredSymbolWithNonNegativePnl(string type, string name, string symbol, decimal pnl);
 
     #endregion Logging
 }

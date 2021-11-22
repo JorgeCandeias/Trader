@@ -17,6 +17,8 @@ public class SymbolData
 
     public string Name { get; }
 
+    public bool IsValid { get; set; } = true;
+
     public Symbol Symbol { get; set; } = Symbol.Empty;
 
     public AutoPosition AutoPosition { get; set; } = AutoPosition.Empty;

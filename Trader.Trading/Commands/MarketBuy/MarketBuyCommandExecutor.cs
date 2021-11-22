@@ -136,7 +136,7 @@ internal partial class MarketBuyCommandExecutor : IAlgoCommandExecutor<MarketBuy
 
         // all set
         var tag = _tags.Generate(command.Symbol.Name, 0);
-        await new CreateOrderCommand(command.Symbol, MyOrderType, MyOrderSide, null, quantity, null, tag)
+        await new CreateOrderCommand(command.Symbol, MyOrderType, MyOrderSide, null, quantity, null, null, tag)
             .ExecuteAsync(context, cancellationToken)
             .ConfigureAwait(false);
     }

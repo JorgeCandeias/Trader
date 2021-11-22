@@ -73,7 +73,7 @@ namespace Outcompute.Trader.Trading.Tests
             var price = 1234m;
             var redeemSavings = true;
             var redeemSwapPool = true;
-            var command = new EnsureSingleOrderCommand(symbol, side, type, timeInForce, quantity, price, redeemSavings, redeemSwapPool);
+            var command = new EnsureSingleOrderCommand(symbol, side, type, timeInForce, quantity, price, null, redeemSavings, redeemSwapPool);
 
             // act
             await executor.ExecuteAsync(context, command);

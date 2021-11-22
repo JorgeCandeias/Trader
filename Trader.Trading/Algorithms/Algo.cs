@@ -79,9 +79,9 @@ public abstract class Algo : IAlgo
         return new AveragingSellCommand(symbol, minSellRate, redeemSavings, redeemSwapPool);
     }
 
-    public virtual IAlgoCommand CreateOrder(Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal price, string? tag)
+    public virtual IAlgoCommand CreateOrder(Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal? price, decimal? stopPrice, string? tag)
     {
-        return new CreateOrderCommand(symbol, type, side, timeInForce, quantity, price, tag);
+        return new CreateOrderCommand(symbol, type, side, timeInForce, quantity, price, stopPrice, tag);
     }
 
     public virtual IAlgoCommand CancelOrder(Symbol symbol, long orderId)
@@ -89,9 +89,9 @@ public abstract class Algo : IAlgo
         return new CancelOrderCommand(symbol, orderId);
     }
 
-    public virtual IAlgoCommand EnsureSingleOrder(Symbol symbol, OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings, bool redeemSwapPool)
+    public virtual IAlgoCommand EnsureSingleOrder(Symbol symbol, OrderSide side, OrderType type, TimeInForce? timeInForce, decimal quantity, decimal? price, decimal? stopPrice, bool redeemSavings = false, bool redeemSwapPool = false)
     {
-        return new EnsureSingleOrderCommand(symbol, side, type, timeInForce, quantity, price, redeemSavings, redeemSwapPool);
+        return new EnsureSingleOrderCommand(symbol, side, type, timeInForce, quantity, price, stopPrice, redeemSavings, redeemSwapPool);
     }
 
     public virtual IAlgoCommand CancelOpenOrders(Symbol symbol, OrderSide? side = null, decimal? distance = null)

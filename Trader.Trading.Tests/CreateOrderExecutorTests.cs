@@ -41,7 +41,7 @@ namespace Outcompute.Trader.Trading.Tests
 
             var executor = new CreateOrderExecutor(logger, trader, orders);
             var context = AlgoContext.Empty;
-            var command = new CreateOrderCommand(symbol, type, side, timeInForce, quantity, price, tag);
+            var command = new CreateOrderCommand(symbol, type, side, timeInForce, quantity, price, null, tag);
 
             // act
             await executor.ExecuteAsync(context, command);

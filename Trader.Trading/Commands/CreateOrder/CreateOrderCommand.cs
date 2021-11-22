@@ -6,7 +6,7 @@ namespace Outcompute.Trader.Trading.Commands.CreateOrder;
 
 public class CreateOrderCommand : IAlgoCommand
 {
-    public CreateOrderCommand(Symbol symbol, OrderType type, OrderSide side, TimeInForce? timeInForce, decimal quantity, decimal? price, string? tag)
+    public CreateOrderCommand(Symbol symbol, OrderType type, OrderSide side, TimeInForce? timeInForce, decimal quantity, decimal? price, decimal? stopPrice, string? tag)
     {
         Symbol = symbol ?? throw new ArgumentNullException(nameof(symbol));
         Type = type;
@@ -14,6 +14,7 @@ public class CreateOrderCommand : IAlgoCommand
         TimeInForce = timeInForce;
         Quantity = quantity;
         Price = price;
+        StopPrice = stopPrice;
         Tag = tag;
     }
 
@@ -23,6 +24,7 @@ public class CreateOrderCommand : IAlgoCommand
     public TimeInForce? TimeInForce { get; }
     public decimal Quantity { get; }
     public decimal? Price { get; }
+    public decimal? StopPrice { get; }
     public string? Tag { get; }
 
     public ValueTask ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)

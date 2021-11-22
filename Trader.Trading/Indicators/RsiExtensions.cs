@@ -32,4 +32,58 @@ public static class RsiExtensions
     {
         return source.Rsi(selector, periods).Last();
     }
+
+    public static decimal PriceForRsi(this IEnumerable<decimal> source, int periods, decimal rsi, decimal precision, int maxIterations = 100)
+    {
+        source = source.SkipLast(1);
+
+        var prevPrice = source.Last();
+        var prevRsi = source.LastRsi(periods);
+        var direction = Math.Sign(rsi - prevRsi);
+
+        if (direction == 0)
+        {
+            return prevPrice;
+        }
+
+        // define the initial search range
+        var high = direction < 0 ? prevPrice : source.Max() * 2;
+        var low = direction > 0 ? prevPrice : source.Min() / 2;
+
+        for (var i = 0; i < maxIterations; i++)
+        {
+            // probe halfway between the range
+            var candidatePrice = (low + high) / 2;
+            var candidateRsi = source.Append(candidatePrice).LastRsi(periods);
+            var candidateSign = Math.Sign(candidateRsi - rsi);
+
+            // we want to err on the side of the target rsi
+            if (candidateSign == direction)
+            {
+                var candidateRate = candidateRsi / rsi;
+                var candidatePrecision = Math.Abs(1 - candidateRate);
+                if (candidatePrecision <= precision)
+                {
+                    return candidatePrice;
+                }
+            }
+
+            // adjust ranges
+            if (candidateRsi < rsi)
+            {
+                low = candidatePrice;
+            }
+            else
+            {
+                high = candidatePrice;
+            }
+        }
+
+        throw new InvalidOperationException($"Could not find target price for RSI({periods}) {rsi} at precision {precision} within {maxIterations} iterations");
+    }
+
+    public static decimal PriceForRsi<T>(this IEnumerable<T> source, Func<T, decimal> selector, int periods, decimal rsi, decimal precision)
+    {
+        return source.Select(selector).PriceForRsi(periods, rsi, precision);
+    }
 }

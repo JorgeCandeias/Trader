@@ -110,7 +110,7 @@ internal partial class MarketSellCommandExecutor : IAlgoCommandExecutor<MarketSe
         }
 
         // all set
-        await new CreateOrderCommand(command.Symbol, OrderType.Market, OrderSide.Sell, null, quantity, null, null)
+        await new CreateOrderCommand(command.Symbol, OrderType.Market, OrderSide.Sell, null, quantity, null, null, null)
             .ExecuteAsync(context, cancellationToken)
             .ConfigureAwait(false);
     }

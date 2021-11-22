@@ -66,7 +66,6 @@ public class AlgoOptions
 
     /// <summary>
     /// The start time for automatic position calculation.
-    /// Only used when <see cref="Symbol"/> is also defined.
     /// </summary>
     [Required]
     public DateTime StartTime { get; set; } = DateTime.MinValue;

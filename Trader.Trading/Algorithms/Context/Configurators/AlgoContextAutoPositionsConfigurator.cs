@@ -22,7 +22,15 @@ internal class AlgoContextAutoPositionsConfigurator : IAlgoContextConfigurator<A
         {
             var data = context.Data[symbol.Name];
 
-            context.Data.GetOrAdd(symbol.Name).AutoPosition = _resolver.Resolve(symbol, data.Orders.Filled, data.Trades, options.StartTime);
+            try
+            {
+                context.Data.GetOrAdd(symbol.Name).AutoPosition = _resolver.Resolve(symbol, data.Orders.Filled, data.Trades, options.StartTime);
+            }
+            // todo: catch a proper resolver exception here
+            catch (InvalidOperationException)
+            {
+                context.Data.GetOrAdd(symbol.Name).IsValid = false;
+            }
         }
 
         return ValueTask.CompletedTask;

@@ -153,6 +153,9 @@ internal partial class AutoPositionResolver : IAutoPositionResolver
             {
                 // we have missing trades if this happened
                 LogCouldNotMatchOrder(TypeName, symbol.Name, order.Type, order.Side, order.OrderId, order.Time, order.ExecutedQuantity, quantity);
+
+                // todo: improve this exception
+                throw new InvalidOperationException();
             }
         }
 

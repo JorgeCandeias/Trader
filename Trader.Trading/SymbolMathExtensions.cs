@@ -2,6 +2,7 @@
 
 namespace System;
 
+// todo: make this extend the symbol instead of decimal
 public static class SymbolMathExtensions
 {
     public static decimal AdjustQuantityDownToLotStepSize(this decimal quantity, Symbol symbol)
@@ -44,5 +45,33 @@ public static class SymbolMathExtensions
         if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
         return Math.Max(total, symbol.Filters.MinNotional.MinNotional);
+    }
+
+    public static decimal LowerToBaseAssetPrecision(this decimal value, Symbol symbol)
+    {
+        if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+
+        return Math.Floor(value / symbol.BaseAssetPrecision) * symbol.BaseAssetPrecision;
+    }
+
+    public static decimal RaiseToBaseAssetPrecision(this decimal value, Symbol symbol)
+    {
+        if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+
+        return Math.Ceiling(value / symbol.BaseAssetPrecision) * symbol.BaseAssetPrecision;
+    }
+
+    public static decimal LowerToQuoteAssetPrecision(this decimal value, Symbol symbol)
+    {
+        if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+
+        return Math.Floor(value / symbol.QuoteAssetPrecision) * symbol.QuoteAssetPrecision;
+    }
+
+    public static decimal RaiseToQuoteAssetPrecision(this decimal value, Symbol symbol)
+    {
+        if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+
+        return Math.Ceiling(value / symbol.QuoteAssetPrecision) * symbol.QuoteAssetPrecision;
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System.Collections;
 
-namespace Outcompute.Trader.Trading.Indicators;
+namespace Outcompute.Trader.Trading.Iterators;
 
 /// <summary>
 /// Base class for high-performance self-enumerators.

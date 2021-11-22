@@ -150,6 +150,7 @@ public static class TraderServiceCollectionExtensions
             .AddArbitrageAlgoType()
             .AddValueAveragingAlgoType()
             .AddDiscoveryAlgoType()
-            .AddPortfolioAlgoType();
+            .AddPortfolioAlgoType()
+            .AddOscillatorAlgoType();
     }
 }

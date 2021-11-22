@@ -119,7 +119,7 @@ internal class TrackingBuyExecutor : IAlgoCommandExecutor<TrackingBuyCommand>
         // place the order now
         var tag = $"{command.Symbol.Name}{lowBuyPrice:N8}".Replace(".", "", StringComparison.Ordinal).Replace(",", "", StringComparison.Ordinal);
 
-        await new CreateOrderCommand(command.Symbol, OrderType.Limit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, lowBuyPrice, tag)
+        await new CreateOrderCommand(command.Symbol, OrderType.Limit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, lowBuyPrice, null, tag)
             .ExecuteAsync(context, cancellationToken)
             .ConfigureAwait(false);
     }

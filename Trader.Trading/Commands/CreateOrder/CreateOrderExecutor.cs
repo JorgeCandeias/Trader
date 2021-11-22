@@ -27,8 +27,9 @@ internal partial class CreateOrderExecutor : IAlgoCommandExecutor<CreateOrderCom
 
         LogPlacingOrder(TypeName, command.Symbol.Name, command.Type, command.Side, command.Quantity, command.Symbol.BaseAsset, command.Price, command.Symbol.QuoteAsset, command.Quantity * command.Price);
 
+        // todo: add support for the missing parameters
         var created = await _trader
-            .CreateOrderAsync(command.Symbol.Name, command.Side, command.Type, command.TimeInForce, command.Quantity, null, command.Price, command.Tag, null, null, cancellationToken)
+            .CreateOrderAsync(command.Symbol.Name, command.Side, command.Type, command.TimeInForce, command.Quantity, null, command.Price, command.Tag, command.StopPrice, null, cancellationToken)
             .ConfigureAwait(false);
 
         await _orders

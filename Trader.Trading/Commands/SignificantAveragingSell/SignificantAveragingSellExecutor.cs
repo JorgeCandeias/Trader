@@ -26,7 +26,7 @@ internal partial class SignificantAveragingSellExecutor : IAlgoCommandExecutor<S
             return ValueTask.CompletedTask;
         }
 
-        return new EnsureSingleOrderCommand(command.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, desired.Quantity, desired.Price, command.RedeemSavings, command.RedeemSwapPool)
+        return new EnsureSingleOrderCommand(command.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, desired.Quantity, desired.Price, null, command.RedeemSavings, command.RedeemSwapPool)
             .ExecuteAsync(context, cancellationToken);
     }
 

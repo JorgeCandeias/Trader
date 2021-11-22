@@ -21,7 +21,7 @@ namespace Outcompute.Trader.Trading.Tests
             var quantity = 123m;
             var price = 234m;
             var tag = "ZZZ";
-            var command = new CreateOrderCommand(symbol, type, side, timeInForce, quantity, price, tag);
+            var command = new CreateOrderCommand(symbol, type, side, timeInForce, quantity, price, null, tag);
             var executor = Mock.Of<IAlgoCommandExecutor<CreateOrderCommand>>();
             var provider = new ServiceCollection()
                 .AddSingleton(executor)

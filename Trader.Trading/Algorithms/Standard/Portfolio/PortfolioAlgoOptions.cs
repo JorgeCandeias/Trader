@@ -8,7 +8,7 @@ public class PortfolioAlgoOptions
     public decimal BalanceFractionPerBuy { get; set; } = 0.001M;
 
     [Required, Range(0, double.MaxValue)]
-    public decimal MinChangeFromLastPositionPriceRequiredForTopUpBuy { get; set; } = 1.01M;
+    public decimal MinChangeFromLastPositionPriceRequiredForTopUpBuy { get; set; } = 1.05M;
 
     [Required, Range(0, 1)]
     public decimal BuyQuoteBalanceFraction { get; set; } = 0.001M;
@@ -35,7 +35,7 @@ public class PortfolioAlgoOptions
     /// Whether to enable stop loss logic.
     /// </summary>
     [Required]
-    public bool StopLossEnabled { get; set; } = true;
+    public bool StopLossEnabled { get; set; } = false;
 
     /// <summary>
     /// When the current price falls from the last position price by this rate, a market sell order for all sellable assets will be placed.
@@ -97,7 +97,7 @@ public class PortfolioAlgoOptionsRsiBuy
     /// RSI threshold above which never to perform top up buys.
     /// </summary>
     [Required]
-    public decimal Overbought { get; set; } = 70M;
+    public decimal Overbought { get; set; } = 60M;
 }
 
 public class PortfolioAlgoOptionsRsiSell

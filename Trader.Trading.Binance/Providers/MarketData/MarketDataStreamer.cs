@@ -66,7 +66,7 @@ internal partial class MarketDataStreamer : IMarketDataStreamer
             }
         }, new ExecutionDataflowBlockOptions
         {
-            MaxDegreeOfParallelism = klineLookup.Count * 2
+            MaxDegreeOfParallelism = klineLookup.Count * 2 + 1
         });
 
         // this worker action pushes incoming tickers to the system in the background so we dont hold up the binance stream

@@ -28,6 +28,7 @@ internal partial class EnsureSingleOrderExecutor : IAlgoCommandExecutor<EnsureSi
 
     public async ValueTask ExecuteAsync(IAlgoContext context, EnsureSingleOrderCommand command, CancellationToken cancellationToken = default)
     {
+        // todo: use context here
         // get current open orders
         var orders = await _orders
             .GetOrdersByFilterAsync(command.Symbol.Name, command.Side, true, null, cancellationToken)
@@ -37,7 +38,7 @@ internal partial class EnsureSingleOrderExecutor : IAlgoCommandExecutor<EnsureSi
         var count = orders.Count;
         foreach (var order in orders)
         {
-            if (order.Type != command.Type || order.OriginalQuantity != command.Quantity || order.Price != command.Price)
+            if (order.Type != command.Type || order.OriginalQuantity != command.Quantity || order.Price != command.Price || order.StopPrice != command.StopPrice.GetValueOrDefault(0))
             {
                 await new CancelOrderCommand(command.Symbol, order.OrderId)
                     .ExecuteAsync(context, cancellationToken)
@@ -63,7 +64,7 @@ internal partial class EnsureSingleOrderExecutor : IAlgoCommandExecutor<EnsureSi
         // get the quantity for the affected asset
         var sourceQuantity = command.Side switch
         {
-            OrderSide.Buy => command.Quantity * command.Price,
+            OrderSide.Buy => command.Quantity * (command.Price ?? command.StopPrice ?? throw new InvalidOperationException()),
             OrderSide.Sell => command.Quantity,
             _ => throw new InvalidOperationException()
         };
@@ -109,15 +110,15 @@ internal partial class EnsureSingleOrderExecutor : IAlgoCommandExecutor<EnsureSi
             }
             else
             {
-                LogMustPlaceOrderButRedemptionIsDisabled(TypeName, command.Symbol.Name, command.Type, command.Side, command.Quantity, command.Symbol.BaseAsset, command.Price, command.Symbol.QuoteAsset, balance.Free, sourceAsset);
+                LogMustPlaceOrderButRedemptionIsDisabled(TypeName, command.Symbol.Name, command.Type, command.Side, command.Quantity, command.Symbol.BaseAsset, command.Price ?? command.StopPrice, command.Symbol.QuoteAsset, sourceQuantity, balance.Free, sourceAsset);
 
                 return;
             }
         }
 
         // if we got here then we can place the order
-        var tag = _tags.Generate(command.Symbol.Name, command.Price);
-        await new CreateOrderCommand(command.Symbol, command.Type, command.Side, command.TimeInForce, command.Quantity, command.Price, tag)
+        var tag = _tags.Generate(command.Symbol.Name, command.Price ?? command.StopPrice ?? 0M);
+        await new CreateOrderCommand(command.Symbol, command.Type, command.Side, command.TimeInForce, command.Quantity, command.Price, command.StopPrice, tag)
             .ExecuteAsync(context, cancellationToken)
             .ConfigureAwait(false);
     }
@@ -136,8 +137,8 @@ internal partial class EnsureSingleOrderExecutor : IAlgoCommandExecutor<EnsureSi
     [LoggerMessage(3, LogLevel.Warning, "{Type} {Name} could not redeem the necessary {Necessary:F8} {Asset} from a swap pool")]
     private partial void LogCouldNotRedeemFromSwapPool(string type, string name, decimal necessary, string asset);
 
-    [LoggerMessage(4, LogLevel.Warning, "{Type} {Name} must place {OrderType} {OrderSide} of {Quantity:F8} {Asset} for {Price:F8} {Quote} but there is only {Free:F8} {SourceAsset} available and savings redemption is disabled")]
-    private partial void LogMustPlaceOrderButRedemptionIsDisabled(string type, string name, OrderType orderType, OrderSide orderSide, decimal quantity, string asset, decimal price, string quote, decimal free, string sourceAsset);
+    [LoggerMessage(4, LogLevel.Warning, "{Type} {Name} must place {OrderType} {OrderSide} of {Quantity:F8} {Asset} at {Price:F8} {Quote} for a total of {Notional:F8} {Quote} but there is only {Free:F8} {SourceAsset} available and savings redemption is disabled")]
+    private partial void LogMustPlaceOrderButRedemptionIsDisabled(string type, string name, OrderType orderType, OrderSide orderSide, decimal quantity, string asset, decimal? price, string quote, decimal notional, decimal free, string sourceAsset);
 
     #endregion Logging
 }

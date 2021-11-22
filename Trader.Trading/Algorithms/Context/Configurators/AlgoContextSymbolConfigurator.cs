@@ -42,6 +42,12 @@ internal class AlgoContextSymbolConfigurator : IAlgoContextConfigurator<AlgoCont
             context.Data.GetOrAdd(context.Symbol.Name).Symbol = context.Symbol;
         }
 
+        // reset the valid flag
+        foreach (var item in context.Data)
+        {
+            item.IsValid = true;
+        }
+
         return ValueTask.CompletedTask;
     }
 }

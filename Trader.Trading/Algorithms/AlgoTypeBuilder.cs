@@ -31,6 +31,7 @@ internal class AlgoTypeBuilder<TAlgo> : IAlgoTypeBuilder<TAlgo>
     public IAlgoTypeBuilder<TAlgo, TOptions> AddOptionsType<TOptions>()
         where TOptions : class
     {
+        Services.AddOptions<TOptions>().ValidateDataAnnotations();
         Services.ConfigureOptions<AlgoUserOptionsConfigurator<TOptions>>();
 
         return new AlgoTypeBuilder<TAlgo, TOptions>(TypeName, Services);

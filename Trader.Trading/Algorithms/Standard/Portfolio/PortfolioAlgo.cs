@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Outcompute.Trader.Core.Time;
+using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands;
 using System.Buffers;
@@ -38,7 +39,6 @@ public partial class PortfolioAlgo : Algo
 
         if (TryElectStopLoss(out var losers))
         {
-            // todo: convert this to a market sell once we have an iterator that can get stats on sellable position lots
             return Sequence(losers.Select(x => AveragingSell(x.Symbol, _options.MinStopLossProfitRate, _options.UseSavings, _options.UseSwapPools)));
         }
 
@@ -61,10 +61,24 @@ public partial class PortfolioAlgo : Algo
 
         foreach (var item in Context.Data)
         {
+            // skip symbol with invalid data
+            if (!item.IsValid)
+            {
+                LogSkippedInvalidatedSymbol(TypeName, Context.Name, item.Symbol.Name);
+                continue;
+            }
+
             // skip symbols to never sell
             if (_options.NeverSellSymbols.Contains(item.Symbol.Name))
             {
                 LogSkippedSymbolOnNeverSellSet(TypeName, item.Symbol.Name);
+                continue;
+            }
+
+            // skip symbol with open market orders
+            if (item.Orders.Open.Any(x => x.Type == OrderType.Market))
+            {
+                LogSkippedSymbolWithOpenMarketOrders(TypeName, Context.Name, item.Symbol.Name, item.Orders.Open.Where(x => x.Type == OrderType.Market));
                 continue;
             }
 
@@ -128,10 +142,24 @@ public partial class PortfolioAlgo : Algo
 
         foreach (var item in Context.Data)
         {
+            // skip symbol with invalid data
+            if (!item.IsValid)
+            {
+                LogSkippedInvalidatedSymbol(TypeName, Context.Name, item.Symbol.Name);
+                continue;
+            }
+
             // skip symbols to never sell
             if (_options.NeverSellSymbols.Contains(item.Symbol.Name))
             {
                 LogSkippedSymbolOnNeverSellSet(TypeName, item.Symbol.Name);
+                continue;
+            }
+
+            // skip symbol with open market orders
+            if (item.Orders.Open.Any(x => x.Type == OrderType.Market))
+            {
+                LogSkippedSymbolWithOpenMarketOrders(TypeName, Context.Name, item.Symbol.Name, item.Orders.Open.Where(x => x.Type == OrderType.Market));
                 continue;
             }
 
@@ -180,6 +208,20 @@ public partial class PortfolioAlgo : Algo
 
         foreach (var item in Context.Data)
         {
+            // skip symbol with invalid data
+            if (!item.IsValid)
+            {
+                LogSkippedInvalidatedSymbol(TypeName, Context.Name, item.Symbol.Name);
+                continue;
+            }
+
+            // skip symbol with open market orders
+            if (item.Orders.Open.Any(x => x.Type == OrderType.Market))
+            {
+                LogSkippedSymbolWithOpenMarketOrders(TypeName, Context.Name, item.Symbol.Name, item.Orders.Open.Where(x => x.Type == OrderType.Market));
+                continue;
+            }
+
             // evaluate pnl
             var stats = item.AutoPosition.Positions.GetStats(item.Ticker.ClosePrice);
 
@@ -244,6 +286,20 @@ public partial class PortfolioAlgo : Algo
         // evaluate symbols with at least one position
         foreach (var item in Context.Data)
         {
+            // skip symbol with invalid data
+            if (!item.IsValid)
+            {
+                LogSkippedInvalidatedSymbol(TypeName, Context.Name, item.Symbol.Name);
+                continue;
+            }
+
+            // skip symbol with open market orders
+            if (item.Orders.Open.Any(x => x.Type == OrderType.Market))
+            {
+                LogSkippedSymbolWithOpenMarketOrders(TypeName, Context.Name, item.Symbol.Name, item.Orders.Open.Where(x => x.Type == OrderType.Market));
+                continue;
+            }
+
             // evaluate pnl
             var stats = item.AutoPosition.Positions.GetStats(item.Ticker.ClosePrice);
 
@@ -426,6 +482,12 @@ public partial class PortfolioAlgo : Algo
 
     [LoggerMessage(25, LogLevel.Information, "{Type} {Name} reports selling is disabled")]
     private partial void LogSellingDisabled(string type, string name);
+
+    [LoggerMessage(26, LogLevel.Error, "{Type} {Name} skipped invalidated symbol {Symbol}")]
+    private partial void LogSkippedInvalidatedSymbol(string type, string name, string symbol);
+
+    [LoggerMessage(27, LogLevel.Warning, "{Type} {Name} skipped symbol {Symbol} with open market orders {Orders}")]
+    private partial void LogSkippedSymbolWithOpenMarketOrders(string type, string name, string symbol, IEnumerable<OrderQueryResult> orders);
 
     #endregion Logging
 }

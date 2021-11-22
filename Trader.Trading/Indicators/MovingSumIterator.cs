@@ -1,4 +1,5 @@
 ﻿using Outcompute.Trader.Core.Pooling;
+using Outcompute.Trader.Trading.Iterators;
 
 namespace Outcompute.Trader.Trading.Indicators;
 

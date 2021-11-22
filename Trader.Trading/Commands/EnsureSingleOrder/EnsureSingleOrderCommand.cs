@@ -6,7 +6,7 @@ namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
 
 public class EnsureSingleOrderCommand : IAlgoCommand
 {
-    public EnsureSingleOrderCommand(Symbol symbol, OrderSide side, OrderType type, TimeInForce timeInForce, decimal quantity, decimal price, bool redeemSavings, bool redeemSwapPool)
+    public EnsureSingleOrderCommand(Symbol symbol, OrderSide side, OrderType type, TimeInForce? timeInForce, decimal quantity, decimal? price, decimal? stopPrice, bool redeemSavings = false, bool redeemSwapPool = false)
     {
         Symbol = symbol ?? throw new ArgumentNullException(nameof(symbol));
         Side = side;
@@ -14,18 +14,21 @@ public class EnsureSingleOrderCommand : IAlgoCommand
         TimeInForce = timeInForce;
         Quantity = quantity;
         Price = price;
+        StopPrice = stopPrice;
         RedeemSavings = redeemSavings;
         RedeemSwapPool = redeemSwapPool;
 
         if (side != OrderSide.Buy && side != OrderSide.Sell) throw new ArgumentOutOfRangeException(nameof(side));
+        if (price is null && stopPrice is null) throw new ArgumentException($"Provide one of '{nameof(price)}' or {nameof(stopPrice)}");
     }
 
     public Symbol Symbol { get; }
     public OrderSide Side { get; }
     public OrderType Type { get; }
-    public TimeInForce TimeInForce { get; }
+    public TimeInForce? TimeInForce { get; }
     public decimal Quantity { get; }
-    public decimal Price { get; }
+    public decimal? Price { get; }
+    public decimal? StopPrice { get; }
     public bool RedeemSavings { get; }
     public bool RedeemSwapPool { get; }
 

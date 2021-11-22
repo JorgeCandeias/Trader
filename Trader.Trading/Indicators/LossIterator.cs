@@ -1,4 +1,6 @@
-﻿namespace Outcompute.Trader.Trading.Indicators;
+﻿using Outcompute.Trader.Trading.Iterators;
+
+namespace Outcompute.Trader.Trading.Indicators;
 
 /// <summary>
 /// An iterator that calculates the loss between the current value and the previous value over the specified source.

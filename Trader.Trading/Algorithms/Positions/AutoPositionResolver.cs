@@ -96,8 +96,7 @@ internal partial class AutoPositionResolver : IAutoPositionResolver
             .Select(x => new Position(
                 symbol,
                 x.Key.OrderId,
-                // market orders will have the price set to zero so we must derive the average from the executed trades
-                x.Key.Price is 0 ? x.Sum(y => y.Trade.Price * y.Trade.Quantity) / x.Sum(y => y.Trade.Quantity) : x.Key.Price,
+                x.Sum(y => y.Trade.Price * y.Trade.Quantity) / x.Sum(y => y.Trade.Quantity),
                 x.Sum(y => y.RemainingExecutedQuantity),
                 x.Key.Time))
             .OrderBy(x => x.Symbol)

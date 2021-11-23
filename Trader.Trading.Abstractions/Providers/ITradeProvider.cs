@@ -5,6 +5,8 @@ namespace Outcompute.Trader.Trading.Providers;
 
 public interface ITradeProvider
 {
+    //ValueTask<AccountTrade> GetLastSyncedTradeAsync(CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Publishes the specified trade.
     /// </summary>

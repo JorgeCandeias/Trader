@@ -41,7 +41,7 @@ internal class TradeProviderGrain : Grain, ITradeProviderGrain
     private readonly Guid _version = Guid.NewGuid();
 
     /// <summary>
-    /// Helps tag all incoming trade so we push minimal diffs to replicas.
+    /// Helps tag all incoming trades so we push minimal diffs to replicas.
     /// </summary>
     private int _serial;
 

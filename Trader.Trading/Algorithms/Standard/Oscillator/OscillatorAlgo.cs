@@ -179,20 +179,25 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Oscillator
                 return null;
             }
 
-            // calculate the target quantity for the target price
+            // calculate the notional to use for buying
             var notional = _options.Notional.AdjustTotalUpToMinNotional(item.Symbol);
-            quantity = notional / lowPrice;
+
+            // top up with the fee
+            notional *= (1 + _options.FeeRate);
+
+            // top up with past realized profits
             if (_options.UseProfits)
             {
-                quantity += item.AutoPosition.ProfitEvents.Sum(x => x.Profit);
-                quantity -= item.AutoPosition.CommissionEvents.Where(x => x.Asset == item.Symbol.BaseAsset).Sum(x => x.Commission);
+                notional += item.AutoPosition.ProfitEvents.Sum(x => x.Profit);
+                notional -= item.AutoPosition.CommissionEvents.Where(x => x.Asset == item.Symbol.QuoteAsset).Sum(x => x.Commission);
             }
+
+            // calculate the quantity quantity for the notional
+            quantity = notional / lowPrice;
             quantity = quantity.AdjustQuantityUpToMinLotSizeQuantity(item.Symbol);
             quantity = quantity.AdjustQuantityUpToLotStepSize(item.Symbol);
-            quantity *= (1 + _options.FeeRate);
-            quantity = quantity.AdjustQuantityUpToLotStepSize(item.Symbol);
 
-            return EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, lowPrice, null, false, false);
+            return EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, lowPrice, null, true, true);
         }
 
         #region Logging

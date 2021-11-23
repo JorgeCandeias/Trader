@@ -39,12 +39,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Oscillator
                 // get pv stats over sellable positions from the last
                 var stats = item.AutoPosition.Positions.Reverse().EnumerateLots(item.Symbol.Filters.LotSize.StepSize).GetStats(item.Ticker.ClosePrice);
 
-                // calculate the current rsi
-                var rsi = item.Klines.LastRsi(x => x.ClosePrice, _options.Rsi.Periods);
-
                 commands.Add(
-                    TryTakeProfit(item, stats, rsi) ??
-                    TryStopLoss(item, stats) ??
+                    TrySell(item, stats) ??
                     TryEntryBuy(item, stats) ??
                     Noop());
             }
@@ -52,7 +48,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Oscillator
             return Sequence(commands);
         }
 
-        private IAlgoCommand? TryTakeProfit(SymbolData item, PositionStats stats, decimal rsi)
+        private IAlgoCommand? TrySell(SymbolData item, PositionStats stats)
         {
             // skip unsellable symbol
             var quantity = stats.TotalQuantity;
@@ -61,75 +57,17 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Oscillator
                 return null;
             }
 
-            // skip if the ticker is downside
-            if (item.Ticker.ClosePrice <= stats.AvgPrice)
-            {
-                return null;
-            }
+            // calculate the ideal sell price
+            var sellPrice = item.Klines.PriceForRsi(x => x.ClosePrice, _options.Rsi.Periods, _options.Rsi.Overbought, _options.Rsi.Precision);
 
-            // calculate take profit price
-            var takeProfitPrice = stats.AvgPrice * (1 + _options.TakeProfitRate);
-            takeProfitPrice = takeProfitPrice.AdjustPriceUpToTickSize(item.Symbol);
-            var above = takeProfitPrice + item.Symbol.Filters.Price.TickSize;
+            // calculate the elastic stop loss rate based on the price amplitude
+            var stopLossRate = MathD.LerpBetween(stats.AvgPrice, sellPrice, item.Ticker.ClosePrice, _options.StopLossRate.Max, _options.StopLossRate.Min);
 
-            // skip unsellable symbol
-            var sellable = quantity * above;
-            if (sellable < item.Symbol.Filters.MinNotional.MinNotional)
-            {
-                return null;
-            }
+            // calculate the reference price for the stop loss price
+            var highPrice = Math.Max(stats.AvgPrice, item.Ticker.ClosePrice);
 
-            // if the current rsi is already overbought and we can break even then raise a market sell order
-            if (rsi >= _options.Rsi.Overbought && stats.RelativePnL > 0)
-            {
-                // if there is an open market order then skip to let the system update itself
-                if (item.Orders.Open.Any(x => x.Type == OrderType.Market))
-                {
-                    return null;
-                }
-
-                // issue the market order
-                return Sequence(
-                    CancelOpenOrders(item.Symbol, OrderSide.Buy),
-                    MarketSell(item.Symbol, quantity, true, true));
-            }
-
-            // skip if not yet halfway there (prevents order twitching when the ticker is near the buy price)
-            var halfway = (stats.AvgPrice + takeProfitPrice) / 2;
-            if (item.Ticker.ClosePrice < halfway)
-            {
-                return null;
-            }
-
-            // skip if there is already a limit order active for it (the take profit triggered)
-            if (item.Orders.Open.Any(x => x.Type == OrderType.Limit && x.Side == OrderSide.Sell && x.OriginalQuantity == quantity && x.Price == above))
-            {
-                return null;
-            }
-
-            // set the order for it
-            return Sequence(
-                CancelOpenOrders(item.Symbol, OrderSide.Buy),
-                EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.TakeProfitLimit, TimeInForce.GoodTillCanceled, quantity, above, takeProfitPrice, true, true));
-        }
-
-        private IAlgoCommand? TryStopLoss(SymbolData item, PositionStats stats)
-        {
-            // skip unsellable symbol
-            var quantity = stats.TotalQuantity;
-            if (quantity < item.Symbol.Filters.LotSize.MinQuantity)
-            {
-                return null;
-            }
-
-            // skip if the ticker is upside
-            if (item.Ticker.ClosePrice >= stats.AvgPrice)
-            {
-                return null;
-            }
-
-            // calculate stop loss price
-            var stopLossPrice = stats.AvgPrice * (1 - _options.StopLossRate);
+            // calculate the stop loss price
+            var stopLossPrice = highPrice * (1 - stopLossRate);
             stopLossPrice = stopLossPrice.AdjustPriceDownToTickSize(item.Symbol);
             var under = stopLossPrice - item.Symbol.Filters.Price.TickSize;
 
@@ -140,15 +78,14 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Oscillator
                 return null;
             }
 
-            // skip if there is already a limit order active for it (the stop loss triggered)
-            if (item.Orders.Open.Any(x => x.Type == OrderType.Limit && x.Side == OrderSide.Sell && x.OriginalQuantity == quantity && x.Price == under))
+            // skip if there is already a limit sell order active (the stop loss triggered)
+            if (item.Orders.Open.Any(x => x.Type == OrderType.Limit && x.Side == OrderSide.Sell))
             {
                 return null;
             }
 
-            // skip if not yet halfway there (prevents order twitching when the ticker is near the buy price)
-            var halfway = (stats.AvgPrice + stopLossPrice) / 2;
-            if (item.Ticker.ClosePrice > halfway)
+            // skip if there is already a stop loss at a higher value than what we calculate (the price went up then down since purchase)
+            if (item.Orders.Open.Any(x => x.Type == OrderType.StopLossLimit && x.Side == OrderSide.Sell && x.OriginalQuantity == quantity && x.StopPrice >= stopLossPrice))
             {
                 return null;
             }

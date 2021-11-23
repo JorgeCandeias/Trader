@@ -5,7 +5,15 @@ namespace Outcompute.Trader.Trading.Providers;
 
 public interface ITradeProvider
 {
-    //ValueTask<AccountTrade> GetLastSyncedTradeAsync(CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Sets the last synced trade id.
+    /// </summary>
+    Task SetLastSyncedTradeIdAsync(string symbol, long tradeId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the last synced trade id.
+    /// </summary>
+    ValueTask<long> GetLastSyncedTradeIdAsync(string symbol, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Publishes the specified trade.

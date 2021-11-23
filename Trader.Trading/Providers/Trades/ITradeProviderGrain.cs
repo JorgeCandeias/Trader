@@ -5,6 +5,10 @@ namespace Outcompute.Trader.Trading.Providers.Trades;
 
 internal interface ITradeProviderGrain : IGrainWithStringKey
 {
+    Task SetLastSyncedTradeIdAsync(long tradeId);
+
+    ValueTask<long> GetLastSyncedTradeIdAsync();
+
     ValueTask<ReactiveResult> GetTradesAsync();
 
     ValueTask<ReactiveResult?> TryWaitForTradesAsync(Guid version, int fromSerial);

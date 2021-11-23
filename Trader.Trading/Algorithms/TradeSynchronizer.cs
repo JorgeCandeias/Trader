@@ -25,8 +25,8 @@ internal partial class TradeSynchronizer : ITradeSynchronizer
     {
         var watch = Stopwatch.StartNew();
 
-        // start from the last trade if possible
-        var tradeId = (await _provider.TryGetLastTradeIdAsync(symbol, cancellationToken).ConfigureAwait(false) ?? 0) + 1;
+        // start from the last synced trade
+        var tradeId = await _provider.GetLastSyncedTradeIdAsync(symbol, cancellationToken);
 
         // save all trades in the background so we can keep pulling trades
         var worker = new ActionBlock<IEnumerable<AccountTrade>>(work => _provider.SetTradesAsync(symbol, work, cancellationToken));
@@ -36,10 +36,7 @@ internal partial class TradeSynchronizer : ITradeSynchronizer
         while (!cancellationToken.IsCancellationRequested)
         {
             // query for the next trades
-            var trades = await _trader
-                .WithBackoff()
-                .GetAccountTradesAsync(symbol, tradeId, 1000, cancellationToken)
-                .ConfigureAwait(false);
+            var trades = await _trader.WithBackoff().GetAccountTradesAsync(symbol, tradeId, 1000, cancellationToken);
 
             // break if we got all trades
             if (trades.Count is 0) break;
@@ -56,6 +53,9 @@ internal partial class TradeSynchronizer : ITradeSynchronizer
 
         worker.Complete();
         await worker.Completion;
+
+        // set the last synced trade id so we continue from that next time
+        await _provider.SetLastSyncedTradeIdAsync(symbol, tradeId);
 
         LogPulledTrades(TypeName, symbol, count, tradeId, watch.ElapsedMilliseconds);
     }

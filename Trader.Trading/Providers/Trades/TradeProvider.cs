@@ -16,6 +16,16 @@ internal class TradeProvider : ITradeProvider
         _repository = repository;
     }
 
+    public Task SetLastSyncedTradeIdAsync(string symbol, long tradeId, CancellationToken cancellationToken = default)
+    {
+        return _factory.GetTradeProviderGrain(symbol).SetLastSyncedTradeIdAsync(tradeId);
+    }
+
+    public ValueTask<long> GetLastSyncedTradeIdAsync(string symbol, CancellationToken cancellationToken = default)
+    {
+        return _factory.GetTradeProviderGrain(symbol).GetLastSyncedTradeIdAsync();
+    }
+
     public ValueTask<TradeCollection> GetTradesAsync(string symbol, CancellationToken cancellationToken = default)
     {
         if (symbol is null) throw new ArgumentNullException(nameof(symbol));

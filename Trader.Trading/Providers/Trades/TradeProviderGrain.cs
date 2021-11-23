@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Concurrency;
+using Orleans.Runtime;
 using OrleansDashboard;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
@@ -15,12 +16,14 @@ namespace Outcompute.Trader.Trading.Providers.Trades;
 internal class TradeProviderGrain : Grain, ITradeProviderGrain
 {
     private readonly ReactiveOptions _reactive;
+    private readonly IPersistentState<TradeProviderGrainState> _state;
     private readonly ITradingRepository _repository;
     private readonly IHostApplicationLifetime _lifetime;
 
-    public TradeProviderGrain(IOptions<ReactiveOptions> reactive, ITradingRepository repository, IHostApplicationLifetime lifetime)
+    public TradeProviderGrain(IOptions<ReactiveOptions> reactive, [PersistentState("Main")] IPersistentState<TradeProviderGrainState> state, ITradingRepository repository, IHostApplicationLifetime lifetime)
     {
         _reactive = reactive.Value;
+        _state = state;
         _repository = repository;
         _lifetime = lifetime;
     }
@@ -72,6 +75,18 @@ internal class TradeProviderGrain : Grain, ITradeProviderGrain
         await LoadAsync();
 
         await base.OnActivateAsync();
+    }
+
+    public Task SetLastSyncedTradeIdAsync(long tradeId)
+    {
+        _state.State.LastSyncedTradeId = tradeId;
+
+        return _state.WriteStateAsync();
+    }
+
+    public ValueTask<long> GetLastSyncedTradeIdAsync()
+    {
+        return ValueTask.FromResult(_state.State.LastSyncedTradeId);
     }
 
     public ValueTask<AccountTrade?> TryGetTradeAsync(long tradeId)

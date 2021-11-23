@@ -248,7 +248,9 @@ internal partial class BinanceUserDataGrain : Grain, IBinanceUserDataGrain
         {
             if (_clock.UtcNow >= _nextPingTime)
             {
-                await _trader.PingUserDataStreamAsync(_listenKey, cancellationToken);
+                await _trader
+                    .WithBackoff()
+                    .PingUserDataStreamAsync(_listenKey, cancellationToken);
 
                 BumpPingTime();
             }

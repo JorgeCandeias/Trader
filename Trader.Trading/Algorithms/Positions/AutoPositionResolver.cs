@@ -1,12 +1,11 @@
 ﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
-using Outcompute.Trader.Trading.Algorithms.Positions;
 using System.Buffers;
 using System.Collections.Immutable;
 using System.Diagnostics;
 
-namespace Outcompute.Trader.Trading.Algorithms;
+namespace Outcompute.Trader.Trading.Algorithms.Positions;
 
 /// <summary>
 /// Automatically resolves positions on a symbol by calculating lifo pnl from all trades on it.

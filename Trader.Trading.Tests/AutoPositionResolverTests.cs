@@ -2,7 +2,7 @@
 using Moq;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
-using Outcompute.Trader.Trading.Algorithms;
+using Outcompute.Trader.Trading.Algorithms.Positions;
 using Outcompute.Trader.Trading.Providers;
 using Xunit;
 

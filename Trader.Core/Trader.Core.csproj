@@ -33,6 +33,8 @@
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Toolkit.Diagnostics" Version="7.1.2" />
+		<PackageReference Include="Microsoft.Toolkit.HighPerformance" Version="7.1.2" />
 		<PackageReference Include="SonarAnalyzer.CSharp" Version="8.32.0.39516">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

@@ -10,14 +10,12 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Portfolio;
 
 public partial class PortfolioAlgo : Algo
 {
-    private readonly AlgoOptions _host;
     private readonly PortfolioAlgoOptions _options;
     private readonly ILogger _logger;
     private readonly ISystemClock _clock;
 
-    public PortfolioAlgo(IOptionsSnapshot<AlgoOptions> host, IOptionsSnapshot<PortfolioAlgoOptions> options, ILogger<PortfolioAlgo> logger, ISystemClock clock)
+    public PortfolioAlgo(IOptionsSnapshot<PortfolioAlgoOptions> options, ILogger<PortfolioAlgo> logger, ISystemClock clock)
     {
-        _host = host.Get(Context.Name);
         _options = options.Get(Context.Name);
         _logger = logger;
         _clock = clock;
@@ -42,7 +40,61 @@ public partial class PortfolioAlgo : Algo
             return Sequence(losers.Select(x => AveragingSell(x.Symbol, _options.MinStopLossProfitRate, _options.UseSavings, _options.UseSwapPools)));
         }
 
+        ReportAggregateStats();
+
         return Noop();
+    }
+
+    private void ReportAggregateStats()
+    {
+        // report on total portfolio value for each quote
+        foreach (var quote in Context.Data.GroupBy(x => x.Symbol.QuoteAsset))
+        {
+            // get stats for every symbol
+            // todo: optimize this using ToSpanOwner
+            var stats = quote.Select(x => (x.Symbol, Stats: x.AutoPosition.Positions.GetStats(x.Ticker.ClosePrice))).ToList();
+
+            var (cost, pv, rpnl) = quote
+                .Select(x =>
+                (
+                    Unrealized: x.AutoPosition.Positions.GetStats(x.Ticker.ClosePrice),
+                    Realized: x.AutoPosition.ProfitEvents.Sum(x => x.Profit)
+                ))
+                .Aggregate(
+                    (Cost: 0M, PV: 0M, RPNL: 0M),
+                    (agg, item) => (agg.Cost + item.Unrealized.TotalCost, agg.PV + item.Unrealized.PresentValue, agg.RPNL + item.Realized));
+
+            LogPortfolioInfo(
+                TypeName,
+                Context.Name,
+                quote.Key,
+                cost,
+                pv,
+                (pv - cost) / cost,
+                pv - cost,
+                rpnl,
+                pv - cost + rpnl);
+
+            // report on the absolute loser
+            var absLoser = stats
+                .OrderByDescending(x => x.Stats.AbsolutePnL)
+                .FirstOrDefault();
+
+            if (!IsNullOrEmpty(absLoser.Symbol.Name))
+            {
+                LogSymbolWithLowestAbsolutePnl(TypeName, Context.Name, absLoser.Symbol.Name, absLoser.Stats.AbsolutePnL);
+            }
+
+            // report on the relative loser
+            var relLoser = stats
+                .OrderByDescending(x => x.Stats.RelativePnL)
+                .FirstOrDefault();
+
+            if (!IsNullOrEmpty(relLoser.Symbol.Name))
+            {
+                LogSymbolWithLowestRelativePnl(TypeName, Context.Name, relLoser.Symbol.Name, relLoser.Stats.RelativePnL);
+            }
+        }
     }
 
     private bool TryElectStopLoss(out SymbolData[] elected)
@@ -488,6 +540,15 @@ public partial class PortfolioAlgo : Algo
 
     [LoggerMessage(27, LogLevel.Warning, "{Type} {Name} skipped symbol {Symbol} with open market orders {Orders}")]
     private partial void LogSkippedSymbolWithOpenMarketOrders(string type, string name, string symbol, IEnumerable<OrderQueryResult> orders);
+
+    [LoggerMessage(28, LogLevel.Information, "{Type} {Name} reports {Quote} portfolio info (U-Cost: {UCost:F8}, U-PV: {UPV:F8}: U-RPnL: {URPNL:P2}, U-AbsPnL: {UAPNL:F8}, R-AbsPnL: {RAPNL:F8}, T-AbsPnL:{TAPNL:F8})")]
+    private partial void LogPortfolioInfo(string type, string name, string quote, decimal ucost, decimal upv, decimal urpnl, decimal uapnl, decimal rapnl, decimal tapnl);
+
+    [LoggerMessage(29, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} with lowest unrealized absolute pnl {unrealizedAbsolutePnl:F8}")]
+    private partial void LogSymbolWithLowestAbsolutePnl(string type, string name, string symbol, decimal unrealizedAbsolutePnl);
+
+    [LoggerMessage(30, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} with lowest unrealized relative pnl {unrealizedRelativePnl:P2}")]
+    private partial void LogSymbolWithLowestRelativePnl(string type, string name, string symbol, decimal unrealizedRelativePnl);
 
     #endregion Logging
 }

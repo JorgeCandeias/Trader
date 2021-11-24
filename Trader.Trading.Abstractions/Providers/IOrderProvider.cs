@@ -8,22 +8,22 @@ public interface IOrderProvider
     /// <summary>
     /// Publishes the specified order.
     /// </summary>
-    ValueTask SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default);
+    Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Publishes the specified order.
     /// </summary>
-    ValueTask SetOrderAsync(OrderResult order, decimal stopPrice = 0m, decimal icebergQuantity = 0m, decimal originalQuoteOrderQuantity = 0m, CancellationToken cancellationToken = default);
+    Task SetOrderAsync(OrderResult order, decimal stopPrice = 0m, decimal icebergQuantity = 0m, decimal originalQuoteOrderQuantity = 0m, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Publishes the specified order.
     /// </summary>
-    ValueTask SetOrderAsync(CancelStandardOrderResult order, CancellationToken cancellationToken = default);
+    Task SetOrderAsync(CancelStandardOrderResult order, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Publishers the specified orders.
     /// </summary>
-    ValueTask SetOrdersAsync(string symbol, IEnumerable<OrderQueryResult> items, CancellationToken cancellationToken = default);
+    Task SetOrdersAsync(string symbol, IEnumerable<OrderQueryResult> items, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets all orders for the specified symbol sorted by <see cref="OrderQueryResult.OrderId"/>.

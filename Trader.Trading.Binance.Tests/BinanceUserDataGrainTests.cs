@@ -104,7 +104,7 @@ namespace Outcompute.Trader.Trading.Binance.Tests
             var orderProvider = Mock.Of<IOrderProvider>();
             Mock.Get(orderProvider)
                 .Setup(x => x.SetOrderAsync(order, CancellationToken.None))
-                .Returns(ValueTask.CompletedTask)
+                .Returns(Task.CompletedTask)
                 .Verifiable();
 
             Balance? balance = null;

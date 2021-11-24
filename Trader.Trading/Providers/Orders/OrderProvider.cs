@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
+using Microsoft.Toolkit.Diagnostics;
 using Orleans;
-using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
 
@@ -9,13 +9,11 @@ namespace Outcompute.Trader.Trading.Providers.Orders;
 internal class OrderProvider : IOrderProvider
 {
     private readonly IGrainFactory _factory;
-    private readonly ITradingRepository _repository;
     private readonly IMapper _mapper;
 
-    public OrderProvider(IGrainFactory factory, ITradingRepository repository, IMapper mapper)
+    public OrderProvider(IGrainFactory factory, IMapper mapper)
     {
         _factory = factory;
-        _repository = repository;
         _mapper = mapper;
     }
 
@@ -33,22 +31,11 @@ internal class OrderProvider : IOrderProvider
         return _factory.GetOrderProviderReplicaGrain(symbol).GetOrdersByFilterAsync(side, transient, significant);
     }
 
-    public ValueTask SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default)
+    public Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default)
     {
         if (order is null) throw new ArgumentNullException(nameof(order));
 
-        return SetOrderCoreAsync(order, cancellationToken);
-    }
-
-    private async ValueTask SetOrderCoreAsync(OrderQueryResult order, CancellationToken cancellationToken = default)
-    {
-        await _repository
-            .SetOrderAsync(order, cancellationToken)
-            .ConfigureAwait(false);
-
-        await _factory
-            .GetOrderProviderReplicaGrain(order.Symbol)
-            .SetOrderAsync(order);
+        return _factory.GetOrderProviderReplicaGrain(order.Symbol).SetOrderAsync(order);
     }
 
     public ValueTask<OrderQueryResult?> TryGetOrderAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
@@ -56,34 +43,25 @@ internal class OrderProvider : IOrderProvider
         return _factory.GetOrderProviderReplicaGrain(symbol).TryGetOrderAsync(orderId);
     }
 
-    public ValueTask SetOrdersAsync(string symbol, IEnumerable<OrderQueryResult> items, CancellationToken cancellationToken = default)
+    public Task SetOrdersAsync(string symbol, IEnumerable<OrderQueryResult> items, CancellationToken cancellationToken = default)
     {
-        if (symbol is null) throw new ArgumentNullException(nameof(symbol));
-        if (items is null) throw new ArgumentNullException(nameof(items));
+        Guard.IsNotNull(symbol, nameof(symbol));
+        Guard.IsNotNull(items, nameof(items));
 
         foreach (var item in items)
         {
-            if (item.Symbol != symbol) throw new ArgumentOutOfRangeException(nameof(items), $"Order has symbol '{item.Symbol}' different from partition symbol '{symbol}'");
+            if (item.Symbol != symbol)
+            {
+                throw new ArgumentOutOfRangeException(nameof(items), $"Order has symbol '{item.Symbol}' different from partition symbol '{symbol}'");
+            }
         }
 
-        return SetOrdersCoreAsync(symbol, items, cancellationToken);
+        return _factory.GetOrderProviderReplicaGrain(symbol).SetOrdersAsync(items);
     }
 
-    private async ValueTask SetOrdersCoreAsync(string symbol, IEnumerable<OrderQueryResult> items, CancellationToken cancellationToken = default)
+    public Task SetOrderAsync(OrderResult order, decimal stopPrice = 0m, decimal icebergQuantity = 0m, decimal originalQuoteOrderQuantity = 0m, CancellationToken cancellationToken = default)
     {
-        await _repository
-            .SetOrdersAsync(items, cancellationToken)
-            .ConfigureAwait(false);
-
-        await _factory
-            .GetOrderProviderReplicaGrain(symbol)
-            .SetOrdersAsync(items)
-            .ConfigureAwait(false);
-    }
-
-    public ValueTask SetOrderAsync(OrderResult order, decimal stopPrice = 0m, decimal icebergQuantity = 0m, decimal originalQuoteOrderQuantity = 0m, CancellationToken cancellationToken = default)
-    {
-        if (order is null) throw new ArgumentNullException(nameof(order));
+        Guard.IsNotNull(order, nameof(order));
 
         var mapped = _mapper.Map<OrderQueryResult>(order, options =>
         {
@@ -95,15 +73,10 @@ internal class OrderProvider : IOrderProvider
         return SetOrderAsync(mapped, cancellationToken);
     }
 
-    public ValueTask SetOrderAsync(CancelStandardOrderResult order, CancellationToken cancellationToken = default)
+    public async Task SetOrderAsync(CancelStandardOrderResult order, CancellationToken cancellationToken = default)
     {
-        if (order is null) throw new ArgumentNullException(nameof(order));
+        Guard.IsNotNull(order, nameof(order));
 
-        return SetOrderCoreAsync(order, cancellationToken);
-    }
-
-    private async ValueTask SetOrderCoreAsync(CancelStandardOrderResult order, CancellationToken cancellationToken = default)
-    {
         var original = await _factory
             .GetOrderProviderReplicaGrain(order.Symbol)
             .TryGetOrderAsync(order.OrderId)

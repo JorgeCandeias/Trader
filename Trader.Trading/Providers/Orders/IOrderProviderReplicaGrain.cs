@@ -12,7 +12,7 @@ public interface IOrderProviderReplicaGrain : IGrainWithStringKey
 
     ValueTask<OrderQueryResult?> TryGetOrderAsync(long orderId);
 
-    ValueTask SetOrderAsync(OrderQueryResult item);
+    Task SetOrderAsync(OrderQueryResult item);
 
-    ValueTask SetOrdersAsync(IEnumerable<OrderQueryResult> items);
+    Task SetOrdersAsync(IEnumerable<OrderQueryResult> items);
 }

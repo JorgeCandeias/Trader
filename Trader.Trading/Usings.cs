@@ -1,1 +1,2 @@
-﻿global using static System.String;
+﻿global using Microsoft.Toolkit.Diagnostics;
+global using static System.String;

@@ -1,7 +1,9 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Microsoft.Toolkit.Diagnostics;
 using Orleans;
 using Orleans.Concurrency;
+using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
 using System.Collections.Immutable;
@@ -15,12 +17,14 @@ internal class OrderProviderReplicaGrain : Grain, IOrderProviderReplicaGrain
     private readonly ReactiveOptions _reactive;
     private readonly IGrainFactory _factory;
     private readonly IHostApplicationLifetime _lifetime;
+    private readonly ITradingRepository _repository;
 
-    public OrderProviderReplicaGrain(IOptions<ReactiveOptions> reactive, IGrainFactory factory, IHostApplicationLifetime lifetime)
+    public OrderProviderReplicaGrain(IOptions<ReactiveOptions> reactive, IGrainFactory factory, IHostApplicationLifetime lifetime, ITradingRepository repository)
     {
         _reactive = reactive.Value;
         _factory = factory;
         _lifetime = lifetime;
+        _repository = repository;
     }
 
     /// <summary>
@@ -97,29 +101,23 @@ internal class OrderProviderReplicaGrain : Grain, IOrderProviderReplicaGrain
         return ValueTask.FromResult(new OrderCollection(result));
     }
 
-    public ValueTask SetOrderAsync(OrderQueryResult item)
+    public async Task SetOrderAsync(OrderQueryResult item)
     {
-        if (item is null) throw new ArgumentNullException(nameof(item));
+        Guard.IsNotNull(item, nameof(item));
 
-        return SetOrderCoreAsync(item);
-    }
+        await _repository.SetOrderAsync(item, _lifetime.ApplicationStopping);
 
-    private async ValueTask SetOrderCoreAsync(OrderQueryResult item)
-    {
         await _factory.GetOrderProviderGrain(_symbol).SetOrderAsync(item);
 
         Apply(item);
     }
 
-    public ValueTask SetOrdersAsync(IEnumerable<OrderQueryResult> items)
+    public async Task SetOrdersAsync(IEnumerable<OrderQueryResult> items)
     {
-        if (items is null) throw new ArgumentNullException(nameof(items));
+        Guard.IsNotNull(items, nameof(items));
 
-        return SetOrdersCoreAsync(items);
-    }
+        await _repository.SetOrdersAsync(items, _lifetime.ApplicationStopping);
 
-    private async ValueTask SetOrdersCoreAsync(IEnumerable<OrderQueryResult> items)
-    {
         await _factory.GetOrderProviderGrain(_symbol).SetOrdersAsync(items);
 
         foreach (var item in items)

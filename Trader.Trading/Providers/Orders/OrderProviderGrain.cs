@@ -139,7 +139,7 @@ internal class OrderProviderGrain : Grain, IOrderProviderGrain
     /// </summary>
     public Task SetOrderAsync(OrderQueryResult item)
     {
-        if (item is null) throw new ArgumentNullException(nameof(item));
+        Guard.IsNotNull(item, nameof(item));
 
         Apply(item);
 
@@ -148,7 +148,7 @@ internal class OrderProviderGrain : Grain, IOrderProviderGrain
 
     public Task SetOrdersAsync(IEnumerable<OrderQueryResult> items)
     {
-        if (items is null) throw new ArgumentNullException(nameof(items));
+        Guard.IsNotNull(items, nameof(items));
 
         foreach (var item in items)
         {
@@ -160,6 +160,12 @@ internal class OrderProviderGrain : Grain, IOrderProviderGrain
 
     private void Apply(OrderQueryResult item)
     {
+        // ignore updates to completed orders or more recent orders - this avoid issues with out of order updates
+        if (_orders.TryGetValue(item, out var current) && (current.Status.IsCompletedStatus() || current.UpdateTime > item.UpdateTime))
+        {
+            return;
+        }
+
         // remove old item to allow an update
         if (_orders.Remove(item) && !Unindex(item))
         {

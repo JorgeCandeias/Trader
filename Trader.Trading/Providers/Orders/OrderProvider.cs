@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using Microsoft.Toolkit.Diagnostics;
 using Orleans;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
@@ -15,6 +14,20 @@ internal class OrderProvider : IOrderProvider
     {
         _factory = factory;
         _mapper = mapper;
+    }
+
+    public Task<long> GetLastSyncedOrderId(string symbol, CancellationToken cancellationToken = default)
+    {
+        Guard.IsNotNull(symbol, nameof(symbol));
+
+        return _factory.GetOrderProviderGrain(symbol).GetLastSyncedOrderId();
+    }
+
+    public Task SetLastSyncedOrderId(string symbol, long orderId, CancellationToken cancellationToken = default)
+    {
+        Guard.IsNotNull(symbol, nameof(symbol));
+
+        return _factory.GetOrderProviderGrain(symbol).SetLastSyncedOrderId(orderId);
     }
 
     public ValueTask<OrderCollection> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default)

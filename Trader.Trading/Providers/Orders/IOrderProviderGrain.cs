@@ -5,6 +5,10 @@ namespace Outcompute.Trader.Trading.Providers.Orders;
 
 internal interface IOrderProviderGrain : IGrainWithStringKey
 {
+    Task<long> GetLastSyncedOrderId();
+
+    Task SetLastSyncedOrderId(long orderId);
+
     Task<ReactiveResult> GetOrdersAsync();
 
     Task<ReactiveResult?> TryWaitForOrdersAsync(Guid version, int fromSerial);

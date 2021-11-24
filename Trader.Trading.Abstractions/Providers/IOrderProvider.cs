@@ -6,6 +6,16 @@ namespace Outcompute.Trader.Trading.Providers;
 public interface IOrderProvider
 {
     /// <summary>
+    /// Gets the last saved synced order id for the specified symbol.
+    /// </summary>
+    Task<long> GetLastSyncedOrderId(string symbol, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Saves the specified order id as the last synced order for the specified symbol.
+    /// </summary>
+    Task SetLastSyncedOrderId(string symbol, long orderId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Publishes the specified order.
     /// </summary>
     Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default);

@@ -34,19 +34,14 @@ internal partial class OrderSynchronizer : IOrderSynchronizer
         var watch = Stopwatch.StartNew();
         var count = 0;
 
-        // attempt to start from the first known transient order
-        var orderId = await _orders.TryGetMinTransientOrderIdAsync(symbol, cancellationToken).ConfigureAwait(false);
+        // start from the order after the last one synced
+        var orderId = (await _orders.GetLastSyncedOrderId(symbol, cancellationToken)) + 1;
 
-        // otherwise attempt to start from the last known order
-        if (!orderId.HasValue)
+        // if the last known transient order is earlier then start from that instead
+        var transientOrderId = await _orders.TryGetMinTransientOrderIdAsync(symbol, cancellationToken);
+        if (transientOrderId.HasValue && transientOrderId.Value < orderId)
         {
-            orderId = (await _orders.TryGetMaxOrderIdAsync(symbol, cancellationToken).ConfigureAwait(false)) + 1;
-        }
-
-        // otherwise start from scratch
-        if (!orderId.HasValue)
-        {
-            orderId = 0;
+            orderId = transientOrderId.Value;
         }
 
         // this worker will publish incoming orders in the background
@@ -63,25 +58,31 @@ internal partial class OrderSynchronizer : IOrderSynchronizer
                 .GetAllOrdersAsync(symbol, orderId, 1000, cancellationToken)
                 .ConfigureAwait(false);
 
-            // break if we got all orders
+            // break if we got no orders
             if (orders.Count is 0) break;
 
             // push the orders to the worker for publishing
             worker.Post((symbol, orders));
 
             // keep the last order id
-            orderId = orders.Max(x => x.OrderId) + 1;
+            orderId = orders.Max(x => x.OrderId);
+
+            // save the synced order id for the next time in case the next loop fails
+            await _orders.SetLastSyncedOrderId(symbol, orderId, cancellationToken);
 
             // keep track for logging
             count += orders.Count;
+
+            // loop from the next
+            orderId++;
         }
 
         // wait for publishing to complete
         worker.Complete();
-        await worker.Completion.ConfigureAwait(false);
+        await worker.Completion;
 
         // log the activity only if necessary
-        LogPulledOrders(TypeName, symbol, count, orderId.Value, watch.ElapsedMilliseconds);
+        LogPulledOrders(TypeName, symbol, count, orderId, watch.ElapsedMilliseconds);
     }
 
     #region Logging

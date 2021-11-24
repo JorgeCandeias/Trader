@@ -77,7 +77,7 @@ public partial class PortfolioAlgo : Algo
 
             // report on the absolute loser
             var absLoser = stats
-                .OrderByDescending(x => x.Stats.AbsolutePnL)
+                .OrderBy(x => x.Stats.AbsolutePnL)
                 .FirstOrDefault();
 
             if (!IsNullOrEmpty(absLoser.Symbol.Name))
@@ -87,12 +87,32 @@ public partial class PortfolioAlgo : Algo
 
             // report on the relative loser
             var relLoser = stats
-                .OrderByDescending(x => x.Stats.RelativePnL)
+                .OrderBy(x => x.Stats.RelativePnL)
                 .FirstOrDefault();
 
             if (!IsNullOrEmpty(relLoser.Symbol.Name))
             {
                 LogSymbolWithLowestRelativePnl(TypeName, Context.Name, relLoser.Symbol.Name, relLoser.Stats.RelativePnL);
+            }
+
+            // report on the absolute winner
+            var absWinner = stats
+                .OrderByDescending(x => x.Stats.AbsolutePnL)
+                .FirstOrDefault();
+
+            if (!IsNullOrEmpty(absWinner.Symbol.Name))
+            {
+                LogSymbolWithHighestAbsolutePnl(TypeName, Context.Name, absWinner.Symbol.Name, absWinner.Stats.AbsolutePnL);
+            }
+
+            // report on the relative loser
+            var relWinner = stats
+                .OrderByDescending(x => x.Stats.RelativePnL)
+                .FirstOrDefault();
+
+            if (!IsNullOrEmpty(relWinner.Symbol.Name))
+            {
+                LogSymbolWithHighestRelativePnl(TypeName, Context.Name, relWinner.Symbol.Name, relWinner.Stats.RelativePnL);
             }
         }
     }
@@ -549,6 +569,12 @@ public partial class PortfolioAlgo : Algo
 
     [LoggerMessage(30, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} with lowest unrealized relative pnl {unrealizedRelativePnl:P2}")]
     private partial void LogSymbolWithLowestRelativePnl(string type, string name, string symbol, decimal unrealizedRelativePnl);
+
+    [LoggerMessage(29, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} with highest unrealized absolute pnl {unrealizedAbsolutePnl:F8}")]
+    private partial void LogSymbolWithHighestAbsolutePnl(string type, string name, string symbol, decimal unrealizedAbsolutePnl);
+
+    [LoggerMessage(30, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} with highest unrealized relative pnl {unrealizedRelativePnl:P2}")]
+    private partial void LogSymbolWithHighestRelativePnl(string type, string name, string symbol, decimal unrealizedRelativePnl);
 
     #endregion Logging
 }

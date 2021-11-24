@@ -15,22 +15,26 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Oscillator
         public bool UseProfits { get; set; } = false;
 
         [Required]
-        public OscillatorAlgoOptionsStopLossRate StopLossRate { get; } = new();
+        public OscillatorAlgoOptionsStopLoss StopLoss { get; } = new();
 
         [Required]
         public OscillatorAlgoOptionsRsi Rsi { get; } = new();
     }
 
-    public class OscillatorAlgoOptionsStopLossRate
+    public class OscillatorAlgoOptionsStopLoss
     {
         [Required]
         [Range(0, 1)]
-        public decimal Min { get; set; } = 0.01M;
+        public decimal MinRate { get; set; } = 0.01M;
 
         [Required]
         [Range(0, 1)]
-        [GreaterThan(nameof(Min))]
-        public decimal Max { get; set; } = 0.10M;
+        [GreaterThan(nameof(MinRate))]
+        public decimal MaxRate { get; set; } = 0.10M;
+
+        [Required]
+        [Range(0, 1)]
+        public decimal LimitRate { get; set; } = 0.01M;
     }
 
     public class OscillatorAlgoOptionsRsi

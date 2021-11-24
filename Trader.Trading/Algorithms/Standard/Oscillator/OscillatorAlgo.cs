@@ -61,7 +61,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Oscillator
             var sellPrice = item.Klines.PriceForRsi(x => x.ClosePrice, _options.Rsi.Periods, _options.Rsi.Overbought, _options.Rsi.Precision);
 
             // calculate the elastic stop loss rate based on the price amplitude
-            var stopLossRate = MathD.LerpBetween(stats.AvgPrice, sellPrice, item.Ticker.ClosePrice, _options.StopLossRate.Max, _options.StopLossRate.Min);
+            var stopLossRate = MathD.LerpBetween(stats.AvgPrice, sellPrice, item.Ticker.ClosePrice, _options.StopLoss.MaxRate, _options.StopLoss.MinRate);
 
             // calculate the reference price for the stop loss price
             var highPrice = Math.Max(stats.AvgPrice, item.Ticker.ClosePrice);
@@ -69,7 +69,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Oscillator
             // calculate the stop loss price
             var stopLossPrice = highPrice * (1 - stopLossRate);
             stopLossPrice = stopLossPrice.AdjustPriceDownToTickSize(item.Symbol);
-            var under = stopLossPrice - item.Symbol.Filters.Price.TickSize;
+
+            // calculate the stop limit
+            var under = stopLossPrice * (1 - _options.StopLoss.LimitRate);
 
             // skip unsellable symbol
             var sellable = quantity * under;

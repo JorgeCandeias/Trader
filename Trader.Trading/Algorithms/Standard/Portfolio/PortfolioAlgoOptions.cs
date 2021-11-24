@@ -7,8 +7,8 @@ public class PortfolioAlgoOptions
     [Required, Range(0, 1)]
     public decimal BalanceFractionPerBuy { get; set; } = 0.001M;
 
-    [Required, Range(0, double.MaxValue)]
-    public decimal MinChangeFromLastPositionPriceRequiredForTopUpBuy { get; set; } = 1.05M;
+    [Required, Range(0, 1)]
+    public decimal MinChangeFromLastPositionPriceRequiredForTopUpBuy { get; set; } = 0.01M;
 
     [Required, Range(0, 1)]
     public decimal BuyQuoteBalanceFraction { get; set; } = 0.001M;
@@ -98,6 +98,12 @@ public class PortfolioAlgoOptionsRsiBuy
     /// </summary>
     [Required]
     public decimal Overbought { get; set; } = 60M;
+
+    /// <summary>
+    /// Precision for RSI price prediction logic.
+    /// </summary>
+    [Required]
+    public decimal Precision { get; set; } = 0.01M;
 }
 
 public class PortfolioAlgoOptionsRsiSell
@@ -109,8 +115,8 @@ public class PortfolioAlgoOptionsRsiSell
     public int Periods { get; set; } = 12;
 
     /// <summary>
-    /// RSI threshold above which to perform a sell.
+    /// RSI threshold above which to attempt a sell.
     /// </summary>
     [Required]
-    public decimal Overbought { get; set; } = 95M;
+    public decimal Overbought { get; set; } = 70M;
 }

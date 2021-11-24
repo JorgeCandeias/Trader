@@ -51,6 +51,12 @@ internal partial class KlineSynchronizer : IKlineSynchronizer
             // define the required window
             var start = end.Subtract(item.Interval, item.Periods).AdjustToNext(item.Interval);
 
+            var synced = await _klines.GetLastSyncedKlineOpenTimeAsync(item.Symbol, item.Interval);
+            if (synced > start)
+            {
+                start = synced.AdjustToPrevious(item.Interval);
+            }
+
             // start syncing from the first missing kline
             var current = start;
             var total = 0;
@@ -81,8 +87,12 @@ internal partial class KlineSynchronizer : IKlineSynchronizer
                 // using 10 as leeway as binance occasionaly sends complete pages without filling them by one or two items
                 if (klines.Count < 990) break;
 
+                // save the last open time
+                var last = klines.Max(x => x.OpenTime);
+                await _klines.SetLastSyncedKlineOpenTimeAsync(item.Symbol, item.Interval, last, cancellationToken);
+
                 // prepare the next page
-                current = klines.Max(x => x.OpenTime).AddMilliseconds(1);
+                current = last.AddMilliseconds(1);
             }
         }
 

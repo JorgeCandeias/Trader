@@ -25,10 +25,31 @@ public partial class PortfolioAlgo : Algo
 
     protected override IAlgoCommand OnExecute()
     {
-        if (TryElectTopUpBuy(out var elected) || TryElectEntryBuy(out elected))
+        var now = _clock.UtcNow;
+
+        var commands = new List<IAlgoCommand>();
+
+        foreach (var item in Context.Data)
         {
-            return CreateBuy(elected);
+            // skip symbol with invalid data
+            if (!item.IsValid)
+            {
+                LogSkippedInvalidatedSymbol(TypeName, Context.Name, item.Symbol.Name);
+                continue;
+            }
+
+            if (SignalTopUpBuy(item, now))
+            {
+                commands.Add(CreateTopUpBuy(item));
+            }
+
+            if (SignalEntryBuy(item, now))
+            {
+                commands.Add(CreateEntryBuy(item));
+            }
         }
+
+        return Sequence(commands);
 
         if (TryElectPumpSell(out var pumped))
         {
@@ -51,7 +72,6 @@ public partial class PortfolioAlgo : Algo
         foreach (var quote in Context.Data.GroupBy(x => x.Symbol.QuoteAsset))
         {
             // get stats for every symbol
-            // todo: optimize this using ToSpanOwner
             var stats = quote.Select(x => (x.Symbol, Stats: x.AutoPosition.Positions.GetStats(x.Ticker.ClosePrice))).ToList();
 
             var (cost, pv, rpnl) = quote
@@ -270,179 +290,145 @@ public partial class PortfolioAlgo : Algo
         return count > 0;
     }
 
-    private bool TryElectEntryBuy(out SymbolData elected)
+    private bool SignalEntryBuy(SymbolData item, DateTime now)
     {
         LogEvaluatingSymbolsForEntryBuy(TypeName);
 
-        elected = null!;
-        var lastRsi = decimal.MaxValue;
-        var now = _clock.UtcNow;
+        // evaluate pnl
+        var stats = item.AutoPosition.Positions.GetStats(item.Ticker.ClosePrice);
 
-        foreach (var item in Context.Data)
+        // only look at symbols under the min lot size or min notional
+        if (!(stats.TotalQuantity < item.Symbol.Filters.LotSize.MinQuantity || stats.PresentValue < item.Symbol.Filters.MinNotional.MinNotional))
         {
-            // skip symbol with invalid data
-            if (!item.IsValid)
-            {
-                LogSkippedInvalidatedSymbol(TypeName, Context.Name, item.Symbol.Name);
-                continue;
-            }
-
-            // skip symbol with open market orders
-            if (item.Orders.Open.Any(x => x.Type == OrderType.Market))
-            {
-                LogSkippedSymbolWithOpenMarketOrders(TypeName, Context.Name, item.Symbol.Name, item.Orders.Open.Where(x => x.Type == OrderType.Market));
-                continue;
-            }
-
-            // evaluate pnl
-            var stats = item.AutoPosition.Positions.GetStats(item.Ticker.ClosePrice);
-
-            // only look at symbols under the min lot size or min notional
-            if (!(stats.TotalQuantity < item.Symbol.Filters.LotSize.MinQuantity || stats.PresentValue < item.Symbol.Filters.MinNotional.MinNotional))
-            {
-                LogSkippedSymbolWithQuantityAndNotionalAboveMin(TypeName, item.Symbol.Name, stats.TotalQuantity, item.Symbol.BaseAsset, item.Symbol.Filters.LotSize.MinQuantity, stats.TotalCost, item.Symbol.Filters.MinNotional.MinNotional, item.Symbol.QuoteAsset);
-                continue;
-            }
-
-            // skip symbols on cooldown
-            if (item.AutoPosition.Positions.Count > 0)
-            {
-                var cooldown = item.AutoPosition.Positions.Last.Time.Add(_options.Cooldown);
-                if (cooldown > now)
-                {
-                    LogSkippedSymbolOnCooldown(TypeName, item.Symbol.Name, cooldown);
-                    continue;
-                }
-            }
-
-            // evaluate the rsi for the symbol
-            var rsi = item.Klines.LastRsi(x => x.ClosePrice, _options.Rsi.Buy.Periods);
-
-            // skip symbol with rsi above oversold
-            if (rsi > _options.Rsi.Buy.Oversold)
-            {
-                LogSkippedSymbolWithRsiAboveOversold(TypeName, item.Symbol.Name, _options.Rsi.Buy.Periods, rsi, _options.Rsi.Buy.Oversold);
-                continue;
-            }
-
-            // skip symbol with rsi above current candidate
-            if (elected is not null && rsi > lastRsi)
-            {
-                LogSkippedSymbolWithRsiAboveCandidate(TypeName, item.Symbol.Name, _options.Rsi.Buy.Periods, rsi, lastRsi, elected.Symbol.Name);
-                continue;
-            }
-
-            // if we got here then we have a new candidate
-            elected = item;
-            lastRsi = rsi;
-            LogSelectedNewCandidateForEntryBuy(TypeName, item.Symbol.Name, _options.Rsi.Buy.Periods, rsi);
-        }
-
-        if (elected is null)
-        {
+            LogSkippedSymbolWithQuantityAndNotionalAboveMin(TypeName, item.Symbol.Name, stats.TotalQuantity, item.Symbol.BaseAsset, item.Symbol.Filters.LotSize.MinQuantity, stats.TotalCost, item.Symbol.Filters.MinNotional.MinNotional, item.Symbol.QuoteAsset);
             return false;
         }
 
-        LogElectedSymbolForEntryBuy(TypeName, elected.Name, elected.Ticker.ClosePrice, elected.Symbol.QuoteAsset, lastRsi);
-        return true;
-    }
-
-    private bool TryElectTopUpBuy(out SymbolData elected)
-    {
-        LogEvaluatingSymbolsForTopUpBuy(TypeName);
-
-        elected = null!;
-        var highRelValue = decimal.MinValue;
-        var now = _clock.UtcNow;
-
-        // evaluate symbols with at least one position
-        foreach (var item in Context.Data)
+        // skip symbols on cooldown
+        if (item.AutoPosition.Positions.Count > 0)
         {
-            // skip symbol with invalid data
-            if (!item.IsValid)
-            {
-                LogSkippedInvalidatedSymbol(TypeName, Context.Name, item.Symbol.Name);
-                continue;
-            }
-
-            // skip symbol with open market orders
-            if (item.Orders.Open.Any(x => x.Type == OrderType.Market))
-            {
-                LogSkippedSymbolWithOpenMarketOrders(TypeName, Context.Name, item.Symbol.Name, item.Orders.Open.Where(x => x.Type == OrderType.Market));
-                continue;
-            }
-
-            // evaluate pnl
-            var stats = item.AutoPosition.Positions.GetStats(item.Ticker.ClosePrice);
-
-            // skip symbols under the min lot size - leftovers are handled by the entry signal
-            if (stats.TotalQuantity < item.Symbol.Filters.LotSize.MinQuantity)
-            {
-                LogSkippedSymbolWithQuantityUnderMinLotSize(TypeName, item.Symbol.Name, stats.TotalQuantity, item.Symbol.BaseAsset, item.Symbol.Filters.LotSize.MinQuantity);
-                continue;
-            }
-
-            // skip symbols under the min notional - leftovers are handled by the entry signal
-            if (stats.PresentValue < item.Symbol.Filters.MinNotional.MinNotional)
-            {
-                LogSkippedSymbolWithNotionalUnderMinNotional(TypeName, item.Symbol.Name, stats.PresentValue, item.Symbol.Filters.MinNotional.MinNotional);
-                continue;
-            }
-
-            // skip symbols on cooldown
             var cooldown = item.AutoPosition.Positions.Last.Time.Add(_options.Cooldown);
             if (cooldown > now)
             {
                 LogSkippedSymbolOnCooldown(TypeName, item.Symbol.Name, cooldown);
-                continue;
+                return false;
             }
-
-            // skip symbols with negative relative value
-            if (stats.RelativePnL < 0)
-            {
-                LogSkippedSymbolWithNegativeRelativePnL(TypeName, item.Symbol.Name, stats.RelativePnL);
-                continue;
-            }
-
-            // skip symbols with rsi overbought
-            var rsi = item.Klines.LastRsi(x => x.ClosePrice, _options.Rsi.Buy.Periods);
-            if (rsi >= _options.Rsi.Buy.Overbought)
-            {
-                LogSkippedSymbolWithRsiAboveOverbought(TypeName, item.Symbol.Name, _options.Rsi.Buy.Periods, rsi, _options.Rsi.Buy.Overbought);
-                continue;
-            }
-
-            // skip symbols below min required for top up
-            var minPrice = item.AutoPosition.Positions.Last.Price * _options.MinChangeFromLastPositionPriceRequiredForTopUpBuy;
-            if (item.Ticker.ClosePrice < minPrice)
-            {
-                LogSkippedSymbolWithPriceNotHighEnough(TypeName, item.Symbol.Name, item.Ticker.ClosePrice, minPrice, _options.MinChangeFromLastPositionPriceRequiredForTopUpBuy, item.AutoPosition.Positions.Last.Price);
-                continue;
-            }
-
-            // skip symbols below the highest candidate yet
-            if (elected is not null && stats.RelativeValue <= highRelValue)
-            {
-                LogSkippedSymbolWithLowerRelativeValueThanCandidate(TypeName, item.Symbol.Name, stats.RelativeValue, highRelValue, elected.Symbol.Name);
-                continue;
-            }
-
-            // if we got here then we have a new candidate
-            elected = item;
-            highRelValue = stats.RelativeValue;
-            LogSelectedNewCandidateForTopUpBuy(TypeName, item.Symbol.Name, item.Ticker.ClosePrice, item.Symbol.QuoteAsset);
         }
 
-        if (elected is null)
+        // skip symbol with rsi above oversold
+        var rsi = item.Klines.LastRsi(x => x.ClosePrice, _options.Rsi.Buy.Periods);
+        if (rsi > _options.Rsi.Buy.Oversold)
         {
+            LogSkippedSymbolWithRsiAboveOversold(TypeName, item.Symbol.Name, _options.Rsi.Buy.Periods, rsi, _options.Rsi.Buy.Oversold);
             return false;
         }
 
-        LogElectedSymbolForTopUpBuy(TypeName, elected.Name, elected.Ticker.ClosePrice, elected.Symbol.QuoteAsset);
+        LogElectedSymbolForEntryBuy(TypeName, item.Name, item.Ticker.ClosePrice, item.Symbol.QuoteAsset, rsi);
         return true;
     }
 
-    private IAlgoCommand CreateBuy(SymbolData item)
+    private bool SignalTopUpBuy(SymbolData item, DateTime now)
+    {
+        LogEvaluatingSymbolsForTopUpBuy(TypeName);
+
+        // evaluate pnl
+        var stats = item.AutoPosition.Positions.GetStats(item.Ticker.ClosePrice);
+
+        // skip symbols under the min lot size - leftovers are handled elsewhere
+        if (stats.TotalQuantity < item.Symbol.Filters.LotSize.MinQuantity)
+        {
+            LogSkippedSymbolWithQuantityUnderMinLotSize(TypeName, item.Symbol.Name, stats.TotalQuantity, item.Symbol.BaseAsset, item.Symbol.Filters.LotSize.MinQuantity);
+            return false;
+        }
+
+        // skip symbols under the min notional - leftovers are handled elsewhere
+        if (stats.PresentValue < item.Symbol.Filters.MinNotional.MinNotional)
+        {
+            LogSkippedSymbolWithNotionalUnderMinNotional(TypeName, item.Symbol.Name, stats.PresentValue, item.Symbol.Filters.MinNotional.MinNotional);
+            return false;
+        }
+
+        // skip symbols on cooldown
+        var cooldown = item.AutoPosition.Positions.Last.Time.Add(_options.Cooldown);
+        if (cooldown > now)
+        {
+            LogSkippedSymbolOnCooldown(TypeName, item.Symbol.Name, cooldown);
+            return false;
+        }
+
+        // skip symbols with negative relative value - losses are handled elsewhere
+        if (stats.RelativePnL < 0)
+        {
+            LogSkippedSymbolWithNegativeRelativePnL(TypeName, item.Symbol.Name, stats.RelativePnL);
+            return false;
+        }
+
+        // skip symbols with rsi overbought
+        var rsi = item.Klines.LastRsi(x => x.ClosePrice, _options.Rsi.Buy.Periods);
+        if (rsi >= _options.Rsi.Buy.Overbought)
+        {
+            LogSkippedSymbolWithRsiAboveOverbought(TypeName, item.Symbol.Name, _options.Rsi.Buy.Periods, rsi, _options.Rsi.Buy.Overbought);
+            return false;
+        }
+
+        // skip symbols with ticker under the last price - take profit is handled elsewhere
+        if (item.Ticker.ClosePrice <= item.AutoPosition.Positions.Last.Price)
+        {
+            // todo: log
+            return false;
+        }
+
+        // skip symbols below min required for top up
+        var minPrice = item.AutoPosition.Positions.Last.Price * (1 + _options.MinChangeFromLastPositionPriceRequiredForTopUpBuy);
+        minPrice = minPrice.AdjustPriceUpToTickSize(item.Symbol);
+
+        if (item.Ticker.ClosePrice < minPrice)
+        {
+            LogSkippedSymbolWithPriceNotHighEnough(TypeName, item.Symbol.Name, item.Ticker.ClosePrice, minPrice, _options.MinChangeFromLastPositionPriceRequiredForTopUpBuy, item.AutoPosition.Positions.Last.Price);
+            return false;
+        }
+
+        // if we got here then we have a top up
+        LogElectedSymbolForTopUpBuy(TypeName, item.Name, item.Ticker.ClosePrice, item.Symbol.QuoteAsset);
+        return true;
+    }
+
+    private IAlgoCommand CreateTopUpBuy(SymbolData item)
+    {
+        // identify the target price for the top up buy
+        var price = item.AutoPosition.Positions.Last.Price * (1 + _options.MinChangeFromLastPositionPriceRequiredForTopUpBuy);
+        price = price.AdjustPriceUpToTickSize(item.Symbol);
+
+        // raise to the current ticker
+        price = Math.Max(item.Ticker.ClosePrice, price);
+
+        // identify the appropriate buy quantity for this price
+        var quantity = CalculateBuyQuantity(item, price);
+
+        // skip if there is already an open order at a higher ticker to avoid order twitching
+        if (item.Orders.Open.Any(x => x.Side == OrderSide.Buy && x.Type == OrderType.Limit && x.OriginalQuantity == quantity && x.Price >= price))
+        {
+            return Noop();
+        }
+
+        // create the limit order
+        return EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, price, null, _options.UseSavings, _options.UseSwapPools);
+    }
+
+    private IAlgoCommand CreateEntryBuy(SymbolData item)
+    {
+        // identify the entry price
+        var price = item.Klines.PriceForRsi(x => x.ClosePrice, _options.Rsi.Buy.Periods, _options.Rsi.Buy.Oversold, _options.Rsi.Buy.Precision);
+        price = price.AdjustPriceUpToTickSize(item.Symbol);
+
+        // identify the appropriate buy quantity for this price
+        var quantity = CalculateBuyQuantity(item, price);
+
+        // create the limit order
+        return EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, price, null, _options.UseSavings, _options.UseSwapPools);
+    }
+
+    private decimal CalculateBuyQuantity(SymbolData item, decimal price)
     {
         // calculate the notional to use for buying
         var notional = item.Spot.QuoteAsset.Free
@@ -451,19 +437,24 @@ public partial class PortfolioAlgo : Algo
 
         notional *= _options.BuyQuoteBalanceFraction;
 
+        // raise to a valid number
         notional = notional.AdjustTotalUpToMinNotional(item.Symbol);
         notional = notional.AdjustPriceUpToTickSize(item.Symbol);
 
         // pad the order with the fee
         notional *= (1 + _options.FeeRate);
+
+        // raise again to a valid number
         notional = notional.AdjustPriceUpToTickSize(item.Symbol);
 
-        if (_options.MaxNotional.HasValue)
-        {
-            notional = Math.Max(notional, _options.MaxNotional.Value);
-        }
+        // calculate the quantity for the limit order
+        var quantity = notional / price;
 
-        return MarketBuy(item.Symbol, null, notional, false, false, _options.UseSavings, _options.UseSwapPools);
+        // raise the quantity to a valid number
+        quantity = quantity.AdjustQuantityUpToMinLotSizeQuantity(item.Symbol);
+        quantity = quantity.AdjustQuantityUpToLotStepSize(item.Symbol);
+
+        return quantity;
     }
 
     #region Logging

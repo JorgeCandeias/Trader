@@ -13,6 +13,18 @@ internal class KlineProvider : IKlineProvider
         _factory = factory;
     }
 
+    public Task SetLastSyncedKlineOpenTimeAsync(string symbol, KlineInterval interval, DateTime time, CancellationToken cancellationToken = default)
+    {
+        Guard.IsNotNull(symbol, nameof(symbol));
+
+        return _factory.GetKlineProviderGrain(symbol, interval).SetLastSyncedKlineOpenTimeAsync(time);
+    }
+
+    public Task<DateTime> GetLastSyncedKlineOpenTimeAsync(string symbol, KlineInterval interval, CancellationToken cancellationToken = default)
+    {
+        return _factory.GetKlineProviderGrain(symbol, interval).GetLastSyncedKlineOpenTimeAsync();
+    }
+
     public ValueTask<KlineCollection> GetKlinesAsync(string symbol, KlineInterval interval, CancellationToken cancellationToken = default)
     {
         if (symbol is null) throw new ArgumentNullException(nameof(symbol));

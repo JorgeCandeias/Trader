@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Moq;
+using Orleans.Runtime;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
@@ -19,10 +20,11 @@ namespace Outcompute.Trader.Trading.Tests
             var interval = KlineInterval.Days1;
             var options = Options.Create(new KlineProviderOptions());
             var reactive = Options.Create(new ReactiveOptions());
+            var state = Mock.Of<IPersistentState<KlineProviderGrainState>>();
             var repository = Mock.Of<ITradingRepository>();
             var clock = Mock.Of<ISystemClock>();
             var lifetime = Mock.Of<IHostApplicationLifetime>();
-            var grain = new KlineProviderGrain(options, reactive, repository, clock, lifetime)
+            var grain = new KlineProviderGrain(options, reactive, state, repository, clock, lifetime)
             {
                 _symbol = symbol,
                 _interval = interval
@@ -53,10 +55,11 @@ namespace Outcompute.Trader.Trading.Tests
             var interval = KlineInterval.Days1;
             var options = Options.Create(new KlineProviderOptions());
             var reactive = Options.Create(new ReactiveOptions());
+            var state = Mock.Of<IPersistentState<KlineProviderGrainState>>();
             var repository = Mock.Of<ITradingRepository>();
             var clock = Mock.Of<ISystemClock>();
             var lifetime = Mock.Of<IHostApplicationLifetime>();
-            var grain = new KlineProviderGrain(options, reactive, repository, clock, lifetime)
+            var grain = new KlineProviderGrain(options, reactive, state, repository, clock, lifetime)
             {
                 _symbol = symbol,
                 _interval = interval

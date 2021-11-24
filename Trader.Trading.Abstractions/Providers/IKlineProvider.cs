@@ -6,6 +6,16 @@ namespace Outcompute.Trader.Trading.Providers;
 public interface IKlineProvider
 {
     /// <summary>
+    /// Sets the last synced kline open time.
+    /// </summary>
+    Task SetLastSyncedKlineOpenTimeAsync(string symbol, KlineInterval interval, DateTime time, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Returns the last synced kline open time.
+    /// </summary>
+    Task<DateTime> GetLastSyncedKlineOpenTimeAsync(string symbol, KlineInterval interval, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Returns all the cached klines.
     /// The result set is ordered by open time.
     /// </summary>

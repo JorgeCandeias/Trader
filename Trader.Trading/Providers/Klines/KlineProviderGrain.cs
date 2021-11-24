@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Concurrency;
+using Orleans.Runtime;
 using OrleansDashboard;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
@@ -16,14 +17,16 @@ internal class KlineProviderGrain : Grain, IKlineProviderGrain
 {
     private readonly KlineProviderOptions _options;
     private readonly ReactiveOptions _reactive;
+    private readonly IPersistentState<KlineProviderGrainState> _state;
     private readonly ITradingRepository _repository;
     private readonly ISystemClock _clock;
     private readonly IHostApplicationLifetime _lifetime;
 
-    public KlineProviderGrain(IOptions<KlineProviderOptions> options, IOptions<ReactiveOptions> reactive, ITradingRepository repository, ISystemClock clock, IHostApplicationLifetime lifetime)
+    public KlineProviderGrain(IOptions<KlineProviderOptions> options, IOptions<ReactiveOptions> reactive, [PersistentState("Main")] IPersistentState<KlineProviderGrainState> state, ITradingRepository repository, ISystemClock clock, IHostApplicationLifetime lifetime)
     {
         _options = options.Value;
         _reactive = reactive.Value;
+        _state = state;
         _repository = repository;
         _clock = clock;
         _lifetime = lifetime;
@@ -42,7 +45,7 @@ internal class KlineProviderGrain : Grain, IKlineProviderGrain
     /// <summary>
     /// The current version.
     /// </summary>
-    private Guid _version = Guid.NewGuid();
+    private readonly Guid _version = Guid.NewGuid();
 
     /// <summary>
     /// The current change serial number;
@@ -83,6 +86,18 @@ internal class KlineProviderGrain : Grain, IKlineProviderGrain
         RegisterTimer(_ => CleanupAsync(), null, _options.CleanupPeriod, _options.CleanupPeriod);
 
         await base.OnActivateAsync();
+    }
+
+    public Task SetLastSyncedKlineOpenTimeAsync(DateTime time)
+    {
+        _state.State.LastSyncedKlineOpenTime = time;
+
+        return _state.WriteStateAsync();
+    }
+
+    public Task<DateTime> GetLastSyncedKlineOpenTimeAsync()
+    {
+        return Task.FromResult(_state.State.LastSyncedKlineOpenTime);
     }
 
     public ValueTask<Kline?> TryGetKlineAsync(DateTime openTime)

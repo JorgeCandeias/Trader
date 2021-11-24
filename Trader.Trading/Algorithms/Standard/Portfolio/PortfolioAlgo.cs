@@ -47,14 +47,14 @@ public partial class PortfolioAlgo : Algo
             {
                 commands.Add(CreateEntryBuy(item));
             }
+
+            if (SignalSell(item))
+            {
+                commands.Add(AveragingSell(item.Symbol, _options.MinSellRate, _options.UseSavings, _options.UseSwapPools));
+            }
         }
 
         return Sequence(commands);
-
-        if (TryElectPumpSell(out var pumped))
-        {
-            return Sequence(pumped.Select(x => AveragingSell(x.Symbol, _options.MinSellRate, _options.UseSavings, _options.UseSwapPools)));
-        }
 
         if (TryElectStopLoss(out var losers))
         {
@@ -217,77 +217,58 @@ public partial class PortfolioAlgo : Algo
         return success;
     }
 
-    private bool TryElectPumpSell(out SymbolData[] elected)
+    private bool SignalSell(SymbolData item)
     {
         if (!_options.SellingEnabled)
         {
             LogSellingDisabled(TypeName, Context.Name);
 
-            elected = Array.Empty<SymbolData>();
             return false;
         }
 
         LogEvaluatingSymbolsForPumpSell(TypeName);
 
-        var buffer = ArrayPool<SymbolData>.Shared.Rent(Context.Data.Count);
-        var count = 0;
-
-        foreach (var item in Context.Data)
+        // skip symbols to never sell
+        if (_options.NeverSellSymbols.Contains(item.Symbol.Name))
         {
-            // skip symbol with invalid data
-            if (!item.IsValid)
-            {
-                LogSkippedInvalidatedSymbol(TypeName, Context.Name, item.Symbol.Name);
-                continue;
-            }
-
-            // skip symbols to never sell
-            if (_options.NeverSellSymbols.Contains(item.Symbol.Name))
-            {
-                LogSkippedSymbolOnNeverSellSet(TypeName, item.Symbol.Name);
-                continue;
-            }
-
-            // skip symbol with open market orders
-            if (item.Orders.Open.Any(x => x.Type == OrderType.Market))
-            {
-                LogSkippedSymbolWithOpenMarketOrders(TypeName, Context.Name, item.Symbol.Name, item.Orders.Open.Where(x => x.Type == OrderType.Market));
-                continue;
-            }
-
-            // calculate the stats vs the current price
-            var stats = item.AutoPosition.Positions.GetStats(item.Ticker.ClosePrice);
-
-            // skip symbols with not enough quantity to sell
-            if (stats.TotalQuantity < item.Symbol.Filters.LotSize.MinQuantity)
-            {
-                LogSkippedSymbolWithQuantityUnderMinLotSize(TypeName, item.Symbol.Name, stats.TotalQuantity, item.Symbol.BaseAsset, item.Symbol.Filters.LotSize.MinQuantity);
-                continue;
-            }
-
-            // skip symbols with not enough notional to sell
-            if (stats.PresentValue < item.Symbol.Filters.MinNotional.MinNotional)
-            {
-                LogSkippedSymbolWithNotionalUnderMinNotional(TypeName, item.Symbol.Name, stats.PresentValue, item.Symbol.Filters.MinNotional.MinNotional);
-                continue;
-            }
-
-            // skip symbols with not enough sell rsi
-            var rsi = item.Klines.LastRsi(x => x.ClosePrice, _options.Rsi.Sell.Periods);
-            if (rsi < _options.Rsi.Sell.Overbought)
-            {
-                LogSkippedSymbolWithLowSellRsi(TypeName, item.Symbol.Name, _options.Rsi.Sell.Periods, rsi, _options.Rsi.Sell.Overbought);
-                continue;
-            }
-
-            // if we got here then we have a pumped symbol
-            buffer[count++] = item;
-            LogElectedSymbolForPumpSell(TypeName, item.Symbol.Name, _options.Rsi.Sell.Periods, rsi);
+            LogSkippedSymbolOnNeverSellSet(TypeName, item.Symbol.Name);
+            return false;
         }
 
-        elected = buffer[0..count];
-        ArrayPool<SymbolData>.Shared.Return(buffer);
-        return count > 0;
+        // skip symbol with open market orders
+        if (item.Orders.Open.Any(x => x.Type == OrderType.Market))
+        {
+            LogSkippedSymbolWithOpenMarketOrders(TypeName, Context.Name, item.Symbol.Name, item.Orders.Open.Where(x => x.Type == OrderType.Market));
+            return false;
+        }
+
+        // calculate the stats of the sellable lots vs the current price
+        var stats = item.AutoPosition.Positions.Reverse().EnumerateLots(item.Symbol.Filters.LotSize.StepSize).GetStats(item.Ticker.ClosePrice);
+
+        // skip symbols with not enough quantity to sell
+        if (stats.TotalQuantity < item.Symbol.Filters.LotSize.MinQuantity)
+        {
+            LogSkippedSymbolWithQuantityUnderMinLotSize(TypeName, item.Symbol.Name, stats.TotalQuantity, item.Symbol.BaseAsset, item.Symbol.Filters.LotSize.MinQuantity);
+            return false;
+        }
+
+        // skip symbols with not enough notional to sell
+        if (stats.PresentValue < item.Symbol.Filters.MinNotional.MinNotional)
+        {
+            LogSkippedSymbolWithNotionalUnderMinNotional(TypeName, item.Symbol.Name, stats.PresentValue, item.Symbol.Filters.MinNotional.MinNotional);
+            return false;
+        }
+
+        // skip symbols with not enough sell rsi
+        var rsi = item.Klines.LastRsi(x => x.ClosePrice, _options.Rsi.Sell.Periods);
+        if (rsi < _options.Rsi.Sell.Overbought)
+        {
+            LogSkippedSymbolWithLowSellRsi(TypeName, item.Symbol.Name, _options.Rsi.Sell.Periods, rsi, _options.Rsi.Sell.Overbought);
+            return false;
+        }
+
+        LogElectedSymbolForPumpSell(TypeName, item.Symbol.Name, _options.Rsi.Sell.Periods, rsi);
+        return true;
     }
 
     private bool SignalEntryBuy(SymbolData item, DateTime now)

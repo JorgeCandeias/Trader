@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Concurrency;
+using Orleans.Runtime;
 using OrleansDashboard;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
@@ -14,12 +15,14 @@ namespace Outcompute.Trader.Trading.Providers.Orders;
 internal class OrderProviderGrain : Grain, IOrderProviderGrain
 {
     private readonly ReactiveOptions _reactive;
+    private readonly IPersistentState<OrderProviderGrainState> _state;
     private readonly ITradingRepository _repository;
     private readonly IHostApplicationLifetime _lifetime;
 
-    public OrderProviderGrain(IOptions<ReactiveOptions> reactive, ITradingRepository repository, IHostApplicationLifetime lifetime)
+    public OrderProviderGrain(IOptions<ReactiveOptions> reactive, [PersistentState("Main")] IPersistentState<OrderProviderGrainState> state, ITradingRepository repository, IHostApplicationLifetime lifetime)
     {
         _reactive = reactive.Value;
+        _state = state;
         _repository = repository;
         _lifetime = lifetime;
     }
@@ -73,6 +76,27 @@ internal class OrderProviderGrain : Grain, IOrderProviderGrain
         await base.OnActivateAsync();
     }
 
+    /// <summary>
+    /// Gets the last synced order id.
+    /// </summary>
+    public Task<long> GetLastSyncedOrderId()
+    {
+        return Task.FromResult(_state.State.LastSyncedOrderId);
+    }
+
+    /// <summary>
+    /// Saves the last synced order id for future reference.
+    /// </summary>
+    public Task SetLastSyncedOrderId(long orderId)
+    {
+        _state.State.LastSyncedOrderId = orderId;
+
+        return _state.WriteStateAsync();
+    }
+
+    /// <summary>
+    /// Gets the order with the specified <paramref name="orderId"/> if it exists.
+    /// </summary>
     public Task<OrderQueryResult?> TryGetOrderAsync(long orderId)
     {
         var order = _orderByOrderId.TryGetValue(orderId, out var current) ? current : null;

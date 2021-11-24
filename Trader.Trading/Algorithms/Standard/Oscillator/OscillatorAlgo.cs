@@ -130,7 +130,12 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Oscillator
                 notional -= item.AutoPosition.CommissionEvents.Where(x => x.Asset == item.Symbol.QuoteAsset).Sum(x => x.Commission);
             }
 
-            return EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, null, notional, lowPrice, null, true, true);
+            // calculate the exact quantity for the notional
+            var quantity = notional / lowPrice;
+            quantity = quantity.AdjustQuantityUpToMinLotSizeQuantity(item.Symbol);
+            quantity = quantity.AdjustQuantityUpToLotStepSize(item.Symbol);
+
+            return EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, lowPrice, null, true, true);
         }
 
         #region Logging

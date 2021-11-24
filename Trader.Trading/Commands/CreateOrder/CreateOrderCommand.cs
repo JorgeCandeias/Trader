@@ -21,19 +21,51 @@ internal class CreateOrderCommand : AlgoCommandBase
     internal CreateOrderCommand(Symbol symbol, OrderType type, OrderSide side, TimeInForce? timeInForce, decimal? quantity, decimal? notional, decimal? price, decimal? stopPrice, string? tag)
         : base(symbol)
     {
-        if (quantity is null && notional is null)
+        switch (type)
         {
-            ThrowHelper.ThrowArgumentException($"Specify one of '{nameof(quantity)}' or '{nameof(notional)}' arguments");
-        }
+            case OrderType.Limit:
+                if (timeInForce is null) ThrowHelper.ThrowArgumentNullException(nameof(timeInForce), $"'{nameof(OrderType)}' '{OrderType.Limit}' requires '{nameof(timeInForce)}'");
+                if (quantity is null) ThrowHelper.ThrowArgumentNullException(nameof(quantity), $"'{nameof(OrderType)}' '{OrderType.Limit}' requires '{nameof(quantity)}'");
+                if (price is null) ThrowHelper.ThrowArgumentNullException(nameof(price), $"'{nameof(OrderType)}' '{OrderType.Limit}' requires '{nameof(price)}'");
+                break;
 
-        if (quantity is not null && notional is not null)
-        {
-            ThrowHelper.ThrowArgumentException($"Specify only one of '{nameof(quantity)}' or '{nameof(notional)}' and not both");
-        }
+            case OrderType.Market:
+                if (quantity is null && notional is null) ThrowHelper.ThrowArgumentException($"'{nameof(OrderType)}' '{OrderType.Market}' requires '{nameof(quantity)}' or '{nameof(notional)}'");
+                if (quantity is not null && notional is not null) ThrowHelper.ThrowArgumentException($"'{nameof(OrderType)}' '{OrderType.Market}' allows only one of '{nameof(quantity)}' or '{nameof(notional)}'");
+                break;
 
-        if (quantity is not null && price is null)
-        {
-            ThrowHelper.ThrowArgumentNullException(nameof(price), $"Specify '{nameof(price)}' when specifying '{nameof(quantity)}'");
+            case OrderType.StopLoss:
+                if (quantity is null) ThrowHelper.ThrowArgumentNullException(nameof(quantity), $"'{nameof(OrderType)}' '{OrderType.StopLoss}' requires '{nameof(quantity)}'");
+                if (stopPrice is null) ThrowHelper.ThrowArgumentNullException(nameof(stopPrice), $"'{nameof(OrderType)}' '{OrderType.StopLoss}' requires '{nameof(stopPrice)}'");
+                break;
+
+            case OrderType.StopLossLimit:
+                if (timeInForce is null) ThrowHelper.ThrowArgumentNullException(nameof(timeInForce), $"'{nameof(OrderType)}' '{OrderType.StopLossLimit}' requires '{nameof(timeInForce)}'");
+                if (quantity is null) ThrowHelper.ThrowArgumentNullException(nameof(quantity), $"'{nameof(OrderType)}' '{OrderType.StopLossLimit}' requires '{nameof(quantity)}'");
+                if (price is null) ThrowHelper.ThrowArgumentNullException(nameof(price), $"'{nameof(OrderType)}' '{OrderType.StopLossLimit}' requires '{nameof(price)}'");
+                if (stopPrice is null) ThrowHelper.ThrowArgumentNullException(nameof(stopPrice), $"'{nameof(OrderType)}' '{OrderType.StopLossLimit}' requires '{nameof(stopPrice)}'");
+                break;
+
+            case OrderType.TakeProfit:
+                if (quantity is null) ThrowHelper.ThrowArgumentNullException(nameof(quantity), $"'{nameof(OrderType)}' '{OrderType.TakeProfit}' requires '{nameof(quantity)}'");
+                if (stopPrice is null) ThrowHelper.ThrowArgumentNullException(nameof(stopPrice), $"'{nameof(OrderType)}' '{OrderType.TakeProfit}' requires '{nameof(stopPrice)}'");
+                break;
+
+            case OrderType.TakeProfitLimit:
+                if (timeInForce is null) ThrowHelper.ThrowArgumentNullException(nameof(timeInForce), $"'{nameof(OrderType)}' '{OrderType.TakeProfitLimit}' requires '{nameof(timeInForce)}'");
+                if (quantity is null) ThrowHelper.ThrowArgumentNullException(nameof(quantity), $"'{nameof(OrderType)}' '{OrderType.TakeProfitLimit}' requires '{nameof(quantity)}'");
+                if (price is null) ThrowHelper.ThrowArgumentNullException(nameof(price), $"'{nameof(OrderType)}' '{OrderType.TakeProfitLimit}' requires '{nameof(price)}'");
+                if (stopPrice is null) ThrowHelper.ThrowArgumentNullException(nameof(stopPrice), $"'{nameof(OrderType)}' '{OrderType.TakeProfitLimit}' requires '{nameof(stopPrice)}'");
+                break;
+
+            case OrderType.LimitMaker:
+                if (quantity is null) ThrowHelper.ThrowArgumentNullException(nameof(quantity), $"'{nameof(OrderType)}' '{OrderType.LimitMaker}' requires '{nameof(quantity)}'");
+                if (price is null) ThrowHelper.ThrowArgumentNullException(nameof(price), $"'{nameof(OrderType)}' '{OrderType.LimitMaker}' requires '{nameof(price)}'");
+                break;
+
+            default:
+                ThrowHelper.ThrowArgumentOutOfRangeException(nameof(type));
+                break;
         }
 
         Type = type;

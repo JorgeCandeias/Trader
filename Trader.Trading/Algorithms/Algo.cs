@@ -79,9 +79,10 @@ public abstract class Algo : IAlgo
         return new AveragingSellCommand(symbol, minSellRate, redeemSavings, redeemSwapPool);
     }
 
-    public virtual IAlgoCommand CreateOrder(Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal quantity, decimal? price, decimal? stopPrice, string? tag)
+    /// <inheritdoc cref="CreateOrderCommand(Symbol, OrderType, OrderSide, TimeInForce?, decimal?, decimal?, decimal?, decimal?, string?)"/>
+    public virtual IAlgoCommand CreateOrder(Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal? quantity, decimal? notional, decimal? price, decimal? stopPrice, string? tag)
     {
-        return new CreateOrderCommand(symbol, type, side, timeInForce, quantity, price, stopPrice, tag);
+        return new CreateOrderCommand(symbol, type, side, timeInForce, quantity, notional, price, stopPrice, tag);
     }
 
     public virtual IAlgoCommand CancelOrder(Symbol symbol, long orderId)
@@ -89,9 +90,9 @@ public abstract class Algo : IAlgo
         return new CancelOrderCommand(symbol, orderId);
     }
 
-    public virtual IAlgoCommand EnsureSingleOrder(Symbol symbol, OrderSide side, OrderType type, TimeInForce? timeInForce, decimal quantity, decimal? price, decimal? stopPrice, bool redeemSavings = false, bool redeemSwapPool = false)
+    public virtual IAlgoCommand EnsureSingleOrder(Symbol symbol, OrderSide side, OrderType type, TimeInForce? timeInForce, decimal? quantity, decimal? notional, decimal? price, decimal? stopPrice, bool redeemSavings = false, bool redeemSwapPool = false)
     {
-        return new EnsureSingleOrderCommand(symbol, side, type, timeInForce, quantity, price, stopPrice, redeemSavings, redeemSwapPool);
+        return new EnsureSingleOrderCommand(symbol, side, type, timeInForce, quantity, notional, price, stopPrice, redeemSavings, redeemSwapPool);
     }
 
     public virtual IAlgoCommand CancelOpenOrders(Symbol symbol, OrderSide? side = null, decimal? distance = null)
@@ -124,9 +125,10 @@ public abstract class Algo : IAlgo
         return new MarketSellCommand(symbol, quantity, redeemSavings, redeemSwapPool);
     }
 
-    public virtual IAlgoCommand MarketBuy(Symbol symbol, decimal quantity, bool redeemSavings = false, bool redeemSwapPool = false)
+    /// <inheritdoc cref="MarketBuyCommand(Symbol, decimal?, decimal?, bool, bool, bool, bool)" />
+    public virtual IAlgoCommand MarketBuy(Symbol symbol, decimal? quantity, decimal? notional, bool raiseToMin, bool raiseToStepSize, bool redeemSavings = false, bool redeemSwapPool = false)
     {
-        return new MarketBuyCommand(symbol, quantity, redeemSavings, redeemSwapPool);
+        return new MarketBuyCommand(symbol, quantity, notional, raiseToMin, raiseToStepSize, redeemSavings, redeemSwapPool);
     }
 
     #endregion Command Helpers

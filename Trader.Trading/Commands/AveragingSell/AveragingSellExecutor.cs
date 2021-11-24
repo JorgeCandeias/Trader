@@ -25,7 +25,7 @@ internal partial class AveragingSellExecutor : IAlgoCommandExecutor<AveragingSel
             return ValueTask.CompletedTask;
         }
 
-        return new EnsureSingleOrderCommand(command.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, desired.Quantity, desired.Price, null, command.RedeemSavings, command.RedeemSwapPool)
+        return new EnsureSingleOrderCommand(command.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, desired.Quantity, null, desired.Price, null, command.RedeemSavings, command.RedeemSwapPool)
             .ExecuteAsync(context, cancellationToken);
     }
 

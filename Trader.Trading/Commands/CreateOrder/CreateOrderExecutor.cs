@@ -25,27 +25,26 @@ internal partial class CreateOrderExecutor : IAlgoCommandExecutor<CreateOrderCom
     {
         var watch = Stopwatch.StartNew();
 
-        LogPlacingOrder(TypeName, command.Symbol.Name, command.Type, command.Side, command.Quantity, command.Symbol.BaseAsset, command.Price, command.Symbol.QuoteAsset, command.Quantity * command.Price);
+        LogPlacingOrder(TypeName, command.Symbol.Name, command.Type, command.Side, command.Quantity, command.Notional, command.Symbol.BaseAsset, command.Price, command.Symbol.QuoteAsset, command.Notional.HasValue ? command.Notional : command.Quantity * command.Price);
 
-        // todo: add support for the missing parameters
         var created = await _trader
-            .CreateOrderAsync(command.Symbol.Name, command.Side, command.Type, command.TimeInForce, command.Quantity, null, command.Price, command.Tag, command.StopPrice, null, cancellationToken)
+            .CreateOrderAsync(command.Symbol.Name, command.Side, command.Type, command.TimeInForce, command.Quantity, command.Notional, command.Price, command.Tag, command.StopPrice, null, cancellationToken)
             .ConfigureAwait(false);
 
         await _orders
             .SetOrderAsync(created, 0m, 0m, 0m, cancellationToken)
             .ConfigureAwait(false);
 
-        LogPlacedOrder(TypeName, command.Symbol.Name, command.Type, command.Side, command.Quantity, command.Symbol.BaseAsset, command.Price, command.Symbol.QuoteAsset, command.Quantity * command.Price, watch.ElapsedMilliseconds);
+        LogPlacedOrder(TypeName, command.Symbol.Name, command.Type, command.Side, command.Quantity, command.Notional, command.Symbol.BaseAsset, command.Price, command.Symbol.QuoteAsset, command.Notional.HasValue ? command.Notional : command.Quantity * command.Price, watch.ElapsedMilliseconds);
     }
 
     #region Logging
 
-    [LoggerMessage(0, LogLevel.Information, "{Type} {Name} placing {OrderType} {OrderSide} order for {Quantity:F8} {Asset} at {Price:F8} {Quote} for a total of {Total:F8} {Quote}")]
-    private partial void LogPlacingOrder(string type, string name, OrderType orderType, OrderSide orderSide, decimal quantity, string asset, decimal? price, string quote, decimal? total);
+    [LoggerMessage(0, LogLevel.Information, "{Type} {Name} placing {OrderType} {OrderSide} order with (Quantity: {Quantity:F8} {Asset}, Notional: {Notional:F8} {Quote}, Price: {Price:F8} {Quote}, Total: {Total:F8} {Quote})")]
+    private partial void LogPlacingOrder(string type, string name, OrderType orderType, OrderSide orderSide, decimal? quantity, decimal? notional, string asset, decimal? price, string quote, decimal? total);
 
-    [LoggerMessage(1, LogLevel.Information, "{Type} {Name} placed {OrderType} {OrderSide} order for {Quantity:F8} {Asset} at {Price:F8} {Quote} for a total of {Total:F8} {Quote} in {ElapsedMs}ms")]
-    private partial void LogPlacedOrder(string type, string name, OrderType orderType, OrderSide orderSide, decimal quantity, string asset, decimal? price, string quote, decimal? total, long elapsedMs);
+    [LoggerMessage(1, LogLevel.Information, "{Type} {Name} placed {OrderType} {OrderSide} order with (Quantity: {Quantity:F8} {Asset}, Notional: {Notional:F8} {Quote}, Price: {Price:F8} {Quote}, Total: {Total:F8} {Quote}) in {ElapsedMs}ms")]
+    private partial void LogPlacedOrder(string type, string name, OrderType orderType, OrderSide orderSide, decimal? quantity, decimal? notional, string asset, decimal? price, string quote, decimal? total, long elapsedMs);
 
     #endregion Logging
 }

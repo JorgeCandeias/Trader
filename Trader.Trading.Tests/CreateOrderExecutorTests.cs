@@ -4,8 +4,6 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Providers;
-using System.Threading;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
@@ -41,7 +39,7 @@ namespace Outcompute.Trader.Trading.Tests
 
             var executor = new CreateOrderExecutor(logger, trader, orders);
             var context = AlgoContext.Empty;
-            var command = new CreateOrderCommand(symbol, type, side, timeInForce, quantity, price, null, tag);
+            var command = new CreateOrderCommand(symbol, type, side, timeInForce, quantity, null, price, null, tag);
 
             // act
             await executor.ExecuteAsync(context, command);

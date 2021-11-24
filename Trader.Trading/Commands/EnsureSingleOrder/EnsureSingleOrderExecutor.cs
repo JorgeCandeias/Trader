@@ -28,28 +28,35 @@ internal partial class EnsureSingleOrderExecutor : IAlgoCommandExecutor<EnsureSi
 
     public async ValueTask ExecuteAsync(IAlgoContext context, EnsureSingleOrderCommand command, CancellationToken cancellationToken = default)
     {
-        // todo: use context here
-        // get current open orders
-        var orders = await _orders
-            .GetOrdersByFilterAsync(command.Symbol.Name, command.Side, true, null, cancellationToken)
-            .ConfigureAwait(false);
+        // get context data
+        var data = context.Data[command.Symbol.Name];
+        var orders = data.Orders.Open.Where(x => x.Side == command.Side);
+        var ticker = data.Ticker;
 
         // cancel all non-desired orders
-        var count = orders.Count;
+        var live = 0;
         foreach (var order in orders)
         {
-            if (order.Type != command.Type || order.OriginalQuantity != command.Quantity || order.Price != command.Price || order.StopPrice != command.StopPrice.GetValueOrDefault(0))
+            if (order.Type == command.Type && order.OriginalQuantity == command.Quantity && order.OriginalQuoteOrderQuantity == command.Notional.GetValueOrDefault(0) && order.Price == command.Price && order.StopPrice == command.StopPrice.GetValueOrDefault(0))
+            {
+                live++;
+            }
+            else
             {
                 await new CancelOrderCommand(command.Symbol, order.OrderId)
                     .ExecuteAsync(context, cancellationToken)
                     .ConfigureAwait(false);
 
-                count--;
+                // stop here to allow balances to update
+                return;
             }
         }
 
-        // if any order survived then we can stop here
-        if (count > 0) return;
+        // stop here if orders survived - this means the target order is already set
+        if (live > 0)
+        {
+            return;
+        }
 
         // get the balance for the affected asset
         var sourceAsset = command.Side switch
@@ -64,9 +71,15 @@ internal partial class EnsureSingleOrderExecutor : IAlgoCommandExecutor<EnsureSi
         // get the quantity for the affected asset
         var sourceQuantity = command.Side switch
         {
-            OrderSide.Buy => command.Quantity * (command.Price ?? command.StopPrice ?? throw new InvalidOperationException()),
-            OrderSide.Sell => command.Quantity,
-            _ => throw new InvalidOperationException()
+            OrderSide.Buy =>
+                command.Notional ?? (command.Quantity.HasValue ? command.Quantity.Value * (command.Price ?? command.StopPrice ?? ticker.ClosePrice) :
+                ThrowHelper.ThrowInvalidOperationException<decimal>()),
+
+            OrderSide.Sell =>
+                command.Quantity ?? (command.Notional.HasValue ? command.Notional.Value / (command.Price ?? command.StopPrice ?? ticker.ClosePrice) :
+                ThrowHelper.ThrowInvalidOperationException<decimal>()),
+
+            _ => ThrowHelper.ThrowInvalidOperationException<decimal>()
         };
 
         // if there is not enough units to place the order then attempt to redeem from savings
@@ -110,7 +123,7 @@ internal partial class EnsureSingleOrderExecutor : IAlgoCommandExecutor<EnsureSi
             }
             else
             {
-                LogMustPlaceOrderButRedemptionIsDisabled(TypeName, command.Symbol.Name, command.Type, command.Side, command.Quantity, command.Symbol.BaseAsset, command.Price ?? command.StopPrice, command.Symbol.QuoteAsset, sourceQuantity, balance.Free, sourceAsset);
+                LogMustPlaceOrderButRedemptionIsDisabled(TypeName, command.Symbol.Name, command.Type, command.Side, command.Quantity, command.Symbol.BaseAsset, command.Price ?? command.StopPrice, command.Symbol.QuoteAsset, command.Notional, balance.Free, sourceAsset);
 
                 return;
             }
@@ -118,7 +131,7 @@ internal partial class EnsureSingleOrderExecutor : IAlgoCommandExecutor<EnsureSi
 
         // if we got here then we can place the order
         var tag = _tags.Generate(command.Symbol.Name, command.Price ?? command.StopPrice ?? 0M);
-        await new CreateOrderCommand(command.Symbol, command.Type, command.Side, command.TimeInForce, command.Quantity, command.Price, command.StopPrice, tag)
+        await new CreateOrderCommand(command.Symbol, command.Type, command.Side, command.TimeInForce, command.Quantity, command.Notional, command.Price, command.StopPrice, tag)
             .ExecuteAsync(context, cancellationToken)
             .ConfigureAwait(false);
     }
@@ -138,7 +151,7 @@ internal partial class EnsureSingleOrderExecutor : IAlgoCommandExecutor<EnsureSi
     private partial void LogCouldNotRedeemFromSwapPool(string type, string name, decimal necessary, string asset);
 
     [LoggerMessage(4, LogLevel.Warning, "{Type} {Name} must place {OrderType} {OrderSide} of {Quantity:F8} {Asset} at {Price:F8} {Quote} for a total of {Notional:F8} {Quote} but there is only {Free:F8} {SourceAsset} available and savings redemption is disabled")]
-    private partial void LogMustPlaceOrderButRedemptionIsDisabled(string type, string name, OrderType orderType, OrderSide orderSide, decimal quantity, string asset, decimal? price, string quote, decimal notional, decimal free, string sourceAsset);
+    private partial void LogMustPlaceOrderButRedemptionIsDisabled(string type, string name, OrderType orderType, OrderSide orderSide, decimal? quantity, string asset, decimal? price, string quote, decimal? notional, decimal free, string sourceAsset);
 
     #endregion Logging
 }

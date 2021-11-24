@@ -445,32 +445,25 @@ public partial class PortfolioAlgo : Algo
     private IAlgoCommand CreateBuy(SymbolData item)
     {
         // calculate the notional to use for buying
-        var total = item.Spot.QuoteAsset.Free
+        var notional = item.Spot.QuoteAsset.Free
             + (_options.UseSavings ? item.Savings.QuoteAsset.FreeAmount : 0)
             + (_options.UseSwapPools ? item.SwapPools.QuoteAsset.Total : 0);
 
-        total *= _options.BuyQuoteBalanceFraction;
+        notional *= _options.BuyQuoteBalanceFraction;
 
-        total = total.AdjustTotalUpToMinNotional(item.Symbol);
+        notional = notional.AdjustTotalUpToMinNotional(item.Symbol);
+        notional = notional.AdjustPriceUpToTickSize(item.Symbol);
+
+        // pad the order with the fee
+        notional *= (1 + _options.FeeRate);
+        notional = notional.AdjustPriceUpToTickSize(item.Symbol);
 
         if (_options.MaxNotional.HasValue)
         {
-            total = Math.Max(total, _options.MaxNotional.Value);
+            notional = Math.Max(notional, _options.MaxNotional.Value);
         }
 
-        // calculate the quantity from the notional
-        var quantity = total / item.Ticker.ClosePrice;
-
-        // adjust the quantity up to the min lot size
-        quantity = quantity.AdjustQuantityUpToMinLotSizeQuantity(item.Symbol);
-
-        // pad the order with the fee
-        quantity *= (1 + _options.FeeRate);
-
-        // adjust again to the step size
-        quantity = quantity.AdjustQuantityUpToLotStepSize(item.Symbol);
-
-        return MarketBuy(item.Symbol, quantity, _options.UseSavings, _options.UseSwapPools);
+        return MarketBuy(item.Symbol, null, notional, false, false, _options.UseSavings, _options.UseSwapPools);
     }
 
     #region Logging

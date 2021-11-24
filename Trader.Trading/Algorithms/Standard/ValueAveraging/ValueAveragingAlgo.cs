@@ -139,22 +139,20 @@ internal sealed partial class ValueAveragingAlgo : Algo
 
     private IAlgoCommand CreateBuy()
     {
-        var total = Context.Spot.QuoteAsset.Free
+        var notional = Context.Spot.QuoteAsset.Free
             + (_options.RedeemSavings ? Context.Savings.QuoteAsset.FreeAmount : 0)
             + (_options.RedeemSwapPool ? Context.SwapPoolBalance.QuoteAsset.Total : 0);
 
-        total *= _options.BuyQuoteBalanceFraction;
+        notional *= _options.BuyQuoteBalanceFraction;
 
-        total = total.AdjustTotalUpToMinNotional(Context.Symbol);
+        notional = notional.AdjustTotalUpToMinNotional(Context.Symbol);
 
         if (_options.MaxNotional.HasValue)
         {
-            total = Math.Max(total, _options.MaxNotional.Value);
+            notional = Math.Max(notional, _options.MaxNotional.Value);
         }
 
-        var quantity = total / Context.Ticker.ClosePrice;
-
-        return MarketBuy(Context.Symbol, quantity, _options.RedeemSavings, _options.RedeemSwapPool);
+        return MarketBuy(Context.Symbol, null, notional, false, false, _options.RedeemSavings, _options.RedeemSwapPool);
     }
 
     private bool IsCooled()

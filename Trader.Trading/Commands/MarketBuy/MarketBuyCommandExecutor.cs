@@ -29,6 +29,7 @@ internal partial class MarketBuyCommandExecutor : IAlgoCommandExecutor<MarketBuy
     private const OrderType MyOrderType = OrderType.Market;
     private const OrderSide MyOrderSide = OrderSide.Buy;
 
+    [SuppressMessage("Major Code Smell", "S3358:Ternary operators should not be nested", Justification = "This block will be refactored out")]
     public async ValueTask ExecuteAsync(IAlgoContext context, MarketBuyCommand command, CancellationToken cancellationToken = default)
     {
         // get context data for the command symbol
@@ -38,31 +39,46 @@ internal partial class MarketBuyCommandExecutor : IAlgoCommandExecutor<MarketBuy
         var savings = data.Savings;
         var swaps = data.SwapPools;
 
-        // adjust the quantity up to the min notional to make a valid order
+        // raise the quantity if required
         var quantity = command.Quantity;
-        var total = quantity * ticker.ClosePrice;
-        total = total.AdjustTotalUpToMinNotional(command.Symbol);
-        var adjusted = total / ticker.ClosePrice;
-        LogAdjustedQuantityToMinNotional(TypeName, command.Symbol.Name, quantity, command.Symbol.BaseAsset, ticker.ClosePrice, command.Symbol.QuoteAsset, total, adjusted, command.Symbol.Filters.MinNotional.MinNotional);
+        if (quantity.HasValue)
+        {
+            if (command.RaiseToMin)
+            {
+                quantity = quantity.Value.AdjustQuantityUpToMinLotSizeQuantity(command.Symbol);
+            }
 
-        // adjust the quantity up to the min lot size quantity
-        adjusted = quantity.AdjustQuantityUpToMinLotSizeQuantity(command.Symbol);
-        LogAdjustedQuantityToMinLotSize(TypeName, command.Symbol.BaseAsset, quantity, command.Symbol.BaseAsset, adjusted, command.Symbol.Filters.LotSize.MinQuantity);
-        quantity = adjusted;
+            if (command.RaiseToStepSize)
+            {
+                quantity = quantity.Value.AdjustQuantityUpToLotStepSize(command.Symbol);
+            }
+        }
 
-        // adjust the quantity up by the step size to make a valid order
-        adjusted = quantity.AdjustQuantityUpToLotStepSize(command.Symbol);
-        LogAdjustedQuantity(TypeName, command.Symbol.Name, quantity, command.Symbol.BaseAsset, adjusted, command.Symbol.Filters.LotSize.StepSize);
-        quantity = adjusted;
+        // raise the notional if required
+        var notional = command.Notional;
+        if (notional.HasValue)
+        {
+            if (command.RaiseToMin)
+            {
+                notional = notional.Value.AdjustTotalUpToMinNotional(command.Symbol);
+            }
+
+            if (command.RaiseToStepSize)
+            {
+                notional = notional.Value.AdjustPriceUpToTickSize(command.Symbol);
+            }
+        }
+
+        // calculate the total quote for redemption
+        var total =
+            quantity.HasValue ? quantity.Value * ticker.ClosePrice :
+            notional.HasValue ? notional.Value :
+            ThrowHelper.ThrowInvalidOperationException<decimal>();
 
         // identify the free quote balance
-
         var free = spots.QuoteAsset.Free
             + (command.RedeemSavings ? savings.QuoteAsset.FreeAmount : 0m)
             + (command.RedeemSwapPool ? swaps.QuoteAsset.Total : 0m);
-
-        // calculate the adjusted total
-        total = quantity * ticker.ClosePrice;
 
         // see if there is enough free balance overall
         if (free < total)
@@ -136,7 +152,7 @@ internal partial class MarketBuyCommandExecutor : IAlgoCommandExecutor<MarketBuy
 
         // all set
         var tag = _tags.Generate(command.Symbol.Name, 0);
-        await new CreateOrderCommand(command.Symbol, MyOrderType, MyOrderSide, null, quantity, null, null, tag)
+        await new CreateOrderCommand(command.Symbol, MyOrderType, MyOrderSide, null, quantity, notional, null, null, tag)
             .ExecuteAsync(context, cancellationToken)
             .ConfigureAwait(false);
     }

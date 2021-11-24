@@ -95,15 +95,14 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Oscillator
             // set the order for it
             return Sequence(
                 CancelOpenOrders(item.Symbol, OrderSide.Buy),
-                EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, quantity, under, stopLossPrice, false, false));
+                EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, quantity, null, under, stopLossPrice, true, true));
         }
 
         private IAlgoCommand? TryEntryBuy(SymbolData item, PositionStats stats)
         {
             // skip sellable symbol
-            var quantity = stats.TotalQuantity;
-            var sellable = quantity * item.Ticker.ClosePrice;
-            if (quantity >= item.Symbol.Filters.LotSize.MinQuantity && sellable >= item.Symbol.Filters.MinNotional.MinNotional)
+            var sellable = stats.TotalQuantity * item.Ticker.ClosePrice;
+            if (stats.TotalQuantity >= item.Symbol.Filters.LotSize.MinQuantity && sellable >= item.Symbol.Filters.MinNotional.MinNotional)
             {
                 return null;
             }
@@ -131,12 +130,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Oscillator
                 notional -= item.AutoPosition.CommissionEvents.Where(x => x.Asset == item.Symbol.QuoteAsset).Sum(x => x.Commission);
             }
 
-            // calculate the quantity quantity for the notional
-            quantity = notional / lowPrice;
-            quantity = quantity.AdjustQuantityUpToMinLotSizeQuantity(item.Symbol);
-            quantity = quantity.AdjustQuantityUpToLotStepSize(item.Symbol);
-
-            return EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, lowPrice, null, true, true);
+            return EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, null, notional, lowPrice, null, true, true);
         }
 
         #region Logging

@@ -37,7 +37,7 @@ public partial class PortfolioAlgo : Algo
                 continue;
             }
 
-            commands.Add(CreateTopUpBuy(item, now));
+            commands.Add(CreateTopUpBuy(item));
 
             if (SignalEntryBuy(item, now))
             {
@@ -132,11 +132,8 @@ public partial class PortfolioAlgo : Algo
     {
         if (!_options.StopLossEnabled)
         {
-            //LogStopLossDisabled(TypeName);
             return Noop();
         }
-
-        //LogEvaluatingSymbolsForStopLoss(TypeName);
 
         // skip symbols to never sell
         if (_options.NeverSellSymbols.Contains(item.Symbol.Name))
@@ -198,8 +195,6 @@ public partial class PortfolioAlgo : Algo
                 return MarketSell(item.Symbol, quantity, _options.UseSavings, _options.UseSwapPools);
             }
         }
-
-        LogDidNotElectSymbol(TypeName, Context.Name, item.Symbol.Name);
 
         // if we got here its too late for the preemtive stop loss
         return Noop();
@@ -296,7 +291,7 @@ public partial class PortfolioAlgo : Algo
         return true;
     }
 
-    private IAlgoCommand CreateTopUpBuy(SymbolData item, DateTime now)
+    private IAlgoCommand CreateTopUpBuy(SymbolData item)
     {
         // evaluate pnl
         var stats = item.AutoPosition.Positions.GetStats(item.Ticker.ClosePrice);
@@ -312,14 +307,6 @@ public partial class PortfolioAlgo : Algo
         if (stats.PresentValue < item.Symbol.Filters.MinNotional.MinNotional)
         {
             LogTopUpSkippedSymbolWithNotionalUnderMinNotional(TypeName, Context.Name, item.Symbol.Name, stats.PresentValue, item.Symbol.Filters.MinNotional.MinNotional);
-            return Noop();
-        }
-
-        // skip symbols on cooldown
-        var cooldown = item.AutoPosition.Positions.Last.Time.Add(_options.Cooldown);
-        if (cooldown > now)
-        {
-            LogTopUpSkippedSymbolOnCooldown(TypeName, Context.Name, item.Symbol.Name, cooldown);
             return Noop();
         }
 
@@ -505,9 +492,6 @@ public partial class PortfolioAlgo : Algo
 
     [LoggerMessage(34, LogLevel.Information, "{Type} {Name} stop loss skipped symbol {Symbol} with present notional {Notional:F8} under min notional {MinNotional:F8}")]
     private partial void LogStopLossSkippedSymbolWithNotionalUnderMinNotional(string type, string name, string symbol, decimal notional, decimal minNotional);
-
-    [LoggerMessage(35, LogLevel.Information, "{Type} {Name} stop loss did not elect symbol {Symbol}")]
-    private partial void LogDidNotElectSymbol(string type, string name, string symbol);
 
     #endregion Logging
 }

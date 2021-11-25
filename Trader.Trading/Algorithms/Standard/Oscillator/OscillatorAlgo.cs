@@ -40,15 +40,46 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Oscillator
                 var stats = item.AutoPosition.Positions.Reverse().EnumerateLots(item.Symbol.Filters.LotSize.StepSize).GetStats(item.Ticker.ClosePrice);
 
                 commands.Add(
-                    TrySell(item, stats) ??
-                    TryEntryBuy(item, stats) ??
+                    TryTakeProfit(item, stats) ??
+                    TrySetStopLoss(item, stats) ??
+                    TrySetEntryBuy(item, stats) ??
                     Noop());
             }
 
             return Sequence(commands);
         }
 
-        private IAlgoCommand? TrySell(SymbolData item, PositionStats stats)
+        private IAlgoCommand? TryTakeProfit(SymbolData item, PositionStats stats)
+        {
+            // skip unsellable symbol by quantity
+            if (stats.TotalQuantity < item.Symbol.Filters.LotSize.MinQuantity)
+            {
+                return null;
+            }
+
+            // skip unsellable symbol by notional
+            if (stats.PresentValue < item.Symbol.Filters.MinNotional.MinNotional)
+            {
+                return null;
+            }
+
+            // calculate the take profit price
+            var price = stats.AvgPrice * (1 + _options.TakeProfitRate);
+            price = price.AdjustPriceUpToTickSize(item.Symbol);
+
+            // skip if we are not halfway there to avoid order twitching
+            if (item.Ticker.ClosePrice < ((stats.AvgPrice + price) / 2))
+            {
+                return null;
+            }
+
+            // cancel the stop loss and set a limit order at the take profit price
+            return Sequence(
+                CancelOpenOrders(item.Symbol),
+                EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, stats.TotalQuantity, null, price, null, true, true));
+        }
+
+        private IAlgoCommand? TrySetStopLoss(SymbolData item, PositionStats stats)
         {
             // skip unsellable symbol
             var quantity = stats.TotalQuantity;
@@ -72,6 +103,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Oscillator
 
             // calculate the stop limit
             var under = stopLossPrice * (1 - _options.StopLoss.LimitRate);
+            under = under.AdjustPriceDownToTickSize(item.Symbol);
 
             // skip unsellable symbol
             var sellable = quantity * under;
@@ -98,7 +130,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Oscillator
                 EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, quantity, null, under, stopLossPrice, true, true));
         }
 
-        private IAlgoCommand? TryEntryBuy(SymbolData item, PositionStats stats)
+        private IAlgoCommand? TrySetEntryBuy(SymbolData item, PositionStats stats)
         {
             // skip sellable symbol
             var sellable = stats.TotalQuantity * item.Ticker.ClosePrice;

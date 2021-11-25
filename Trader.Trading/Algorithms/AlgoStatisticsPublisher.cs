@@ -35,8 +35,6 @@ internal partial class AlgoStatisticsPublisher : IAlgoStatisticsPublisher
 
     private async Task PublishCoreAsync(AutoPosition significant, MiniTicker ticker, CancellationToken cancellationToken)
     {
-        LogTicker(TypeName, ticker.Symbol, ticker.ClosePrice);
-
         if (significant.Positions.Count > 0)
         {
             var quantity = significant.Positions.Sum(x => x.Quantity);
@@ -68,10 +66,6 @@ internal partial class AlgoStatisticsPublisher : IAlgoStatisticsPublisher
             if (balance < quantity)
             {
                 LogFreeAmountLessThanPurchased(TypeName, significant.Symbol.Name, balance, significant.Symbol.BaseAsset, quantity);
-            }
-            else
-            {
-                LogFreeAmountExceedsPurchased(TypeName, significant.Symbol.Name, balance, significant.Symbol.BaseAsset, quantity, balance - quantity);
             }
         }
 

@@ -1,9 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
-using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
 using Outcompute.Trader.Trading.Providers.Orders;
 using System.Diagnostics;
-using System.Threading.Tasks.Dataflow;
 
 namespace Outcompute.Trader.Trading.Algorithms;
 
@@ -44,12 +42,6 @@ internal partial class OrderSynchronizer : IOrderSynchronizer
             orderId = transientOrderId.Value;
         }
 
-        // this worker will publish incoming orders in the background
-        var worker = new ActionBlock<(string Symbol, IEnumerable<OrderQueryResult> Items)>(async work =>
-        {
-            await _orders.SetOrdersAsync(work.Symbol, work.Items, cancellationToken);
-        });
-
         // pull all new or updated orders page by page
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -61,8 +53,8 @@ internal partial class OrderSynchronizer : IOrderSynchronizer
             // break if we got no orders
             if (orders.Count is 0) break;
 
-            // push the orders to the worker for publishing
-            worker.Post((symbol, orders));
+            // save the orders
+            await _orders.SetOrdersAsync(symbol, orders, cancellationToken);
 
             // keep the last order id
             orderId = orders.Max(x => x.OrderId);
@@ -73,13 +65,12 @@ internal partial class OrderSynchronizer : IOrderSynchronizer
             // keep track for logging
             count += orders.Count;
 
+            // break if we didnt get a full-ish page - using a leeway for when binance doesnt fill full pages by one or two items
+            if (orders.Count < 990) break;
+
             // loop from the next
             orderId++;
         }
-
-        // wait for publishing to complete
-        worker.Complete();
-        await worker.Completion;
 
         // log the activity only if necessary
         LogPulledOrders(TypeName, symbol, count, orderId, watch.ElapsedMilliseconds);

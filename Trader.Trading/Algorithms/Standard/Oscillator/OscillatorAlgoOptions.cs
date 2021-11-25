@@ -15,6 +15,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Oscillator
         public bool UseProfits { get; set; } = false;
 
         [Required]
+        public decimal TakeProfitRate { get; set; } = 0.01M;
+
+        [Required]
         public OscillatorAlgoOptionsStopLoss StopLoss { get; } = new();
 
         [Required]

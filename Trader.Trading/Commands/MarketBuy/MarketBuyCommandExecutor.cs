@@ -38,6 +38,14 @@ internal partial class MarketBuyCommandExecutor : IAlgoCommandExecutor<MarketBuy
         var spots = data.Spot;
         var savings = data.Savings;
         var swaps = data.SwapPools;
+        var orders = data.Orders;
+
+        // ensure there are no other open market orders waiting for execution
+        if (orders.Open.Any(x => x.Type == OrderType.Market))
+        {
+            LogConcurrentMarketOrders(TypeName, context.Name, orders.Open.Where(x => x.Type == OrderType.Market));
+            return;
+        }
 
         // raise the quantity if required
         var quantity = command.Quantity;
@@ -195,4 +203,7 @@ internal partial class MarketBuyCommandExecutor : IAlgoCommandExecutor<MarketBuy
 
     [LoggerMessage(13, LogLevel.Information, "{Type} {Name} adjusted quantity of {Quantity} {Asset} at {Price} {Quote} for a total of {Total} {Quote} up to {AdjustedQuantity} {Asset} to match min notional of {MinNotional} {Quote}")]
     private partial void LogAdjustedQuantityToMinNotional(string type, string name, decimal quantity, string asset, decimal price, string quote, decimal total, decimal adjustedQuantity, decimal minNotional);
+
+    [LoggerMessage(14, LogLevel.Error, "{Type} {Name} will not execute as there are open market orders being executed: {Orders}")]
+    private partial void LogConcurrentMarketOrders(string type, string name, IEnumerable<OrderQueryResult> orders);
 }

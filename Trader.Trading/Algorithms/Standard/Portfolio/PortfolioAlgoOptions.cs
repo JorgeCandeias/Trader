@@ -23,7 +23,7 @@ public class PortfolioAlgoOptions
     /// Whether selling logic is enabled.
     /// </summary>
     [Required]
-    public bool SellingEnabled { get; set; } = true;
+    public bool SellingEnabled { get; set; } = false;
 
     /// <summary>
     /// The minimum profit rate at which to sell an asset as compared to its average cost.
@@ -38,16 +38,22 @@ public class PortfolioAlgoOptions
     public bool StopLossEnabled { get; set; } = false;
 
     /// <summary>
-    /// When the current price falls from the last position price by this rate, a market sell order for all sellable assets will be placed.
+    /// When the current price falls from the last position price by this rate, the stop loss will signal.
     /// </summary>
     [Required, Range(0, 1)]
-    public decimal StopLossRateFromLastPosition { get; set; } = 0.90M;
+    public decimal StopLossRateFromLastPosition { get; set; } = 0.01M;
+
+    /// <summary>
+    /// When the average value of all sellable assets vs their average price falls, the stop loss logic will activate.
+    /// </summary>
+    [Required, Range(0, 1)]
+    public decimal StopLossRate { get; set; } = 0.10M;
 
     /// <summary>
     /// When stop loss is triggered, the sell order will only be placed if all assets can be sold at least at the this markup from their average cost.
     /// </summary>
-    [Required, Range(0, int.MaxValue)]
-    public decimal MinStopLossProfitRate { get; set; } = 1.01M;
+    [Required, Range(0, 1)]
+    public decimal MinStopLossProfitRate { get; set; } = 0.01M;
 
     [Range(0, int.MaxValue)]
     public decimal? MaxNotional { get; set; }

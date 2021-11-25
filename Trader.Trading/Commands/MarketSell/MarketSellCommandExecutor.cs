@@ -28,6 +28,14 @@ internal partial class MarketSellCommandExecutor : IAlgoCommandExecutor<MarketSe
         var spots = data.Spot;
         var savings = data.Savings;
         var swaps = data.SwapPools;
+        var orders = data.Orders;
+
+        // ensure there are no other open market orders waiting for execution
+        if (orders.Open.Any(x => x.Type == OrderType.Market))
+        {
+            LogConcurrentMarketOrders(TypeName, context.Name, orders.Open.Where(x => x.Type == OrderType.Market));
+            return;
+        }
 
         // adjust the quantity down by the step size to make a valid order
         var quantity = command.Quantity.AdjustQuantityDownToLotStepSize(command.Symbol);
@@ -135,4 +143,7 @@ internal partial class MarketSellCommandExecutor : IAlgoCommandExecutor<MarketSe
 
     [LoggerMessage(6, LogLevel.Error, "{Type} {Name} could not redeem the required {Quantity} {Asset}")]
     private partial void LogCouldNotRedeem(string type, string name, decimal quantity, string asset);
+
+    [LoggerMessage(7, LogLevel.Error, "{Type} {Name} will not execute as there are open market orders being executed: {Orders}")]
+    private partial void LogConcurrentMarketOrders(string type, string name, IEnumerable<OrderQueryResult> orders);
 }

@@ -357,8 +357,6 @@ public partial class PortfolioAlgo : Algo
 
     #region Logging
 
-    // add the algo name to all logs
-
     [LoggerMessage(0, LogLevel.Information, "{Type} {Name} elected symbol {Symbol} for entry buy with ticker {Ticker:F8} {Quote} and RSI {Rsi:F8}")]
     private partial void LogEntryBuyElectedSymbol(string type, string name, string symbol, decimal ticker, string quote, decimal rsi);
 

@@ -38,17 +38,8 @@ public partial class PortfolioAlgo : Algo
             }
 
             commands.Add(CreateTopUpBuy(item));
-
-            if (SignalEntryBuy(item, now))
-            {
-                commands.Add(CreateEntryBuy(item));
-            }
-
-            if (SignalSell(item))
-            {
-                commands.Add(AveragingSell(item.Symbol, _options.MinSellRate, _options.UseSavings, _options.UseSwapPools));
-            }
-
+            commands.Add(CreateEntryBuy(item, now));
+            commands.Add(CreateSell(item));
             commands.Add(CreateStopLoss(item));
         }
 
@@ -200,29 +191,18 @@ public partial class PortfolioAlgo : Algo
         return Noop();
     }
 
-    private bool SignalSell(SymbolData item)
+    private IAlgoCommand CreateSell(SymbolData item)
     {
         if (!_options.SellingEnabled)
         {
-            //LogSellingDisabled(TypeName, Context.Name);
-
-            return false;
+            return Noop();
         }
-
-        //LogEvaluatingSymbolsForPumpSell(TypeName);
 
         // skip symbols to never sell
         if (_options.NeverSellSymbols.Contains(item.Symbol.Name))
         {
-            //LogSkippedSymbolOnNeverSellSet(TypeName, item.Symbol.Name);
-            return false;
-        }
-
-        // skip symbol with open market orders
-        if (item.Orders.Open.Any(x => x.Type == OrderType.Market))
-        {
-            //LogSkippedSymbolWithOpenMarketOrders(TypeName, Context.Name, item.Symbol.Name, item.Orders.Open.Where(x => x.Type == OrderType.Market));
-            return false;
+            LogSellSkippedSymbolOnNeverSellSet(TypeName, Context.Name, item.Symbol.Name);
+            return Noop();
         }
 
         // calculate the stats of the sellable lots vs the current price
@@ -231,41 +211,39 @@ public partial class PortfolioAlgo : Algo
         // skip symbols with not enough quantity to sell
         if (stats.TotalQuantity < item.Symbol.Filters.LotSize.MinQuantity)
         {
-            //LogSkippedSymbolWithQuantityUnderMinLotSize(TypeName, item.Symbol.Name, stats.TotalQuantity, item.Symbol.BaseAsset, item.Symbol.Filters.LotSize.MinQuantity);
-            return false;
+            LogSellSkippedSymbolWithQuantityUnderMinLotSize(TypeName, Context.Name, item.Symbol.Name, stats.TotalQuantity, item.Symbol.BaseAsset, item.Symbol.Filters.LotSize.MinQuantity);
+            return Noop();
         }
 
         // skip symbols with not enough notional to sell
         if (stats.PresentValue < item.Symbol.Filters.MinNotional.MinNotional)
         {
-            //LogSkippedSymbolWithNotionalUnderMinNotional(TypeName, item.Symbol.Name, stats.PresentValue, item.Symbol.Filters.MinNotional.MinNotional);
-            return false;
+            LogSellSkippedSymbolWithNotionalUnderMinNotional(TypeName, Context.Name, item.Symbol.Name, stats.PresentValue, item.Symbol.Filters.MinNotional.MinNotional);
+            return Noop();
         }
 
         // skip symbols with not enough sell rsi
         var rsi = item.Klines.LastRsi(x => x.ClosePrice, _options.Rsi.Sell.Periods);
         if (rsi < _options.Rsi.Sell.Overbought)
         {
-            //LogSkippedSymbolWithLowSellRsi(TypeName, item.Symbol.Name, _options.Rsi.Sell.Periods, rsi, _options.Rsi.Sell.Overbought);
-            return false;
+            LogSellSkippedSymbolWithLowSellRsi(TypeName, Context.Name, item.Symbol.Name, _options.Rsi.Sell.Periods, rsi, _options.Rsi.Sell.Overbought);
+            return Noop();
         }
 
-        LogElectedSymbolForPumpSell(TypeName, item.Symbol.Name, _options.Rsi.Sell.Periods, rsi);
-        return true;
+        LogSellElectedSymbol(TypeName, Context.Name, item.Symbol.Name, _options.Rsi.Sell.Periods, rsi);
+        return AveragingSell(item.Symbol, _options.MinSellRate, _options.UseSavings, _options.UseSwapPools);
     }
 
-    private bool SignalEntryBuy(SymbolData item, DateTime now)
+    private IAlgoCommand CreateEntryBuy(SymbolData item, DateTime now)
     {
-        //LogEvaluatingSymbolsForEntryBuy(TypeName);
-
         // evaluate pnl
         var stats = item.AutoPosition.Positions.GetStats(item.Ticker.ClosePrice);
 
         // only look at symbols under the min lot size or min notional
         if (!(stats.TotalQuantity < item.Symbol.Filters.LotSize.MinQuantity || stats.PresentValue < item.Symbol.Filters.MinNotional.MinNotional))
         {
-            //LogSkippedSymbolWithQuantityAndNotionalAboveMin(TypeName, item.Symbol.Name, stats.TotalQuantity, item.Symbol.BaseAsset, item.Symbol.Filters.LotSize.MinQuantity, stats.TotalCost, item.Symbol.Filters.MinNotional.MinNotional, item.Symbol.QuoteAsset);
-            return false;
+            LogEntryBuySkippedSymbolWithQuantityAndNotionalAboveMin(TypeName, Context.Name, item.Symbol.Name, stats.TotalQuantity, item.Symbol.BaseAsset, item.Symbol.Filters.LotSize.MinQuantity, stats.TotalCost, item.Symbol.Filters.MinNotional.MinNotional, item.Symbol.QuoteAsset);
+            return Noop();
         }
 
         // skip symbols on cooldown
@@ -274,8 +252,8 @@ public partial class PortfolioAlgo : Algo
             var cooldown = item.AutoPosition.Positions.Last.Time.Add(_options.Cooldown);
             if (cooldown > now)
             {
-                //LogSkippedSymbolOnCooldown(TypeName, item.Symbol.Name, cooldown);
-                return false;
+                LogEntryBuySkippedSymbolOnCooldown(TypeName, Context.Name, item.Symbol.Name, cooldown);
+                return Noop();
             }
         }
 
@@ -283,12 +261,21 @@ public partial class PortfolioAlgo : Algo
         var rsi = item.Klines.LastRsi(x => x.ClosePrice, _options.Rsi.Buy.Periods);
         if (rsi > _options.Rsi.Buy.Oversold)
         {
-            //LogSkippedSymbolWithRsiAboveOversold(TypeName, item.Symbol.Name, _options.Rsi.Buy.Periods, rsi, _options.Rsi.Buy.Oversold);
-            return false;
+            LogEntryBuySkippedSymbolWithRsiAboveOversold(TypeName, Context.Name, item.Symbol.Name, _options.Rsi.Buy.Periods, rsi, _options.Rsi.Buy.Oversold);
+            return Noop();
         }
 
-        //LogElectedSymbolForEntryBuy(TypeName, item.Name, item.Ticker.ClosePrice, item.Symbol.QuoteAsset, rsi);
-        return true;
+        LogEntryBuyElectedSymbol(TypeName, Context.Name, item.Symbol.Name, item.Ticker.ClosePrice, item.Symbol.QuoteAsset, rsi);
+
+        // identify the entry price
+        var price = item.Klines.PriceForRsi(x => x.ClosePrice, _options.Rsi.Buy.Periods, _options.Rsi.Buy.Oversold, _options.Rsi.Buy.Precision);
+        price = price.AdjustPriceUpToTickSize(item.Symbol);
+
+        // identify the appropriate buy quantity for this price
+        var quantity = CalculateBuyQuantity(item, price);
+
+        // create the limit order
+        return EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, price, null, _options.UseSavings, _options.UseSwapPools);
     }
 
     private IAlgoCommand CreateTopUpBuy(SymbolData item)
@@ -339,19 +326,6 @@ public partial class PortfolioAlgo : Algo
         return EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, price, null, _options.UseSavings, _options.UseSwapPools);
     }
 
-    private IAlgoCommand CreateEntryBuy(SymbolData item)
-    {
-        // identify the entry price
-        var price = item.Klines.PriceForRsi(x => x.ClosePrice, _options.Rsi.Buy.Periods, _options.Rsi.Buy.Oversold, _options.Rsi.Buy.Precision);
-        price = price.AdjustPriceUpToTickSize(item.Symbol);
-
-        // identify the appropriate buy quantity for this price
-        var quantity = CalculateBuyQuantity(item, price);
-
-        // create the limit order
-        return EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, price, null, _options.UseSavings, _options.UseSwapPools);
-    }
-
     private decimal CalculateBuyQuantity(SymbolData item, decimal price)
     {
         // calculate the notional to use for buying
@@ -385,8 +359,8 @@ public partial class PortfolioAlgo : Algo
 
     // add the algo name to all logs
 
-    [LoggerMessage(0, LogLevel.Information, "{Type} elected symbol {Symbol} for entry buy with ticker {Ticker:F8} {Quote} and RSI {Rsi:F8}")]
-    private partial void LogElectedSymbolForEntryBuy(string type, string symbol, decimal ticker, string quote, decimal rsi);
+    [LoggerMessage(0, LogLevel.Information, "{Type} {Name} elected symbol {Symbol} for entry buy with ticker {Ticker:F8} {Quote} and RSI {Rsi:F8}")]
+    private partial void LogEntryBuyElectedSymbol(string type, string name, string symbol, decimal ticker, string quote, decimal rsi);
 
     [LoggerMessage(1, LogLevel.Information, "{Type} {Name} top up elected symbol {Symbol} with ticker {Ticker:F8} {Quote}")]
     private partial void LogTopUpElectedSymbol(string type, string name, string symbol, decimal ticker, string quote);
@@ -430,8 +404,8 @@ public partial class PortfolioAlgo : Algo
     [LoggerMessage(15, LogLevel.Information, "{Type} evaluating symbols for stop loss")]
     private partial void LogEvaluatingSymbolsForStopLoss(string type);
 
-    [LoggerMessage(16, LogLevel.Information, "{Type} skipped symbol {Symbol} on the never sell set")]
-    private partial void LogSkippedSymbolOnNeverSellSet(string type, string symbol);
+    [LoggerMessage(16, LogLevel.Information, "{Type} {Name} sell skipped symbol {Symbol} on the never sell set")]
+    private partial void LogSellSkippedSymbolOnNeverSellSet(string type, string name, string symbol);
 
     [LoggerMessage(17, LogLevel.Information, "{Type} evaluating symbols for pump sell")]
     private partial void LogEvaluatingSymbolsForPumpSell(string type);
@@ -439,8 +413,8 @@ public partial class PortfolioAlgo : Algo
     [LoggerMessage(18, LogLevel.Information, "{Type} skipped symbol {Symbol} with RSI({Periods}) {RSI:F8} lower than sell RSI({Periods}) {SellRSI:F8}")]
     private partial void LogSkippedSymbolWithLowSellRsi(string type, string symbol, int periods, decimal rsi, decimal sellRsi);
 
-    [LoggerMessage(19, LogLevel.Information, "{Type} elected symbol {Symbol} with RSI({Periods}) {RSI:F8} for pump sell")]
-    private partial void LogElectedSymbolForPumpSell(string type, string symbol, int periods, decimal rsi);
+    [LoggerMessage(19, LogLevel.Information, "{Type} {Name} elected symbol {Symbol} with RSI({Periods}) {RSI:F8} for pump sell")]
+    private partial void LogSellElectedSymbol(string type, string name, string symbol, int periods, decimal rsi);
 
     [LoggerMessage(20, LogLevel.Information, "{Type} skipped symbol {Symbol} with negative relative value {PNL:P2}")]
     private partial void LogSkippedSymbolWithNegativeRelativePnL(string type, string symbol, decimal pnl);
@@ -492,6 +466,24 @@ public partial class PortfolioAlgo : Algo
 
     [LoggerMessage(34, LogLevel.Information, "{Type} {Name} stop loss skipped symbol {Symbol} with present notional {Notional:F8} under min notional {MinNotional:F8}")]
     private partial void LogStopLossSkippedSymbolWithNotionalUnderMinNotional(string type, string name, string symbol, decimal notional, decimal minNotional);
+
+    [LoggerMessage(35, LogLevel.Information, "{Type} {Name} sell skipped symbol {Symbol} with quantity {Quantity:F8} {Asset} under min lot size {MinLotSize:F8}")]
+    private partial void LogSellSkippedSymbolWithQuantityUnderMinLotSize(string type, string name, string symbol, decimal quantity, string asset, decimal minLotSize);
+
+    [LoggerMessage(36, LogLevel.Information, "{Type} {Name} sell skipped symbol {Symbol} with present notional {Notional:F8} under min notional {MinNotional:F8}")]
+    private partial void LogSellSkippedSymbolWithNotionalUnderMinNotional(string type, string name, string symbol, decimal notional, decimal minNotional);
+
+    [LoggerMessage(37, LogLevel.Information, "{Type} {Name} sell symbol {Symbol} with RSI({Periods}) {RSI:F8} lower than sell RSI({Periods}) {SellRSI:F8}")]
+    private partial void LogSellSkippedSymbolWithLowSellRsi(string type, string name, string symbol, int periods, decimal rsi, decimal sellRsi);
+
+    [LoggerMessage(38, LogLevel.Information, "{Type} {Name} entry buy skipped symbol {Symbol} with quantity {Quantity:F8} {Asset} above min {MinLotSize:F8} {Asset} and notional {Cost:F8} above min {MinNotional:F8} {Quote}")]
+    private partial void LogEntryBuySkippedSymbolWithQuantityAndNotionalAboveMin(string type, string name, string symbol, decimal quantity, string asset, decimal minLotSize, decimal cost, decimal minNotional, string quote);
+
+    [LoggerMessage(39, LogLevel.Information, "{Type} {Name} entry buy skipped symbol {Symbol} on cooldown until {Cooldown}")]
+    private partial void LogEntryBuySkippedSymbolOnCooldown(string type, string name, string symbol, DateTime cooldown);
+
+    [LoggerMessage(40, LogLevel.Information, "{Type} {Name} entry buy skipped symbol {Symbol} with RSI({Periods}) {RSI:F8} above oversold of {Oversold:F8}")]
+    private partial void LogEntryBuySkippedSymbolWithRsiAboveOversold(string type, string name, string symbol, int periods, decimal rsi, decimal oversold);
 
     #endregion Logging
 }

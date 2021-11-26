@@ -30,6 +30,7 @@ public partial class PortfolioAlgo : Algo
         var now = _clock.UtcNow;
 
         var commands = new List<IAlgoCommand>(Context.Data.Count * 4);
+        var statsLookup = new Dictionary<string, PositionStats>();
 
         foreach (var item in Context.Data)
         {
@@ -50,20 +51,22 @@ public partial class PortfolioAlgo : Algo
             commands.Add(CreateRecoveryBuy(item, lots));
             commands.Add(CreateTopUpBuy(item, lots, stats));
             commands.Add(CreateEntryBuy(item, lots));
+
+            statsLookup[item.Symbol.Name] = stats;
         }
 
-        ReportAggregateStats();
+        ReportAggregateStats(statsLookup);
 
         return Sequence(commands);
     }
 
-    private void ReportAggregateStats()
+    private void ReportAggregateStats(IDictionary<string, PositionStats> statsLookup)
     {
         // report on total portfolio value for each quote
         foreach (var quote in Context.Data.GroupBy(x => x.Symbol.QuoteAsset))
         {
             // get stats for every sellable symbol
-            var stats = quote.Select(x => (x.Symbol, Stats: x.AutoPosition.Positions.Reverse().EnumerateLots(x.Symbol.Filters.LotSize.StepSize).GetStats(x.Ticker.ClosePrice))).ToList();
+            var stats = quote.Select(x => (x.Symbol, Stats: statsLookup[x.Symbol.Name]));
 
             var (cost, pv, rpnl) = quote
                 .Select(x =>
@@ -124,6 +127,15 @@ public partial class PortfolioAlgo : Algo
             if (!IsNullOrEmpty(relWinner.Symbol.Name))
             {
                 LogSymbolWithHighestRelativePnl(TypeName, Context.Name, relWinner.Symbol.Name, relWinner.Stats.RelativePnL);
+            }
+
+            // top 10 break even
+            foreach (var item in stats
+                .Where(x => x.Stats.TotalQuantity > 0)
+                .Where(x => x.Stats.RelativePnL >= 0)
+                .OrderBy(x => x.Stats.RelativePnL))
+            {
+                LogSymbolAtBreakEven(TypeName, Context.Name, item.Symbol.Name, item.Stats.RelativePnL, item.Stats.AbsolutePnL, item.Symbol.QuoteAsset, item.Stats.PresentValue);
             }
         }
     }
@@ -443,16 +455,16 @@ public partial class PortfolioAlgo : Algo
     [LoggerMessage(28, LogLevel.Information, "{Type} {Name} reports {Quote} portfolio info (U-Cost: {UCost:F8}, U-PV: {UPV:F8}: U-RPnL: {URPNL:P2}, U-AbsPnL: {UAPNL:F8}, R-AbsPnL: {RAPNL:F8}, T-AbsPnL:{TAPNL:F8})")]
     private partial void LogPortfolioInfo(string type, string name, string quote, decimal ucost, decimal upv, decimal urpnl, decimal uapnl, decimal rapnl, decimal tapnl);
 
-    [LoggerMessage(29, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} with lowest unrealized absolute pnl {unrealizedAbsolutePnl:F8}")]
+    [LoggerMessage(29, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} with lowest unrealized absolute pnl {UnrealizedAbsolutePnl:F8}")]
     private partial void LogSymbolWithLowestAbsolutePnl(string type, string name, string symbol, decimal unrealizedAbsolutePnl);
 
-    [LoggerMessage(30, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} with lowest unrealized relative pnl {unrealizedRelativePnl:P2}")]
+    [LoggerMessage(30, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} with lowest unrealized relative pnl {UnrealizedRelativePnl:P2}")]
     private partial void LogSymbolWithLowestRelativePnl(string type, string name, string symbol, decimal unrealizedRelativePnl);
 
-    [LoggerMessage(29, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} with highest unrealized absolute pnl {unrealizedAbsolutePnl:F8}")]
+    [LoggerMessage(29, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} with highest unrealized absolute pnl {UnrealizedAbsolutePnl:F8}")]
     private partial void LogSymbolWithHighestAbsolutePnl(string type, string name, string symbol, decimal unrealizedAbsolutePnl);
 
-    [LoggerMessage(30, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} with highest unrealized relative pnl {unrealizedRelativePnl:P2}")]
+    [LoggerMessage(30, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} with highest unrealized relative pnl {UnrealizedRelativePnl:P2}")]
     private partial void LogSymbolWithHighestRelativePnl(string type, string name, string symbol, decimal unrealizedRelativePnl);
 
     [LoggerMessage(31, LogLevel.Information, "{Type} {Name} stop loss skipped symbol {Symbol} on the never sell set")]
@@ -499,6 +511,9 @@ public partial class PortfolioAlgo : Algo
 
     [LoggerMessage(45, LogLevel.Information, "{Type} {Name} top up skipped symbol {Symbol} with a recovery buy of {Quantity:F8} {Asset} at {Price:F8} {Quote}")]
     private partial void LogTopUpSkippedSymbolARecoveryBuy(string type, string name, string symbol, decimal quantity, string asset, decimal price, string quote);
+
+    [LoggerMessage(46, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} above break even with (PnL: {UnrealizedPnl:P2}, Unrealized: {UnrealizedAbsPnl:F8} {Quote}, PV: {PV:F8} {Quote}")]
+    private partial void LogSymbolAtBreakEven(string type, string name, string symbol, decimal unrealizedPnl, decimal unrealizedAbsPnl, string quote, decimal pv);
 
     #endregion Logging
 }

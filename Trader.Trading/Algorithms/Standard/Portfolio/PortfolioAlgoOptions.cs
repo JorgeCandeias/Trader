@@ -109,7 +109,7 @@ public class PortfolioAlgoOptionsRecoveryRsi
     /// RSI threshold above which to perfrom recovery sells.
     /// </summary>
     [Required]
-    public decimal Sell { get; set; } = 80M;
+    public decimal Sell { get; set; } = 70M;
 
     /// <summary>
     /// Periods for RSI calculation.

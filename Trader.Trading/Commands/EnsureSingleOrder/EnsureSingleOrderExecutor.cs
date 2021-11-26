@@ -13,15 +13,11 @@ internal partial class EnsureSingleOrderExecutor : IAlgoCommandExecutor<EnsureSi
 {
     private readonly ILogger _logger;
     private readonly IBalanceProvider _balances;
-    private readonly IOrderProvider _orders;
-    private readonly ITagGenerator _tags;
 
-    public EnsureSingleOrderExecutor(ILogger<EnsureSingleOrderExecutor> logger, IBalanceProvider balances, IOrderProvider orders, ITagGenerator tags)
+    public EnsureSingleOrderExecutor(ILogger<EnsureSingleOrderExecutor> logger, IBalanceProvider balances)
     {
         _logger = logger;
         _balances = balances;
-        _orders = orders;
-        _tags = tags;
     }
 
     private const string TypeName = nameof(EnsureSingleOrderExecutor);
@@ -37,7 +33,12 @@ internal partial class EnsureSingleOrderExecutor : IAlgoCommandExecutor<EnsureSi
         var live = 0;
         foreach (var order in orders)
         {
-            if (order.Type == command.Type && order.OriginalQuantity == command.Quantity && order.OriginalQuoteOrderQuantity == command.Notional.GetValueOrDefault(0) && order.Price == command.Price && order.StopPrice == command.StopPrice.GetValueOrDefault(0))
+            if (order.Type == command.Type &&
+                (command.Quantity is null || order.OriginalQuantity == command.Quantity.Value) &&
+                (command.Notional is null || order.OriginalQuoteOrderQuantity == command.Notional.Value) &&
+                (command.Price is null || order.Price == command.Price.Value) &&
+                (command.StopPrice is null || order.StopPrice == command.StopPrice.Value) &&
+                (command.Tag is null || (command.Tag == order.ClientOrderId)))
             {
                 live++;
             }
@@ -130,8 +131,7 @@ internal partial class EnsureSingleOrderExecutor : IAlgoCommandExecutor<EnsureSi
         }
 
         // if we got here then we can place the order
-        var tag = _tags.Generate(command.Symbol.Name, command.Price ?? command.StopPrice ?? 0M);
-        await new CreateOrderCommand(command.Symbol, command.Type, command.Side, command.TimeInForce, command.Quantity, command.Notional, command.Price, command.StopPrice, tag)
+        await new CreateOrderCommand(command.Symbol, command.Type, command.Side, command.TimeInForce, command.Quantity, command.Notional, command.Price, command.StopPrice, command.Tag)
             .ExecuteAsync(context, cancellationToken)
             .ConfigureAwait(false);
     }

@@ -44,9 +44,7 @@ namespace Outcompute.Trader.Trading.Tests
                 .ReturnsAsync(new OrderCollection(existing))
                 .Verifiable();
 
-            var tags = Mock.Of<ITagGenerator>(x => x.Generate(symbol.Name, 1234m) == "SomeTag");
-
-            var executor = new EnsureSingleOrderExecutor(logger, balances, orders, tags);
+            var executor = new EnsureSingleOrderExecutor(logger, balances);
 
             var cancelOrderExecutor = Mock.Of<IAlgoCommandExecutor<CancelOrderCommand>>();
 
@@ -73,7 +71,7 @@ namespace Outcompute.Trader.Trading.Tests
             var price = 1234m;
             var redeemSavings = true;
             var redeemSwapPool = true;
-            var command = new EnsureSingleOrderCommand(symbol, side, type, timeInForce, quantity, null, price, null, redeemSavings, redeemSwapPool);
+            var command = new EnsureSingleOrderCommand(symbol, side, type, timeInForce, quantity, null, price, null, null, redeemSavings, redeemSwapPool);
 
             // act
             await executor.ExecuteAsync(context, command);

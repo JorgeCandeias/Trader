@@ -76,7 +76,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Oscillator
             // cancel the stop loss and set a limit order at the take profit price
             return Sequence(
                 CancelOpenOrders(item.Symbol),
-                EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, stats.TotalQuantity, null, price, null, true, true));
+                EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, stats.TotalQuantity, null, price, null, null, true, true));
         }
 
         private IAlgoCommand? TrySetStopLoss(SymbolData item, PositionStats stats)
@@ -127,7 +127,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Oscillator
             // set the order for it
             return Sequence(
                 CancelOpenOrders(item.Symbol, OrderSide.Buy),
-                EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, quantity, null, under, stopLossPrice, true, true));
+                EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, quantity, null, under, stopLossPrice, null, true, true));
         }
 
         private IAlgoCommand? TrySetEntryBuy(SymbolData item, PositionStats stats)
@@ -167,7 +167,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Oscillator
             quantity = quantity.AdjustQuantityUpToMinLotSizeQuantity(item.Symbol);
             quantity = quantity.AdjustQuantityUpToLotStepSize(item.Symbol);
 
-            return EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, lowPrice, null, true, true);
+            return EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, lowPrice, null, null, true, true);
         }
 
         #region Logging

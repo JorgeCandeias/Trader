@@ -4,23 +4,27 @@ using Outcompute.Trader.Trading.Algorithms.Context;
 
 namespace Outcompute.Trader.Trading.Commands.CancelOpenOrders;
 
-public class CancelOpenOrdersCommand : IAlgoCommand
+internal class CancelOpenOrdersCommand : IAlgoCommand
 {
-    public CancelOpenOrdersCommand(Symbol symbol, OrderSide? side = null, decimal? distance = null)
+    public CancelOpenOrdersCommand(Symbol symbol, OrderSide? side = null, decimal? distance = null, string? tag = null)
     {
-        Symbol = symbol ?? throw new ArgumentNullException(nameof(symbol));
+        Guard.IsNotNull(symbol, nameof(symbol));
+
+        if (distance.HasValue)
+        {
+            Guard.IsGreaterThanOrEqualTo(distance.Value, 0M, nameof(distance));
+        }
+
+        Symbol = symbol;
         Side = side;
         Distance = distance;
-
-        if (distance.HasValue && distance.Value < 0)
-        {
-            throw new ArgumentOutOfRangeException(nameof(distance));
-        }
+        Tag = tag;
     }
 
     public Symbol Symbol { get; }
     public OrderSide? Side { get; }
     public decimal? Distance { get; }
+    public string? Tag { get; }
 
     public ValueTask ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
     {

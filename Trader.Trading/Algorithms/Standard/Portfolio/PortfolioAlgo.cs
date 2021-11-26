@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
+using Outcompute.Trader.Trading.Algorithms.Positions;
 using Outcompute.Trader.Trading.Commands;
 
 namespace Outcompute.Trader.Trading.Algorithms.Standard.Portfolio;
@@ -21,12 +22,14 @@ public partial class PortfolioAlgo : Algo
     }
 
     private const string TypeName = nameof(PortfolioAlgo);
+    private const string RecoverySellTag = "RecoverySell";
+    private const string RecoveryBuyTag = "RecoveryBuy";
 
     protected override IAlgoCommand OnExecute()
     {
         var now = _clock.UtcNow;
 
-        var commands = new List<IAlgoCommand>();
+        var commands = new List<IAlgoCommand>(Context.Data.Count * 5);
 
         foreach (var item in Context.Data)
         {
@@ -37,10 +40,18 @@ public partial class PortfolioAlgo : Algo
                 continue;
             }
 
-            commands.Add(CreateTopUpBuy(item));
-            commands.Add(CreateEntryBuy(item, now));
-            commands.Add(CreateSell(item));
-            commands.Add(CreateStopLoss(item));
+            // get sellable lots from the end
+            var lots = item.AutoPosition.Positions.Reverse().EnumerateLots(item.Symbol.Filters.LotSize.StepSize).ToList();
+
+            // get the stats for sellable lots
+            var stats = lots.GetStats(item.Ticker.ClosePrice);
+
+            commands.Add(CreateRecoverySell(item, lots, stats));
+            commands.Add(CreateRecoveryBuy(item, lots, stats));
+            commands.Add(CreateTopUpBuy(item, lots, stats));
+            commands.Add(CreateEntryBuy(item, stats, now));
+            //commands.Add(CreateSell(item));
+            //commands.Add(CreateStopLoss(item));
         }
 
         ReportAggregateStats();
@@ -234,11 +245,8 @@ public partial class PortfolioAlgo : Algo
         return AveragingSell(item.Symbol, _options.MinSellRate, _options.UseSavings, _options.UseSwapPools);
     }
 
-    private IAlgoCommand CreateEntryBuy(SymbolData item, DateTime now)
+    private IAlgoCommand CreateEntryBuy(SymbolData item, PositionStats stats, DateTime now)
     {
-        // evaluate pnl
-        var stats = item.AutoPosition.Positions.GetStats(item.Ticker.ClosePrice);
-
         // only look at symbols under the min lot size or min notional
         if (!(stats.TotalQuantity < item.Symbol.Filters.LotSize.MinQuantity || stats.PresentValue < item.Symbol.Filters.MinNotional.MinNotional))
         {
@@ -246,7 +254,7 @@ public partial class PortfolioAlgo : Algo
             return Noop();
         }
 
-        // skip symbols on cooldown
+        // symbol must not be on cooldown
         if (item.AutoPosition.Positions.Count > 0)
         {
             var cooldown = item.AutoPosition.Positions.Last.Time.Add(_options.Cooldown);
@@ -257,7 +265,7 @@ public partial class PortfolioAlgo : Algo
             }
         }
 
-        // skip symbol with rsi above oversold
+        // rsi must not be oversold
         var rsi = item.Klines.LastRsi(x => x.ClosePrice, _options.Rsi.Buy.Periods);
         if (rsi > _options.Rsi.Buy.Oversold)
         {
@@ -275,13 +283,22 @@ public partial class PortfolioAlgo : Algo
         var quantity = CalculateBuyQuantity(item, price);
 
         // create the limit order
-        return EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, price, null, _options.UseSavings, _options.UseSwapPools);
+        return EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, price, null, null, _options.UseSavings, _options.UseSwapPools);
     }
 
-    private IAlgoCommand CreateTopUpBuy(SymbolData item)
+    private IAlgoCommand CreateTopUpBuy(SymbolData item, IList<PositionLot> lots, PositionStats stats)
     {
-        // evaluate pnl
-        var stats = item.AutoPosition.Positions.GetStats(item.Ticker.ClosePrice);
+        // pnl must be positive to execute a top up
+        if (stats.RelativePnL <= 0)
+        {
+            return Noop();
+        }
+
+        // there must be something to top up
+        if (lots.Count == 0)
+        {
+            return Noop();
+        }
 
         // skip symbols under the min lot size - leftovers are handled elsewhere
         if (stats.TotalQuantity < item.Symbol.Filters.LotSize.MinQuantity)
@@ -298,7 +315,8 @@ public partial class PortfolioAlgo : Algo
         }
 
         // skip symbols below min required for top up
-        var price = item.AutoPosition.Positions.Last.Price * (1 + _options.MinChangeFromLastPositionPriceRequiredForTopUpBuy);
+        var lastLot = lots[0];
+        var price = lastLot.AvgPrice * (1 + _options.MinChangeFromLastPositionPriceRequiredForTopUpBuy);
         price = price.AdjustPriceUpToTickSize(item.Symbol);
 
         if (item.Ticker.ClosePrice < price)
@@ -323,7 +341,123 @@ public partial class PortfolioAlgo : Algo
         }
 
         // create the limit order
-        return EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, price, null, _options.UseSavings, _options.UseSwapPools);
+        return EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, price, null, null, _options.UseSavings, _options.UseSwapPools);
+    }
+
+    private IAlgoCommand CreateRecoveryBuy(SymbolData item, IList<PositionLot> lots, PositionStats stats)
+    {
+        // recovery must be enabled
+        if (!_options.Recovery.Enabled)
+        {
+            return CancelRecoveryBuy(item.Symbol);
+        }
+
+        // skip with error if the symbol step size is zero - this should never happen
+        if (item.Symbol.Filters.LotSize.StepSize == 0)
+        {
+            LogRecoveryBuyDetectedZeroLotStepSize(TypeName, Context.Name, item.Symbol.Name);
+            return CancelRecoveryBuy(item.Symbol);
+        }
+
+        // the pnl must be negative for a recovery buy
+        if (stats.RelativePnL >= 0)
+        {
+            return CancelRecoveryBuy(item.Symbol);
+        }
+
+        // there must something to recover
+        if (lots.Count == 0)
+        {
+            return CancelRecoveryBuy(item.Symbol);
+        }
+
+        // the ticker must be under the last price for a recovery buy
+        var lastLot = lots[0];
+        if (item.Ticker.ClosePrice >= lastLot.AvgPrice)
+        {
+            return CancelRecoveryBuy(item.Symbol);
+        }
+
+        // calculate the price required for the recovery rsi
+        var buyPrice = item.Klines.PriceForRsi(x => x.ClosePrice, _options.Recovery.Rsi.Periods, _options.Recovery.Rsi.Buy, _options.Recovery.Rsi.Precision);
+        buyPrice = buyPrice.AdjustPriceDownToTickSize(item.Symbol);
+
+        // calculate the quantity
+        var quantity = CalculateBuyQuantity(item, buyPrice);
+
+        LogRecoveryPlacingBuy(TypeName, Context.Name, quantity, buyPrice, item.Symbol.BaseAsset, item.Symbol.QuoteAsset);
+        return EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, buyPrice, null, RecoveryBuyTag, _options.UseSavings, _options.UseSwapPools);
+    }
+
+    private IAlgoCommand CancelRecoveryBuy(Symbol symbol)
+    {
+        return CancelOpenOrders(symbol, OrderSide.Buy, null, RecoveryBuyTag);
+    }
+
+    private IAlgoCommand CreateRecoverySell(SymbolData item, IList<PositionLot> lots, PositionStats stats)
+    {
+        // recovery must be enabled
+        if (!_options.Recovery.Enabled)
+        {
+            return CancelRecoverySell(item.Symbol);
+        }
+
+        // pnl must be negative or there is no reason for recovery
+        if (stats.RelativePnL >= 0)
+        {
+            return CancelRecoverySell(item.Symbol);
+        }
+
+        // identify the recovery sell price for the target rsi
+        var price = item.Klines.PriceForRsi(x => x.ClosePrice, _options.Recovery.Rsi.Periods, _options.Recovery.Rsi.Sell, _options.Recovery.Rsi.Precision);
+        price = price.AdjustPriceUpToTickSize(item.Symbol);
+
+        // gather all the lots that fit under the sell price
+        var quantity = 0M;
+        var notional = 0M;
+        var electedQuantity = 0M;
+        foreach (var lot in lots)
+        {
+            // keep adding everything up so we get a average from the end
+            quantity += lot.Quantity;
+            notional += lot.Quantity * lot.AvgPrice;
+
+            // continue until the quantity is sellable
+            if (quantity < item.Symbol.Filters.LotSize.MinQuantity)
+            {
+                continue;
+            }
+
+            // continue until the notional is sellable
+            if (notional < item.Symbol.Filters.MinNotional.MinNotional)
+            {
+                continue;
+            }
+
+            // the average cost price must fit under the sell price to break even
+            var avgPrice = notional / quantity;
+            avgPrice *= 1 + (2 * _options.FeeRate);
+            avgPrice = avgPrice.AdjustPriceUpToTickSize(item.Symbol);
+            if (avgPrice <= price)
+            {
+                // keep the candidate quantity and continue looking for more
+                electedQuantity = quantity;
+            }
+        }
+
+        // if we found something to sell then place the recovery sell
+        if (electedQuantity > 0)
+        {
+            LogRecoveryPlacingSell(TypeName, Context.Name, electedQuantity, item.Symbol.BaseAsset, price, item.Symbol.QuoteAsset);
+            return EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, electedQuantity, null, price, null, RecoverySellTag, _options.UseSavings, _options.UseSwapPools);
+        }
+
+        return Noop();
+    }
+
+    private IAlgoCommand CancelRecoverySell(Symbol symbol)
+    {
+        return CancelOpenOrders(symbol, OrderSide.Sell, null, RecoverySellTag);
     }
 
     private decimal CalculateBuyQuantity(SymbolData item, decimal price)
@@ -340,7 +474,7 @@ public partial class PortfolioAlgo : Algo
         notional = notional.AdjustPriceUpToTickSize(item.Symbol);
 
         // pad the order with the fee
-        notional *= (1 + _options.FeeRate);
+        notional *= 1 + _options.FeeRate;
 
         // raise again to a valid number
         notional = notional.AdjustPriceUpToTickSize(item.Symbol);
@@ -482,6 +616,18 @@ public partial class PortfolioAlgo : Algo
 
     [LoggerMessage(40, LogLevel.Information, "{Type} {Name} entry buy skipped symbol {Symbol} with RSI({Periods}) {RSI:F8} above oversold of {Oversold:F8}")]
     private partial void LogEntryBuySkippedSymbolWithRsiAboveOversold(string type, string name, string symbol, int periods, decimal rsi, decimal oversold);
+
+    [LoggerMessage(41, LogLevel.Error, "{Type} {Name} recovery buy detected lot step size for symbol {Symbol} is zero")]
+    private partial void LogRecoveryBuyDetectedZeroLotStepSize(string type, string name, string symbol);
+
+    [LoggerMessage(42, LogLevel.Information, "{Type} {Name} recovery placing recovery buy of {Quantity} {Asset} at {BuyPrice} {Quote}")]
+    private partial void LogRecoveryPlacingBuy(string type, string name, decimal quantity, decimal buyPrice, string asset, string quote);
+
+    [LoggerMessage(43, LogLevel.Warning, "{Type} {Name} recovery cannot place buy to recover lot of {Quantity} {Asset} bought at {BuyPrice} {Quote} with current settings")]
+    private partial void LogRecoveryCannotPlaceBuy(string type, string name, decimal quantity, decimal buyPrice, string asset, string quote);
+
+    [LoggerMessage(44, LogLevel.Information, "{Type} {Name} recovery placing recovery sell of {Quantity} {Asset} at {SellPrice} {Quote}")]
+    private partial void LogRecoveryPlacingSell(string type, string name, decimal quantity, string asset, decimal sellPrice, string quote);
 
     #endregion Logging
 }

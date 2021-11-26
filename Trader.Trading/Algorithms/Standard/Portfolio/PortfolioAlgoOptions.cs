@@ -68,12 +68,54 @@ public class PortfolioAlgoOptions
     public bool UseSwapPools { get; set; }
 
     [Required]
-    public PortfolioAlgoOptionsRsis Rsi { get; } = new PortfolioAlgoOptionsRsis();
+    public PortfolioAlgoOptionsRsis Rsi { get; } = new();
+
+    [Required]
+    public PortfolioAlgoOptionsRecovery Recovery { get; } = new();
 
     /// <summary>
     /// Set of symbols to never issue sells against, even for stop loss.
     /// </summary>
     public ISet<string> NeverSellSymbols { get; } = new HashSet<string>();
+}
+
+public class PortfolioAlgoOptionsRecovery
+{
+    /// <summary>
+    /// Whether recovery logic is enabled.
+    /// </summary>
+    [Required]
+    public bool Enabled { get; set; } = true;
+
+    [Required]
+    public PortfolioAlgoOptionsRecoveryRsi Rsi { get; } = new();
+}
+
+public class PortfolioAlgoOptionsRecoveryRsi
+{
+    /// <summary>
+    /// RSI threshold under which to perfrom recovery buys.
+    /// </summary>
+    [Required]
+    public decimal Buy { get; set; } = 20M;
+
+    /// <summary>
+    /// RSI threshold above which to perfrom recovery sells.
+    /// </summary>
+    [Required]
+    public decimal Sell { get; set; } = 80M;
+
+    /// <summary>
+    /// Periods for RSI calculation.
+    /// </summary>
+    [Required]
+    public int Periods { get; set; } = 6;
+
+    /// <summary>
+    /// Precision for RSI price prediction logic.
+    /// </summary>
+    [Required]
+    public decimal Precision { get; set; } = 0.01M;
 }
 
 public class PortfolioAlgoOptionsRsis

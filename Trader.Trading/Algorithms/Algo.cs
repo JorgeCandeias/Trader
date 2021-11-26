@@ -90,14 +90,14 @@ public abstract class Algo : IAlgo
         return new CancelOrderCommand(symbol, orderId);
     }
 
-    public virtual IAlgoCommand EnsureSingleOrder(Symbol symbol, OrderSide side, OrderType type, TimeInForce? timeInForce, decimal? quantity, decimal? notional, decimal? price, decimal? stopPrice, bool redeemSavings = false, bool redeemSwapPool = false)
+    public virtual IAlgoCommand EnsureSingleOrder(Symbol symbol, OrderSide side, OrderType type, TimeInForce? timeInForce, decimal? quantity, decimal? notional, decimal? price, decimal? stopPrice, string? tag = null, bool redeemSavings = false, bool redeemSwapPool = false)
     {
-        return new EnsureSingleOrderCommand(symbol, side, type, timeInForce, quantity, notional, price, stopPrice, redeemSavings, redeemSwapPool);
+        return new EnsureSingleOrderCommand(symbol, side, type, timeInForce, quantity, notional, price, stopPrice, tag, redeemSavings, redeemSwapPool);
     }
 
-    public virtual IAlgoCommand CancelOpenOrders(Symbol symbol, OrderSide? side = null, decimal? distance = null)
+    public virtual IAlgoCommand CancelOpenOrders(Symbol symbol, OrderSide? side = null, decimal? distance = null, string? tag = null)
     {
-        return new CancelOpenOrdersCommand(symbol, side, distance);
+        return new CancelOpenOrdersCommand(symbol, side, distance, tag);
     }
 
     public virtual IAlgoCommand TryRedeemSavings(string asset, decimal amount)

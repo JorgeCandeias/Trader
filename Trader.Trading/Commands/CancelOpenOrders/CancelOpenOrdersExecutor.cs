@@ -16,13 +16,15 @@ internal class CancelOpenOrdersExecutor : IAlgoCommandExecutor<CancelOpenOrdersC
 
     public async ValueTask ExecuteAsync(IAlgoContext context, CancelOpenOrdersCommand command, CancellationToken cancellationToken = default)
     {
-        var orders = await _orders
-            .GetOrdersByFilterAsync(command.Symbol.Name, command.Side, true, null, cancellationToken)
-            .ConfigureAwait(false);
-
-        foreach (var order in orders)
+        foreach (var order in context.Data[command.Symbol.Name].Orders.Open)
         {
-            // evaluate the distance rule
+            // apply the side rule
+            if (command.Side.HasValue && command.Side.Value != order.Side)
+            {
+                continue;
+            }
+
+            // apply the distance rule
             if (command.Distance.HasValue)
             {
                 var ticker = context.Data[command.Symbol.Name].Ticker;
@@ -34,10 +36,18 @@ internal class CancelOpenOrdersExecutor : IAlgoCommandExecutor<CancelOpenOrdersC
                 }
             }
 
+            // apply the tag rule
+            if (command.Tag is not null && order.ClientOrderId != command.Tag)
+            {
+                continue;
+            }
+
+            // cancel the identified order
             var cancelled = await _trader
                 .CancelOrderAsync(command.Symbol.Name, order.OrderId, cancellationToken)
                 .ConfigureAwait(false);
 
+            // save the order now to ensure consistency
             await _orders
                 .SetOrderAsync(cancelled, cancellationToken)
                 .ConfigureAwait(false);

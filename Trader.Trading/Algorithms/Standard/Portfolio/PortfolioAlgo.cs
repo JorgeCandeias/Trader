@@ -50,8 +50,6 @@ public partial class PortfolioAlgo : Algo
             commands.Add(CreateRecoveryBuy(item, lots));
             commands.Add(CreateTopUpBuy(item, lots, stats));
             commands.Add(CreateEntryBuy(item, stats, now));
-            //commands.Add(CreateSell(item));
-            //commands.Add(CreateStopLoss(item));
         }
 
         ReportAggregateStats();
@@ -128,121 +126,6 @@ public partial class PortfolioAlgo : Algo
                 LogSymbolWithHighestRelativePnl(TypeName, Context.Name, relWinner.Symbol.Name, relWinner.Stats.RelativePnL);
             }
         }
-    }
-
-    private IAlgoCommand CreateStopLoss(SymbolData item)
-    {
-        if (!_options.StopLossEnabled)
-        {
-            return Noop();
-        }
-
-        // skip symbols to never sell
-        if (_options.NeverSellSymbols.Contains(item.Symbol.Name))
-        {
-            LogStopLossSkippedSymbolOnNeverSellSet(TypeName, Context.Name, item.Symbol.Name);
-            return Noop();
-        }
-
-        // skip symbol with open market orders
-        if (item.Orders.Open.Any(x => x.Type == OrderType.Market))
-        {
-            LogStopLossSkippedSymbolWithOpenMarketOrders(TypeName, Context.Name, item.Symbol.Name, item.Orders.Open.Where(x => x.Type == OrderType.Market));
-            return Noop();
-        }
-
-        // calculate the stats of the sellable lots vs the current price
-        var sellable = item.AutoPosition.Positions.Reverse().EnumerateLots(item.Symbol.Filters.LotSize.StepSize).ToList();
-        var stats = sellable.GetStats(item.Ticker.ClosePrice);
-
-        // skip symbols with not enough quantity to sell
-        if (stats.TotalQuantity < item.Symbol.Filters.LotSize.MinQuantity)
-        {
-            LogStopLossSkippedSymbolWithQuantityUnderMinLotSize(TypeName, Context.Name, item.Symbol.Name, stats.TotalQuantity, item.Symbol.BaseAsset, item.Symbol.Filters.LotSize.MinQuantity);
-            return Noop();
-        }
-
-        // skip symbols with not enough notional to sell
-        if (stats.PresentValue < item.Symbol.Filters.MinNotional.MinNotional)
-        {
-            LogStopLossSkippedSymbolWithNotionalUnderMinNotional(TypeName, Context.Name, item.Symbol.Name, stats.PresentValue, item.Symbol.Filters.MinNotional.MinNotional);
-            return Noop();
-        }
-
-        // if we got here its safe to calculate a stop loss
-        var stopPrice = sellable[0].AvgPrice * (1 - _options.StopLossRateFromLastPosition);
-        stopPrice = stopPrice.AdjustPriceDownToTickSize(item.Symbol);
-
-        // see if we hit the stop loss
-        if (item.Ticker.ClosePrice > stopPrice)
-        {
-            return Noop();
-        }
-
-        // attempt to find the last positions that can be sold together at minimum profit on the current ticker
-        var quantity = 0M;
-        var cost = 0M;
-        var pv = 0M;
-        var minRelativeProfit = 1 + _options.MinStopLossProfitRate;
-        foreach (var lot in sellable)
-        {
-            quantity += lot.Quantity;
-            cost += lot.Quantity * lot.AvgPrice;
-            pv += lot.Quantity * item.Ticker.ClosePrice;
-
-            // see if we found a sellable combo
-            if (pv > cost && pv >= item.Symbol.Filters.MinNotional.MinNotional && pv / cost >= minRelativeProfit)
-            {
-                LogStopLossElectedSymbol(TypeName, Context.Name, item.Symbol.Name, stats.RelativePnL);
-                return MarketSell(item.Symbol, quantity, _options.UseSavings, _options.UseSwapPools);
-            }
-        }
-
-        // if we got here its too late for the preemtive stop loss
-        return Noop();
-    }
-
-    private IAlgoCommand CreateSell(SymbolData item)
-    {
-        if (!_options.SellingEnabled)
-        {
-            return Noop();
-        }
-
-        // skip symbols to never sell
-        if (_options.NeverSellSymbols.Contains(item.Symbol.Name))
-        {
-            LogSellSkippedSymbolOnNeverSellSet(TypeName, Context.Name, item.Symbol.Name);
-            return Noop();
-        }
-
-        // calculate the stats of the sellable lots vs the current price
-        var stats = item.AutoPosition.Positions.Reverse().EnumerateLots(item.Symbol.Filters.LotSize.StepSize).GetStats(item.Ticker.ClosePrice);
-
-        // skip symbols with not enough quantity to sell
-        if (stats.TotalQuantity < item.Symbol.Filters.LotSize.MinQuantity)
-        {
-            LogSellSkippedSymbolWithQuantityUnderMinLotSize(TypeName, Context.Name, item.Symbol.Name, stats.TotalQuantity, item.Symbol.BaseAsset, item.Symbol.Filters.LotSize.MinQuantity);
-            return Noop();
-        }
-
-        // skip symbols with not enough notional to sell
-        if (stats.PresentValue < item.Symbol.Filters.MinNotional.MinNotional)
-        {
-            LogSellSkippedSymbolWithNotionalUnderMinNotional(TypeName, Context.Name, item.Symbol.Name, stats.PresentValue, item.Symbol.Filters.MinNotional.MinNotional);
-            return Noop();
-        }
-
-        // skip symbols with not enough sell rsi
-        var rsi = item.Klines.LastRsi(x => x.ClosePrice, _options.Rsi.Sell.Periods);
-        if (rsi < _options.Rsi.Sell.Overbought)
-        {
-            LogSellSkippedSymbolWithLowSellRsi(TypeName, Context.Name, item.Symbol.Name, _options.Rsi.Sell.Periods, rsi, _options.Rsi.Sell.Overbought);
-            return Noop();
-        }
-
-        LogSellElectedSymbol(TypeName, Context.Name, item.Symbol.Name, _options.Rsi.Sell.Periods, rsi);
-        return AveragingSell(item.Symbol, _options.MinSellRate, _options.UseSavings, _options.UseSwapPools);
     }
 
     private IAlgoCommand CreateEntryBuy(SymbolData item, PositionStats stats, DateTime now)

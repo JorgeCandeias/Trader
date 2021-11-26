@@ -145,13 +145,13 @@ public class PortfolioAlgoOptionsRsiBuy
     /// RSI threshold under which to perfrom entry buys.
     /// </summary>
     [Required]
-    public decimal Oversold { get; set; } = 30M;
+    public decimal Oversold { get; set; } = 20M;
 
     /// <summary>
     /// RSI threshold above which never to perform top up buys.
     /// </summary>
     [Required]
-    public decimal Overbought { get; set; } = 60M;
+    public decimal Overbought { get; set; } = 80M;
 
     /// <summary>
     /// Precision for RSI price prediction logic.

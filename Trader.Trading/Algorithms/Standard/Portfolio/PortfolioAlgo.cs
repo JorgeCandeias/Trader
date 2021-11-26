@@ -49,7 +49,7 @@ public partial class PortfolioAlgo : Algo
             commands.Add(CreateRecoverySell(item, lots, stats));
             commands.Add(CreateRecoveryBuy(item, lots));
             commands.Add(CreateTopUpBuy(item, lots, stats));
-            commands.Add(CreateEntryBuy(item, stats, now));
+            commands.Add(CreateEntryBuy(item, lots));
         }
 
         ReportAggregateStats();
@@ -128,43 +128,20 @@ public partial class PortfolioAlgo : Algo
         }
     }
 
-    private IAlgoCommand CreateEntryBuy(SymbolData item, PositionStats stats, DateTime now)
+    private IAlgoCommand CreateEntryBuy(SymbolData item, IList<PositionLot> lots)
     {
-        // only look at symbols under the min lot size or min notional
-        if (!(stats.TotalQuantity < item.Symbol.Filters.LotSize.MinQuantity || stats.PresentValue < item.Symbol.Filters.MinNotional.MinNotional))
+        // only look at symbols without a full lot
+        if (lots.Count > 0)
         {
-            LogEntryBuySkippedSymbolWithQuantityAndNotionalAboveMin(TypeName, Context.Name, item.Symbol.Name, stats.TotalQuantity, item.Symbol.BaseAsset, item.Symbol.Filters.LotSize.MinQuantity, stats.TotalCost, item.Symbol.Filters.MinNotional.MinNotional, item.Symbol.QuoteAsset);
             return Noop();
         }
-
-        // symbol must not be on cooldown
-        if (item.AutoPosition.Positions.Count > 0)
-        {
-            var cooldown = item.AutoPosition.Positions.Last.Time.Add(_options.Cooldown);
-            if (cooldown > now)
-            {
-                LogEntryBuySkippedSymbolOnCooldown(TypeName, Context.Name, item.Symbol.Name, cooldown);
-                return Noop();
-            }
-        }
-
-        // rsi must not be oversold
-        var rsi = item.Klines.LastRsi(x => x.ClosePrice, _options.Rsi.Buy.Periods);
-        if (rsi > _options.Rsi.Buy.Oversold)
-        {
-            LogEntryBuySkippedSymbolWithRsiAboveOversold(TypeName, Context.Name, item.Symbol.Name, _options.Rsi.Buy.Periods, rsi, _options.Rsi.Buy.Oversold);
-            return Noop();
-        }
-
-        LogEntryBuyElectedSymbol(TypeName, Context.Name, item.Symbol.Name, item.Ticker.ClosePrice, item.Symbol.QuoteAsset, rsi);
 
         // identify the entry price
         if (!item.Klines.TryGetPriceForRsi(x => x.ClosePrice, _options.Rsi.Buy.Periods, _options.Rsi.Buy.Oversold, out var price))
         {
-            // todo: log
             return Noop();
         }
-        price = price.AdjustPriceUpToTickSize(item.Symbol);
+        price = price.AdjustPriceDownToTickSize(item.Symbol);
 
         // identify the appropriate buy quantity for this price
         var quantity = CalculateBuyQuantity(item, price);
@@ -178,20 +155,6 @@ public partial class PortfolioAlgo : Algo
         // there must be something to top up
         if (lots.Count == 0)
         {
-            return Noop();
-        }
-
-        // skip symbols under the min lot size - leftovers are handled elsewhere
-        if (stats.TotalQuantity < item.Symbol.Filters.LotSize.MinQuantity)
-        {
-            LogTopUpSkippedSymbolWithQuantityUnderMinLotSize(TypeName, Context.Name, item.Symbol.Name, stats.TotalQuantity, item.Symbol.BaseAsset, item.Symbol.Filters.LotSize.MinQuantity);
-            return Noop();
-        }
-
-        // skip symbols under the min notional - leftovers are handled elsewhere
-        if (stats.PresentValue < item.Symbol.Filters.MinNotional.MinNotional)
-        {
-            LogTopUpSkippedSymbolWithNotionalUnderMinNotional(TypeName, Context.Name, item.Symbol.Name, stats.PresentValue, item.Symbol.Filters.MinNotional.MinNotional);
             return Noop();
         }
 
@@ -214,11 +177,11 @@ public partial class PortfolioAlgo : Algo
             return Noop();
         }
 
+        // raise to the current ticker if needed for the order to go through
+        price = Math.Max(item.Ticker.ClosePrice, price);
+
         // if we got here then we have a top up
         LogTopUpElectedSymbol(TypeName, Context.Name, item.Name, item.Ticker.ClosePrice, item.Symbol.QuoteAsset);
-
-        // raise to the current ticker if needed
-        price = Math.Max(item.Ticker.ClosePrice, price);
 
         // identify the appropriate buy quantity for this price
         var quantity = CalculateBuyQuantity(item, price);

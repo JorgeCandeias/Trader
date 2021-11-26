@@ -29,7 +29,7 @@ public partial class PortfolioAlgo : Algo
     {
         var now = _clock.UtcNow;
 
-        var commands = new List<IAlgoCommand>(Context.Data.Count * 5);
+        var commands = new List<IAlgoCommand>(Context.Data.Count * 4);
 
         foreach (var item in Context.Data)
         {

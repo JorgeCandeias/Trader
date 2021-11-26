@@ -33,7 +33,7 @@ public static class RsiExtensions
         return source.Rsi(selector, periods).Last();
     }
 
-    public static decimal PriceForRsi(this IEnumerable<decimal> source, int periods, decimal rsi, decimal precision, int maxIterations = 100)
+    public static bool TryGetPriceForRsi(this IEnumerable<decimal> source, int periods, decimal rsi, out decimal price, decimal precision = 0.01M, int maxIterations = 100)
     {
         source = source.SkipLast(1);
 
@@ -43,7 +43,8 @@ public static class RsiExtensions
 
         if (direction == 0)
         {
-            return prevPrice;
+            price = prevPrice;
+            return true;
         }
 
         // define the initial search range
@@ -64,7 +65,8 @@ public static class RsiExtensions
                 var candidatePrecision = Math.Abs(1 - candidateRate);
                 if (candidatePrecision <= precision)
                 {
-                    return candidatePrice;
+                    price = candidatePrice;
+                    return true;
                 }
             }
 
@@ -79,11 +81,12 @@ public static class RsiExtensions
             }
         }
 
-        throw new InvalidOperationException($"Could not find target price for RSI({periods}) {rsi} at precision {precision} within {maxIterations} iterations");
+        price = 0;
+        return false;
     }
 
-    public static decimal PriceForRsi<T>(this IEnumerable<T> source, Func<T, decimal> selector, int periods, decimal rsi, decimal precision)
+    public static bool TryGetPriceForRsi<T>(this IEnumerable<T> source, Func<T, decimal> selector, int periods, decimal rsi, out decimal price, decimal precision = 0.01M, int maxIterations = 100)
     {
-        return source.Select(selector).PriceForRsi(periods, rsi, precision);
+        return source.Select(selector).TryGetPriceForRsi(periods, rsi, out price, precision, maxIterations);
     }
 }

@@ -47,7 +47,7 @@ public partial class PortfolioAlgo : Algo
             var stats = lots.GetStats(item.Ticker.ClosePrice);
 
             commands.Add(CreateRecoverySell(item, lots, stats));
-            commands.Add(CreateRecoveryBuy(item, lots, stats));
+            commands.Add(CreateRecoveryBuy(item, lots));
             commands.Add(CreateTopUpBuy(item, lots, stats));
             commands.Add(CreateEntryBuy(item, stats, now));
             //commands.Add(CreateSell(item));
@@ -276,7 +276,11 @@ public partial class PortfolioAlgo : Algo
         LogEntryBuyElectedSymbol(TypeName, Context.Name, item.Symbol.Name, item.Ticker.ClosePrice, item.Symbol.QuoteAsset, rsi);
 
         // identify the entry price
-        var price = item.Klines.PriceForRsi(x => x.ClosePrice, _options.Rsi.Buy.Periods, _options.Rsi.Buy.Oversold, _options.Rsi.Buy.Precision);
+        if (!item.Klines.TryGetPriceForRsi(x => x.ClosePrice, _options.Rsi.Buy.Periods, _options.Rsi.Buy.Oversold, out var price))
+        {
+            // todo: log
+            return Noop();
+        }
         price = price.AdjustPriceUpToTickSize(item.Symbol);
 
         // identify the appropriate buy quantity for this price
@@ -288,12 +292,6 @@ public partial class PortfolioAlgo : Algo
 
     private IAlgoCommand CreateTopUpBuy(SymbolData item, IList<PositionLot> lots, PositionStats stats)
     {
-        // pnl must be positive to execute a top up
-        if (stats.RelativePnL <= 0)
-        {
-            return Noop();
-        }
-
         // there must be something to top up
         if (lots.Count == 0)
         {
@@ -314,8 +312,16 @@ public partial class PortfolioAlgo : Algo
             return Noop();
         }
 
-        // skip symbols below min required for top up
+        // only ever top up the highest position - recovery is handled elsewhere
+        var maxPrice = lots.Max(x => x.AvgPrice);
         var lastLot = lots[0];
+        if (lastLot.AvgPrice < maxPrice)
+        {
+            LogTopUpSkippedSymbolARecoveryBuy(TypeName, Context.Name, item.Symbol.Name, item.AutoPosition.Positions.Last.Quantity, item.Symbol.BaseAsset, item.AutoPosition.Positions.Last.Price, item.Symbol.QuoteAsset);
+            return Noop();
+        }
+
+        // skip symbols below min required for top up
         var price = lastLot.AvgPrice * (1 + _options.MinChangeFromLastPositionPriceRequiredForTopUpBuy);
         price = price.AdjustPriceUpToTickSize(item.Symbol);
 
@@ -344,23 +350,10 @@ public partial class PortfolioAlgo : Algo
         return EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, price, null, null, _options.UseSavings, _options.UseSwapPools);
     }
 
-    private IAlgoCommand CreateRecoveryBuy(SymbolData item, IList<PositionLot> lots, PositionStats stats)
+    private IAlgoCommand CreateRecoveryBuy(SymbolData item, IList<PositionLot> lots)
     {
         // recovery must be enabled
         if (!_options.Recovery.Enabled)
-        {
-            return CancelRecoveryBuy(item.Symbol);
-        }
-
-        // skip with error if the symbol step size is zero - this should never happen
-        if (item.Symbol.Filters.LotSize.StepSize == 0)
-        {
-            LogRecoveryBuyDetectedZeroLotStepSize(TypeName, Context.Name, item.Symbol.Name);
-            return CancelRecoveryBuy(item.Symbol);
-        }
-
-        // the pnl must be negative for a recovery buy
-        if (stats.RelativePnL >= 0)
         {
             return CancelRecoveryBuy(item.Symbol);
         }
@@ -371,22 +364,32 @@ public partial class PortfolioAlgo : Algo
             return CancelRecoveryBuy(item.Symbol);
         }
 
-        // the ticker must be under the last price for a recovery buy
+        // calculate the price required for the recovery rsi
+        if (!item.Klines.TryGetPriceForRsi(x => x.ClosePrice, _options.Recovery.Rsi.Periods, _options.Recovery.Rsi.Buy, out var buyPrice))
+        {
+            return CancelRecoveryBuy(item.Symbol);
+        }
+        buyPrice = buyPrice.AdjustPriceDownToTickSize(item.Symbol);
+
+        // the buy price must be low enough from the last buy for a recovery buy to take place
         var lastLot = lots[0];
-        if (item.Ticker.ClosePrice >= lastLot.AvgPrice)
+        var dropPrice = lastLot.AvgPrice * (1 - _options.Recovery.DropRate);
+        if (buyPrice >= dropPrice)
         {
             return CancelRecoveryBuy(item.Symbol);
         }
 
-        // calculate the price required for the recovery rsi
-        var buyPrice = item.Klines.PriceForRsi(x => x.ClosePrice, _options.Recovery.Rsi.Periods, _options.Recovery.Rsi.Buy, _options.Recovery.Rsi.Precision);
-        buyPrice = buyPrice.AdjustPriceDownToTickSize(item.Symbol);
+        // ticker must be below the buy price to bother reserving funds
+        if (item.Ticker.ClosePrice >= buyPrice)
+        {
+            return CancelRecoveryBuy(item.Symbol);
+        }
 
         // calculate the quantity
         var quantity = CalculateBuyQuantity(item, buyPrice);
 
         LogRecoveryPlacingBuy(TypeName, Context.Name, quantity, buyPrice, item.Symbol.BaseAsset, item.Symbol.QuoteAsset);
-        return EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, buyPrice, null, RecoveryBuyTag, _options.UseSavings, _options.UseSwapPools);
+        return EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.FillOrKill, quantity, null, buyPrice, null, RecoveryBuyTag, _options.UseSavings, _options.UseSwapPools);
     }
 
     private IAlgoCommand CancelRecoveryBuy(Symbol symbol)
@@ -402,20 +405,32 @@ public partial class PortfolioAlgo : Algo
             return CancelRecoverySell(item.Symbol);
         }
 
-        // pnl must be negative or there is no reason for recovery
-        if (stats.RelativePnL >= 0)
+        // there must be something to recover
+        if (lots.Count == 0)
         {
             return CancelRecoverySell(item.Symbol);
         }
 
         // identify the recovery sell price for the target rsi
-        var price = item.Klines.PriceForRsi(x => x.ClosePrice, _options.Recovery.Rsi.Periods, _options.Recovery.Rsi.Sell, _options.Recovery.Rsi.Precision);
+        if (!item.Klines.TryGetPriceForRsi(x => x.ClosePrice, _options.Recovery.Rsi.Periods, _options.Recovery.Rsi.Sell, out var price))
+        {
+            return CancelRecoverySell(item.Symbol);
+        }
         price = price.AdjustPriceUpToTickSize(item.Symbol);
+
+        // the symbol must have lots bought at a higher value than the target sell price
+        // otherwise everything is profit at that price and there is nothing to recover
+        var maxPrice = lots.Max(x => x.AvgPrice);
+        if (maxPrice <= price)
+        {
+            return CancelRecoverySell(item.Symbol);
+        }
 
         // gather all the lots that fit under the sell price
         var quantity = 0M;
         var notional = 0M;
         var electedQuantity = 0M;
+        var lastPrice = 0M;
         foreach (var lot in lots)
         {
             // keep adding everything up so we get a average from the end
@@ -433,6 +448,13 @@ public partial class PortfolioAlgo : Algo
             {
                 continue;
             }
+
+            // only add the lot if the price is greater than or equal to the last price
+            if (lot.AvgPrice < lastPrice)
+            {
+                break;
+            }
+            lastPrice = lot.AvgPrice;
 
             // the average cost price must fit under the sell price to break even
             var avgPrice = notional / quantity;
@@ -620,14 +642,17 @@ public partial class PortfolioAlgo : Algo
     [LoggerMessage(41, LogLevel.Error, "{Type} {Name} recovery buy detected lot step size for symbol {Symbol} is zero")]
     private partial void LogRecoveryBuyDetectedZeroLotStepSize(string type, string name, string symbol);
 
-    [LoggerMessage(42, LogLevel.Information, "{Type} {Name} recovery placing recovery buy of {Quantity} {Asset} at {BuyPrice} {Quote}")]
+    [LoggerMessage(42, LogLevel.Information, "{Type} {Name} recovery placing recovery buy of {Quantity:F8} {Asset} at {BuyPrice:F8} {Quote}")]
     private partial void LogRecoveryPlacingBuy(string type, string name, decimal quantity, decimal buyPrice, string asset, string quote);
 
-    [LoggerMessage(43, LogLevel.Warning, "{Type} {Name} recovery cannot place buy to recover lot of {Quantity} {Asset} bought at {BuyPrice} {Quote} with current settings")]
+    [LoggerMessage(43, LogLevel.Warning, "{Type} {Name} recovery cannot place buy to recover lot of {Quantity:F8} {Asset} bought at {BuyPrice:F8} {Quote} with current settings")]
     private partial void LogRecoveryCannotPlaceBuy(string type, string name, decimal quantity, decimal buyPrice, string asset, string quote);
 
-    [LoggerMessage(44, LogLevel.Information, "{Type} {Name} recovery placing recovery sell of {Quantity} {Asset} at {SellPrice} {Quote}")]
+    [LoggerMessage(44, LogLevel.Information, "{Type} {Name} recovery placing recovery sell of {Quantity:F8} {Asset} at {SellPrice:F8} {Quote}")]
     private partial void LogRecoveryPlacingSell(string type, string name, decimal quantity, string asset, decimal sellPrice, string quote);
+
+    [LoggerMessage(45, LogLevel.Information, "{Type} {Name} top up skipped symbol {Symbol} with a recovery buy of {Quantity:F8} {Asset} at {Price:F8} {Quote}")]
+    private partial void LogTopUpSkippedSymbolARecoveryBuy(string type, string name, string symbol, decimal quantity, string asset, decimal price, string quote);
 
     #endregion Logging
 }

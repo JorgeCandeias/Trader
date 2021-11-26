@@ -87,6 +87,12 @@ public class PortfolioAlgoOptionsRecovery
     [Required]
     public bool Enabled { get; set; } = true;
 
+    /// <summary>
+    /// Drop rate from the last buy for recovery to activate.
+    /// </summary>
+    [Required]
+    public decimal DropRate { get; set; } = 0.10M;
+
     [Required]
     public PortfolioAlgoOptionsRecoveryRsi Rsi { get; } = new();
 }

@@ -40,7 +40,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Oscillator
                 var stats = item.AutoPosition.Positions.Reverse().EnumerateLots(item.Symbol.Filters.LotSize.StepSize).GetStats(item.Ticker.ClosePrice);
 
                 commands.Add(
-                    TryTakeProfit(item, stats) ??
+                    //TryTakeProfit(item, stats) ??
                     TrySetStopLoss(item, stats) ??
                     TrySetEntryBuy(item, stats) ??
                     Noop());
@@ -67,16 +67,16 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Oscillator
             var price = stats.AvgPrice * (1 + _options.TakeProfitRate);
             price = price.AdjustPriceUpToTickSize(item.Symbol);
 
-            // skip if we are not halfway there to avoid order twitching
-            if (item.Ticker.ClosePrice < ((stats.AvgPrice + price) / 2))
+            // see if the price has reached take profit
+            if (item.Ticker.ClosePrice < price)
             {
                 return null;
             }
 
-            // cancel the stop loss and set a limit order at the take profit price
+            // cancel the stop loss and issue a market sell
             return Sequence(
                 CancelOpenOrders(item.Symbol),
-                EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, stats.TotalQuantity, null, price, null, null, true, true));
+                MarketSell(item.Symbol, stats.TotalQuantity, true, true));
         }
 
         private IAlgoCommand? TrySetStopLoss(SymbolData item, PositionStats stats)
@@ -89,7 +89,10 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Oscillator
             }
 
             // calculate the ideal sell price
-            var sellPrice = item.Klines.PriceForRsi(x => x.ClosePrice, _options.Rsi.Periods, _options.Rsi.Overbought, _options.Rsi.Precision);
+            if (!item.Klines.TryGetPriceForRsi(x => x.ClosePrice, _options.Rsi.Periods, _options.Rsi.Overbought, out var sellPrice))
+            {
+                return null;
+            }
 
             // calculate the elastic stop loss rate based on the price amplitude
             var stopLossRate = MathD.LerpBetween(stats.AvgPrice, sellPrice, item.Ticker.ClosePrice, _options.StopLoss.MaxRate, _options.StopLoss.MinRate);
@@ -140,7 +143,10 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Oscillator
             }
 
             // calculate the target price for the entry rsi
-            var lowPrice = item.Klines.PriceForRsi(x => x.ClosePrice, _options.Rsi.Periods, _options.Rsi.Oversold, _options.Rsi.Precision);
+            if (!item.Klines.TryGetPriceForRsi(x => x.ClosePrice, _options.Rsi.Periods, _options.Rsi.Oversold, out var lowPrice))
+            {
+                return null;
+            }
             lowPrice = lowPrice.AdjustPriceDownToTickSize(item.Symbol);
 
             // skip if price below allowed price

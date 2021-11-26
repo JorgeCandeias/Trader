@@ -2,8 +2,6 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Outcompute.Trader.Models;
-using System;
-using System.Threading.Tasks;
 using System.Transactions;
 using Xunit;
 
@@ -14,9 +12,9 @@ namespace Outcompute.Trader.Data.Sql.Tests
         private const string ConnectionString = @"server=(localdb)\mssqllocaldb;database=TraderTest";
 
         private static readonly IMapper _mapper = new MapperConfiguration(options =>
-              {
-                  options.AddProfile<SqlTradingRepositoryProfile>();
-              }).CreateMapper();
+                       {
+                           options.AddProfile<SqlTradingRepositoryProfile>();
+                       }).CreateMapper();
 
         private static SqlTradingRepository CreateRepository()
         {

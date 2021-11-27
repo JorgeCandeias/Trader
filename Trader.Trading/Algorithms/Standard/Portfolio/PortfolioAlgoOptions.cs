@@ -5,9 +5,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Portfolio;
 public class PortfolioAlgoOptions
 {
     [Required, Range(0, 1)]
-    public decimal BalanceFractionPerBuy { get; set; } = 0.001M;
-
-    [Required, Range(0, 1)]
     public decimal BuyQuoteBalanceFraction { get; set; } = 0.001M;
 
     /// <summary>

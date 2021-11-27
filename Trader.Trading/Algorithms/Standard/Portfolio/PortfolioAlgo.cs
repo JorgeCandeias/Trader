@@ -62,8 +62,11 @@ public partial class PortfolioAlgo : Algo
 
     private void ReportAggregateStats(IDictionary<string, PositionStats> statsLookup)
     {
+        var reportable = Context.Data.Where(x => !_options.NeverSellSymbols.Contains(x.Symbol.Name));
+        var grouped = reportable.GroupBy(x => x.Symbol.QuoteAsset);
+
         // report on total portfolio value for each quote
-        foreach (var quote in Context.Data.GroupBy(x => x.Symbol.QuoteAsset))
+        foreach (var quote in grouped)
         {
             // get stats for every sellable symbol
             var stats = quote.Select(x => (x.Symbol, Stats: statsLookup[x.Symbol.Name]));
@@ -308,21 +311,38 @@ public partial class PortfolioAlgo : Algo
         }
 
         // identify the recovery sell price for the target rsi
-        if (!item.Klines.TryGetPriceForRsi(x => x.ClosePrice, _options.Recovery.Rsi.Periods, _options.Recovery.Rsi.Sell, out var price))
+        if (!item.Klines.TryGetPriceForRsi(x => x.ClosePrice, _options.Recovery.Rsi.Periods, _options.Recovery.Rsi.Sell, out var sellPrice))
         {
             return CancelRecoverySell(item.Symbol);
         }
-        price = price.AdjustPriceUpToTickSize(item.Symbol);
+        sellPrice = sellPrice.AdjustPriceUpToTickSize(item.Symbol);
 
-        // the symbol must have lots bought at a higher value than the target sell price
-        // otherwise everything is profit at that price and there is nothing to recover
-        var maxPrice = lots.Max(x => x.AvgPrice);
-        if (maxPrice <= price)
+        // the last lot must be under the recovery sell price
+        var lastLot = lots[0];
+        if (lastLot.AvgPrice >= sellPrice)
         {
             return CancelRecoverySell(item.Symbol);
         }
 
-        // gather all the lots that fit under the sell price
+        // there must be a local max from the last lot above the recovery sell price
+        var maxPrice = 0M;
+        foreach (var lot in lots)
+        {
+            if (lot.AvgPrice >= maxPrice)
+            {
+                maxPrice = lot.AvgPrice;
+            }
+            else
+            {
+                break;
+            }
+        }
+        if (maxPrice <= sellPrice)
+        {
+            return CancelRecoverySell(item.Symbol);
+        }
+
+        // gather all the lots that fit under the sell price up to the local max
         var quantity = 0M;
         var notional = 0M;
         var electedQuantity = 0M;
@@ -352,11 +372,17 @@ public partial class PortfolioAlgo : Algo
             }
             lastPrice = lot.AvgPrice;
 
+            // only add the lot if the price is under or equal to the local max
+            if (lot.AvgPrice > maxPrice)
+            {
+                break;
+            }
+
             // the average cost price must fit under the sell price to break even
             var avgPrice = notional / quantity;
             avgPrice *= 1 + (2 * _options.FeeRate);
             avgPrice = avgPrice.AdjustPriceUpToTickSize(item.Symbol);
-            if (avgPrice <= price)
+            if (avgPrice <= sellPrice)
             {
                 // keep the candidate quantity and continue looking for more
                 electedQuantity = quantity;
@@ -366,8 +392,8 @@ public partial class PortfolioAlgo : Algo
         // if we found something to sell then place the recovery sell
         if (electedQuantity > 0)
         {
-            LogRecoveryPlacingSell(TypeName, Context.Name, electedQuantity, item.Symbol.BaseAsset, price, item.Symbol.QuoteAsset);
-            return EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, electedQuantity, null, price, null, RecoverySellTag, _options.UseSavings, _options.UseSwapPools);
+            LogRecoveryPlacingSell(TypeName, Context.Name, electedQuantity, item.Symbol.BaseAsset, sellPrice, item.Symbol.QuoteAsset);
+            return EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, electedQuantity, null, sellPrice, null, RecoverySellTag, _options.UseSavings, _options.UseSwapPools);
         }
 
         return Noop();

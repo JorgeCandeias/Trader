@@ -218,6 +218,12 @@ public partial class PortfolioAlgo : Algo
     {
         command = Noop();
 
+        // entry buying must be enabled
+        if (!_options.EntryBuy.Enabled)
+        {
+            return false;
+        }
+
         // only look at symbols without a full lot
         if (lots.Count > 0)
         {
@@ -232,7 +238,7 @@ public partial class PortfolioAlgo : Algo
         price = price.AdjustPriceDownToTickSize(item.Symbol);
 
         // identify the appropriate buy quantity for this price
-        var quantity = CalculateBuyQuantity(item, price);
+        var quantity = CalculateBuyQuantity(item, price, _options.EntryBuy.BalanceRate);
 
         // create the limit order
         command = EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, price, null, null, _options.UseSavings, _options.UseSwapPools);
@@ -306,7 +312,7 @@ public partial class PortfolioAlgo : Algo
         LogTopUpElectedSymbol(TypeName, Context.Name, item.Name, item.Ticker.ClosePrice, item.Symbol.QuoteAsset);
 
         // identify the appropriate buy quantity for this price
-        var quantity = CalculateBuyQuantity(item, price);
+        var quantity = CalculateBuyQuantity(item, price, _options.TopUpBuy.BalanceRate);
 
         // skip if there is already an open order at an equal or higher ticker to avoid order twitching
         if (item.Orders.Open.Any(x => x.Side == OrderSide.Buy && x.Type == OrderType.Limit && x.OriginalQuantity == quantity && x.Price >= price))
@@ -358,7 +364,7 @@ public partial class PortfolioAlgo : Algo
         }
 
         // calculate the quantity
-        var quantity = CalculateBuyQuantity(item, buyPrice);
+        var quantity = CalculateBuyQuantity(item, buyPrice, _options.Recovery.BalanceRate);
 
         LogRecoveryPlacingBuy(TypeName, Context.Name, quantity, buyPrice, item.Symbol.BaseAsset, item.Symbol.QuoteAsset);
 
@@ -484,14 +490,14 @@ public partial class PortfolioAlgo : Algo
         return CancelOpenOrders(symbol, OrderSide.Sell, null, RecoverySellTag);
     }
 
-    private decimal CalculateBuyQuantity(SymbolData item, decimal price)
+    private decimal CalculateBuyQuantity(SymbolData item, decimal price, decimal balanceRate)
     {
         // calculate the notional to use for buying
         var notional = item.Spot.QuoteAsset.Free
             + (_options.UseSavings ? item.Savings.QuoteAsset.FreeAmount : 0)
             + (_options.UseSwapPools ? item.SwapPools.QuoteAsset.Total : 0);
 
-        notional *= _options.BuyQuoteBalanceFraction;
+        notional *= balanceRate;
 
         // raise to a valid number
         notional = notional.AdjustTotalUpToMinNotional(item.Symbol);

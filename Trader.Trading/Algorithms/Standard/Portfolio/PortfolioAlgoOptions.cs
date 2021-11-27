@@ -4,9 +4,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Portfolio;
 
 public class PortfolioAlgoOptions
 {
-    [Required, Range(0, 1)]
-    public decimal BuyQuoteBalanceFraction { get; set; } = 0.001M;
-
     /// <summary>
     /// Pad buy orders with this rate (before adjustments) to ensure that the resulting quantity is sellable.
     /// </summary>
@@ -75,6 +72,18 @@ public class PortfolioAlgoOptions
 /// </summary>
 public class PortfolioAlgoOptionsEntryBuy
 {
+    /// <summary>
+    /// Whether entry buying is enabled.
+    /// </summary>
+    [Required]
+    public bool Enabled { get; set; } = false;
+
+    /// <summary>
+    /// The fraction of the quote balance to use for each buy order.
+    /// </summary>
+    [Required, Range(0, 1)]
+    public decimal BalanceRate { get; set; } = 0.001M;
+
     [Required]
     public PortfolioAlgoOptionsEntryBuyRsi Rsi { get; } = new();
 }
@@ -107,6 +116,12 @@ public class PortfolioAlgoOptionsTopUpBuy
     /// </summary>
     [Required]
     public bool Enabled { get; set; } = false;
+
+    /// <summary>
+    /// The fraction of the quote balance to use for each buy order.
+    /// </summary>
+    [Required, Range(0, 1)]
+    public decimal BalanceRate { get; set; } = 0.001M;
 
     /// <summary>
     /// The minimum increase rate from the last lot position for a top up buy to execute.
@@ -182,6 +197,12 @@ public class PortfolioAlgoOptionsRecovery
     /// </summary>
     [Required]
     public decimal DropRate { get; set; } = 0.10M;
+
+    /// <summary>
+    /// The fraction of the quote balance to use for each buy order.
+    /// </summary>
+    [Required, Range(0, 1)]
+    public decimal BalanceRate { get; set; } = 0.001M;
 
     [Required]
     public PortfolioAlgoOptionsRecoveryRsi Rsi { get; } = new();

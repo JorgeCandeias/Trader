@@ -101,12 +101,6 @@ public class PortfolioAlgoOptionsTopBuyRsi
     /// </summary>
     [Required]
     public decimal Overbought { get; set; } = 70M;
-
-    /// <summary>
-    /// Precision for RSI price prediction logic.
-    /// </summary>
-    [Required]
-    public decimal Precision { get; set; } = 0.01M;
 }
 
 /// <summary>

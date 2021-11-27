@@ -27,13 +27,20 @@ public partial class PortfolioAlgo : Algo
 
     protected override IAlgoCommand OnExecute()
     {
-        var now = _clock.UtcNow;
-
-        var commands = new List<IAlgoCommand>(Context.Data.Count * 4);
+        var commands = new List<IAlgoCommand>(Context.Data.Count * 5);
         var statsLookup = new Dictionary<string, PositionStats>();
 
         foreach (var item in Context.Data)
         {
+            // get sellable lots from the end
+            var lots = item.AutoPosition.Positions.Reverse().EnumerateLots(item.Symbol.Filters.LotSize.StepSize).ToList();
+
+            // get the stats for sellable lots
+            var stats = lots.GetStats(item.Ticker.ClosePrice);
+
+            // cache for the reporting method
+            statsLookup[item.Symbol.Name] = stats;
+
             // skip symbol with invalid data
             if (!item.IsValid)
             {
@@ -41,18 +48,11 @@ public partial class PortfolioAlgo : Algo
                 continue;
             }
 
-            // get sellable lots from the end
-            var lots = item.AutoPosition.Positions.Reverse().EnumerateLots(item.Symbol.Filters.LotSize.StepSize).ToList();
-
-            // get the stats for sellable lots
-            var stats = lots.GetStats(item.Ticker.ClosePrice);
-
+            commands.Add(CreateSellOff(item, lots, stats));
             commands.Add(CreateRecoverySell(item, lots, stats));
             commands.Add(CreateRecoveryBuy(item, lots));
-            commands.Add(CreateTopUpBuy(item, lots, stats));
+            commands.Add(CreateTopUpBuy(item, lots));
             commands.Add(CreateEntryBuy(item, lots));
-
-            statsLookup[item.Symbol.Name] = stats;
         }
 
         ReportAggregateStats(statsLookup);
@@ -140,6 +140,37 @@ public partial class PortfolioAlgo : Algo
         }
     }
 
+    private IAlgoCommand CreateSellOff(SymbolData item, IList<PositionLot> lots, PositionStats stats)
+    {
+        // there must be enough quantity to sell off right now
+        if (stats.TotalQuantity < item.Symbol.Filters.LotSize.MinQuantity)
+        {
+            return Noop();
+        }
+
+        // there must be enough notional value to sell off right now
+        if (stats.PresentValue < item.Symbol.Filters.MinNotional.MinNotional)
+        {
+            return Noop();
+        }
+
+        // the present pnl must be at or above the requirement
+        if (stats.RelativeValue < _options.SellOffTriggerRate)
+        {
+            return Noop();
+        }
+
+        // the present rsi must be at or above the requirement
+        var rsi = item.Klines.LastRsi(x => x.ClosePrice, _options.Rsi.Sell.Periods);
+        if (rsi < _options.Rsi.Sell.Overbought)
+        {
+            return Noop();
+        }
+
+        // if all the stars align then dump the assets
+        return MarketSell(item.Symbol, stats.TotalQuantity, _options.UseSavings, _options.UseSwapPools);
+    }
+
     private IAlgoCommand CreateEntryBuy(SymbolData item, IList<PositionLot> lots)
     {
         // only look at symbols without a full lot
@@ -162,10 +193,17 @@ public partial class PortfolioAlgo : Algo
         return EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, price, null, null, _options.UseSavings, _options.UseSwapPools);
     }
 
-    private IAlgoCommand CreateTopUpBuy(SymbolData item, IList<PositionLot> lots, PositionStats stats)
+    private IAlgoCommand CreateTopUpBuy(SymbolData item, IList<PositionLot> lots)
     {
         // there must be something to top up
         if (lots.Count == 0)
+        {
+            return Noop();
+        }
+
+        // the symbol must not be overbought
+        var rsi = item.Klines.LastRsi(x => x.ClosePrice, _options.Rsi.Buy.Periods);
+        if (rsi >= _options.Rsi.Buy.Overbought)
         {
             return Noop();
         }

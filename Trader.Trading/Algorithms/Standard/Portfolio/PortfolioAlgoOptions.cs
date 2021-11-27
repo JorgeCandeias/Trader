@@ -20,16 +20,29 @@ public class PortfolioAlgoOptions
     public decimal FeeRate { get; set; } = 0.001M;
 
     /// <summary>
-    /// Whether selling logic is enabled.
+    /// Whether sell off at high profit logic is enabled.
     /// </summary>
     [Required]
-    public bool SellingEnabled { get; set; } = false;
+    public bool SellOffEnabled { get; set; } = false;
 
     /// <summary>
-    /// The minimum profit rate at which to sell an asset as compared to its average cost.
+    /// The minimum relative value (pv / cost) at which to sell off an asset as compared to its average cost.
     /// </summary>
     [Required, Range(0, double.MaxValue)]
-    public decimal MinSellRate { get; set; } = 2M;
+    public decimal SellOffTriggerRate { get; set; } = 2M;
+
+    /// <summary>
+    /// The drop rate from the ticker within which all positions are sold off.
+    /// 0.0 = sell nothing, 1.0 = sell everything, 0.5 = sell only positions within a 50% drop rate.
+    /// </summary>
+    [Required, Range(0, 1)]
+    public decimal SellOffShaveRate { get; set; } = 0.5M;
+
+    /// <summary>
+    /// When positions are selected by shaving they will only be sold off if their profit rate is at or above this rate.
+    /// </summary>
+    [Required, Range(0, 1)]
+    public decimal MinSellOffShaveProfitRate { get; set; } = 0.01M;
 
     /// <summary>
     /// Whether to enable stop loss logic.
@@ -109,7 +122,7 @@ public class PortfolioAlgoOptionsRecoveryRsi
     /// RSI threshold above which to perfrom recovery sells.
     /// </summary>
     [Required]
-    public decimal Sell { get; set; } = 70M;
+    public decimal Sell { get; set; } = 80M;
 
     /// <summary>
     /// Periods for RSI calculation.
@@ -151,7 +164,7 @@ public class PortfolioAlgoOptionsRsiBuy
     /// RSI threshold above which never to perform top up buys.
     /// </summary>
     [Required]
-    public decimal Overbought { get; set; } = 80M;
+    public decimal Overbought { get; set; } = 70M;
 
     /// <summary>
     /// Precision for RSI price prediction logic.
@@ -172,5 +185,5 @@ public class PortfolioAlgoOptionsRsiSell
     /// RSI threshold above which to attempt a sell.
     /// </summary>
     [Required]
-    public decimal Overbought { get; set; } = 70M;
+    public decimal Overbought { get; set; } = 90M;
 }

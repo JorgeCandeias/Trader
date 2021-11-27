@@ -210,6 +210,12 @@ public partial class PortfolioAlgo : Algo
 
     private IAlgoCommand CreateTopUpBuy(SymbolData item, IList<PositionLot> lots)
     {
+        // topping up must be enabled
+        if (!_options.TopUpBuy.Enabled)
+        {
+            return Noop();
+        }
+
         // there must be something to top up
         if (lots.Count == 0)
         {

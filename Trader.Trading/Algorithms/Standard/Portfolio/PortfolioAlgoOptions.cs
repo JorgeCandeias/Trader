@@ -76,6 +76,12 @@ public class PortfolioAlgoOptions
 public class PortfolioAlgoOptionsTopUpBuy
 {
     /// <summary>
+    /// Whether topping up is enabled.
+    /// </summary>
+    [Required]
+    public bool Enabled { get; set; } = false;
+
+    /// <summary>
     /// The minimum increase rate from the last lot position for a top up buy to execute.
     /// </summary>
     [Required, Range(0, 1)]
@@ -142,7 +148,7 @@ public class PortfolioAlgoOptionsRecovery
     /// Whether recovery logic is enabled.
     /// </summary>
     [Required]
-    public bool Enabled { get; set; } = true;
+    public bool Enabled { get; set; } = false;
 
     /// <summary>
     /// Drop rate from the last buy for recovery to activate.

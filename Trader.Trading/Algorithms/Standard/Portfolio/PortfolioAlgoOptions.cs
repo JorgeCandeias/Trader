@@ -8,9 +8,6 @@ public class PortfolioAlgoOptions
     public decimal BalanceFractionPerBuy { get; set; } = 0.001M;
 
     [Required, Range(0, 1)]
-    public decimal MinChangeFromLastPositionPriceRequiredForTopUpBuy { get; set; } = 0.01M;
-
-    [Required, Range(0, 1)]
     public decimal BuyQuoteBalanceFraction { get; set; } = 0.001M;
 
     /// <summary>
@@ -64,10 +61,52 @@ public class PortfolioAlgoOptions
     [Required]
     public PortfolioAlgoOptionsSellOff SellOff { get; } = new();
 
+    [Required]
+    public PortfolioAlgoOptionsTopUpBuy TopUpBuy { get; } = new();
+
     /// <summary>
     /// Set of symbols to never issue sells against, even for stop loss.
     /// </summary>
     public ISet<string> NeverSellSymbols { get; } = new HashSet<string>();
+}
+
+/// <summary>
+/// Options related to top up buying behaviour.
+/// </summary>
+public class PortfolioAlgoOptionsTopUpBuy
+{
+    /// <summary>
+    /// The minimum increase rate from the last lot position for a top up buy to execute.
+    /// </summary>
+    [Required, Range(0, 1)]
+    public decimal RaiseRate { get; set; } = 0.01M;
+
+    [Required]
+    public PortfolioAlgoOptionsTopBuyRsi Rsi { get; } = new();
+}
+
+/// <summary>
+/// Rsi options related to top up buying behaviour.
+/// </summary>
+public class PortfolioAlgoOptionsTopBuyRsi
+{
+    /// <summary>
+    /// Periods for RSI calculation.
+    /// </summary>
+    [Required]
+    public int Periods { get; set; } = 6;
+
+    /// <summary>
+    /// RSI threshold above which never to perform top up buys.
+    /// </summary>
+    [Required]
+    public decimal Overbought { get; set; } = 70M;
+
+    /// <summary>
+    /// Precision for RSI price prediction logic.
+    /// </summary>
+    [Required]
+    public decimal Precision { get; set; } = 0.01M;
 }
 
 /// <summary>
@@ -88,6 +127,9 @@ public class PortfolioAlgoOptionsSellOff
     public decimal TriggerRate { get; set; } = 2M;
 }
 
+/// <summary>
+/// Options related to recovery behaviour.
+/// </summary>
 public class PortfolioAlgoOptionsRecovery
 {
     /// <summary>

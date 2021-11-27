@@ -217,8 +217,8 @@ public partial class PortfolioAlgo : Algo
         }
 
         // the symbol must not be overbought
-        var rsi = item.Klines.LastRsi(x => x.ClosePrice, _options.Rsi.Buy.Periods);
-        if (rsi >= _options.Rsi.Buy.Overbought)
+        var rsi = item.Klines.LastRsi(x => x.ClosePrice, _options.TopUpBuy.Rsi.Periods);
+        if (rsi >= _options.TopUpBuy.Rsi.Overbought)
         {
             return Noop();
         }
@@ -233,12 +233,12 @@ public partial class PortfolioAlgo : Algo
         }
 
         // skip symbols below min required for top up
-        var price = lastLot.AvgPrice * (1 + _options.MinChangeFromLastPositionPriceRequiredForTopUpBuy);
+        var price = lastLot.AvgPrice * (1 + _options.TopUpBuy.RaiseRate);
         price = price.AdjustPriceUpToTickSize(item.Symbol);
 
         if (item.Ticker.ClosePrice < price)
         {
-            LogTopUpSkippedSymbolWithPriceNotHighEnough(TypeName, Context.Name, item.Symbol.Name, item.Ticker.ClosePrice, price, _options.MinChangeFromLastPositionPriceRequiredForTopUpBuy, item.AutoPosition.Positions.Last.Price);
+            LogTopUpSkippedSymbolWithPriceNotHighEnough(TypeName, Context.Name, item.Symbol.Name, item.Ticker.ClosePrice, price, _options.TopUpBuy.RaiseRate, item.AutoPosition.Positions.Last.Price);
             return Noop();
         }
 

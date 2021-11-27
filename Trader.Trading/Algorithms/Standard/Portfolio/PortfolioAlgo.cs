@@ -26,10 +26,11 @@ public partial class PortfolioAlgo : Algo
 
     protected override IAlgoCommand OnExecute()
     {
+        // always get the latest options so the user can change them in real-time
         _options = _monitor.Get(Context.Name);
 
         var commands = new List<IAlgoCommand>(Context.Data.Count * 5);
-        var statsLookup = new Dictionary<string, PositionStats>();
+        var lookup = new Dictionary<string, PositionStats>();
 
         foreach (var item in Context.Data)
         {
@@ -40,7 +41,7 @@ public partial class PortfolioAlgo : Algo
             var stats = lots.GetStats(item.Ticker.ClosePrice);
 
             // cache for the reporting method
-            statsLookup[item.Symbol.Name] = stats;
+            lookup[item.Symbol.Name] = stats;
 
             // skip symbol with invalid data
             if (!item.IsValid)
@@ -56,12 +57,12 @@ public partial class PortfolioAlgo : Algo
             commands.Add(CreateEntryBuy(item, lots));
         }
 
-        ReportAggregateStats(statsLookup);
+        ReportAggregateStats(lookup);
 
         return Sequence(commands);
     }
 
-    private void ReportAggregateStats(IDictionary<string, PositionStats> statsLookup)
+    private void ReportAggregateStats(Dictionary<string, PositionStats> lookup)
     {
         var reportable = Context.Data.Where(x => !_options.NeverSellSymbols.Contains(x.Symbol.Name));
         var grouped = reportable.GroupBy(x => x.Symbol.QuoteAsset);
@@ -70,7 +71,7 @@ public partial class PortfolioAlgo : Algo
         foreach (var quote in grouped)
         {
             // get stats for every sellable symbol
-            var stats = quote.Select(x => (x.Symbol, Stats: statsLookup[x.Symbol.Name]));
+            var stats = quote.Select(x => (x.Symbol, Stats: lookup[x.Symbol.Name]));
 
             var (cost, pv, rpnl) = quote
                 .Select(x =>

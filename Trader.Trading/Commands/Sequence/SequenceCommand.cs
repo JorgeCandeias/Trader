@@ -3,7 +3,7 @@ using Outcompute.Trader.Trading.Algorithms.Context;
 
 namespace Outcompute.Trader.Trading.Commands.Sequence;
 
-public class SequenceCommand : IAlgoCommand
+internal class SequenceCommand : IAlgoCommand
 {
     public SequenceCommand(IEnumerable<IAlgoCommand> commands)
     {

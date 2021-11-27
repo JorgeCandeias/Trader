@@ -57,7 +57,7 @@ public abstract class Algo : IAlgo
 
     public IAlgoContext Context { get; }
 
-    public virtual NoopAlgoCommand Noop()
+    public virtual IAlgoCommand Noop()
     {
         return NoopAlgoCommand.Instance;
     }

@@ -29,7 +29,7 @@ public partial class PortfolioAlgo : Algo
         // always get the latest options so the user can change them in real-time
         _options = _monitor.Get(Context.Name);
 
-        var commands = new List<IAlgoCommand>(Context.Data.Count * 5);
+        var command = Noop();
         var lookup = new Dictionary<string, PositionStats>();
 
         foreach (var item in Context.Data)
@@ -50,16 +50,17 @@ public partial class PortfolioAlgo : Algo
                 continue;
             }
 
-            commands.Add(CreateSellOff(item, stats));
-            commands.Add(CreateRecoverySell(item, lots));
-            commands.Add(CreateRecoveryBuy(item, lots));
-            commands.Add(CreateTopUpBuy(item, lots));
-            commands.Add(CreateEntryBuy(item, lots));
+            command = command
+                .Then(CreateSellOff(item, stats))
+                .Then(CreateRecoverySell(item, lots))
+                .Then(CreateRecoveryBuy(item, lots))
+                .Then(CreateTopUpBuy(item, lots))
+                .Then(CreateEntryBuy(item, lots));
         }
 
         ReportAggregateStats(lookup);
 
-        return Sequence(commands);
+        return command;
     }
 
     private void ReportAggregateStats(Dictionary<string, PositionStats> lookup)

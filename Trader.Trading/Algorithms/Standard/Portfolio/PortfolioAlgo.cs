@@ -145,6 +145,18 @@ public partial class PortfolioAlgo : Algo
 
     private IAlgoCommand CreateSellOff(SymbolData item, IList<PositionLot> lots, PositionStats stats)
     {
+        // selling must be enabled
+        if (!_options.SellOffEnabled)
+        {
+            return Noop();
+        }
+
+        // symbol must not be on the never sell set
+        if (_options.NeverSellSymbols.Contains(item.Symbol.Name))
+        {
+            return Noop();
+        }
+
         // there must be enough quantity to sell off right now
         if (stats.TotalQuantity < item.Symbol.Filters.LotSize.MinQuantity)
         {

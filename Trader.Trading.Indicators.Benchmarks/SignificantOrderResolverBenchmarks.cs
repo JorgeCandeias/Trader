@@ -2,7 +2,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
-using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Algorithms.Positions;
 using System;
 
@@ -19,7 +18,7 @@ namespace Trader.Trading.Indicators.Benchmarks
 
         private readonly OrderCollection _orders = OrderCollection.Empty;
 
-        private readonly AccountTrade[] _trades = Array.Empty<AccountTrade>();
+        private readonly TradeCollection _trades = TradeCollection.Empty;
 
         public SignificantOrderResolverBenchmarks()
         {

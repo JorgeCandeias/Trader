@@ -26,7 +26,7 @@ internal partial class AutoPositionResolver : IAutoPositionResolver
         public decimal RemainingExecutedQuantity { get; set; }
     }
 
-    public AutoPosition Resolve(Symbol symbol, OrderCollection orders, IEnumerable<AccountTrade> trades, DateTime startTime)
+    public AutoPosition Resolve(Symbol symbol, OrderCollection orders, TradeCollection trades, DateTime startTime)
     {
         // todo: validate that the symbols are consistent between all arguments
 
@@ -152,8 +152,8 @@ internal partial class AutoPositionResolver : IAutoPositionResolver
                 // we have missing trades if this happened
                 LogCouldNotMatchOrder(TypeName, symbol.Name, order.Type, order.Side, order.OrderId, order.Time, order.ExecutedQuantity, quantity);
 
-                // todo: improve this exception
-                throw new InvalidOperationException();
+                // we cannot let algos continue work if we are missing trades or they will make incorrect decisions
+                throw new AutoPositionResolverException($"Could not find all trades for {symbol.Name} {order.Type} {order.Side} order {order.OrderId} with quantity {order.ExecutedQuantity} at {order.Time}");
             }
         }
 

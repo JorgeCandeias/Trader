@@ -48,8 +48,8 @@ public partial class PortfolioAlgo : Algo
                 continue;
             }
 
-            commands.Add(CreateSellOff(item, lots, stats));
-            commands.Add(CreateRecoverySell(item, lots, stats));
+            commands.Add(CreateSellOff(item, stats));
+            commands.Add(CreateRecoverySell(item, lots));
             commands.Add(CreateRecoveryBuy(item, lots));
             commands.Add(CreateTopUpBuy(item, lots));
             commands.Add(CreateEntryBuy(item, lots));
@@ -143,7 +143,7 @@ public partial class PortfolioAlgo : Algo
         }
     }
 
-    private IAlgoCommand CreateSellOff(SymbolData item, IList<PositionLot> lots, PositionStats stats)
+    private IAlgoCommand CreateSellOff(SymbolData item, PositionStats stats)
     {
         // selling must be enabled
         if (!_options.SellOff.Enabled)
@@ -308,7 +308,7 @@ public partial class PortfolioAlgo : Algo
         return CancelOpenOrders(symbol, OrderSide.Buy, null, RecoveryBuyTag);
     }
 
-    private IAlgoCommand CreateRecoverySell(SymbolData item, IList<PositionLot> lots, PositionStats stats)
+    private IAlgoCommand CreateRecoverySell(SymbolData item, IList<PositionLot> lots)
     {
         // recovery must be enabled
         if (!_options.Recovery.Enabled)

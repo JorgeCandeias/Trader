@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Algorithms.Positions;
@@ -12,13 +11,11 @@ public partial class PortfolioAlgo : Algo
 {
     private readonly PortfolioAlgoOptions _options;
     private readonly ILogger _logger;
-    private readonly ISystemClock _clock;
 
-    public PortfolioAlgo(IOptionsSnapshot<PortfolioAlgoOptions> options, ILogger<PortfolioAlgo> logger, ISystemClock clock)
+    public PortfolioAlgo(IOptionsSnapshot<PortfolioAlgoOptions> options, ILogger<PortfolioAlgo> logger)
     {
         _options = options.Get(Context.Name);
         _logger = logger;
-        _clock = clock;
     }
 
     private const string TypeName = nameof(PortfolioAlgo);
@@ -195,7 +192,7 @@ public partial class PortfolioAlgo : Algo
         }
 
         // identify the entry price
-        if (!item.Klines.TryGetPriceForRsi(x => x.ClosePrice, _options.Rsi.Buy.Periods, _options.Rsi.Buy.Oversold, out var price))
+        if (!item.Klines.TryGetPriceForRsi(x => x.ClosePrice, _options.EntryBuy.Rsi.Periods, _options.EntryBuy.Rsi.Oversold, out var price))
         {
             return Noop();
         }
@@ -236,9 +233,20 @@ public partial class PortfolioAlgo : Algo
             return Noop();
         }
 
-        // only ever top up the highest position - recovery is handled elsewhere
-        var maxPrice = lots.Max(x => x.AvgPrice);
+        // only top up if the last lot is not a recovery buy - if so the last lot will be lower than a local max
         var lastLot = lots[0];
+        var maxPrice = 0M;
+        foreach (var lot in lots)
+        {
+            if (lot.AvgPrice >= maxPrice)
+            {
+                maxPrice = lot.AvgPrice;
+            }
+            else
+            {
+                break;
+            }
+        }
         if (lastLot.AvgPrice < maxPrice)
         {
             LogTopUpSkippedSymbolARecoveryBuy(TypeName, Context.Name, item.Symbol.Name, item.AutoPosition.Positions.Last.Quantity, item.Symbol.BaseAsset, item.AutoPosition.Positions.Last.Price, item.Symbol.QuoteAsset);

@@ -64,10 +64,40 @@ public class PortfolioAlgoOptions
     [Required]
     public PortfolioAlgoOptionsTopUpBuy TopUpBuy { get; } = new();
 
+    [Required]
+    public PortfolioAlgoOptionsEntryBuy EntryBuy { get; } = new();
+
     /// <summary>
     /// Set of symbols to never issue sells against, even for stop loss.
     /// </summary>
     public ISet<string> NeverSellSymbols { get; } = new HashSet<string>();
+}
+
+/// <summary>
+/// Options related to entry buying behaviour.
+/// </summary>
+public class PortfolioAlgoOptionsEntryBuy
+{
+    [Required]
+    public PortfolioAlgoOptionsEntryBuyRsi Rsi { get; } = new();
+}
+
+/// <summary>
+/// RSI options related to entry buying behaviour.
+/// </summary>
+public class PortfolioAlgoOptionsEntryBuyRsi
+{
+    /// <summary>
+    /// Periods for RSI calculation.
+    /// </summary>
+    [Required]
+    public int Periods { get; set; } = 6;
+
+    /// <summary>
+    /// RSI threshold under which to perfrom entry buys.
+    /// </summary>
+    [Required]
+    public decimal Oversold { get; set; } = 20M;
 }
 
 /// <summary>
@@ -198,18 +228,6 @@ public class PortfolioAlgoOptionsRsis
 
 public class PortfolioAlgoOptionsRsiBuy
 {
-    /// <summary>
-    /// Periods for RSI calculation.
-    /// </summary>
-    [Required]
-    public int Periods { get; set; } = 6;
-
-    /// <summary>
-    /// RSI threshold under which to perfrom entry buys.
-    /// </summary>
-    [Required]
-    public decimal Oversold { get; set; } = 20M;
-
     /// <summary>
     /// RSI threshold above which never to perform top up buys.
     /// </summary>

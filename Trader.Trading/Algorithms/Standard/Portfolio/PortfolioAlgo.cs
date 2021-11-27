@@ -83,8 +83,12 @@ public partial class PortfolioAlgo : Algo
 
     private void ReportAggregateStats(Dictionary<string, PositionStats> lookup)
     {
-        var reportable = Context.Data.Where(x => !_options.NeverSellSymbols.Contains(x.Symbol.Name));
-        var grouped = reportable.GroupBy(x => x.Symbol.QuoteAsset);
+        var reportable = Context.Data
+            .Where(x => x.IsValid)
+            .Where(x => !_options.NeverSellSymbols.Contains(x.Symbol.Name));
+
+        var grouped = reportable
+            .GroupBy(x => x.Symbol.QuoteAsset);
 
         // report on total portfolio value for each quote
         foreach (var quote in grouped)

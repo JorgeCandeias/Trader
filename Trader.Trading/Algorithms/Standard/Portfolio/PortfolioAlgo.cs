@@ -146,7 +146,7 @@ public partial class PortfolioAlgo : Algo
     private IAlgoCommand CreateSellOff(SymbolData item, IList<PositionLot> lots, PositionStats stats)
     {
         // selling must be enabled
-        if (!_options.SellOffEnabled)
+        if (!_options.SellOff.Enabled)
         {
             return Noop();
         }
@@ -170,7 +170,7 @@ public partial class PortfolioAlgo : Algo
         }
 
         // the present pnl must be at or above the requirement
-        if (stats.RelativeValue < _options.SellOffTriggerRate)
+        if (stats.RelativeValue < _options.SellOff.TriggerRate)
         {
             return Noop();
         }

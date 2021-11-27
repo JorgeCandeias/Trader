@@ -20,31 +20,6 @@ public class PortfolioAlgoOptions
     public decimal FeeRate { get; set; } = 0.001M;
 
     /// <summary>
-    /// Whether sell off at high profit logic is enabled.
-    /// </summary>
-    [Required]
-    public bool SellOffEnabled { get; set; } = false;
-
-    /// <summary>
-    /// The minimum relative value (pv / cost) at which to sell off an asset as compared to its average cost.
-    /// </summary>
-    [Required, Range(0, double.MaxValue)]
-    public decimal SellOffTriggerRate { get; set; } = 2M;
-
-    /// <summary>
-    /// The drop rate from the ticker within which all positions are sold off.
-    /// 0.0 = sell nothing, 1.0 = sell everything, 0.5 = sell only positions within a 50% drop rate.
-    /// </summary>
-    [Required, Range(0, 1)]
-    public decimal SellOffShaveRate { get; set; } = 0.5M;
-
-    /// <summary>
-    /// When positions are selected by shaving they will only be sold off if their profit rate is at or above this rate.
-    /// </summary>
-    [Required, Range(0, 1)]
-    public decimal MinSellOffShaveProfitRate { get; set; } = 0.01M;
-
-    /// <summary>
     /// Whether to enable stop loss logic.
     /// </summary>
     [Required]
@@ -86,10 +61,44 @@ public class PortfolioAlgoOptions
     [Required]
     public PortfolioAlgoOptionsRecovery Recovery { get; } = new();
 
+    [Required]
+    public PortfolioAlgoOptionsSellOff SellOff { get; } = new();
+
     /// <summary>
     /// Set of symbols to never issue sells against, even for stop loss.
     /// </summary>
     public ISet<string> NeverSellSymbols { get; } = new HashSet<string>();
+}
+
+/// <summary>
+/// Options related to sell off behaviour.
+/// </summary>
+public class PortfolioAlgoOptionsSellOff
+{
+    /// <summary>
+    /// Whether sell off at high profit logic is enabled.
+    /// </summary>
+    [Required]
+    public bool Enabled { get; set; } = false;
+
+    /// <summary>
+    /// The minimum relative value (pv / cost) at which to sell off an asset as compared to its average cost.
+    /// </summary>
+    [Required, Range(1, double.MaxValue)]
+    public decimal TriggerRate { get; set; } = 2M;
+
+    /// <summary>
+    /// The drop rate from the ticker within which all positions are sold off.
+    /// 0.0 = sell nothing, 1.0 = sell everything, 0.5 = sell only positions within a 50% drop rate.
+    /// </summary>
+    [Required, Range(0, 1)]
+    public decimal ShaveRate { get; set; } = 0.5M;
+
+    /// <summary>
+    /// When positions are selected by shaving they will only be sold off if their profit rate is at or above this rate.
+    /// </summary>
+    [Required, Range(0, 1)]
+    public decimal MinShaveProfitRate { get; set; } = 0.01M;
 }
 
 public class PortfolioAlgoOptionsRecovery

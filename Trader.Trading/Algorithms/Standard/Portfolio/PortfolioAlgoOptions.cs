@@ -83,6 +83,9 @@ public class PortfolioAlgoOptionsTopUpBuy
 
     [Required]
     public PortfolioAlgoOptionsTopBuyRsi Rsi { get; } = new();
+
+    [Required]
+    public PortfolioAlgoOptionsSma Sma { get; } = new();
 }
 
 /// <summary>
@@ -101,6 +104,15 @@ public class PortfolioAlgoOptionsTopBuyRsi
     /// </summary>
     [Required]
     public decimal Overbought { get; set; } = 70M;
+}
+
+/// <summary>
+/// Sma options related to top up buying behaviour.
+/// </summary>
+public class PortfolioAlgoOptionsSma
+{
+    [Required]
+    public int Periods { get; set; } = 7;
 }
 
 /// <summary>

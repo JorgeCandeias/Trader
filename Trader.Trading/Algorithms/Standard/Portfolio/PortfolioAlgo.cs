@@ -223,6 +223,13 @@ public partial class PortfolioAlgo : Algo
             return Noop();
         }
 
+        // the symbol must be under the safety sma
+        var sma = item.Klines.LastSma(x => x.ClosePrice, _options.TopUpBuy.Sma.Periods);
+        if (item.Ticker.ClosePrice >= sma)
+        {
+            return Noop();
+        }
+
         // only ever top up the highest position - recovery is handled elsewhere
         var maxPrice = lots.Max(x => x.AvgPrice);
         var lastLot = lots[0];

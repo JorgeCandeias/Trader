@@ -86,19 +86,6 @@ public class PortfolioAlgoOptionsSellOff
     /// </summary>
     [Required, Range(1, double.MaxValue)]
     public decimal TriggerRate { get; set; } = 2M;
-
-    /// <summary>
-    /// The drop rate from the ticker within which all positions are sold off.
-    /// 0.0 = sell nothing, 1.0 = sell everything, 0.5 = sell only positions within a 50% drop rate.
-    /// </summary>
-    [Required, Range(0, 1)]
-    public decimal ShaveRate { get; set; } = 0.5M;
-
-    /// <summary>
-    /// When positions are selected by shaving they will only be sold off if their profit rate is at or above this rate.
-    /// </summary>
-    [Required, Range(0, 1)]
-    public decimal MinShaveProfitRate { get; set; } = 0.01M;
 }
 
 public class PortfolioAlgoOptionsRecovery

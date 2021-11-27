@@ -9,12 +9,12 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Portfolio;
 
 public partial class PortfolioAlgo : Algo
 {
-    private readonly PortfolioAlgoOptions _options;
+    private readonly IOptionsMonitor<PortfolioAlgoOptions> _monitor;
     private readonly ILogger _logger;
 
-    public PortfolioAlgo(IOptionsSnapshot<PortfolioAlgoOptions> options, ILogger<PortfolioAlgo> logger)
+    public PortfolioAlgo(IOptionsMonitor<PortfolioAlgoOptions> monitor, ILogger<PortfolioAlgo> logger)
     {
-        _options = options.Get(Context.Name);
+        _monitor = monitor;
         _logger = logger;
     }
 
@@ -22,8 +22,12 @@ public partial class PortfolioAlgo : Algo
     private const string RecoverySellTag = "RecoverySell";
     private const string RecoveryBuyTag = "RecoveryBuy";
 
+    private PortfolioAlgoOptions _options = null!;
+
     protected override IAlgoCommand OnExecute()
     {
+        _options = _monitor.Get(Context.Name);
+
         var commands = new List<IAlgoCommand>(Context.Data.Count * 5);
         var statsLookup = new Dictionary<string, PositionStats>();
 

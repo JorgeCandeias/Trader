@@ -7,15 +7,15 @@ internal interface ITradeProviderGrain : IGrainWithStringKey
 {
     Task SetLastSyncedTradeIdAsync(long tradeId);
 
-    ValueTask<long> GetLastSyncedTradeIdAsync();
+    Task<long> GetLastSyncedTradeIdAsync();
 
-    ValueTask<ReactiveResult> GetTradesAsync();
+    Task<ReactiveResult> GetTradesAsync();
 
-    ValueTask<ReactiveResult?> TryWaitForTradesAsync(Guid version, int fromSerial);
+    Task<ReactiveResult?> TryWaitForTradesAsync(Guid version, int fromSerial);
 
-    ValueTask<AccountTrade?> TryGetTradeAsync(long tradeId);
+    Task<AccountTrade?> TryGetTradeAsync(long tradeId);
 
-    ValueTask SetTradeAsync(AccountTrade trade);
+    Task SetTradeAsync(AccountTrade trade);
 
-    ValueTask SetTradesAsync(IEnumerable<AccountTrade> trades);
+    Task SetTradesAsync(IEnumerable<AccountTrade> trades);
 }

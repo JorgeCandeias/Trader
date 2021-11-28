@@ -84,24 +84,24 @@ internal class TradeProviderGrain : Grain, ITradeProviderGrain
         return _state.WriteStateAsync();
     }
 
-    public ValueTask<long> GetLastSyncedTradeIdAsync()
+    public Task<long> GetLastSyncedTradeIdAsync()
     {
-        return ValueTask.FromResult(_state.State.LastSyncedTradeId);
+        return Task.FromResult(_state.State.LastSyncedTradeId);
     }
 
-    public ValueTask<AccountTrade?> TryGetTradeAsync(long tradeId)
+    public Task<AccountTrade?> TryGetTradeAsync(long tradeId)
     {
         var trade = _tradeByTradeId.TryGetValue(tradeId, out var current) ? current : null;
 
-        return ValueTask.FromResult(trade);
+        return Task.FromResult(trade);
     }
 
     /// <summary>
     /// Gets all cached trades.
     /// </summary>
-    public ValueTask<ReactiveResult> GetTradesAsync()
+    public Task<ReactiveResult> GetTradesAsync()
     {
-        return ValueTask.FromResult(new ReactiveResult(_version, _serial, _trades.ToImmutable().AsTradeCollection()));
+        return Task.FromResult(new ReactiveResult(_version, _serial, _trades.ToImmutable().AsTradeCollection()));
     }
 
     /// <summary>
@@ -109,12 +109,12 @@ internal class TradeProviderGrain : Grain, ITradeProviderGrain
     /// If the specified version is different from the current version then returns all trades along with the current version.
     /// </summary>
     [NoProfiling]
-    public ValueTask<ReactiveResult?> TryWaitForTradesAsync(Guid version, int fromSerial)
+    public Task<ReactiveResult?> TryWaitForTradesAsync(Guid version, int fromSerial)
     {
         // if the versions differ then return the entire data set
         if (version != _version)
         {
-            return new ValueTask<ReactiveResult?>(new ReactiveResult(_version, _serial, _trades.ToImmutable().AsTradeCollection()));
+            return Task.FromResult<ReactiveResult?>(new ReactiveResult(_version, _serial, _trades.ToImmutable().AsTradeCollection()));
         }
 
         // fulfill the request now if possible
@@ -130,11 +130,11 @@ internal class TradeProviderGrain : Grain, ITradeProviderGrain
                 }
             }
 
-            return new ValueTask<ReactiveResult?>(new ReactiveResult(_version, _serial, new TradeCollection(builder.ToImmutable())));
+            return Task.FromResult<ReactiveResult?>(new ReactiveResult(_version, _serial, new TradeCollection(builder.ToImmutable())));
         }
 
         // otherwise let the request wait for more data
-        return new ValueTask<ReactiveResult?>(GetOrCreateCompletionTask(version, fromSerial).WithDefaultOnTimeout(null, _reactive.ReactivePollingTimeout, _lifetime.ApplicationStopping));
+        return GetOrCreateCompletionTask(version, fromSerial).WithDefaultOnTimeout(null, _reactive.ReactivePollingTimeout, _lifetime.ApplicationStopping);
     }
 
     /// <summary>
@@ -153,25 +153,25 @@ internal class TradeProviderGrain : Grain, ITradeProviderGrain
     /// <summary>
     /// Saves the trades to the cache and notifies all pending reactive pollers.
     /// </summary>
-    public ValueTask SetTradeAsync(AccountTrade trade)
+    public Task SetTradeAsync(AccountTrade trade)
     {
-        if (trade is null) throw new ArgumentNullException(nameof(trade));
+        Guard.IsNotNull(trade, nameof(trade));
 
         Apply(trade);
 
-        return ValueTask.CompletedTask;
+        return Task.CompletedTask;
     }
 
-    public ValueTask SetTradesAsync(IEnumerable<AccountTrade> trades)
+    public Task SetTradesAsync(IEnumerable<AccountTrade> trades)
     {
-        if (trades is null) throw new ArgumentNullException(nameof(trades));
+        Guard.IsNotNull(trades, nameof(trades));
 
         foreach (var trade in trades)
         {
             Apply(trade);
         }
 
-        return ValueTask.CompletedTask;
+        return Task.CompletedTask;
     }
 
     private void Apply(AccountTrade trade)
@@ -179,7 +179,7 @@ internal class TradeProviderGrain : Grain, ITradeProviderGrain
         // remove old item to allow an update
         if (_trades.Remove(trade) && !Unindex(trade))
         {
-            throw new InvalidOperationException($"Failed to unindex trade ('{trade.Symbol}','{trade.Id}')");
+            ThrowHelper.ThrowInvalidOperationException($"Failed to unindex trade ('{trade.Symbol}','{trade.Id}')");
         }
 
         _trades.Add(trade);

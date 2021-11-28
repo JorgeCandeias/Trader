@@ -1,10 +1,12 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Moq;
+using Orleans;
 using Orleans.TestingHost;
+using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
+using Outcompute.Trader.Trading.Providers.Trades;
 using Outcompute.Trader.Trading.Tests.Fixtures;
-using System;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
@@ -20,20 +22,48 @@ namespace Outcompute.Trader.Trading.Tests
         }
 
         [Fact]
-        public async Task SetsAndGetsTrade()
+        public async Task SetsTrade()
         {
             // arrange
-            var symbol = Guid.NewGuid().ToString();
-            var tradeId = 123;
-            var trade = AccountTrade.Empty with { Symbol = symbol, Id = tradeId };
-            var provider = _cluster.ServiceProvider.GetRequiredService<ITradeProvider>();
+            var trade = AccountTrade.Empty with { Symbol = "ABCXYZ", Id = 123 };
+
+            var factory = Mock.Of<IGrainFactory>();
+            Mock.Get(factory)
+                .Setup(x => x.GetGrain<ITradeProviderReplicaGrain>(trade.Symbol, null).SetTradeAsync(trade))
+                .Returns(Task.CompletedTask)
+                .Verifiable();
+
+            var repository = Mock.Of<ITradingRepository>();
+            var provider = new TradeProvider(factory, repository);
 
             // act
-            await provider.SetTradeAsync(trade);
-            var result = await provider.TryGetTradeAsync(symbol, tradeId);
+            await provider.SetTradeAsync(trade, CancellationToken.None);
 
             // assert
-            Assert.Equal(trade, result);
+            Mock.Get(factory).VerifyAll();
+        }
+
+        [Fact]
+        public async Task GetsTrade()
+        {
+            // arrange
+            var trade = AccountTrade.Empty with { Symbol = "ABCXYZ", Id = 123 };
+
+            var factory = Mock.Of<IGrainFactory>();
+            Mock.Get(factory)
+                .Setup(x => x.GetGrain<ITradeProviderReplicaGrain>(trade.Symbol, null).TryGetTradeAsync(trade.Id))
+                .ReturnsAsync(trade)
+                .Verifiable();
+
+            var repository = Mock.Of<ITradingRepository>();
+            var provider = new TradeProvider(factory, repository);
+
+            // act
+            var result = await provider.TryGetTradeAsync(trade.Symbol, trade.Id, CancellationToken.None);
+
+            // assert
+            Assert.Same(trade, result);
+            Mock.Get(factory).VerifyAll();
         }
 
         [Fact]

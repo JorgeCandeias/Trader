@@ -6,11 +6,11 @@ namespace Outcompute.Trader.Trading.Providers.Trades;
 
 public interface ITradeProviderReplicaGrain : IGrainWithStringKey
 {
-    ValueTask<TradeCollection> GetTradesAsync();
+    Task<TradeCollection> GetTradesAsync();
 
-    ValueTask<AccountTrade?> TryGetTradeAsync(long tradeId);
+    Task<AccountTrade?> TryGetTradeAsync(long tradeId);
 
-    ValueTask SetTradeAsync(AccountTrade trade);
+    Task SetTradeAsync(AccountTrade trade);
 
-    ValueTask SetTradesAsync(IEnumerable<AccountTrade> trades);
+    Task SetTradesAsync(IEnumerable<AccountTrade> trades);
 }

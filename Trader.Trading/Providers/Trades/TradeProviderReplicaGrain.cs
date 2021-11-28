@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Concurrency;
+using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
 using System.Collections.Immutable;
@@ -14,12 +15,14 @@ internal class TradeProviderReplicaGrain : Grain, ITradeProviderReplicaGrain
 {
     private readonly ReactiveOptions _reactive;
     private readonly IGrainFactory _factory;
+    private readonly ITradingRepository _repository;
     private readonly IHostApplicationLifetime _lifetime;
 
-    public TradeProviderReplicaGrain(IOptions<ReactiveOptions> reactive, IGrainFactory factory, IHostApplicationLifetime lifetime)
+    public TradeProviderReplicaGrain(IOptions<ReactiveOptions> reactive, IGrainFactory factory, ITradingRepository repository, IHostApplicationLifetime lifetime)
     {
         _reactive = reactive.Value;
         _factory = factory;
+        _repository = repository;
         _lifetime = lifetime;
     }
 
@@ -60,41 +63,33 @@ internal class TradeProviderReplicaGrain : Grain, ITradeProviderReplicaGrain
         await base.OnActivateAsync();
     }
 
-    public ValueTask<AccountTrade?> TryGetTradeAsync(long tradeId)
+    public Task<AccountTrade?> TryGetTradeAsync(long tradeId)
     {
         var trade = _tradeByTradeId.TryGetValue(tradeId, out var current) ? current : null;
 
-        return ValueTask.FromResult(trade);
+        return Task.FromResult(trade);
     }
 
-    public ValueTask<TradeCollection> GetTradesAsync()
+    public Task<TradeCollection> GetTradesAsync()
     {
-        return ValueTask.FromResult(new TradeCollection(_trades.ToImmutable()));
+        return Task.FromResult(new TradeCollection(_trades.ToImmutable()));
     }
 
-    public ValueTask SetTradeAsync(AccountTrade trade)
+    public async Task SetTradeAsync(AccountTrade trade)
     {
-        if (trade is null) throw new ArgumentNullException(nameof(trade));
+        Guard.IsNotNull(trade, nameof(trade));
 
-        return SetTradeCoreAsync(trade);
-    }
+        await _repository.SetTradeAsync(trade, _lifetime.ApplicationStopping);
 
-    private async ValueTask SetTradeCoreAsync(AccountTrade trade)
-    {
         await _factory.GetTradeProviderGrain(_symbol).SetTradeAsync(trade);
 
         Apply(trade);
     }
 
-    public ValueTask SetTradesAsync(IEnumerable<AccountTrade> trades)
+    public async Task SetTradesAsync(IEnumerable<AccountTrade> trades)
     {
-        if (trades is null) throw new ArgumentNullException(nameof(trades));
+        Guard.IsNotNull(trades, nameof(trades));
 
-        return SetTradesCoreAsync(trades);
-    }
-
-    private async ValueTask SetTradesCoreAsync(IEnumerable<AccountTrade> trades)
-    {
         await _factory.GetTradeProviderGrain(_symbol).SetTradesAsync(trades);
 
         foreach (var trade in trades)
@@ -132,7 +127,7 @@ internal class TradeProviderReplicaGrain : Grain, ITradeProviderReplicaGrain
     {
         if (_trades.Remove(trade) && !Unindex(trade))
         {
-            throw new InvalidOperationException($"Failed to unindex order ('{trade.Symbol}','{trade.Id}')");
+            ThrowHelper.ThrowInvalidOperationException($"Failed to unindex order ('{trade.Symbol}','{trade.Id}')");
         }
     }
 

@@ -13,25 +13,25 @@ public interface ITradeProvider
     /// <summary>
     /// Gets the last synced trade id.
     /// </summary>
-    ValueTask<long> GetLastSyncedTradeIdAsync(string symbol, CancellationToken cancellationToken = default);
+    Task<long> GetLastSyncedTradeIdAsync(string symbol, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Publishes the specified trade.
     /// </summary>
-    ValueTask SetTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default);
+    Task SetTradeAsync(AccountTrade trade, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Publishers the specified trades.
     /// </summary>
-    ValueTask SetTradesAsync(string symbol, IEnumerable<AccountTrade> trades, CancellationToken cancellationToken = default);
+    Task SetTradesAsync(string symbol, IEnumerable<AccountTrade> trades, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets all trades for the specified symbol.
     /// </summary>
-    ValueTask<TradeCollection> GetTradesAsync(string symbol, CancellationToken cancellationToken = default);
+    Task<TradeCollection> GetTradesAsync(string symbol, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the trade with the specified parameters.
     /// </summary>
-    ValueTask<AccountTrade?> TryGetTradeAsync(string symbol, long tradeId, CancellationToken cancellationToken = default);
+    Task<AccountTrade?> TryGetTradeAsync(string symbol, long tradeId, CancellationToken cancellationToken = default);
 }

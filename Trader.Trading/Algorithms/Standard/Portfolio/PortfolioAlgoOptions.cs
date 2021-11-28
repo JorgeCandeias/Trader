@@ -37,9 +37,6 @@ public class PortfolioAlgoOptions
     [Range(0, int.MaxValue)]
     public decimal? MaxNotional { get; set; }
 
-    [Required, Range(typeof(TimeSpan), "0.00:00:01.000", "365.00:00:00.000")]
-    public TimeSpan Cooldown { get; set; } = TimeSpan.FromDays(1);
-
     [Required]
     public bool UseSavings { get; set; }
 

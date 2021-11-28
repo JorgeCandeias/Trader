@@ -83,9 +83,7 @@ public partial class PortfolioAlgo : Algo
 
     private void ReportAggregateStats(Dictionary<string, PositionStats> lookup)
     {
-        var reportable = Context.Data
-            .Where(x => x.IsValid)
-            .Where(x => !_options.NeverSellSymbols.Contains(x.Symbol.Name));
+        var reportable = Context.Data.Where(x => x.IsValid);
 
         var grouped = reportable
             .GroupBy(x => x.Symbol.QuoteAsset);
@@ -179,7 +177,7 @@ public partial class PortfolioAlgo : Algo
         }
 
         // symbol must not be on the never sell set
-        if (_options.NeverSellSymbols.Contains(item.Symbol.Name))
+        if (_options.SellOff.ExcludeSymbols.Contains(item.Symbol.Name))
         {
             return false;
         }
@@ -203,8 +201,8 @@ public partial class PortfolioAlgo : Algo
         }
 
         // the present rsi must be at or above the requirement
-        var rsi = item.Klines.LastRsi(x => x.ClosePrice, _options.Rsi.Sell.Periods);
-        if (rsi < _options.Rsi.Sell.Overbought)
+        var rsi = item.Klines.LastRsi(x => x.ClosePrice, _options.SellOff.Rsi.Periods);
+        if (rsi < _options.SellOff.Rsi.Overbought)
         {
             return false;
         }
@@ -336,6 +334,12 @@ public partial class PortfolioAlgo : Algo
             return false;
         }
 
+        // symbol must not be on the exclusion set
+        if (_options.Recovery.ExcludeSymbols.Contains(item.Symbol.Name))
+        {
+            return false;
+        }
+
         // there must something to recover
         if (lots.Count == 0)
         {
@@ -384,6 +388,12 @@ public partial class PortfolioAlgo : Algo
 
         // recovery must be enabled
         if (!_options.Recovery.Enabled)
+        {
+            return false;
+        }
+
+        // symbol must not be on the exclusion set
+        if (_options.Recovery.ExcludeSymbols.Contains(item.Symbol.Name))
         {
             return false;
         }
@@ -504,7 +514,7 @@ public partial class PortfolioAlgo : Algo
         notional = notional.AdjustPriceUpToTickSize(item.Symbol);
 
         // pad the order with the fee
-        notional *= 1 + _options.FeeRate;
+        notional *= 2 + _options.FeeRate;
 
         // raise again to a valid number
         notional = notional.AdjustPriceUpToTickSize(item.Symbol);

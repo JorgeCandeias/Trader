@@ -36,7 +36,7 @@ public class SymbolData
     /// Otherwise returns <see cref="true"/>.
     /// Examine the <see cref="Exceptions"/> property for more information.
     /// </summary>
-    public bool IsValid => Exceptions.Count > 0;
+    public bool IsValid => _exceptions.Count == 0;
 
     /// <summary>
     /// Returns any exceptions generated while populating the symbol data.

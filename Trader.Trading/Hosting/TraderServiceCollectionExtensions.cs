@@ -111,7 +111,8 @@ public static class TraderServiceCollectionExtensions
             .AddScoped<IAlgoContextLocal, AlgoContextLocal>()
             .AddScoped<IAlgoContextFactory, AlgoContextFactory>()
 
-            // algo context configurators in order
+            // algo context configurators in order of execution
+            .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextResetConfigurator>()
             .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextTickTimeConfigurator>()
             .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextExchangeInfoConfigurator>()
             .AddSingleton<IAlgoContextConfigurator<AlgoContext>, AlgoContextSymbolConfigurator>()

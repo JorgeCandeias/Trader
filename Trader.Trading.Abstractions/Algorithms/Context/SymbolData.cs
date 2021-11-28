@@ -15,25 +15,167 @@ public class SymbolData
         Name = name ?? throw new ArgumentNullException(nameof(name));
     }
 
+    private readonly List<Exception> _exceptions = new();
+    private Symbol _symbol = Symbol.Empty;
+    private AutoPosition _position = AutoPosition.Empty;
+    private MiniTicker _ticker = MiniTicker.Empty;
+    private readonly SymbolSpotBalances _spotBalances = new();
+    private readonly SymbolSavingsBalances _savingsBalances = new();
+    private readonly SymbolSwapPoolAssetBalances _swapBalances = new();
+    private readonly SymbolOrders _orders = new();
+    private TradeCollection _trades = TradeCollection.Empty;
+    private KlineCollection _klines = KlineCollection.Empty;
+
+    /// <summary>
+    /// The name of the symbol.
+    /// </summary>
     public string Name { get; }
 
-    public bool IsValid { get; set; } = true;
+    /// <summary>
+    /// Returns <see cref="false"/> if there were any problems populating the symbol data.
+    /// Otherwise returns <see cref="true"/>.
+    /// Examine the <see cref="Exceptions"/> property for more information.
+    /// </summary>
+    public bool IsValid => Exceptions.Count > 0;
 
-    public Symbol Symbol { get; set; } = Symbol.Empty;
+    /// <summary>
+    /// Returns any exceptions generated while populating the symbol data.
+    /// </summary>
+    public IList<Exception> Exceptions => _exceptions;
 
-    public AutoPosition AutoPosition { get; set; } = AutoPosition.Empty;
+    /// <summary>
+    /// The exchange information for the symbol.
+    /// </summary>
+    public Symbol Symbol
+    {
+        get
+        {
+            ThrowOnInvalid();
+            return _symbol;
+        }
+        set
+        {
+            _symbol = value;
+        }
+    }
 
-    public MiniTicker Ticker { get; set; } = MiniTicker.Empty;
+    /// <summary>
+    /// The automatically resolved positions for the symbol based on exchange order and trade history.
+    /// </summary>
+    public AutoPosition AutoPosition
+    {
+        get
+        {
+            ThrowOnInvalid();
+            return _position;
+        }
+        set
+        {
+            _position = value;
+        }
+    }
 
-    public SymbolSpotBalances Spot { get; } = new SymbolSpotBalances();
+    /// <summary>
+    /// The current ticker information for the symbol.
+    /// </summary>
+    public MiniTicker Ticker
+    {
+        get
+        {
+            ThrowOnInvalid();
+            return _ticker;
+        }
+        set
+        {
+            _ticker = value;
+        }
+    }
 
-    public SymbolSavingsBalances Savings { get; } = new SymbolSavingsBalances();
+    /// <summary>
+    /// The current spot balances for the assets of the symbol.
+    /// </summary>
+    public SymbolSpotBalances Spot
+    {
+        get
+        {
+            ThrowOnInvalid();
+            return _spotBalances;
+        }
+    }
 
-    public SymbolSwapPoolAssetBalances SwapPools { get; } = new SymbolSwapPoolAssetBalances();
+    /// <summary>
+    /// The current savings balances for the assets of the symbol.
+    /// </summary>
+    public SymbolSavingsBalances Savings
+    {
+        get
+        {
+            ThrowOnInvalid();
+            return _savingsBalances;
+        }
+    }
 
-    public SymbolOrders Orders { get; } = new SymbolOrders();
+    /// <summary>
+    /// The current swap pool balances for the assets of the symbol.
+    /// </summary>
+    public SymbolSwapPoolAssetBalances SwapPools
+    {
+        get
+        {
+            ThrowOnInvalid();
+            return _swapBalances;
+        }
+    }
 
-    public TradeCollection Trades { get; set; } = TradeCollection.Empty;
+    /// <summary>
+    /// The order history of the current symbol.
+    /// </summary>
+    public SymbolOrders Orders
+    {
+        get
+        {
+            ThrowOnInvalid();
+            return _orders;
+        }
+    }
 
-    public KlineCollection Klines { get; set; } = KlineCollection.Empty;
+    /// <summary>
+    /// The trade history of the current symbol.
+    /// </summary>
+    public TradeCollection Trades
+    {
+        get
+        {
+            ThrowOnInvalid();
+            return _trades;
+        }
+        set
+        {
+            _trades = value;
+        }
+    }
+
+    /// <summary>
+    /// The kline history of the current symbol.
+    /// </summary>
+    public KlineCollection Klines
+    {
+        get
+        {
+            ThrowOnInvalid();
+            return _klines;
+        }
+        set
+        {
+            _klines = value;
+        }
+    }
+
+    public void ThrowOnInvalid()
+    {
+        if (_exceptions.Count > 0)
+        {
+            throw new AggregateException(_exceptions);
+        }
+    }
 }

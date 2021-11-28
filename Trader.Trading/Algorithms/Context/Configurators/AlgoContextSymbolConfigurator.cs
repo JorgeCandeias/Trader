@@ -16,11 +16,6 @@ internal class AlgoContextSymbolConfigurator : IAlgoContextConfigurator<AlgoCont
 
     public ValueTask ConfigureAsync(AlgoContext context, string name, CancellationToken cancellationToken = default)
     {
-        if (context.Name != name)
-        {
-            throw new InvalidOperationException();
-        }
-
         var options = _monitor.Get(name);
 
         // populate the symbol set
@@ -40,12 +35,6 @@ internal class AlgoContextSymbolConfigurator : IAlgoContextConfigurator<AlgoCont
             // include the default symbol in the symbol set
             context.Symbols.AddOrUpdate(context.Symbol);
             context.Data.GetOrAdd(context.Symbol.Name).Symbol = context.Symbol;
-        }
-
-        // reset the valid flag
-        foreach (var item in context.Data)
-        {
-            item.IsValid = true;
         }
 
         return ValueTask.CompletedTask;

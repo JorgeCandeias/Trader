@@ -2,6 +2,9 @@
 
 namespace Outcompute.Trader.Trading.Algorithms.Context
 {
+    /// <summary>
+    /// Organizes historical orders for a symbol.
+    /// </summary>
     [SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "N/A")]
     public class SymbolOrders
     {

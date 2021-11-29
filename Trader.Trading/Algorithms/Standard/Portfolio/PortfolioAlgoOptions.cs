@@ -198,6 +198,12 @@ public class PortfolioAlgoOptionsRecovery
     [Required, Range(0, 1)]
     public decimal BalanceRate { get; set; } = 0.001M;
 
+    /// <summary>
+    /// The cooldown between sequential recovery buys.
+    /// </summary>
+    [Required, Range(typeof(TimeSpan), "0.00:00:00.000", "360.00:00:00.000")]
+    public TimeSpan Cooldown { get; set; } = TimeSpan.FromDays(1);
+
     /// <inheritdoc cref="PortfolioAlgoOptionsRecoveryRsi"/>
     [Required]
     public PortfolioAlgoOptionsRecoveryRsi Rsi { get; } = new();
@@ -217,7 +223,7 @@ public class PortfolioAlgoOptionsRecoveryRsi
     /// RSI threshold under which to perfrom recovery buys.
     /// </summary>
     [Required, Range(0, 100)]
-    public decimal Buy { get; set; } = 10M;
+    public decimal Buy { get; set; } = 20M;
 
     /// <summary>
     /// RSI threshold above which to perfrom recovery sells.

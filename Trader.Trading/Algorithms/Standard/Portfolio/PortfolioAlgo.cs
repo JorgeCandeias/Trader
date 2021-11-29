@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Algorithms.Positions;
@@ -11,11 +12,13 @@ public partial class PortfolioAlgo : Algo
 {
     private readonly IOptionsMonitor<PortfolioAlgoOptions> _monitor;
     private readonly ILogger _logger;
+    private readonly ISystemClock _clock;
 
-    public PortfolioAlgo(IOptionsMonitor<PortfolioAlgoOptions> monitor, ILogger<PortfolioAlgo> logger)
+    public PortfolioAlgo(IOptionsMonitor<PortfolioAlgoOptions> monitor, ILogger<PortfolioAlgo> logger, ISystemClock clock)
     {
         _monitor = monitor;
         _logger = logger;
+        _clock = clock;
     }
 
     private const string TypeName = nameof(PortfolioAlgo);
@@ -357,8 +360,14 @@ public partial class PortfolioAlgo : Algo
         }
         buyPrice = buyPrice.AdjustPriceDownToTickSize(item.Symbol);
 
-        // the buy price must be low enough from the last buy for a recovery buy to take place
+        // enough time must have passed since the last buy
         var lastLot = lots[0];
+        if (lastLot.Time.Add(_options.Recovery.Cooldown) >= _clock.UtcNow)
+        {
+            return false;
+        }
+
+        // the buy price must be low enough from the last buy for a recovery buy to take place
         var dropPrice = lastLot.AvgPrice * (1 - _options.Recovery.DropRate);
         if (buyPrice >= dropPrice)
         {

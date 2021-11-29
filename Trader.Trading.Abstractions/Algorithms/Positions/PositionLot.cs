@@ -5,4 +5,4 @@ namespace Outcompute.Trader.Trading.Algorithms.Positions;
 
 [Immutable]
 [StructLayout(LayoutKind.Auto)]
-public readonly record struct PositionLot(decimal Quantity, decimal AvgPrice);
+public readonly record struct PositionLot(decimal Quantity, decimal AvgPrice, DateTime Time);

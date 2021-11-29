@@ -21,6 +21,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Positions
         private decimal _remaining;
         private decimal _quantity;
         private decimal _notional;
+        private DateTime _time;
 
         public override bool MoveNext()
         {
@@ -29,7 +30,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Positions
                 case 1:
                     if (TryFill())
                     {
-                        _current = new PositionLot(_quantity, _notional / _quantity);
+                        _current = new PositionLot(_quantity, _notional / _quantity, _time);
                         return true;
                     }
                     else
@@ -75,11 +76,13 @@ namespace Outcompute.Trader.Trading.Algorithms.Positions
                 return false;
             }
 
-            _remaining = _enumerator.Current.Quantity;
+            var current = _enumerator.Current;
+            _remaining = current.Quantity;
+            _time = current.Time;
 
             if (_remaining < 0)
             {
-                throw new InvalidOperationException($"Cannot enumerate negative position quantity of {_remaining}");
+                ThrowHelper.ThrowInvalidOperationException($"Cannot enumerate negative position quantity of {_remaining}");
             }
 
             return true;

@@ -190,7 +190,7 @@ public class PortfolioAlgoOptionsRecovery
     /// Drop rate from the last buy for recovery to activate.
     /// </summary>
     [Required, Range(0, 1)]
-    public decimal DropRate { get; set; } = 0.50M;
+    public decimal DropRate { get; set; } = 0.10M;
 
     /// <summary>
     /// The fraction of the quote balance to use for each buy order.
@@ -217,13 +217,13 @@ public class PortfolioAlgoOptionsRecoveryRsi
     /// RSI threshold under which to perfrom recovery buys.
     /// </summary>
     [Required, Range(0, 100)]
-    public decimal Buy { get; set; } = 20M;
+    public decimal Buy { get; set; } = 10M;
 
     /// <summary>
     /// RSI threshold above which to perfrom recovery sells.
     /// </summary>
     [Required, Range(0, 100)]
-    public decimal Sell { get; set; } = 80M;
+    public decimal Sell { get; set; } = 70M;
 
     /// <summary>
     /// Periods for RSI calculation.

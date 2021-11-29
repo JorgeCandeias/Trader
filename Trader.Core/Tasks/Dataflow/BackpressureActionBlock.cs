@@ -21,7 +21,7 @@ public class BackpressureActionBlock<TInput> : ITargetBlock<TInput>
         Guard.IsNotNull(action, nameof(action));
 
         _target = new ActionBlock<TInput>(Enqueue);
-        _action = new ActionBlock<TInput>(_ => ConflateAction(action));
+        _action = new ActionBlock<TInput>(_ => Callback(action));
 
         LinkCompletion();
     }
@@ -32,7 +32,7 @@ public class BackpressureActionBlock<TInput> : ITargetBlock<TInput>
         Guard.IsNotNull(dataflowBlockOptions, nameof(dataflowBlockOptions));
 
         _target = new ActionBlock<TInput>(Enqueue);
-        _action = new ActionBlock<TInput>(_ => ConflateAction(action), dataflowBlockOptions);
+        _action = new ActionBlock<TInput>(_ => Callback(action), dataflowBlockOptions);
 
         LinkCompletion();
     }
@@ -42,7 +42,7 @@ public class BackpressureActionBlock<TInput> : ITargetBlock<TInput>
         Guard.IsNotNull(action, nameof(action));
 
         _target = new ActionBlock<TInput>(Enqueue);
-        _action = new ActionBlock<TInput>(_ => ConflateAction(action));
+        _action = new ActionBlock<TInput>(_ => Callback(action));
 
         LinkCompletion();
     }
@@ -53,7 +53,7 @@ public class BackpressureActionBlock<TInput> : ITargetBlock<TInput>
         Guard.IsNotNull(dataflowBlockOptions, nameof(dataflowBlockOptions));
 
         _target = new ActionBlock<TInput>(Enqueue);
-        _action = new ActionBlock<TInput>(_ => ConflateAction(action), dataflowBlockOptions);
+        _action = new ActionBlock<TInput>(_ => Callback(action), dataflowBlockOptions);
 
         LinkCompletion();
     }
@@ -110,7 +110,7 @@ public class BackpressureActionBlock<TInput> : ITargetBlock<TInput>
         }
     }
 
-    private void ConflateAction(Action<IEnumerable<TInput>> action)
+    private void Callback(Action<IEnumerable<TInput>> action)
     {
         if (TryDequeue(out var items))
         {
@@ -118,7 +118,7 @@ public class BackpressureActionBlock<TInput> : ITargetBlock<TInput>
         }
     }
 
-    private Task ConflateAction(Func<IEnumerable<TInput>, Task> action)
+    private Task Callback(Func<IEnumerable<TInput>, Task> action)
     {
         if (TryDequeue(out var items))
         {

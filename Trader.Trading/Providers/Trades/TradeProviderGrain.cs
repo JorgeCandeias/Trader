@@ -176,6 +176,9 @@ internal class TradeProviderGrain : Grain, ITradeProviderGrain
 
     private void Apply(AccountTrade trade)
     {
+        // validate
+        Guard.IsEqualTo(trade.Symbol, _symbol, nameof(trade.Symbol));
+
         // remove old item to allow an update
         if (_trades.Remove(trade) && !Unindex(trade))
         {

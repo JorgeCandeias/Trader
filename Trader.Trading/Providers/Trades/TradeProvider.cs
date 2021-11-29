@@ -56,14 +56,6 @@ internal class TradeProvider : ITradeProvider
         Guard.IsNotNull(symbol, nameof(symbol));
         Guard.IsNotNull(trades, nameof(trades));
 
-        foreach (var item in trades)
-        {
-            if (item.Symbol != symbol)
-            {
-                ThrowHelper.ThrowArgumentOutOfRangeException(nameof(trades), $"Order has symbol '{item.Symbol}' different from partition symbol '{symbol}'");
-            }
-        }
-
         await _repository
             .SetTradesAsync(trades, cancellationToken)
             .ConfigureAwait(false);

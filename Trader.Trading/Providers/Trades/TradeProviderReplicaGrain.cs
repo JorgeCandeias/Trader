@@ -113,6 +113,9 @@ internal class TradeProviderReplicaGrain : Grain, ITradeProviderReplicaGrain
 
     private void Apply(AccountTrade trade)
     {
+        // validate
+        Guard.IsEqualTo(trade.Symbol, _symbol, nameof(trade.Symbol));
+
         // remove old item to allow an update
         Remove(trade);
 

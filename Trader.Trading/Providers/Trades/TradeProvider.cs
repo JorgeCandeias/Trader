@@ -56,10 +56,6 @@ internal class TradeProvider : ITradeProvider
         Guard.IsNotNull(symbol, nameof(symbol));
         Guard.IsNotNull(trades, nameof(trades));
 
-        await _repository
-            .SetTradesAsync(trades, cancellationToken)
-            .ConfigureAwait(false);
-
         await _factory
             .GetTradeProviderReplicaGrain(symbol)
             .SetTradesAsync(trades)

@@ -90,6 +90,8 @@ internal class TradeProviderReplicaGrain : Grain, ITradeProviderReplicaGrain
     {
         Guard.IsNotNull(trades, nameof(trades));
 
+        await _repository.SetTradesAsync(trades, _lifetime.ApplicationStopping);
+
         await _factory.GetTradeProviderGrain(_symbol).SetTradesAsync(trades);
 
         foreach (var trade in trades)

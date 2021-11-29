@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using Microsoft.Toolkit.Diagnostics;
 using Orleans;
 using Orleans.Concurrency;
 using Outcompute.Trader.Data;
@@ -141,6 +140,9 @@ internal class OrderProviderReplicaGrain : Grain, IOrderProviderReplicaGrain
 
     private void Apply(OrderQueryResult item)
     {
+        // validate
+        Guard.IsEqualTo(item.Symbol, _symbol, nameof(item.Symbol));
+
         // remove old item to allow an update
         Remove(item);
 

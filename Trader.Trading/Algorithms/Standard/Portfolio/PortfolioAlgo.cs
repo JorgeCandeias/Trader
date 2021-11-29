@@ -372,7 +372,7 @@ public partial class PortfolioAlgo : Algo
 
         LogRecoveryPlacingBuy(TypeName, Context.Name, quantity, buyPrice, item.Symbol.BaseAsset, item.Symbol.QuoteAsset);
 
-        command = EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.FillOrKill, quantity, null, buyPrice, null, RecoveryBuyTag, _options.UseSavings, _options.UseSwapPools);
+        command = EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, buyPrice, null, RecoveryBuyTag, _options.UseSavings, _options.UseSwapPools);
         return true;
     }
 

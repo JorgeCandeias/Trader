@@ -15,15 +15,11 @@ internal class TickerProvider : ITickerProvider
         _repository = repository;
     }
 
-    public Task SetTickerAsync(MiniTicker ticker, CancellationToken cancellationToken = default)
+    public async Task SetTickerAsync(MiniTicker ticker, CancellationToken cancellationToken = default)
     {
-        if (ticker is null) throw new ArgumentNullException(nameof(ticker));
+        Guard.IsNotNull(ticker, nameof(ticker));
 
-        return SetTickerCoreAsync(ticker, cancellationToken);
-    }
-
-    private async Task SetTickerCoreAsync(MiniTicker ticker, CancellationToken cancellationToken)
-    {
+        // todo: move this into the replica
         await _repository.SetTickerAsync(ticker, cancellationToken);
 
         await _factory.GetTickerProviderReplicaGrain(ticker.Symbol).SetTickerAsync(ticker);
@@ -31,7 +27,7 @@ internal class TickerProvider : ITickerProvider
 
     public Task<MiniTicker?> TryGetTickerAsync(string symbol, CancellationToken cancellationToken = default)
     {
-        if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+        Guard.IsNotNull(symbol, nameof(symbol));
 
         return _factory.GetTickerProviderReplicaGrain(symbol).TryGetTickerAsync();
     }

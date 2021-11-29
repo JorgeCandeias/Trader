@@ -274,23 +274,27 @@ public partial class PortfolioAlgo : Algo
         }
 
         // only top up if the last lot is not a recovery buy - if so the last lot will be lower than a local max
+        // this rule only applies to symbols that participate in recovery
         var lastLot = lots[0];
-        var maxPrice = 0M;
-        foreach (var lot in lots)
+        if (!_options.Recovery.ExcludeSymbols.Contains(item.Symbol.Name))
         {
-            if (lot.AvgPrice >= maxPrice)
+            var maxPrice = 0M;
+            foreach (var lot in lots)
             {
-                maxPrice = lot.AvgPrice;
+                if (lot.AvgPrice >= maxPrice)
+                {
+                    maxPrice = lot.AvgPrice;
+                }
+                else
+                {
+                    break;
+                }
             }
-            else
+            if (lastLot.AvgPrice < maxPrice)
             {
-                break;
+                LogTopUpSkippedSymbolARecoveryBuy(TypeName, Context.Name, item.Symbol.Name, item.AutoPosition.Positions.Last.Quantity, item.Symbol.BaseAsset, item.AutoPosition.Positions.Last.Price, item.Symbol.QuoteAsset);
+                return false;
             }
-        }
-        if (lastLot.AvgPrice < maxPrice)
-        {
-            LogTopUpSkippedSymbolARecoveryBuy(TypeName, Context.Name, item.Symbol.Name, item.AutoPosition.Positions.Last.Quantity, item.Symbol.BaseAsset, item.AutoPosition.Positions.Last.Price, item.Symbol.QuoteAsset);
-            return false;
         }
 
         // skip symbols below min required for top up

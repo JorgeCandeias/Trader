@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Logging;
+using Outcompute.Trader.Core.Tasks.Dataflow;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
+using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks.Dataflow;
 
@@ -52,40 +54,10 @@ internal partial class MarketDataStreamer : IMarketDataStreamer
             .ConfigureAwait(false);
 
         // this worker action pushes incoming klines to the system in the background so we dont hold up the binance stream
-        var klineWorker = new ActionBlock<Kline>(async item =>
-        {
-            try
-            {
-                await _klines
-                    .SetKlineAsync(item, cancellationToken)
-                    .ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                LogFailedToPushKline(ex, TypeName, item);
-            }
-        }, new ExecutionDataflowBlockOptions
-        {
-            MaxDegreeOfParallelism = klineLookup.Count * 2 + 1
-        });
+        var klineWorkers = new Dictionary<(string Symbol, KlineInterval Interval), BackpressureActionBlock<Kline>>();
 
         // this worker action pushes incoming tickers to the system in the background so we dont hold up the binance stream
-        var tickerWorker = new ActionBlock<MiniTicker>(async item =>
-        {
-            try
-            {
-                await _tickers
-                    .SetTickerAsync(item, cancellationToken)
-                    .ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                LogFailedToPushTicker(ex, TypeName, item);
-            }
-        }, new ExecutionDataflowBlockOptions
-        {
-            MaxDegreeOfParallelism = tickerLookup.Count * 2
-        });
+        var tickerWorkers = new Dictionary<string, BackpressureActionBlock<MiniTicker>>();
 
         // now we can stream from the exchange
         while (!cancellationToken.IsCancellationRequested)
@@ -101,12 +73,51 @@ internal partial class MarketDataStreamer : IMarketDataStreamer
 
             if (message.MiniTicker is not null && tickerLookup.Contains(message.MiniTicker.Symbol))
             {
-                tickerWorker.Post(message.MiniTicker);
+                if (!tickerWorkers.TryGetValue(message.MiniTicker.Symbol, out var worker))
+                {
+                    tickerWorkers[message.MiniTicker.Symbol] = worker = new BackpressureActionBlock<MiniTicker>(async items =>
+                    {
+                        // keep the latest ticker only
+                        var item = items.MaxBy(x => x.EventTime)!;
+
+                        try
+                        {
+                            await _tickers.SetTickerAsync(item, cancellationToken).ConfigureAwait(false);
+                        }
+                        catch (Exception ex)
+                        {
+                            LogFailedToPushTicker(ex, TypeName, item);
+                        }
+                    });
+                }
+
+                worker.Post(message.MiniTicker);
             }
 
             if (message.Kline is not null && klineLookup.Contains((message.Kline.Symbol, message.Kline.Interval)))
             {
-                klineWorker.Post(message.Kline);
+                if (!klineWorkers.TryGetValue((message.Kline.Symbol, message.Kline.Interval), out var worker))
+                {
+                    klineWorkers[(message.Kline.Symbol, message.Kline.Interval)] = worker = new BackpressureActionBlock<Kline>(async items =>
+                    {
+                        // keep the latest kline for each open time only
+                        var conflated = items
+                            .GroupBy(x => x.OpenTime)
+                            .Select(x => x.MaxBy(x => x.EventTime)!)
+                            .ToImmutableList();
+
+                        try
+                        {
+                            await _klines.SetKlinesAsync(message.Kline.Symbol, message.Kline.Interval, conflated, cancellationToken);
+                        }
+                        catch (Exception ex)
+                        {
+                            LogFailedToPushKlines(ex, TypeName, conflated);
+                        }
+                    });
+                }
+
+                worker.Post(message.Kline);
             }
         }
     }
@@ -114,8 +125,8 @@ internal partial class MarketDataStreamer : IMarketDataStreamer
     [LoggerMessage(0, LogLevel.Information, "{Type} connecting to streams {Streams}")]
     private partial void LogConnectingToStreams(string type, IEnumerable<string> streams);
 
-    [LoggerMessage(1, LogLevel.Error, "{Type} failed to push kline {Kline}")]
-    private partial void LogFailedToPushKline(Exception exception, string type, Kline kline);
+    [LoggerMessage(1, LogLevel.Error, "{Type} failed to push kline {Klines}")]
+    private partial void LogFailedToPushKlines(Exception exception, string type, IEnumerable<Kline> klines);
 
     [LoggerMessage(2, LogLevel.Error, "{Type} failed to push ticker {Ticker}")]
     private partial void LogFailedToPushTicker(Exception exception, string type, MiniTicker ticker);

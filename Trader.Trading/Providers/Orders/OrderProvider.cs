@@ -32,27 +32,29 @@ internal class OrderProvider : IOrderProvider
 
     public ValueTask<OrderCollection> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default)
     {
-        if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+        Guard.IsNotNull(symbol, nameof(symbol));
 
         return _factory.GetOrderProviderReplicaGrain(symbol).GetOrdersAsync();
     }
 
     public ValueTask<OrderCollection> GetOrdersByFilterAsync(string symbol, OrderSide? side, bool? transient, bool? significant, CancellationToken cancellationToken = default)
     {
-        if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+        Guard.IsNotNull(symbol, nameof(symbol));
 
         return _factory.GetOrderProviderReplicaGrain(symbol).GetOrdersByFilterAsync(side, transient, significant);
     }
 
     public Task SetOrderAsync(OrderQueryResult order, CancellationToken cancellationToken = default)
     {
-        if (order is null) throw new ArgumentNullException(nameof(order));
+        Guard.IsNotNull(order, nameof(order));
 
         return _factory.GetOrderProviderReplicaGrain(order.Symbol).SetOrderAsync(order);
     }
 
     public ValueTask<OrderQueryResult?> TryGetOrderAsync(string symbol, long orderId, CancellationToken cancellationToken = default)
     {
+        Guard.IsNotNull(symbol, nameof(symbol));
+
         return _factory.GetOrderProviderReplicaGrain(symbol).TryGetOrderAsync(orderId);
     }
 
@@ -60,14 +62,6 @@ internal class OrderProvider : IOrderProvider
     {
         Guard.IsNotNull(symbol, nameof(symbol));
         Guard.IsNotNull(items, nameof(items));
-
-        foreach (var item in items)
-        {
-            if (item.Symbol != symbol)
-            {
-                throw new ArgumentOutOfRangeException(nameof(items), $"Order has symbol '{item.Symbol}' different from partition symbol '{symbol}'");
-            }
-        }
 
         return _factory.GetOrderProviderReplicaGrain(symbol).SetOrdersAsync(items);
     }
@@ -97,7 +91,7 @@ internal class OrderProvider : IOrderProvider
 
         if (original is null)
         {
-            throw new InvalidOperationException($"Unable to cancel order '{order.OrderId}' because its original could not be found");
+            ThrowHelper.ThrowInvalidOperationException($"Unable to cancel order '{order.OrderId}' because its original could not be found");
         }
 
         var mapped = _mapper.Map<OrderQueryResult>(order, options =>

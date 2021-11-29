@@ -184,6 +184,9 @@ internal class OrderProviderGrain : Grain, IOrderProviderGrain
 
     private void Apply(OrderQueryResult item)
     {
+        // validate order
+        Guard.IsEqualTo(item.Symbol, _symbol, nameof(item.Symbol));
+
         // ignore updates to completed orders or more recent orders - this avoid issues with out of order updates
         if (_orders.TryGetValue(item, out var current) && (current.Status.IsCompletedStatus() || current.UpdateTime > item.UpdateTime))
         {

@@ -8,6 +8,7 @@ using Outcompute.Trader.Trading.Providers;
 namespace Outcompute.Trader.Trading.Binance.Providers.MarketData
 {
     // todo: promote this to common implementation and hide it behind the ticker provider
+    [Reentrant]
     [StatelessWorker(1)]
     internal class TickerConflaterGrain : Grain, ITickerConflaterGrain
     {

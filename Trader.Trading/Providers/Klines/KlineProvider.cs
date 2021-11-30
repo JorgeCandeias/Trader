@@ -63,6 +63,13 @@ internal class KlineProvider : IKlineProvider
         return _factory.GetKlineProviderReplicaGrain(symbol, interval).SetKlinesAsync(items);
     }
 
+    public ValueTask ConflateKlineAsync(Kline item, CancellationToken cancellationToken = default)
+    {
+        Guard.IsNotNull(item, nameof(item));
+
+        return _factory.GetKlineConflaterGrain(item.Symbol, item.Interval).PushAsync(item);
+    }
+
     public ValueTask<DateTime?> TryGetLastOpenTimeAsync(string symbol, KlineInterval interval, CancellationToken cancellationToken = default)
     {
         Guard.IsNotNull(symbol, nameof(symbol));

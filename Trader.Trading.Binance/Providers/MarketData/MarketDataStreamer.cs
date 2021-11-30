@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Logging;
-using Orleans;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
 
@@ -11,16 +10,16 @@ internal partial class MarketDataStreamer : IMarketDataStreamer
     private readonly ILogger _logger;
     private readonly IMapper _mapper;
     private readonly IMarketDataStreamClientFactory _streams;
-    private readonly IGrainFactory _orleans;
     private readonly ITickerProvider _tickers;
+    private readonly IKlineProvider _klines;
 
-    public MarketDataStreamer(ILogger<MarketDataStreamer> logger, IMapper mapper, IMarketDataStreamClientFactory factory, IGrainFactory orleans, ITickerProvider tickers)
+    public MarketDataStreamer(ILogger<MarketDataStreamer> logger, IMapper mapper, IMarketDataStreamClientFactory factory, ITickerProvider tickers, IKlineProvider klines)
     {
         _logger = logger;
         _mapper = mapper;
         _streams = factory;
-        _orleans = orleans;
         _tickers = tickers;
+        _klines = klines;
     }
 
     private static string TypeName => nameof(MarketDataStreamer);
@@ -68,7 +67,7 @@ internal partial class MarketDataStreamer : IMarketDataStreamer
 
             if (message.Kline is not null && klineLookup.Contains((message.Kline.Symbol, message.Kline.Interval)))
             {
-                await _orleans.GetKlineConflaterGrain(message.Kline.Symbol, message.Kline.Interval).PushAsync(message.Kline);
+                await _klines.ConflateKlineAsync(message.Kline, cancellationToken).ConfigureAwait(false);
             }
         }
     }

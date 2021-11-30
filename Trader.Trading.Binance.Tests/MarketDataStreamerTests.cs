@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
-using Orleans;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Binance.Providers.MarketData;
 using Outcompute.Trader.Trading.Providers;
@@ -57,9 +56,7 @@ namespace Outcompute.Trader.Trading.Binance.Tests
                 .Returns(ValueTask.CompletedTask)
                 .Verifiable();
 
-            var orleans = Mock.Of<IGrainFactory>();
-
-            var streamer = new MarketDataStreamer(logger, mapper, factory, orleans, tickerProvider);
+            var streamer = new MarketDataStreamer(logger, mapper, factory, tickerProvider, klineProvider);
             var tickers = new HashSet<string>(new[] { symbol });
             var klines = new HashSet<(string, KlineInterval)>(new[] { (symbol, KlineInterval.Days1) });
 
@@ -70,7 +67,7 @@ namespace Outcompute.Trader.Trading.Binance.Tests
 
             // assert
             Mock.Get(tickerProvider).Verify(x => x.ConflateTickerAsync(ticker, cancellation.Token));
-            Mock.Get(klineProvider).Verify(x => x.SetKlineAsync(kline, cancellation.Token));
+            Mock.Get(klineProvider).Verify(x => x.ConflateKlineAsync(kline, cancellation.Token));
             Mock.Get(factory).VerifyAll();
 
             cancellation.Cancel();

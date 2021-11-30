@@ -42,6 +42,13 @@ public interface IKlineProvider
     ValueTask SetKlinesAsync(string symbol, KlineInterval interval, IEnumerable<Kline> items, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Publishes the specified kline using backpressure based conflation.
+    /// The latest kline published for a given key will eventually be saved as soon as the system allows, with any interim versions being discarded.
+    /// This method returns immediately and is designed to be called from an exchange streaming client.
+    /// </summary>
+    ValueTask ConflateKlineAsync(Kline item, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets the last persisted open time for the specified parameters.
     /// </summary>
     ValueTask<DateTime?> TryGetLastOpenTimeAsync(string symbol, KlineInterval interval, CancellationToken cancellationToken = default);

@@ -243,18 +243,21 @@ public partial class PortfolioAlgo : Algo
         // entry buying must be enabled
         if (!_options.EntryBuy.Enabled)
         {
+            LogEntryBuyDisabled(TypeName, Context.Name, item.Symbol.Name);
             return false;
         }
 
         // only look at symbols without a full lot
         if (lots.Count > 0)
         {
+            LogEntryBuySkippedSymbolWithLots(TypeName, Context.Name, item.Symbol.Name, lots.Count, lots.Sum(x => x.Quantity), item.Symbol.BaseAsset);
             return false;
         }
 
         // identify the entry price
         if (!item.Klines.TryGetPriceForRsi(x => x.ClosePrice, _options.EntryBuy.Rsi.Periods, _options.EntryBuy.Rsi.Oversold, out var price))
         {
+            LogEntryBuySkippedSymbolWithUnknownRsiPrice(TypeName, Context.Name, item.Symbol.Name, _options.EntryBuy.Rsi.Periods, _options.EntryBuy.Rsi.Oversold);
             return false;
         }
         price = price.AdjustPriceDownToTickSize(item.Symbol);
@@ -759,6 +762,15 @@ public partial class PortfolioAlgo : Algo
 
     [LoggerMessage(56, LogLevel.Information, "{Type} {Name} recovery sell skipped symbol {Symbol} because it could not fit any lot under the local max price of {MaxPrice:F8} {Quote}")]
     private partial void LogRecoverySellSkippedSymbolWithLotsNotUnderMaxPrice(string type, string name, string symbol, decimal maxPrice, string quote);
+
+    [LoggerMessage(57, LogLevel.Information, "{Type} {Name} entry buy skipped symbol {Symbol} because entry buying is disabled")]
+    private partial void LogEntryBuyDisabled(string type, string name, string symbol);
+
+    [LoggerMessage(58, LogLevel.Information, "{Type} {Name} entry buy skipped symbol {Symbol} because it already has {Lots} lots totalling {Quantity:F8} {Asset}")]
+    private partial void LogEntryBuySkippedSymbolWithLots(string type, string name, string symbol, int lots, decimal quantity, string asset);
+
+    [LoggerMessage(59, LogLevel.Information, "{Type} {Name} entry buy skipped symbol {Symbol} because it could identify the price for RSI({Periods}) {RSI:F2}")]
+    private partial void LogEntryBuySkippedSymbolWithUnknownRsiPrice(string type, string name, string symbol, int periods, decimal rsi);
 
     #endregion Logging
 }

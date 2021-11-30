@@ -137,6 +137,9 @@ internal class KlineProviderReplicaGrain : Grain, IKlineProviderReplicaGrain
 
     private void Apply(Kline item)
     {
+        Guard.IsEqualTo(item.Symbol, _symbol, nameof(item.Symbol));
+        Guard.IsEqualTo((int)item.Interval, (int)_interval, nameof(item.Interval));
+
         // remove old item to allow an update
         Remove(item);
 

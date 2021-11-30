@@ -171,7 +171,7 @@ internal class KlineProviderGrain : Grain, IKlineProviderGrain
 
     public ValueTask SetKlinesAsync(IEnumerable<Kline> items)
     {
-        if (items is null) throw new ArgumentNullException(nameof(items));
+        Guard.IsNotNull(items, nameof(items));
 
         foreach (var item in items)
         {
@@ -183,6 +183,9 @@ internal class KlineProviderGrain : Grain, IKlineProviderGrain
 
     private void Apply(Kline item)
     {
+        Guard.IsEqualTo(item.Symbol, _symbol, nameof(item.Symbol));
+        Guard.IsEqualTo((int)item.Interval, (int)_interval, nameof(item.Interval));
+
         Remove(item);
 
         _klines.Add(item);

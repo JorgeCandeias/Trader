@@ -22,51 +22,51 @@ internal class KlineProvider : IKlineProvider
 
     public Task<DateTime> GetLastSyncedKlineOpenTimeAsync(string symbol, KlineInterval interval, CancellationToken cancellationToken = default)
     {
+        Guard.IsNotNull(symbol, nameof(symbol));
+
         return _factory.GetKlineProviderGrain(symbol, interval).GetLastSyncedKlineOpenTimeAsync();
     }
 
     public ValueTask<KlineCollection> GetKlinesAsync(string symbol, KlineInterval interval, CancellationToken cancellationToken = default)
     {
-        if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+        Guard.IsNotNull(symbol, nameof(symbol));
 
         return _factory.GetKlineProviderReplicaGrain(symbol, interval).GetKlinesAsync();
     }
 
     public ValueTask<KlineCollection> GetKlinesAsync(string symbol, KlineInterval interval, DateTime tickTime, int periods, CancellationToken cancellationToken = default)
     {
-        if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+        Guard.IsNotNull(symbol, nameof(symbol));
 
         return _factory.GetKlineProviderReplicaGrain(symbol, interval).GetKlinesAsync(tickTime, periods);
     }
 
     public ValueTask SetKlineAsync(Kline item, CancellationToken cancellationToken = default)
     {
+        Guard.IsNotNull(item, nameof(item));
+
         return _factory.GetKlineProviderReplicaGrain(item.Symbol, item.Interval).SetKlineAsync(item);
     }
 
     public ValueTask<Kline?> TryGetKlineAsync(string symbol, KlineInterval interval, DateTime openTime, CancellationToken cancellationToken = default)
     {
-        if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+        Guard.IsNotNull(symbol, nameof(symbol));
 
         return _factory.GetKlineProviderReplicaGrain(symbol, interval).TryGetKlineAsync(openTime);
     }
 
     public ValueTask SetKlinesAsync(string symbol, KlineInterval interval, IEnumerable<Kline> items, CancellationToken cancellationToken = default)
     {
-        if (symbol is null) throw new ArgumentNullException(nameof(symbol));
-        if (items is null) throw new ArgumentNullException(nameof(items));
-
-        foreach (var item in items)
-        {
-            if (item.Symbol != symbol) throw new ArgumentOutOfRangeException(nameof(items), $"Kline has symbol '{item.Symbol}' different from partition symbol '{symbol}'");
-            if (item.Interval != interval) throw new ArgumentOutOfRangeException(nameof(items), $"Kline has interval '{item.Interval}' different from partition interval '{interval}'");
-        }
+        Guard.IsNotNull(symbol, nameof(symbol));
+        Guard.IsNotNull(items, nameof(items));
 
         return _factory.GetKlineProviderReplicaGrain(symbol, interval).SetKlinesAsync(items);
     }
 
     public ValueTask<DateTime?> TryGetLastOpenTimeAsync(string symbol, KlineInterval interval, CancellationToken cancellationToken = default)
     {
+        Guard.IsNotNull(symbol, nameof(symbol));
+
         return _factory.GetKlineProviderReplicaGrain(symbol, interval).TryGetLastOpenTimeAsync();
     }
 }

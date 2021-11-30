@@ -422,24 +422,28 @@ public partial class PortfolioAlgo : Algo
         // recovery must be enabled
         if (!_options.Recovery.Enabled)
         {
+            LogRecoveryDisabled(TypeName, Context.Name, item.Symbol.Name);
             return false;
         }
 
         // symbol must not be on the exclusion set
         if (_options.Recovery.ExcludeSymbols.Contains(item.Symbol.Name))
         {
+            LogRecoverySellSkippedSymbolOnExclusionSet(TypeName, Context.Name, item.Symbol.Name);
             return false;
         }
 
         // there must be something to recover
         if (lots.Count == 0)
         {
+            LogRecoverySellSkippedSymbolWithoutFullLot(TypeName, Context.Name, item.Symbol.Name);
             return false;
         }
 
         // identify the recovery sell price for the target rsi
         if (!item.Klines.TryGetPriceForRsi(x => x.ClosePrice, _options.Recovery.Rsi.Periods, _options.Recovery.Rsi.Sell, out var sellPrice))
         {
+            LogRecoverySellSkippedSymbolWithUnknownRsiPrice(TypeName, Context.Name, item.Symbol.Name, _options.Recovery.Rsi.Periods, _options.Recovery.Rsi.Sell);
             return false;
         }
         sellPrice = sellPrice.AdjustPriceUpToTickSize(item.Symbol);
@@ -448,6 +452,7 @@ public partial class PortfolioAlgo : Algo
         var lastLot = lots[0];
         if (lastLot.AvgPrice >= sellPrice)
         {
+            LogRecoverySellSkippedSymbolWithHighLastLotPrice(TypeName, Context.Name, item.Symbol.Name, lastLot.AvgPrice, item.Symbol.QuoteAsset, sellPrice);
             return false;
         }
 
@@ -466,6 +471,7 @@ public partial class PortfolioAlgo : Algo
         }
         if (maxPrice <= sellPrice)
         {
+            LogRecoverySellSkippedSymbolWithoutLocalMax(TypeName, Context.Name, item.Symbol.Name, lastLot.AvgPrice, item.Symbol.QuoteAsset);
             return false;
         }
 
@@ -516,16 +522,16 @@ public partial class PortfolioAlgo : Algo
             }
         }
 
-        // if we found something to sell then place the recovery sell
-        if (electedQuantity > 0)
+        if (electedQuantity <= 0)
         {
-            LogRecoveryPlacingSell(TypeName, Context.Name, electedQuantity, item.Symbol.BaseAsset, sellPrice, item.Symbol.QuoteAsset);
-
-            command = EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, electedQuantity, null, sellPrice, null, RecoverySellTag, _options.UseSavings, _options.UseSwapPools);
-            return true;
+            LogRecoverySellSkippedSymbolWithLotsNotUnderMaxPrice(TypeName, Context.Name, item.Symbol.Name, maxPrice, item.Symbol.QuoteAsset);
+            return false;
         }
 
-        return false;
+        // if we found something to sell then place the recovery sell
+        LogRecoverySellElectedSymbol(TypeName, Context.Name, item.Symbol.Name, electedQuantity, item.Symbol.BaseAsset, sellPrice, item.Symbol.QuoteAsset);
+        command = EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, electedQuantity, null, sellPrice, null, RecoverySellTag, _options.UseSavings, _options.UseSwapPools);
+        return true;
     }
 
     private IAlgoCommand CancelRecoverySell(Symbol symbol)
@@ -699,8 +705,8 @@ public partial class PortfolioAlgo : Algo
     [LoggerMessage(43, LogLevel.Warning, "{Type} {Name} recovery cannot place buy to recover lot of {Quantity:F8} {Asset} bought at {BuyPrice:F8} {Quote} with current settings")]
     private partial void LogRecoveryCannotPlaceBuy(string type, string name, decimal quantity, decimal buyPrice, string asset, string quote);
 
-    [LoggerMessage(44, LogLevel.Information, "{Type} {Name} recovery placing recovery sell of {Quantity:F8} {Asset} at {SellPrice:F8} {Quote}")]
-    private partial void LogRecoveryPlacingSell(string type, string name, decimal quantity, string asset, decimal sellPrice, string quote);
+    [LoggerMessage(44, LogLevel.Information, "{Type} {Name} recovery sell elected symbol {Symbol} for selling at {Quantity:F8} {Asset} at {SellPrice:F8} {Quote}")]
+    private partial void LogRecoverySellElectedSymbol(string type, string name, string symbol, decimal quantity, string asset, decimal sellPrice, string quote);
 
     [LoggerMessage(45, LogLevel.Information, "{Type} {Name} top up skipped symbol {Symbol} with a recovery buy of {Quantity:F8} {Asset} at {Price:F8} {Quote}")]
     private partial void LogTopUpSkippedSymbolARecoveryBuy(string type, string name, string symbol, decimal quantity, string asset, decimal price, string quote);
@@ -722,6 +728,27 @@ public partial class PortfolioAlgo : Algo
 
     [LoggerMessage(49, LogLevel.Information, "{Type} {Name} sell off skipped symbol {Symbol} with relative value of {RV:P2} under the trigger of {Trigger:P2}")]
     private partial void LogSellOffSkippedSymbolWithRelativeValueUnderTrigger(string type, string name, string symbol, decimal rv, decimal trigger);
+
+    [LoggerMessage(50, LogLevel.Information, "{Type} {Name} recovery sell skipped symbol {Symbol} because recovery is disabled")]
+    private partial void LogRecoveryDisabled(string type, string name, string symbol);
+
+    [LoggerMessage(51, LogLevel.Information, "{Type} {Name} recovery sell skipped symbol {Symbol} on the exclusion set")]
+    private partial void LogRecoverySellSkippedSymbolOnExclusionSet(string type, string name, string symbol);
+
+    [LoggerMessage(52, LogLevel.Information, "{Type} {Name} recovery sell skipped symbol {Symbol} without any full lot to recover")]
+    private partial void LogRecoverySellSkippedSymbolWithoutFullLot(string type, string name, string symbol);
+
+    [LoggerMessage(53, LogLevel.Information, "{Type} {Name} recovery sell skipped symbol {Symbol} due to inability to identify price for RSI({Periods}) {RSI:F2}")]
+    private partial void LogRecoverySellSkippedSymbolWithUnknownRsiPrice(string type, string name, string symbol, int periods, decimal rsi);
+
+    [LoggerMessage(54, LogLevel.Information, "{Type} {Name} recovery sell skipped symbol {Symbol} with last lot price of {LastLotPrice:F8} {Quote} not under the recovery sell price of {SellPrice:F8} {Quote}")]
+    private partial void LogRecoverySellSkippedSymbolWithHighLastLotPrice(string type, string name, string symbol, decimal lastLotPrice, string quote, decimal sellPrice);
+
+    [LoggerMessage(55, LogLevel.Information, "{Type} {Name} recovery sell skipped symbol {Symbol} because last lot price of {LastLotPrice:F8} {Quote} does not have a local max")]
+    private partial void LogRecoverySellSkippedSymbolWithoutLocalMax(string type, string name, string symbol, decimal lastLotPrice, string quote);
+
+    [LoggerMessage(56, LogLevel.Information, "{Type} {Name} recovery sell skipped symbol {Symbol} because it could not fit any lot under the local max price of {MaxPrice:F8} {Quote}")]
+    private partial void LogRecoverySellSkippedSymbolWithLotsNotUnderMaxPrice(string type, string name, string symbol, decimal maxPrice, string quote);
 
     #endregion Logging
 }

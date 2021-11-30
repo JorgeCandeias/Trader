@@ -185,30 +185,35 @@ public partial class PortfolioAlgo : Algo
         // selling must be enabled
         if (!_options.SellOff.Enabled)
         {
+            LogSellOffDisabled(TypeName, Context.Name, item.Symbol.Name);
             return false;
         }
 
         // symbol must not be on the never sell set
         if (_options.SellOff.ExcludeSymbols.Contains(item.Symbol.Name))
         {
+            LogSellOffSkippedSymbolOnExclusionSet(TypeName, Context.Name, item.Symbol.Name);
             return false;
         }
 
         // there must be enough quantity to sell off right now
         if (stats.TotalQuantity < item.Symbol.Filters.LotSize.MinQuantity)
         {
+            LogSellOffSkippedSymbolWithQuantityUnderMinLotSize(TypeName, Context.Name, item.Symbol.Name, stats.TotalQuantity, item.Symbol.BaseAsset, item.Symbol.Filters.LotSize.MinQuantity);
             return false;
         }
 
         // there must be enough notional value to sell off right now
         if (stats.PresentValue < item.Symbol.Filters.MinNotional.MinNotional)
         {
+            LogSellOffSkippedSymbolWithPresentValueUnderMinNotional(TypeName, Context.Name, item.Symbol.Name, stats.PresentValue, item.Symbol.Filters.MinNotional.MinNotional, item.Symbol.QuoteAsset);
             return false;
         }
 
         // the present pnl must be at or above the requirement
         if (stats.RelativeValue < _options.SellOff.TriggerRate)
         {
+            LogSellOffSkippedSymbolWithRelativeValueUnderTrigger(TypeName, Context.Name, item.Symbol.Name, stats.RelativeValue, _options.SellOff.TriggerRate);
             return false;
         }
 
@@ -216,10 +221,12 @@ public partial class PortfolioAlgo : Algo
         var rsi = item.Klines.LastRsi(x => x.ClosePrice, _options.SellOff.Rsi.Periods);
         if (rsi < _options.SellOff.Rsi.Overbought)
         {
+            LogSellOffSkippedSymbolWithLowSellRsi(TypeName, Context.Name, item.Symbol.Name, _options.SellOff.Rsi.Periods, rsi, _options.SellOff.Rsi.Overbought);
             return false;
         }
 
         // if all the stars align then dump the assets
+        LogSellOffElectedSymbol(TypeName, Context.Name, item.Symbol.Name);
         command = MarketSell(item.Symbol, stats.TotalQuantity, _options.UseSavings, _options.UseSwapPools);
         return true;
     }
@@ -602,8 +609,8 @@ public partial class PortfolioAlgo : Algo
     [LoggerMessage(15, LogLevel.Information, "{Type} evaluating symbols for stop loss")]
     private partial void LogEvaluatingSymbolsForStopLoss(string type);
 
-    [LoggerMessage(16, LogLevel.Information, "{Type} {Name} sell skipped symbol {Symbol} on the never sell set")]
-    private partial void LogSellSkippedSymbolOnNeverSellSet(string type, string name, string symbol);
+    [LoggerMessage(16, LogLevel.Information, "{Type} {Name} sell off skipped symbol {Symbol} because it is in the exclusion set")]
+    private partial void LogSellOffSkippedSymbolOnExclusionSet(string type, string name, string symbol);
 
     [LoggerMessage(17, LogLevel.Information, "{Type} evaluating symbols for pump sell")]
     private partial void LogEvaluatingSymbolsForPumpSell(string type);
@@ -611,8 +618,8 @@ public partial class PortfolioAlgo : Algo
     [LoggerMessage(18, LogLevel.Information, "{Type} skipped symbol {Symbol} with RSI({Periods}) {RSI:F8} lower than sell RSI({Periods}) {SellRSI:F8}")]
     private partial void LogSkippedSymbolWithLowSellRsi(string type, string symbol, int periods, decimal rsi, decimal sellRsi);
 
-    [LoggerMessage(19, LogLevel.Information, "{Type} {Name} elected symbol {Symbol} with RSI({Periods}) {RSI:F8} for pump sell")]
-    private partial void LogSellElectedSymbol(string type, string name, string symbol, int periods, decimal rsi);
+    [LoggerMessage(19, LogLevel.Information, "{Type} {Name} sell off elected symbol {Symbol}")]
+    private partial void LogSellOffElectedSymbol(string type, string name, string symbol);
 
     [LoggerMessage(20, LogLevel.Information, "{Type} skipped symbol {Symbol} with negative relative value {PNL:P2}")]
     private partial void LogSkippedSymbolWithNegativeRelativePnL(string type, string symbol, decimal pnl);
@@ -629,8 +636,8 @@ public partial class PortfolioAlgo : Algo
     [LoggerMessage(24, LogLevel.Information, "{Type} reports stop loss is disabled")]
     private partial void LogStopLossDisabled(string type);
 
-    [LoggerMessage(25, LogLevel.Information, "{Type} {Name} reports selling is disabled")]
-    private partial void LogSellingDisabled(string type, string name);
+    [LoggerMessage(25, LogLevel.Information, "{Type} {Name} sell off skipped symbol {Symbol} because selling off is disabled")]
+    private partial void LogSellOffDisabled(string type, string name, string symbol);
 
     [LoggerMessage(26, LogLevel.Error, "{Type} {Name} skipped invalidated symbol {Symbol}")]
     private partial void LogSkippedInvalidatedSymbol(string type, string name, string symbol);
@@ -665,14 +672,14 @@ public partial class PortfolioAlgo : Algo
     [LoggerMessage(34, LogLevel.Information, "{Type} {Name} stop loss skipped symbol {Symbol} with present notional {Notional:F8} under min notional {MinNotional:F8}")]
     private partial void LogStopLossSkippedSymbolWithNotionalUnderMinNotional(string type, string name, string symbol, decimal notional, decimal minNotional);
 
-    [LoggerMessage(35, LogLevel.Information, "{Type} {Name} sell skipped symbol {Symbol} with quantity {Quantity:F8} {Asset} under min lot size {MinLotSize:F8}")]
-    private partial void LogSellSkippedSymbolWithQuantityUnderMinLotSize(string type, string name, string symbol, decimal quantity, string asset, decimal minLotSize);
+    [LoggerMessage(35, LogLevel.Information, "{Type} {Name} sell off skipped symbol {Symbol} with quantity {Quantity:F8} {Asset} under min lot size of {MinLotSize:F8}")]
+    private partial void LogSellOffSkippedSymbolWithQuantityUnderMinLotSize(string type, string name, string symbol, decimal quantity, string asset, decimal minLotSize);
 
-    [LoggerMessage(36, LogLevel.Information, "{Type} {Name} sell skipped symbol {Symbol} with present notional {Notional:F8} under min notional {MinNotional:F8}")]
-    private partial void LogSellSkippedSymbolWithNotionalUnderMinNotional(string type, string name, string symbol, decimal notional, decimal minNotional);
+    [LoggerMessage(36, LogLevel.Information, "{Type} {Name} sell off skipped symbol {Symbol} with present value {PV:F8} {Quote} under min notional {MinNotional:F8} {Quote}")]
+    private partial void LogSellOffSkippedSymbolWithPresentValueUnderMinNotional(string type, string name, string symbol, decimal pv, decimal minNotional, string quote);
 
-    [LoggerMessage(37, LogLevel.Information, "{Type} {Name} sell symbol {Symbol} with RSI({Periods}) {RSI:F8} lower than sell RSI({Periods}) {SellRSI:F8}")]
-    private partial void LogSellSkippedSymbolWithLowSellRsi(string type, string name, string symbol, int periods, decimal rsi, decimal sellRsi);
+    [LoggerMessage(37, LogLevel.Information, "{Type} {Name} sell off skipped symbol {Symbol} with RSI({Periods}) {RSI:F8} under sell RSI({Periods}) {SellRSI:F8}")]
+    private partial void LogSellOffSkippedSymbolWithLowSellRsi(string type, string name, string symbol, int periods, decimal rsi, decimal sellRsi);
 
     [LoggerMessage(38, LogLevel.Information, "{Type} {Name} entry buy skipped symbol {Symbol} with quantity {Quantity:F8} {Asset} above min {MinLotSize:F8} {Asset} and notional {Cost:F8} above min {MinNotional:F8} {Quote}")]
     private partial void LogEntryBuySkippedSymbolWithQuantityAndNotionalAboveMin(string type, string name, string symbol, decimal quantity, string asset, decimal minLotSize, decimal cost, decimal minNotional, string quote);
@@ -701,7 +708,7 @@ public partial class PortfolioAlgo : Algo
     [LoggerMessage(46, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} above break even with (PnL: {UnrealizedPnl:P2}, Unrealized: {UnrealizedAbsPnl:F8} {Quote}, PV: {PV:F8} {Quote}")]
     private partial void LogSymbolAtBreakEven(string type, string name, string symbol, decimal unrealizedPnl, decimal unrealizedAbsPnl, string quote, decimal pv);
 
-    [LoggerMessage(47, LogLevel.Information, "{Type} {Name} top up skipped symbol {Symbol} because top buying is disabled")]
+    [LoggerMessage(47, LogLevel.Information, "{Type} {Name} top up skipped symbol {Symbol} because top up buying is disabled")]
     private partial void LogTopUpDisabled(string type, string name, string symbol);
 
     [LoggerMessage(48, LogLevel.Information, "{Type} {Name} top up skipped symbol {Symbol} because there is no full lot of at least {Size} {Asset} to top up")]
@@ -712,6 +719,9 @@ public partial class PortfolioAlgo : Algo
 
     [LoggerMessage(48, LogLevel.Information, "{Type} {Name} top up skipped symbol {Symbol} because the ticker of {Ticker:F8} {Asset} is above the safety SMA({Periods}) of {SMA:F8} {Asset}")]
     private partial void LogTopUpSkippedSymbolWithTickerAboveSafetySma(string type, string name, string symbol, decimal ticker, string asset, int periods, decimal sma);
+
+    [LoggerMessage(49, LogLevel.Information, "{Type} {Name} sell off skipped symbol {Symbol} with relative value of {RV:P2} under the trigger of {Trigger:P2}")]
+    private partial void LogSellOffSkippedSymbolWithRelativeValueUnderTrigger(string type, string name, string symbol, decimal rv, decimal trigger);
 
     #endregion Logging
 }

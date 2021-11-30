@@ -15,6 +15,13 @@ internal class TickerProvider : ITickerProvider
         _repository = repository;
     }
 
+    public Task<MiniTicker?> TryGetTickerAsync(string symbol, CancellationToken cancellationToken = default)
+    {
+        Guard.IsNotNull(symbol, nameof(symbol));
+
+        return _factory.GetTickerProviderReplicaGrain(symbol).TryGetTickerAsync();
+    }
+
     public async Task SetTickerAsync(MiniTicker ticker, CancellationToken cancellationToken = default)
     {
         Guard.IsNotNull(ticker, nameof(ticker));
@@ -25,10 +32,10 @@ internal class TickerProvider : ITickerProvider
         await _factory.GetTickerProviderReplicaGrain(ticker.Symbol).SetTickerAsync(ticker);
     }
 
-    public Task<MiniTicker?> TryGetTickerAsync(string symbol, CancellationToken cancellationToken = default)
+    public ValueTask ConflateTickerAsync(MiniTicker ticker, CancellationToken cancellationToken = default)
     {
-        Guard.IsNotNull(symbol, nameof(symbol));
+        Guard.IsNotNull(ticker, nameof(ticker));
 
-        return _factory.GetTickerProviderReplicaGrain(symbol).TryGetTickerAsync();
+        return _factory.GetTickerConflaterGrain(ticker.Symbol).PushAsync(ticker);
     }
 }

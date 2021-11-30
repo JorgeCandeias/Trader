@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Orleans;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Trading.Providers;
 
 namespace Outcompute.Trader.Trading.Binance.Providers.MarketData;
 
@@ -11,13 +12,15 @@ internal partial class MarketDataStreamer : IMarketDataStreamer
     private readonly IMapper _mapper;
     private readonly IMarketDataStreamClientFactory _streams;
     private readonly IGrainFactory _orleans;
+    private readonly ITickerProvider _tickers;
 
-    public MarketDataStreamer(ILogger<MarketDataStreamer> logger, IMapper mapper, IMarketDataStreamClientFactory factory, IGrainFactory orleans)
+    public MarketDataStreamer(ILogger<MarketDataStreamer> logger, IMapper mapper, IMarketDataStreamClientFactory factory, IGrainFactory orleans, ITickerProvider tickers)
     {
         _logger = logger;
         _mapper = mapper;
         _streams = factory;
         _orleans = orleans;
+        _tickers = tickers;
     }
 
     private static string TypeName => nameof(MarketDataStreamer);
@@ -60,7 +63,7 @@ internal partial class MarketDataStreamer : IMarketDataStreamer
 
             if (message.MiniTicker is not null && tickerLookup.Contains(message.MiniTicker.Symbol))
             {
-                await _orleans.GetTickerConflaterGrain(message.MiniTicker.Symbol).PushAsync(message.MiniTicker);
+                await _tickers.ConflateTickerAsync(message.MiniTicker, cancellationToken).ConfigureAwait(false);
             }
 
             if (message.Kline is not null && klineLookup.Contains((message.Kline.Symbol, message.Kline.Interval)))

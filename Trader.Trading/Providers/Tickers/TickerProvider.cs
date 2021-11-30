@@ -26,9 +26,6 @@ internal class TickerProvider : ITickerProvider
     {
         Guard.IsNotNull(ticker, nameof(ticker));
 
-        // todo: move this into the replica
-        await _repository.SetTickerAsync(ticker, cancellationToken);
-
         await _factory.GetTickerProviderReplicaGrain(ticker.Symbol).SetTickerAsync(ticker);
     }
 

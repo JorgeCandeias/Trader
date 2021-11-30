@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Concurrency;
+using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 
 namespace Outcompute.Trader.Trading.Providers.Tickers;
@@ -12,12 +13,14 @@ internal class TickerProviderReplicaGrain : Grain, ITickerProviderReplicaGrain
 {
     private readonly ReactiveOptions _reactive;
     private readonly IGrainFactory _factory;
+    private readonly ITradingRepository _repository;
     private readonly IHostApplicationLifetime _lifetime;
 
-    public TickerProviderReplicaGrain(IOptions<ReactiveOptions> reactive, IGrainFactory factory, IHostApplicationLifetime lifetime)
+    public TickerProviderReplicaGrain(IOptions<ReactiveOptions> reactive, IGrainFactory factory, ITradingRepository repository, IHostApplicationLifetime lifetime)
     {
         _reactive = reactive.Value;
         _factory = factory;
+        _repository = repository;
         _lifetime = lifetime;
     }
 
@@ -53,15 +56,12 @@ internal class TickerProviderReplicaGrain : Grain, ITickerProviderReplicaGrain
         return Task.FromResult(_ticker);
     }
 
-    public Task SetTickerAsync(MiniTicker item)
+    public async Task SetTickerAsync(MiniTicker item)
     {
-        if (item is null) throw new ArgumentNullException(nameof(item));
+        Guard.IsNotNull(item, nameof(item));
 
-        return SetTickerCoreAsync(item);
-    }
+        await _repository.SetTickerAsync(item, _lifetime.ApplicationStopping);
 
-    private async Task SetTickerCoreAsync(MiniTicker item)
-    {
         await _factory.GetTickerProviderGrain(_symbol).SetTickerAsync(item);
 
         (_version, _ticker) = await _factory.GetTickerProviderGrain(_symbol).GetTickerAsync();

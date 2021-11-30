@@ -172,7 +172,7 @@ public class PortfolioAlgoOptionsSellOffRsi
     /// The RSI threshold above which to attempt a sell.
     /// </summary>
     [Required, Range(0, 100)]
-    public decimal Overbought { get; set; } = 90M;
+    public decimal Overbought { get; set; } = 80M;
 }
 
 /// <summary>
@@ -223,7 +223,7 @@ public class PortfolioAlgoOptionsRecoveryRsi
     /// RSI threshold under which to perfrom recovery buys.
     /// </summary>
     [Required, Range(0, 100)]
-    public decimal Buy { get; set; } = 20M;
+    public decimal Buy { get; set; } = 10M;
 
     /// <summary>
     /// RSI threshold above which to perfrom recovery sells.

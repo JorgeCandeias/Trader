@@ -62,10 +62,18 @@ public partial class PortfolioAlgo : Algo
             {
                 command = command.Then(recoverySell);
             }
+            else
+            {
+                command = command.Then(CancelRecoverySell(item.Symbol));
+            }
 
             if (TryCreateRecoveryBuy(item, lots, out var recoveryBuy))
             {
                 command = command.Then(recoveryBuy);
+            }
+            else
+            {
+                command = command.Then(CancelRecoveryBuy(item.Symbol));
             }
 
             if (TryCreateTopUpBuy(item, lots, out var topUpBuy))
@@ -171,6 +179,7 @@ public partial class PortfolioAlgo : Algo
 
     private bool TryCreateSellOff(SymbolData item, PositionStats stats, out IAlgoCommand command)
     {
+        // placeholder
         command = Noop();
 
         // selling must be enabled
@@ -253,12 +262,14 @@ public partial class PortfolioAlgo : Algo
         // topping up must be enabled
         if (!_options.TopUpBuy.Enabled)
         {
+            LogTopUpDisabled(TypeName, Context.Name, item.Symbol.Name);
             return false;
         }
 
         // there must be something to top up
         if (lots.Count == 0)
         {
+            LogTopUpSkippedSymbolWithoutFullLot(TypeName, Context.Name, item.Symbol.Name, item.Symbol.Filters.LotSize.StepSize, item.Symbol.BaseAsset);
             return false;
         }
 
@@ -266,6 +277,7 @@ public partial class PortfolioAlgo : Algo
         var rsi = item.Klines.LastRsi(x => x.ClosePrice, _options.TopUpBuy.Rsi.Periods);
         if (rsi >= _options.TopUpBuy.Rsi.Overbought)
         {
+            LogTopUpSkippedSymbolWithOverboughtRsi(TypeName, Context.Name, item.Symbol.Name, _options.TopUpBuy.Rsi.Periods, rsi, _options.TopUpBuy.Rsi.Overbought);
             return false;
         }
 
@@ -273,6 +285,7 @@ public partial class PortfolioAlgo : Algo
         var sma = item.Klines.LastSma(x => x.ClosePrice, _options.TopUpBuy.Sma.Periods);
         if (item.Ticker.ClosePrice >= sma)
         {
+            LogTopUpSkippedSymbolWithTickerAboveSafetySma(TypeName, Context.Name, item.Symbol.Name, item.Ticker.ClosePrice, item.Symbol.BaseAsset, _options.TopUpBuy.Sma.Periods, sma);
             return false;
         }
 
@@ -332,8 +345,8 @@ public partial class PortfolioAlgo : Algo
 
     private bool TryCreateRecoveryBuy(SymbolData item, IList<PositionLot> lots, out IAlgoCommand command)
     {
-        // by default we just cancel any open recovery buy
-        command = CancelRecoveryBuy(item.Symbol);
+        // placeholder
+        command = Noop();
 
         // recovery must be enabled
         if (!_options.Recovery.Enabled)
@@ -396,8 +409,8 @@ public partial class PortfolioAlgo : Algo
 
     private bool TryCreateRecoverySell(SymbolData item, IList<PositionLot> lots, out IAlgoCommand command)
     {
-        // by default we just cancel any open recovery sell
-        command = CancelRecoverySell(item.Symbol);
+        // placeholder
+        command = Noop();
 
         // recovery must be enabled
         if (!_options.Recovery.Enabled)
@@ -687,6 +700,18 @@ public partial class PortfolioAlgo : Algo
 
     [LoggerMessage(46, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} above break even with (PnL: {UnrealizedPnl:P2}, Unrealized: {UnrealizedAbsPnl:F8} {Quote}, PV: {PV:F8} {Quote}")]
     private partial void LogSymbolAtBreakEven(string type, string name, string symbol, decimal unrealizedPnl, decimal unrealizedAbsPnl, string quote, decimal pv);
+
+    [LoggerMessage(47, LogLevel.Information, "{Type} {Name} top up skipped symbol {Symbol} because top buying is disabled")]
+    private partial void LogTopUpDisabled(string type, string name, string symbol);
+
+    [LoggerMessage(48, LogLevel.Information, "{Type} {Name} top up skipped symbol {Symbol} because there is no full lot of at least {Size} {Asset} to top up")]
+    private partial void LogTopUpSkippedSymbolWithoutFullLot(string type, string name, string symbol, decimal size, string asset);
+
+    [LoggerMessage(47, LogLevel.Information, "{Type} {Name} top up skipped symbol {Symbol} because the RSI({Periods}) of {RSI:F2} is over the threshold of {Overbought:F2}")]
+    private partial void LogTopUpSkippedSymbolWithOverboughtRsi(string type, string name, string symbol, int periods, decimal rsi, decimal overbought);
+
+    [LoggerMessage(48, LogLevel.Information, "{Type} {Name} top up skipped symbol {Symbol} because the ticker of {Ticker:F8} {Asset} is above the safety SMA({Periods}) of {SMA:F8} {Asset}")]
+    private partial void LogTopUpSkippedSymbolWithTickerAboveSafetySma(string type, string name, string symbol, decimal ticker, string asset, int periods, decimal sma);
 
     #endregion Logging
 }

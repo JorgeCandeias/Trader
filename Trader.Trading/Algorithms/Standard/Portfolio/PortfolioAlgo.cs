@@ -24,6 +24,7 @@ public partial class PortfolioAlgo : Algo
     private const string TypeName = nameof(PortfolioAlgo);
     private const string RecoverySellTag = "RecoverySell";
     private const string RecoveryBuyTag = "RecoveryBuy";
+    private const string TopUpBuyTag = "TopUpBuy";
 
     private PortfolioAlgoOptions _options = null!;
 
@@ -79,6 +80,10 @@ public partial class PortfolioAlgo : Algo
             if (TryCreateTopUpBuy(item, lots, out var topUpBuy))
             {
                 command = command.Then(topUpBuy);
+            }
+            else
+            {
+                command = command.Then(CancelTopUpBuy(item.Symbol));
             }
 
             if (TryCreateEntryBuy(item, lots, out var entryBuy))
@@ -348,6 +353,11 @@ public partial class PortfolioAlgo : Algo
         // create the limit order
         command = EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, price, null, null, _options.UseSavings, _options.UseSwapPools);
         return true;
+    }
+
+    private IAlgoCommand CancelTopUpBuy(Symbol symbol)
+    {
+        return CancelOpenOrders(symbol, OrderSide.Buy, null, TopUpBuyTag);
     }
 
     private bool TryCreateRecoveryBuy(SymbolData item, IList<PositionLot> lots, out IAlgoCommand command)

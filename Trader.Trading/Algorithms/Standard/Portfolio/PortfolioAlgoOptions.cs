@@ -156,7 +156,7 @@ public class PortfolioAlgoOptionsSellOff
     /// The minimum relative value (pv / cost) at which to sell off an asset as compared to its average cost.
     /// </summary>
     [Required, Range(1, double.MaxValue)]
-    public decimal TriggerRate { get; set; } = 1.5M;
+    public decimal TriggerRate { get; set; } = 2M;
 
     /// <summary>
     /// Symbols which will never be sold off.

@@ -6,6 +6,7 @@ using Outcompute.Trader.Trading.Commands.CancelOpenOrders;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
+using Outcompute.Trader.Trading.Commands.EnsureSpotBalance;
 using Outcompute.Trader.Trading.Commands.MarketBuy;
 using Outcompute.Trader.Trading.Commands.MarketSell;
 using Outcompute.Trader.Trading.Commands.RedeemSavings;
@@ -129,6 +130,12 @@ public abstract class Algo : IAlgo
     public virtual IAlgoCommand MarketBuy(Symbol symbol, decimal? quantity, decimal? notional, bool raiseToMin, bool raiseToStepSize, bool redeemSavings = false, bool redeemSwapPool = false)
     {
         return new MarketBuyCommand(symbol, quantity, notional, raiseToMin, raiseToStepSize, redeemSavings, redeemSwapPool);
+    }
+
+    /// <inheritdoc cref="EnsureSpotBalance(string, decimal, bool, bool)" />
+    public virtual IAlgoCommand EnsureSpotBalance(string asset, decimal value, bool redeemSavings, bool redeemSwapPools)
+    {
+        return new EnsureSpotBalanceCommand(asset, value, redeemSavings, redeemSwapPools);
     }
 
     #endregion Command Helpers

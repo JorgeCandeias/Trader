@@ -1,30 +1,32 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Outcompute.Trader.Trading.Algorithms.Context;
 
-namespace Outcompute.Trader.Trading.Commands.EnsureSpotBalance
+namespace Outcompute.Trader.Trading.Commands.EnsureSpotBalance;
+
+internal class EnsureSpotBalanceCommand : IAlgoCommand
 {
-    internal class EnsureSpotBalanceCommand : IAlgoCommand
+    public EnsureSpotBalanceCommand(string asset, decimal value, bool redeemSavings, bool redeemSwapPools)
     {
-        public EnsureSpotBalanceCommand(decimal value, bool redeemSavings, bool redeemSwapPools)
-        {
-            Guard.IsGreaterThanOrEqualTo(value, 0, nameof(value));
+        Guard.IsNotNull(asset, nameof(asset));
+        Guard.IsGreaterThanOrEqualTo(value, 0, nameof(value));
 
-            Value = value;
-            RedeemSavings = redeemSavings;
-            RedeemSwapPools = redeemSwapPools;
-        }
+        Asset = asset;
+        Value = value;
+        RedeemSavings = redeemSavings;
+        RedeemSwapPools = redeemSwapPools;
+    }
 
-        public decimal Value { get; }
-        public bool RedeemSavings { get; }
-        public bool RedeemSwapPools { get; }
+    public string Asset { get; }
+    public decimal Value { get; }
+    public bool RedeemSavings { get; }
+    public bool RedeemSwapPools { get; }
 
-        public ValueTask ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
-        {
-            Guard.IsNotNull(context, nameof(context));
+    public ValueTask ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
+    {
+        Guard.IsNotNull(context, nameof(context));
 
-            return context.ServiceProvider
-                .GetRequiredService<IAlgoCommandExecutor<EnsureSpotBalanceCommand>>()
-                .ExecuteAsync(context, this, cancellationToken);
-        }
+        return context.ServiceProvider
+            .GetRequiredService<IAlgoCommandExecutor<EnsureSpotBalanceCommand>>()
+            .ExecuteAsync(context, this, cancellationToken);
     }
 }

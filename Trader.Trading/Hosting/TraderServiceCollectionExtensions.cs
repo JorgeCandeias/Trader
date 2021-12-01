@@ -13,6 +13,7 @@ using Outcompute.Trader.Trading.Commands.CancelOpenOrders;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
+using Outcompute.Trader.Trading.Commands.EnsureSpotBalance;
 using Outcompute.Trader.Trading.Commands.MarketBuy;
 using Outcompute.Trader.Trading.Commands.MarketSell;
 using Outcompute.Trader.Trading.Commands.RedeemSavings;
@@ -145,6 +146,7 @@ public static class TraderServiceCollectionExtensions
             .AddSingleton<IAlgoCommandExecutor<MarketSellCommand>, MarketSellCommandExecutor>()
             .AddSingleton<IAlgoCommandExecutor<MarketBuyCommand>, MarketBuyCommandExecutor>()
             .AddSingleton<IAlgoCommandExecutor<CancelOpenOrdersCommand>, CancelOpenOrdersExecutor>()
+            .AddSingleton<IAlgoCommandExecutor<EnsureSpotBalanceCommand>, EnsureSpotBalanceExecutor>()
 
             // builtin algos
             .AddAccumulatorAlgoType()

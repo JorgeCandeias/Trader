@@ -13,7 +13,7 @@ namespace Outcompute.Trader.Trading.Binance.Tests
         [Fact]
         public async Task Streams()
         {
-            using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            using var cancellation = new CancellationTokenSource(TimeSpan.FromMinutes(1));
 
             // arrange
             var logger = NullLogger<MarketDataStreamer>.Instance;
@@ -41,9 +41,9 @@ namespace Outcompute.Trader.Trading.Binance.Tests
 
             var tickerProvider = Mock.Of<ITickerProvider>();
             Mock.Get(tickerProvider)
-                .Setup(x => x.SetTickerAsync(ticker, cancellation.Token))
+                .Setup(x => x.ConflateTickerAsync(ticker, cancellation.Token))
                 .Callback(() => receivedTicker.TrySetResult())
-                .Returns(Task.CompletedTask)
+                .Returns(ValueTask.CompletedTask)
                 .Verifiable();
 
             var receivedKline = new TaskCompletionSource();
@@ -51,7 +51,7 @@ namespace Outcompute.Trader.Trading.Binance.Tests
 
             var klineProvider = Mock.Of<IKlineProvider>();
             Mock.Get(klineProvider)
-                .Setup(x => x.SetKlineAsync(kline, cancellation.Token))
+                .Setup(x => x.ConflateKlineAsync(kline, cancellation.Token))
                 .Callback(() => receivedKline.TrySetResult())
                 .Returns(ValueTask.CompletedTask)
                 .Verifiable();

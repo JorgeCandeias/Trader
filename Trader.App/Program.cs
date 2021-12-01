@@ -123,30 +123,6 @@ namespace Outcompute.Trader.App
                                 {
                                     options.Port = 6002;
                                 });
-
-                            var templates = new[] { "ValueAveragingTemplate1", "ValueAveragingTemplate2" };
-
-                            foreach (var template in templates)
-                            {
-                                var templateSection = context.Configuration.GetSection(template);
-
-                                foreach (var symbol in templateSection.GetSection("Symbols").Get<string[]>() ?? Array.Empty<string>())
-                                {
-                                    services
-                                        .AddValueAveragingAlgo(symbol)
-                                        .ConfigureHostOptions(options =>
-                                        {
-                                            templateSection.Bind(options);
-
-                                            options.Symbols.Clear();
-                                            options.Symbol = symbol;
-                                        })
-                                        .ConfigureTypeOptions(options =>
-                                        {
-                                            templateSection.GetSection("Options").Bind(options);
-                                        });
-                                }
-                            }
                         });
                 })
                 .RunConsoleAsync();

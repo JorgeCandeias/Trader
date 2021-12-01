@@ -1,7 +1,6 @@
 ﻿using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands;
-using Outcompute.Trader.Trading.Commands.AveragingSell;
 using Outcompute.Trader.Trading.Commands.CancelOpenOrders;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
@@ -12,7 +11,6 @@ using Outcompute.Trader.Trading.Commands.MarketSell;
 using Outcompute.Trader.Trading.Commands.RedeemSavings;
 using Outcompute.Trader.Trading.Commands.RedeemSwapPool;
 using Outcompute.Trader.Trading.Commands.Sequence;
-using Outcompute.Trader.Trading.Commands.SignificantAveragingSell;
 using Outcompute.Trader.Trading.Commands.TrackingBuy;
 
 namespace Outcompute.Trader.Trading.Algorithms;
@@ -75,11 +73,6 @@ public abstract class Algo : IAlgo
 
     #region Command Helpers
 
-    public virtual IAlgoCommand AveragingSell(Symbol symbol, decimal minSellRate, bool redeemSavings = false, bool redeemSwapPool = false)
-    {
-        return new AveragingSellCommand(symbol, minSellRate, redeemSavings, redeemSwapPool);
-    }
-
     /// <inheritdoc cref="CreateOrderCommand(Symbol, OrderType, OrderSide, TimeInForce?, decimal?, decimal?, decimal?, decimal?, string?)"/>
     public virtual IAlgoCommand CreateOrder(Symbol symbol, OrderType type, OrderSide side, TimeInForce timeInForce, decimal? quantity, decimal? notional, decimal? price, decimal? stopPrice, string? tag)
     {
@@ -91,9 +84,9 @@ public abstract class Algo : IAlgo
         return new CancelOrderCommand(symbol, orderId);
     }
 
-    public virtual IAlgoCommand EnsureSingleOrder(Symbol symbol, OrderSide side, OrderType type, TimeInForce? timeInForce, decimal? quantity, decimal? notional, decimal? price, decimal? stopPrice, string? tag = null, bool redeemSavings = false, bool redeemSwapPool = false)
+    public virtual IAlgoCommand EnsureSingleOrder(Symbol symbol, OrderSide side, OrderType type, TimeInForce? timeInForce, decimal? quantity, decimal? notional, decimal? price, decimal? stopPrice, string? tag = null)
     {
-        return new EnsureSingleOrderCommand(symbol, side, type, timeInForce, quantity, notional, price, stopPrice, tag, redeemSavings, redeemSwapPool);
+        return new EnsureSingleOrderCommand(symbol, side, type, timeInForce, quantity, notional, price, stopPrice, tag);
     }
 
     public virtual IAlgoCommand CancelOpenOrders(Symbol symbol, OrderSide? side = null, decimal? distance = null, string? tag = null)
@@ -111,25 +104,20 @@ public abstract class Algo : IAlgo
         return new RedeemSwapPoolCommand(asset, amount);
     }
 
-    public virtual IAlgoCommand SignificantAveragingSell(Symbol symbol, decimal minimumProfitRate, bool redeemSavings, bool redeemSwapPool)
+    public virtual IAlgoCommand TrackingBuy(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional)
     {
-        return new SignificantAveragingSellCommand(symbol, minimumProfitRate, redeemSavings, redeemSwapPool);
+        return new TrackingBuyCommand(symbol, pullbackRatio, targetQuoteBalanceFractionPerBuy, maxNotional);
     }
 
-    public virtual IAlgoCommand TrackingBuy(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings, bool redeemSwapPool)
+    public virtual IAlgoCommand MarketSell(Symbol symbol, decimal quantity, string? tag = null)
     {
-        return new TrackingBuyCommand(symbol, pullbackRatio, targetQuoteBalanceFractionPerBuy, maxNotional, redeemSavings, redeemSwapPool);
-    }
-
-    public virtual IAlgoCommand MarketSell(Symbol symbol, decimal quantity, string? tag = null, bool redeemSavings = false, bool redeemSwapPool = false)
-    {
-        return new MarketSellCommand(symbol, quantity, tag, redeemSavings, redeemSwapPool);
+        return new MarketSellCommand(symbol, quantity, tag);
     }
 
     /// <inheritdoc cref="MarketBuyCommand(Symbol, decimal?, decimal?, bool, bool, bool, bool)" />
-    public virtual IAlgoCommand MarketBuy(Symbol symbol, decimal? quantity, decimal? notional, bool raiseToMin, bool raiseToStepSize, bool redeemSavings = false, bool redeemSwapPool = false)
+    public virtual IAlgoCommand MarketBuy(Symbol symbol, decimal? quantity, decimal? notional, bool raiseToMin, bool raiseToStepSize)
     {
-        return new MarketBuyCommand(symbol, quantity, notional, raiseToMin, raiseToStepSize, redeemSavings, redeemSwapPool);
+        return new MarketBuyCommand(symbol, quantity, notional, raiseToMin, raiseToStepSize);
     }
 
     /// <inheritdoc cref="EnsureSpotBalance(string, decimal, bool, bool)" />

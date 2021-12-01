@@ -43,11 +43,6 @@ namespace Outcompute.Trader.Trading.Tests
 
             var redeemSavingsExecutor = Mock.Of<IAlgoCommandExecutor<RedeemSavingsCommand, RedeemSavingsEvent>>();
 
-            var redeemed = new RedeemSavingsEvent(true, 20m);
-            Mock.Get(redeemSavingsExecutor)
-                .Setup(x => x.ExecuteAsync(It.IsAny<IAlgoContext>(), It.IsAny<RedeemSavingsCommand>(), CancellationToken.None))
-                .ReturnsAsync(redeemed);
-
             var provider = new ServiceCollection()
                 .AddSingleton(cancelOrderExecutor)
                 .AddSingleton(redeemSavingsExecutor)
@@ -66,16 +61,13 @@ namespace Outcompute.Trader.Trading.Tests
             var pullbackRatio = 0.999m;
             var targetQuoteBalanceFractionPerBuy = 0.01m;
             var maxNotional = 100m;
-            var redeemSavings = true;
-            var redeemSwapPool = true;
-            var command = new TrackingBuyCommand(symbol, pullbackRatio, targetQuoteBalanceFractionPerBuy, maxNotional, redeemSavings, redeemSwapPool);
+            var command = new TrackingBuyCommand(symbol, pullbackRatio, targetQuoteBalanceFractionPerBuy, maxNotional);
 
             // act
             await executor.ExecuteAsync(context, command);
 
             // assert
             Mock.Get(cancelOrderExecutor).Verify(x => x.ExecuteAsync(context, It.Is<CancelOrderCommand>(x => x.Symbol == symbol && x.OrderId == 1), CancellationToken.None));
-            Mock.Get(redeemSavingsExecutor).Verify(x => x.ExecuteAsync(context, It.Is<RedeemSavingsCommand>(x => x.Asset == symbol.QuoteAsset && x.Amount == 20.006189M), CancellationToken.None));
         }
     }
 }

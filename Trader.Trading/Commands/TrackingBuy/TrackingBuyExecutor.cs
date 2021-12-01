@@ -4,8 +4,6 @@ using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
-using Outcompute.Trader.Trading.Commands.RedeemSavings;
-using Outcompute.Trader.Trading.Commands.RedeemSwapPool;
 using System.Buffers;
 
 namespace Outcompute.Trader.Trading.Commands.TrackingBuy;
@@ -27,13 +25,9 @@ internal class TrackingBuyExecutor : IAlgoCommandExecutor<TrackingBuyCommand>
         var ticker = data.Ticker;
         var orders = data.Orders.Open.Where(x => x.Side == OrderSide.Buy).ToOrderCollection();
         var balance = data.Spot.QuoteAsset;
-        var savings = data.Savings.QuoteAsset;
-        var pool = data.SwapPools.QuoteAsset;
 
         // identify the free balance
-        var free = balance.Free
-            + (command.RedeemSavings ? savings.FreeAmount : 0m)
-            + (command.RedeemSwapPool ? pool.Total : 0m);
+        var free = balance.Free;
 
         // identify the target low price for the first buy
         var lowBuyPrice = ticker.ClosePrice * command.PullbackRatio;
@@ -83,35 +77,6 @@ internal class TrackingBuyExecutor : IAlgoCommandExecutor<TrackingBuyCommand>
             return;
         }
 
-        // ensure there is enough quote asset for it
-        if (total > balance.Free)
-        {
-            var necessary = total - balance.Free;
-
-            _logger.LogWarning(
-                "{Type} {Name} must place order with amount of {Total} {Quote} but the free amount is only {Free} {Quote}",
-                TypeName, command.Symbol.Name, total, command.Symbol.QuoteAsset, balance.Free, command.Symbol.QuoteAsset);
-
-            // attempt to redeem savings and let the calling algo cycle if successful
-            if (await TryRedeemSavingsAsync(context, command, necessary, cancellationToken))
-            {
-                return;
-            }
-
-            // attempt to redeem from a swap pool and let the calling algo cycle if successful
-            if (await TryRedeemSwapPoolAsync(context, command, necessary, cancellationToken))
-            {
-                return;
-            }
-
-            // if we got here then we could not redeem from any earnings source
-            _logger.LogError(
-                "{Type} {Name} could not redeem the necessary {Necessary:F8} {Asset} from any earnings source",
-                TypeName, command.Symbol.Name, necessary, command.Symbol.QuoteAsset);
-
-            return;
-        }
-
         _logger.LogInformation(
             "{Type} {Name} placing {OrderType} {OrderSode} order on symbol {Symbol} for {Quantity} {Asset} at price {Price} {Quote} for a total of {Total} {Quote}",
             TypeName, command.Symbol.Name, OrderType.Limit, OrderSide.Buy, command.Symbol.Name, quantity, command.Symbol.BaseAsset, lowBuyPrice, command.Symbol.QuoteAsset, quantity * lowBuyPrice, command.Symbol.QuoteAsset);
@@ -122,80 +87,6 @@ internal class TrackingBuyExecutor : IAlgoCommandExecutor<TrackingBuyCommand>
         await new CreateOrderCommand(command.Symbol, OrderType.Limit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, null, lowBuyPrice, null, tag)
             .ExecuteAsync(context, cancellationToken)
             .ConfigureAwait(false);
-    }
-
-    private async Task<bool> TryRedeemSavingsAsync(IAlgoContext context, TrackingBuyCommand command, decimal necessary, CancellationToken cancellationToken)
-    {
-        if (!command.RedeemSavings)
-        {
-            _logger.LogInformation(
-                "{Type} {Name} cannot redeem {Necessary} from savings because redemption is disabled",
-                TypeName, command.Symbol.Name, necessary);
-
-            return false;
-        }
-
-        _logger.LogInformation(
-            "Will attempt to redeem the necessary {Necessary} {Quote} from savings...",
-            necessary, command.Symbol.QuoteAsset);
-
-        var result = await new RedeemSavingsCommand(command.Symbol.QuoteAsset, necessary)
-            .ExecuteAsync(context, cancellationToken)
-            .ConfigureAwait(false);
-
-        if (result.Success)
-        {
-            _logger.LogInformation(
-                "{Type} {Name} redeemed {Quantity} {Asset} from savings to cover the necessary {Necessary} {Asset}",
-                TypeName, command.Symbol.Name, result.Redeemed, command.Symbol.QuoteAsset, necessary, command.Symbol.QuoteAsset);
-
-            return true;
-        }
-        else
-        {
-            _logger.LogError(
-                "{Type} {Name} could not redeem the necessary {Quantity} {Asset} from savings",
-                TypeName, command.Symbol.Name, necessary, command.Symbol.QuoteAsset);
-
-            return false;
-        }
-    }
-
-    private async Task<bool> TryRedeemSwapPoolAsync(IAlgoContext context, TrackingBuyCommand command, decimal necessary, CancellationToken cancellationToken)
-    {
-        if (!command.RedeemSwapPool)
-        {
-            _logger.LogInformation(
-                "{Type} {Name} cannot redeem {Necessary} from a swap pool because redemption is disabled",
-                TypeName, command.Symbol.Name, necessary);
-
-            return false;
-        }
-
-        _logger.LogInformation(
-            "Will attempt to redeem the necessary {Necessary} {Quote} from a swap pool...",
-            necessary, command.Symbol.QuoteAsset);
-
-        var result = await new RedeemSwapPoolCommand(command.Symbol.QuoteAsset, necessary)
-            .ExecuteAsync(context, cancellationToken)
-            .ConfigureAwait(false);
-
-        if (result.Success)
-        {
-            _logger.LogInformation(
-                "{Type} {Name} redeemed {Quantity} {Asset} from swap pool {PoolName} to cover the necessary {Necessary} {Asset}",
-                TypeName, command.Symbol.Name, result.QuoteAmount, result.QuoteAsset, result.PoolName, necessary, command.Symbol.QuoteAsset);
-
-            return true;
-        }
-        else
-        {
-            _logger.LogError(
-                "{Type} {Name} could not redeem the necessary {Quantity} {Asset} from a swap pool",
-                TypeName, command.Symbol.Name, necessary, command.Symbol.QuoteAsset);
-
-            return false;
-        }
     }
 
     private async Task<OrderCollection> TryCloseLowBuysAsync(IAlgoContext context, Symbol symbol, OrderCollection orders, decimal lowBuyPrice, CancellationToken cancellationToken)

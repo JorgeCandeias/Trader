@@ -25,11 +25,13 @@ internal class AccumulatorAlgo : Algo
         var rsi = Context.Klines.LastRsi(x => x.ClosePrice, options.RsiPeriods);
 
         var buyCommand = TrySignalBuy(options, rsi)
-            ? TrackingBuy(Context.Symbol, 1.000M, 0.001M, null, true, true)
+            ? TrackingBuy(Context.Symbol, 1.000M, 0.001M, null)
             : CancelOpenOrders(Context.Symbol, OrderSide.Buy);
 
         var sellCommand = TrySignalSell(options)
-            ? MarketSell(Context.Symbol, Context.AutoPosition.Positions.Sum(x => x.Quantity), null, true, true)
+            ? Sequence(
+                EnsureSpotBalance(Context.Symbol.BaseAsset, Context.AutoPosition.Positions.Sum(x => x.Quantity), true, true),
+                MarketSell(Context.Symbol, Context.AutoPosition.Positions.Sum(x => x.Quantity), null))
             : Noop();
 
         return ValueTask.FromResult(Sequence(buyCommand, sellCommand));

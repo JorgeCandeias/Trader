@@ -6,22 +6,18 @@ namespace Outcompute.Trader.Trading.Commands.TrackingBuy;
 
 public class TrackingBuyCommand : IAlgoCommand
 {
-    public TrackingBuyCommand(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional, bool redeemSavings, bool redeemSwapPool)
+    public TrackingBuyCommand(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional)
     {
         Symbol = symbol ?? throw new ArgumentNullException(nameof(symbol));
         PullbackRatio = pullbackRatio;
         TargetQuoteBalanceFractionPerBuy = targetQuoteBalanceFractionPerBuy;
         MaxNotional = maxNotional;
-        RedeemSavings = redeemSavings;
-        RedeemSwapPool = redeemSwapPool;
     }
 
     public Symbol Symbol { get; }
     public decimal PullbackRatio { get; }
     public decimal TargetQuoteBalanceFractionPerBuy { get; }
     public decimal? MaxNotional { get; }
-    public bool RedeemSavings { get; }
-    public bool RedeemSwapPool { get; }
 
     public ValueTask ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
     {

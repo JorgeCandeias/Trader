@@ -76,7 +76,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Oscillator
             // cancel the stop loss and issue a market sell
             return Sequence(
                 CancelOpenOrders(item.Symbol),
-                MarketSell(item.Symbol, stats.TotalQuantity, null, true, true));
+                EnsureSpotBalance(item.Symbol.BaseAsset, stats.TotalQuantity, true, true),
+                MarketSell(item.Symbol, stats.TotalQuantity, null));
         }
 
         private IAlgoCommand? TrySetStopLoss(SymbolData item, PositionStats stats)
@@ -130,7 +131,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Oscillator
             // set the order for it
             return Sequence(
                 CancelOpenOrders(item.Symbol, OrderSide.Buy),
-                EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, quantity, null, under, stopLossPrice, null, true, true));
+                EnsureSpotBalance(item.Symbol.BaseAsset, quantity, true, true),
+                EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, quantity, null, under, stopLossPrice, null));
         }
 
         private IAlgoCommand? TrySetEntryBuy(SymbolData item, PositionStats stats)
@@ -173,7 +175,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Oscillator
             quantity = quantity.AdjustQuantityUpToMinLotSizeQuantity(item.Symbol);
             quantity = quantity.AdjustQuantityUpToLotStepSize(item.Symbol);
 
-            return EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, lowPrice, null, null, true, true);
+            return Sequence(
+                EnsureSpotBalance(item.Symbol.QuoteAsset, notional, true, true),
+                EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, lowPrice, null, null));
         }
 
         #region Logging

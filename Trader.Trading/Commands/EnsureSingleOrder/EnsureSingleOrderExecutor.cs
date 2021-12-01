@@ -3,31 +3,23 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
-using Outcompute.Trader.Trading.Commands.RedeemSavings;
-using Outcompute.Trader.Trading.Commands.RedeemSwapPool;
-using Outcompute.Trader.Trading.Providers;
 
 namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
 
 internal partial class EnsureSingleOrderExecutor : IAlgoCommandExecutor<EnsureSingleOrderCommand>
 {
     private readonly ILogger _logger;
-    private readonly IBalanceProvider _balances;
 
-    public EnsureSingleOrderExecutor(ILogger<EnsureSingleOrderExecutor> logger, IBalanceProvider balances)
+    public EnsureSingleOrderExecutor(ILogger<EnsureSingleOrderExecutor> logger)
     {
         _logger = logger;
-        _balances = balances;
     }
-
-    private const string TypeName = nameof(EnsureSingleOrderExecutor);
 
     public async ValueTask ExecuteAsync(IAlgoContext context, EnsureSingleOrderCommand command, CancellationToken cancellationToken = default)
     {
         // get context data
         var data = context.Data[command.Symbol.Name];
         var orders = data.Orders.Open.Where(x => x.Side == command.Side);
-        var ticker = data.Ticker;
 
         // cancel all non-desired orders
         var live = 0;
@@ -57,77 +49,6 @@ internal partial class EnsureSingleOrderExecutor : IAlgoCommandExecutor<EnsureSi
         if (live > 0)
         {
             return;
-        }
-
-        // get the balance for the affected asset
-        var sourceAsset = command.Side switch
-        {
-            OrderSide.Buy => command.Symbol.QuoteAsset,
-            OrderSide.Sell => command.Symbol.BaseAsset,
-            _ => throw new InvalidOperationException()
-        };
-
-        var balance = await _balances.GetRequiredBalanceAsync(sourceAsset, cancellationToken).ConfigureAwait(false);
-
-        // get the quantity for the affected asset
-        var sourceQuantity = command.Side switch
-        {
-            OrderSide.Buy =>
-                command.Notional ?? (command.Quantity.HasValue ? command.Quantity.Value * (command.Price ?? command.StopPrice ?? ticker.ClosePrice) :
-                ThrowHelper.ThrowInvalidOperationException<decimal>()),
-
-            OrderSide.Sell =>
-                command.Quantity ?? (command.Notional.HasValue ? command.Notional.Value / (command.Price ?? command.StopPrice ?? ticker.ClosePrice) :
-                ThrowHelper.ThrowInvalidOperationException<decimal>()),
-
-            _ => ThrowHelper.ThrowInvalidOperationException<decimal>()
-        };
-
-        // if there is not enough units to place the order then attempt to redeem from savings
-        if (balance.Free < sourceQuantity)
-        {
-            if (command.RedeemSavings)
-            {
-                var necessary = sourceQuantity - balance.Free;
-
-                var result = await new RedeemSavingsCommand(sourceAsset, necessary)
-                    .ExecuteAsync(context, cancellationToken)
-                    .ConfigureAwait(false);
-
-                if (result.Success)
-                {
-                    LogRedeemedFromSavings(TypeName, command.Symbol.Name, result.Redeemed, sourceAsset, necessary);
-
-                    return;
-                }
-                else
-                {
-                    LogCouldNotRedeemFromSavings(TypeName, command.Symbol.Name, necessary, sourceAsset);
-
-                    var result2 = await new RedeemSwapPoolCommand(sourceAsset, necessary)
-                        .ExecuteAsync(context, cancellationToken)
-                        .ConfigureAwait(false);
-
-                    if (result2.Success)
-                    {
-                        LogRedeemedFromSwapPool(TypeName, command.Symbol.Name, result2.QuoteAmount, sourceAsset, necessary);
-
-                        return;
-                    }
-                    else
-                    {
-                        LogCouldNotRedeemFromSwapPool(TypeName, command.Symbol.Name, necessary, sourceAsset);
-
-                        return;
-                    }
-                }
-            }
-            else
-            {
-                LogMustPlaceOrderButRedemptionIsDisabled(TypeName, command.Symbol.Name, command.Type, command.Side, command.Quantity, command.Symbol.BaseAsset, command.Price ?? command.StopPrice, command.Symbol.QuoteAsset, command.Notional, balance.Free, sourceAsset);
-
-                return;
-            }
         }
 
         // if we got here then we can place the order

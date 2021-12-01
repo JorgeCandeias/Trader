@@ -14,7 +14,8 @@ internal class MarketBuyCommand : AlgoCommandBase
     /// <param name="notional">The quote asset quantity to buy.</param>
     /// <param name="raiseToMin">Whether to raise the <paramref name="quantity"/> or <paramref name="notional"/> to the exchange minimum to ensure a valid order.</param>
     /// <param name="raiseToStepSize">Whether to raise the fractional <paramref name="quantity"/> or <paramref name="notional"/> values to the next step size of the exchange to ensure a valid order.</param>
-    internal MarketBuyCommand(Symbol symbol, decimal? quantity, decimal? notional, bool raiseToMin = false, bool raiseToStepSize = false, bool redeemSavings = false, bool redeemSwapPool = false)
+    /// <param name="tag">Unique tag of the open order.</param>
+    internal MarketBuyCommand(Symbol symbol, decimal? quantity, decimal? notional, bool raiseToMin = false, bool raiseToStepSize = false, string? tag = null)
         : base(symbol)
     {
         if (quantity is null && notional is null)
@@ -31,16 +32,14 @@ internal class MarketBuyCommand : AlgoCommandBase
         Notional = notional;
         RaiseToMin = raiseToMin;
         RaiseToStepSize = raiseToStepSize;
-        RedeemSavings = redeemSavings;
-        RedeemSwapPool = redeemSwapPool;
+        Tag = tag;
     }
 
     public decimal? Quantity { get; }
     public decimal? Notional { get; }
     public bool RaiseToMin { get; }
     public bool RaiseToStepSize { get; }
-    public bool RedeemSavings { get; }
-    public bool RedeemSwapPool { get; }
+    public string? Tag { get; }
 
     public override ValueTask ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
     {

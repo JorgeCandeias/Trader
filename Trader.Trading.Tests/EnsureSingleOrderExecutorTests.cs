@@ -8,7 +8,6 @@ using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
-using Outcompute.Trader.Trading.Commands.RedeemSavings;
 using Outcompute.Trader.Trading.Providers;
 using Xunit;
 
@@ -22,13 +21,6 @@ namespace Outcompute.Trader.Trading.Tests
             // arrange
             var logger = NullLogger<EnsureSingleOrderExecutor>.Instance;
             var symbol = Symbol.Empty with { Name = "ABCXYZ", BaseAsset = "ABC", QuoteAsset = "XYZ" };
-
-            var balance = Balance.Empty with { Asset = symbol.QuoteAsset, Free = 1000000m };
-            var balances = Mock.Of<IBalanceProvider>();
-            Mock.Get(balances)
-                .Setup(x => x.TryGetBalanceAsync(symbol.QuoteAsset, CancellationToken.None))
-                .ReturnsAsync(balance)
-                .Verifiable();
 
             var side = OrderSide.Buy;
 
@@ -44,22 +36,14 @@ namespace Outcompute.Trader.Trading.Tests
                 .ReturnsAsync(new OrderCollection(existing))
                 .Verifiable();
 
-            var executor = new EnsureSingleOrderExecutor(logger, balances);
+            var executor = new EnsureSingleOrderExecutor(logger);
 
             var cancelOrderExecutor = Mock.Of<IAlgoCommandExecutor<CancelOrderCommand>>();
-
-            var redeemed = new RedeemSavingsEvent(true, 234000);
-            var redeemSavingsExecutor = Mock.Of<IAlgoCommandExecutor<RedeemSavingsCommand, RedeemSavingsEvent>>();
-            Mock.Get(redeemSavingsExecutor)
-                .Setup(x => x.ExecuteAsync(It.IsAny<IAlgoContext>(), It.IsAny<RedeemSavingsCommand>(), CancellationToken.None))
-                .ReturnsAsync(redeemed)
-                .Verifiable();
 
             var createOrderExecutor = Mock.Of<IAlgoCommandExecutor<CreateOrderCommand>>();
 
             var provider = new ServiceCollection()
                 .AddSingleton(cancelOrderExecutor)
-                .AddSingleton(redeemSavingsExecutor)
                 .AddSingleton(createOrderExecutor)
                 .BuildServiceProvider();
 
@@ -69,9 +53,7 @@ namespace Outcompute.Trader.Trading.Tests
             var timeInForce = TimeInForce.GoodTillCanceled;
             var quantity = 1000m;
             var price = 1234m;
-            var redeemSavings = true;
-            var redeemSwapPool = true;
-            var command = new EnsureSingleOrderCommand(symbol, side, type, timeInForce, quantity, null, price, null, null, redeemSavings, redeemSwapPool);
+            var command = new EnsureSingleOrderCommand(symbol, side, type, timeInForce, quantity, null, price, null, null);
 
             // act
             await executor.ExecuteAsync(context, command);
@@ -79,8 +61,6 @@ namespace Outcompute.Trader.Trading.Tests
             // assert
             Mock.Get(orders).VerifyAll();
             Mock.Get(cancelOrderExecutor).Verify(x => x.ExecuteAsync(context, It.Is<CancelOrderCommand>(x => x.Symbol == symbol && x.OrderId == 123), CancellationToken.None));
-            Mock.Get(balances).VerifyAll();
-            Mock.Get(redeemSavingsExecutor).Verify(x => x.ExecuteAsync(context, It.Is<RedeemSavingsCommand>(x => x.Asset == symbol.QuoteAsset && x.Amount == 234000), CancellationToken.None));
         }
     }
 }

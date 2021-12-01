@@ -2,8 +2,6 @@
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
-using Outcompute.Trader.Trading.Commands.RedeemSavings;
-using Outcompute.Trader.Trading.Commands.RedeemSwapPool;
 
 namespace Outcompute.Trader.Trading.Commands.MarketSell;
 
@@ -20,21 +18,18 @@ internal partial class MarketSellCommandExecutor : IAlgoCommandExecutor<MarketSe
     private const OrderType MyOrderType = OrderType.Market;
     private const OrderSide MyOrderSide = OrderSide.Sell;
 
-    public async ValueTask ExecuteAsync(IAlgoContext context, MarketSellCommand command, CancellationToken cancellationToken = default)
+    public ValueTask ExecuteAsync(IAlgoContext context, MarketSellCommand command, CancellationToken cancellationToken = default)
     {
         // get context data for the command symbol
         var data = context.Data[command.Symbol.Name];
         var ticker = data.Ticker;
-        var spots = data.Spot;
-        var savings = data.Savings;
-        var swaps = data.SwapPools;
         var orders = data.Orders;
 
         // ensure there are no other open market orders waiting for execution
         if (orders.Open.Any(x => x.Type == OrderType.Market))
         {
             LogConcurrentMarketOrders(TypeName, context.Name, orders.Open.Where(x => x.Type == OrderType.Market));
-            return;
+            return ValueTask.CompletedTask;
         }
 
         // adjust the quantity down by the step size to make a valid order
@@ -45,7 +40,7 @@ internal partial class MarketSellCommandExecutor : IAlgoCommandExecutor<MarketSe
         if (quantity < command.Symbol.Filters.LotSize.MinQuantity)
         {
             LogQuantityLessThanMinLotSize(TypeName, command.Symbol.Name, MyOrderType, MyOrderSide, quantity, command.Symbol.BaseAsset, command.Symbol.Filters.LotSize.MinQuantity);
-            return;
+            return ValueTask.CompletedTask;
         }
 
         // if the total becomes lower than the minimum notional then we cant sell
@@ -53,74 +48,12 @@ internal partial class MarketSellCommandExecutor : IAlgoCommandExecutor<MarketSe
         if (total < command.Symbol.Filters.MinNotional.MinNotional)
         {
             LogTotalLessThanMinNotional(TypeName, command.Symbol.Name, MyOrderType, MyOrderSide, quantity, command.Symbol.BaseAsset, ticker.ClosePrice, command.Symbol.QuoteAsset, total, command.Symbol.Filters.MinNotional.MinNotional);
-            return;
-        }
-
-        // identify the free balance
-        var free = spots.BaseAsset.Free
-            + (command.RedeemSavings ? savings.BaseAsset.FreeAmount : 0m)
-            + (command.RedeemSwapPool ? swaps.BaseAsset.Total : 0m);
-
-        // see if there is enough free balance overall
-        if (free < quantity)
-        {
-            LogNotEnoughFreeBalance(TypeName, command.Symbol.Name, MyOrderType, MyOrderSide, quantity, command.Symbol.BaseAsset, free);
-            return;
-        }
-
-        // see if we need to redeem anything
-        if (quantity > spots.BaseAsset.Free)
-        {
-            // we need to redeem up to this from any redemption sources
-            var required = quantity - spots.BaseAsset.Free;
-
-            // see if we can redeem the rest from savings
-            if (command.RedeemSavings && savings.BaseAsset.FreeAmount > 0)
-            {
-                var redeeming = Math.Min(savings.BaseAsset.FreeAmount, required);
-
-                LogRedeemingSavings(TypeName, command.Symbol.Name, redeeming, command.Symbol.BaseAsset);
-
-                var result = await new RedeemSavingsCommand(command.Symbol.BaseAsset, redeeming)
-                    .ExecuteAsync(context, cancellationToken)
-                    .ConfigureAwait(false);
-
-                if (result.Success)
-                {
-                    required -= result.Redeemed;
-                    required = Math.Max(required, 0);
-                }
-            }
-
-            // see if we can redeem the rest from the swap pool
-            if (command.RedeemSwapPool && swaps.BaseAsset.Total > 0 && required > 0)
-            {
-                var redeeming = Math.Min(swaps.BaseAsset.Total, required);
-
-                LogRedeemingSwapPool(TypeName, command.Symbol.Name, redeeming, command.Symbol.BaseAsset);
-
-                var result = await new RedeemSwapPoolCommand(command.Symbol.BaseAsset, required)
-                    .ExecuteAsync(context, cancellationToken)
-                    .ConfigureAwait(false);
-
-                if (result.Success)
-                {
-                    required -= result.QuoteAmount;
-                    required = Math.Max(required, 0);
-                }
-            }
-
-            if (required > 0)
-            {
-                LogCouldNotRedeem(TypeName, command.Symbol.Name, required, command.Symbol.BaseAsset);
-                return;
-            }
+            return ValueTask.CompletedTask;
         }
 
         // all set
-        await new CreateOrderCommand(command.Symbol, OrderType.Market, OrderSide.Sell, null, quantity, null, null, null, command.Tag)
-            .ExecuteAsync(context, cancellationToken)
-            .ConfigureAwait(false);
+        return new CreateOrderCommand(command.Symbol, OrderType.Market, OrderSide.Sell, null, quantity, null, null, null, command.Tag)
+            .ExecuteAsync(context, cancellationToken);
     }
 
     [LoggerMessage(0, LogLevel.Information, "{Type} {Name} adjusted original quantity of {Quantity} {Asset} down to {AdjustedQuantity} {Asset} by step size {StepSize} {Asset}")]

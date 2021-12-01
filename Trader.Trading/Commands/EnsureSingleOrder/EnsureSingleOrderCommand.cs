@@ -6,7 +6,7 @@ namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
 
 internal class EnsureSingleOrderCommand : AlgoCommandBase
 {
-    public EnsureSingleOrderCommand(Symbol symbol, OrderSide side, OrderType type, TimeInForce? timeInForce, decimal? quantity, decimal? notional, decimal? price, decimal? stopPrice, string? tag = null, bool redeemSavings = false, bool redeemSwapPool = false)
+    public EnsureSingleOrderCommand(Symbol symbol, OrderSide side, OrderType type, TimeInForce? timeInForce, decimal? quantity, decimal? notional, decimal? price, decimal? stopPrice, string? tag = null)
         : base(symbol)
     {
         Side = side;
@@ -17,8 +17,6 @@ internal class EnsureSingleOrderCommand : AlgoCommandBase
         Price = price;
         StopPrice = stopPrice;
         Tag = tag;
-        RedeemSavings = redeemSavings;
-        RedeemSwapPool = redeemSwapPool;
     }
 
     public OrderSide Side { get; }
@@ -29,8 +27,6 @@ internal class EnsureSingleOrderCommand : AlgoCommandBase
     public decimal? Price { get; }
     public decimal? StopPrice { get; }
     public string? Tag { get; }
-    public bool RedeemSavings { get; }
-    public bool RedeemSwapPool { get; }
 
     public override ValueTask ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
     {

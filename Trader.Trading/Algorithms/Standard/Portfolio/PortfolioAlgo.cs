@@ -26,6 +26,7 @@ public partial class PortfolioAlgo : Algo
     private const string RecoverySellTag = "RecoverySell";
     private const string RecoveryBuyTag = "RecoveryBuy";
     private const string TopUpBuyTag = "TopUpBuy";
+    private const string EntryBuyTag = "EntryBuy";
 
     private PortfolioAlgoOptions _options = null!;
 
@@ -297,8 +298,10 @@ public partial class PortfolioAlgo : Algo
         // if all the stars align then dump the assets
         LogSellOffElectedSymbol(TypeName, Context.Name, item.Symbol.Name);
 
-        command = MarketSell(item.Symbol, stats.TotalQuantity, SellOffTag, _options.UseSavings, _options.UseSwapPools);
-        //command = EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, stats.TotalQuantity, null, price, null, SellOffTag, _options.UseSavings, _options.UseSwapPools);
+        command =
+            Sequence(
+                EnsureSpotBalance(item.Symbol.BaseAsset, stats.TotalQuantity, _options.UseSavings, _options.UseSwapPools),
+                MarketSell(item.Symbol, stats.TotalQuantity, SellOffTag));
 
         return true;
     }
@@ -338,7 +341,10 @@ public partial class PortfolioAlgo : Algo
         var quantity = CalculateBuyQuantity(item, price, _options.EntryBuy.BalanceRate);
 
         // create the limit order
-        command = EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, price, null, null, _options.UseSavings, _options.UseSwapPools);
+        command = Sequence(
+            EnsureSpotBalance(item.Symbol.QuoteAsset, quantity * price, _options.UseSavings, _options.UseSwapPools),
+            EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, price, null, EntryBuyTag));
+
         return true;
     }
 
@@ -417,7 +423,10 @@ public partial class PortfolioAlgo : Algo
         }
 
         // create the limit order
-        command = EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, price, null, null, _options.UseSavings, _options.UseSwapPools);
+        command = Sequence(
+            EnsureSpotBalance(item.Symbol.QuoteAsset, quantity * price, _options.UseSavings, _options.UseSwapPools),
+            EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, price, null, TopUpBuyTag));
+
         return true;
     }
 
@@ -489,7 +498,10 @@ public partial class PortfolioAlgo : Algo
 
         LogRecoveryBuyPlacingOrder(TypeName, Context.Name, OrderType.Limit, OrderSide.Buy, quantity, buyPrice, item.Symbol.BaseAsset, item.Symbol.QuoteAsset);
 
-        command = EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, buyPrice, null, RecoveryBuyTag, _options.UseSavings, _options.UseSwapPools);
+        command = Sequence(
+            EnsureSpotBalance(item.Symbol.QuoteAsset, quantity * buyPrice, _options.UseSavings, _options.UseSwapPools),
+            EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, buyPrice, null, RecoveryBuyTag));
+
         return true;
     }
 
@@ -614,7 +626,11 @@ public partial class PortfolioAlgo : Algo
 
         // if we found something to sell then place the recovery sell
         LogRecoverySellElectedSymbol(TypeName, Context.Name, item.Symbol.Name, electedQuantity, item.Symbol.BaseAsset, sellPrice, item.Symbol.QuoteAsset);
-        command = EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, electedQuantity, null, sellPrice, null, RecoverySellTag, _options.UseSavings, _options.UseSwapPools);
+
+        command = Sequence(
+            EnsureSpotBalance(item.Symbol.BaseAsset, electedQuantity, _options.UseSavings, _options.UseSwapPools),
+            EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, electedQuantity, null, sellPrice, null, RecoverySellTag));
+
         return true;
     }
 

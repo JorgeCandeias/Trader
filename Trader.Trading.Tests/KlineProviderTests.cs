@@ -1,24 +1,14 @@
 ﻿using Moq;
 using Orleans;
-using Orleans.TestingHost;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Providers.Klines;
-using Outcompute.Trader.Trading.Tests.Fixtures;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
 {
-    [Collection(nameof(ClusterCollectionFixture))]
     public class KlineProviderTests
     {
-        private readonly TestCluster _cluster;
-
-        public KlineProviderTests(ClusterFixture cluster)
-        {
-            _cluster = cluster?.Cluster ?? throw new ArgumentNullException(nameof(cluster));
-        }
-
         [Fact]
         public async Task GetsKlines()
         {

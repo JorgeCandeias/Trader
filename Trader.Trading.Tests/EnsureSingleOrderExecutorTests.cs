@@ -31,11 +31,6 @@ namespace Outcompute.Trader.Trading.Tests
 
             var orders = Mock.Of<IOrderProvider>();
 
-            Mock.Get(orders)
-                .Setup(x => x.GetOrdersByFilterAsync(symbol.Name, OrderSide.Buy, true, null, CancellationToken.None))
-                .ReturnsAsync(new OrderCollection(existing))
-                .Verifiable();
-
             var executor = new EnsureSingleOrderExecutor(logger);
 
             var cancelOrderExecutor = Mock.Of<IAlgoCommandExecutor<CancelOrderCommand>>();
@@ -48,6 +43,7 @@ namespace Outcompute.Trader.Trading.Tests
                 .BuildServiceProvider();
 
             var context = new AlgoContext("Algo1", provider);
+            context.Data.GetOrAdd(symbol.Name).Orders.Open = new OrderCollection(existing);
 
             var type = OrderType.Limit;
             var timeInForce = TimeInForce.GoodTillCanceled;

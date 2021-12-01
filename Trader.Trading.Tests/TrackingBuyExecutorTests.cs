@@ -6,9 +6,7 @@ using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
-using Outcompute.Trader.Trading.Commands.RedeemSavings;
 using Outcompute.Trader.Trading.Commands.TrackingBuy;
-using Outcompute.Trader.Trading.Providers;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
@@ -41,11 +39,8 @@ namespace Outcompute.Trader.Trading.Tests
 
             var cancelOrderExecutor = Mock.Of<IAlgoCommandExecutor<CancelOrderCommand>>();
 
-            var redeemSavingsExecutor = Mock.Of<IAlgoCommandExecutor<RedeemSavingsCommand, RedeemSavingsEvent>>();
-
             var provider = new ServiceCollection()
                 .AddSingleton(cancelOrderExecutor)
-                .AddSingleton(redeemSavingsExecutor)
                 .BuildServiceProvider();
 
             var context = new AlgoContext("Algo1", provider);

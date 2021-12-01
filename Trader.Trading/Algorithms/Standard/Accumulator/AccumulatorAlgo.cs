@@ -29,7 +29,7 @@ internal class AccumulatorAlgo : Algo
             : CancelOpenOrders(Context.Symbol, OrderSide.Buy);
 
         var sellCommand = TrySignalSell(options)
-            ? MarketSell(Context.Symbol, Context.AutoPosition.Positions.Sum(x => x.Quantity), true, true)
+            ? MarketSell(Context.Symbol, Context.AutoPosition.Positions.Sum(x => x.Quantity), null, true, true)
             : Noop();
 
         return ValueTask.FromResult(Sequence(buyCommand, sellCommand));

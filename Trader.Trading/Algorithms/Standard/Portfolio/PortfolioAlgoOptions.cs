@@ -107,6 +107,11 @@ public class PortfolioAlgoOptionsTopUpBuy
 public class PortfolioAlgoOptionsTopUpBuyRsi
 {
     /// <summary>
+    /// Whether the safety RSI check is enabled.
+    /// </summary>
+    public bool Enabled { get; set; } = true;
+
+    /// <summary>
     /// Periods for RSI calculation.
     /// </summary>
     [Required, Range(1, int.MaxValue)]
@@ -124,6 +129,11 @@ public class PortfolioAlgoOptionsTopUpBuyRsi
 /// </summary>
 public class PortfolioAlgoOptionsTopUpBuySma
 {
+    /// <summary>
+    /// Whether the safety SMA check is enabled.
+    /// </summary>
+    public bool Enabled { get; set; } = true;
+
     /// <summary>
     /// The periods for SMA calculation.
     /// </summary>
@@ -146,7 +156,7 @@ public class PortfolioAlgoOptionsSellOff
     /// The minimum relative value (pv / cost) at which to sell off an asset as compared to its average cost.
     /// </summary>
     [Required, Range(1, double.MaxValue)]
-    public decimal TriggerRate { get; set; } = 2M;
+    public decimal TriggerRate { get; set; } = 1.5M;
 
     /// <summary>
     /// Symbols which will never be sold off.

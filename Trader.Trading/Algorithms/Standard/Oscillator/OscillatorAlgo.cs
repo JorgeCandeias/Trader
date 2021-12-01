@@ -76,7 +76,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Standard.Oscillator
             // cancel the stop loss and issue a market sell
             return Sequence(
                 CancelOpenOrders(item.Symbol),
-                MarketSell(item.Symbol, stats.TotalQuantity, true, true));
+                MarketSell(item.Symbol, stats.TotalQuantity, null, true, true));
         }
 
         private IAlgoCommand? TrySetStopLoss(SymbolData item, PositionStats stats)

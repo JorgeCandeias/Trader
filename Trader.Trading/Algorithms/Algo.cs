@@ -120,9 +120,9 @@ public abstract class Algo : IAlgo
         return new TrackingBuyCommand(symbol, pullbackRatio, targetQuoteBalanceFractionPerBuy, maxNotional, redeemSavings, redeemSwapPool);
     }
 
-    public virtual IAlgoCommand MarketSell(Symbol symbol, decimal quantity, bool redeemSavings = false, bool redeemSwapPool = false)
+    public virtual IAlgoCommand MarketSell(Symbol symbol, decimal quantity, string? tag = null, bool redeemSavings = false, bool redeemSwapPool = false)
     {
-        return new MarketSellCommand(symbol, quantity, redeemSavings, redeemSwapPool);
+        return new MarketSellCommand(symbol, quantity, tag, redeemSavings, redeemSwapPool);
     }
 
     /// <inheritdoc cref="MarketBuyCommand(Symbol, decimal?, decimal?, bool, bool, bool, bool)" />

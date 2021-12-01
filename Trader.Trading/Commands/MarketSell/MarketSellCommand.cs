@@ -6,16 +6,18 @@ namespace Outcompute.Trader.Trading.Commands.MarketSell;
 
 public class MarketSellCommand : IAlgoCommand
 {
-    public MarketSellCommand(Symbol symbol, decimal quantity, bool redeemSavings = false, bool redeemSwapPool = false)
+    public MarketSellCommand(Symbol symbol, decimal quantity, string? tag = null, bool redeemSavings = false, bool redeemSwapPool = false)
     {
         Symbol = symbol;
         Quantity = quantity;
+        Tag = tag;
         RedeemSavings = redeemSavings;
         RedeemSwapPool = redeemSwapPool;
     }
 
     public Symbol Symbol { get; }
     public decimal Quantity { get; }
+    public string? Tag { get; }
     public bool RedeemSavings { get; }
     public bool RedeemSwapPool { get; }
 

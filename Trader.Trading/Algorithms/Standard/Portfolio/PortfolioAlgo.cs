@@ -22,6 +22,7 @@ public partial class PortfolioAlgo : Algo
     }
 
     private const string TypeName = nameof(PortfolioAlgo);
+    private const string SellOffTag = "SellOff";
     private const string RecoverySellTag = "RecoverySell";
     private const string RecoveryBuyTag = "RecoveryBuy";
     private const string TopUpBuyTag = "TopUpBuy";
@@ -54,9 +55,13 @@ public partial class PortfolioAlgo : Algo
                 continue;
             }
 
-            if (TryCreateSellOff(item, stats, out var selloff))
+            if (TryCreateSellOff(item, lots, stats, out var selloff))
             {
                 command = command.Then(selloff);
+            }
+            else
+            {
+                command = command.Then(CancelSellOff(item.Symbol));
             }
 
             if (TryCreateRecoverySell(item, lots, out var recoverySell))
@@ -97,6 +102,7 @@ public partial class PortfolioAlgo : Algo
         return command;
     }
 
+    // todo: move all this code to the algo stats publisher so it does not consume algo time
     private void ReportAggregateStats(Dictionary<string, PositionStats> lookup)
     {
         var reportable = Context.Data.Where(x => x.IsValid);
@@ -171,7 +177,32 @@ public partial class PortfolioAlgo : Algo
                 LogSymbolWithHighestRelativePnl(TypeName, Context.Name, relWinner.Symbol.Name, relWinner.Stats.RelativePnL);
             }
 
-            // top 10 break even
+            // report on the highest sellable pv
+            var highPv = stats
+                .Where(x => x.Stats.TotalQuantity > 0)
+                .Where(x => !_options.SellOff.ExcludeSymbols.Contains(x.Symbol.Name))
+                .OrderByDescending(x => x.Stats.PresentValue)
+                .FirstOrDefault();
+
+            if (!IsNullOrEmpty(highPv.Symbol.Name))
+            {
+                LogSymbolWithHighestPresentValue(TypeName, Context.Name, highPv.Symbol.Name, highPv.Stats.PresentValue, highPv.Symbol.QuoteAsset);
+            }
+
+            // report on the highest sellable pv above break even
+            var highPvBreakEven = stats
+                .Where(x => !_options.SellOff.ExcludeSymbols.Contains(x.Symbol.Name))
+                .Where(x => x.Stats.TotalQuantity > 0)
+                .Where(x => x.Stats.RelativePnL >= 0)
+                .OrderByDescending(x => x.Stats.PresentValue)
+                .FirstOrDefault();
+
+            if (!IsNullOrEmpty(highPv.Symbol.Name))
+            {
+                LogSymbolWithHighestPresentValueAboveBreakEven(TypeName, Context.Name, highPvBreakEven.Symbol.Name, highPvBreakEven.Stats.PresentValue, highPvBreakEven.Symbol.QuoteAsset);
+            }
+
+            // above break even
             foreach (var item in stats
                 .Where(x => x.Stats.TotalQuantity > 0)
                 .Where(x => x.Stats.RelativePnL >= 0)
@@ -182,7 +213,7 @@ public partial class PortfolioAlgo : Algo
         }
     }
 
-    private bool TryCreateSellOff(SymbolData item, PositionStats stats, out IAlgoCommand command)
+    private bool TryCreateSellOff(SymbolData item, IList<PositionLot> lots, PositionStats stats, out IAlgoCommand command)
     {
         // placeholder
         command = Noop();
@@ -201,39 +232,80 @@ public partial class PortfolioAlgo : Algo
             return false;
         }
 
-        // there must be enough quantity to sell off right now
+        // there must be enough quantity to sell off
         if (stats.TotalQuantity < item.Symbol.Filters.LotSize.MinQuantity)
         {
             LogSellOffSkippedSymbolWithQuantityUnderMinLotSize(TypeName, Context.Name, item.Symbol.Name, stats.TotalQuantity, item.Symbol.BaseAsset, item.Symbol.Filters.LotSize.MinQuantity);
             return false;
         }
 
+        /*
         // there must be enough notional value to sell off right now
+        // todo: this applies at sell price
         if (stats.PresentValue < item.Symbol.Filters.MinNotional.MinNotional)
         {
             LogSellOffSkippedSymbolWithPresentValueUnderMinNotional(TypeName, Context.Name, item.Symbol.Name, stats.PresentValue, item.Symbol.Filters.MinNotional.MinNotional, item.Symbol.QuoteAsset);
             return false;
         }
+        */
 
-        // the present pnl must be at or above the requirement
-        if (stats.RelativeValue < _options.SellOff.TriggerRate)
+        // skip if the last lot is a recovery buy and recovery is enabled for this symbol
+        if (_options.Recovery.Enabled && !_options.Recovery.ExcludeSymbols.Contains(item.Symbol.Name) && HasLocalMax(lots))
         {
-            LogSellOffSkippedSymbolWithRelativeValueUnderTrigger(TypeName, Context.Name, item.Symbol.Name, stats.RelativeValue, _options.SellOff.TriggerRate);
+            // todo: log
             return false;
         }
 
-        // the present rsi must be at or above the requirement
-        var rsi = item.Klines.LastRsi(x => x.ClosePrice, _options.SellOff.Rsi.Periods);
-        if (rsi < _options.SellOff.Rsi.Overbought)
+        // calculate the desired sell price based on desired profit
+        var profitPrice = _options.SellOff.TriggerRate * stats.AvgPrice;
+
+        // calculate the desired sell price based on desired rsi
+        if (!item.Klines.TryGetPriceForRsi(x => x.ClosePrice, _options.SellOff.Rsi.Periods, _options.SellOff.Rsi.Overbought, out var rsiPrice))
         {
-            LogSellOffSkippedSymbolWithLowSellRsi(TypeName, Context.Name, item.Symbol.Name, _options.SellOff.Rsi.Periods, rsi, _options.SellOff.Rsi.Overbought);
+            // todo: log
             return false;
+        }
+
+        // keep the max of the two
+        var price = Math.Max(profitPrice, rsiPrice);
+        price = price.AdjustPriceUpToTickSize(item.Symbol);
+
+        // the notional must be sellable at the target price
+        var notional = stats.TotalQuantity * price;
+        if (notional < item.Symbol.Filters.MinNotional.MinNotional)
+        {
+            // todo: log
+            return false;
+        }
+
+        // skip if we have not reached the target price yet
+        if (item.Ticker.ClosePrice <= price)
+        {
+            // todo: log
+            return false;
+        }
+
+        // skip if there is already an open sell off order
+        // this means that a previously placed order hit and is being filled
+        if (item.Orders.Open.Any(x => x.Type == OrderType.Market && x.Side == OrderSide.Sell && x.ClientOrderId == SellOffTag))
+        {
+            // todo: log
+            // returning true but not assigning the command
+            return true;
         }
 
         // if all the stars align then dump the assets
         LogSellOffElectedSymbol(TypeName, Context.Name, item.Symbol.Name);
-        command = MarketSell(item.Symbol, stats.TotalQuantity, _options.UseSavings, _options.UseSwapPools);
+
+        command = MarketSell(item.Symbol, stats.TotalQuantity, SellOffTag, _options.UseSavings, _options.UseSwapPools);
+        //command = EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, stats.TotalQuantity, null, price, null, SellOffTag, _options.UseSavings, _options.UseSwapPools);
+
         return true;
+    }
+
+    private IAlgoCommand CancelSellOff(Symbol symbol)
+    {
+        return CancelOpenOrders(symbol, OrderSide.Sell, null, SellOffTag);
     }
 
     private bool TryCreateEntryBuy(SymbolData item, IList<PositionLot> lots, out IAlgoCommand command)
@@ -289,46 +361,37 @@ public partial class PortfolioAlgo : Algo
         }
 
         // the symbol must not be overbought
-        var rsi = item.Klines.LastRsi(x => x.ClosePrice, _options.TopUpBuy.Rsi.Periods);
-        if (rsi >= _options.TopUpBuy.Rsi.Overbought)
+        if (_options.TopUpBuy.Rsi.Enabled)
         {
-            LogTopUpSkippedSymbolWithOverboughtRsi(TypeName, Context.Name, item.Symbol.Name, _options.TopUpBuy.Rsi.Periods, rsi, _options.TopUpBuy.Rsi.Overbought);
-            return false;
-        }
-
-        // the symbol must be under the safety sma
-        var sma = item.Klines.LastSma(x => x.ClosePrice, _options.TopUpBuy.Sma.Periods);
-        if (item.Ticker.ClosePrice >= sma)
-        {
-            LogTopUpSkippedSymbolWithTickerAboveSafetySma(TypeName, Context.Name, item.Symbol.Name, item.Ticker.ClosePrice, item.Symbol.BaseAsset, _options.TopUpBuy.Sma.Periods, sma);
-            return false;
-        }
-
-        // only top up if the last lot is not a recovery buy - if so the last lot will be lower than a local max
-        // this rule only applies to symbols that participate in recovery
-        var lastLot = lots[0];
-        if (!_options.Recovery.ExcludeSymbols.Contains(item.Symbol.Name))
-        {
-            var maxPrice = 0M;
-            foreach (var lot in lots)
+            var rsi = item.Klines.LastRsi(x => x.ClosePrice, _options.TopUpBuy.Rsi.Periods);
+            if (rsi >= _options.TopUpBuy.Rsi.Overbought)
             {
-                if (lot.AvgPrice >= maxPrice)
-                {
-                    maxPrice = lot.AvgPrice;
-                }
-                else
-                {
-                    break;
-                }
-            }
-            if (lastLot.AvgPrice < maxPrice)
-            {
-                LogTopUpSkippedSymbolARecoveryBuy(TypeName, Context.Name, item.Symbol.Name, item.AutoPosition.Positions.Last.Quantity, item.Symbol.BaseAsset, item.AutoPosition.Positions.Last.Price, item.Symbol.QuoteAsset);
+                LogTopUpSkippedSymbolWithOverboughtRsi(TypeName, Context.Name, item.Symbol.Name, _options.TopUpBuy.Rsi.Periods, rsi, _options.TopUpBuy.Rsi.Overbought);
                 return false;
             }
         }
 
+        // the symbol must be under the safety sma
+        if (_options.TopUpBuy.Sma.Enabled)
+        {
+            var sma = item.Klines.LastSma(x => x.ClosePrice, _options.TopUpBuy.Sma.Periods);
+            if (item.Ticker.ClosePrice >= sma)
+            {
+                LogTopUpSkippedSymbolWithTickerAboveSafetySma(TypeName, Context.Name, item.Symbol.Name, item.Ticker.ClosePrice, item.Symbol.BaseAsset, _options.TopUpBuy.Sma.Periods, sma);
+                return false;
+            }
+        }
+
+        // only top up if the last lot is not a recovery buy - if so the last lot will be lower than a local max
+        // this rule only applies to symbols that participate in recovery
+        if (_options.Recovery.Enabled && !_options.Recovery.ExcludeSymbols.Contains(item.Symbol.Name) && HasLocalMax(lots))
+        {
+            LogTopUpSkippedSymbolWithRecoveryBuy(TypeName, Context.Name, item.Symbol.Name, item.AutoPosition.Positions.Last.Quantity, item.Symbol.BaseAsset, item.AutoPosition.Positions.Last.Price, item.Symbol.QuoteAsset);
+            return false;
+        }
+
         // skip symbols below min required for top up
+        var lastLot = lots[0];
         var price = lastLot.AvgPrice * (1 + _options.TopUpBuy.RaiseRate);
         price = price.AdjustPriceUpToTickSize(item.Symbol);
 
@@ -348,7 +411,7 @@ public partial class PortfolioAlgo : Algo
         var quantity = CalculateBuyQuantity(item, price, _options.TopUpBuy.BalanceRate);
 
         // skip if there is already an open order at an equal or higher ticker to avoid order twitching
-        if (item.Orders.Open.Any(x => x.Side == OrderSide.Buy && x.Type == OrderType.Limit && x.OriginalQuantity == quantity && x.Price >= price))
+        if (item.Orders.Open.Any(x => x.Side == OrderSide.Buy && x.Type == OrderType.Limit && x.Price >= price))
         {
             return false;
         }
@@ -371,32 +434,38 @@ public partial class PortfolioAlgo : Algo
         // recovery must be enabled
         if (!_options.Recovery.Enabled)
         {
+            LogBuyRecoveryDisabled(TypeName, Context.Name, item.Symbol.Name);
             return false;
         }
 
         // symbol must not be on the exclusion set
         if (_options.Recovery.ExcludeSymbols.Contains(item.Symbol.Name))
         {
+            LogRecoveryBuySkippedSymbolOnExclusionSet(TypeName, Context.Name, item.Symbol.Name);
             return false;
         }
 
         // there must something to recover
         if (lots.Count == 0)
         {
+            LogRecoveryBuySkippedSymbolWithoutFullLot(TypeName, Context.Name, item.Symbol.Name);
             return false;
         }
 
         // calculate the price required for the recovery rsi
         if (!item.Klines.TryGetPriceForRsi(x => x.ClosePrice, _options.Recovery.Rsi.Periods, _options.Recovery.Rsi.Buy, out var buyPrice))
         {
+            LogRecoveryBuySkippedSymbolWithUnknownRsiPrice(TypeName, Context.Name, item.Symbol.Name, _options.Recovery.Rsi.Periods, _options.Recovery.Rsi.Buy);
             return false;
         }
         buyPrice = buyPrice.AdjustPriceDownToTickSize(item.Symbol);
 
         // enough time must have passed since the last buy
         var lastLot = lots[0];
-        if (lastLot.Time.Add(_options.Recovery.Cooldown) >= _clock.UtcNow)
+        var cooldown = lastLot.Time.Add(_options.Recovery.Cooldown);
+        if (cooldown >= _clock.UtcNow)
         {
+            LogRecoveryBuySkippedSymbolOnCooldown(TypeName, Context.Name, item.Symbol.Name, cooldown);
             return false;
         }
 
@@ -404,19 +473,21 @@ public partial class PortfolioAlgo : Algo
         var dropPrice = lastLot.AvgPrice * (1 - _options.Recovery.DropRate);
         if (buyPrice >= dropPrice)
         {
+            LogRecoveryBuySkippedSymbolWithBuyPriceNotUnderDropPrice(TypeName, Context.Name, item.Symbol.Name, buyPrice, item.Symbol.QuoteAsset, dropPrice);
             return false;
         }
 
         // ticker must be below the buy price to bother reserving funds
         if (item.Ticker.ClosePrice >= buyPrice)
         {
+            LogRecoveryBuySkippedSymbolWithTickerNotUnderBuyPrice(TypeName, Context.Name, item.Symbol.Name, item.Ticker.ClosePrice, item.Symbol.QuoteAsset, buyPrice);
             return false;
         }
 
         // calculate the quantity
         var quantity = CalculateBuyQuantity(item, buyPrice, _options.Recovery.BalanceRate);
 
-        LogRecoveryPlacingBuy(TypeName, Context.Name, quantity, buyPrice, item.Symbol.BaseAsset, item.Symbol.QuoteAsset);
+        LogRecoveryBuyPlacingOrder(TypeName, Context.Name, OrderType.Limit, OrderSide.Buy, quantity, buyPrice, item.Symbol.BaseAsset, item.Symbol.QuoteAsset);
 
         command = EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, buyPrice, null, RecoveryBuyTag, _options.UseSavings, _options.UseSwapPools);
         return true;
@@ -435,7 +506,7 @@ public partial class PortfolioAlgo : Algo
         // recovery must be enabled
         if (!_options.Recovery.Enabled)
         {
-            LogRecoveryDisabled(TypeName, Context.Name, item.Symbol.Name);
+            LogRecoverySellDisabled(TypeName, Context.Name, item.Symbol.Name);
             return false;
         }
 
@@ -469,7 +540,7 @@ public partial class PortfolioAlgo : Algo
             return false;
         }
 
-        // there must be a local max from the last lot above the recovery sell price
+        // there must be a local max from the last lot for it to classify as a recovery buy
         var maxPrice = 0M;
         foreach (var lot in lots)
         {
@@ -482,7 +553,7 @@ public partial class PortfolioAlgo : Algo
                 break;
             }
         }
-        if (maxPrice <= sellPrice)
+        if (maxPrice <= lastLot.AvgPrice)
         {
             LogRecoverySellSkippedSymbolWithoutLocalMax(TypeName, Context.Name, item.Symbol.Name, lastLot.AvgPrice, item.Symbol.QuoteAsset);
             return false;
@@ -550,6 +621,35 @@ public partial class PortfolioAlgo : Algo
     private IAlgoCommand CancelRecoverySell(Symbol symbol)
     {
         return CancelOpenOrders(symbol, OrderSide.Sell, null, RecoverySellTag);
+    }
+
+    private bool HasLocalMax(IList<PositionLot> lots)
+    {
+        return TryFindLocalMax(lots, out _);
+    }
+
+    private bool TryFindLocalMax(IList<PositionLot> lots, out decimal max)
+    {
+        max = 0;
+
+        if (lots.Count == 0)
+        {
+            return false;
+        }
+
+        foreach (var lot in lots)
+        {
+            if (lot.AvgPrice >= max)
+            {
+                max = lot.AvgPrice;
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        return max > lots[0].AvgPrice;
     }
 
     private decimal CalculateBuyQuantity(SymbolData item, decimal price, decimal balanceRate)
@@ -712,8 +812,8 @@ public partial class PortfolioAlgo : Algo
     [LoggerMessage(41, LogLevel.Error, "{Type} {Name} recovery buy detected lot step size for symbol {Symbol} is zero")]
     private partial void LogRecoveryBuyDetectedZeroLotStepSize(string type, string name, string symbol);
 
-    [LoggerMessage(42, LogLevel.Information, "{Type} {Name} recovery placing recovery buy of {Quantity:F8} {Asset} at {BuyPrice:F8} {Quote}")]
-    private partial void LogRecoveryPlacingBuy(string type, string name, decimal quantity, decimal buyPrice, string asset, string quote);
+    [LoggerMessage(42, LogLevel.Information, "{Type} {Name} recovery buy placing {OrderType} {OrderSide} of {Quantity:F8} {Asset} at {BuyPrice:F8} {Quote}")]
+    private partial void LogRecoveryBuyPlacingOrder(string type, string name, OrderType orderType, OrderSide orderSide, decimal quantity, decimal buyPrice, string asset, string quote);
 
     [LoggerMessage(43, LogLevel.Warning, "{Type} {Name} recovery cannot place buy to recover lot of {Quantity:F8} {Asset} bought at {BuyPrice:F8} {Quote} with current settings")]
     private partial void LogRecoveryCannotPlaceBuy(string type, string name, decimal quantity, decimal buyPrice, string asset, string quote);
@@ -722,7 +822,7 @@ public partial class PortfolioAlgo : Algo
     private partial void LogRecoverySellElectedSymbol(string type, string name, string symbol, decimal quantity, string asset, decimal sellPrice, string quote);
 
     [LoggerMessage(45, LogLevel.Information, "{Type} {Name} top up skipped symbol {Symbol} with a recovery buy of {Quantity:F8} {Asset} at {Price:F8} {Quote}")]
-    private partial void LogTopUpSkippedSymbolARecoveryBuy(string type, string name, string symbol, decimal quantity, string asset, decimal price, string quote);
+    private partial void LogTopUpSkippedSymbolWithRecoveryBuy(string type, string name, string symbol, decimal quantity, string asset, decimal price, string quote);
 
     [LoggerMessage(46, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} above break even with (PnL: {UnrealizedPnl:P2}, Unrealized: {UnrealizedAbsPnl:F8} {Quote}, PV: {PV:F8} {Quote}")]
     private partial void LogSymbolAtBreakEven(string type, string name, string symbol, decimal unrealizedPnl, decimal unrealizedAbsPnl, string quote, decimal pv);
@@ -743,7 +843,7 @@ public partial class PortfolioAlgo : Algo
     private partial void LogSellOffSkippedSymbolWithRelativeValueUnderTrigger(string type, string name, string symbol, decimal rv, decimal trigger);
 
     [LoggerMessage(50, LogLevel.Information, "{Type} {Name} recovery sell skipped symbol {Symbol} because recovery is disabled")]
-    private partial void LogRecoveryDisabled(string type, string name, string symbol);
+    private partial void LogRecoverySellDisabled(string type, string name, string symbol);
 
     [LoggerMessage(51, LogLevel.Information, "{Type} {Name} recovery sell skipped symbol {Symbol} on the exclusion set")]
     private partial void LogRecoverySellSkippedSymbolOnExclusionSet(string type, string name, string symbol);
@@ -771,6 +871,33 @@ public partial class PortfolioAlgo : Algo
 
     [LoggerMessage(59, LogLevel.Information, "{Type} {Name} entry buy skipped symbol {Symbol} because it could identify the price for RSI({Periods}) {RSI:F2}")]
     private partial void LogEntryBuySkippedSymbolWithUnknownRsiPrice(string type, string name, string symbol, int periods, decimal rsi);
+
+    [LoggerMessage(60, LogLevel.Information, "{Type} {Name} recovery buy skipped symbol {Symbol} because recovery is disabled")]
+    private partial void LogBuyRecoveryDisabled(string type, string name, string symbol);
+
+    [LoggerMessage(61, LogLevel.Information, "{Type} {Name} recovery buy skipped symbol {Symbol} on the exclusion set")]
+    private partial void LogRecoveryBuySkippedSymbolOnExclusionSet(string type, string name, string symbol);
+
+    [LoggerMessage(62, LogLevel.Information, "{Type} {Name} recovery buy skipped symbol {Symbol} without any full lot to recover")]
+    private partial void LogRecoveryBuySkippedSymbolWithoutFullLot(string type, string name, string symbol);
+
+    [LoggerMessage(63, LogLevel.Information, "{Type} {Name} recovery buy skipped symbol {Symbol} due to inability to identify price for RSI({Periods}) {RSI:F2}")]
+    private partial void LogRecoveryBuySkippedSymbolWithUnknownRsiPrice(string type, string name, string symbol, int periods, decimal rsi);
+
+    [LoggerMessage(64, LogLevel.Information, "{Type} {Name} recovery buy skipped symbol {Symbol} on cooldown until {Cooldown}")]
+    private partial void LogRecoveryBuySkippedSymbolOnCooldown(string type, string name, string symbol, DateTime cooldown);
+
+    [LoggerMessage(65, LogLevel.Information, "{Type} {Name} recovery buy skipped symbol {Symbol} with recovery buy price {BuyPrice:F8} {Quote} not under drop price of {DropPrice:F8} {Quote}")]
+    private partial void LogRecoveryBuySkippedSymbolWithBuyPriceNotUnderDropPrice(string type, string name, string symbol, decimal buyPrice, string quote, decimal dropPrice);
+
+    [LoggerMessage(66, LogLevel.Information, "{Type} {Name} recovery buy skipped symbol {Symbol} with ticker of {Ticker:F8} {Quote} not under buy price of {BuyPrice:F8} {Quote}")]
+    private partial void LogRecoveryBuySkippedSymbolWithTickerNotUnderBuyPrice(string type, string name, string symbol, decimal ticker, string quote, decimal buyPrice);
+
+    [LoggerMessage(67, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} with highest present value {PV:F8} {Quote}")]
+    private partial void LogSymbolWithHighestPresentValue(string type, string name, string symbol, decimal pv, string quote);
+
+    [LoggerMessage(68, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} with highest present value above break even {PV:F8} {Quote}")]
+    private partial void LogSymbolWithHighestPresentValueAboveBreakEven(string type, string name, string symbol, decimal pv, string quote);
 
     #endregion Logging
 }

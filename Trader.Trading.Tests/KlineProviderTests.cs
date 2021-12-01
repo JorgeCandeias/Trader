@@ -1,11 +1,13 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Moq;
+using Orleans;
 using Orleans.TestingHost;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
+using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Providers;
+using Outcompute.Trader.Trading.Providers.Klines;
 using Outcompute.Trader.Trading.Tests.Fixtures;
-using System;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
@@ -21,25 +23,32 @@ namespace Outcompute.Trader.Trading.Tests
         }
 
         [Fact]
-        public async Task GetKlinesAsync()
+        public async Task GetsKlines()
         {
             // arrange
-            var symbol = Guid.NewGuid().ToString();
+            var symbol = "ABCXYZ";
             var interval = KlineInterval.Days1;
             var openTime = DateTime.UtcNow.Date;
-            var item1 = Kline.Empty with { Symbol = symbol, Interval = interval, OpenTime = openTime };
-            var item2 = Kline.Empty with { Symbol = symbol, Interval = interval, OpenTime = openTime.Subtract(TimeSpan.FromDays(1)) };
-            await _cluster.ServiceProvider.GetRequiredService<ITradingRepository>().SetKlinesAsync(new[] { item1, item2 });
+            var items = new KlineCollection(new[]
+            {
+                Kline.Empty with { Symbol = symbol, Interval = interval, OpenTime = openTime },
+                Kline.Empty with { Symbol = symbol, Interval = interval, OpenTime = openTime.Subtract(TimeSpan.FromDays(1)) }
+            });
+
+            var factory = Mock.Of<IGrainFactory>();
+            Mock.Get(factory)
+                .Setup(x => x.GetGrain<IKlineProviderReplicaGrain>($"{symbol}|{interval}", null).GetKlinesAsync())
+                .ReturnsAsync(items)
+                .Verifiable();
+
+            var provider = new KlineProvider(factory);
 
             // act
-            var result = await _cluster.ServiceProvider
-                .GetRequiredService<IKlineProvider>()
-                .GetKlinesAsync(symbol, interval);
+            var result = await provider.GetKlinesAsync(symbol, interval);
 
             // assert
-            Assert.Equal(2, result.Count);
-            Assert.Contains(item1, result);
-            Assert.Contains(item2, result);
+            Assert.Same(items, result);
+            Mock.Get(factory).VerifyAll();
         }
 
         [Fact]

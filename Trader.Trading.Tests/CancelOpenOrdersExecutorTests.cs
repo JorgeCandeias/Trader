@@ -1,4 +1,5 @@
 ﻿using Moq;
+using Outcompute.Trader.Core;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms.Context;
@@ -20,7 +21,6 @@ namespace Outcompute.Trader.Trading.Tests
             var cancelled = CancelStandardOrderResult.Empty with { Symbol = symbol.Name, OrderId = orderId, Status = OrderStatus.Canceled, Side = side };
 
             var trader = Mock.Of<ITradingService>();
-
             Mock.Get(trader)
                 .Setup(x => x.CancelOrderAsync(symbol.Name, orderId, CancellationToken.None))
                 .Returns(Task.FromResult(cancelled))
@@ -29,18 +29,14 @@ namespace Outcompute.Trader.Trading.Tests
             var order = OrderQueryResult.Empty with { Symbol = symbol.Name, OrderId = orderId, Status = OrderStatus.New, Side = side };
 
             var orders = Mock.Of<IOrderProvider>();
-
-            Mock.Get(orders)
-                .Setup(x => x.GetOrdersByFilterAsync(symbol.Name, side, true, null, CancellationToken.None))
-                .ReturnsAsync(new OrderCollection(new[] { order }))
-                .Verifiable();
-
             Mock.Get(orders)
                 .Setup(x => x.SetOrderAsync(cancelled, CancellationToken.None))
                 .Verifiable();
 
+            var context = new AlgoContext(symbol.Name, NullServiceProvider.Instance);
+            context.Data.GetOrAdd(symbol.Name).Orders.Open = new OrderCollection(new[] { order });
+
             var executor = new CancelOpenOrdersExecutor(trader, orders);
-            var context = AlgoContext.Empty;
             var command = new CancelOpenOrdersCommand(symbol, side);
 
             // act

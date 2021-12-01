@@ -24,14 +24,12 @@ internal partial class MarketDataStreamer : IMarketDataStreamer
 
     private static string TypeName => nameof(MarketDataStreamer);
 
-    public Task StreamAsync(IEnumerable<string> tickers, IEnumerable<(string Symbol, KlineInterval Interval)> klines, CancellationToken cancellationToken = default)
-    {
-        return StreamCoreAsync(tickers, klines, cancellationToken);
-    }
-
     [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "N/A")]
-    private async Task StreamCoreAsync(IEnumerable<string> tickers, IEnumerable<(string Symbol, KlineInterval Interval)> klines, CancellationToken cancellationToken)
+    public async Task StreamAsync(IEnumerable<string> tickers, IEnumerable<(string Symbol, KlineInterval Interval)> klines, CancellationToken cancellationToken = default)
     {
+        Guard.IsNotNull(tickers, nameof(tickers));
+        Guard.IsNotNull(klines, nameof(klines));
+
         var tickerLookup = tickers.ToHashSet();
         var klineLookup = klines.ToHashSet();
 

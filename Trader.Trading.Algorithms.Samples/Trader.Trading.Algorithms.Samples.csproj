@@ -1,15 +1,15 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-	<RootNamespace>Outcompute.Trader.Trading.Algorithms.Sample</RootNamespace>
+	<RootNamespace>Outcompute.Trader.Trading.Algorithms.Samples</RootNamespace>
 	<NeutralLanguage>en-GB</NeutralLanguage>
 	<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 	<EnableNETAnalyzers>true</EnableNETAnalyzers>
 	<AnalysisMode>AllEnabledByDefault</AnalysisMode>
-	<AssemblyName>Outcompute.Trader.Trading.Algorithms.Sample</AssemblyName>
+	<AssemblyName>Outcompute.Trader.Trading.Algorithms.Samples</AssemblyName>
 	<ImplicitUsings>enable</ImplicitUsings>
 	<Description>Sample algorithms library of Outcompute Trader, a real-time algorithmic trading framework.</Description>
   </PropertyGroup>

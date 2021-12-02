@@ -158,11 +158,11 @@ jobs:
         VERSION_REGEX: ^\s*<Version>(.*)<\/Version>\s*$
         NUGET_KEY: ${{ secrets.NUGET_KEY }}
 
-    - name: Publish NuGet Trader.Trading.Algorithms.Sample
+    - name: Publish NuGet Trader.Trading.Algorithms.Samples
       uses: brandedoutcast/publish-nuget@v2.5.5
       with:
-        PROJECT_FILE_PATH: ./Trader.Trading.Algorithms.Sample/Trader.Trading.Algorithms.Sample.csproj
-        PACKAGE_NAME: Outcompute.Trader.Trading.Algortihms.Sample
+        PROJECT_FILE_PATH: ./Trader.Trading.Algorithms.Sample/Trader.Trading.Algorithms.Samples.csproj
+        PACKAGE_NAME: Outcompute.Trader.Trading.Algortihms.Samples
         VERSION_FILE_PATH: Directory.Build.props
         VERSION_REGEX: ^\s*<Version>(.*)<\/Version>\s*$
         NUGET_KEY: ${{ secrets.NUGET_KEY }}

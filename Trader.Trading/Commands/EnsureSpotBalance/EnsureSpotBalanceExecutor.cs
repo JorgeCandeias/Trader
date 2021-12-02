@@ -21,19 +21,19 @@ internal partial class EnsureSpotBalanceExecutor : IAlgoCommandExecutor<EnsureSp
 
     public async ValueTask<EnsureSpotBalanceEvent> ExecuteAsync(IAlgoContext context, EnsureSpotBalanceCommand command, CancellationToken cancellationToken = default)
     {
-        // get the free spot balance for the specified asset
+        // get the spot balance for the specified asset
         var balance = await _balances.TryGetBalanceAsync(command.Asset, cancellationToken);
-        var free = balance?.Free ?? 0M;
+        var spot = balance?.Total ?? 0M;
 
         // if the free balance already covers the target amount then we can stop here
-        if (free >= command.Value)
+        if (spot >= command.Value)
         {
             return new EnsureSpotBalanceEvent(true, 0);
         }
 
         // if not then calculate the required amount to redeem
-        var required = command.Value - free;
-        LogWillRedeem(TypeName, context.Name, free, command.Asset, required, command.Value);
+        var required = command.Value - spot;
+        LogWillRedeem(TypeName, context.Name, spot, command.Asset, required, command.Value);
 
         // attempt to redeem from savings first
         var redeemed = 0M;

@@ -1,7 +1,4 @@
 ﻿using Orleans;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Outcompute.Trader.Trading.Binance.Tests.Fakes
 {
@@ -25,6 +22,8 @@ namespace Outcompute.Trader.Trading.Binance.Tests.Fakes
         public object State { get; }
         public TimeSpan DueTime { get; }
         public TimeSpan Period { get; }
+
+        public Task ExecuteAsync() => AsyncCallback(State);
 
         public void Dispose()
         {

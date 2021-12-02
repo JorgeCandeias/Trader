@@ -1,5 +1,6 @@
 ﻿using Orleans;
 using Orleans.Concurrency;
+using Orleans.Timers;
 
 namespace Outcompute.Trader.Trading.Binance.Providers.UserData;
 
@@ -10,17 +11,19 @@ namespace Outcompute.Trader.Trading.Binance.Providers.UserData;
 internal class BinanceUserDataReadynessGrain : Grain, IBinanceUserDataReadynessGrain
 {
     private readonly IGrainFactory _factory;
+    private readonly ITimerRegistry _timers;
 
-    public BinanceUserDataReadynessGrain(IGrainFactory factory)
+    public BinanceUserDataReadynessGrain(IGrainFactory factory, ITimerRegistry timers)
     {
-        _factory = factory ?? throw new ArgumentNullException(nameof(factory));
+        _factory = factory;
+        _timers = timers;
     }
 
     public override async Task OnActivateAsync()
     {
         await TickUpdateAsync();
 
-        RegisterTimer(TickUpdateAsync, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+        _timers.RegisterTimer(this, TickUpdateAsync, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
 
         await base.OnActivateAsync();
     }

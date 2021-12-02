@@ -143,7 +143,7 @@ public partial class PortfolioAlgo : Algo
                 .OrderBy(x => x.Stats.AbsolutePnL)
                 .FirstOrDefault();
 
-            if (!IsNullOrEmpty(absLoser.Symbol.Name))
+            if (!IsNullOrEmpty(absLoser.Symbol?.Name))
             {
                 LogSymbolWithLowestAbsolutePnl(TypeName, Context.Name, absLoser.Symbol.Name, absLoser.Stats.AbsolutePnL);
             }
@@ -153,7 +153,7 @@ public partial class PortfolioAlgo : Algo
                 .OrderBy(x => x.Stats.RelativePnL)
                 .FirstOrDefault();
 
-            if (!IsNullOrEmpty(relLoser.Symbol.Name))
+            if (!IsNullOrEmpty(relLoser.Symbol?.Name))
             {
                 LogSymbolWithLowestRelativePnl(TypeName, Context.Name, relLoser.Symbol.Name, relLoser.Stats.RelativePnL);
             }
@@ -163,7 +163,7 @@ public partial class PortfolioAlgo : Algo
                 .OrderByDescending(x => x.Stats.AbsolutePnL)
                 .FirstOrDefault();
 
-            if (!IsNullOrEmpty(absWinner.Symbol.Name))
+            if (!IsNullOrEmpty(absWinner.Symbol?.Name))
             {
                 LogSymbolWithHighestAbsolutePnl(TypeName, Context.Name, absWinner.Symbol.Name, absWinner.Stats.AbsolutePnL);
             }
@@ -173,7 +173,7 @@ public partial class PortfolioAlgo : Algo
                 .OrderByDescending(x => x.Stats.RelativePnL)
                 .FirstOrDefault();
 
-            if (!IsNullOrEmpty(relWinner.Symbol.Name))
+            if (!IsNullOrEmpty(relWinner.Symbol?.Name))
             {
                 LogSymbolWithHighestRelativePnl(TypeName, Context.Name, relWinner.Symbol.Name, relWinner.Stats.RelativePnL);
             }
@@ -185,7 +185,7 @@ public partial class PortfolioAlgo : Algo
                 .OrderByDescending(x => x.Stats.PresentValue)
                 .FirstOrDefault();
 
-            if (!IsNullOrEmpty(highPv.Symbol.Name))
+            if (!IsNullOrEmpty(highPv.Symbol?.Name))
             {
                 LogSymbolWithHighestPresentValue(TypeName, Context.Name, highPv.Symbol.Name, highPv.Stats.PresentValue, highPv.Symbol.QuoteAsset);
             }
@@ -198,7 +198,7 @@ public partial class PortfolioAlgo : Algo
                 .OrderByDescending(x => x.Stats.PresentValue)
                 .FirstOrDefault();
 
-            if (!IsNullOrEmpty(highPv.Symbol.Name))
+            if (!IsNullOrEmpty(highPv.Symbol?.Name))
             {
                 LogSymbolWithHighestPresentValueAboveBreakEven(TypeName, Context.Name, highPvBreakEven.Symbol.Name, highPvBreakEven.Stats.PresentValue, highPvBreakEven.Symbol.QuoteAsset);
             }
@@ -341,6 +341,7 @@ public partial class PortfolioAlgo : Algo
         var quantity = CalculateBuyQuantity(item, price, _options.EntryBuy.BalanceRate);
 
         // create the limit order
+        LogEntryBuyPlacingOrder(TypeName, Context.Name, quantity, item.Symbol.BaseAsset, price, item.Symbol.QuoteAsset);
         command = Sequence(
             EnsureSpotBalance(item.Symbol.QuoteAsset, quantity * price, _options.UseSavings, _options.UseSwapPools),
             EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, price, null, EntryBuyTag));
@@ -914,6 +915,9 @@ public partial class PortfolioAlgo : Algo
 
     [LoggerMessage(68, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} with highest present value above break even {PV:F8} {Quote}")]
     private partial void LogSymbolWithHighestPresentValueAboveBreakEven(string type, string name, string symbol, decimal pv, string quote);
+
+    [LoggerMessage(69, LogLevel.Information, "{Type} {Name} entry buy placing order for {Quantity} {Asset} at {Price} {Quote}")]
+    private partial void LogEntryBuyPlacingOrder(string type, string name, decimal quantity, string asset, decimal price, string quote);
 
     #endregion Logging
 }

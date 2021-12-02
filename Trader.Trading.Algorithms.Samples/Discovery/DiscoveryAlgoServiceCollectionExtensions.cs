@@ -1,5 +1,5 @@
 ﻿using Outcompute.Trader.Trading.Algorithms;
-using Outcompute.Trader.Trading.Algorithms.Standard.Discovery;
+using Outcompute.Trader.Trading.Algorithms.Samples.Discovery;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -7,7 +7,7 @@ public static class DiscoveryAlgoServiceCollectionExtensions
 {
     internal const string AlgoTypeName = "Discovery";
 
-    internal static IServiceCollection AddDiscoveryAlgoType(this IServiceCollection services)
+    public static IServiceCollection AddDiscoveryAlgoType(this IServiceCollection services)
     {
         return services
             .AddAlgoType<DiscoveryAlgo>(AlgoTypeName)

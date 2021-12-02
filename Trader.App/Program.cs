@@ -124,7 +124,8 @@ namespace Outcompute.Trader.App
                                     options.Port = 6002;
                                 })
                                 .AddAccumulatorAlgoType()
-                                .AddArbitrageAlgoType();
+                                .AddArbitrageAlgoType()
+                                .AddDiscoveryAlgoType();
                         });
                 })
                 .RunConsoleAsync();

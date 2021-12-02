@@ -4,7 +4,7 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Providers;
 
-namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery;
+namespace Outcompute.Trader.Trading.Algorithms.Samples.Discovery;
 
 internal partial class DiscoveryAlgo : Algo
 {

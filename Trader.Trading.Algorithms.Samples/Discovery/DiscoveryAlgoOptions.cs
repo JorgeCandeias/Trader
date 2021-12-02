@@ -1,4 +1,4 @@
-﻿namespace Outcompute.Trader.Trading.Algorithms.Standard.Discovery;
+﻿namespace Outcompute.Trader.Trading.Algorithms.Samples.Discovery;
 
 public class DiscoveryAlgoOptions
 {

@@ -280,7 +280,7 @@ public partial class PortfolioAlgo : Algo
         }
 
         // skip if we have not reached the target price yet
-        if (item.Ticker.ClosePrice <= price)
+        if (item.Ticker.ClosePrice <= (price * (1 - _options.SellOff.OrderPriceRange)))
         {
             // todo: log
             return false;
@@ -288,7 +288,7 @@ public partial class PortfolioAlgo : Algo
 
         // skip if there is already an open sell off order
         // this means that a previously placed order hit and is being filled
-        if (item.Orders.Open.Any(x => x.Type == OrderType.Market && x.Side == OrderSide.Sell && x.ClientOrderId == SellOffTag))
+        if (item.Orders.Open.Any(x => x.Type == OrderType.Limit && x.Side == OrderSide.Sell && x.ClientOrderId == SellOffTag))
         {
             // todo: log
             // returning true but not assigning the command
@@ -298,10 +298,11 @@ public partial class PortfolioAlgo : Algo
         // if all the stars align then dump the assets
         LogSellOffElectedSymbol(TypeName, Context.Name, item.Symbol.Name);
 
+        // take any current sell orders into account for spot balance release
         command =
             Sequence(
-                EnsureSpotBalance(item.Symbol.BaseAsset, stats.TotalQuantity, _options.UseSavings, _options.UseSwapPools),
-                MarketSell(item.Symbol, stats.TotalQuantity, SellOffTag));
+                EnsureSpotBalance(item.Symbol.BaseAsset, stats.TotalQuantity, _options.UseSavings, _options.UseSwapPools, true),
+                EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, stats.TotalQuantity, null, price, null, SellOffTag));
 
         return true;
     }
@@ -342,8 +343,10 @@ public partial class PortfolioAlgo : Algo
 
         // create the limit order
         LogEntryBuyPlacingOrder(TypeName, Context.Name, quantity, item.Symbol.BaseAsset, price, item.Symbol.QuoteAsset);
+
+        // take the locked notional into account when redeeming funds
         command = Sequence(
-            EnsureSpotBalance(item.Symbol.QuoteAsset, quantity * price, _options.UseSavings, _options.UseSwapPools),
+            EnsureSpotBalance(item.Symbol.QuoteAsset, quantity * price, _options.UseSavings, _options.UseSwapPools, true),
             EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, price, null, EntryBuyTag));
 
         return true;
@@ -420,12 +423,15 @@ public partial class PortfolioAlgo : Algo
         // skip if there is already an open order at an equal or higher ticker to avoid order twitching
         if (item.Orders.Open.Any(x => x.Side == OrderSide.Buy && x.Type == OrderType.Limit && x.Price >= price))
         {
+            // todo: log
             return false;
         }
 
         // create the limit order
+        // todo: log
+
         command = Sequence(
-            EnsureSpotBalance(item.Symbol.QuoteAsset, quantity * price, _options.UseSavings, _options.UseSwapPools),
+            EnsureSpotBalance(item.Symbol.QuoteAsset, quantity * price, _options.UseSavings, _options.UseSwapPools, true),
             EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, price, null, TopUpBuyTag));
 
         return true;
@@ -500,7 +506,7 @@ public partial class PortfolioAlgo : Algo
         LogRecoveryBuyPlacingOrder(TypeName, Context.Name, OrderType.Limit, OrderSide.Buy, quantity, buyPrice, item.Symbol.BaseAsset, item.Symbol.QuoteAsset);
 
         command = Sequence(
-            EnsureSpotBalance(item.Symbol.QuoteAsset, quantity * buyPrice, _options.UseSavings, _options.UseSwapPools),
+            EnsureSpotBalance(item.Symbol.QuoteAsset, quantity * buyPrice, _options.UseSavings, _options.UseSwapPools, true),
             EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, buyPrice, null, RecoveryBuyTag));
 
         return true;
@@ -629,7 +635,7 @@ public partial class PortfolioAlgo : Algo
         LogRecoverySellElectedSymbol(TypeName, Context.Name, item.Symbol.Name, electedQuantity, item.Symbol.BaseAsset, sellPrice, item.Symbol.QuoteAsset);
 
         command = Sequence(
-            EnsureSpotBalance(item.Symbol.BaseAsset, electedQuantity, _options.UseSavings, _options.UseSwapPools),
+            EnsureSpotBalance(item.Symbol.BaseAsset, electedQuantity, _options.UseSavings, _options.UseSwapPools, true),
             EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, electedQuantity, null, sellPrice, null, RecoverySellTag));
 
         return true;

@@ -120,10 +120,10 @@ public abstract class Algo : IAlgo
         return new MarketBuyCommand(symbol, quantity, notional, raiseToMin, raiseToStepSize);
     }
 
-    /// <inheritdoc cref="EnsureSpotBalance(string, decimal, bool, bool)" />
-    public virtual IAlgoCommand EnsureSpotBalance(string asset, decimal value, bool redeemSavings, bool redeemSwapPools)
+    /// <inheritdoc cref="EnsureSpotBalance(string, decimal, bool, bool, bool) />
+    public virtual IAlgoCommand EnsureSpotBalance(string asset, decimal value, bool redeemSavings = false, bool redeemSwapPools = false, bool lockedAsFree = false)
     {
-        return new EnsureSpotBalanceCommand(asset, value, redeemSavings, redeemSwapPools);
+        return new EnsureSpotBalanceCommand(asset, value, redeemSavings, redeemSwapPools, lockedAsFree);
     }
 
     #endregion Command Helpers

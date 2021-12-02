@@ -159,6 +159,12 @@ public class PortfolioAlgoOptionsSellOff
     public decimal TriggerRate { get; set; } = 2M;
 
     /// <summary>
+    /// The distance to the target sell off price at which point to prepare the limit order.
+    /// </summary>
+    [Required, Range(0, 1)]
+    public decimal OrderPriceRange { get; set; } = 0.01M;
+
+    /// <summary>
     /// Symbols which will never be sold off.
     /// </summary>
     public ISet<string> ExcludeSymbols { get; } = new HashSet<string>();

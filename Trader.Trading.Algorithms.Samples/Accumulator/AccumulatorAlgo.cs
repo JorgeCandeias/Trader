@@ -3,7 +3,7 @@ using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Commands;
 
-namespace Outcompute.Trader.Trading.Algorithms.Sample.Accumulator;
+namespace Outcompute.Trader.Trading.Algorithms.Samples.Accumulator;
 
 internal class AccumulatorAlgo : Algo
 {

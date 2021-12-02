@@ -3,7 +3,7 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Providers;
 
-namespace Outcompute.Trader.Trading.Algorithms.Standard.Arbitrage;
+namespace Outcompute.Trader.Trading.Algorithms.Samples.Arbitrage;
 
 internal partial class ArbitrageAlgo : Algo
 {

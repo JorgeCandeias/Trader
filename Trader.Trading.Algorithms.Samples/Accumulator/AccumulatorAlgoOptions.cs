@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Outcompute.Trader.Trading.Algorithms.Sample.Accumulator;
+namespace Outcompute.Trader.Trading.Algorithms.Samples.Accumulator;
 
 public class AccumulatorAlgoOptions
 {

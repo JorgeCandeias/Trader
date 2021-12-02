@@ -1,5 +1,5 @@
 ﻿using Outcompute.Trader.Trading.Algorithms;
-using Outcompute.Trader.Trading.Algorithms.Sample.Accumulator;
+using Outcompute.Trader.Trading.Algorithms.Samples.Accumulator;
 
 namespace Microsoft.Extensions.DependencyInjection;
 

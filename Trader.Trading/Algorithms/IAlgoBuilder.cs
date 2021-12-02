@@ -11,7 +11,7 @@ public interface IAlgoBuilder<TAlgo>
 
     IAlgoBuilder<TAlgo> ConfigureHostOptions(Action<AlgoOptions> configure);
 
-    IAlgoBuilder<TAlgo> ConfigureTypeOptions<TOptions>(Action<TOptions> configure)
+    IAlgoBuilder<TAlgo, TOptions> ConfigureTypeOptions<TOptions>(Action<TOptions> configure)
         where TOptions : class;
 }
 

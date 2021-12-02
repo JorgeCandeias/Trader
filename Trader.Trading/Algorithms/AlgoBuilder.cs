@@ -31,10 +31,10 @@ internal class AlgoBuilder<TAlgo> : IAlgoBuilder<TAlgo>
         return this;
     }
 
-    public IAlgoBuilder<TAlgo> ConfigureTypeOptions<TOptions>(Action<TOptions> configure)
+    public IAlgoBuilder<TAlgo, TOptions> ConfigureTypeOptions<TOptions>(Action<TOptions> configure)
         where TOptions : class
     {
-        if (configure is null) throw new ArgumentNullException(nameof(configure));
+        Guard.IsNotNull(configure, nameof(configure));
 
         ConfigureTypeOptionsCore(configure);
 
@@ -60,10 +60,10 @@ internal class AlgoBuilder<TAlgo, TOptions> : AlgoBuilder<TAlgo>, IAlgoBuilder<T
 
     public IAlgoBuilder<TAlgo, TOptions> ConfigureTypeOptions(Action<TOptions> configure)
     {
-        if (configure is null) throw new ArgumentNullException(nameof(configure));
+        Guard.IsNotNull(configure, nameof(configure));
 
         ConfigureTypeOptionsCore(configure);
 
-        return new AlgoBuilder<TAlgo, TOptions>(Name, Services);
+        return this;
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Outcompute.Trader.Trading.Algorithms.Standard.Oscillator
+namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
 {
     public class OscillatorAlgoOptions
     {

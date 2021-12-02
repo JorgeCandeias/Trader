@@ -125,7 +125,8 @@ namespace Outcompute.Trader.App
                                 })
                                 .AddAccumulatorAlgoType()
                                 .AddArbitrageAlgoType()
-                                .AddDiscoveryAlgoType();
+                                .AddDiscoveryAlgoType()
+                                .AddOscillatorAlgoType();
                         });
                 })
                 .RunConsoleAsync();

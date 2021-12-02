@@ -145,7 +145,6 @@ public static class TraderServiceCollectionExtensions
             .AddSingleton<IAlgoCommandExecutor<EnsureSpotBalanceCommand>, EnsureSpotBalanceExecutor>()
 
             // builtin algos
-            .AddPortfolioAlgoType()
-            .AddOscillatorAlgoType();
+            .AddPortfolioAlgoType();
     }
 }

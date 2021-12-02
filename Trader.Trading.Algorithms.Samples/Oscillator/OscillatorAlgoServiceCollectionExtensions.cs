@@ -1,5 +1,5 @@
 ﻿using Outcompute.Trader.Trading.Algorithms;
-using Outcompute.Trader.Trading.Algorithms.Standard.Oscillator;
+using Outcompute.Trader.Trading.Algorithms.Samples.Oscillator;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -7,7 +7,7 @@ public static class OscillatorAlgoServiceCollectionExtensions
 {
     internal const string AlgoTypeName = "Oscillator";
 
-    internal static IServiceCollection AddOscillatorAlgoType(this IServiceCollection services)
+    public static IServiceCollection AddOscillatorAlgoType(this IServiceCollection services)
     {
         return services
             .AddAlgoType<OscillatorAlgo>(AlgoTypeName)

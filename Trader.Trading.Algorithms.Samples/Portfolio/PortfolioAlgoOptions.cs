@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Outcompute.Trader.Trading.Algorithms.Standard.Portfolio;
+namespace Outcompute.Trader.Trading.Algorithms.Samples.Portfolio;
 
 public class PortfolioAlgoOptions
 {

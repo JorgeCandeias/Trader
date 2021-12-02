@@ -142,9 +142,6 @@ public static class TraderServiceCollectionExtensions
             .AddSingleton<IAlgoCommandExecutor<MarketSellCommand>, MarketSellCommandExecutor>()
             .AddSingleton<IAlgoCommandExecutor<MarketBuyCommand>, MarketBuyCommandExecutor>()
             .AddSingleton<IAlgoCommandExecutor<CancelOpenOrdersCommand>, CancelOpenOrdersExecutor>()
-            .AddSingleton<IAlgoCommandExecutor<EnsureSpotBalanceCommand>, EnsureSpotBalanceExecutor>()
-
-            // builtin algos
-            .AddPortfolioAlgoType();
+            .AddSingleton<IAlgoCommandExecutor<EnsureSpotBalanceCommand>, EnsureSpotBalanceExecutor>();
     }
 }

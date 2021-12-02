@@ -6,7 +6,7 @@ using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Algorithms.Positions;
 using Outcompute.Trader.Trading.Commands;
 
-namespace Outcompute.Trader.Trading.Algorithms.Standard.Portfolio;
+namespace Outcompute.Trader.Trading.Algorithms.Samples.Portfolio;
 
 public partial class PortfolioAlgo : Algo
 {

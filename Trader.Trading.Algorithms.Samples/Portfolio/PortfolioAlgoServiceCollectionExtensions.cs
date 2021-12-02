@@ -1,5 +1,5 @@
 ﻿using Outcompute.Trader.Trading.Algorithms;
-using Outcompute.Trader.Trading.Algorithms.Standard.Portfolio;
+using Outcompute.Trader.Trading.Algorithms.Samples.Portfolio;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -7,7 +7,7 @@ public static class PortfolioAlgoServiceCollectionExtensions
 {
     internal const string AlgoTypeName = "Portfolio";
 
-    internal static IServiceCollection AddPortfolioAlgoType(this IServiceCollection services)
+    public static IServiceCollection AddPortfolioAlgoType(this IServiceCollection services)
     {
         return services
             .AddAlgoType<PortfolioAlgo>(AlgoTypeName)

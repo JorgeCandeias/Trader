@@ -25,7 +25,7 @@ namespace Outcompute.Trader.Trading.Tests
             var factory = Mock.Of<IGrainFactory>();
             Mock.Get(factory)
                 .Setup(x => x.GetGrain<IKlineProviderReplicaGrain>($"{symbol}|{interval}", null).GetKlinesAsync())
-                .ReturnsAsync(items)
+                .ReturnsAsync(() => items)
                 .Verifiable();
 
             var provider = new KlineProvider(factory);
@@ -73,7 +73,7 @@ namespace Outcompute.Trader.Trading.Tests
             var factory = Mock.Of<IGrainFactory>();
             Mock.Get(factory)
                 .Setup(x => x.GetGrain<IKlineProviderReplicaGrain>($"{symbol}|{interval}", null).TryGetKlineAsync(openTime))
-                .ReturnsAsync(item)
+                .ReturnsAsync(() => item)
                 .Verifiable();
 
             var provider = new KlineProvider(factory);

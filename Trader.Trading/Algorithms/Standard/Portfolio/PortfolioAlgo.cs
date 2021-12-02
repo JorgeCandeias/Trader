@@ -486,8 +486,8 @@ public partial class PortfolioAlgo : Algo
             return false;
         }
 
-        // ticker must be below the buy price to bother reserving funds
-        if (item.Ticker.ClosePrice >= buyPrice)
+        // ticker must be within range of the buy price to bother reserving funds
+        if (item.Ticker.ClosePrice >= buyPrice * (1 + _options.Recovery.BuyOrderPriceRange))
         {
             LogRecoveryBuySkippedSymbolWithTickerNotUnderBuyPrice(TypeName, Context.Name, item.Symbol.Name, item.Ticker.ClosePrice, item.Symbol.QuoteAsset, buyPrice);
             return false;

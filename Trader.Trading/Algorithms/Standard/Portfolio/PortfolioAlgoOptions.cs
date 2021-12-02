@@ -209,6 +209,12 @@ public class PortfolioAlgoOptionsRecovery
     public decimal BalanceRate { get; set; } = 0.001M;
 
     /// <summary>
+    /// The distance to the target recovery buy price at which point to prepare the limit order.
+    /// </summary>
+    [Required, Range(0, 1)]
+    public decimal BuyOrderPriceRange { get; set; } = 0.01M;
+
+    /// <summary>
     /// The cooldown between sequential recovery buys.
     /// </summary>
     [Required, Range(typeof(TimeSpan), "0.00:00:00.000", "360.00:00:00.000")]

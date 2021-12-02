@@ -4,7 +4,9 @@ internal class AlgoEntry : IAlgoEntry
 {
     public AlgoEntry(string name)
     {
-        Name = name ?? throw new ArgumentNullException(nameof(name));
+        Guard.IsNotNull(name, nameof(name));
+
+        Name = name;
     }
 
     public string Name { get; }

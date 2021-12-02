@@ -299,9 +299,11 @@ public partial class PortfolioAlgo : Algo
         LogSellOffElectedSymbol(TypeName, Context.Name, item.Symbol.Name);
 
         // take any current sell orders into account for spot balance release
+        var locked = item.Orders.Open.Where(x => x.Side == OrderSide.Sell).Sum(x => x.OriginalQuantity);
+
         command =
             Sequence(
-                EnsureSpotBalance(item.Symbol.BaseAsset, stats.TotalQuantity, _options.UseSavings, _options.UseSwapPools, true),
+                EnsureSpotBalance(item.Symbol.BaseAsset, Math.Max(stats.TotalQuantity - locked, 0), _options.UseSavings, _options.UseSwapPools),
                 EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, stats.TotalQuantity, null, price, null, SellOffTag));
 
         return true;
@@ -344,9 +346,11 @@ public partial class PortfolioAlgo : Algo
         // create the limit order
         LogEntryBuyPlacingOrder(TypeName, Context.Name, quantity, item.Symbol.BaseAsset, price, item.Symbol.QuoteAsset);
 
-        // take the locked notional into account when redeeming funds
+        // take any current buy orders into account for spot balance release
+        var locked = item.Orders.Open.Where(x => x.Side == OrderSide.Buy).Sum(x => x.OriginalQuantity * x.Price);
+
         command = Sequence(
-            EnsureSpotBalance(item.Symbol.QuoteAsset, quantity * price, _options.UseSavings, _options.UseSwapPools, true),
+            EnsureSpotBalance(item.Symbol.QuoteAsset, Math.Max((quantity * price) - locked, 0), _options.UseSavings, _options.UseSwapPools),
             EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, price, null, EntryBuyTag));
 
         return true;
@@ -430,8 +434,11 @@ public partial class PortfolioAlgo : Algo
         // create the limit order
         // todo: log
 
+        // take any current buy orders into account for spot balance release
+        var locked = item.Orders.Open.Where(x => x.Side == OrderSide.Buy).Sum(x => x.OriginalQuantity * x.Price);
+
         command = Sequence(
-            EnsureSpotBalance(item.Symbol.QuoteAsset, quantity * price, _options.UseSavings, _options.UseSwapPools, true),
+            EnsureSpotBalance(item.Symbol.QuoteAsset, Math.Max((quantity * price) - locked, 0), _options.UseSavings, _options.UseSwapPools),
             EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, price, null, TopUpBuyTag));
 
         return true;
@@ -505,8 +512,11 @@ public partial class PortfolioAlgo : Algo
 
         LogRecoveryBuyPlacingOrder(TypeName, Context.Name, OrderType.Limit, OrderSide.Buy, quantity, buyPrice, item.Symbol.BaseAsset, item.Symbol.QuoteAsset);
 
+        // take any current buy orders into account for spot balance release
+        var locked = item.Orders.Open.Where(x => x.Side == OrderSide.Buy).Sum(x => x.OriginalQuantity * x.Price);
+
         command = Sequence(
-            EnsureSpotBalance(item.Symbol.QuoteAsset, quantity * buyPrice, _options.UseSavings, _options.UseSwapPools, true),
+            EnsureSpotBalance(item.Symbol.QuoteAsset, Math.Max((quantity * buyPrice) - locked, 0), _options.UseSavings, _options.UseSwapPools),
             EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, buyPrice, null, RecoveryBuyTag));
 
         return true;
@@ -634,8 +644,11 @@ public partial class PortfolioAlgo : Algo
         // if we found something to sell then place the recovery sell
         LogRecoverySellElectedSymbol(TypeName, Context.Name, item.Symbol.Name, electedQuantity, item.Symbol.BaseAsset, sellPrice, item.Symbol.QuoteAsset);
 
+        // take any current sell orders into account for spot balance release
+        var locked = item.Orders.Open.Where(x => x.Side == OrderSide.Sell).Sum(x => x.OriginalQuantity);
+
         command = Sequence(
-            EnsureSpotBalance(item.Symbol.BaseAsset, electedQuantity, _options.UseSavings, _options.UseSwapPools, true),
+            EnsureSpotBalance(item.Symbol.BaseAsset, Math.Max(electedQuantity - locked, 0), _options.UseSavings, _options.UseSwapPools),
             EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, electedQuantity, null, sellPrice, null, RecoverySellTag));
 
         return true;

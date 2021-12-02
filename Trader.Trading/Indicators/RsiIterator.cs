@@ -14,8 +14,11 @@ internal sealed class RsiIterator : Iterator<decimal>
 
     public RsiIterator(IEnumerable<decimal> source, int periods)
     {
-        _source = source ?? throw new ArgumentNullException(nameof(source));
-        _periods = periods > 0 ? periods : throw new ArgumentOutOfRangeException(nameof(periods));
+        Guard.IsNotNull(source, nameof(source));
+        Guard.IsGreaterThan(periods, 0, nameof(periods));
+
+        _source = source;
+        _periods = periods;
 
         _avgGain = _source.Gain().Rma(periods).GetEnumerator();
         _avgLoss = _source.AbsLoss().Rma(periods).GetEnumerator();
@@ -31,9 +34,16 @@ internal sealed class RsiIterator : Iterator<decimal>
             case 1:
                 if (_avgGain.MoveNext() && _avgLoss.MoveNext())
                 {
-                    if (_avgLoss.Current is 0m)
+                    if (_avgLoss.Current is 0M)
                     {
-                        _current = 100m;
+                        if (_avgGain.Current is 0M)
+                        {
+                            _current = 50M;
+                        }
+                        else
+                        {
+                            _current = 100m;
+                        }
                     }
                     else
                     {

@@ -8,7 +8,9 @@ public class TrackingBuyCommand : IAlgoCommand
 {
     public TrackingBuyCommand(Symbol symbol, decimal pullbackRatio, decimal targetQuoteBalanceFractionPerBuy, decimal? maxNotional)
     {
-        Symbol = symbol ?? throw new ArgumentNullException(nameof(symbol));
+        Guard.IsNotNull(symbol, nameof(symbol));
+
+        Symbol = symbol;
         PullbackRatio = pullbackRatio;
         TargetQuoteBalanceFractionPerBuy = targetQuoteBalanceFractionPerBuy;
         MaxNotional = maxNotional;

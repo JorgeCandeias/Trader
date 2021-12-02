@@ -3,7 +3,7 @@ using Outcompute.Trader.Trading.Algorithms.Context;
 
 namespace Outcompute.Trader.Trading.Commands.EnsureSpotBalance;
 
-internal class EnsureSpotBalanceCommand : IAlgoCommand
+public class EnsureSpotBalanceCommand : IAlgoCommand
 {
     /// <summary>
     /// Creates a new command that will ensure the specified spot balance is available by redeeming enough assets from redemption sources.

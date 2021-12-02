@@ -8,6 +8,8 @@ public class MarketSellCommand : IAlgoCommand
 {
     public MarketSellCommand(Symbol symbol, decimal quantity, string? tag = null)
     {
+        Guard.IsNotNull(symbol, nameof(symbol));
+
         Symbol = symbol;
         Quantity = quantity;
         Tag = tag;

@@ -8,7 +8,9 @@ public class RedeemSwapPoolCommand : IAlgoCommand
 {
     public RedeemSwapPoolCommand(string asset, decimal amount)
     {
-        Asset = asset ?? throw new ArgumentNullException(nameof(asset));
+        Guard.IsNotNull(asset, nameof(asset));
+
+        Asset = asset;
         Amount = amount;
     }
 

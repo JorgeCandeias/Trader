@@ -4,7 +4,7 @@ using Outcompute.Trader.Trading.Algorithms.Context;
 
 namespace Outcompute.Trader.Trading.Commands.CreateOrder;
 
-internal class CreateOrderCommand : AlgoCommandBase
+public class CreateOrderCommand : IAlgoCommand
 {
     /// <summary>
     /// Creates an order on the exchange.
@@ -19,8 +19,9 @@ internal class CreateOrderCommand : AlgoCommandBase
     /// <param name="stopPrice">The stop price of the order.</param>
     /// <param name="tag">The open order tag of the order.</param>
     internal CreateOrderCommand(Symbol symbol, OrderType type, OrderSide side, TimeInForce? timeInForce, decimal? quantity, decimal? notional, decimal? price, decimal? stopPrice, string? tag)
-        : base(symbol)
     {
+        Guard.IsNotNull(symbol, nameof(symbol));
+
         switch (type)
         {
             case OrderType.Limit:
@@ -68,6 +69,7 @@ internal class CreateOrderCommand : AlgoCommandBase
                 break;
         }
 
+        Symbol = symbol;
         Type = type;
         Side = side;
         TimeInForce = timeInForce;
@@ -78,6 +80,7 @@ internal class CreateOrderCommand : AlgoCommandBase
         Tag = tag;
     }
 
+    public Symbol Symbol { get; }
     public OrderType Type { get; }
     public OrderSide Side { get; }
     public TimeInForce? TimeInForce { get; }
@@ -87,7 +90,7 @@ internal class CreateOrderCommand : AlgoCommandBase
     public decimal? StopPrice { get; }
     public string? Tag { get; }
 
-    public override ValueTask ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
+    public ValueTask ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
     {
         return context.ServiceProvider
             .GetRequiredService<IAlgoCommandExecutor<CreateOrderCommand>>()

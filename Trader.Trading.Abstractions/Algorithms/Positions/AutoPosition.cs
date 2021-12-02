@@ -5,12 +5,13 @@ using System.Collections.Immutable;
 namespace Outcompute.Trader.Trading.Algorithms.Positions
 {
     [Immutable]
-    public record AutoPosition(Symbol Symbol, PositionCollection Positions, ImmutableList<ProfitEvent> ProfitEvents, ImmutableList<CommissionEvent> CommissionEvents)
+    public record AutoPosition()
     {
-        public static AutoPosition Empty { get; } = new AutoPosition(
-            Symbol.Empty,
-            PositionCollection.Empty,
-            ImmutableList<ProfitEvent>.Empty,
-            ImmutableList<CommissionEvent>.Empty);
+        public Symbol Symbol { get; init; } = Symbol.Empty;
+        public PositionCollection Positions { get; init; } = PositionCollection.Empty;
+        public ImmutableList<ProfitEvent> ProfitEvents { get; init; } = ImmutableList<ProfitEvent>.Empty;
+        public ImmutableList<CommissionEvent> CommissionEvents { get; init; } = ImmutableList<CommissionEvent>.Empty;
+
+        public static AutoPosition Empty { get; } = new AutoPosition();
     }
 }

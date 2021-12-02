@@ -4,11 +4,13 @@ using Outcompute.Trader.Trading.Algorithms.Context;
 
 namespace Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
 
-internal class EnsureSingleOrderCommand : AlgoCommandBase
+public class EnsureSingleOrderCommand : IAlgoCommand
 {
     public EnsureSingleOrderCommand(Symbol symbol, OrderSide side, OrderType type, TimeInForce? timeInForce, decimal? quantity, decimal? notional, decimal? price, decimal? stopPrice, string? tag = null)
-        : base(symbol)
     {
+        Guard.IsNotNull(symbol, nameof(symbol));
+
+        Symbol = symbol;
         Side = side;
         Type = type;
         TimeInForce = timeInForce;
@@ -19,6 +21,7 @@ internal class EnsureSingleOrderCommand : AlgoCommandBase
         Tag = tag;
     }
 
+    public Symbol Symbol { get; }
     public OrderSide Side { get; }
     public OrderType Type { get; }
     public TimeInForce? TimeInForce { get; }
@@ -28,7 +31,7 @@ internal class EnsureSingleOrderCommand : AlgoCommandBase
     public decimal? StopPrice { get; }
     public string? Tag { get; }
 
-    public override ValueTask ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
+    public ValueTask ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
     {
         return context.ServiceProvider
             .GetRequiredService<IAlgoCommandExecutor<EnsureSingleOrderCommand>>()

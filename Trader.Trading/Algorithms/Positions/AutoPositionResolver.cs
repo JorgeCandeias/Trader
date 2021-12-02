@@ -105,7 +105,13 @@ internal partial class AutoPositionResolver : IAutoPositionResolver
 
         LogIdentifiedPositions(TypeName, symbol.Name, positions.Count, watch.ElapsedMilliseconds);
 
-        return new AutoPosition(symbol, positions, profits.ToImmutable(), commissions);
+        return new AutoPosition
+        {
+            Symbol = symbol,
+            Positions = positions,
+            ProfitEvents = profits.ToImmutable(),
+            CommissionEvents = commissions
+        };
     }
 
     private (SortedSet<Map> Mapping, ImmutableList<CommissionEvent> Commissions) Combine(Symbol symbol, IEnumerable<OrderQueryResult> orders, IEnumerable<AccountTrade> trades)

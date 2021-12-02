@@ -8,7 +8,9 @@ public class CancelOrderCommand : IAlgoCommand
 {
     public CancelOrderCommand(Symbol symbol, long orderId)
     {
-        Symbol = symbol ?? throw new ArgumentNullException(nameof(symbol));
+        Guard.IsNotNull(symbol, nameof(symbol));
+
+        Symbol = symbol;
         OrderId = orderId;
     }
 

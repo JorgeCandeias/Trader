@@ -54,7 +54,7 @@ public abstract class Algo : IAlgo
         return ValueTask.CompletedTask;
     }
 
-    public IAlgoContext Context { get; }
+    public IAlgoContext Context { get; set; }
 
     public virtual IAlgoCommand Noop()
     {

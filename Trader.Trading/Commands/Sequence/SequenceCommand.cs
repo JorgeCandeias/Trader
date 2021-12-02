@@ -3,15 +3,19 @@ using Outcompute.Trader.Trading.Algorithms.Context;
 
 namespace Outcompute.Trader.Trading.Commands.Sequence;
 
-internal class SequenceCommand : IAlgoCommand
+public class SequenceCommand : IAlgoCommand
 {
     public SequenceCommand(IEnumerable<IAlgoCommand> commands)
     {
-        Commands = commands ?? throw new ArgumentNullException(nameof(commands));
+        Guard.IsNotNull(commands, nameof(commands));
+
+        Commands = commands;
     }
 
     public SequenceCommand(params IAlgoCommand[] results)
     {
+        Guard.IsNotNull(results, nameof(results));
+
         Commands = results;
     }
 

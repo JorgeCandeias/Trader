@@ -4,7 +4,7 @@ using Outcompute.Trader.Trading.Algorithms.Context;
 
 namespace Outcompute.Trader.Trading.Commands.MarketBuy;
 
-internal class MarketBuyCommand : AlgoCommandBase
+public class MarketBuyCommand : IAlgoCommand
 {
     /// <summary>
     /// Creates a market buy order with the specified parameters.
@@ -16,8 +16,9 @@ internal class MarketBuyCommand : AlgoCommandBase
     /// <param name="raiseToStepSize">Whether to raise the fractional <paramref name="quantity"/> or <paramref name="notional"/> values to the next step size of the exchange to ensure a valid order.</param>
     /// <param name="tag">Unique tag of the open order.</param>
     internal MarketBuyCommand(Symbol symbol, decimal? quantity, decimal? notional, bool raiseToMin = false, bool raiseToStepSize = false, string? tag = null)
-        : base(symbol)
     {
+        Guard.IsNotNull(symbol, nameof(symbol));
+
         if (quantity is null && notional is null)
         {
             ThrowHelper.ThrowArgumentException($"Specify one of '{nameof(quantity)}' or '{nameof(notional)}' arguments");
@@ -28,6 +29,7 @@ internal class MarketBuyCommand : AlgoCommandBase
             ThrowHelper.ThrowArgumentException($"Specify only one of '{nameof(quantity)}' or '{nameof(notional)}' and not both");
         }
 
+        Symbol = symbol;
         Quantity = quantity;
         Notional = notional;
         RaiseToMin = raiseToMin;
@@ -35,13 +37,14 @@ internal class MarketBuyCommand : AlgoCommandBase
         Tag = tag;
     }
 
+    public Symbol Symbol { get; }
     public decimal? Quantity { get; }
     public decimal? Notional { get; }
     public bool RaiseToMin { get; }
     public bool RaiseToStepSize { get; }
     public string? Tag { get; }
 
-    public override ValueTask ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
+    public ValueTask ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
     {
         return context.ServiceProvider
             .GetRequiredService<IAlgoCommandExecutor<MarketBuyCommand>>()

@@ -14,4 +14,15 @@
 	<Description>Sample algorithms library of Outcompute Trader, a real-time algorithmic trading framework.</Description>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="SonarAnalyzer.CSharp" Version="8.32.0.39516">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Trader.Trading\Trader.Trading.csproj" />
+  </ItemGroup>
+
 </Project>

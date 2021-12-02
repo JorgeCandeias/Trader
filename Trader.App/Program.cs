@@ -122,7 +122,8 @@ namespace Outcompute.Trader.App
                                 .AddTraderDashboard(options =>
                                 {
                                     options.Port = 6002;
-                                });
+                                })
+                                .AddAccumulatorAlgoType();
                         });
                 })
                 .RunConsoleAsync();

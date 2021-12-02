@@ -1,5 +1,5 @@
 ﻿using Outcompute.Trader.Trading.Algorithms;
-using Outcompute.Trader.Trading.Algorithms.Standard.Accumulator;
+using Outcompute.Trader.Trading.Algorithms.Sample.Accumulator;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -7,7 +7,7 @@ public static class AccumulatorAlgoServiceCollectionExtensions
 {
     internal const string AlgoTypeName = "Accumulator";
 
-    internal static IServiceCollection AddAccumulatorAlgoType(this IServiceCollection services)
+    public static IServiceCollection AddAccumulatorAlgoType(this IServiceCollection services)
     {
         return services
             .AddAlgoType<AccumulatorAlgo>(AlgoTypeName)

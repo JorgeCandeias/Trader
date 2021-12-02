@@ -15,6 +15,7 @@
 
 	<ItemGroup>
 		<InternalsVisibleTo Include="Outcompute.Trader.Models.Tests" />
+		<InternalsVisibleTo Include="Outcompute.Trader.Trading.Tests" />
 	</ItemGroup>
 
 	<ItemGroup>

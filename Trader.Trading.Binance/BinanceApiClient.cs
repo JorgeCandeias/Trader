@@ -74,17 +74,6 @@ internal class BinanceApiClient
         return _mapper.Map<OrderBook>(result);
     }
 
-    public async Task<IEnumerable<Trade>> GetRecentTradesAsync(string symbol, CancellationToken cancellationToken = default)
-    {
-        var result = await _client
-            .GetFromJsonAsync<ApiTrade[]>(
-                new Uri($"/api/v3/trades?symbol={HttpUtility.UrlEncode(symbol)}", UriKind.Relative),
-                cancellationToken)
-            .ConfigureAwait(false);
-
-        return _mapper.Map<IEnumerable<Trade>>(result);
-    }
-
     public async Task<IEnumerable<Trade>> GetHistoricalTradesAsync(string symbol, CancellationToken cancellationToken = default)
     {
         var result = await _client

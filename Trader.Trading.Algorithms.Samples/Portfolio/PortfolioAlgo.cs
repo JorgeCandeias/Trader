@@ -340,6 +340,15 @@ public partial class PortfolioAlgo : Algo
         }
         price = price.AdjustPriceDownToTickSize(item.Symbol);
 
+        // price must above the price filter
+        // todo: push this check to the command executors
+        var minPrice = item.Ticker.ClosePrice * item.Symbol.Filters.PercentPrice.MultiplierDown;
+        if (price < minPrice)
+        {
+            LogEntryBuySkippedSymbolWithPriceBelowMinPercent(TypeName, Context.Name, item.Symbol.Name, price, minPrice, item.Symbol.QuoteAsset);
+            return false;
+        }
+
         // identify the appropriate buy quantity for this price
         var quantity = CalculateBuyQuantity(item, price, _options.EntryBuy.BalanceRate);
 
@@ -937,6 +946,9 @@ public partial class PortfolioAlgo : Algo
 
     [LoggerMessage(69, LogLevel.Information, "{Type} {Name} entry buy placing order for {Quantity} {Asset} at {Price} {Quote}")]
     private partial void LogEntryBuyPlacingOrder(string type, string name, decimal quantity, string asset, decimal price, string quote);
+
+    [LoggerMessage(70, LogLevel.Information, "{Type} {Name} entry buy skipped symbol {Symbol} with buy price of {Price:F8} {Quote} below min percent price of {MinPrice:F8} {Quote}")]
+    private partial void LogEntryBuySkippedSymbolWithPriceBelowMinPercent(string type, string name, string symbol, decimal price, decimal minPrice, string quote);
 
     #endregion Logging
 }

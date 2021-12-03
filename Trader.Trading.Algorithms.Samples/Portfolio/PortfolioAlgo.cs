@@ -138,6 +138,14 @@ public partial class PortfolioAlgo : Algo
                 rpnl,
                 pv - cost + rpnl);
 
+            // every non zero symbol by relative pnl
+            foreach (var item in stats
+                .Where(x => x.Stats.TotalQuantity > 0)
+                .OrderBy(x => x.Stats.RelativePnL))
+            {
+                LogSymbolAtBreakEven(TypeName, Context.Name, item.Symbol.Name, item.Stats.RelativePnL, item.Stats.AbsolutePnL, item.Symbol.QuoteAsset, item.Stats.PresentValue);
+            }
+
             // report on the absolute loser
             var absLoser = stats
                 .OrderBy(x => x.Stats.AbsolutePnL)
@@ -201,15 +209,6 @@ public partial class PortfolioAlgo : Algo
             if (!IsNullOrEmpty(highPv.Symbol?.Name))
             {
                 LogSymbolWithHighestPresentValueAboveBreakEven(TypeName, Context.Name, highPvBreakEven.Symbol.Name, highPvBreakEven.Stats.PresentValue, highPvBreakEven.Symbol.QuoteAsset);
-            }
-
-            // above break even
-            foreach (var item in stats
-                .Where(x => x.Stats.TotalQuantity > 0)
-                .Where(x => x.Stats.RelativePnL >= 0)
-                .OrderBy(x => x.Stats.RelativePnL))
-            {
-                LogSymbolAtBreakEven(TypeName, Context.Name, item.Symbol.Name, item.Stats.RelativePnL, item.Stats.AbsolutePnL, item.Symbol.QuoteAsset, item.Stats.PresentValue);
             }
         }
     }

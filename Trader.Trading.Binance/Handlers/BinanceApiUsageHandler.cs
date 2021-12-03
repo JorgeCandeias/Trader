@@ -15,10 +15,10 @@ internal partial class BinanceApiUsageHandler : DelegatingHandler
 
     public BinanceApiUsageHandler(IOptions<BinanceOptions> options, BinanceUsageContext usage, ILogger<BinanceApiUsageHandler> logger, ISystemClock clock)
     {
-        _options = options.Value ?? throw new ArgumentNullException(nameof(options));
-        _usage = usage ?? throw new ArgumentNullException(nameof(usage));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _clock = clock ?? throw new ArgumentNullException(nameof(clock));
+        _options = options.Value;
+        _usage = usage;
+        _logger = logger;
+        _clock = clock;
     }
 
     private const string TypeName = nameof(BinanceApiUsageHandler);

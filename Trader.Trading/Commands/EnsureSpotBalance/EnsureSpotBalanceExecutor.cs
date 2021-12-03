@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Trading.Algorithms.Context;
-using Outcompute.Trader.Trading.Commands.RedeemSavings;
 using Outcompute.Trader.Trading.Commands.RedeemSwapPool;
 using Outcompute.Trader.Trading.Providers;
 
@@ -10,11 +9,13 @@ internal partial class EnsureSpotBalanceExecutor : IAlgoCommandExecutor<EnsureSp
 {
     private readonly ILogger _logger;
     private readonly IBalanceProvider _balances;
+    private readonly ISavingsProvider _savings;
 
-    public EnsureSpotBalanceExecutor(ILogger<EnsureSpotBalanceExecutor> logger, IBalanceProvider balances)
+    public EnsureSpotBalanceExecutor(ILogger<EnsureSpotBalanceExecutor> logger, IBalanceProvider balances, ISavingsProvider savings)
     {
         _logger = logger;
         _balances = balances;
+        _savings = savings;
     }
 
     private const string TypeName = nameof(EnsureSpotBalanceCommand);
@@ -39,9 +40,7 @@ internal partial class EnsureSpotBalanceExecutor : IAlgoCommandExecutor<EnsureSp
         var redeemed = 0M;
         if (command.RedeemSavings)
         {
-            var result = await new RedeemSavingsCommand(command.Asset, required)
-                .ExecuteAsync(context, cancellationToken)
-                .ConfigureAwait(false);
+            var result = await _savings.RedeemAsync(command.Asset, required, cancellationToken).ConfigureAwait(false);
 
             if (result.Success)
             {

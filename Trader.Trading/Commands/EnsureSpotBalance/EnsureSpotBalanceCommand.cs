@@ -12,8 +12,7 @@ public class EnsureSpotBalanceCommand : IAlgoCommand
     /// <param name="value">The desired minimum spot balance for the asset.</param>
     /// <param name="redeemSavings">Whether to redeem savings.</param>
     /// <param name="redeemSwapPools">Whether to redeem from swap pools.</param>
-    /// <param name="lockedAsFree">Whether to consider the locked amount as free amount. Use this if you are going to be replacing an existing order.</param>
-    public EnsureSpotBalanceCommand(string asset, decimal value, bool redeemSavings = false, bool redeemSwapPools = false, bool lockedAsFree = false)
+    public EnsureSpotBalanceCommand(string asset, decimal value, bool redeemSavings = false, bool redeemSwapPools = false)
     {
         Guard.IsNotNull(asset, nameof(asset));
         Guard.IsGreaterThanOrEqualTo(value, 0, nameof(value));
@@ -22,14 +21,12 @@ public class EnsureSpotBalanceCommand : IAlgoCommand
         Value = value;
         RedeemSavings = redeemSavings;
         RedeemSwapPools = redeemSwapPools;
-        LockedAsFree = lockedAsFree;
     }
 
     public string Asset { get; }
     public decimal Value { get; }
     public bool RedeemSavings { get; }
     public bool RedeemSwapPools { get; }
-    public bool LockedAsFree { get; }
 
     public ValueTask ExecuteAsync(IAlgoContext context, CancellationToken cancellationToken = default)
     {

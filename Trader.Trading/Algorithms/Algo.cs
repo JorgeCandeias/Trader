@@ -121,9 +121,9 @@ public abstract class Algo : IAlgo
     }
 
     /// <inheritdoc cref="EnsureSpotBalance(string, decimal, bool, bool, bool) />
-    public virtual IAlgoCommand EnsureSpotBalance(string asset, decimal value, bool redeemSavings = false, bool redeemSwapPools = false, bool lockedAsFree = false)
+    public virtual IAlgoCommand EnsureSpotBalance(string asset, decimal value, bool redeemSavings = false, bool redeemSwapPools = false)
     {
-        return new EnsureSpotBalanceCommand(asset, value, redeemSavings, redeemSwapPools, lockedAsFree);
+        return new EnsureSpotBalanceCommand(asset, value, redeemSavings, redeemSwapPools);
     }
 
     #endregion Command Helpers

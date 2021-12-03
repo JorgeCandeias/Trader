@@ -25,12 +25,6 @@ internal partial class EnsureSpotBalanceExecutor : IAlgoCommandExecutor<EnsureSp
         var balance = await _balances.TryGetBalanceAsync(command.Asset, cancellationToken);
         var spot = balance?.Free ?? 0M;
 
-        // include locked balance if the user requires it
-        if (command.LockedAsFree)
-        {
-            spot += balance?.Locked ?? 0M;
-        }
-
         // if the free balance already covers the target amount then we can stop here
         if (spot >= command.Value)
         {

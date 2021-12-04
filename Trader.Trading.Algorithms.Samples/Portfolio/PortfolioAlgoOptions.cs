@@ -206,7 +206,7 @@ public class PortfolioAlgoOptionsRecovery
     /// Drop rate from the last buy for recovery to activate.
     /// </summary>
     [Required, Range(0, 1)]
-    public decimal DropRate { get; set; } = 0.10M;
+    public decimal DropRate { get; set; } = 0.50M;
 
     /// <summary>
     /// The fraction of the quote balance to use for each buy order.

@@ -20,20 +20,16 @@ internal class BalanceProvider : IBalanceProvider
 
     public ValueTask<Balance?> TryGetBalanceAsync(string asset, CancellationToken cancellationToken = default)
     {
-        if (asset is null) throw new ArgumentNullException(nameof(asset));
+        Guard.IsNotNull(asset, nameof(asset));
 
         return _factory.GetBalanceProviderReplicaGrain(asset).TryGetBalanceAsync();
     }
 
-    public ValueTask SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default)
+    public async ValueTask SetBalancesAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default)
     {
-        if (balances is null) throw new ArgumentNullException(nameof(balances));
+        Guard.IsNotNull(balances, nameof(balances));
 
-        return SetBalancesCoreAsync(balances, cancellationToken);
-    }
-
-    private async ValueTask SetBalancesCoreAsync(IEnumerable<Balance> balances, CancellationToken cancellationToken = default)
-    {
+        // todo: move this to the grain
         await _repository.SetBalancesAsync(balances, cancellationToken).ConfigureAwait(false);
 
         await balances
@@ -44,7 +40,7 @@ internal class BalanceProvider : IBalanceProvider
 
     public ValueTask SetBalancesAsync(AccountInfo accountInfo, CancellationToken cancellationToken = default)
     {
-        if (accountInfo is null) throw new ArgumentNullException(nameof(accountInfo));
+        Guard.IsNotNull(accountInfo, nameof(accountInfo));
 
         var balances = _mapper.Map<IEnumerable<Balance>>(accountInfo);
 
@@ -53,6 +49,7 @@ internal class BalanceProvider : IBalanceProvider
 
     public ValueTask<IEnumerable<Balance>> GetBalancesAsync(CancellationToken cancellationToken = default)
     {
+        // todo: get this from replica grains
         return _repository.GetBalancesAsync(cancellationToken);
     }
 }

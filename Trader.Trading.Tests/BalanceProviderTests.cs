@@ -1,81 +1,96 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Orleans.TestingHost;
+﻿using AutoMapper;
+using Orleans;
+using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Providers;
-using Outcompute.Trader.Trading.Tests.Fixtures;
-using System;
+using Outcompute.Trader.Models.Hosting;
+using Outcompute.Trader.Trading.Providers.Balances;
 using System.Collections.Immutable;
-using System.Threading.Tasks;
-using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
 {
-    [Collection(nameof(ClusterCollectionFixture))]
     public class BalanceProviderTests
     {
-        private readonly TestCluster _cluster;
-
-        public BalanceProviderTests(ClusterFixture cluster)
-        {
-            _cluster = cluster?.Cluster ?? throw new ArgumentNullException(nameof(cluster));
-        }
+        private readonly IMapper _mapper = new MapperConfiguration(options => options.AddProfile<ModelsProfile>()).CreateMapper();
 
         [Fact]
-        public async Task SetsAndGetsAccountInfoBalances()
+        public async Task SetsBalances()
         {
             // arrange
             var asset1 = Guid.NewGuid().ToString();
             var asset2 = Guid.NewGuid().ToString();
+
             var balance1 = AccountBalance.Empty with { Asset = asset1, Free = 123m };
             var balance2 = AccountBalance.Empty with { Asset = asset2, Free = 234m };
+
+            var factory = Mock.Of<IGrainFactory>();
+            Mock.Get(factory)
+                .Setup(x => x.GetGrain<IBalanceProviderGrain>(asset1, null).SetBalanceAsync(It.Is<Balance>(x => x.Asset == balance1.Asset && x.Free == balance1.Free)))
+                .Verifiable();
+            Mock.Get(factory)
+                .Setup(x => x.GetGrain<IBalanceProviderGrain>(asset2, null).SetBalanceAsync(It.Is<Balance>(x => x.Asset == balance2.Asset && x.Free == balance2.Free)))
+                .Verifiable();
+
+            var repository = Mock.Of<ITradingRepository>();
+            var provider = new BalanceProvider(factory, repository, _mapper);
+
             var info = AccountInfo.Empty with { AccountType = AccountType.Spot, Balances = ImmutableList.Create(balance1, balance2) };
-            var provider = _cluster.ServiceProvider.GetRequiredService<IBalanceProvider>();
 
             // act
             await provider.SetBalancesAsync(info);
-            var result1 = await provider.TryGetBalanceAsync(asset1);
-            var result2 = await provider.TryGetBalanceAsync(asset2);
-            var result3 = await provider.TryGetBalanceAsync(Guid.NewGuid().ToString());
 
             // assert
-            Assert.NotNull(result1);
-            Assert.Equal(asset1, result1!.Asset);
-            Assert.Equal(123m, result1.Free);
-
-            Assert.NotNull(result2);
-            Assert.Equal(asset2, result2!.Asset);
-            Assert.Equal(234m, result2.Free);
-
-            Assert.Null(result3);
+            Mock.Get(factory).VerifyAll();
         }
 
         [Fact]
-        public async Task SetsAndGetsBalances()
+        public async Task GetsBalances()
         {
             // arrange
-            var asset1 = Guid.NewGuid().ToString();
-            var asset2 = Guid.NewGuid().ToString();
-            var balance1 = Balance.Empty with { Asset = asset1, Free = 123m };
-            var balance2 = Balance.Empty with { Asset = asset2, Free = 234m };
-            var balances = new[] { balance1, balance2 };
-            var provider = _cluster.ServiceProvider.GetRequiredService<IBalanceProvider>();
+            var balances = new[]
+            {
+                Balance.Empty with { Asset = "ABC", Free = 123 },
+                Balance.Empty with { Asset = "XYZ", Free = 234 }
+            };
+
+            var repository = Mock.Of<ITradingRepository>();
+            Mock.Get(repository)
+                .Setup(x => x.GetBalancesAsync(CancellationToken.None))
+                .ReturnsAsync(balances)
+                .Verifiable();
+
+            var factory = Mock.Of<IGrainFactory>();
+            var provider = new BalanceProvider(factory, repository, _mapper);
 
             // act
-            await provider.SetBalancesAsync(balances);
-            var result1 = await provider.TryGetBalanceAsync(asset1);
-            var result2 = await provider.TryGetBalanceAsync(asset2);
-            var result3 = await provider.TryGetBalanceAsync(Guid.NewGuid().ToString());
+            var result = await provider.GetBalancesAsync();
 
             // assert
-            Assert.NotNull(result1);
-            Assert.Equal(asset1, result1!.Asset);
-            Assert.Equal(123m, result1.Free);
+            Assert.Same(balances, result);
+            Mock.Get(factory).VerifyAll();
+        }
 
-            Assert.NotNull(result2);
-            Assert.Equal(asset2, result2!.Asset);
-            Assert.Equal(234m, result2.Free);
+        [Fact]
+        public async Task GetsBalance()
+        {
+            // arrange
+            var balance = Balance.Empty with { Asset = "ABC", Free = 123 };
 
-            Assert.Null(result3);
+            var repository = Mock.Of<ITradingRepository>();
+
+            var factory = Mock.Of<IGrainFactory>();
+            Mock.Get(factory)
+                .Setup(x => x.GetGrain<IBalanceProviderReplicaGrain>(balance.Asset, null).TryGetBalanceAsync())
+                .ReturnsAsync(balance)
+                .Verifiable();
+
+            var provider = new BalanceProvider(factory, repository, _mapper);
+
+            // act
+            var result = await provider.TryGetBalanceAsync(balance.Asset);
+
+            // assert
+            Assert.Same(balance, result);
+            Mock.Get(factory).VerifyAll();
         }
     }
 }

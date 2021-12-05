@@ -6,7 +6,7 @@ internal static class TradeProviderReplicaGrainFactoryExtensions
 {
     public static ITradeProviderReplicaGrain GetTradeProviderReplicaGrain(this IGrainFactory factory, string symbol)
     {
-        if (factory is null) throw new ArgumentNullException(nameof(factory));
+        Guard.IsNotNull(factory, nameof(factory));
 
         return factory.GetGrain<ITradeProviderReplicaGrain>(symbol);
     }

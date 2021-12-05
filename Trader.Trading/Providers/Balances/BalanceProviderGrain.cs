@@ -86,7 +86,8 @@ internal class BalanceProviderGrain : Grain, IBalanceProviderGrain
 
     public Task SetBalanceAsync(Balance balance)
     {
-        if (balance.Asset != _asset) throw new ArgumentOutOfRangeException(nameof(balance));
+        Guard.IsNotNull(balance, nameof(balance));
+        Guard.IsEqualTo(balance.Asset, _asset, nameof(balance.Asset));
 
         Apply(balance);
 

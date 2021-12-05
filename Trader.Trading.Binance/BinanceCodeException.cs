@@ -6,9 +6,12 @@ namespace Outcompute.Trader.Trading.Binance;
 [Serializable]
 public class BinanceCodeException : BinanceException
 {
-    public BinanceCodeException(int binanceCode, string message, HttpStatusCode statusCode) : base(message)
+    public BinanceCodeException(int binanceCode, string binanceMessage, HttpStatusCode statusCode) : base($"{binanceCode}:{binanceMessage}")
     {
+        Guard.IsNotNull(binanceMessage, nameof(binanceMessage));
+
         BinanceCode = binanceCode;
+        BinanceMessage = binanceMessage;
         StatusCode = statusCode;
     }
 
@@ -26,8 +29,9 @@ public class BinanceCodeException : BinanceException
 
     protected BinanceCodeException(SerializationInfo info, StreamingContext context) : base(info, context)
     {
-        BinanceCode = info.GetValue(nameof(BinanceCode), typeof(int)) is int binanceCode ? binanceCode : 0;
-        StatusCode = info.GetValue(nameof(StatusCode), typeof(HttpStatusCode?)) is HttpStatusCode statusCode ? statusCode : HttpStatusCode.OK;
+        BinanceCode = info.GetInt32(nameof(BinanceCode));
+        BinanceMessage = info.GetString(nameof(BinanceMessage))!;
+        StatusCode = (HttpStatusCode)info.GetValue(nameof(StatusCode), typeof(HttpStatusCode))!;
     }
 
     public override void GetObjectData(SerializationInfo info, StreamingContext context)
@@ -39,5 +43,6 @@ public class BinanceCodeException : BinanceException
     }
 
     public int BinanceCode { get; }
-    public HttpStatusCode StatusCode { get; }
+    public string BinanceMessage { get; } = Empty;
+    public HttpStatusCode StatusCode { get; } = HttpStatusCode.OK;
 }

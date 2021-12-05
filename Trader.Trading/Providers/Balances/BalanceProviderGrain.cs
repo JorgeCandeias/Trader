@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Concurrency;
+using Orleans.Runtime;
 using OrleansDashboard;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
@@ -12,12 +13,14 @@ namespace Outcompute.Trader.Trading.Providers.Balances;
 internal class BalanceProviderGrain : Grain, IBalanceProviderGrain
 {
     private readonly ReactiveOptions _reactive;
+    private readonly IGrainActivationContext _context;
     private readonly ITradingRepository _repository;
     private readonly IHostApplicationLifetime _lifetime;
 
-    public BalanceProviderGrain(IOptions<ReactiveOptions> reactive, ITradingRepository repository, IHostApplicationLifetime lifetime)
+    public BalanceProviderGrain(IOptions<ReactiveOptions> reactive, IGrainActivationContext context, ITradingRepository repository, IHostApplicationLifetime lifetime)
     {
         _reactive = reactive.Value;
+        _context = context;
         _repository = repository;
         _lifetime = lifetime;
     }
@@ -44,7 +47,7 @@ internal class BalanceProviderGrain : Grain, IBalanceProviderGrain
 
     public override async Task OnActivateAsync()
     {
-        _asset = this.GetPrimaryKeyString();
+        _asset = _context.GrainIdentity.PrimaryKeyString;
 
         await LoadAsync();
 

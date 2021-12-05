@@ -1,60 +1,57 @@
-﻿using Moq;
-using Orleans;
+﻿using Orleans;
+using Outcompute.Trader.Tests.Fakes;
 using Outcompute.Trader.Trading.Binance.Providers.MarketData;
-using Outcompute.Trader.Trading.Binance.Tests.Fakes;
-using Xunit;
 
-namespace Outcompute.Trader.Trading.Binance.Tests
+namespace Outcompute.Trader.Trading.Binance.Tests;
+
+public class BinanceMarketDataReadynessGrainTests
 {
-    public class BinanceMarketDataReadynessGrainTests
+    [Fact]
+    public async Task IsReadySignalsTrue()
     {
-        [Fact]
-        public async Task IsReadySignalsTrue()
-        {
-            // arrange
-            var state = false;
-            var factory = Mock.Of<IGrainFactory>();
-            Mock.Get(factory)
-                .Setup(x => x.GetGrain<IBinanceMarketDataGrain>(Guid.Empty, null).IsReadyAsync())
-                .Returns(() => Task.FromResult(state))
-                .Verifiable();
+        // arrange
+        var state = false;
+        var factory = Mock.Of<IGrainFactory>();
+        Mock.Get(factory)
+            .Setup(x => x.GetGrain<IBinanceMarketDataGrain>(Guid.Empty, null).IsReadyAsync())
+            .Returns(() => Task.FromResult(state))
+            .Verifiable();
 
-            var timers = new FakeTimerRegistry();
+        var timers = new FakeTimerRegistry();
 
-            var grain = new BinanceMarketDataReadynessGrain(factory, timers);
+        var grain = new BinanceMarketDataReadynessGrain(factory, timers);
 
-            // act
-            await grain.OnActivateAsync();
+        // act
+        await grain.OnActivateAsync();
 
-            // assert timer was created
-            var timer = Assert.Single(timers.Entries);
-            Assert.Same(grain, timer.Grain);
-            Assert.Equal(TimeSpan.FromSeconds(1), timer.DueTime);
-            Assert.Equal(TimeSpan.FromSeconds(1), timer.Period);
+        // assert timer was created
+        var timer = Assert.Single(timers.Entries);
+        Assert.Same(grain, timer.Grain);
+        Assert.Equal(TimeSpan.FromSeconds(1), timer.DueTime);
+        Assert.Equal(TimeSpan.FromSeconds(1), timer.Period);
 
-            // act - get ready state
-            var ready = await grain.IsReadyAsync();
+        // act - get ready state
+        var ready = await grain.IsReadyAsync();
 
-            // assert current ready state is false
-            Assert.Equal(state, ready);
+        // assert current ready state is false
+        Assert.Equal(state, ready);
 
-            // arrange dependant state
-            state = true;
+        // arrange dependant state
+        state = true;
 
-            // act - simulate tick
-            await timer.AsyncCallback(timer.State);
+        // act - simulate tick
+        await timer.AsyncCallback(timer.State);
 
-            // act - get ready state
-            ready = await grain.IsReadyAsync();
+        // act - get ready state
+        ready = await grain.IsReadyAsync();
 
-            // assert current ready state is true
-            Assert.Equal(state, ready);
+        // assert current ready state is true
+        Assert.Equal(state, ready);
 
-            // act - simulate deactivation
-            await grain.OnDeactivateAsync();
+        // act - simulate deactivation
+        await grain.OnDeactivateAsync();
 
-            // assert everything was called
-            Mock.Get(factory).VerifyAll();
-        }
+        // assert everything was called
+        Mock.Get(factory).VerifyAll();
     }
 }

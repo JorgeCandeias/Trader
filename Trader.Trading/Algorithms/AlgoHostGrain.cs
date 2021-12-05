@@ -2,6 +2,8 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
+using Orleans.Runtime;
+using Orleans.Timers;
 using Outcompute.Trader.Trading.Readyness;
 
 namespace Outcompute.Trader.Trading.Algorithms;
@@ -11,16 +13,20 @@ internal sealed class AlgoHostGrain : Grain, IAlgoHostGrainInternal, IDisposable
 {
     private readonly ILogger _logger;
     private readonly IOptionsMonitor<AlgoOptions> _options;
+    private readonly IGrainActivationContext _context;
     private readonly IReadynessProvider _readyness;
     private readonly IServiceScope _scope;
     private readonly IAlgoStatisticsPublisher _publisher;
+    private readonly ITimerRegistry _timers;
 
-    public AlgoHostGrain(ILogger<AlgoHostGrain> logger, IOptionsMonitor<AlgoOptions> options, IReadynessProvider readyness, IAlgoStatisticsPublisher publisher, IServiceProvider provider)
+    public AlgoHostGrain(ILogger<AlgoHostGrain> logger, IOptionsMonitor<AlgoOptions> options, IGrainActivationContext context, IReadynessProvider readyness, IAlgoStatisticsPublisher publisher, IServiceProvider provider, ITimerRegistry timers)
     {
         _logger = logger;
         _options = options;
+        _context = context;
         _readyness = readyness;
         _publisher = publisher;
+        _timers = timers;
 
         _scope = provider.CreateScope();
     }
@@ -29,14 +35,15 @@ internal sealed class AlgoHostGrain : Grain, IAlgoHostGrainInternal, IDisposable
 
     private string _name = Empty;
     private IAlgo _algo = NoopAlgo.Instance;
-    private IDisposable? _timer;
+    private IDisposable? _executionTimer;
+    private IDisposable? _readynessTimer;
     private bool _ready;
     private bool _loggedNotReady;
 
     public override async Task OnActivateAsync()
     {
         // the name of the algo is the key for this grain instance
-        _name = this.GetPrimaryKeyString();
+        _name = _context.GrainIdentity.PrimaryKeyString;
 
         // snapshot the current algo host options
         var options = _options.Get(_name);
@@ -54,7 +61,7 @@ internal sealed class AlgoHostGrain : Grain, IAlgoHostGrainInternal, IDisposable
         await ApplyOptionsAsync();
 
         // spin up the readyness check
-        RegisterTimer(_ => TickReadynessAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+        _readynessTimer = _timers.RegisterTimer(this, _ => TickReadynessAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
 
         _logger.AlgoHostGrainStarted(_name);
     }
@@ -100,18 +107,18 @@ internal sealed class AlgoHostGrain : Grain, IAlgoHostGrainInternal, IDisposable
 
     private void StartTicking(AlgoOptions options)
     {
-        if (_timer is null)
+        if (_executionTimer is null)
         {
-            _timer = RegisterTimer(_ => ExecuteAlgoAsync(), null, options.TickDelay, options.TickDelay);
+            _executionTimer = RegisterTimer(_ => ExecuteAlgoAsync(), null, options.TickDelay, options.TickDelay);
         }
     }
 
     private void StopTicking()
     {
-        if (_timer is not null)
+        if (_executionTimer is not null)
         {
-            _timer.Dispose();
-            _timer = null;
+            _executionTimer.Dispose();
+            _executionTimer = null;
         }
     }
 
@@ -173,7 +180,8 @@ internal sealed class AlgoHostGrain : Grain, IAlgoHostGrainInternal, IDisposable
     public void Dispose()
     {
         _cancellation.Dispose();
-        _timer?.Dispose();
+        _executionTimer?.Dispose();
+        _readynessTimer?.Dispose();
     }
 }
 

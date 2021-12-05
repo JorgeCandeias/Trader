@@ -70,7 +70,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Dashboard.Tests", "T
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Trading.Algorithms.Samples", "Trader.Trading.Algorithms.Samples\Trader.Trading.Algorithms.Samples.csproj", "{72ABE86D-9A3E-4674-A4E1-C57ACAEA40E8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Trading.Algorithms.Samples.Tests", "Trader.Trading.Algorithms.Samples.Tests\Trader.Trading.Algorithms.Samples.Tests.csproj", "{DF87A71D-713E-40EF-920E-FE5A6C63A7F2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Trader.Trading.Algorithms.Samples.Tests", "Trader.Trading.Algorithms.Samples.Tests\Trader.Trading.Algorithms.Samples.Tests.csproj", "{DF87A71D-713E-40EF-920E-FE5A6C63A7F2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trader.Tests.Fakes", "Trader.Tests.Fakes\Trader.Tests.Fakes.csproj", "{A788CB78-99E9-4858-8E45-04555B0AC079}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -198,6 +200,10 @@ Global
 		{DF87A71D-713E-40EF-920E-FE5A6C63A7F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DF87A71D-713E-40EF-920E-FE5A6C63A7F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DF87A71D-713E-40EF-920E-FE5A6C63A7F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A788CB78-99E9-4858-8E45-04555B0AC079}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A788CB78-99E9-4858-8E45-04555B0AC079}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A788CB78-99E9-4858-8E45-04555B0AC079}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A788CB78-99E9-4858-8E45-04555B0AC079}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -214,6 +220,7 @@ Global
 		{EB3BDCD4-5115-4F33-B9AA-FE242CE0817B} = {724871D8-46E7-4280-B828-D6A28360E820}
 		{AAC512E6-F837-4A22-A345-3EF4C2F3705A} = {724871D8-46E7-4280-B828-D6A28360E820}
 		{DF87A71D-713E-40EF-920E-FE5A6C63A7F2} = {724871D8-46E7-4280-B828-D6A28360E820}
+		{A788CB78-99E9-4858-8E45-04555B0AC079} = {724871D8-46E7-4280-B828-D6A28360E820}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7716D8A4-6E15-41AB-90E0-DE40D69C82EE}

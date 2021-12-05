@@ -50,6 +50,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\Trader.Data.InMemory\Trader.Data.InMemory.csproj" />
 		<ProjectReference Include="..\Trader.Hosting\Trader.Hosting.csproj" />
+		<ProjectReference Include="..\Trader.Tests.Fakes\Trader.Tests.Fakes.csproj" />
 		<ProjectReference Include="..\Trader.Trading.InMemory\Trader.Trading.InMemory.csproj" />
 		<ProjectReference Include="..\Trader.Trading\Trader.Trading.csproj" />
 	</ItemGroup>

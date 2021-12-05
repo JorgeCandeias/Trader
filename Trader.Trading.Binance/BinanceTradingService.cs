@@ -141,7 +141,7 @@ internal partial class BinanceTradingService : ITradingService, IHostedService
         {
             switch (ex.BinanceCode)
             {
-                case 2011:
+                case -2011:
                     throw new UnknownOrderException(symbol, orderId, ex);
 
                 default:

@@ -3,40 +3,53 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Core;
+using Orleans.Timers;
 using System.Collections.Immutable;
 
 namespace Outcompute.Trader.Trading.Algorithms;
 
-internal partial class AlgoManagerGrain : Grain, IAlgoManagerGrain
+internal sealed partial class AlgoManagerGrain : Grain, IAlgoManagerGrain, IDisposable
 {
-    private readonly IOptionsMonitor<TraderOptions> _options;
+    private readonly IOptionsMonitor<TraderOptions> _monitor;
     private readonly ILogger _logger;
     private readonly IHostApplicationLifetime _lifetime;
+    private readonly ITimerRegistry _timers;
 
-    public AlgoManagerGrain(IOptionsMonitor<TraderOptions> options, ILogger<AlgoManagerGrain> logger, IHostApplicationLifetime lifetime)
+    public AlgoManagerGrain(IOptionsMonitor<TraderOptions> monitor, ILogger<AlgoManagerGrain> logger, IHostApplicationLifetime lifetime, ITimerRegistry timers)
     {
-        _options = options ?? throw new ArgumentNullException(nameof(options));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _lifetime = lifetime ?? throw new ArgumentNullException(nameof(lifetime));
+        _monitor = monitor;
+        _logger = logger;
+        _lifetime = lifetime;
+        _timers = timers;
     }
 
     private static string TypeName => nameof(AlgoManagerGrain);
 
+    private IDisposable? _pingTimer;
+    private IDisposable? _tickTimer;
+
     public override Task OnActivateAsync()
     {
-        var options = _options.CurrentValue;
+        var options = _monitor.CurrentValue;
 
-        RegisterTimer(TickPingAllAlgoGrainsAsync, null, options.PingDelay, options.PingDelay);
+        _pingTimer = _timers.RegisterTimer(this, TickPingAllAlgoGrainsAsync, null, options.PingDelay, options.PingDelay);
 
-        RegisterTimer(TickExecuteAllAlgosAsync, null, options.BatchTickDelay, options.BatchTickDelay);
+        _tickTimer = _timers.RegisterTimer(this, TickExecuteAllAlgosAsync, null, options.BatchTickDelay, options.BatchTickDelay);
 
         return base.OnActivateAsync();
+    }
+
+    public override Task OnDeactivateAsync()
+    {
+        Dispose();
+
+        return base.OnDeactivateAsync();
     }
 
     private async Task TickPingAllAlgoGrainsAsync(object _)
     {
         // snapshot the current options for this tick
-        var options = _options.CurrentValue;
+        var options = _monitor.CurrentValue;
 
         // ping all enabled algos
         foreach (var algo in options.Algos)
@@ -69,7 +82,7 @@ internal partial class AlgoManagerGrain : Grain, IAlgoManagerGrain
     private async Task TickExecuteAllAlgosAsync(object _)
     {
         // snapshot the current options for this tick
-        var options = _options.CurrentValue;
+        var options = _monitor.CurrentValue;
 
         // execute all algos one by one
         foreach (var algo in options.Algos.OrderBy(x => x.Value.BatchOrder).ThenBy(x => x.Key))
@@ -98,7 +111,7 @@ internal partial class AlgoManagerGrain : Grain, IAlgoManagerGrain
 
     public Task<IReadOnlyCollection<AlgoInfo>> GetAlgosAsync()
     {
-        var options = _options.CurrentValue;
+        var options = _monitor.CurrentValue;
 
         // for now this will come from the options snapshot but later it will come from a more sophisticated algo settings provider
         var builder = ImmutableList.CreateBuilder<AlgoInfo>();
@@ -124,4 +137,34 @@ internal partial class AlgoManagerGrain : Grain, IAlgoManagerGrain
     private partial void LogFailedToTickTargetAlgo(Exception ex, string typeName, IGrainIdentity identity);
 
     #endregion Logging
+
+    #region Disposable
+
+    public void Dispose()
+    {
+        // pinning for thread safety
+        var pingTimer = _pingTimer;
+        if (pingTimer is not null)
+        {
+            pingTimer.Dispose();
+            _pingTimer = null;
+        }
+
+        // pinning for thread safety
+        var tickTimer = _tickTimer;
+        if (tickTimer is not null)
+        {
+            tickTimer.Dispose();
+            _tickTimer = null;
+        }
+
+        GC.SuppressFinalize(this);
+    }
+
+    ~AlgoManagerGrain()
+    {
+        Dispose();
+    }
+
+    #endregion Disposable
 }

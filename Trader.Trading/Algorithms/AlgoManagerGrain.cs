@@ -128,16 +128,6 @@ internal sealed partial class AlgoManagerGrain : Grain, IAlgoManagerGrain, IDisp
         return Task.FromResult<IReadOnlyCollection<AlgoInfo>>(builder.ToImmutable());
     }
 
-    #region Logging
-
-    [LoggerMessage(0, LogLevel.Error, "{TypeName} failed to ping target algo grain with identity {Identity}")]
-    private partial void LogFailedToPingTargetAlgo(Exception ex, string typeName, IGrainIdentity identity);
-
-    [LoggerMessage(1, LogLevel.Error, "{TypeName} failed to tick target algo grain with identity {Identity}")]
-    private partial void LogFailedToTickTargetAlgo(Exception ex, string typeName, IGrainIdentity identity);
-
-    #endregion Logging
-
     #region Disposable
 
     public void Dispose()
@@ -167,4 +157,14 @@ internal sealed partial class AlgoManagerGrain : Grain, IAlgoManagerGrain, IDisp
     }
 
     #endregion Disposable
+
+    #region Logging
+
+    [LoggerMessage(0, LogLevel.Error, "{TypeName} failed to ping target algo grain with identity {Identity}")]
+    private partial void LogFailedToPingTargetAlgo(Exception ex, string typeName, IGrainIdentity identity);
+
+    [LoggerMessage(1, LogLevel.Error, "{TypeName} failed to tick target algo grain with identity {Identity}")]
+    private partial void LogFailedToTickTargetAlgo(Exception ex, string typeName, IGrainIdentity identity);
+
+    #endregion Logging
 }

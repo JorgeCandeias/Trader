@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using Moq;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Trading.Binance.Handlers;
 using System.Net;
@@ -142,7 +141,8 @@ namespace Outcompute.Trader.Trading.Binance.Tests
 
             // assert
             Assert.Equal(123, result.BinanceCode);
-            Assert.Equal("test", result.Message);
+            Assert.Equal("test", result.BinanceMessage);
+            Assert.Equal("123:test", result.Message);
         }
 
         [Fact]

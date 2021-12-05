@@ -1,10 +1,9 @@
 ﻿using Microsoft.Extensions.Logging.Abstractions;
-using Moq;
+using Outcompute.Trader.Core;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Providers;
-using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
 {
@@ -15,7 +14,12 @@ namespace Outcompute.Trader.Trading.Tests
         {
             // arrange
             var logger = NullLogger<CreateOrderExecutor>.Instance;
-            var symbol = Symbol.Empty with { Name = "ABCXYZ" };
+            var symbol = Symbol.Empty with
+            {
+                Name = "ABCXYZ",
+                BaseAsset = "ABC",
+                QuoteAsset = "XYZ"
+            };
             var side = OrderSide.Buy;
             var type = OrderType.Limit;
             var timeInForce = TimeInForce.GoodTillCanceled;
@@ -37,11 +41,17 @@ namespace Outcompute.Trader.Trading.Tests
                 .Setup(x => x.SetOrderAsync(created, 0, 0, 0, CancellationToken.None))
                 .Verifiable();
 
-            var executor = new CreateOrderExecutor(logger, trader, orders);
-            var context = AlgoContext.Empty;
+            var context = new AlgoContext("Algo1", NullServiceProvider.Instance);
+            context.Data.GetOrAdd(symbol.Name).Spot.QuoteAsset = Balance.Empty with
+            {
+                Asset = symbol.QuoteAsset,
+                Free = 30000
+            };
+
             var command = new CreateOrderCommand(symbol, type, side, timeInForce, quantity, null, price, null, tag);
 
             // act
+            var executor = new CreateOrderExecutor(logger, trader, orders);
             await executor.ExecuteAsync(context, command);
 
             // assert

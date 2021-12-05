@@ -1,5 +1,4 @@
 ﻿using Orleans;
-using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 
 namespace Outcompute.Trader.Trading.Providers.Tickers;
@@ -7,12 +6,10 @@ namespace Outcompute.Trader.Trading.Providers.Tickers;
 internal class TickerProvider : ITickerProvider
 {
     private readonly IGrainFactory _factory;
-    private readonly ITradingRepository _repository;
 
-    public TickerProvider(IGrainFactory factory, ITradingRepository repository)
+    public TickerProvider(IGrainFactory factory)
     {
         _factory = factory;
-        _repository = repository;
     }
 
     public Task<MiniTicker?> TryGetTickerAsync(string symbol, CancellationToken cancellationToken = default)

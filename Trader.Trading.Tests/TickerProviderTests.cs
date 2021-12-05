@@ -1,38 +1,53 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Orleans.TestingHost;
+﻿using Orleans;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Providers;
-using Outcompute.Trader.Trading.Tests.Fixtures;
-using System;
-using System.Threading.Tasks;
-using Xunit;
+using Outcompute.Trader.Trading.Providers.Tickers;
 
 namespace Outcompute.Trader.Trading.Tests
 {
-    [Collection(nameof(ClusterCollectionFixture))]
     public class TickerProviderTests
     {
-        private readonly TestCluster _cluster;
-
-        public TickerProviderTests(ClusterFixture cluster)
-        {
-            _cluster = cluster?.Cluster ?? throw new ArgumentNullException(nameof(cluster));
-        }
-
         [Fact]
-        public async Task SetsAndGetsTicker()
+        public async Task SetsTicker()
         {
             // arrange
-            var symbol = Guid.NewGuid().ToString();
+            var symbol = "ABCXYZ";
             var ticker = MiniTicker.Empty with { Symbol = symbol };
-            var provider = _cluster.ServiceProvider.GetRequiredService<ITickerProvider>();
+
+            var factory = Mock.Of<IGrainFactory>();
+            Mock.Get(factory)
+                .Setup(x => x.GetGrain<ITickerProviderReplicaGrain>(symbol, null).SetTickerAsync(ticker))
+                .Verifiable();
+
+            var provider = new TickerProvider(factory);
 
             // act
             await provider.SetTickerAsync(ticker);
+
+            // assert
+            Mock.Get(factory).VerifyAll();
+        }
+
+        [Fact]
+        public async Task GetsTicker()
+        {
+            // arrange
+            var symbol = "ABCXYZ";
+            var ticker = MiniTicker.Empty with { Symbol = symbol };
+
+            var factory = Mock.Of<IGrainFactory>();
+            Mock.Get(factory)
+                .Setup(x => x.GetGrain<ITickerProviderReplicaGrain>(symbol, null).TryGetTickerAsync())
+                .ReturnsAsync(ticker)
+                .Verifiable();
+
+            var provider = new TickerProvider(factory);
+
+            // act
             var result = await provider.TryGetTickerAsync(symbol);
 
             // assert
-            Assert.Equal(ticker, result);
+            Assert.Same(ticker, result);
+            Mock.Get(factory).VerifyAll();
         }
     }
 }

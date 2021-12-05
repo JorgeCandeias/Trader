@@ -19,16 +19,13 @@ internal class AlgoUserOptionsConfigurator<TOptions> : IConfigureNamedOptions<TO
 
     public void Configure(string name, TOptions options)
     {
-        if (name is null)
-        {
-            throw new ArgumentNullException(nameof(name));
-        }
+        Guard.IsNotNull(name, nameof(name));
 
         if (name == Options.DefaultName)
         {
-            if (string.IsNullOrWhiteSpace(AlgoContext.Current.Name))
+            if (IsNullOrWhiteSpace(AlgoContext.Current.Name))
             {
-                throw new InvalidOperationException($"{nameof(AlgoContext)}.{nameof(AlgoContext.Current)}.{nameof(AlgoContext.Current.Name)} must be defined to configure default options");
+                ThrowHelper.ThrowInvalidOperationException($"{nameof(AlgoContext)}.{nameof(AlgoContext.Current)}.{nameof(AlgoContext.Current.Name)} must be defined to configure default options");
             }
             else
             {
@@ -45,6 +42,8 @@ internal class AlgoUserOptionsConfigurator<TOptions> : IConfigureNamedOptions<TO
 
     public void Configure(TOptions options)
     {
+        Guard.IsNotNull(options, nameof(options));
+
         Configure(Options.DefaultName, options);
     }
 }

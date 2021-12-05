@@ -9,7 +9,7 @@ using Outcompute.Trader.Trading.Readyness;
 namespace Outcompute.Trader.Trading.Algorithms;
 
 /// <inheritdoc cref="IAlgoHostGrain" />
-internal sealed class AlgoHostGrain : Grain, IAlgoHostGrainInternal, IDisposable
+internal sealed partial class AlgoHostGrain : Grain, IAlgoHostGrainInternal, IDisposable
 {
     private readonly ILogger _logger;
     private readonly IOptionsMonitor<AlgoOptions> _options;
@@ -30,6 +30,8 @@ internal sealed class AlgoHostGrain : Grain, IAlgoHostGrainInternal, IDisposable
 
         _scope = provider.CreateScope();
     }
+
+    private const string TypeName = nameof(AlgoHostGrain);
 
     private readonly CancellationTokenSource _cancellation = new();
 
@@ -63,7 +65,7 @@ internal sealed class AlgoHostGrain : Grain, IAlgoHostGrainInternal, IDisposable
         // spin up the readyness check
         _readynessTimer = _timers.RegisterTimer(this, _ => TickReadynessAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
 
-        _logger.AlgoHostGrainStarted(_name);
+        LogStarted(TypeName, _name);
     }
 
     public override async Task OnDeactivateAsync()
@@ -80,7 +82,7 @@ internal sealed class AlgoHostGrain : Grain, IAlgoHostGrainInternal, IDisposable
         }
         finally
         {
-            _logger.AlgoHostGrainStopped(_name);
+            LogStopped(TypeName, _name);
         }
 
         await base.OnDeactivateAsync();
@@ -129,7 +131,7 @@ internal sealed class AlgoHostGrain : Grain, IAlgoHostGrainInternal, IDisposable
         {
             if (!_loggedNotReady)
             {
-                _logger.AlgoHostGrainSystemNotReady(_name);
+                LogWaiting(TypeName, _name);
                 _loggedNotReady = true;
             }
             return;
@@ -183,42 +185,22 @@ internal sealed class AlgoHostGrain : Grain, IAlgoHostGrainInternal, IDisposable
         _executionTimer?.Dispose();
         _readynessTimer?.Dispose();
     }
+
+    #region Logging
+
+    [LoggerMessage(1, LogLevel.Information, "{Type} {Name} started")]
+    private partial void LogStarted(string type, string name);
+
+    [LoggerMessage(2, LogLevel.Information, "{Type} {Name} stopped")]
+    private partial void LogStopped(string type, string name);
+
+    [LoggerMessage(3, LogLevel.Information, "{Type} {Name} is waiting until the system is ready")]
+    private partial void LogWaiting(string type, string name);
+
+    #endregion Logging
 }
 
 internal interface IAlgoHostGrainInternal : IAlgoHostGrain
 {
     Task ApplyOptionsAsync();
-}
-
-internal static class AlgoHostGrainLoggerExtensions
-{
-    private static readonly Action<ILogger, string, string, Exception> _started = LoggerMessage.Define<string, string>(
-        LogLevel.Information,
-        new EventId(0, nameof(AlgoHostGrainStarted)),
-        "{Grain} {Name} started");
-
-    public static void AlgoHostGrainStarted(this ILogger logger, string name)
-    {
-        _started(logger, nameof(AlgoHostGrain), name, null!);
-    }
-
-    private static readonly Action<ILogger, string, string, Exception> _stopped = LoggerMessage.Define<string, string>(
-        LogLevel.Information,
-        new EventId(0, nameof(AlgoHostGrainStopped)),
-        "{Grain} {Name} stopped");
-
-    public static void AlgoHostGrainStopped(this ILogger logger, string name)
-    {
-        _stopped(logger, nameof(AlgoHostGrain), name, null!);
-    }
-
-    private static readonly Action<ILogger, string, string, Exception> _notReady = LoggerMessage.Define<string, string>(
-        LogLevel.Information,
-        new EventId(0, nameof(AlgoHostGrainSystemNotReady)),
-        "{Grain} {Name} is waiting until the system is ready...");
-
-    public static void AlgoHostGrainSystemNotReady(this ILogger logger, string name)
-    {
-        _notReady(logger, nameof(AlgoHostGrain), name, null!);
-    }
 }

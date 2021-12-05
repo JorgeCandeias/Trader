@@ -25,16 +25,16 @@ internal partial class AlgoContextAutoPositionsConfigurator : IAlgoContextConfig
 
         foreach (var symbol in context.Symbols)
         {
-            var data = context.Data[symbol.Name];
+            var data = context.Data.GetOrAdd(symbol.Name);
 
             try
             {
-                context.Data.GetOrAdd(symbol.Name).AutoPosition = _resolver.Resolve(symbol, data.Orders.Filled, data.Trades, options.StartTime);
+                data.AutoPosition = _resolver.Resolve(symbol, data.Orders.Filled, data.Trades, options.StartTime);
             }
             catch (AutoPositionResolverException ex)
             {
                 LogError(ex, TypeName, name);
-                context.Data.GetOrAdd(symbol.Name).Exceptions.Add(ex);
+                data.Exceptions.Add(ex);
             }
         }
 

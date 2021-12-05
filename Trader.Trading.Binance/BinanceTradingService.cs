@@ -5,8 +5,8 @@ using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
+using Outcompute.Trader.Trading.Exceptions;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Outcompute.Trader.Trading.Binance;
 
@@ -130,9 +130,24 @@ internal partial class BinanceTradingService : ITradingService, IHostedService
         var model = new CancelStandardOrder(symbol, orderId, null, null, null, _clock.UtcNow);
         var input = _mapper.Map<CancelOrderRequest>(model);
 
-        var output = await _client
-            .CancelOrderAsync(input, cancellationToken)
-            .ConfigureAwait(false);
+        CancelOrderResponse output;
+        try
+        {
+            output = await _client
+                .CancelOrderAsync(input, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (BinanceCodeException ex)
+        {
+            switch (ex.BinanceCode)
+            {
+                case 2011:
+                    throw new UnknownOrderException(symbol, orderId, ex);
+
+                default:
+                    throw;
+            }
+        }
 
         return _mapper.Map<CancelStandardOrderResult>(output);
     }

@@ -96,4 +96,40 @@ public class BalanceProviderGrainTests
         Assert.Same(result, balance2);
         Mock.Get(repository).VerifyAll();
     }
+
+    [Fact]
+    public async Task ReactiveBalance()
+    {
+        // arrange
+        var asset = "ABC";
+        var options = new ReactiveOptions();
+        var context = Mock.Of<IGrainActivationContext>(x => x.GrainIdentity.PrimaryKeyString == asset);
+
+        var balance1 = Balance.Empty with { Asset = asset, Free = 123 };
+        var balance2 = Balance.Empty with { Asset = asset, Free = 234 };
+
+        var repository = Mock.Of<ITradingRepository>();
+        Mock.Get(repository)
+            .Setup(x => x.TryGetBalanceAsync(asset, CancellationToken.None))
+            .ReturnsAsync(balance1)
+            .Verifiable();
+
+        var lifetime = Mock.Of<IHostApplicationLifetime>();
+        var grain = new BalanceProviderGrain(Options.Create(options), context, repository, lifetime);
+
+        // activate
+        await grain.OnActivateAsync();
+
+        // act
+        var result1 = await grain.GetBalanceAsync();
+        var result2Task = grain.TryWaitForBalanceAsync(result1.Version);
+        await grain.SetBalanceAsync(balance2);
+        var result2 = await result2Task;
+
+        // assert
+        Assert.Same(balance1, result1.Value);
+        Assert.Same(balance2, result2.Value.Value);
+        Assert.NotEqual(result1.Version, result2.Value.Version);
+        Mock.Get(repository).VerifyAll();
+    }
 }

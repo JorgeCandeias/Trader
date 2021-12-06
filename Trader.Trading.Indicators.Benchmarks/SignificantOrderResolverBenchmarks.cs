@@ -16,7 +16,7 @@ namespace Trader.Trading.Indicators.Benchmarks
 
         private readonly DateTime _startTime;
 
-        private readonly OrderCollection _orders = OrderCollection.Empty;
+        private readonly ImmutableSortedOrderSet _orders = ImmutableSortedOrderSet.Empty;
 
         private readonly TradeCollection _trades = TradeCollection.Empty;
 

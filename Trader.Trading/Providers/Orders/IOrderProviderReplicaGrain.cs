@@ -6,9 +6,9 @@ namespace Outcompute.Trader.Trading.Providers.Orders;
 
 public interface IOrderProviderReplicaGrain : IGrainWithStringKey
 {
-    ValueTask<OrderCollection> GetOrdersAsync();
+    ValueTask<ImmutableSortedOrderSet> GetOrdersAsync();
 
-    ValueTask<OrderCollection> GetOrdersByFilterAsync(OrderSide? side, bool? transient, bool? significant);
+    ValueTask<ImmutableSortedOrderSet> GetOrdersByFilterAsync(OrderSide? side, bool? transient, bool? significant);
 
     ValueTask<OrderQueryResult?> TryGetOrderAsync(long orderId);
 

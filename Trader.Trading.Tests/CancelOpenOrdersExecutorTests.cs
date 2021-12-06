@@ -1,11 +1,9 @@
-﻿using Moq;
-using Outcompute.Trader.Core;
+﻿using Outcompute.Trader.Core;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands.CancelOpenOrders;
 using Outcompute.Trader.Trading.Providers;
-using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
 {
@@ -34,7 +32,7 @@ namespace Outcompute.Trader.Trading.Tests
                 .Verifiable();
 
             var context = new AlgoContext(symbol.Name, NullServiceProvider.Instance);
-            context.Data.GetOrAdd(symbol.Name).Orders.Open = new OrderCollection(new[] { order });
+            context.Data.GetOrAdd(symbol.Name).Orders.Open = ImmutableSortedOrderSet.Create(new[] { order });
 
             var executor = new CancelOpenOrdersExecutor(trader, orders);
             var command = new CancelOpenOrdersCommand(symbol, side);

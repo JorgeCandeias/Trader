@@ -58,7 +58,7 @@ internal sealed class BalanceProviderReplicaGrain : Grain, IBalanceProviderRepli
 
         await LoadAsync();
 
-        _timer = _timers.RegisterTimer(this, _ => MonitorPollAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+        _timer = _timers.RegisterTimer(this, _ => MonitorPollAsync(), null, _reactive.ReactiveRecoveryDelay, _reactive.ReactiveRecoveryDelay);
 
         await base.OnActivateAsync();
     }

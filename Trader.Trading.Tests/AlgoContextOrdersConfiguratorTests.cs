@@ -20,9 +20,9 @@ public class AlgoContextOrdersConfiguratorTests
             Name = "ABCXYZ"
         };
 
-        var openOrders = new OrderCollection(Array.Empty<OrderQueryResult>());
-        var filledOrders = new OrderCollection(Array.Empty<OrderQueryResult>());
-        var completedOrders = new OrderCollection(Array.Empty<OrderQueryResult>());
+        var openOrders = ImmutableSortedOrderSet.Empty;
+        var filledOrders = ImmutableSortedOrderSet.Empty;
+        var completedOrders = ImmutableSortedOrderSet.Empty;
 
         var orderProvider = Mock.Of<IOrderProvider>();
         Mock.Get(orderProvider)

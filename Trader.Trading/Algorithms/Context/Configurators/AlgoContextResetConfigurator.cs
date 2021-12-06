@@ -23,9 +23,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Context.Configurators
                 item.Savings.QuoteAsset = SavingsBalance.Empty;
                 item.SwapPools.BaseAsset = SwapPoolAssetBalance.Empty;
                 item.SwapPools.QuoteAsset = SwapPoolAssetBalance.Empty;
-                item.Orders.Completed = OrderCollection.Empty;
-                item.Orders.Open = OrderCollection.Empty;
-                item.Orders.Filled = OrderCollection.Empty;
+                item.Orders.Completed = ImmutableSortedOrderSet.Empty;
+                item.Orders.Open = ImmutableSortedOrderSet.Empty;
+                item.Orders.Filled = ImmutableSortedOrderSet.Empty;
                 item.Trades = TradeCollection.Empty;
                 item.Klines = KlineCollection.Empty;
             }

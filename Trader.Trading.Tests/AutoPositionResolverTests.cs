@@ -2,7 +2,6 @@
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms.Positions;
-using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
 {
@@ -21,7 +20,7 @@ namespace Outcompute.Trader.Trading.Tests
 
             var startTime = DateTime.MinValue;
             var logger = NullLogger<AutoPositionResolver>.Instance;
-            var orders = OrderCollection.Empty;
+            var orders = ImmutableSortedOrderSet.Empty;
             var trades = TradeCollection.Empty;
             var resolver = new AutoPositionResolver(logger);
 
@@ -67,7 +66,7 @@ namespace Outcompute.Trader.Trading.Tests
                 ExecutedQuantity = 100m
             };
 
-            var orders = new OrderCollection(new[] { order1, order2 });
+            var orders = ImmutableSortedOrderSet.Create(new[] { order1, order2 });
 
             var trade1 = AccountTrade.Empty with
             {

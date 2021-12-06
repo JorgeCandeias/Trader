@@ -5,5 +5,5 @@ namespace Outcompute.Trader.Trading.Algorithms.Positions;
 
 public interface IAutoPositionResolver
 {
-    AutoPosition Resolve(Symbol symbol, OrderCollection orders, TradeCollection trades, DateTime startTime);
+    AutoPosition Resolve(Symbol symbol, ImmutableSortedOrderSet orders, TradeCollection trades, DateTime startTime);
 }

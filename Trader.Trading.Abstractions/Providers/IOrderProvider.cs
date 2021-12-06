@@ -38,12 +38,12 @@ public interface IOrderProvider
     /// <summary>
     /// Gets all orders for the specified symbol sorted by <see cref="OrderQueryResult.OrderId"/>.
     /// </summary>
-    ValueTask<OrderCollection> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default);
+    ValueTask<ImmutableSortedOrderSet> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets filtered orders for the specified symbol sorted by <see cref="OrderQueryResult.OrderId"/>.
     /// </summary>
-    ValueTask<OrderCollection> GetOrdersByFilterAsync(string symbol, OrderSide? side, bool? transient, bool? significant, CancellationToken cancellationToken = default);
+    ValueTask<ImmutableSortedOrderSet> GetOrdersByFilterAsync(string symbol, OrderSide? side, bool? transient, bool? significant, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the order with the specified <paramref name="orderId"/> and <paramref name="symbol"/>.

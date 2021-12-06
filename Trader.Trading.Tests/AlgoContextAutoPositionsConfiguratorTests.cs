@@ -28,7 +28,7 @@ public class AlgoContextAutoPositionsConfiguratorTests
             StartTime = DateTime.UtcNow
         };
 
-        var orders = new OrderCollection(new[] { OrderQueryResult.Empty with { OrderId = 123 } });
+        var orders = ImmutableSortedOrderSet.Create(new[] { OrderQueryResult.Empty with { OrderId = 123 } });
 
         var trades = new TradeCollection(new[] { AccountTrade.Empty with { Id = 123 } });
 

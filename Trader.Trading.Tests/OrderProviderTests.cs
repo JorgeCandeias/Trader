@@ -1,11 +1,9 @@
 ﻿using AutoMapper;
-using Moq;
 using Orleans;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Models.Hosting;
 using Outcompute.Trader.Trading.Providers.Orders;
-using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
 {
@@ -81,7 +79,7 @@ namespace Outcompute.Trader.Trading.Tests
         {
             // arrange
             var symbol = "ABCXYZ";
-            var orders = new OrderCollection(new[]
+            var orders = ImmutableSortedOrderSet.Create(new[]
             {
                 OrderQueryResult.Empty with { Symbol = symbol, OrderId = 1 },
                 OrderQueryResult.Empty with { Symbol = symbol, OrderId = 2 },

@@ -23,7 +23,7 @@ internal class TrackingBuyExecutor : IAlgoCommandExecutor<TrackingBuyCommand>
     {
         var data = context.Data[command.Symbol.Name];
         var ticker = data.Ticker;
-        var orders = data.Orders.Open.Where(x => x.Side == OrderSide.Buy).ToOrderCollection();
+        var orders = data.Orders.Open.Where(x => x.Side == OrderSide.Buy).ToImmutableSortedOrderSet();
         var balance = data.Spot.QuoteAsset;
 
         // identify the free balance
@@ -89,7 +89,7 @@ internal class TrackingBuyExecutor : IAlgoCommandExecutor<TrackingBuyCommand>
             .ConfigureAwait(false);
     }
 
-    private async Task<OrderCollection> TryCloseLowBuysAsync(IAlgoContext context, Symbol symbol, OrderCollection orders, decimal lowBuyPrice, CancellationToken cancellationToken)
+    private async Task<ImmutableSortedOrderSet> TryCloseLowBuysAsync(IAlgoContext context, Symbol symbol, ImmutableSortedOrderSet orders, decimal lowBuyPrice, CancellationToken cancellationToken)
     {
         var buffer = ArrayPool<OrderQueryResult>.Shared.Rent(orders.Count);
         var count = 0;
@@ -110,7 +110,7 @@ internal class TrackingBuyExecutor : IAlgoCommandExecutor<TrackingBuyCommand>
 
         if (count > 0)
         {
-            orders = orders.Except(buffer.Take(count)).ToOrderCollection();
+            orders = orders.Except(buffer.Take(count));
         }
 
         ArrayPool<OrderQueryResult>.Shared.Return(buffer);
@@ -118,7 +118,7 @@ internal class TrackingBuyExecutor : IAlgoCommandExecutor<TrackingBuyCommand>
         return orders;
     }
 
-    private async Task<OrderCollection> TryCloseHighBuysAsync(IAlgoContext context, Symbol symbol, OrderCollection orders, CancellationToken cancellationToken)
+    private async Task<ImmutableSortedOrderSet> TryCloseHighBuysAsync(IAlgoContext context, Symbol symbol, ImmutableSortedOrderSet orders, CancellationToken cancellationToken)
     {
         var buffer = ArrayPool<OrderQueryResult>.Shared.Rent(orders.Count);
         var count = 0;
@@ -138,7 +138,7 @@ internal class TrackingBuyExecutor : IAlgoCommandExecutor<TrackingBuyCommand>
 
         if (count > 0)
         {
-            orders = orders.Except(buffer.Take(count)).ToOrderCollection();
+            orders = orders.Except(buffer.Take(count));
         }
 
         ArrayPool<OrderQueryResult>.Shared.Return(buffer);

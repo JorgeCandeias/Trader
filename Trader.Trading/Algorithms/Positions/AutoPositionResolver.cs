@@ -26,7 +26,7 @@ internal partial class AutoPositionResolver : IAutoPositionResolver
         public decimal RemainingExecutedQuantity { get; set; }
     }
 
-    public AutoPosition Resolve(Symbol symbol, OrderCollection orders, TradeCollection trades, DateTime startTime)
+    public AutoPosition Resolve(Symbol symbol, ImmutableSortedOrderSet orders, TradeCollection trades, DateTime startTime)
     {
         // todo: validate that the symbols are consistent between all arguments
 

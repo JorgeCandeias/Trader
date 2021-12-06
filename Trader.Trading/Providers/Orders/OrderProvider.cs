@@ -30,14 +30,14 @@ internal class OrderProvider : IOrderProvider
         return _factory.GetOrderProviderGrain(symbol).SetLastSyncedOrderId(orderId);
     }
 
-    public ValueTask<OrderCollection> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default)
+    public ValueTask<ImmutableSortedOrderSet> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default)
     {
         Guard.IsNotNull(symbol, nameof(symbol));
 
         return _factory.GetOrderProviderReplicaGrain(symbol).GetOrdersAsync();
     }
 
-    public ValueTask<OrderCollection> GetOrdersByFilterAsync(string symbol, OrderSide? side, bool? transient, bool? significant, CancellationToken cancellationToken = default)
+    public ValueTask<ImmutableSortedOrderSet> GetOrdersByFilterAsync(string symbol, OrderSide? side, bool? transient, bool? significant, CancellationToken cancellationToken = default)
     {
         Guard.IsNotNull(symbol, nameof(symbol));
 

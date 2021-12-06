@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
-using Moq;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms.Context;
@@ -9,7 +8,6 @@ using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Commands.EnsureSingleOrder;
 using Outcompute.Trader.Trading.Providers;
-using Xunit;
 
 namespace Outcompute.Trader.Trading.Tests
 {
@@ -43,7 +41,7 @@ namespace Outcompute.Trader.Trading.Tests
                 .BuildServiceProvider();
 
             var context = new AlgoContext("Algo1", provider);
-            context.Data.GetOrAdd(symbol.Name).Orders.Open = new OrderCollection(existing);
+            context.Data.GetOrAdd(symbol.Name).Orders.Open = ImmutableSortedOrderSet.Create(existing);
 
             var type = OrderType.Limit;
             var timeInForce = TimeInForce.GoodTillCanceled;

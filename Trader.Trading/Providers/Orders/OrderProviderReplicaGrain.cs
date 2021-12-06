@@ -5,7 +5,6 @@ using Orleans.Concurrency;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
-using System.Collections.Immutable;
 
 namespace Outcompute.Trader.Trading.Providers.Orders;
 
@@ -45,7 +44,7 @@ internal class OrderProviderReplicaGrain : Grain, IOrderProviderReplicaGrain
     /// <summary>
     /// Holds the order cache in a form that is mutable but still convertible to immutable upon request with low overhead.
     /// </summary>
-    private readonly ImmutableSortedSet<OrderQueryResult>.Builder _orders = ImmutableSortedSet.CreateBuilder(OrderQueryResult.KeyComparer);
+    private readonly ImmutableSortedOrderSet.Builder _orders = ImmutableSortedOrderSet.CreateBuilder();
 
     /// <summary>
     /// Indexes orders by order id to speed up requests for a single order.
@@ -70,13 +69,13 @@ internal class OrderProviderReplicaGrain : Grain, IOrderProviderReplicaGrain
         return ValueTask.FromResult(order);
     }
 
-    public ValueTask<OrderCollection> GetOrdersAsync()
+    public ValueTask<ImmutableSortedOrderSet> GetOrdersAsync()
     {
-        return ValueTask.FromResult(new OrderCollection(_orders.ToImmutable()));
+        return ValueTask.FromResult(_orders.ToImmutable());
     }
 
     // todo: optimize this with specific filters for each used combination
-    public ValueTask<OrderCollection> GetOrdersByFilterAsync(OrderSide? side, bool? transient, bool? significant)
+    public ValueTask<ImmutableSortedOrderSet> GetOrdersByFilterAsync(OrderSide? side, bool? transient, bool? significant)
     {
         var query = _orders.AsEnumerable();
 
@@ -95,9 +94,9 @@ internal class OrderProviderReplicaGrain : Grain, IOrderProviderReplicaGrain
             query = query.Where(x => (x.ExecutedQuantity > 0) == significant.Value);
         }
 
-        var result = query.ToImmutableList();
+        var result = query.ToImmutableSortedOrderSet();
 
-        return ValueTask.FromResult(new OrderCollection(result));
+        return ValueTask.FromResult(result);
     }
 
     public async Task SetOrderAsync(OrderQueryResult item)

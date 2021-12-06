@@ -71,10 +71,13 @@ public record OrderQueryResult(
                 }
                 else
                 {
-                    var bySymbol = Comparer<string>.Default.Compare(x.Symbol, y.Symbol);
-                    if (bySymbol != 0) return bySymbol;
+                    var bySymbol = CompareOrdinal(x.Symbol, y.Symbol);
+                    if (bySymbol != 0)
+                    {
+                        return bySymbol;
+                    }
 
-                    return Comparer<long>.Default.Compare(x.OrderId, y.OrderId);
+                    return x.OrderId.CompareTo(y.OrderId);
                 }
             }
         }

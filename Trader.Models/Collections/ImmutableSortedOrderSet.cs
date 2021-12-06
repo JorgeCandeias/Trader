@@ -1,17 +1,13 @@
-﻿using System.Collections;
-using System.Collections.Immutable;
-
-namespace Outcompute.Trader.Models.Collections
+﻿namespace Outcompute.Trader.Models.Collections
 {
-    // todo: remove this class
     public sealed class ImmutableSortedOrderSet : IImmutableSet<OrderQueryResult>
     {
         private readonly ImmutableSortedSet<OrderQueryResult> _set;
 
         internal ImmutableSortedOrderSet(ImmutableSortedSet<OrderQueryResult> set)
         {
-            if (set is null) throw new ArgumentNullException(nameof(set));
-            if (set.KeyComparer is not Comparer) throw new ArgumentOutOfRangeException(nameof(set));
+            Guard.IsNotNull(set, nameof(set));
+            Guard.IsOfType(set.KeyComparer, OrderQueryResult.KeyComparer.GetType(), nameof(set));
 
             _set = set;
         }
@@ -90,7 +86,7 @@ namespace Outcompute.Trader.Models.Collections
 
         public sealed class Builder : ISet<OrderQueryResult>
         {
-            private readonly ImmutableSortedSet<OrderQueryResult>.Builder _builder = ImmutableSortedSet.CreateBuilder(Comparer.Default);
+            private readonly ImmutableSortedSet<OrderQueryResult>.Builder _builder = ImmutableSortedSet.CreateBuilder(OrderQueryResult.KeyComparer);
 
             #region Set
 
@@ -141,37 +137,13 @@ namespace Outcompute.Trader.Models.Collections
 
         #endregion Builder
 
-        #region Comparer
-
-        internal class Comparer : IComparer<OrderQueryResult>
-        {
-            private Comparer()
-            {
-            }
-
-            public int Compare(OrderQueryResult? x, OrderQueryResult? y)
-            {
-                if (x is null) throw new ArgumentNullException(nameof(x));
-                if (y is null) throw new ArgumentNullException(nameof(y));
-
-                var bySymbol = Comparer<string>.Default.Compare(x.Symbol, y.Symbol);
-                if (bySymbol is not 0) return bySymbol;
-
-                return Comparer<long>.Default.Compare(x.OrderId, y.OrderId);
-            }
-
-            public static Comparer Default { get; } = new Comparer();
-        }
-
-        #endregion Comparer
-
         #region Helpers
 
-        public static readonly ImmutableSortedOrderSet Empty = new(ImmutableSortedSet.Create<OrderQueryResult>(Comparer.Default));
+        public static ImmutableSortedOrderSet Empty { get; } = new(ImmutableSortedSet.Create(OrderQueryResult.KeyComparer));
 
         public static ImmutableSortedOrderSet Create(IEnumerable<OrderQueryResult> items)
         {
-            _ = items ?? throw new ArgumentNullException(nameof(items));
+            Guard.IsNotNull(items, nameof(items));
 
             var builder = new Builder();
 

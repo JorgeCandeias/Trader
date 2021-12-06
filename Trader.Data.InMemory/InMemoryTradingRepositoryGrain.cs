@@ -1,4 +1,5 @@
-﻿using Orleans;
+﻿using Microsoft.Toolkit.Diagnostics;
+using Orleans;
 using Orleans.Concurrency;
 using Outcompute.Trader.Models;
 using System.Collections.Immutable;
@@ -20,24 +21,24 @@ internal class InMemoryTradingRepositoryGrain : Grain, IInMemoryTradingRepositor
 
     public ValueTask<ImmutableSortedSet<Kline>> GetKlinesAsync(string symbol, KlineInterval interval)
     {
-        if (symbol is null) throw new ArgumentNullException(nameof(symbol));
+        Guard.IsNotNull(symbol, nameof(symbol));
 
         var result = _klines.TryGetValue((symbol, interval), out var builder)
             ? builder.ToImmutable()
-            : ImmutableSortedSet<Kline>.Empty.WithComparer(KlineComparer.Key);
+            : ImmutableSortedSet<Kline>.Empty;
 
         return ValueTask.FromResult(result);
     }
 
     public ValueTask SetKlinesAsync(ImmutableList<Kline> items)
     {
-        if (items is null) throw new ArgumentNullException(nameof(items));
+        Guard.IsNotNull(items, nameof(items));
 
         foreach (var item in items)
         {
             if (!_klines.TryGetValue((item.Symbol, item.Interval), out var builder))
             {
-                _klines[(item.Symbol, item.Interval)] = builder = ImmutableSortedSet.CreateBuilder(KlineComparer.Key);
+                _klines[(item.Symbol, item.Interval)] = builder = ImmutableSortedSet.CreateBuilder(Kline.KeyComparer);
             }
 
             builder.Remove(item);
@@ -51,7 +52,7 @@ internal class InMemoryTradingRepositoryGrain : Grain, IInMemoryTradingRepositor
     {
         if (!_klines.TryGetValue((item.Symbol, item.Interval), out var builder))
         {
-            _klines[(item.Symbol, item.Interval)] = builder = ImmutableSortedSet.CreateBuilder(KlineComparer.Key);
+            _klines[(item.Symbol, item.Interval)] = builder = ImmutableSortedSet.CreateBuilder(Kline.KeyComparer);
         }
 
         builder.Remove(item);

@@ -24,22 +24,15 @@ public record Kline(
     decimal TakerBuyQuoteAssetVolume)
 {
     public static Kline Empty { get; } = new Kline(string.Empty, KlineInterval.None, DateTime.MinValue, DateTime.MinValue, DateTime.MinValue, 0, 0, 0, 0, 0, 0, 0, 0, 0, true, 0, 0);
+
+    public static IComparer<Kline> KeyComparer { get; } = new KlineKeyComparer();
+
+    public static IEqualityComparer<Kline> KeyEqualityComparer { get; } = new KlineKeyEqualityComparer();
 }
 
-public abstract class KlineComparer : IEqualityComparer<Kline>, IComparer<Kline>
+internal class KlineKeyComparer : IComparer<Kline>
 {
-    public static KlineComparer Key { get; } = new KlineKeyComparer();
-
-    public abstract int Compare(Kline? x, Kline? y);
-
-    public abstract bool Equals(Kline? x, Kline? y);
-
-    public abstract int GetHashCode([DisallowNull] Kline obj);
-}
-
-internal class KlineKeyComparer : KlineComparer
-{
-    public override int Compare(Kline? x, Kline? y)
+    public int Compare(Kline? x, Kline? y)
     {
         if (x is null) return y is null ? 0 : -1;
         if (y is null) return 1;
@@ -52,8 +45,11 @@ internal class KlineKeyComparer : KlineComparer
 
         return x.OpenTime.CompareTo(y.OpenTime);
     }
+}
 
-    public override bool Equals(Kline? x, Kline? y)
+internal class KlineKeyEqualityComparer : IEqualityComparer<Kline>
+{
+    public bool Equals(Kline? x, Kline? y)
     {
         if (x is null) return y is null;
         if (y is null) return false;
@@ -64,7 +60,7 @@ internal class KlineKeyComparer : KlineComparer
             x.OpenTime == y.OpenTime;
     }
 
-    public override int GetHashCode([DisallowNull] Kline obj)
+    public int GetHashCode([DisallowNull] Kline obj)
     {
         return HashCode.Combine(obj.Symbol, obj.Interval, obj.OpenTime);
     }

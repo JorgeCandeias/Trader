@@ -1,14 +1,11 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using Orleans;
 using Orleans.Concurrency;
 using Orleans.Runtime;
 using OrleansDashboard;
 using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Data;
-using Outcompute.Trader.Models;
 using System.Buffers;
-using System.Collections.Immutable;
 
 namespace Outcompute.Trader.Trading.Providers.Klines;
 
@@ -55,7 +52,7 @@ internal class KlineProviderGrain : Grain, IKlineProviderGrain
     /// <summary>
     /// Holds the kline cache in a form that is mutable but still convertible to immutable upon request with low overhead.
     /// </summary>
-    private readonly ImmutableSortedSet<Kline>.Builder _klines = ImmutableSortedSet.CreateBuilder(KlineComparer.Key);
+    private readonly ImmutableSortedSet<Kline>.Builder _klines = ImmutableSortedSet.CreateBuilder(Kline.KeyComparer);
 
     /// <summary>
     /// Indexes klines by open time to speed up requests for a single order.
@@ -65,7 +62,7 @@ internal class KlineProviderGrain : Grain, IKlineProviderGrain
     /// <summary>
     /// Assigns a unique serial number to each kline.
     /// </summary>
-    private readonly Dictionary<Kline, int> _serialByKline = new(KlineComparer.Key);
+    private readonly Dictionary<Kline, int> _serialByKline = new(Kline.KeyEqualityComparer);
 
     /// <summary>
     /// Indexes each kline by it serial number.
@@ -131,12 +128,12 @@ internal class KlineProviderGrain : Grain, IKlineProviderGrain
 
     private ReactiveResult CreateSnapshot()
     {
-        return new ReactiveResult(_version, _serial, _klines.ToImmutable().AsKlineCollection());
+        return new ReactiveResult(_version, _serial, _klines.ToImmutable());
     }
 
     private ReactiveResult CreateUpdate(int fromSerial)
     {
-        var builder = ImmutableSortedSet.CreateBuilder(KlineComparer.Key);
+        var builder = ImmutableSortedSet.CreateBuilder(Kline.KeyComparer);
 
         for (var i = fromSerial; i <= _serial; i++)
         {
@@ -146,7 +143,7 @@ internal class KlineProviderGrain : Grain, IKlineProviderGrain
             }
         }
 
-        return new ReactiveResult(_version, _serial, builder.ToImmutable().AsKlineCollection());
+        return new ReactiveResult(_version, _serial, builder.ToImmutable());
     }
 
     private async ValueTask LoadAsync()

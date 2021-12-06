@@ -1,12 +1,8 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using Orleans;
 using Orleans.Concurrency;
 using Outcompute.Trader.Data;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms;
-using System.Collections.Immutable;
 
 namespace Outcompute.Trader.Trading.Providers.Klines;
 
@@ -59,7 +55,7 @@ internal class KlineProviderReplicaGrain : Grain, IKlineProviderReplicaGrain
     /// <summary>
     /// Holds the kline cache in a form that is mutable but still convertible to immutable upon request with low overhead.
     /// </summary>
-    private readonly ImmutableSortedSet<Kline>.Builder _klines = ImmutableSortedSet.CreateBuilder(KlineComparer.Key);
+    private readonly ImmutableSortedSet<Kline>.Builder _klines = ImmutableSortedSet.CreateBuilder(Kline.KeyComparer);
 
     /// <summary>
     /// Indexes klines by open time to speed up requests for a single order.
@@ -86,14 +82,19 @@ internal class KlineProviderReplicaGrain : Grain, IKlineProviderReplicaGrain
         return new(_klineByOpenTime.GetValueOrDefault(openTime));
     }
 
-    public ValueTask<KlineCollection> GetKlinesAsync()
+    public ValueTask<ImmutableSortedSet<Kline>> GetKlinesAsync()
     {
-        return new(_klines.ToImmutable().AsKlineCollection());
+        return ValueTask.FromResult(_klines.ToImmutable());
     }
 
-    public ValueTask<KlineCollection> GetKlinesAsync(DateTime tickTime, int periods)
+    public ValueTask<ImmutableSortedSet<Kline>> GetKlinesAsync(DateTime tickTime, int periods)
     {
-        return new(_klines.Where(x => x.OpenTime <= tickTime).TakeLast(periods).ToImmutableList().AsKlineCollection());
+        var result = _klines
+            .Where(x => x.OpenTime <= tickTime)
+            .TakeLast(periods)
+            .ToImmutableSortedSet(Kline.KeyComparer);
+
+        return ValueTask.FromResult(result);
     }
 
     public async ValueTask SetKlineAsync(Kline item)

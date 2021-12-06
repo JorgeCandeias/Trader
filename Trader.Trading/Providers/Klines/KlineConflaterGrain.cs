@@ -1,9 +1,6 @@
 ﻿using Microsoft.Extensions.Hosting;
-using Orleans;
 using Orleans.Concurrency;
 using Outcompute.Trader.Core.Tasks.Dataflow;
-using Outcompute.Trader.Models;
-using System.Collections.Immutable;
 
 namespace Outcompute.Trader.Trading.Providers.Klines;
 
@@ -25,7 +22,7 @@ internal class KlineConflaterGrain : Grain, IKlineConflaterGrain
     private KlineInterval _interval = KlineInterval.None;
 
     private readonly ConflateChannel<Kline, ImmutableHashSet<Kline>.Builder, IEnumerable<Kline>> _channel = new(
-        () => ImmutableHashSet.CreateBuilder(KlineComparer.Key),
+        () => ImmutableHashSet.CreateBuilder(Kline.KeyEqualityComparer),
         (agg, item) =>
         {
             if (!agg.TryGetValue(item, out var current))

@@ -46,7 +46,7 @@ internal class AlgoContext : IAlgoContext
 
     public ImmutableSortedSet<AccountTrade> Trades => Data[Symbol.Name].Trades;
 
-    public KlineCollection Klines => Data[Symbol.Name].Klines;
+    public ImmutableSortedSet<Kline> Klines => Data[Symbol.Name].Klines;
 
     public SymbolDataCollection Data { get; } = new SymbolDataCollection();
 

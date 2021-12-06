@@ -1,7 +1,4 @@
-﻿using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
-
-namespace Outcompute.Trader.Trading.Providers;
+﻿namespace Outcompute.Trader.Trading.Providers;
 
 public interface IKlineProvider
 {
@@ -19,12 +16,12 @@ public interface IKlineProvider
     /// Returns all the cached klines.
     /// The result set is ordered by open time.
     /// </summary>
-    ValueTask<KlineCollection> GetKlinesAsync(string symbol, KlineInterval interval, CancellationToken cancellationToken = default);
+    ValueTask<ImmutableSortedSet<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Returns the last <paramref name="periods"/> cached klines up to and including <paramref name="tickTime"/>.
     /// </summary>
-    ValueTask<KlineCollection> GetKlinesAsync(string symbol, KlineInterval interval, DateTime tickTime, int periods, CancellationToken cancellationToken = default);
+    ValueTask<ImmutableSortedSet<Kline>> GetKlinesAsync(string symbol, KlineInterval interval, DateTime tickTime, int periods, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the kline for the specified parameters.

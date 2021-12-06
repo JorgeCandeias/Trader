@@ -1,7 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
+﻿using Microsoft.Extensions.Options;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Algorithms.Context.Configurators;
@@ -32,10 +29,7 @@ public class AlgoContextKlinesConfiguratorTests
             KlinePeriods = periods
         };
 
-        var klines = new KlineCollection(new[]
-        {
-            Kline.Empty with { Symbol = symbol.Name, Interval = interval, OpenTime = time.AddSeconds(-1) }
-        });
+        var klines = ImmutableSortedSet.Create(Kline.KeyComparer, Kline.Empty with { Symbol = symbol.Name, Interval = interval, OpenTime = time.AddSeconds(-1) });
 
         var monitor = Mock.Of<IOptionsMonitor<AlgoOptions>>(x => x.Get(name) == options);
 

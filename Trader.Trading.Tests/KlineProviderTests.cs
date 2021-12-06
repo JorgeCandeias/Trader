@@ -1,9 +1,4 @@
-﻿using Moq;
-using Orleans;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
-using Outcompute.Trader.Trading.Providers.Klines;
-using Xunit;
+﻿using Outcompute.Trader.Trading.Providers.Klines;
 
 namespace Outcompute.Trader.Trading.Tests
 {
@@ -16,11 +11,9 @@ namespace Outcompute.Trader.Trading.Tests
             var symbol = "ABCXYZ";
             var interval = KlineInterval.Days1;
             var openTime = DateTime.UtcNow.Date;
-            var items = new KlineCollection(new[]
-            {
+            var items = ImmutableSortedSet.Create(Kline.KeyComparer,
                 Kline.Empty with { Symbol = symbol, Interval = interval, OpenTime = openTime },
-                Kline.Empty with { Symbol = symbol, Interval = interval, OpenTime = openTime.Subtract(TimeSpan.FromDays(1)) }
-            });
+                Kline.Empty with { Symbol = symbol, Interval = interval, OpenTime = openTime.Subtract(TimeSpan.FromDays(1)) });
 
             var factory = Mock.Of<IGrainFactory>();
             Mock.Get(factory)
@@ -93,11 +86,9 @@ namespace Outcompute.Trader.Trading.Tests
             var symbol = "ABCXYZ";
             var interval = KlineInterval.Days1;
             var openTime = DateTime.UtcNow.Date;
-            var items = new KlineCollection(new[]
-            {
+            var items = ImmutableSortedSet.Create(Kline.KeyComparer,
                 Kline.Empty with { Symbol = symbol, Interval = interval, OpenTime = openTime },
-                Kline.Empty with { Symbol = symbol, Interval = interval, OpenTime = openTime.Subtract(TimeSpan.FromDays(1)) }
-            });
+                Kline.Empty with { Symbol = symbol, Interval = interval, OpenTime = openTime.Subtract(TimeSpan.FromDays(1)) });
 
             var factory = Mock.Of<IGrainFactory>();
             Mock.Get(factory)

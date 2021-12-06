@@ -75,7 +75,7 @@ public class InMemoryTradingRepositoryTests
         var start = DateTime.Today.Subtract(TimeSpan.FromDays(10));
         var end = DateTime.Today;
         var kline = Kline.Empty with { Symbol = symbol, Interval = interval, OpenTime = DateTime.Today };
-        var klines = ImmutableSortedSet.Create(KlineComparer.Key, kline);
+        var klines = ImmutableSortedSet.Create(Kline.KeyComparer, kline);
 
         var factory = Mock.Of<IGrainFactory>();
         Mock.Get(factory)

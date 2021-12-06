@@ -5,7 +5,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Context;
 /// <summary>
 /// Organizes multiple shards of data for a given symbol.
 /// </summary>
-[SuppressMessage("Usage", "CA2227:Collection properties should be read only", Justification = "N/A")]
 public class SymbolData
 {
     public SymbolData(string name)
@@ -22,7 +21,7 @@ public class SymbolData
     private readonly SymbolSwapPoolAssetBalances _swapBalances = new();
     private readonly SymbolOrders _orders = new();
     private ImmutableSortedSet<AccountTrade> _trades = ImmutableSortedSet<AccountTrade>.Empty;
-    private KlineCollection _klines = KlineCollection.Empty;
+    private ImmutableSortedSet<Kline> _klines = ImmutableSortedSet<Kline>.Empty;
 
     /// <summary>
     /// The name of the symbol.
@@ -156,7 +155,7 @@ public class SymbolData
     /// <summary>
     /// The kline history of the current symbol.
     /// </summary>
-    public KlineCollection Klines
+    public ImmutableSortedSet<Kline> Klines
     {
         get
         {

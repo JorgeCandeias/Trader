@@ -179,6 +179,12 @@ public class PortfolioAlgoOptionsSellOff
 public class PortfolioAlgoOptionsSellOffRsi
 {
     /// <summary>
+    /// Whether the RSI check is enabled for sell off.
+    /// </summary>
+    [Required]
+    public bool Enabled { get; set; } = false;
+
+    /// <summary>
     /// The periods used for sell off RSI calculation.
     /// </summary>
     [Required, Range(1, int.MaxValue)]
@@ -188,7 +194,7 @@ public class PortfolioAlgoOptionsSellOffRsi
     /// The RSI threshold above which to attempt a sell.
     /// </summary>
     [Required, Range(0, 100)]
-    public decimal Overbought { get; set; } = 80M;
+    public decimal Overbought { get; set; } = 70M;
 }
 
 /// <summary>

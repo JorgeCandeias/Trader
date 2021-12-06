@@ -260,7 +260,8 @@ public partial class PortfolioAlgo : Algo
         var profitPrice = _options.SellOff.TriggerRate * stats.AvgPrice;
 
         // calculate the desired sell price based on desired rsi
-        if (!item.Klines.TryGetPriceForRsi(x => x.ClosePrice, _options.SellOff.Rsi.Periods, _options.SellOff.Rsi.Overbought, out var rsiPrice))
+        var rsiPrice = 0M;
+        if (_options.SellOff.Rsi.Enabled && !item.Klines.TryGetPriceForRsi(x => x.ClosePrice, _options.SellOff.Rsi.Periods, _options.SellOff.Rsi.Overbought, out rsiPrice))
         {
             // todo: log
             return false;

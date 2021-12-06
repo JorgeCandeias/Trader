@@ -1,5 +1,8 @@
-﻿namespace Outcompute.Trader.Models.Collections
+﻿using Orleans.Concurrency;
+
+namespace Outcompute.Trader.Models.Collections
 {
+    [Immutable]
     public sealed class ImmutableSortedOrderSet : IImmutableSet<OrderQueryResult>
     {
         private readonly ImmutableSortedSet<OrderQueryResult> _set;

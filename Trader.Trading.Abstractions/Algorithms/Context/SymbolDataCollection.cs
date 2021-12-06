@@ -1,31 +1,34 @@
-﻿using Outcompute.Trader.Models.Collections;
+﻿using System.Collections;
 
-namespace Outcompute.Trader.Trading.Algorithms.Context
+namespace Outcompute.Trader.Trading.Algorithms.Context;
+
+/// <summary>
+/// Organizes multiple shards of data for each symbol.
+/// </summary>
+public class SymbolDataCollection : IReadOnlyCollection<SymbolData>
 {
-    /// <summary>
-    /// Organizes multiple shards of data for each symbol.
-    /// </summary>
-    public class SymbolDataCollection : SortedKeyedCollection<string, SymbolData>
+    private readonly SortedDictionary<string, SymbolData> _data = new();
+
+    public SymbolData this[string symbol]
     {
-        protected override string GetKeyForItem(SymbolData item)
+        get
         {
-            if (item is null) throw new ArgumentNullException(nameof(item));
-
-            return item.Name;
-        }
-
-        public SymbolData GetOrAdd(string key)
-        {
-            if (TryGetValue(key, out var item))
+            if (_data.TryGetValue(symbol, out var item))
             {
                 return item;
             }
 
-            item = new SymbolData(key);
+            item = new SymbolData(symbol);
 
-            Add(item);
+            _data.Add(symbol, item);
 
             return item;
         }
     }
+
+    public int Count => _data.Count;
+
+    public IEnumerator<SymbolData> GetEnumerator() => _data.Values.GetEnumerator();
+
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 }

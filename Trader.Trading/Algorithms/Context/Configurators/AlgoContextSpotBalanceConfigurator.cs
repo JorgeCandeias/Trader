@@ -15,7 +15,7 @@ internal class AlgoContextSpotBalanceConfigurator : IAlgoContextConfigurator<Alg
     {
         foreach (var symbol in context.Symbols)
         {
-            var spot = context.Data.GetOrAdd(symbol.Name).Spot;
+            var spot = context.Data[symbol.Name].Spot;
 
             spot.BaseAsset = await _balances
                 .GetBalanceOrZeroAsync(symbol.BaseAsset, cancellationToken)

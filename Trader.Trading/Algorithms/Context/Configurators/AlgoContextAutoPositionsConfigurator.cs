@@ -25,7 +25,7 @@ internal partial class AlgoContextAutoPositionsConfigurator : IAlgoContextConfig
 
         foreach (var symbol in context.Symbols)
         {
-            var data = context.Data.GetOrAdd(symbol.Name);
+            var data = context.Data[symbol.Name];
 
             try
             {

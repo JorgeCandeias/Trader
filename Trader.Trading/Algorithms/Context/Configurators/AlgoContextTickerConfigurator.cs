@@ -15,7 +15,7 @@ internal class AlgoContextTickerConfigurator : IAlgoContextConfigurator<AlgoCont
     {
         foreach (var symbol in context.Symbols)
         {
-            context.Data.GetOrAdd(symbol.Name).Ticker = await _tickers
+            context.Data[symbol.Name].Ticker = await _tickers
                 .GetRequiredTickerAsync(symbol.Name, cancellationToken)
                 .ConfigureAwait(false);
         }

@@ -15,7 +15,7 @@ namespace Outcompute.Trader.Trading.Tests
             var symbol = Symbol.Empty with { Name = "ABCXYZ" };
             var serviceProvider = NullServiceProvider.Instance;
             var context = new AlgoContext(name, serviceProvider);
-            var item = context.Data.GetOrAdd("Item1");
+            var item = context.Data["Item1"];
             item.Symbol = Symbol.Empty with { BaseAsset = "ABC" };
             item.AutoPosition = AutoPosition.Empty with { Symbol = symbol };
             item.Ticker = MiniTicker.Empty with { Symbol = symbol.Name };

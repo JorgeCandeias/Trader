@@ -15,7 +15,7 @@ internal class AlgoContextSwapPoolBalanceConfigurator : IAlgoContextConfigurator
     {
         foreach (var symbol in context.Symbols)
         {
-            var swaps = context.Data.GetOrAdd(symbol.Name).SwapPools;
+            var swaps = context.Data[symbol.Name].SwapPools;
 
             swaps.BaseAsset = await _swaps
                 .GetBalanceAsync(symbol.BaseAsset, cancellationToken)

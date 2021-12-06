@@ -1,7 +1,4 @@
-﻿using Microsoft.Extensions.Logging.Abstractions;
-using Outcompute.Trader.Core;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Algorithms.Context;
+﻿using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 using Outcompute.Trader.Trading.Providers;
 
@@ -42,7 +39,7 @@ namespace Outcompute.Trader.Trading.Tests
                 .Verifiable();
 
             var context = new AlgoContext("Algo1", NullServiceProvider.Instance);
-            context.Data.GetOrAdd(symbol.Name).Spot.QuoteAsset = Balance.Empty with
+            context.Data[symbol.Name].Spot.QuoteAsset = Balance.Empty with
             {
                 Asset = symbol.QuoteAsset,
                 Free = 30000

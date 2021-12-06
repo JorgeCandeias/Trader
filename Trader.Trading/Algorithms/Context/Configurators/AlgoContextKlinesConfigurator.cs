@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Options;
-using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
 
 namespace Outcompute.Trader.Trading.Algorithms.Context.Configurators;
@@ -28,7 +27,7 @@ internal class AlgoContextKlinesConfigurator : IAlgoContextConfigurator<AlgoCont
         {
             foreach (var symbol in context.Symbols)
             {
-                context.Data.GetOrAdd(symbol.Name).Klines = await _klines
+                context.Data[symbol.Name].Klines = await _klines
                     .GetKlinesAsync(symbol.Name, context.KlineInterval, context.TickTime, context.KlinePeriods, cancellationToken)
                     .ConfigureAwait(false);
             }

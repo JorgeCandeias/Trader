@@ -15,7 +15,7 @@ internal class AlgoContextSavingsConfigurator : IAlgoContextConfigurator<AlgoCon
     {
         foreach (var symbol in context.Symbols)
         {
-            var savings = context.Data.GetOrAdd(symbol.Name).Savings;
+            var savings = context.Data[symbol.Name].Savings;
 
             savings.BaseAsset = await _savings
                 .GetBalanceOrZeroAsync(symbol.BaseAsset, cancellationToken)

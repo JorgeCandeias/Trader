@@ -2,23 +2,29 @@
 using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Concurrency;
+using Orleans.Runtime;
+using Orleans.Timers;
 using Outcompute.Trader.Models;
 
 namespace Outcompute.Trader.Trading.Providers.Balances;
 
 [Reentrant]
 [StatelessWorker(1)]
-internal class BalanceProviderReplicaGrain : Grain, IBalanceProviderReplicaGrain
+internal sealed class BalanceProviderReplicaGrain : Grain, IBalanceProviderReplicaGrain
 {
     private readonly ReactiveOptions _reactive;
+    private readonly IGrainActivationContext _context;
     private readonly IGrainFactory _factory;
     private readonly IHostApplicationLifetime _lifetime;
+    private readonly ITimerRegistry _timers;
 
-    public BalanceProviderReplicaGrain(IOptions<ReactiveOptions> reactive, IGrainFactory factory, IHostApplicationLifetime lifetime)
+    public BalanceProviderReplicaGrain(IOptions<ReactiveOptions> reactive, IGrainActivationContext context, IGrainFactory factory, IHostApplicationLifetime lifetime, ITimerRegistry timers)
     {
         _reactive = reactive.Value;
+        _context = context;
         _factory = factory;
         _lifetime = lifetime;
+        _timers = timers;
     }
 
     /// <summary>
@@ -36,15 +42,27 @@ internal class BalanceProviderReplicaGrain : Grain, IBalanceProviderReplicaGrain
     /// </summary>
     private Balance? _balance;
 
+    /// <summary>
+    /// Holds the polling timer.
+    /// </summary>
+    private IDisposable? _timer;
+
     public override async Task OnActivateAsync()
     {
-        _asset = this.GetPrimaryKeyString();
+        _asset = _context.GrainIdentity.PrimaryKeyString;
 
         await LoadAsync();
 
-        RegisterTimer(_ => PollAsync(), null, _reactive.ReactiveRecoveryDelay, _reactive.ReactiveRecoveryDelay);
+        _timer = _timers.RegisterTimer(this, _ => PollAsync(), null, _reactive.ReactiveRecoveryDelay, _reactive.ReactiveRecoveryDelay);
 
         await base.OnActivateAsync();
+    }
+
+    public override Task OnDeactivateAsync()
+    {
+        _timer?.Dispose();
+
+        return base.OnDeactivateAsync();
     }
 
     public ValueTask<Balance?> TryGetBalanceAsync()

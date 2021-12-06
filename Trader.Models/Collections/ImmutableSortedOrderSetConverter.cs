@@ -1,6 +1,4 @@
 ﻿using AutoMapper;
-using System;
-using System.Collections.Generic;
 
 namespace Outcompute.Trader.Models.Collections
 {
@@ -8,9 +6,8 @@ namespace Outcompute.Trader.Models.Collections
     {
         public ImmutableSortedOrderSet Convert(IEnumerable<T> source, ImmutableSortedOrderSet destination, ResolutionContext context)
         {
-            if (source is null) throw new ArgumentNullException(nameof(source));
-            if (destination is not null) throw new ArgumentOutOfRangeException(nameof(destination));
-            if (context is null) throw new ArgumentNullException(nameof(context));
+            Guard.IsNotNull(source, nameof(source));
+            Guard.IsNotNull(context, nameof(context));
 
             var builder = ImmutableSortedOrderSet.CreateBuilder();
 

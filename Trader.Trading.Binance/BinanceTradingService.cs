@@ -100,7 +100,10 @@ internal partial class BinanceTradingService : ITradingService, IHostedService
             .GetAllOrdersAsync(input, cancellationToken)
             .ConfigureAwait(false);
 
-        return _mapper.Map<ImmutableSortedSet<OrderQueryResult>>(output);
+        return _mapper.Map<ImmutableSortedSet<OrderQueryResult>>(output, options =>
+        {
+            options.Items[nameof(OrderQueryResult.KeyComparer)] = OrderQueryResult.KeyComparer;
+        });
     }
 
     public async Task<OrderResult> CreateOrderAsync(string symbol, OrderSide side, OrderType type, TimeInForce? timeInForce, decimal? quantity, decimal? quoteOrderQuantity, decimal? price, string? newClientOrderId, decimal? stopPrice, decimal? icebergQuantity, CancellationToken cancellationToken = default)

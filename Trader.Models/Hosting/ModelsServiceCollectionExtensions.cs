@@ -15,6 +15,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton(typeof(ImmutableListConverter<,>))
                 .AddSingleton(typeof(ImmutableDictionaryConverter<,,,>))
                 .AddSingleton(typeof(ImmutableHashSetConverter<,>))
+                .AddSingleton(typeof(ImmutableSortedSetConverter<,>))
                 .AddAutoMapper(options =>
                 {
                     options.AddProfile<ImmutableSortedTradeSetProfile>();

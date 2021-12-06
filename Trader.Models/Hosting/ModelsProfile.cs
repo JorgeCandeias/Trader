@@ -10,6 +10,7 @@ namespace Outcompute.Trader.Models.Hosting
             CreateMap(typeof(IEnumerable<>), typeof(ImmutableList<>)).ConvertUsing(typeof(ImmutableListConverter<,>));
             CreateMap(typeof(IDictionary<,>), typeof(ImmutableDictionary<,>)).ConvertUsing(typeof(ImmutableDictionaryConverter<,,,>));
             CreateMap(typeof(IEnumerable<>), typeof(ImmutableHashSet<>)).ConvertUsing(typeof(ImmutableHashSetConverter<,>));
+            CreateMap(typeof(IEnumerable<>), typeof(ImmutableSortedSet<>)).ConvertUsing(typeof(ImmutableSortedSetConverter<,>));
 
             CreateMap<Ticker, MiniTicker>()
                 .ForCtorParam(nameof(MiniTicker.EventTime), x => x.MapFrom(y => y.CloseTime))

@@ -91,7 +91,7 @@ internal class OrderProviderReplicaGrain : Grain, IOrderProviderReplicaGrain
             query = query.Where(x => (x.ExecutedQuantity > 0) == significant.Value);
         }
 
-        var result = query.ToImmutableSortedSet();
+        var result = query.ToImmutableSortedSet(OrderQueryResult.KeyComparer);
 
         return ValueTask.FromResult(result);
     }

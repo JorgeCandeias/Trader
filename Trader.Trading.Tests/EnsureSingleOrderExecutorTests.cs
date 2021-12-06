@@ -1,8 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging.Abstractions;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
-using Outcompute.Trader.Trading.Algorithms.Context;
+﻿using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
@@ -41,7 +37,7 @@ namespace Outcompute.Trader.Trading.Tests
                 .BuildServiceProvider();
 
             var context = new AlgoContext("Algo1", provider);
-            context.Data.GetOrAdd(symbol.Name).Orders.Open = ImmutableSortedOrderSet.Create(existing);
+            context.Data.GetOrAdd(symbol.Name).Orders.Open = ImmutableSortedSet.Create(OrderQueryResult.KeyComparer, existing);
 
             var type = OrderType.Limit;
             var timeInForce = TimeInForce.GoodTillCanceled;

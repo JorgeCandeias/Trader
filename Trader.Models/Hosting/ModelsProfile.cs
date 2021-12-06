@@ -7,8 +7,6 @@ namespace Outcompute.Trader.Models.Hosting
     {
         public ModelsProfile()
         {
-            CreateMap(typeof(IEnumerable<>), typeof(ImmutableSortedOrderSet)).ConvertUsing(typeof(ImmutableSortedOrderSetConverter<>));
-
             CreateMap(typeof(IEnumerable<>), typeof(ImmutableList<>)).ConvertUsing(typeof(ImmutableListConverter<,>));
             CreateMap(typeof(IDictionary<,>), typeof(ImmutableDictionary<,>)).ConvertUsing(typeof(ImmutableDictionaryConverter<,,,>));
             CreateMap(typeof(IEnumerable<>), typeof(ImmutableHashSet<>)).ConvertUsing(typeof(ImmutableHashSetConverter<,>));

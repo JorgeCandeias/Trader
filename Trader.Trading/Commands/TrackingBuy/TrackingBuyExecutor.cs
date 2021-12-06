@@ -1,10 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 using System.Buffers;
+using System.Collections.Immutable;
 
 namespace Outcompute.Trader.Trading.Commands.TrackingBuy;
 
@@ -23,7 +23,7 @@ internal class TrackingBuyExecutor : IAlgoCommandExecutor<TrackingBuyCommand>
     {
         var data = context.Data[command.Symbol.Name];
         var ticker = data.Ticker;
-        var orders = data.Orders.Open.Where(x => x.Side == OrderSide.Buy).ToImmutableSortedOrderSet();
+        var orders = data.Orders.Open.Where(x => x.Side == OrderSide.Buy).ToImmutableSortedSet(OrderQueryResult.KeyComparer);
         var balance = data.Spot.QuoteAsset;
 
         // identify the free balance
@@ -89,7 +89,7 @@ internal class TrackingBuyExecutor : IAlgoCommandExecutor<TrackingBuyCommand>
             .ConfigureAwait(false);
     }
 
-    private async Task<ImmutableSortedOrderSet> TryCloseLowBuysAsync(IAlgoContext context, Symbol symbol, ImmutableSortedOrderSet orders, decimal lowBuyPrice, CancellationToken cancellationToken)
+    private async Task<ImmutableSortedSet<OrderQueryResult>> TryCloseLowBuysAsync(IAlgoContext context, Symbol symbol, ImmutableSortedSet<OrderQueryResult> orders, decimal lowBuyPrice, CancellationToken cancellationToken)
     {
         var buffer = ArrayPool<OrderQueryResult>.Shared.Rent(orders.Count);
         var count = 0;
@@ -118,7 +118,7 @@ internal class TrackingBuyExecutor : IAlgoCommandExecutor<TrackingBuyCommand>
         return orders;
     }
 
-    private async Task<ImmutableSortedOrderSet> TryCloseHighBuysAsync(IAlgoContext context, Symbol symbol, ImmutableSortedOrderSet orders, CancellationToken cancellationToken)
+    private async Task<ImmutableSortedSet<OrderQueryResult>> TryCloseHighBuysAsync(IAlgoContext context, Symbol symbol, ImmutableSortedSet<OrderQueryResult> orders, CancellationToken cancellationToken)
     {
         var buffer = ArrayPool<OrderQueryResult>.Shared.Rent(orders.Count);
         var count = 0;

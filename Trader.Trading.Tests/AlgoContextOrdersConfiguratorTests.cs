@@ -1,7 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
-using Outcompute.Trader.Trading.Algorithms.Context;
+﻿using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Algorithms.Context.Configurators;
 using Outcompute.Trader.Trading.Providers;
 
@@ -20,9 +17,9 @@ public class AlgoContextOrdersConfiguratorTests
             Name = "ABCXYZ"
         };
 
-        var openOrders = ImmutableSortedOrderSet.Empty;
-        var filledOrders = ImmutableSortedOrderSet.Empty;
-        var completedOrders = ImmutableSortedOrderSet.Empty;
+        var openOrders = ImmutableSortedSet<OrderQueryResult>.Empty;
+        var filledOrders = ImmutableSortedSet<OrderQueryResult>.Empty;
+        var completedOrders = ImmutableSortedSet<OrderQueryResult>.Empty;
 
         var orderProvider = Mock.Of<IOrderProvider>();
         Mock.Get(orderProvider)

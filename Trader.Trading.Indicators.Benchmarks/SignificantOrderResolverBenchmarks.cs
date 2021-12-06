@@ -4,6 +4,7 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms.Positions;
 using System;
+using System.Collections.Immutable;
 
 namespace Trader.Trading.Indicators.Benchmarks
 {
@@ -16,7 +17,7 @@ namespace Trader.Trading.Indicators.Benchmarks
 
         private readonly DateTime _startTime;
 
-        private readonly ImmutableSortedOrderSet _orders = ImmutableSortedOrderSet.Empty;
+        private readonly ImmutableSortedSet<OrderQueryResult> _orders = ImmutableSortedSet<OrderQueryResult>.Empty;
 
         private readonly TradeCollection _trades = TradeCollection.Empty;
 

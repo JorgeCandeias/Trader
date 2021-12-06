@@ -1,2 +1,10 @@
-﻿global using Moq;
+﻿global using AutoMapper;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Logging.Abstractions;
+global using Moq;
+global using Orleans;
+global using Outcompute.Trader.Core;
+global using Outcompute.Trader.Models;
+global using Outcompute.Trader.Models.Collections;
+global using System.Collections.Immutable;
 global using Xunit;

@@ -7,6 +7,7 @@ using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Algorithms.Context.Configurators;
 using Outcompute.Trader.Trading.Algorithms.Positions;
+using System.Collections.Immutable;
 
 namespace Outcompute.Trader.Trading.Tests;
 
@@ -28,7 +29,7 @@ public class AlgoContextAutoPositionsConfiguratorTests
             StartTime = DateTime.UtcNow
         };
 
-        var orders = ImmutableSortedOrderSet.Create(new[] { OrderQueryResult.Empty with { OrderId = 123 } });
+        var orders = ImmutableSortedSet.Create(OrderQueryResult.Empty with { OrderId = 123 }).WithComparer(OrderQueryResult.KeyComparer);
 
         var trades = new TradeCollection(new[] { AccountTrade.Empty with { Id = 123 } });
 

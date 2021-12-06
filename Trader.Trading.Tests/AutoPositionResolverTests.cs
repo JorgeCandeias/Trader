@@ -1,7 +1,4 @@
-﻿using Microsoft.Extensions.Logging.Abstractions;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
-using Outcompute.Trader.Trading.Algorithms.Positions;
+﻿using Outcompute.Trader.Trading.Algorithms.Positions;
 
 namespace Outcompute.Trader.Trading.Tests
 {
@@ -20,7 +17,7 @@ namespace Outcompute.Trader.Trading.Tests
 
             var startTime = DateTime.MinValue;
             var logger = NullLogger<AutoPositionResolver>.Instance;
-            var orders = ImmutableSortedOrderSet.Empty;
+            var orders = ImmutableSortedSet<OrderQueryResult>.Empty;
             var trades = TradeCollection.Empty;
             var resolver = new AutoPositionResolver(logger);
 
@@ -66,7 +63,7 @@ namespace Outcompute.Trader.Trading.Tests
                 ExecutedQuantity = 100m
             };
 
-            var orders = ImmutableSortedOrderSet.Create(new[] { order1, order2 });
+            var orders = ImmutableSortedSet.Create(OrderQueryResult.KeyComparer, new[] { order1, order2 });
 
             var trade1 = AccountTrade.Empty with
             {

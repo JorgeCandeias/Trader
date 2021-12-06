@@ -1,14 +1,10 @@
-﻿using Orleans;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
-
-namespace Outcompute.Trader.Trading.Providers.Orders;
+﻿namespace Outcompute.Trader.Trading.Providers.Orders;
 
 public interface IOrderProviderReplicaGrain : IGrainWithStringKey
 {
-    ValueTask<ImmutableSortedOrderSet> GetOrdersAsync();
+    ValueTask<ImmutableSortedSet<OrderQueryResult>> GetOrdersAsync();
 
-    ValueTask<ImmutableSortedOrderSet> GetOrdersByFilterAsync(OrderSide? side, bool? transient, bool? significant);
+    ValueTask<ImmutableSortedSet<OrderQueryResult>> GetOrdersByFilterAsync(OrderSide? side, bool? transient, bool? significant);
 
     ValueTask<OrderQueryResult?> TryGetOrderAsync(long orderId);
 

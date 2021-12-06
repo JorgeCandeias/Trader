@@ -11,7 +11,6 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IServiceCollection AddModelServices(this IServiceCollection services)
         {
             return services
-                .AddSingleton(typeof(ImmutableSortedOrderSetConverter<>))
                 .AddSingleton(typeof(ImmutableSortedTradeSetConverter<>))
                 .AddSingleton(typeof(ImmutableListConverter<,>))
                 .AddSingleton(typeof(ImmutableDictionaryConverter<,,,>))

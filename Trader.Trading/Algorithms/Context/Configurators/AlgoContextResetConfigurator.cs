@@ -1,6 +1,4 @@
-﻿using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
-using Outcompute.Trader.Trading.Algorithms.Positions;
+﻿using Outcompute.Trader.Trading.Algorithms.Positions;
 
 namespace Outcompute.Trader.Trading.Algorithms.Context.Configurators
 {
@@ -23,9 +21,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Context.Configurators
                 item.Savings.QuoteAsset = SavingsBalance.Empty;
                 item.SwapPools.BaseAsset = SwapPoolAssetBalance.Empty;
                 item.SwapPools.QuoteAsset = SwapPoolAssetBalance.Empty;
-                item.Orders.Completed = ImmutableSortedOrderSet.Empty;
-                item.Orders.Open = ImmutableSortedOrderSet.Empty;
-                item.Orders.Filled = ImmutableSortedOrderSet.Empty;
+                item.Orders.Completed = ImmutableSortedSet<OrderQueryResult>.Empty;
+                item.Orders.Open = ImmutableSortedSet<OrderQueryResult>.Empty;
+                item.Orders.Filled = ImmutableSortedSet<OrderQueryResult>.Empty;
                 item.Trades = TradeCollection.Empty;
                 item.Klines = KlineCollection.Empty;
             }

@@ -1,4 +1,5 @@
-﻿using Outcompute.Trader.Models.Collections;
+﻿using Outcompute.Trader.Models;
+using System.Collections.Immutable;
 
 namespace Outcompute.Trader.Trading.Algorithms.Context
 {
@@ -10,16 +11,16 @@ namespace Outcompute.Trader.Trading.Algorithms.Context
         /// <summary>
         /// All current open orders in the exchange.
         /// </summary>
-        public ImmutableSortedOrderSet Open { get; set; } = ImmutableSortedOrderSet.Empty;
+        public ImmutableSortedSet<OrderQueryResult> Open { get; set; } = ImmutableSortedSet<OrderQueryResult>.Empty.WithComparer(OrderQueryResult.KeyComparer);
 
         /// <summary>
         /// All completed orders with positive executed quantity.
         /// </summary>
-        public ImmutableSortedOrderSet Filled { get; set; } = ImmutableSortedOrderSet.Empty;
+        public ImmutableSortedSet<OrderQueryResult> Filled { get; set; } = ImmutableSortedSet<OrderQueryResult>.Empty.WithComparer(OrderQueryResult.KeyComparer);
 
         /// <summary>
         /// All completed orders including canceled orders.
         /// </summary>
-        public ImmutableSortedOrderSet Completed { get; set; } = ImmutableSortedOrderSet.Empty;
+        public ImmutableSortedSet<OrderQueryResult> Completed { get; set; } = ImmutableSortedSet<OrderQueryResult>.Empty.WithComparer(OrderQueryResult.KeyComparer);
     }
 }

@@ -1,7 +1,4 @@
-﻿using Outcompute.Trader.Core;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
-using Outcompute.Trader.Trading.Algorithms.Context;
+﻿using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Algorithms.Context.Configurators;
 using Outcompute.Trader.Trading.Algorithms.Positions;
 
@@ -28,9 +25,9 @@ namespace Outcompute.Trader.Trading.Tests
             item.Savings.QuoteAsset = SavingsBalance.Empty with { FreeAmount = 123M };
             item.SwapPools.BaseAsset = SwapPoolAssetBalance.Empty with { Total = 123M };
             item.SwapPools.QuoteAsset = SwapPoolAssetBalance.Empty with { Total = 123M };
-            item.Orders.Completed = ImmutableSortedOrderSet.Empty;
-            item.Orders.Open = ImmutableSortedOrderSet.Empty;
-            item.Orders.Filled = ImmutableSortedOrderSet.Empty;
+            item.Orders.Completed = ImmutableSortedSet<OrderQueryResult>.Empty;
+            item.Orders.Open = ImmutableSortedSet<OrderQueryResult>.Empty;
+            item.Orders.Filled = ImmutableSortedSet<OrderQueryResult>.Empty;
             item.Trades = new TradeCollection(new[] { AccountTrade.Empty });
             item.Klines = new KlineCollection(new[] { Kline.Empty });
             item.Exceptions.Add(new InvalidOperationException());

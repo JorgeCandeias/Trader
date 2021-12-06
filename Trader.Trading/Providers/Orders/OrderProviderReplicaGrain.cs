@@ -1,10 +1,7 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using Orleans;
 using Orleans.Concurrency;
 using Outcompute.Trader.Data;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
 
 namespace Outcompute.Trader.Trading.Providers.Orders;
 
@@ -44,7 +41,7 @@ internal class OrderProviderReplicaGrain : Grain, IOrderProviderReplicaGrain
     /// <summary>
     /// Holds the order cache in a form that is mutable but still convertible to immutable upon request with low overhead.
     /// </summary>
-    private readonly ImmutableSortedOrderSet.Builder _orders = ImmutableSortedOrderSet.CreateBuilder();
+    private readonly ImmutableSortedSet<OrderQueryResult>.Builder _orders = ImmutableSortedSet.CreateBuilder(OrderQueryResult.KeyComparer);
 
     /// <summary>
     /// Indexes orders by order id to speed up requests for a single order.
@@ -69,13 +66,13 @@ internal class OrderProviderReplicaGrain : Grain, IOrderProviderReplicaGrain
         return ValueTask.FromResult(order);
     }
 
-    public ValueTask<ImmutableSortedOrderSet> GetOrdersAsync()
+    public ValueTask<ImmutableSortedSet<OrderQueryResult>> GetOrdersAsync()
     {
         return ValueTask.FromResult(_orders.ToImmutable());
     }
 
     // todo: optimize this with specific filters for each used combination
-    public ValueTask<ImmutableSortedOrderSet> GetOrdersByFilterAsync(OrderSide? side, bool? transient, bool? significant)
+    public ValueTask<ImmutableSortedSet<OrderQueryResult>> GetOrdersByFilterAsync(OrderSide? side, bool? transient, bool? significant)
     {
         var query = _orders.AsEnumerable();
 
@@ -94,7 +91,7 @@ internal class OrderProviderReplicaGrain : Grain, IOrderProviderReplicaGrain
             query = query.Where(x => (x.ExecutedQuantity > 0) == significant.Value);
         }
 
-        var result = query.ToImmutableSortedOrderSet();
+        var result = query.ToImmutableSortedSet();
 
         return ValueTask.FromResult(result);
     }

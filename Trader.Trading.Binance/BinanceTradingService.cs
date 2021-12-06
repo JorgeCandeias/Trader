@@ -1,14 +1,4 @@
-﻿using AutoMapper;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Outcompute.Trader.Core.Time;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
-using Outcompute.Trader.Trading.Exceptions;
-using System.Diagnostics;
-
-namespace Outcompute.Trader.Trading.Binance;
+﻿namespace Outcompute.Trader.Trading.Binance;
 
 [ExcludeFromCodeCoverage(Justification = "Requires Integration Testing")]
 internal partial class BinanceTradingService : ITradingService, IHostedService
@@ -86,7 +76,7 @@ internal partial class BinanceTradingService : ITradingService, IHostedService
             .GetOpenOrdersAsync(input, cancellationToken)
             .ConfigureAwait(false);
 
-        return _mapper.Map<ImmutableSortedOrderSet>(output);
+        return _mapper.Map<ImmutableSortedSet<OrderQueryResult>>(output);
     }
 
     public async Task<OrderQueryResult> GetOrderAsync(string symbol, long? orderId, string? originalClientOrderId, CancellationToken cancellationToken = default)
@@ -110,7 +100,7 @@ internal partial class BinanceTradingService : ITradingService, IHostedService
             .GetAllOrdersAsync(input, cancellationToken)
             .ConfigureAwait(false);
 
-        return _mapper.Map<ImmutableSortedOrderSet>(output);
+        return _mapper.Map<ImmutableSortedSet<OrderQueryResult>>(output);
     }
 
     public async Task<OrderResult> CreateOrderAsync(string symbol, OrderSide side, OrderType type, TimeInForce? timeInForce, decimal? quantity, decimal? quoteOrderQuantity, decimal? price, string? newClientOrderId, decimal? stopPrice, decimal? icebergQuantity, CancellationToken cancellationToken = default)

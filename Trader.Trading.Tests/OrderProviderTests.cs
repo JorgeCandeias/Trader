@@ -1,8 +1,4 @@
-﻿using AutoMapper;
-using Orleans;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
-using Outcompute.Trader.Models.Hosting;
+﻿using Outcompute.Trader.Models.Hosting;
 using Outcompute.Trader.Trading.Providers.Orders;
 
 namespace Outcompute.Trader.Trading.Tests
@@ -79,12 +75,10 @@ namespace Outcompute.Trader.Trading.Tests
         {
             // arrange
             var symbol = "ABCXYZ";
-            var orders = ImmutableSortedOrderSet.Create(new[]
-            {
+            var orders = ImmutableSortedSet.Create(OrderQueryResult.KeyComparer,
                 OrderQueryResult.Empty with { Symbol = symbol, OrderId = 1 },
                 OrderQueryResult.Empty with { Symbol = symbol, OrderId = 2 },
-                OrderQueryResult.Empty with { Symbol = symbol, OrderId = 3 }
-            });
+                OrderQueryResult.Empty with { Symbol = symbol, OrderId = 3 });
 
             var factory = Mock.Of<IGrainFactory>();
             Mock.Get(factory)

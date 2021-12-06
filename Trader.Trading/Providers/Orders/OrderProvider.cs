@@ -1,7 +1,4 @@
 ﻿using AutoMapper;
-using Orleans;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
 
 namespace Outcompute.Trader.Trading.Providers.Orders;
 
@@ -30,14 +27,14 @@ internal class OrderProvider : IOrderProvider
         return _factory.GetOrderProviderGrain(symbol).SetLastSyncedOrderId(orderId);
     }
 
-    public ValueTask<ImmutableSortedOrderSet> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default)
+    public ValueTask<ImmutableSortedSet<OrderQueryResult>> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default)
     {
         Guard.IsNotNull(symbol, nameof(symbol));
 
         return _factory.GetOrderProviderReplicaGrain(symbol).GetOrdersAsync();
     }
 
-    public ValueTask<ImmutableSortedOrderSet> GetOrdersByFilterAsync(string symbol, OrderSide? side, bool? transient, bool? significant, CancellationToken cancellationToken = default)
+    public ValueTask<ImmutableSortedSet<OrderQueryResult>> GetOrdersByFilterAsync(string symbol, OrderSide? side, bool? transient, bool? significant, CancellationToken cancellationToken = default)
     {
         Guard.IsNotNull(symbol, nameof(symbol));
 

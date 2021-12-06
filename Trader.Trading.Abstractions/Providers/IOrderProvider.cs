@@ -1,7 +1,4 @@
-﻿using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
-
-namespace Outcompute.Trader.Trading.Providers;
+﻿namespace Outcompute.Trader.Trading.Providers;
 
 public interface IOrderProvider
 {
@@ -38,12 +35,12 @@ public interface IOrderProvider
     /// <summary>
     /// Gets all orders for the specified symbol sorted by <see cref="OrderQueryResult.OrderId"/>.
     /// </summary>
-    ValueTask<ImmutableSortedOrderSet> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default);
+    ValueTask<ImmutableSortedSet<OrderQueryResult>> GetOrdersAsync(string symbol, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets filtered orders for the specified symbol sorted by <see cref="OrderQueryResult.OrderId"/>.
     /// </summary>
-    ValueTask<ImmutableSortedOrderSet> GetOrdersByFilterAsync(string symbol, OrderSide? side, bool? transient, bool? significant, CancellationToken cancellationToken = default);
+    ValueTask<ImmutableSortedSet<OrderQueryResult>> GetOrdersByFilterAsync(string symbol, OrderSide? side, bool? transient, bool? significant, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the order with the specified <paramref name="orderId"/> and <paramref name="symbol"/>.

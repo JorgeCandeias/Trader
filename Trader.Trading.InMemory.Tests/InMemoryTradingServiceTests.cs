@@ -1,11 +1,7 @@
 ﻿using Moq;
 using Orleans;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
-using System;
 using System.Collections.Immutable;
-using System.Threading;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace Outcompute.Trader.Trading.InMemory.Tests
@@ -358,7 +354,7 @@ namespace Outcompute.Trader.Trading.InMemory.Tests
             var fromId = 123;
             var limit = 1000;
             var trade = AccountTrade.Empty with { Symbol = symbol, Id = 123 };
-            var trades = ImmutableSortedTradeSet.Create(new[] { trade });
+            var trades = ImmutableSortedSet.Create(AccountTrade.KeyComparer, trade);
 
             var factory = Mock.Of<IGrainFactory>();
             Mock.Get(factory)

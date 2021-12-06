@@ -55,7 +55,7 @@ internal partial class BinanceTradingService : ITradingService, IHostedService
         return _mapper.Map<IReadOnlyCollection<SymbolPriceTicker>>(output);
     }
 
-    public async Task<ImmutableSortedTradeSet> GetAccountTradesAsync(string symbol, long? fromId, int? limit, CancellationToken cancellationToken = default)
+    public async Task<ImmutableSortedSet<AccountTrade>> GetAccountTradesAsync(string symbol, long? fromId, int? limit, CancellationToken cancellationToken = default)
     {
         var model = new GetAccountTrades(symbol, null, null, fromId, limit, null, _clock.UtcNow);
         var input = _mapper.Map<GetAccountTradesRequest>(model);
@@ -64,7 +64,10 @@ internal partial class BinanceTradingService : ITradingService, IHostedService
             .GetAccountTradesAsync(input, cancellationToken)
             .ConfigureAwait(false);
 
-        return _mapper.Map<ImmutableSortedTradeSet>(output);
+        return _mapper.Map<ImmutableSortedSet<AccountTrade>>(output, options =>
+        {
+            options.Items[nameof(ImmutableSortedSet<AccountTrade>.KeyComparer)] = AccountTrade.KeyComparer;
+        });
     }
 
     public async Task<IReadOnlyCollection<OrderQueryResult>> GetOpenOrdersAsync(string symbol, CancellationToken cancellationToken = default)

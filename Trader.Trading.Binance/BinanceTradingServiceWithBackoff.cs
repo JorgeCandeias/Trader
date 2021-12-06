@@ -1,7 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
-using Polly;
+﻿using Polly;
 
 namespace Outcompute.Trader.Trading.Binance;
 
@@ -78,7 +75,7 @@ internal partial class BinanceTradingServiceWithBackoff : ITradingService
         return WaitAndRetryForeverAsync(ct => _trader.GetAccountInfoAsync(ct), cancellationToken);
     }
 
-    public Task<ImmutableSortedTradeSet> GetAccountTradesAsync(string symbol, long? fromId, int? limit, CancellationToken cancellationToken = default)
+    public Task<ImmutableSortedSet<AccountTrade>> GetAccountTradesAsync(string symbol, long? fromId, int? limit, CancellationToken cancellationToken = default)
     {
         return WaitAndRetryForeverAsync(ct => _trader.GetAccountTradesAsync(symbol, fromId, limit, ct), cancellationToken);
     }

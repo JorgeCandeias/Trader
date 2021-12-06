@@ -1,9 +1,5 @@
-﻿using Orleans;
-using Orleans.Concurrency;
+﻿using Orleans.Concurrency;
 using Outcompute.Trader.Core.Time;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
-using System.Collections.Immutable;
 using static System.String;
 
 namespace Outcompute.Trader.Trading.InMemory;
@@ -278,13 +274,13 @@ internal class InMemoryTradingServiceGrain : Grain, IInMemoryTradingServiceGrain
         return Task.CompletedTask;
     }
 
-    public Task<ImmutableSortedTradeSet> GetAccountTradesAsync(string symbol, long? fromId, int? limit)
+    public Task<ImmutableSortedSet<AccountTrade>> GetAccountTradesAsync(string symbol, long? fromId, int? limit)
     {
         if (symbol is null) throw new ArgumentNullException(nameof(symbol));
 
         if (!_trades.TryGetValue(symbol, out var lookup))
         {
-            return Task.FromResult(ImmutableSortedTradeSet.Empty);
+            return Task.FromResult(ImmutableSortedSet<AccountTrade>.Empty);
         }
 
         var query = lookup.Values.AsEnumerable();
@@ -299,7 +295,7 @@ internal class InMemoryTradingServiceGrain : Grain, IInMemoryTradingServiceGrain
             query = query.Take(limit.Value);
         }
 
-        var result = query.ToImmutableSortedTradeSet();
+        var result = query.ToImmutableSortedSet(AccountTrade.KeyComparer);
 
         return Task.FromResult(result);
     }

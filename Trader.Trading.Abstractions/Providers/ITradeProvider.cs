@@ -1,7 +1,4 @@
-﻿using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
-
-namespace Outcompute.Trader.Trading.Providers;
+﻿namespace Outcompute.Trader.Trading.Providers;
 
 public interface ITradeProvider
 {
@@ -28,7 +25,7 @@ public interface ITradeProvider
     /// <summary>
     /// Gets all trades for the specified symbol.
     /// </summary>
-    Task<TradeCollection> GetTradesAsync(string symbol, CancellationToken cancellationToken = default);
+    Task<ImmutableSortedSet<AccountTrade>> GetTradesAsync(string symbol, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the trade with the specified parameters.

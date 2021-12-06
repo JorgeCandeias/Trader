@@ -1,7 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Outcompute.Trader.Core;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms.Positions;
 
 namespace Outcompute.Trader.Trading.Algorithms.Context;
@@ -46,7 +44,7 @@ internal class AlgoContext : IAlgoContext
 
     public SymbolOrders Orders => Data[Symbol.Name].Orders;
 
-    public TradeCollection Trades => Data[Symbol.Name].Trades;
+    public ImmutableSortedSet<AccountTrade> Trades => Data[Symbol.Name].Trades;
 
     public KlineCollection Klines => Data[Symbol.Name].Klines;
 

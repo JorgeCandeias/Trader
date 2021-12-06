@@ -1,7 +1,4 @@
-﻿using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
-
-namespace Outcompute.Trader.Trading;
+﻿namespace Outcompute.Trader.Trading;
 
 public interface ITradingService
 {
@@ -45,7 +42,7 @@ public interface ITradingService
     Task<IReadOnlyCollection<SymbolPriceTicker>> GetSymbolPriceTickersAsync(
         CancellationToken cancellationToken = default);
 
-    Task<ImmutableSortedTradeSet> GetAccountTradesAsync(
+    Task<ImmutableSortedSet<AccountTrade>> GetAccountTradesAsync(
         string symbol,
         long? fromId,
         int? limit,

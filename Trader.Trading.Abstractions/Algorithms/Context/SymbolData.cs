@@ -1,6 +1,4 @@
-﻿using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
-using Outcompute.Trader.Trading.Algorithms.Positions;
+﻿using Outcompute.Trader.Trading.Algorithms.Positions;
 
 namespace Outcompute.Trader.Trading.Algorithms.Context;
 
@@ -23,7 +21,7 @@ public class SymbolData
     private readonly SymbolSavingsBalances _savingsBalances = new();
     private readonly SymbolSwapPoolAssetBalances _swapBalances = new();
     private readonly SymbolOrders _orders = new();
-    private TradeCollection _trades = TradeCollection.Empty;
+    private ImmutableSortedSet<AccountTrade> _trades = ImmutableSortedSet<AccountTrade>.Empty;
     private KlineCollection _klines = KlineCollection.Empty;
 
     /// <summary>
@@ -142,7 +140,7 @@ public class SymbolData
     /// <summary>
     /// The trade history of the current symbol.
     /// </summary>
-    public TradeCollection Trades
+    public ImmutableSortedSet<AccountTrade> Trades
     {
         get
         {

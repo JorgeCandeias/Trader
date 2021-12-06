@@ -1,14 +1,10 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using Orleans;
 using Orleans.Concurrency;
 using Orleans.Runtime;
 using OrleansDashboard;
 using Outcompute.Trader.Data;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
 using System.Buffers;
-using System.Collections.Immutable;
 
 namespace Outcompute.Trader.Trading.Providers.Trades;
 
@@ -101,7 +97,7 @@ internal class TradeProviderGrain : Grain, ITradeProviderGrain
     /// </summary>
     public Task<ReactiveResult> GetTradesAsync()
     {
-        return Task.FromResult(new ReactiveResult(_version, _serial, _trades.ToImmutable().AsTradeCollection()));
+        return Task.FromResult(new ReactiveResult(_version, _serial, _trades.ToImmutable()));
     }
 
     /// <summary>
@@ -114,7 +110,7 @@ internal class TradeProviderGrain : Grain, ITradeProviderGrain
         // if the versions differ then return the entire data set
         if (version != _version)
         {
-            return Task.FromResult<ReactiveResult?>(new ReactiveResult(_version, _serial, _trades.ToImmutable().AsTradeCollection()));
+            return Task.FromResult<ReactiveResult?>(new ReactiveResult(_version, _serial, _trades.ToImmutable()));
         }
 
         // fulfill the request now if possible
@@ -130,7 +126,7 @@ internal class TradeProviderGrain : Grain, ITradeProviderGrain
                 }
             }
 
-            return Task.FromResult<ReactiveResult?>(new ReactiveResult(_version, _serial, new TradeCollection(builder.ToImmutable())));
+            return Task.FromResult<ReactiveResult?>(new ReactiveResult(_version, _serial, builder.ToImmutable()));
         }
 
         // otherwise let the request wait for more data
@@ -242,7 +238,7 @@ internal class TradeProviderGrain : Grain, ITradeProviderGrain
         if (version != _version)
         {
             // complete on data reset
-            completion.SetResult(new ReactiveResult(_version, _serial, _trades.ToImmutable().AsTradeCollection()));
+            completion.SetResult(new ReactiveResult(_version, _serial, _trades.ToImmutable()));
         }
         else
         {
@@ -257,7 +253,7 @@ internal class TradeProviderGrain : Grain, ITradeProviderGrain
                 }
             }
 
-            completion.SetResult(new ReactiveResult(_version, _serial, builder.ToImmutable().AsTradeCollection()));
+            completion.SetResult(new ReactiveResult(_version, _serial, builder.ToImmutable()));
         }
     }
 

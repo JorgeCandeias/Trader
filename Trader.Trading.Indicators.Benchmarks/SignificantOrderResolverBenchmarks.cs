@@ -1,7 +1,6 @@
 ﻿using BenchmarkDotNet.Attributes;
 using Microsoft.Extensions.DependencyInjection;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Trading.Algorithms.Positions;
 using System;
 using System.Collections.Immutable;
@@ -19,7 +18,7 @@ namespace Trader.Trading.Indicators.Benchmarks
 
         private readonly ImmutableSortedSet<OrderQueryResult> _orders = ImmutableSortedSet<OrderQueryResult>.Empty;
 
-        private readonly TradeCollection _trades = TradeCollection.Empty;
+        private readonly ImmutableSortedSet<AccountTrade> _trades = ImmutableSortedSet<AccountTrade>.Empty;
 
         public SignificantOrderResolverBenchmarks()
         {

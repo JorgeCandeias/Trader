@@ -24,7 +24,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Context.Configurators
                 item.Orders.Completed = ImmutableSortedSet<OrderQueryResult>.Empty;
                 item.Orders.Open = ImmutableSortedSet<OrderQueryResult>.Empty;
                 item.Orders.Filled = ImmutableSortedSet<OrderQueryResult>.Empty;
-                item.Trades = TradeCollection.Empty;
+                item.Trades = ImmutableSortedSet<AccountTrade>.Empty;
                 item.Klines = KlineCollection.Empty;
             }
 

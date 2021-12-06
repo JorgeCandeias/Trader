@@ -1,6 +1,5 @@
 ﻿using Orleans;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
 
 namespace Outcompute.Trader.Trading.InMemory;
 
@@ -50,5 +49,5 @@ internal interface IInMemoryTradingServiceGrain : IGrainWithGuidKey
 
     Task SetAccountTradeAsync(AccountTrade trade);
 
-    Task<ImmutableSortedTradeSet> GetAccountTradesAsync(string symbol, long? fromId, int? limit);
+    Task<ImmutableSortedSet<AccountTrade>> GetAccountTradesAsync(string symbol, long? fromId, int? limit);
 }

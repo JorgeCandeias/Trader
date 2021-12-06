@@ -1,7 +1,4 @@
-﻿using Orleans;
-using Outcompute.Trader.Data;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
+﻿using Outcompute.Trader.Data;
 
 namespace Outcompute.Trader.Trading.Providers.Trades;
 
@@ -30,7 +27,7 @@ internal class TradeProvider : ITradeProvider
         return _factory.GetTradeProviderGrain(symbol).GetLastSyncedTradeIdAsync();
     }
 
-    public Task<TradeCollection> GetTradesAsync(string symbol, CancellationToken cancellationToken = default)
+    public Task<ImmutableSortedSet<AccountTrade>> GetTradesAsync(string symbol, CancellationToken cancellationToken = default)
     {
         Guard.IsNotNull(symbol, nameof(symbol));
 

@@ -1,7 +1,4 @@
-﻿using Orleans;
-using Outcompute.Trader.Data;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
+﻿using Outcompute.Trader.Data;
 using Outcompute.Trader.Trading.Providers.Trades;
 
 namespace Outcompute.Trader.Trading.Tests
@@ -60,7 +57,7 @@ namespace Outcompute.Trader.Trading.Tests
             // arrange
             var symbol = "ABCXYZ";
             var trade = AccountTrade.Empty with { Id = 123, Symbol = symbol };
-            var trades = new TradeCollection(new[] { trade });
+            var trades = ImmutableSortedSet.Create(AccountTrade.KeyComparer, trade);
 
             var factory = Mock.Of<IGrainFactory>();
             Mock.Get(factory)

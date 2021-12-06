@@ -1,13 +1,6 @@
 ﻿using Microsoft.Extensions.Logging.Abstractions;
-using Moq;
 using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
-using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Threading;
-using System.Threading.Tasks;
-using Xunit;
 
 namespace Outcompute.Trader.Trading.Binance.Tests
 {
@@ -167,7 +160,7 @@ namespace Outcompute.Trader.Trading.Binance.Tests
             var fromId = 123;
             var limit = 234;
             var logger = NullLogger<BinanceTradingServiceWithBackoff>.Instance;
-            var trades = ImmutableSortedTradeSet.Empty;
+            var trades = ImmutableSortedSet<AccountTrade>.Empty;
             var trader = Mock.Of<ITradingService>();
             Mock.Get(trader)
                 .Setup(x => x.GetAccountTradesAsync(symbol, fromId, limit, CancellationToken.None))

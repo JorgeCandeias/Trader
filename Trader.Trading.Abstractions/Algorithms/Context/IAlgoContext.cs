@@ -1,6 +1,4 @@
-﻿using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
-using Outcompute.Trader.Trading.Algorithms.Positions;
+﻿using Outcompute.Trader.Trading.Algorithms.Positions;
 
 namespace Outcompute.Trader.Trading.Algorithms.Context;
 
@@ -79,7 +77,7 @@ public interface IAlgoContext
     /// <summary>
     /// Gets all historial trades for the default symbol.
     /// </summary>
-    TradeCollection Trades { get; }
+    ImmutableSortedSet<AccountTrade> Trades { get; }
 
     /// <summary>
     /// Gets the klines for the default configuration.

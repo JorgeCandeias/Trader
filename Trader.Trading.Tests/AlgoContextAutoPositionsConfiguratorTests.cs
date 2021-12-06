@@ -1,13 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
+﻿using Microsoft.Extensions.Options;
 using Outcompute.Trader.Trading.Algorithms;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Algorithms.Context.Configurators;
 using Outcompute.Trader.Trading.Algorithms.Positions;
-using System.Collections.Immutable;
 
 namespace Outcompute.Trader.Trading.Tests;
 
@@ -29,9 +24,9 @@ public class AlgoContextAutoPositionsConfiguratorTests
             StartTime = DateTime.UtcNow
         };
 
-        var orders = ImmutableSortedSet.Create(OrderQueryResult.Empty with { OrderId = 123 }).WithComparer(OrderQueryResult.KeyComparer);
+        var orders = ImmutableSortedSet.Create(OrderQueryResult.KeyComparer, OrderQueryResult.Empty with { OrderId = 123 });
 
-        var trades = new TradeCollection(new[] { AccountTrade.Empty with { Id = 123 } });
+        var trades = ImmutableSortedSet.Create(AccountTrade.KeyComparer, AccountTrade.Empty with { Id = 123 });
 
         var position = new AutoPosition();
 

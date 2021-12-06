@@ -1,8 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
 using System.Buffers;
-using System.Collections.Immutable;
 using System.Diagnostics;
 
 namespace Outcompute.Trader.Trading.Algorithms.Positions;
@@ -26,7 +23,7 @@ internal partial class AutoPositionResolver : IAutoPositionResolver
         public decimal RemainingExecutedQuantity { get; set; }
     }
 
-    public AutoPosition Resolve(Symbol symbol, ImmutableSortedSet<OrderQueryResult> orders, TradeCollection trades, DateTime startTime)
+    public AutoPosition Resolve(Symbol symbol, ImmutableSortedSet<OrderQueryResult> orders, ImmutableSortedSet<AccountTrade> trades, DateTime startTime)
     {
         // todo: validate that the symbols are consistent between all arguments
 

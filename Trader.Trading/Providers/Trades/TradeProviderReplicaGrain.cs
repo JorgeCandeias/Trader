@@ -1,11 +1,7 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using Orleans;
 using Orleans.Concurrency;
 using Outcompute.Trader.Data;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
-using System.Collections.Immutable;
 
 namespace Outcompute.Trader.Trading.Providers.Trades;
 
@@ -70,9 +66,9 @@ internal class TradeProviderReplicaGrain : Grain, ITradeProviderReplicaGrain
         return Task.FromResult(trade);
     }
 
-    public Task<TradeCollection> GetTradesAsync()
+    public Task<ImmutableSortedSet<AccountTrade>> GetTradesAsync()
     {
-        return Task.FromResult(new TradeCollection(_trades.ToImmutable()));
+        return Task.FromResult(_trades.ToImmutable());
     }
 
     public async Task SetTradeAsync(AccountTrade trade)

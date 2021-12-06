@@ -28,7 +28,7 @@ namespace Outcompute.Trader.Trading.Tests
             item.Orders.Completed = ImmutableSortedSet<OrderQueryResult>.Empty;
             item.Orders.Open = ImmutableSortedSet<OrderQueryResult>.Empty;
             item.Orders.Filled = ImmutableSortedSet<OrderQueryResult>.Empty;
-            item.Trades = new TradeCollection(new[] { AccountTrade.Empty });
+            item.Trades = ImmutableSortedSet.Create(AccountTrade.KeyComparer, AccountTrade.Empty);
             item.Klines = new KlineCollection(new[] { Kline.Empty });
             item.Exceptions.Add(new InvalidOperationException());
 

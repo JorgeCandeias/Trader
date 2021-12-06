@@ -1,12 +1,8 @@
-﻿using Orleans;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
-
-namespace Outcompute.Trader.Trading.Providers.Trades;
+﻿namespace Outcompute.Trader.Trading.Providers.Trades;
 
 public interface ITradeProviderReplicaGrain : IGrainWithStringKey
 {
-    Task<TradeCollection> GetTradesAsync();
+    Task<ImmutableSortedSet<AccountTrade>> GetTradesAsync();
 
     Task<AccountTrade?> TryGetTradeAsync(long tradeId);
 

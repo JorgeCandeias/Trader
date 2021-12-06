@@ -18,7 +18,7 @@ namespace Outcompute.Trader.Trading.Tests
             var startTime = DateTime.MinValue;
             var logger = NullLogger<AutoPositionResolver>.Instance;
             var orders = ImmutableSortedSet<OrderQueryResult>.Empty;
-            var trades = TradeCollection.Empty;
+            var trades = ImmutableSortedSet<AccountTrade>.Empty;
             var resolver = new AutoPositionResolver(logger);
 
             // act
@@ -93,7 +93,7 @@ namespace Outcompute.Trader.Trading.Tests
 
             var profit = ((trade2.Quantity - trade1.Commission) * trade2.Price) - ((trade1.Quantity - trade1.Commission) * trade1.Price);
 
-            var trades = new TradeCollection(new[] { trade1, trade2 });
+            var trades = ImmutableSortedSet.Create(AccountTrade.KeyComparer, trade1, trade2);
 
             var resolver = new AutoPositionResolver(logger);
 

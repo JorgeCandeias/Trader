@@ -1,8 +1,4 @@
-﻿using Orleans;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
-
-namespace Outcompute.Trader.Trading.InMemory;
+﻿namespace Outcompute.Trader.Trading.InMemory;
 
 internal class InMemoryTradingService : IInMemoryTradingService
 {
@@ -88,7 +84,7 @@ internal class InMemoryTradingService : IInMemoryTradingService
         return _grain.GetAccountInfoAsync();
     }
 
-    public Task<ImmutableSortedTradeSet> GetAccountTradesAsync(string symbol, long? fromId, int? limit, CancellationToken cancellationToken = default)
+    public Task<ImmutableSortedSet<AccountTrade>> GetAccountTradesAsync(string symbol, long? fromId, int? limit, CancellationToken cancellationToken = default)
     {
         return _grain.GetAccountTradesAsync(symbol, fromId, limit);
     }

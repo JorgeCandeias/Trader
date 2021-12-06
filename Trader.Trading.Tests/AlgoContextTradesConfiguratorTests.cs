@@ -1,7 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Models.Collections;
-using Outcompute.Trader.Trading.Algorithms.Context;
+﻿using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Algorithms.Context.Configurators;
 using Outcompute.Trader.Trading.Providers;
 
@@ -20,7 +17,7 @@ public class AlgoContextTradesConfiguratorTests
             Name = "ABCXYZ"
         };
 
-        var trades = new TradeCollection(Array.Empty<AccountTrade>());
+        var trades = ImmutableSortedSet<AccountTrade>.Empty;
 
         var tradeProvider = Mock.Of<ITradeProvider>();
         Mock.Get(tradeProvider)

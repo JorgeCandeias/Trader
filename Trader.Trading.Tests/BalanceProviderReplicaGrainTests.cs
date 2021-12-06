@@ -47,4 +47,43 @@ public class BalanceProviderReplicaGrainTests
         // deactivate
         await grain.OnDeactivateAsync();
     }
+
+    [Fact]
+    public async Task TryGetBalance()
+    {
+        // arrange
+        var asset = "Asset1";
+        var version = Guid.NewGuid();
+        var balance = Balance.Empty with { Asset = asset, Free = 123 };
+
+        var options = new ReactiveOptions
+        {
+            ReactiveRecoveryDelay = TimeSpan.FromSeconds(10)
+        };
+
+        var context = Mock.Of<IGrainActivationContext>(x => x.GrainIdentity.PrimaryKeyString == asset);
+
+        var factory = Mock.Of<IGrainFactory>();
+        Mock.Get(factory)
+            .Setup(x => x.GetGrain<IBalanceProviderGrain>(asset, null).GetBalanceAsync())
+            .ReturnsAsync(new ReactiveResult(version, balance))
+            .Verifiable();
+
+        var lifetime = Mock.Of<IHostApplicationLifetime>();
+        var timers = new FakeTimerRegistry();
+
+        var grain = new BalanceProviderReplicaGrain(Options.Create(options), context, factory, lifetime, timers);
+
+        // activate
+        await grain.OnActivateAsync();
+
+        // act
+        var result = await grain.TryGetBalanceAsync();
+
+        // assert
+        Assert.Same(balance, result);
+
+        // deactivate
+        await grain.OnDeactivateAsync();
+    }
 }

@@ -1,6 +1,5 @@
 ﻿using Outcompute.Trader.Models.Collections;
 using Outcompute.Trader.Models.Hosting;
-using System.Collections.Immutable;
 
 namespace Microsoft.Extensions.DependencyInjection
 {
@@ -19,13 +18,8 @@ namespace Microsoft.Extensions.DependencyInjection
                 .AddSingleton(typeof(ImmutableHashSetConverter<,>))
                 .AddAutoMapper(options =>
                 {
-                    options.AddProfile<ImmutableSortedOrderSetProfile>();
                     options.AddProfile<ImmutableSortedTradeSetProfile>();
                     options.AddProfile<ModelsProfile>();
-
-                    options.CreateMap(typeof(IEnumerable<>), typeof(ImmutableList<>)).ConvertUsing(typeof(ImmutableListConverter<,>));
-                    options.CreateMap(typeof(IDictionary<,>), typeof(ImmutableDictionary<,>)).ConvertUsing(typeof(ImmutableDictionaryConverter<,,,>));
-                    options.CreateMap(typeof(IEnumerable<>), typeof(ImmutableHashSet<>)).ConvertUsing(typeof(ImmutableHashSetConverter<,>));
                 });
         }
     }

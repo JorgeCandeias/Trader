@@ -43,9 +43,14 @@ internal sealed class BalanceProviderReplicaGrain : Grain, IBalanceProviderRepli
     private Balance? _balance;
 
     /// <summary>
-    /// Holds the polling timer.
+    /// Holds the poll recovery timer.
     /// </summary>
     private IDisposable? _timer;
+
+    /// <summary>
+    /// Holds the background poll task.
+    /// </summary>
+    private Task? _poll;
 
     public override async Task OnActivateAsync()
     {
@@ -53,7 +58,7 @@ internal sealed class BalanceProviderReplicaGrain : Grain, IBalanceProviderRepli
 
         await LoadAsync();
 
-        _timer = _timers.RegisterTimer(this, _ => PollAsync(), null, _reactive.ReactiveRecoveryDelay, _reactive.ReactiveRecoveryDelay);
+        _timer = _timers.RegisterTimer(this, _ => MonitorPollAsync(), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
 
         await base.OnActivateAsync();
     }
@@ -75,7 +80,28 @@ internal sealed class BalanceProviderReplicaGrain : Grain, IBalanceProviderRepli
         (_version, _balance) = await _factory.GetBalanceProviderGrain(_asset).GetBalanceAsync();
     }
 
-    private async Task PollAsync()
+    private async Task MonitorPollAsync()
+    {
+        if (_poll is null)
+        {
+            _poll = Task.Run(() => ExecutePollAsync());
+            return;
+        }
+
+        if (_poll.IsCompleted)
+        {
+            try
+            {
+                await _poll;
+            }
+            finally
+            {
+                _poll = null;
+            }
+        }
+    }
+
+    private async Task ExecutePollAsync()
     {
         while (!_lifetime.ApplicationStopping.IsCancellationRequested)
         {

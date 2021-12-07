@@ -1,6 +1,4 @@
-﻿using Microsoft.Toolkit.Diagnostics;
-
-namespace Outcompute.Trader.Trading.Tests;
+﻿namespace Outcompute.Trader.Trading.Tests;
 
 public class MomentumTests
 {
@@ -8,9 +6,6 @@ public class MomentumTests
     [MemberData(nameof(TestData))]
     public void Evaluates(decimal[] source, decimal[] expected, int periods)
     {
-        Guard.IsNotNull(source, nameof(source));
-        Guard.IsNotNull(expected, nameof(expected));
-
         var momentum = source.Momentum(periods).ToArray();
 
         for (var i = 0; i < expected.Length; i++)

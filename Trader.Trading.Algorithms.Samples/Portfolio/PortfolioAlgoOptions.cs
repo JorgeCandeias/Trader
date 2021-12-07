@@ -90,7 +90,7 @@ public class PortfolioAlgoOptionsTopUpBuy
     /// The minimum increase rate from the last lot position for a top up buy to execute.
     /// </summary>
     [Required, Range(0, 1)]
-    public decimal RaiseRate { get; set; } = 0.01M;
+    public decimal RaiseRate { get; set; } = 0.05M;
 
     /// <inheritdoc cref="PortfolioAlgoOptionsTopUpBuyRsi"/>
     [Required]
@@ -156,7 +156,7 @@ public class PortfolioAlgoOptionsSellOff
     /// The minimum relative value (pv / cost) at which to sell off an asset as compared to its average cost.
     /// </summary>
     [Required, Range(1, double.MaxValue)]
-    public decimal TriggerRate { get; set; } = 2M;
+    public decimal TriggerRate { get; set; } = 1.5M;
 
     /// <summary>
     /// The distance to the target sell off price at which point to prepare the limit order.
@@ -209,10 +209,16 @@ public class PortfolioAlgoOptionsRecovery
     public bool Enabled { get; set; } = false;
 
     /// <summary>
-    /// Drop rate from the last buy for recovery to activate.
+    /// Drop rate from the last buy for recovery to activate a recovery buy.
     /// </summary>
     [Required, Range(0, 1)]
     public decimal DropRate { get; set; } = 0.50M;
+
+    /// <summary>
+    /// The rate, from the last buy, at which to trigger a recovery sell.
+    /// </summary>
+    [Required, Range(0, (double)decimal.MaxValue)]
+    public decimal SellRate { get; set; } = 1.5M;
 
     /// <summary>
     /// The fraction of the quote balance to use for each buy order.
@@ -221,10 +227,10 @@ public class PortfolioAlgoOptionsRecovery
     public decimal BalanceRate { get; set; } = 0.001M;
 
     /// <summary>
-    /// The distance to the target recovery buy price at which point to prepare the limit order.
+    /// The distance to the target recovery buy or sell price at which point to prepare the limit order.
     /// </summary>
     [Required, Range(0, 1)]
-    public decimal BuyOrderPriceRange { get; set; } = 0.01M;
+    public decimal OrderPriceRange { get; set; } = 0.01M;
 
     /// <summary>
     /// The cooldown between sequential recovery buys.
@@ -251,7 +257,7 @@ public class PortfolioAlgoOptionsRecoveryRsi
     /// RSI threshold under which to perfrom recovery buys.
     /// </summary>
     [Required, Range(0, 100)]
-    public decimal Buy { get; set; } = 5M;
+    public decimal Buy { get; set; } = 20M;
 
     /// <summary>
     /// RSI threshold above which to perfrom recovery sells.

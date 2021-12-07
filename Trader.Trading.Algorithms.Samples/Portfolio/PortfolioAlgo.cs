@@ -206,7 +206,7 @@ public partial class PortfolioAlgo : Algo
                 .OrderByDescending(x => x.Stats.PresentValue)
                 .FirstOrDefault();
 
-            if (!IsNullOrEmpty(highPv.Symbol?.Name))
+            if (!IsNullOrEmpty(highPvBreakEven.Symbol?.Name))
             {
                 LogSymbolWithHighestPresentValueAboveBreakEven(TypeName, Context.Name, highPvBreakEven.Symbol.Name, highPvBreakEven.Stats.PresentValue, highPvBreakEven.Symbol.QuoteAsset);
             }
@@ -510,7 +510,7 @@ public partial class PortfolioAlgo : Algo
         }
 
         // ticker must be within range of the buy price to bother reserving funds
-        if (item.Ticker.ClosePrice >= buyPrice * (1 + _options.Recovery.BuyOrderPriceRange))
+        if (item.Ticker.ClosePrice >= buyPrice * (1 + _options.Recovery.OrderPriceRange))
         {
             LogRecoveryBuySkippedSymbolWithTickerNotUnderBuyPrice(TypeName, Context.Name, item.Symbol.Name, item.Ticker.ClosePrice, item.Symbol.QuoteAsset, buyPrice);
             return false;
@@ -562,6 +562,27 @@ public partial class PortfolioAlgo : Algo
             return false;
         }
 
+        // there must be a local max from the last lot for it to classify as a recovery buy
+        var lastLot = lots[0];
+        if (!TryFindLocalMax(lots, out var maxPrice))
+        {
+            LogRecoverySellSkippedSymbolWithoutLocalMax(TypeName, Context.Name, item.Symbol.Name, lastLot.AvgPrice, item.Symbol.QuoteAsset);
+            return false;
+        }
+
+        // identify the recovery sell price from the last lot
+        var sellPrice = lastLot.AvgPrice * _options.Recovery.SellRate;
+        sellPrice = sellPrice.AdjustPriceUpToTickSize(item.Symbol);
+
+        // ticker must be within range of the sell price to bother reserving funds
+        var rangePrice = sellPrice * (1 - _options.Recovery.OrderPriceRange);
+        if (item.Ticker.ClosePrice < rangePrice)
+        {
+            LogRecoverySellSkippedSymbolWithTickerNotAboveRangePrice(TypeName, Context.Name, item.Symbol.Name, item.Ticker.ClosePrice, item.Symbol.QuoteAsset, rangePrice, sellPrice);
+            return false;
+        }
+
+        /*
         // identify the recovery sell price for the target rsi
         if (!item.Klines.TryGetPriceForRsi(x => x.ClosePrice, _options.Recovery.Rsi.Periods, _options.Recovery.Rsi.Sell, out var sellPrice))
         {
@@ -569,33 +590,16 @@ public partial class PortfolioAlgo : Algo
             return false;
         }
         sellPrice = sellPrice.AdjustPriceUpToTickSize(item.Symbol);
+        */
 
+        /*
         // the last lot must be under the recovery sell price
-        var lastLot = lots[0];
         if (lastLot.AvgPrice >= sellPrice)
         {
             LogRecoverySellSkippedSymbolWithHighLastLotPrice(TypeName, Context.Name, item.Symbol.Name, lastLot.AvgPrice, item.Symbol.QuoteAsset, sellPrice);
             return false;
         }
-
-        // there must be a local max from the last lot for it to classify as a recovery buy
-        var maxPrice = 0M;
-        foreach (var lot in lots)
-        {
-            if (lot.AvgPrice >= maxPrice)
-            {
-                maxPrice = lot.AvgPrice;
-            }
-            else
-            {
-                break;
-            }
-        }
-        if (maxPrice <= lastLot.AvgPrice)
-        {
-            LogRecoverySellSkippedSymbolWithoutLocalMax(TypeName, Context.Name, item.Symbol.Name, lastLot.AvgPrice, item.Symbol.QuoteAsset);
-            return false;
-        }
+        */
 
         // gather all the lots that fit under the sell price up to the local max
         var quantity = 0M;
@@ -668,12 +672,12 @@ public partial class PortfolioAlgo : Algo
         return CancelOpenOrders(symbol, OrderSide.Sell, null, RecoverySellTag);
     }
 
-    private bool HasLocalMax(IList<PositionLot> lots)
+    private static bool HasLocalMax(IList<PositionLot> lots)
     {
         return TryFindLocalMax(lots, out _);
     }
 
-    private bool TryFindLocalMax(IList<PositionLot> lots, out decimal max)
+    private static bool TryFindLocalMax(IList<PositionLot> lots, out decimal max)
     {
         max = 0;
 
@@ -949,6 +953,9 @@ public partial class PortfolioAlgo : Algo
 
     [LoggerMessage(70, LogLevel.Information, "{Type} {Name} entry buy skipped symbol {Symbol} with buy price of {Price:F8} {Quote} below min percent price of {MinPrice:F8} {Quote}")]
     private partial void LogEntryBuySkippedSymbolWithPriceBelowMinPercent(string type, string name, string symbol, decimal price, decimal minPrice, string quote);
+
+    [LoggerMessage(71, LogLevel.Information, "{Type} {Name} recovery sell skipped symbol {Symbol} with ticker of {Ticker:F8} {Quote} not above range price of {RangePrice:F8} {Quote} for sell price of {SellPrice:F8} {Quote}")]
+    private partial void LogRecoverySellSkippedSymbolWithTickerNotAboveRangePrice(string type, string name, string symbol, decimal ticker, string quote, decimal rangePrice, decimal sellPrice);
 
     #endregion Logging
 }

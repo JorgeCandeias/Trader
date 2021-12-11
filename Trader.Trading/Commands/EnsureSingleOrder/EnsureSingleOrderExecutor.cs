@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
@@ -39,9 +38,6 @@ internal partial class EnsureSingleOrderExecutor : IAlgoCommandExecutor<EnsureSi
                 await new CancelOrderCommand(command.Symbol, order.OrderId)
                     .ExecuteAsync(context, cancellationToken)
                     .ConfigureAwait(false);
-
-                // stop here to allow balances to update
-                return;
             }
         }
 

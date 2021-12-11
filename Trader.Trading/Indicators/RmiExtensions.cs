@@ -61,4 +61,59 @@ public static class RmiExtensions
 
         return source.Select(selector).LastRmi(momentumPeriods, rmaPeriods);
     }
+
+    public static bool TryGetPriceForRmi(this IEnumerable<decimal> source, decimal rmi, out decimal price, int momentumPeriods = 3, int rmaPeriods = 14, decimal precision = 0.01M, int maxIterations = 100)
+    {
+        var prevPrice = source.Last();
+        var prevRmi = source.LastRmi(momentumPeriods, rmaPeriods);
+        var direction = Math.Sign(rmi - prevRmi);
+
+        if (direction == 0)
+        {
+            price = prevPrice;
+            return true;
+        }
+
+        // define the initial search range
+        var high = direction < 0 ? prevPrice : source.Max() * 2;
+        var low = direction > 0 ? prevPrice : source.Min() / 2;
+
+        for (var i = 0; i < maxIterations; i++)
+        {
+            // probe halfway between the range
+            var candidatePrice = (low + high) / 2;
+            var candidateRmi = source.Append(candidatePrice).LastRmi(momentumPeriods, rmaPeriods);
+            var candidateSign = Math.Sign(candidateRmi - rmi);
+
+            // we want to err on the side of the target rmi
+            if (candidateSign == direction)
+            {
+                var candidateRate = candidateRmi / rmi;
+                var candidatePrecision = Math.Abs(1 - candidateRate);
+                if (candidatePrecision <= precision)
+                {
+                    price = candidatePrice;
+                    return true;
+                }
+            }
+
+            // adjust ranges
+            if (candidateRmi < rmi)
+            {
+                low = candidatePrice;
+            }
+            else
+            {
+                high = candidatePrice;
+            }
+        }
+
+        price = 0;
+        return false;
+    }
+
+    public static bool TryGetPriceForRmi<T>(this IEnumerable<T> source, Func<T, decimal> selector, decimal rmi, out decimal price, int momentumPeriods = 3, int rmaPeriods = 14, decimal precision = 0.01M, int maxIterations = 100)
+    {
+        return source.Select(selector).TryGetPriceForRmi(rmi, out price, momentumPeriods, rmaPeriods, precision, maxIterations);
+    }
 }

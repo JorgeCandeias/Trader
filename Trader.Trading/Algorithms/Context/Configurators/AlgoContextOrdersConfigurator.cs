@@ -15,7 +15,7 @@ internal class AlgoContextOrdersConfigurator : IAlgoContextConfigurator<AlgoCont
     {
         foreach (var symbol in context.Symbols)
         {
-            var orders = context.Data[symbol.Name].Orders;
+            var orders = context.Data.GetOrAdd(symbol.Name).Orders;
 
             orders.Open = await _orders
                 .GetOrdersByFilterAsync(symbol.Name, null, true, null, cancellationToken)

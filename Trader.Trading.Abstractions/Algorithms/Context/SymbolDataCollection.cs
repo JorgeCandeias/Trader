@@ -9,21 +9,20 @@ public class SymbolDataCollection : IReadOnlyCollection<SymbolData>
 {
     private readonly SortedDictionary<string, SymbolData> _data = new();
 
-    public SymbolData this[string symbol]
+    public SymbolData this[string symbol] => _data[symbol];
+
+    public SymbolData GetOrAdd(string symbol)
     {
-        get
+        if (_data.TryGetValue(symbol, out var item))
         {
-            if (_data.TryGetValue(symbol, out var item))
-            {
-                return item;
-            }
-
-            item = new SymbolData(symbol);
-
-            _data.Add(symbol, item);
-
             return item;
         }
+
+        item = new SymbolData(symbol);
+
+        _data.Add(symbol, item);
+
+        return item;
     }
 
     public int Count => _data.Count;

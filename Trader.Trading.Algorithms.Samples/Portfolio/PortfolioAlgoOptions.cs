@@ -17,257 +17,108 @@ public class PortfolioAlgoOptions
     public bool UseSwapPools { get; set; }
 
     [Required]
-    public PortfolioAlgoOptionsRecovery Recovery { get; } = new();
+    public PortfolioSellingAlgoOptions Selling { get; } = new();
 
     [Required]
-    public PortfolioAlgoOptionsSellOff SellOff { get; } = new();
+    public PortfolioBuyingAlgoOptions Buying { get; } = new();
 
     [Required]
-    public PortfolioAlgoOptionsTopUpBuy TopUpBuy { get; } = new();
-
-    [Required]
-    public PortfolioAlgoOptionsEntryBuy EntryBuy { get; } = new();
+    public PortfolioRmiAlgoOptions Rmi { get; } = new();
 }
 
 /// <summary>
-/// Options related to entry buying behaviour.
+/// Options related to buying behaviour.
 /// </summary>
-public class PortfolioAlgoOptionsEntryBuy
+public class PortfolioBuyingAlgoOptions
 {
     /// <summary>
-    /// Whether entry buying is enabled.
-    /// </summary>
-    [Required]
-    public bool Enabled { get; set; } = false;
-
-    /// <summary>
-    /// The fraction of the quote balance to use for each buy order.
-    /// </summary>
-    [Required, Range(0, 1)]
-    public decimal BalanceRate { get; set; } = 0.001M;
-
-    /// <inheritdoc cref="PortfolioAlgoOptionsEntryBuyRsi"/>
-    [Required]
-    public PortfolioAlgoOptionsEntryBuyRsi Rsi { get; } = new();
-}
-
-/// <summary>
-/// RSI options related to entry buying behaviour.
-/// </summary>
-public class PortfolioAlgoOptionsEntryBuyRsi
-{
-    /// <summary>
-    /// Periods for RSI calculation.
-    /// </summary>
-    [Required, Range(1, int.MaxValue)]
-    public int Periods { get; set; } = 6;
-
-    /// <summary>
-    /// RSI threshold under which to perfrom entry buys.
-    /// </summary>
-    [Required, Range(0, 100)]
-    public decimal Oversold { get; set; } = 20M;
-}
-
-/// <summary>
-/// Options related to top up buying behaviour.
-/// </summary>
-public class PortfolioAlgoOptionsTopUpBuy
-{
-    /// <summary>
-    /// Whether topping up is enabled.
-    /// </summary>
-    [Required]
-    public bool Enabled { get; set; } = false;
-
-    /// <summary>
-    /// The fraction of the quote balance to use for each buy order.
-    /// </summary>
-    [Required, Range(0, 1)]
-    public decimal BalanceRate { get; set; } = 0.001M;
-
-    /// <summary>
-    /// The minimum increase rate from the last lot position for a top up buy to execute.
-    /// </summary>
-    [Required, Range(0, 1)]
-    public decimal RaiseRate { get; set; } = 0.05M;
-
-    /// <inheritdoc cref="PortfolioAlgoOptionsTopUpBuyRsi"/>
-    [Required]
-    public PortfolioAlgoOptionsTopUpBuyRsi Rsi { get; } = new();
-
-    /// <inheritdoc cref="PortfolioAlgoOptionsTopUpBuySma"/>
-    [Required]
-    public PortfolioAlgoOptionsTopUpBuySma Sma { get; } = new();
-}
-
-/// <summary>
-/// RSI options related to top up buying behaviour.
-/// </summary>
-public class PortfolioAlgoOptionsTopUpBuyRsi
-{
-    /// <summary>
-    /// Whether the safety RSI check is enabled.
+    /// Whether buying is enabled.
     /// </summary>
     public bool Enabled { get; set; } = true;
 
     /// <summary>
-    /// Periods for RSI calculation.
-    /// </summary>
-    [Required, Range(1, int.MaxValue)]
-    public int Periods { get; set; } = 6;
-
-    /// <summary>
-    /// RSI threshold above which never to perform top up buys.
-    /// </summary>
-    [Required, Range(0, 100)]
-    public decimal Overbought { get; set; } = 70M;
-}
-
-/// <summary>
-/// SMA options related to top up buying behaviour.
-/// </summary>
-public class PortfolioAlgoOptionsTopUpBuySma
-{
-    /// <summary>
-    /// Whether the safety SMA check is enabled.
-    /// </summary>
-    public bool Enabled { get; set; } = true;
-
-    /// <summary>
-    /// The periods for SMA calculation.
-    /// </summary>
-    [Required, Range(1, int.MaxValue)]
-    public int Periods { get; set; } = 7;
-}
-
-/// <summary>
-/// Options related to sell off behaviour.
-/// </summary>
-public class PortfolioAlgoOptionsSellOff
-{
-    /// <summary>
-    /// Whether sell off at high profit logic is enabled.
-    /// </summary>
-    [Required]
-    public bool Enabled { get; set; } = false;
-
-    /// <summary>
-    /// The minimum relative value (pv / cost) at which to sell off an asset as compared to its average cost.
-    /// </summary>
-    [Required, Range(1, double.MaxValue)]
-    public decimal TriggerRate { get; set; } = 1.5M;
-
-    /// <summary>
-    /// The distance to the target sell off price at which point to prepare the limit order.
-    /// </summary>
-    [Required, Range(0, 1)]
-    public decimal OrderPriceRange { get; set; } = 0.01M;
-
-    /// <summary>
-    /// Symbols which will never be sold off.
-    /// </summary>
-    public ISet<string> ExcludeSymbols { get; } = new HashSet<string>();
-
-    /// <inheritdoc cref="PortfolioAlgoOptionsSellOffRsi"/>
-    public PortfolioAlgoOptionsSellOffRsi Rsi { get; } = new();
-}
-
-/// <summary>
-/// RSI options related to sell off behaviour.
-/// </summary>
-public class PortfolioAlgoOptionsSellOffRsi
-{
-    /// <summary>
-    /// Whether the RSI check is enabled for sell off.
-    /// </summary>
-    [Required]
-    public bool Enabled { get; set; } = false;
-
-    /// <summary>
-    /// The periods used for sell off RSI calculation.
-    /// </summary>
-    [Required, Range(1, int.MaxValue)]
-    public int Periods { get; set; } = 12;
-
-    /// <summary>
-    /// The RSI threshold above which to attempt a sell.
-    /// </summary>
-    [Required, Range(0, 100)]
-    public decimal Overbought { get; set; } = 70M;
-}
-
-/// <summary>
-/// Options related to recovery behaviour.
-/// </summary>
-public class PortfolioAlgoOptionsRecovery
-{
-    /// <summary>
-    /// Whether recovery logic is enabled.
-    /// </summary>
-    [Required]
-    public bool Enabled { get; set; } = false;
-
-    /// <summary>
-    /// Drop rate from the last buy for recovery to activate a recovery buy.
-    /// </summary>
-    [Required, Range(0, 1)]
-    public decimal DropRate { get; set; } = 0.50M;
-
-    /// <summary>
-    /// The rate, from the last buy, at which to trigger a recovery sell.
-    /// </summary>
-    [Required, Range(0, (double)decimal.MaxValue)]
-    public decimal SellRate { get; set; } = 1.5M;
-
-    /// <summary>
     /// The fraction of the quote balance to use for each buy order.
     /// </summary>
     [Required, Range(0, 1)]
     public decimal BalanceRate { get; set; } = 0.001M;
 
     /// <summary>
-    /// The distance to the target recovery buy or sell price at which point to prepare the limit order.
+    /// The cooldown period between consecutive buys.
     /// </summary>
-    [Required, Range(0, 1)]
-    public decimal OrderPriceRange { get; set; } = 0.01M;
-
-    /// <summary>
-    /// The cooldown between sequential recovery buys.
-    /// </summary>
-    [Required, Range(typeof(TimeSpan), "0.00:00:00.000", "360.00:00:00.000")]
     public TimeSpan Cooldown { get; set; } = TimeSpan.FromDays(1);
 
-    /// <inheritdoc cref="PortfolioAlgoOptionsRecoveryRsi"/>
-    [Required]
-    public PortfolioAlgoOptionsRecoveryRsi Rsi { get; } = new();
-
     /// <summary>
-    /// Symbols which will never be recovered.
+    /// Symbols which will never be bought.
     /// </summary>
     public ISet<string> ExcludeSymbols { get; } = new HashSet<string>();
 }
 
 /// <summary>
-/// RSI options related to recovery behaviour.
+/// Options related to selling behaviour.
 /// </summary>
-public class PortfolioAlgoOptionsRecoveryRsi
+public class PortfolioSellingAlgoOptions
 {
     /// <summary>
-    /// RSI threshold under which to perfrom recovery buys.
+    /// Whether selling is enabled at all.
     /// </summary>
-    [Required, Range(0, 100)]
-    public decimal Buy { get; set; } = 20M;
+    public bool Enabled { get; set; } = true;
 
     /// <summary>
-    /// RSI threshold above which to perfrom recovery sells.
+    /// Regular stop loss to ensure profit when the symbol exhibits flash spikes.
     /// </summary>
-    [Required, Range(0, 100)]
-    public decimal Sell { get; set; } = 70M;
+    [Required, Range(0, 1)]
+    public decimal StopLossRate { get; set; } = 0.01M;
 
     /// <summary>
-    /// Periods for RSI calculation.
+    /// The minimum profit rate for the assets elected for selling.
+    /// </summary>
+    [Required, Range(0, 1)]
+    public decimal MinProfitRate { get; set; } = 0.01M;
+
+    /// <summary>
+    /// Symbols which will never be sold.
+    /// </summary>
+    public ISet<string> ExcludeSymbols { get; } = new HashSet<string>();
+}
+
+/// <summary>
+/// RMI options.
+/// </summary>
+public class PortfolioRmiAlgoOptions
+{
+    /// <summary>
+    /// RMI threshold to cross upwards for buying.
     /// </summary>
     [Required, Range(0, 100)]
-    public int Periods { get; set; } = 6;
+    public decimal Low { get; set; } = 30M;
+
+    /// <summary>
+    /// RMI threshold to cross downwards for selling.
+    /// </summary>
+    [Required, Range(0, 100)]
+    public decimal High1 { get; set; } = 70M;
+
+    /// <summary>
+    /// RMI threshold to activate a stop loss sell at <see cref="High1"/>.
+    /// </summary>
+    [Required, Range(0, 100), GreaterThan(nameof(High1))]
+    public decimal High2 { get; set; } = 80M;
+
+    /// <summary>
+    /// RMI threshold at which to activate an aggressive percent stop loss to guarantee profit from fast spikes.
+    /// </summary>
+    [Required, Range(0, 100)]
+    public decimal High3 { get; set; } = 90M;
+
+    /// <summary>
+    /// Momentum periods for RMI calculation.
+    /// </summary>
+    [Required, Range(1, 100)]
+    public int MomentumPeriods { get; set; } = 3;
+
+    /// <summary>
+    /// Running Moving Average periods for RMI calculation.
+    /// </summary>
+    [Required, Range(1, 100)]
+    public int RmaPeriods { get; set; } = 14;
 }

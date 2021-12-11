@@ -22,6 +22,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
 
         [Required]
         public OscillatorAlgoOptionsRsi Rsi { get; } = new();
+
+        [Required]
+        public OscillatorAlgoOptionsRmi Rmi { get; } = new();
     }
 
     public class OscillatorAlgoOptionsStopLoss
@@ -54,6 +57,30 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
         [Range(0, 100)]
         [GreaterThan(nameof(Oversold))]
         public decimal Overbought { get; set; } = 70M;
+
+        [Required]
+        [Range(0, 1)]
+        public decimal Precision { get; set; } = 0.01M;
+    }
+
+    public class OscillatorAlgoOptionsRmi
+    {
+        [Required]
+        [Range(1, 1000)]
+        public int MomentumPeriods { get; set; } = 3;
+
+        [Required]
+        [Range(1, 1000)]
+        public int RmaPeriods { get; set; } = 14;
+
+        [Required]
+        [Range(0, 100)]
+        public decimal Low { get; set; } = 30M;
+
+        [Required]
+        [Range(0, 100)]
+        [GreaterThan(nameof(Low))]
+        public decimal High { get; set; } = 70M;
 
         [Required]
         [Range(0, 1)]

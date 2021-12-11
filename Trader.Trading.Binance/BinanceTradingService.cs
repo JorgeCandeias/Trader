@@ -114,9 +114,24 @@ internal partial class BinanceTradingService : ITradingService, IHostedService
         var model = new Order(symbol, side, type, timeInForce, quantity, quoteOrderQuantity, price, newClientOrderId, stopPrice, icebergQuantity, NewOrderResponseType.Full, null, _clock.UtcNow);
         var input = _mapper.Map<CreateOrderRequest>(model);
 
-        var output = await _client
-            .CreateOrderAsync(input, cancellationToken)
-            .ConfigureAwait(false);
+        CreateOrderResponse output;
+        try
+        {
+            output = await _client
+                .CreateOrderAsync(input, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (BinanceCodeException ex)
+        {
+            switch (ex.BinanceCode)
+            {
+                case -2010:
+                    throw new StopLossWouldTriggerImmediatelyException(symbol, side, type, quantity ?? 0, stopPrice ?? 0, price ?? 0, ex);
+
+                default:
+                    throw;
+            }
+        }
 
         return _mapper.Map<OrderResult>(output);
     }

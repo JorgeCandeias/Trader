@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
-using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
+using Outcompute.Trader.Trading.Exceptions;
 using Outcompute.Trader.Trading.Providers;
 using System.Diagnostics;
 
@@ -89,12 +89,21 @@ internal partial class CreateOrderExecutor : IAlgoCommandExecutor<CreateOrderCom
 
         LogPlacingOrder(TypeName, command.Symbol.Name, command.Type, command.Side, command.Quantity, command.Notional, command.Symbol.BaseAsset, command.Price, command.Symbol.QuoteAsset, command.Notional.HasValue ? command.Notional : command.Quantity * command.Price);
 
-        var created = await _trader
-            .CreateOrderAsync(command.Symbol.Name, command.Side, command.Type, command.TimeInForce, command.Quantity, command.Notional, command.Price, command.Tag, command.StopPrice, null, cancellationToken)
-            .ConfigureAwait(false);
+        OrderResult created;
+        try
+        {
+            created = await _trader
+                .CreateOrderAsync(command.Symbol.Name, command.Side, command.Type, command.TimeInForce, command.Quantity, command.Notional, command.Price, command.Tag, command.StopPrice, null, cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (TraderException ex)
+        {
+            LogFailedToCreateOrder(ex, TypeName, context.Name);
+            return;
+        }
 
         await _orders
-            .SetOrderAsync(created, 0m, 0m, 0m, cancellationToken)
+            .SetOrderAsync(created, command.StopPrice.GetValueOrDefault(0), 0m, command.Notional.GetValueOrDefault(0), cancellationToken)
             .ConfigureAwait(false);
 
         LogPlacedOrder(TypeName, command.Symbol.Name, command.Type, command.Side, command.Quantity, command.Notional, command.Symbol.BaseAsset, command.Price, command.Symbol.QuoteAsset, command.Notional.HasValue ? command.Notional : command.Quantity * command.Price, watch.ElapsedMilliseconds);
@@ -110,6 +119,9 @@ internal partial class CreateOrderExecutor : IAlgoCommandExecutor<CreateOrderCom
 
     [LoggerMessage(3, LogLevel.Error, "{Type} {Name} cannot place {OrderType} {OrderSide} order requiring {Quantity:F8} {Asset} because there is only {Free:F8} {Asset} free")]
     private partial void LogCannotPlaceOrderWithoutFreeQuantity(string type, string name, OrderType orderType, OrderSide orderSide, decimal quantity, string asset, decimal free);
+
+    [LoggerMessage(4, LogLevel.Error, "{Type} {Name} failed to create order")]
+    private partial void LogFailedToCreateOrder(Exception ex, string type, string name);
 
     #endregion Logging
 }

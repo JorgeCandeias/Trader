@@ -46,4 +46,12 @@ public class UnknownOrderException : TraderException
 
     public string Symbol { get; } = Empty;
     public long OrderId { get; }
+
+    public override void GetObjectData(SerializationInfo info, StreamingContext context)
+    {
+        base.GetObjectData(info, context);
+
+        info.AddValue(nameof(Symbol), Symbol);
+        info.AddValue(nameof(OrderId), OrderId);
+    }
 }

@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Exceptions;
 using Outcompute.Trader.Trading.Providers;
@@ -44,6 +43,32 @@ internal partial class CancelOrderExecutor : IAlgoCommandExecutor<CancelOrderCom
         await _orders
             .SetOrderAsync(order, cancellationToken)
             .ConfigureAwait(false);
+
+        // adjust the spot balance for the current context so subsequent commands can attempt to execute
+        var data = context.Data[command.Symbol.Name];
+        var cancelled = data.Orders.Open.FirstOrDefault(x => x.OrderId == command.OrderId);
+        if (cancelled is not null)
+        {
+            switch (cancelled.Side)
+            {
+                case OrderSide.Buy:
+                    var quantity = cancelled.OriginalQuantity * cancelled.Price;
+                    data.Spot.QuoteAsset = data.Spot.QuoteAsset with
+                    {
+                        Free = data.Spot.QuoteAsset.Free + quantity,
+                        Locked = data.Spot.QuoteAsset.Locked - quantity
+                    };
+                    break;
+
+                case OrderSide.Sell:
+                    data.Spot.BaseAsset = data.Spot.BaseAsset with
+                    {
+                        Free = data.Spot.BaseAsset.Free + cancelled.OriginalQuantity,
+                        Locked = data.Spot.BaseAsset.Locked - cancelled.OriginalQuantity
+                    };
+                    break;
+            }
+        }
 
         LogEnd(TypeName, context.Name, command.Symbol.Name, command.OrderId, watch.ElapsedMilliseconds);
     }

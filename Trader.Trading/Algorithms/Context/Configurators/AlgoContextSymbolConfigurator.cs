@@ -24,7 +24,7 @@ internal class AlgoContextSymbolConfigurator : IAlgoContextConfigurator<AlgoCont
             var value = _exchange.GetRequiredSymbol(symbol);
 
             context.Symbols.AddOrUpdate(value);
-            context.Data[symbol].Symbol = value;
+            context.Data.GetOrAdd(symbol).Symbol = value;
         }
 
         // populate the default symbol
@@ -34,7 +34,7 @@ internal class AlgoContextSymbolConfigurator : IAlgoContextConfigurator<AlgoCont
 
             // include the default symbol in the symbol set
             context.Symbols.AddOrUpdate(context.Symbol);
-            context.Data[context.Symbol.Name].Symbol = context.Symbol;
+            context.Data.GetOrAdd(context.Symbol.Name).Symbol = context.Symbol;
         }
 
         return ValueTask.CompletedTask;

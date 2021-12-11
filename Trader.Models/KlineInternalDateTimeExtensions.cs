@@ -83,4 +83,28 @@ public static class KlineInternalDateTimeExtensions
     {
         return value.Add(interval, count * -1);
     }
+
+    public static TimeSpan ToTimeSpan(this KlineInterval interval)
+    {
+        return interval switch
+        {
+            KlineInterval.Minutes1 => TimeSpan.FromMinutes(1),
+            KlineInterval.Minutes3 => TimeSpan.FromMinutes(3),
+            KlineInterval.Minutes5 => TimeSpan.FromMinutes(5),
+            KlineInterval.Minutes15 => TimeSpan.FromMinutes(15),
+            KlineInterval.Minutes30 => TimeSpan.FromMinutes(30),
+            KlineInterval.Hours1 => TimeSpan.FromHours(1),
+            KlineInterval.Hours2 => TimeSpan.FromHours(2),
+            KlineInterval.Hours4 => TimeSpan.FromHours(4),
+            KlineInterval.Hours6 => TimeSpan.FromHours(6),
+            KlineInterval.Hours8 => TimeSpan.FromHours(8),
+            KlineInterval.Hours12 => TimeSpan.FromHours(12),
+            KlineInterval.Days1 => TimeSpan.FromDays(1),
+            KlineInterval.Days3 => TimeSpan.FromDays(3),
+            KlineInterval.Weeks1 => TimeSpan.FromDays(7),
+            KlineInterval.Months1 => TimeSpan.FromDays(30),
+
+            _ => throw new ArgumentOutOfRangeException(nameof(interval))
+        };
+    }
 }

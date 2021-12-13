@@ -51,6 +51,22 @@ public class PortfolioBuyingAlgoOptions
     /// Symbols which will never be bought.
     /// </summary>
     public ISet<string> ExcludeSymbols { get; } = new HashSet<string>();
+
+    /// <inheritdoc cref="PortfolioOpeningOptions"/>
+    public PortfolioOpeningOptions Opening { get; } = new();
+}
+
+/// <summary>
+/// Options related to opening behaviour (first buy).
+/// </summary>
+public class PortfolioOpeningOptions
+{
+    /// <summary>
+    /// Whether opening is disabled for specific symbols.
+    /// If a symbol is excluded, no buys will be placed for it if it does not have open positions already.
+    /// Enable to this to let the algo close all positions for tha symbol over time.
+    /// </summary>
+    public ISet<string> ExcludeSymbols { get; } = new HashSet<string>();
 }
 
 /// <summary>
@@ -74,6 +90,12 @@ public class PortfolioSellingAlgoOptions
     /// </summary>
     [Required, Range(0, 1)]
     public decimal MinProfitRate { get; set; } = 0.01M;
+
+    /// <summary>
+    /// A trailing stop loss will be placed at this level of profit to guarantee some return regardless of other factors.
+    /// </summary>
+    [Required, Range(0, 1)]
+    public decimal TakeProfitTriggerRate { get; set; } = 0.10M;
 
     /// <summary>
     /// Symbols which will never be sold.

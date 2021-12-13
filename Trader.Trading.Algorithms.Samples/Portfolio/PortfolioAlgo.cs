@@ -114,7 +114,7 @@ public partial class PortfolioAlgo : Algo
                 quote.Key,
                 cost,
                 pv,
-                (pv - cost) / cost,
+                cost == 0M ? 0M : (pv - cost) / cost,
                 pv - cost,
                 rpnl,
                 pv - cost + rpnl);
@@ -202,6 +202,13 @@ public partial class PortfolioAlgo : Algo
         if (!_options.Buying.Enabled)
         {
             LogEntryBuyDisabled(TypeName, Context.Name, item.Symbol.Name);
+            return false;
+        }
+
+        // if the symbol is on the opening exclusion list then it must have positions
+        if (lots.Count == 0 && _options.Buying.Opening.ExcludeSymbols.Contains(item.Symbol.Name))
+        {
+            LogBuySkippedSymbolOnOpeningExclusionSet(TypeName, Context.Name, item.Symbol.Name);
             return false;
         }
 
@@ -321,6 +328,17 @@ public partial class PortfolioAlgo : Algo
 
             // keep the highest of the two
             stopPrice = Math.Max(stopPrice, tickerSellPrice);
+        }
+
+        // if the take profit price has been reached then calculate a regular stop loss as well
+        var takeProfitPrice = (lots[0].AvgPrice * _options.Selling.TakeProfitTriggerRate).AdjustPriceUpToTickSize(item.Symbol);
+        if (item.Ticker.ClosePrice >= takeProfitPrice)
+        {
+            // calculate the target stop price
+            var price = (item.Ticker.ClosePrice * (1 - _options.Selling.StopLossRate)).AdjustPriceUpToTickSize(item.Symbol);
+
+            // keep the highest so far
+            stopPrice = Math.Max(stopPrice, price);
         }
 
         // if the sell price equals the tick size then quit
@@ -685,6 +703,9 @@ public partial class PortfolioAlgo : Algo
 
     [LoggerMessage(83, LogLevel.Information, "{Type} {Name} {Symbol} sell step skipped symbol with target stop price {SellPrice:F8} {Quote} at or above ticker {Ticker:F8} {Quote}")]
     private partial void LogSellSkippedSymbolWithHighStopPrice(string type, string name, string symbol, decimal sellPrice, decimal ticker, string quote);
+
+    [LoggerMessage(84, LogLevel.Information, "{Type} {Name} {Symbol} buy step skipped symbol with zero lots on the opening exclusion set")]
+    private partial void LogBuySkippedSymbolOnOpeningExclusionSet(string type, string name, string symbol);
 
     #endregion Logging
 }

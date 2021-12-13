@@ -1,11 +1,10 @@
 ﻿global using AutoMapper;
+global using CommunityToolkit.Diagnostics;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Hosting;
 global using Microsoft.Extensions.Logging;
-global using Microsoft.Toolkit.Diagnostics;
 global using Outcompute.Trader.Core.Time;
 global using Outcompute.Trader.Models;
-global using Outcompute.Trader.Models.Collections;
 global using Outcompute.Trader.Trading.Exceptions;
 global using System.Collections.Immutable;
 global using System.Diagnostics;

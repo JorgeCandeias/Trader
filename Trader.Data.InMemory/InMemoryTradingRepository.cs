@@ -1,5 +1,4 @@
-﻿using Microsoft.Toolkit.Diagnostics;
-using Orleans;
+﻿using Orleans;
 using Outcompute.Trader.Data;
 using Outcompute.Trader.Models;
 using System.Collections.Immutable;

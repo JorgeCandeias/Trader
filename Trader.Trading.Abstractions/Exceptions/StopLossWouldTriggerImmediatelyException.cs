@@ -1,5 +1,4 @@
-﻿using Microsoft.Toolkit.Diagnostics;
-using System.Runtime.Serialization;
+﻿using System.Runtime.Serialization;
 
 namespace Outcompute.Trader.Trading.Exceptions;
 

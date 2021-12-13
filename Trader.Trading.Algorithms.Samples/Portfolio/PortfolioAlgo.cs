@@ -250,7 +250,7 @@ public partial class PortfolioAlgo : Algo
         var quantity = CalculateBuyQuantity(item, price, _options.Buying.BalanceRate);
 
         // skip if there is already an equivalent order at a lower price
-        var current = item.Orders.Open.FirstOrDefault(x => x.Side == OrderSide.Buy && x.Type == OrderType.StopLossLimit && x.OriginalQuantity == quantity && x.StopPrice <= price);
+        var current = item.Orders.Open.FirstOrDefault(x => x.Side == OrderSide.Buy && x.StopPrice <= price);
         if (current is not null)
         {
             LogSellSkippedSymbolWithLowerStopPrice(TypeName, Context.Name, item.Symbol.Name, OrderType.StopLossLimit, OrderSide.Buy, current.StopPrice, price, item.Symbol.QuoteAsset);
@@ -267,14 +267,7 @@ public partial class PortfolioAlgo : Algo
         command = EnsureSpotBalance(item.Symbol.QuoteAsset, Math.Max((quantity * price) - locked, 0), _options.UseSavings, _options.UseSwapPools);
 
         // create the order
-        if (item.Symbol.OrderTypes.Contains(OrderType.StopLoss))
-        {
-            command = command.Then(EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.StopLoss, TimeInForce.GoodTillCanceled, quantity, null, null, price, EntryBuyTag));
-        }
-        else
-        {
-            command = command.Then(EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, quantity, null, price, price, EntryBuyTag));
-        }
+        command = command.Then(EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, quantity, null, price, price, EntryBuyTag));
         return true;
     }
 

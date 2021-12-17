@@ -22,8 +22,8 @@ public partial class PortfolioAlgo : Algo
     }
 
     private const string TypeName = nameof(PortfolioAlgo);
-    private const string RecoverySellTag = "RecoverySell";
-    private const string EntryBuyTag = "EntryBuy";
+    private const string SellTag = "Sell";
+    private const string BuyTag = "Buy";
 
     private PortfolioAlgoOptions _options = null!;
 
@@ -59,11 +59,10 @@ public partial class PortfolioAlgo : Algo
                 continue;
             }
 
-            if (TrySell(item, lots, stats, out var recoverySell))
-            {
-                command = command.Then(recoverySell);
-            }
+            command = command.Then(Sell(item, lots, stats));
+            command = command.Then(Buy(item, lots));
 
+            /*
             if (TryBuy(item, lots, out var entryBuy))
             {
                 command = command.Then(entryBuy);
@@ -77,6 +76,7 @@ public partial class PortfolioAlgo : Algo
                     command = command.Then(CancelOrder(item.Symbol, obsolete.OrderId));
                 }
             }
+            */
         }
 
         ReportAggregateStats(lookup);
@@ -194,167 +194,143 @@ public partial class PortfolioAlgo : Algo
         }
     }
 
-    private bool TryBuy(SymbolData item, IList<PositionLot> lots, out IAlgoCommand command)
+    private IAlgoCommand Buy(SymbolData item, IList<PositionLot> lots)
     {
-        command = Noop();
-
         // buying must be enabled
         if (!_options.Buying.Enabled)
         {
-            LogEntryBuyDisabled(TypeName, Context.Name, item.Symbol.Name);
-            return false;
+            return Noop();
         }
 
         // if the symbol is on the opening exclusion list then it must have positions
         if (lots.Count == 0 && _options.Buying.Opening.ExcludeSymbols.Contains(item.Symbol.Name))
         {
-            LogBuySkippedSymbolOnOpeningExclusionSet(TypeName, Context.Name, item.Symbol.Name);
-            return false;
+            return Noop();
         }
 
-        // skip if on buy cooldown
-        var lastLot = lots.FirstOrDefault();
-        var cooldown = lastLot.Time.Add(_options.Buying.Cooldown);
-        if (cooldown >= Context.TickTime)
+        // skip if the symbol is on buy cooldown
+        if (lots.Count > 0 && lots[0].Time.Add(_options.Buying.Cooldown) >= Context.TickTime)
         {
-            LogBuySkippedSymbolOnCooldown(TypeName, Context.Name, item.Symbol.Name, cooldown);
-            return false;
+            return Noop();
         }
 
-        // symbol must be under the rmi low momentum threshold
-        var rmi = item.Klines.LastRmi(x => x.ClosePrice, _options.Rmi.MomentumPeriods, _options.Rmi.RmaPeriods);
-        if (rmi >= _options.Rmi.Low)
+        // calculate the trend for the symbol
+        var trend = item.Klines.SuperTrend().Last();
+
+        // the symbol must be in a down trend so we can prepare for the reversal
+        if (trend.Direction != SuperTrendDirection.Down)
         {
-            LogBuySkippedSymbolWithHighCurrentRmi(TypeName, Context.Name, item.Symbol.Name, rmi);
-            return false;
+            return Noop();
         }
 
-        // calculate the price required for crossing the low rmi threshold upwards
-        if (!item.Klines.TryGetPriceForRmi(x => x.ClosePrice, _options.Rmi.Low, out var price, _options.Rmi.MomentumPeriods, _options.Rmi.RmaPeriods))
+        // define a stop buy at the high trend
+        var stopPrice = item.Symbol.LowerPriceToTickSize(trend.High1);
+
+        // apply the sma rule
+        if (_options.Sma.Enabled)
         {
-            LogBuySkippedSymbolWithUnknownRmiPrice(TypeName, Context.Name, item.Symbol.Name, _options.Rmi.Low);
-            return false;
-        }
-        price = price.AdjustPriceDownToTickSize(item.Symbol);
+            // calculate the long sma for the symbol
+            var sma = item.Klines.Sma(x => x.ClosePrice, _options.Sma.LongPeriods).Last();
 
-        // price must above the price filter
-        // todo: push this check to the command executors
-        var minPrice = item.Ticker.ClosePrice * item.Symbol.Filters.PercentPrice.MultiplierDown;
-        if (price < minPrice)
+            // that stop price must be above the long sma
+            if (stopPrice < sma)
+            {
+                return Noop();
+            }
+        }
+
+        // skip if there is already a buy placed at a lower price
+        if (item.Orders.Open.Any(x => x.Side == OrderSide.Buy && x.StopPrice <= stopPrice))
         {
-            LogEntryBuySkippedSymbolWithPriceBelowMinPercent(TypeName, Context.Name, item.Symbol.Name, price, minPrice, item.Symbol.QuoteAsset);
-            return false;
+            return Noop();
         }
 
-        // identify the appropriate buy quantity for this price
-        var quantity = CalculateBuyQuantity(item, price, _options.Buying.BalanceRate);
+        // define the buy window
+        var buyPrice = item.Symbol.LowerPriceToTickSize(stopPrice * (1 + _options.Buying.BuyWindowRate));
 
-        // skip if there is already an equivalent order at a lower price
-        var current = item.Orders.Open.FirstOrDefault(x => x.Side == OrderSide.Buy && x.StopPrice <= price);
-        if (current is not null)
-        {
-            LogSellSkippedSymbolWithLowerStopPrice(TypeName, Context.Name, item.Symbol.Name, OrderType.StopLossLimit, OrderSide.Buy, current.StopPrice, price, item.Symbol.QuoteAsset);
-            return false;
-        }
+        // define the quantity to buy
+        var quantity = CalculateBuyQuantity(item, buyPrice, _options.Buying.BalanceRate);
 
-        // create the limit order
-        LogEntryBuyPlacingOrder(TypeName, Context.Name, quantity, item.Symbol.BaseAsset, price, item.Symbol.QuoteAsset);
+        // define the notional to lock
+        var notional = quantity * buyPrice;
 
-        // take any current buy orders into account for spot balance release
-        var locked = item.Orders.Open.Where(x => x.Side == OrderSide.Buy).Sum(x => x.OriginalQuantity * x.Price);
+        // define the notional to free
+        var locked = item.Orders.Open.Where(x => x.Side == OrderSide.Sell).Sum(x => x.OriginalQuantity);
+        var required = Math.Max(notional - locked, 0);
 
-        // redeem enough assets for the order to execute
-        command = EnsureSpotBalance(item.Symbol.QuoteAsset, Math.Max((quantity * price) - locked, 0), _options.UseSavings, _options.UseSwapPools);
-
-        // create the order
-        command = command.Then(EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, quantity, null, price, price, EntryBuyTag));
-        return true;
+        // place the order
+        return Sequence(
+            EnsureSpotBalance(item.Symbol.QuoteAsset, required, _options.UseSavings, _options.UseSwapPools),
+            CancelOpenOrders(item.Symbol, OrderSide.Buy, null, BuyTag),
+            CreateOrder(item.Symbol, OrderType.StopLossLimit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, null, buyPrice, stopPrice, BuyTag));
     }
 
-    private bool TrySell(SymbolData item, IList<PositionLot> lots, PositionStats stats, out IAlgoCommand command)
+    private IAlgoCommand Sell(SymbolData item, IList<PositionLot> lots, PositionStats stats)
     {
-        // placeholder
-        command = Noop();
-
         // selling must be enabled
         if (!_options.Selling.Enabled)
         {
             LogRecoverySellDisabled(TypeName, Context.Name, item.Symbol.Name);
-            return false;
+            return Noop();
         }
 
         // symbol must not be on the selling exclusion set
         if (_options.Selling.ExcludeSymbols.Contains(item.Symbol.Name))
         {
             LogRecoverySellSkippedSymbolOnExclusionSet(TypeName, Context.Name, item.Symbol.Name);
-            return false;
+            return Noop();
         }
 
         // there must be something to sell
-        if (lots.Count == 0)
+        if (stats.TotalQuantity == 0)
         {
             LogRecoverySellSkippedSymbolWithoutFullLot(TypeName, Context.Name, item.Symbol.Name);
-            return false;
+            return Noop();
         }
 
-        // symbol must be above the rmi level 2 threshold
-        var rmi = item.Klines.LastRmi(x => x.ClosePrice, _options.Rmi.MomentumPeriods, _options.Rmi.RmaPeriods);
-        if (rmi < _options.Rmi.High2)
+        // calculate the trend for the symbol
+        var trend = item.Klines.SuperTrend().Last();
+
+        /*
+        // the symbol must be in an up trend
+        if (trend.Direction != SuperTrendDirection.Up)
         {
-            LogRecoverySellSkippedSymbolWithRmiUnderHighThreshold(TypeName, Context.Name, item.Symbol.Name, rmi, _options.Rmi.High2);
-            return false;
+            return Noop();
         }
+        */
 
-        // calculate the price required for crossing the high rmi level 1 threshold downwards
-        if (!item.Klines.TryGetPriceForRmi(x => x.ClosePrice, _options.Rmi.High1, out var stopPrice, _options.Rmi.MomentumPeriods, _options.Rmi.RmaPeriods))
+        // use a trailing stop to start with
+        var stopPrice = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * (1 - _options.Selling.StopLossRate));
+
+        // raise to the first trend low band
+        stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(trend.Low1));
+
+        // raise the stop loss to the second high band if it gets there
+        if (item.Ticker.ClosePrice > trend.High2)
         {
-            LogRecoverySellSkippedSymbolWithUnknownRmiPrice(TypeName, Context.Name, item.Symbol.Name, _options.Rmi.High1);
-            return false;
+            stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(trend.High2));
         }
-        stopPrice = stopPrice.AdjustPriceUpToTickSize(item.Symbol);
 
-        // if the rmi is very high then calculate a regular stop loss to take profit early
-        if (rmi >= _options.Rmi.High3)
+        // raise the stop loss to the third high band if it gets there
+        if (item.Ticker.ClosePrice > trend.High3)
         {
-            var tickerSellPrice = item.Ticker.ClosePrice * (1 - _options.Selling.StopLossRate);
-            tickerSellPrice = tickerSellPrice.AdjustPriceUpToTickSize(item.Symbol);
-
-            // keep the highest of the two
-            stopPrice = Math.Max(stopPrice, tickerSellPrice);
+            stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(trend.High3));
         }
 
-        // if the take profit price has been reached then calculate a regular stop loss as well
-        var takeProfitPrice = (lots[0].AvgPrice * _options.Selling.TakeProfitTriggerRate).AdjustPriceUpToTickSize(item.Symbol);
-        if (item.Ticker.ClosePrice >= takeProfitPrice)
-        {
-            // calculate the target stop price
-            var price = (item.Ticker.ClosePrice * (1 - _options.Selling.StopLossRate)).AdjustPriceUpToTickSize(item.Symbol);
+        // calculate the sell price from the stop price
+        var sellPrice = item.Symbol.LowerPriceToTickSize(stopPrice * (1 - _options.Selling.SellWindowRate));
 
-            // keep the highest so far
-            stopPrice = Math.Max(stopPrice, price);
-        }
-
-        // if the sell price equals the tick size then quit
-        // this can happen for symbols trading at a price near zero
-        if (stopPrice >= item.Ticker.ClosePrice)
-        {
-            LogSellSkippedSymbolWithHighStopPrice(TypeName, Context.Name, item.Symbol.Name, stopPrice, item.Ticker.ClosePrice, item.Symbol.QuoteAsset);
-            return false;
-        }
-
-        // calculate the profit price from the sell price
-        var profitPrice = stopPrice * (1 - _options.Selling.MinProfitRate);
-        profitPrice = profitPrice.AdjustPriceUpToTickSize(item.Symbol);
-
-        // gather all the lots that fit under the profit price
+        // gather the all the lots that fit under the sell price
         var quantity = 0M;
-        var notional = 0M;
+        var buyNotional = 0M;
+        var sellNotional = 0M;
         var electedQuantity = 0M;
         foreach (var lot in lots)
         {
             // keep adding everything up so we get a average from the end
             quantity += lot.Quantity;
-            notional += lot.Quantity * lot.AvgPrice;
+            buyNotional += lot.Quantity * lot.AvgPrice;
+            sellNotional += lot.Quantity * sellPrice;
 
             // continue until the quantity is sellable
             if (quantity < item.Symbol.Filters.LotSize.MinQuantity)
@@ -363,15 +339,15 @@ public partial class PortfolioAlgo : Algo
             }
 
             // continue until the notional is sellable
-            if (notional < item.Symbol.Filters.MinNotional.MinNotional)
+            if (sellNotional < item.Symbol.Filters.MinNotional.MinNotional)
             {
                 continue;
             }
 
             // the average cost price must fit under the profit price
-            var avgPrice = notional / quantity;
-            avgPrice = avgPrice.AdjustPriceUpToTickSize(item.Symbol);
-            if (avgPrice > profitPrice)
+            var avgPrice = buyNotional / quantity;
+            avgPrice = item.Symbol.RaisePriceToTickSize(avgPrice);
+            if (avgPrice > sellPrice)
             {
                 continue;
             }
@@ -382,8 +358,7 @@ public partial class PortfolioAlgo : Algo
 
         if (electedQuantity <= 0)
         {
-            LogSellSkippedSymbolWithLotsNotUnderProfitPrice(TypeName, Context.Name, item.Symbol.Name, profitPrice, item.Symbol.QuoteAsset);
-            return false;
+            return Noop();
         }
 
         // skip if we already have a sell order at a higher price
@@ -391,18 +366,18 @@ public partial class PortfolioAlgo : Algo
         if (current is not null)
         {
             LogSellSkippedSymbolWithHigherStopPrice(TypeName, Context.Name, item.Symbol.Name, OrderType.StopLossLimit, OrderSide.Sell, current.StopPrice, stopPrice, item.Symbol.QuoteAsset);
-            return false;
+            return Noop();
         }
 
         // if we found something to sell then place the recovery sell
-        LogRecoverySellElectedSymbol(TypeName, Context.Name, item.Symbol.Name, electedQuantity, item.Symbol.BaseAsset, stopPrice, profitPrice, item.Symbol.QuoteAsset);
+        LogRecoverySellElectedSymbol(TypeName, Context.Name, item.Symbol.Name, stats.TotalQuantity, item.Symbol.BaseAsset, stopPrice, sellPrice, item.Symbol.QuoteAsset);
 
         // take any current sell orders into account for spot balance release
         var locked = item.Orders.Open.Where(x => x.Side == OrderSide.Sell).Sum(x => x.OriginalQuantity);
-        command = Sequence(
-            EnsureSpotBalance(item.Symbol.BaseAsset, Math.Max(electedQuantity - locked, 0), _options.UseSavings, _options.UseSwapPools),
-            EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, electedQuantity, null, profitPrice, stopPrice, RecoverySellTag));
-        return true;
+        var required = Math.Max(quantity - locked, 0);
+        return Sequence(
+            EnsureSpotBalance(item.Symbol.BaseAsset, required, _options.UseSavings, _options.UseSwapPools),
+            EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, stats.TotalQuantity, null, sellPrice, stopPrice, SellTag));
     }
 
     private decimal CalculateBuyQuantity(SymbolData item, decimal price, decimal balanceRate)
@@ -416,13 +391,13 @@ public partial class PortfolioAlgo : Algo
 
         // raise to a valid number
         notional = notional.AdjustTotalUpToMinNotional(item.Symbol);
-        notional = notional.AdjustPriceUpToTickSize(item.Symbol);
+        notional = item.Symbol.RaisePriceToTickSize(notional);
 
         // pad the order with the fee
-        notional *= 2 + _options.FeeRate;
+        notional *= 1 + (2 * _options.FeeRate);
 
         // raise again to a valid number
-        notional = notional.AdjustPriceUpToTickSize(item.Symbol);
+        notional = item.Symbol.RaisePriceToTickSize(notional);
 
         // calculate the quantity for the limit order
         var quantity = notional / price;
@@ -616,8 +591,8 @@ public partial class PortfolioAlgo : Algo
     [LoggerMessage(56, LogLevel.Information, "{Type} {Name} {Symbol} sell skipped symbol because it could not fit any lot under the profit price of {ProfitPrice:F8} {Quote}")]
     private partial void LogSellSkippedSymbolWithLotsNotUnderProfitPrice(string type, string name, string symbol, decimal profitPrice, string quote);
 
-    [LoggerMessage(57, LogLevel.Information, "{Type} {Name} entry buy skipped symbol {Symbol} because entry buying is disabled")]
-    private partial void LogEntryBuyDisabled(string type, string name, string symbol);
+    [LoggerMessage(57, LogLevel.Information, "{Type} {Name} {Symbol} buy step skipped symbol because entry buying is disabled")]
+    private partial void LogBuyDisabled(string type, string name, string symbol);
 
     [LoggerMessage(58, LogLevel.Information, "{Type} {Name} entry buy skipped symbol {Symbol} because it already has {Lots} lots totalling {Quantity:F8} {Asset}")]
     private partial void LogEntryBuySkippedSymbolWithLots(string type, string name, string symbol, int lots, decimal quantity, string asset);
@@ -699,6 +674,27 @@ public partial class PortfolioAlgo : Algo
 
     [LoggerMessage(84, LogLevel.Information, "{Type} {Name} {Symbol} buy step skipped symbol with zero lots on the opening exclusion set")]
     private partial void LogBuySkippedSymbolOnOpeningExclusionSet(string type, string name, string symbol);
+
+    [LoggerMessage(85, LogLevel.Information, "{Type} {Name} {Symbol} buy step skipped symbol with ticker {Ticker:F8} {Quote} below trend SMA({Periods}) {Sma:F8} {Quote}")]
+    private partial void LogBuySkippedSymbolWithTickerBelowTrendSma(string type, string name, string symbol, decimal ticker, int periods, decimal sma, string quote);
+
+    [LoggerMessage(86, LogLevel.Information, "{Type} {Name} {Symbol} stop loss sell skipped symbol {Symbol} because selling is disabled")]
+    private partial void LogStopLossSellDisabled(string type, string name, string symbol);
+
+    [LoggerMessage(87, LogLevel.Information, "{Type} {Name} {Symbol} stop loss sell skipped symbol {Symbol} without any full lot to sell")]
+    private partial void LogStopLossSellSkippedSymbolWithoutFullLot(string type, string name, string symbol);
+
+    [LoggerMessage(88, LogLevel.Information, "{Type} {Name} {Symbol} stop loss sell skipped symbol with PV {PV:F8} {Quote} under min notion {MinNotional:F8} {Quote}")]
+    private partial void LogStopLossSellSkippedSymbolWithPvUnderMinNotional(string type, string name, string symbol, decimal pv, decimal minNotional, string quote);
+
+    [LoggerMessage(89, LogLevel.Information, "{Type} {Name} {Symbol} stop loss skipped symbol with quantity {Quantity:F8} {Asset} less than min quantity of {MinQuantity:F8} {Asset}")]
+    private partial void LogStopLossSellSkippedSymbolWithQuantityUnderMin(string type, string name, string symbol, decimal quantity, decimal minQuantity, string asset);
+
+    [LoggerMessage(90, LogLevel.Information, "{Type} {Name} {Symbol} stop loss sell skipped symbol with ticker {Ticker:F8} {Quote} above avg price {AvgPrice:F8} {Quote}")]
+    private partial void LogStopLossSellSkippedSymbolWithTickerAboveAvgPrice(string type, string name, string symbol, decimal ticker, decimal avgPrice, string quote);
+
+    [LoggerMessage(91, LogLevel.Information, "{Type} {Name} {Symbol} stop loss sell elected symbol for market sell at ticker {Ticker:F8} {Quote}")]
+    private partial void LogStopLossSellElectedSymbolForMarketSell(string type, string name, string symbol, decimal ticker, string quote);
 
     #endregion Logging
 }

@@ -1,8 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
-using Outcompute.Trader.Core.Time;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Providers;
-using System.Diagnostics;
+﻿using Outcompute.Trader.Trading.Providers;
 
 namespace Outcompute.Trader.Trading.Binance.Providers.MarketData;
 
@@ -44,11 +40,14 @@ internal partial class KlineSynchronizer : IKlineSynchronizer
             // define the required window
             var start = end.Subtract(item.Interval, item.Periods).AdjustToNext(item.Interval);
 
+            // todo: fix this
+            /*
             var synced = await _klines.GetLastSyncedKlineOpenTimeAsync(item.Symbol, item.Interval, cancellationToken);
             if (synced > start)
             {
                 start = synced.AdjustToPrevious(item.Interval);
             }
+            */
 
             // start syncing from the first missing kline
             var current = start;

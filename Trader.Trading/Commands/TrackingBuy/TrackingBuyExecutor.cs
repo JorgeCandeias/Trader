@@ -1,10 +1,8 @@
 ﻿using Microsoft.Extensions.Logging;
-using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands.CancelOrder;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 using System.Buffers;
-using System.Collections.Immutable;
 
 namespace Outcompute.Trader.Trading.Commands.TrackingBuy;
 
@@ -30,10 +28,7 @@ internal class TrackingBuyExecutor : IAlgoCommandExecutor<TrackingBuyCommand>
         var free = balance.Free;
 
         // identify the target low price for the first buy
-        var lowBuyPrice = ticker.ClosePrice * command.PullbackRatio;
-
-        // under adjust the buy price to the tick size
-        lowBuyPrice = lowBuyPrice.AdjustPriceDownToTickSize(command.Symbol);
+        var lowBuyPrice = command.Symbol.LowerPriceToTickSize(ticker.ClosePrice * command.PullbackRatio);
 
         _logger.LogInformation(
             "{Type} {Name} identified first buy target price at {LowPrice} {LowQuote} with current price at {CurrentPrice} {CurrentQuote}",

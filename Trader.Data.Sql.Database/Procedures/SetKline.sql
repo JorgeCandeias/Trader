@@ -6,16 +6,16 @@
 	@EventTime DATETIME2(7),
 	@FirstTradeId BIGINT,
 	@LastTradeId BIGINT,
-	@OpenPrice DECIMAL (18,8),
-	@HighPrice DECIMAL (18,8),
-	@LowPrice DECIMAL (18,8),
-	@ClosePrice DECIMAL (18,8),
-	@Volume DECIMAL (18,8),
-	@QuoteAssetVolume DECIMAL (18,8),
+	@OpenPrice DECIMAL (28,8),
+	@HighPrice DECIMAL (28,8),
+	@LowPrice DECIMAL (28,8),
+	@ClosePrice DECIMAL (28,8),
+	@Volume DECIMAL (28,8),
+	@QuoteAssetVolume DECIMAL (28,8),
 	@TradeCount INT,
 	@IsClosed BIT,
-	@TakerBuyBaseAssetVolume DECIMAL (18,8),
-	@TakerBuyQuoteAssetVolume DECIMAL (18,8)
+	@TakerBuyBaseAssetVolume DECIMAL (28,8),
+	@TakerBuyQuoteAssetVolume DECIMAL (28,8)
 AS
 
 SET XACT_ABORT ON;

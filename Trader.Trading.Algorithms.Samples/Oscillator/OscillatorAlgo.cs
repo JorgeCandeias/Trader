@@ -80,7 +80,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
                 LogEntrySkippedSymbolWithUnknownRmiPrice(TypeName, Context.Name, item.Symbol.Name, _options.Rmi.Low);
                 return false;
             }
-            entryPrice = entryPrice.AdjustPriceDownToTickSize(item.Symbol);
+            entryPrice = item.Symbol.LowerPriceToTickSize(entryPrice);
 
             // calculate the notional to use for buying
             var notional = _options.Notional.AdjustTotalUpToMinNotional(item.Symbol);
@@ -131,7 +131,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
                 LogExitSkippedSymbolWithUnknownRmiPrice(TypeName, Context.Name, item.Symbol.Name, _options.Rmi.High);
                 return false;
             }
-            exitPrice = exitPrice.AdjustPriceDownToTickSize(item.Symbol);
+            exitPrice = item.Symbol.LowerPriceToTickSize(exitPrice);
 
             // gather all the lots that fit under the exit price from the end
             var quantity = 0M;
@@ -158,7 +158,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
                 // the average cost price must fit under the sell price to break even
                 var avgPrice = notional / quantity;
                 avgPrice *= 1 + (2 * _options.FeeRate);
-                avgPrice = avgPrice.AdjustPriceUpToTickSize(item.Symbol);
+                avgPrice = item.Symbol.RaisePriceToTickSize(avgPrice);
                 if (avgPrice <= exitPrice)
                 {
                     // keep the candidate quantity and continue looking for more

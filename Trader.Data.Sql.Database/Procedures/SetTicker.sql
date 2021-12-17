@@ -1,12 +1,12 @@
 ﻿CREATE PROCEDURE [dbo].[SetTicker]
 	@Symbol NVARCHAR(100),
 	@EventTime DATETIME2(7),
-	@ClosePrice DECIMAL(18,8),
-	@OpenPrice DECIMAL(18,8),
-	@HighPrice DECIMAL(18,8),
-	@LowPrice DECIMAL(18,8),
-	@AssetVolume DECIMAL(18,8),
-	@QuoteVolume DECIMAL(18,8)
+	@ClosePrice DECIMAL(28,8),
+	@OpenPrice DECIMAL(28,8),
+	@HighPrice DECIMAL(28,8),
+	@LowPrice DECIMAL(28,8),
+	@AssetVolume DECIMAL(28,8),
+	@QuoteVolume DECIMAL(28,8)
 AS
 
 SET XACT_ABORT ON;

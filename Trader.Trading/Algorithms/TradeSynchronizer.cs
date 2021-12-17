@@ -1,8 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
-using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Providers;
 using System.Diagnostics;
-using System.Threading.Tasks.Dataflow;
 
 namespace Outcompute.Trader.Trading.Algorithms;
 
@@ -28,9 +26,6 @@ internal partial class TradeSynchronizer : ITradeSynchronizer
         // start from the last synced trade
         var tradeId = await _provider.GetLastSyncedTradeIdAsync(symbol, cancellationToken);
 
-        // save all trades in the background so we can keep pulling trades
-        var worker = new ActionBlock<IEnumerable<AccountTrade>>(work => _provider.SetTradesAsync(symbol, work, cancellationToken));
-
         // pull all trades
         var count = 0;
         while (!cancellationToken.IsCancellationRequested)
@@ -42,20 +37,17 @@ internal partial class TradeSynchronizer : ITradeSynchronizer
             if (trades.Count is 0) break;
 
             // persist all new trades in this page
-            worker.Post(trades);
+            await _provider.SetTradesAsync(symbol, trades, cancellationToken);
 
-            // keep the last trade
+            // set the last synced trade id so we continue from that next time
+            await _provider.SetLastSyncedTradeIdAsync(symbol, trades.Max!.Id, cancellationToken);
+
+            // setup the next loop
             tradeId = trades.Max!.Id + 1;
 
             // keep track for logging
             count += trades.Count;
         }
-
-        worker.Complete();
-        await worker.Completion;
-
-        // set the last synced trade id so we continue from that next time
-        await _provider.SetLastSyncedTradeIdAsync(symbol, tradeId);
 
         LogPulledTrades(TypeName, symbol, count, tradeId, watch.ElapsedMilliseconds);
     }

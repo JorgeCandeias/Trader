@@ -55,7 +55,7 @@ internal partial class MarketBuyCommandExecutor : IAlgoCommandExecutor<MarketBuy
 
             if (command.RaiseToStepSize)
             {
-                notional = notional.Value.AdjustPriceUpToTickSize(command.Symbol);
+                notional = SymbolMath.RaisePriceToTickSize(command.Symbol, notional.Value);
             }
         }
 

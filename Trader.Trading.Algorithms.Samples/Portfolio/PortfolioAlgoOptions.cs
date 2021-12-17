@@ -24,6 +24,9 @@ public class PortfolioAlgoOptions
 
     [Required]
     public PortfolioRmiAlgoOptions Rmi { get; } = new();
+
+    [Required]
+    public PortfolioSmaAlgoOptions Sma { get; } = new();
 }
 
 /// <summary>
@@ -41,6 +44,30 @@ public class PortfolioBuyingAlgoOptions
     /// </summary>
     [Required, Range(0, 1)]
     public decimal BalanceRate { get; set; } = 0.001M;
+
+    /// <summary>
+    /// On a down-trend the buy order price will be set at this drop from the short SMA.
+    /// </summary>
+    [Required, Range(0, 1)]
+    public decimal SmaDropRate { get; set; } = 0.05M;
+
+    /// <summary>
+    /// The rate above the long SMA at which a trigger buy will be place.
+    /// </summary>
+    [Required, Range(0, 1)]
+    public decimal LongSmaRiseRate { get; set; } = 0.01M;
+
+    /// <summary>
+    /// The distance from buy side stop loss price to use to calculate the buy price.
+    /// </summary>
+    [Required, Range(0, 1)]
+    public decimal BuyWindowRate { get; set; } = 0.001M;
+
+    /// <summary>
+    /// Distance from the target stop loss rate at which funds will be reserved.
+    /// </summary>
+    [Required, Range(0, 1)]
+    public decimal ActivationRate { get; set; } = 0.01M;
 
     /// <summary>
     /// The cooldown period between consecutive buys.
@@ -80,10 +107,16 @@ public class PortfolioSellingAlgoOptions
     public bool Enabled { get; set; } = true;
 
     /// <summary>
-    /// Regular stop loss to ensure profit when the symbol exhibits flash spikes.
+    /// The distance from the sell side stop loss price to use to calculate the sell price.
     /// </summary>
     [Required, Range(0, 1)]
-    public decimal StopLossRate { get; set; } = 0.01M;
+    public decimal SellWindowRate { get; set; } = 0.001M;
+
+    /// <summary>
+    /// The default trailing stop loss rate.
+    /// </summary>
+    [Required, Range(0, 1)]
+    public decimal StopLossRate { get; set; } = 0.10M;
 
     /// <summary>
     /// The minimum profit rate for the assets elected for selling.
@@ -92,15 +125,32 @@ public class PortfolioSellingAlgoOptions
     public decimal MinProfitRate { get; set; } = 0.01M;
 
     /// <summary>
-    /// A trailing stop loss will be placed at this level of profit to guarantee some return regardless of other factors.
-    /// </summary>
-    [Required, Range(0, 1)]
-    public decimal TakeProfitTriggerRate { get; set; } = 0.10M;
-
-    /// <summary>
     /// Symbols which will never be sold.
     /// </summary>
     public ISet<string> ExcludeSymbols { get; } = new HashSet<string>();
+}
+
+/// <summary>
+/// SMA options.
+/// </summary>
+public class PortfolioSmaAlgoOptions
+{
+    /// <summary>
+    /// Whether SMA checks are enabled.
+    /// </summary>
+    public bool Enabled { get; set; }
+
+    /// <summary>
+    /// Periods used for the long-term trend safety SMA.
+    /// </summary>
+    [Required, Range(1, 1000)]
+    public int LongPeriods { get; set; } = 99;
+
+    /// <summary>
+    /// Periods for the short-term reaction SMA.
+    /// </summary>
+    [Required, Range(1, 1000)]
+    public int ShortPeriods { get; set; } = 7;
 }
 
 /// <summary>

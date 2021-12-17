@@ -390,6 +390,8 @@ internal partial class SqlTradingRepository : ITradingRepository
 
         using var connection = new SqlConnection(_options.ConnectionString);
 
+        var symbolx = items.FirstOrDefault()?.Symbol;
+
         await _retryPolicy
             .ExecuteAsync(ct => connection
                 .ExecuteAsync(

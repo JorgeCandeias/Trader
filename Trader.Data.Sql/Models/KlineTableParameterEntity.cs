@@ -37,16 +37,16 @@ internal static class KlineTableParameterEntityExtensions
             new SqlMetaData(nameof(KlineTableParameterEntity.EventTime), SqlDbType.DateTime2),
             new SqlMetaData(nameof(KlineTableParameterEntity.FirstTradeId), SqlDbType.BigInt),
             new SqlMetaData(nameof(KlineTableParameterEntity.LastTradeId), SqlDbType.BigInt),
-            new SqlMetaData(nameof(KlineTableParameterEntity.OpenPrice), SqlDbType.Decimal, 18, 8),
-            new SqlMetaData(nameof(KlineTableParameterEntity.HighPrice), SqlDbType.Decimal, 18, 8),
-            new SqlMetaData(nameof(KlineTableParameterEntity.LowPrice), SqlDbType.Decimal, 18, 8),
-            new SqlMetaData(nameof(KlineTableParameterEntity.ClosePrice), SqlDbType.Decimal, 18, 8),
-            new SqlMetaData(nameof(KlineTableParameterEntity.Volume), SqlDbType.Decimal, 18, 8),
-            new SqlMetaData(nameof(KlineTableParameterEntity.QuoteAssetVolume), SqlDbType.Decimal, 18, 8),
+            new SqlMetaData(nameof(KlineTableParameterEntity.OpenPrice), SqlDbType.Decimal, 28, 8),
+            new SqlMetaData(nameof(KlineTableParameterEntity.HighPrice), SqlDbType.Decimal, 28, 8),
+            new SqlMetaData(nameof(KlineTableParameterEntity.LowPrice), SqlDbType.Decimal, 28, 8),
+            new SqlMetaData(nameof(KlineTableParameterEntity.ClosePrice), SqlDbType.Decimal, 28, 8),
+            new SqlMetaData(nameof(KlineTableParameterEntity.Volume), SqlDbType.Decimal, 28, 8),
+            new SqlMetaData(nameof(KlineTableParameterEntity.QuoteAssetVolume), SqlDbType.Decimal, 28, 8),
             new SqlMetaData(nameof(KlineTableParameterEntity.TradeCount), SqlDbType.Int),
             new SqlMetaData(nameof(KlineTableParameterEntity.IsClosed), SqlDbType.Bit),
-            new SqlMetaData(nameof(KlineTableParameterEntity.TakerBuyBaseAssetVolume), SqlDbType.Decimal, 18, 8),
-            new SqlMetaData(nameof(KlineTableParameterEntity.TakerBuyQuoteAssetVolume), SqlDbType.Decimal, 18, 8)
+            new SqlMetaData(nameof(KlineTableParameterEntity.TakerBuyBaseAssetVolume), SqlDbType.Decimal, 28, 8),
+            new SqlMetaData(nameof(KlineTableParameterEntity.TakerBuyQuoteAssetVolume), SqlDbType.Decimal, 28, 8)
         };
 
     /// <summary>

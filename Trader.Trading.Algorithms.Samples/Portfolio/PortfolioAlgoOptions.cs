@@ -110,7 +110,7 @@ public class PortfolioSellingAlgoOptions
     /// The distance from the sell side stop loss price to use to calculate the sell price.
     /// </summary>
     [Required, Range(0, 1)]
-    public decimal SellWindowRate { get; set; } = 0.001M;
+    public decimal SellWindowRate { get; set; } = 0.01M;
 
     /// <summary>
     /// The default trailing stop loss rate.
@@ -122,7 +122,7 @@ public class PortfolioSellingAlgoOptions
     /// The minimum profit rate for the assets elected for selling.
     /// </summary>
     [Required, Range(0, 1)]
-    public decimal MinProfitRate { get; set; } = 0.01M;
+    public decimal MinProfitRate { get; set; } = 0.10M;
 
     /// <summary>
     /// Symbols which will never be sold.

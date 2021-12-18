@@ -19,7 +19,9 @@ public readonly record struct SuperTrendValue
     public decimal Low1 { get; init; }
     public decimal Low2 { get; init; }
     public decimal Low3 { get; init; }
+    public decimal Midpoint { get; init; }
     public decimal Close { get; init; }
+    public decimal Atr { get; init; }
 }
 
 public static class SuperTrendExtensions
@@ -82,7 +84,9 @@ public static class SuperTrendExtensions
                 Low1 = low1,
                 Low2 = low2,
                 Low3 = low3,
-                Close = item.ClosePrice
+                Midpoint = average,
+                Close = item.ClosePrice,
+                Atr = atr
             };
 
             yield return prev.Value;

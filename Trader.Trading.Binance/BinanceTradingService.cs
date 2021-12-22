@@ -121,16 +121,13 @@ internal partial class BinanceTradingService : ITradingService, IHostedService
                 .CreateOrderAsync(input, cancellationToken)
                 .ConfigureAwait(false);
         }
+        catch (BinanceCodeException ex) when (ex.BinanceCode == -2010)
+        {
+            throw new StopLossWouldTriggerImmediatelyException(symbol, side, type, quantity ?? 0, stopPrice ?? 0, price ?? 0, ex);
+        }
         catch (BinanceCodeException ex)
         {
-            switch (ex.BinanceCode)
-            {
-                case -2010:
-                    throw new StopLossWouldTriggerImmediatelyException(symbol, side, type, quantity ?? 0, stopPrice ?? 0, price ?? 0, ex);
-
-                default:
-                    throw;
-            }
+            throw new TraderException(ex.Message, ex);
         }
 
         return _mapper.Map<OrderResult>(output);

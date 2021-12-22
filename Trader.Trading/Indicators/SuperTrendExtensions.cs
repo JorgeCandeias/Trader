@@ -12,6 +12,8 @@ public enum SuperTrendDirection
 [StructLayout(LayoutKind.Auto)]
 public readonly record struct SuperTrendValue
 {
+    public DateTime OpenTime { get; init; }
+    public DateTime CloseTime { get; init; }
     public SuperTrendDirection Direction { get; init; }
     public decimal High3 { get; init; }
     public decimal High2 { get; init; }
@@ -65,11 +67,11 @@ public static class SuperTrendExtensions
                 low2 = (low2 > prev.Value.Low2 || prev.Value.Close < prev.Value.Low1) ? low2 : prev.Value.Low2;
                 low3 = (low3 > prev.Value.Low3 || prev.Value.Close < prev.Value.Low1) ? low3 : prev.Value.Low3;
 
-                if (item.HighPrice >= prev.Value.High1)
+                if (item.ClosePrice >= prev.Value.High1)
                 {
                     direction = SuperTrendDirection.Up;
                 }
-                else if (item.LowPrice <= prev.Value.Low1)
+                else if (item.ClosePrice <= prev.Value.Low1)
                 {
                     direction = SuperTrendDirection.Down;
                 }
@@ -77,6 +79,8 @@ public static class SuperTrendExtensions
 
             prev = new SuperTrendValue
             {
+                OpenTime = item.OpenTime,
+                CloseTime = item.CloseTime,
                 Direction = direction,
                 High1 = high1,
                 High2 = high2,

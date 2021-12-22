@@ -214,8 +214,8 @@ public partial class PortfolioAlgo : Algo
             return Noop();
         }
 
-        // calculate the trend for the symbol
-        var trend = item.Klines.SuperTrend().Last();
+        // calculate the trend for the symbol up the previous kline
+        var trend = item.Klines.SkipLast(1).SuperTrend().Last();
 
         // the symbol must be on a downtrend to prepare for the reversal
         if (trend.Direction != SuperTrendDirection.Down)
@@ -225,6 +225,13 @@ public partial class PortfolioAlgo : Algo
 
         // the ticker must be under the first high
         if (item.Ticker.ClosePrice > trend.High1)
+        {
+            return Noop();
+        }
+
+        // the ticker must be close enough to the high to justify reserving funds
+        var distance = Math.Abs((item.Ticker.ClosePrice - trend.High1) / trend.High1);
+        if (distance > _options.Buying.ActivationRate)
         {
             return Noop();
         }
@@ -252,7 +259,8 @@ public partial class PortfolioAlgo : Algo
         }
 
         // define the buy window
-        var buyPrice = item.Symbol.LowerPriceToTickSize(stopPrice * (1 + _options.Buying.BuyWindowRate));
+        //var buyPrice = item.Symbol.LowerPriceToTickSize(stopPrice * (1 + _options.Buying.BuyWindowRate));
+        var buyPrice = stopPrice;
 
         // define the quantity to buy
         var quantity = CalculateBuyQuantity(item, buyPrice, _options.Buying.BalanceRate);
@@ -294,8 +302,8 @@ public partial class PortfolioAlgo : Algo
             return Noop();
         }
 
-        // calculate the trend for the symbol up the previous period
-        var trend = item.Klines.SkipLast(1).SuperTrend().Last();
+        // calculate the trend for the symbol
+        var trend = item.Klines.SuperTrend().Last();
 
         // the symbol must have a direction or the trend lines will be too far away
         if (trend.Direction == SuperTrendDirection.None)
@@ -303,35 +311,77 @@ public partial class PortfolioAlgo : Algo
             return Noop();
         }
 
-        // define a default stop loss that allows volatility and tightens on consolidation
-        var stopPrice = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice - (2 * trend.Atr));
+        // define a default stop loss using the trend
+        var stopPrice = item.Symbol.LowerPriceToTickSize(trend.Low1);
 
-        // bump to the high 2 if possible
-        if (item.Ticker.ClosePrice >= trend.High2)
+        // if the ticker doubles then raise to a close stop loss based on the atr
+        /*
+        if (item.Ticker.ClosePrice >= lots[0].AvgPrice * 2)
         {
-            stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(trend.High2));
+            var raise = item.Ticker.ClosePrice - trend.Atr;
+            raise = item.Symbol.LowerPriceToTickSize(raise);
+            stopPrice = Math.Max(stopPrice, raise);
+        }
+        */
+
+        /*
+        // raise the stop loss to the second high band
+        var trigger2 = item.Symbol.LowerPriceToTickSize(trend.High2 * (1 + _options.Selling.StopLossRate));
+        if (item.Ticker.ClosePrice > trigger2)
+        {
+            var high2 = item.Symbol.LowerPriceToTickSize(trend.High2);
+            stopPrice = Math.Max(stopPrice, high2);
+        }
+        */
+
+        // raise the stop loss to the third high band
+        var trigger3 = item.Symbol.LowerPriceToTickSize(trend.High3 * (1 + _options.Selling.StopLossRate));
+        if (item.Ticker.ClosePrice > trigger3)
+        {
+            var raise = item.Symbol.LowerPriceToTickSize(trend.High3);
+            stopPrice = Math.Max(stopPrice, raise);
         }
 
-        // bump to the high 3 if possible
-        if (item.Ticker.ClosePrice >= trend.High3)
+        // raise to the take profit rate
+        var takePrice = item.Symbol.LowerPriceToTickSize(lots[0].AvgPrice * (1 + _options.Selling.TakeProfitRate));
+        if (item.Ticker.ClosePrice >= takePrice)
         {
-            stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(trend.High3));
+            stopPrice = Math.Max(stopPrice, takePrice);
         }
 
         // define the sell window from the stop price
         var sellPrice = item.Symbol.LowerPriceToTickSize(stopPrice * (1 - _options.Selling.SellWindowRate));
 
-        // check if there is already a stop at a higher price
+        // skip if there is already a stop at a higher price
         if (item.Orders.Open.Any(x => x.Side == OrderSide.Sell && x.StopPrice >= stopPrice))
         {
             return Noop();
         }
 
+        // get the sellable quantity at the target price
+        if (!TryGetElectedQuantity(item, lots, sellPrice, out var electedQuantity))
+        {
+            return Noop();
+        }
+
+        // take any current sell orders into account for spot balance release
+        var locked = item.Orders.Open.Where(x => x.Side == OrderSide.Sell).Sum(x => x.OriginalQuantity);
+        var required = Math.Max(electedQuantity - locked, 0);
+        return Sequence(
+            EnsureSpotBalance(item.Symbol.BaseAsset, required, _options.UseSavings, _options.UseSwapPools),
+            EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, electedQuantity, null, sellPrice, stopPrice, SellTag));
+        //EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, electedQuantity, null, sellPrice, null, SellTag));
+    }
+
+    private static bool TryGetElectedQuantity(SymbolData item, IEnumerable<PositionLot> lots, decimal sellPrice, out decimal electedQuantity)
+    {
         // gather the all the lots that fit under the sell price
         var quantity = 0M;
         var buyNotional = 0M;
         var sellNotional = 0M;
-        var electedQuantity = 0M;
+
+        electedQuantity = 0M;
+
         foreach (var lot in lots)
         {
             // keep adding everything up so we get a average from the end
@@ -363,18 +413,7 @@ public partial class PortfolioAlgo : Algo
             electedQuantity = quantity;
         }
 
-        // if we cant do a stop loss then prepare a regular sell at the very high trend line
-        if (electedQuantity <= 0)
-        {
-            return Noop();
-        }
-
-        // take any current sell orders into account for spot balance release
-        var locked = item.Orders.Open.Where(x => x.Side == OrderSide.Sell).Sum(x => x.OriginalQuantity);
-        var required = Math.Max(electedQuantity - locked, 0);
-        return Sequence(
-            EnsureSpotBalance(item.Symbol.BaseAsset, required, _options.UseSavings, _options.UseSwapPools),
-            EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, electedQuantity, null, sellPrice, stopPrice, SellTag));
+        return electedQuantity > 0;
     }
 
     private decimal CalculateBuyQuantity(SymbolData item, decimal price, decimal balanceRate)

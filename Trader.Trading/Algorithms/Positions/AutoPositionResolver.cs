@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Buffers;
 using System.Diagnostics;
 
@@ -10,10 +11,12 @@ namespace Outcompute.Trader.Trading.Algorithms.Positions;
 internal partial class AutoPositionResolver : IAutoPositionResolver
 {
     private readonly ILogger _logger;
+    private readonly AutoPositionResolverOptions _options;
 
-    public AutoPositionResolver(ILogger<AutoPositionResolver> logger)
+    public AutoPositionResolver(ILogger<AutoPositionResolver> logger, IOptions<AutoPositionResolverOptions> options)
     {
         _logger = logger;
+        _options = options.Value;
     }
 
     private static string TypeName => nameof(AutoPositionResolver);
@@ -100,7 +103,11 @@ internal partial class AutoPositionResolver : IAutoPositionResolver
             .ThenBy(x => x.OrderId)
             .ToPositionCollection();
 
-        LogIdentifiedPositions(TypeName, symbol.Name, positions.Count, watch.ElapsedMilliseconds);
+        watch.Stop();
+        if (watch.Elapsed >= _options.ElapsedTimeWarningThreshold)
+        {
+            LogIdentifiedPositions(TypeName, symbol.Name, positions.Count, watch.ElapsedMilliseconds);
+        }
 
         return new AutoPosition
         {
@@ -185,7 +192,7 @@ internal partial class AutoPositionResolver : IAutoPositionResolver
     [LoggerMessage(0, LogLevel.Warning, "{TypeName} {Symbol} could not fill {OrderType} {OrderSide} order {OrderId} as there is {Missing} {Asset} missing")]
     private partial void LogCouldNotFillOrder(string typeName, string symbol, OrderType orderType, OrderSide orderSide, long orderId, decimal missing, string asset);
 
-    [LoggerMessage(1, LogLevel.Information, "{TypeName} {Symbol} identified {Count} positions in {ElapsedMs}ms")]
+    [LoggerMessage(1, LogLevel.Warning, "{TypeName} {Symbol} identified {Count} positions in {ElapsedMs}ms")]
     private partial void LogIdentifiedPositions(string typeName, string symbol, int count, long elapsedMs);
 
     [LoggerMessage(2, LogLevel.Error, "{TypeName} {Symbol} could not match {OrderType} {OrderSide} {OrderId} at {Time} for {ExecutedQuantity} units with total trade quantity of {TradeQuantity}")]

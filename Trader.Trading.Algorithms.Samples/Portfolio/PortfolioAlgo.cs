@@ -124,7 +124,7 @@ public partial class PortfolioAlgo : Algo
                 .Where(x => x.Stats.TotalQuantity > 0)
                 .OrderBy(x => x.Stats.RelativePnL))
             {
-                LogSymbolAtBreakEven(TypeName, Context.Name, item.Symbol.Name, item.Stats.RelativePnL, item.Stats.AbsolutePnL, item.Symbol.QuoteAsset, item.Stats.PresentValue);
+                LogSymbolPv(TypeName, Context.Name, item.Symbol.Name, item.Stats.RelativePnL, item.Stats.AbsolutePnL, item.Symbol.QuoteAsset, item.Stats.PresentValue);
             }
 
             // report on the absolute loser
@@ -179,7 +179,7 @@ public partial class PortfolioAlgo : Algo
                 LogSymbolWithHighestPresentValue(TypeName, Context.Name, highPv.Symbol.Name, highPv.Stats.PresentValue, highPv.Symbol.QuoteAsset);
             }
 
-            // report on the highest sellable pv above break even
+            // report on sellable pv
             var highPvBreakEven = stats
                 .Where(x => !_options.Selling.ExcludeSymbols.Contains(x.Symbol.Name))
                 .Where(x => x.Stats.TotalQuantity > 0)
@@ -259,7 +259,6 @@ public partial class PortfolioAlgo : Algo
         }
 
         // define the buy window
-        //var buyPrice = item.Symbol.LowerPriceToTickSize(stopPrice * (1 + _options.Buying.BuyWindowRate));
         var buyPrice = stopPrice;
 
         // define the quantity to buy
@@ -298,7 +297,6 @@ public partial class PortfolioAlgo : Algo
         // there must be something to sell
         if (stats.TotalQuantity == 0)
         {
-            LogRecoverySellSkippedSymbolWithoutFullLot(TypeName, Context.Name, item.Symbol.Name);
             return Noop();
         }
 
@@ -324,29 +322,30 @@ public partial class PortfolioAlgo : Algo
         }
         */
 
+        // raise the stop loss to the second high band as a trailing stop loss
         /*
-        // raise the stop loss to the second high band
-        var trigger2 = item.Symbol.LowerPriceToTickSize(trend.High2 * (1 + _options.Selling.StopLossRate));
+        var trigger2 = item.Symbol.LowerPriceToTickSize(trend.High2);
         if (item.Ticker.ClosePrice > trigger2)
         {
-            var high2 = item.Symbol.LowerPriceToTickSize(trend.High2);
-            stopPrice = Math.Max(stopPrice, high2);
+            var raise = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * (1 - _options.Selling.StopLossRate));
+            stopPrice = Math.Max(stopPrice, raise);
         }
         */
 
-        // raise the stop loss to the third high band
-        var trigger3 = item.Symbol.LowerPriceToTickSize(trend.High3 * (1 + _options.Selling.StopLossRate));
+        // raise the stop loss to the third high band as a trailing stop loss
+        var trigger3 = item.Symbol.LowerPriceToTickSize(trend.High3);
         if (item.Ticker.ClosePrice > trigger3)
         {
-            var raise = item.Symbol.LowerPriceToTickSize(trend.High3);
+            var raise = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * (1 - _options.Selling.StopLossRate));
             stopPrice = Math.Max(stopPrice, raise);
         }
 
-        // raise to the take profit rate
+        // raise to the take profit rate as a trailing stop loss
         var takePrice = item.Symbol.LowerPriceToTickSize(lots[0].AvgPrice * (1 + _options.Selling.TakeProfitRate));
         if (item.Ticker.ClosePrice >= takePrice)
         {
-            stopPrice = Math.Max(stopPrice, takePrice);
+            var raise = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * (1 - _options.Selling.StopLossRate));
+            stopPrice = Math.Max(stopPrice, raise);
         }
 
         // define the sell window from the stop price
@@ -588,8 +587,8 @@ public partial class PortfolioAlgo : Algo
     [LoggerMessage(45, LogLevel.Information, "{Type} {Name} top up skipped symbol {Symbol} with a recovery buy of {Quantity:F8} {Asset} at {Price:F8} {Quote}")]
     private partial void LogTopUpSkippedSymbolWithRecoveryBuy(string type, string name, string symbol, decimal quantity, string asset, decimal price, string quote);
 
-    [LoggerMessage(46, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} above break even with (PnL: {UnrealizedPnl:P2}, Unrealized: {UnrealizedAbsPnl:F8} {Quote}, PV: {PV:F8} {Quote}")]
-    private partial void LogSymbolAtBreakEven(string type, string name, string symbol, decimal unrealizedPnl, decimal unrealizedAbsPnl, string quote, decimal pv);
+    [LoggerMessage(46, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} with (PnL: {UnrealizedPnl:P2}, Unrealized: {UnrealizedAbsPnl:F8} {Quote}, PV: {PV:F8} {Quote}")]
+    private partial void LogSymbolPv(string type, string name, string symbol, decimal unrealizedPnl, decimal unrealizedAbsPnl, string quote, decimal pv);
 
     [LoggerMessage(47, LogLevel.Information, "{Type} {Name} top up skipped symbol {Symbol} because top up buying is disabled")]
     private partial void LogTopUpDisabled(string type, string name, string symbol);
@@ -611,9 +610,6 @@ public partial class PortfolioAlgo : Algo
 
     [LoggerMessage(51, LogLevel.Information, "{Type} {Name} recovery sell skipped symbol {Symbol} on the exclusion set")]
     private partial void LogRecoverySellSkippedSymbolOnExclusionSet(string type, string name, string symbol);
-
-    [LoggerMessage(52, LogLevel.Information, "{Type} {Name} recovery sell skipped symbol {Symbol} without any full lot to recover")]
-    private partial void LogRecoverySellSkippedSymbolWithoutFullLot(string type, string name, string symbol);
 
     [LoggerMessage(53, LogLevel.Information, "{Type} {Name} recovery sell skipped symbol {Symbol} due to inability to identify price for RSI({Periods}) {RSI:F2}")]
     private partial void LogRecoverySellSkippedSymbolWithUnknownRsiPrice(string type, string name, string symbol, int periods, decimal rsi);

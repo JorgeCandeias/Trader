@@ -29,7 +29,7 @@ public class CancelOpenOrdersExecutorTests
             .Verifiable();
 
         var context = new AlgoContext(symbol.Name, NullServiceProvider.Instance);
-        context.Data[symbol.Name].Orders.Open = ImmutableSortedSet.Create(OrderQueryResult.KeyComparer, order);
+        context.Data.GetOrAdd(symbol.Name).Orders.Open = ImmutableSortedSet.Create(OrderQueryResult.KeyComparer, order);
 
         var executor = new CancelOpenOrdersExecutor(trader, orders);
         var command = new CancelOpenOrdersCommand(symbol, side);

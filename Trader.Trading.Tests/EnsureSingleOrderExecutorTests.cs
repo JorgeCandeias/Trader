@@ -37,7 +37,8 @@ namespace Outcompute.Trader.Trading.Tests
                 .BuildServiceProvider();
 
             var context = new AlgoContext("Algo1", provider);
-            context.Data[symbol.Name].Orders.Open = ImmutableSortedSet.Create(OrderQueryResult.KeyComparer, existing);
+            var data = context.Data.GetOrAdd(symbol.Name);
+            data.Orders.Open = ImmutableSortedSet.Create(OrderQueryResult.KeyComparer, existing);
 
             var type = OrderType.Limit;
             var timeInForce = TimeInForce.GoodTillCanceled;

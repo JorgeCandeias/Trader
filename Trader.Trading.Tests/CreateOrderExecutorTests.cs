@@ -39,7 +39,8 @@ namespace Outcompute.Trader.Trading.Tests
                 .Verifiable();
 
             var context = new AlgoContext("Algo1", NullServiceProvider.Instance);
-            context.Data[symbol.Name].Spot.QuoteAsset = Balance.Empty with
+            var data = context.Data.GetOrAdd(symbol.Name);
+            data.Spot.QuoteAsset = Balance.Empty with
             {
                 Asset = symbol.QuoteAsset,
                 Free = 30000

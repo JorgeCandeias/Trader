@@ -48,7 +48,7 @@ public class AlgoContextAutoPositionsConfiguratorTests
         var context = new AlgoContext(name, provider);
         context.Symbols.AddOrUpdate(symbol);
 
-        var data = context.Data["ABCXYZ"];
+        var data = context.Data.GetOrAdd("ABCXYZ");
         data.Orders.Filled = orders;
         data.Trades = trades;
 

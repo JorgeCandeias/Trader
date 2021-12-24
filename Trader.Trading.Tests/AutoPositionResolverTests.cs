@@ -1,4 +1,5 @@
-﻿using Outcompute.Trader.Trading.Algorithms.Positions;
+﻿using Microsoft.Extensions.Options;
+using Outcompute.Trader.Trading.Algorithms.Positions;
 
 namespace Outcompute.Trader.Trading.Tests
 {
@@ -19,7 +20,8 @@ namespace Outcompute.Trader.Trading.Tests
             var logger = NullLogger<AutoPositionResolver>.Instance;
             var orders = ImmutableSortedSet<OrderQueryResult>.Empty;
             var trades = ImmutableSortedSet<AccountTrade>.Empty;
-            var resolver = new AutoPositionResolver(logger);
+            var options = new AutoPositionResolverOptions();
+            var resolver = new AutoPositionResolver(logger, Options.Create(options));
 
             // act
             var result = resolver.Resolve(symbol, orders, trades, startTime);
@@ -95,7 +97,8 @@ namespace Outcompute.Trader.Trading.Tests
 
             var trades = ImmutableSortedSet.Create(AccountTrade.KeyComparer, trade1, trade2);
 
-            var resolver = new AutoPositionResolver(logger);
+            var options = new AutoPositionResolverOptions();
+            var resolver = new AutoPositionResolver(logger, Options.Create(options));
 
             // act
             var result = resolver.Resolve(symbol, orders, trades, startTime);

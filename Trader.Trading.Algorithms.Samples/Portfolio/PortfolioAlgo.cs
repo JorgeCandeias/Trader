@@ -61,22 +61,6 @@ public partial class PortfolioAlgo : Algo
 
             command = command.Then(Sell(item, lots, stats));
             command = command.Then(Buy(item, lots));
-
-            /*
-            if (TryBuy(item, lots, out var entryBuy))
-            {
-                command = command.Then(entryBuy);
-            }
-            else
-            {
-                // cancel any buy orders that didnt fill when the ticker moves out of range
-                var obsolete = item.Orders.Open.FirstOrDefault(x => x.Side == OrderSide.Buy && x.Price < item.Ticker.ClosePrice && Math.Abs((x.Price - item.Ticker.ClosePrice) / item.Ticker.ClosePrice) >= 0.01M);
-                if (obsolete is not null)
-                {
-                    command = command.Then(CancelOrder(item.Symbol, obsolete.OrderId));
-                }
-            }
-            */
         }
 
         ReportAggregateStats(lookup);
@@ -312,26 +296,6 @@ public partial class PortfolioAlgo : Algo
         // define a default stop loss using the trend
         var stopPrice = item.Symbol.LowerPriceToTickSize(trend.Low1);
 
-        // if the ticker doubles then raise to a close stop loss based on the atr
-        /*
-        if (item.Ticker.ClosePrice >= lots[0].AvgPrice * 2)
-        {
-            var raise = item.Ticker.ClosePrice - trend.Atr;
-            raise = item.Symbol.LowerPriceToTickSize(raise);
-            stopPrice = Math.Max(stopPrice, raise);
-        }
-        */
-
-        // raise the stop loss to the second high band as a trailing stop loss
-        /*
-        var trigger2 = item.Symbol.LowerPriceToTickSize(trend.High2);
-        if (item.Ticker.ClosePrice > trigger2)
-        {
-            var raise = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * (1 - _options.Selling.StopLossRate));
-            stopPrice = Math.Max(stopPrice, raise);
-        }
-        */
-
         // raise the stop loss to the third high band as a trailing stop loss
         var trigger3 = item.Symbol.LowerPriceToTickSize(trend.High3);
         if (item.Ticker.ClosePrice > trigger3)
@@ -369,7 +333,6 @@ public partial class PortfolioAlgo : Algo
         return Sequence(
             EnsureSpotBalance(item.Symbol.BaseAsset, required, _options.UseSavings, _options.UseSwapPools),
             EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, electedQuantity, null, sellPrice, stopPrice, SellTag));
-        //EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, electedQuantity, null, sellPrice, null, SellTag));
     }
 
     private static bool TryGetElectedQuantity(SymbolData item, IEnumerable<PositionLot> lots, decimal sellPrice, out decimal electedQuantity)

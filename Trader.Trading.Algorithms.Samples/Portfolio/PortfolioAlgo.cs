@@ -205,20 +205,20 @@ public partial class PortfolioAlgo : Algo
         }
 
         // the ticker must be under the first high
-        if (item.Ticker.ClosePrice > trend.High1)
+        if (item.Ticker.ClosePrice > trend.High)
         {
             return Noop();
         }
 
         // the ticker must be close enough to the high to justify reserving funds
-        var distance = Math.Abs((item.Ticker.ClosePrice - trend.High1) / trend.High1);
+        var distance = Math.Abs((item.Ticker.ClosePrice - trend.High) / trend.High);
         if (distance > _options.Buying.ActivationRate)
         {
             return Noop();
         }
 
         // define a stop buy at the high trend
-        var stopPrice = item.Symbol.LowerPriceToTickSize(trend.High1);
+        var stopPrice = item.Symbol.LowerPriceToTickSize(trend.High);
 
         // apply the sma rule
         if (_options.Sma.Enabled)
@@ -292,7 +292,7 @@ public partial class PortfolioAlgo : Algo
         }
 
         // define a default stop loss using the trend
-        var stopPrice = item.Symbol.LowerPriceToTickSize(trend.Low1);
+        var stopPrice = item.Symbol.LowerPriceToTickSize(trend.Low);
 
         // raise to the entry amplitude if found
         if (trend.Direction == SuperTrendDirection.Up)
@@ -305,8 +305,8 @@ public partial class PortfolioAlgo : Algo
 
                 if (before.Direction != SuperTrendDirection.Up)
                 {
-                    var amplitude = Math.Abs(before.High1 - after.Low1) * 2.5M;
-                    var target = item.Symbol.RaisePriceToTickSize(trend.Low1 + amplitude);
+                    var amplitude = Math.Abs(before.High - after.Low) * 2.5M;
+                    var target = item.Symbol.RaisePriceToTickSize(trend.Low + amplitude);
 
                     if (item.Ticker.ClosePrice >= target)
                     {

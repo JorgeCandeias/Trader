@@ -1,6 +1,4 @@
-﻿using System.Runtime.InteropServices;
-
-namespace System.Collections.Generic;
+﻿namespace System.Collections.Generic;
 
 public enum SuperTrendDirection
 {
@@ -9,18 +7,13 @@ public enum SuperTrendDirection
     Up = 1
 }
 
-[StructLayout(LayoutKind.Auto)]
 public record SuperTrendValue
 {
     public DateTime OpenTime { get; init; }
     public DateTime CloseTime { get; init; }
     public SuperTrendDirection Direction { get; init; }
-    public decimal High3 { get; init; }
-    public decimal High2 { get; init; }
-    public decimal High1 { get; init; }
-    public decimal Low1 { get; init; }
-    public decimal Low2 { get; init; }
-    public decimal Low3 { get; init; }
+    public decimal High { get; init; }
+    public decimal Low { get; init; }
     public decimal Midpoint { get; init; }
     public decimal Close { get; init; }
     public decimal Atr { get; init; }
@@ -28,7 +21,7 @@ public record SuperTrendValue
 
 public static class SuperTrendExtensions
 {
-    public static IEnumerable<SuperTrendValue> SuperTrend(this IEnumerable<Kline> source, int periods = 10, decimal multiplier1 = 3, decimal multiplier2 = 4, decimal multiplier3 = 5)
+    public static IEnumerable<SuperTrendValue> SuperTrend(this IEnumerable<Kline> source, int periods = 10, decimal multiplier = 3)
     {
         Guard.IsNotNull(source, nameof(source));
 
@@ -45,33 +38,21 @@ public static class SuperTrendExtensions
 
             var average = (item.HighPrice + item.LowPrice) / 2M;
 
-            var spread1 = multiplier1 * atr;
-            var spread2 = multiplier2 * atr;
-            var spread3 = multiplier3 * atr;
-
-            var high1 = average + spread1;
-            var high2 = average + spread2;
-            var high3 = average + spread3;
-
-            var low1 = average - spread1;
-            var low2 = average - spread2;
-            var low3 = average - spread3;
+            var spread = multiplier * atr;
+            var high = average + spread;
+            var low = average - spread;
 
             if (prev is not null)
             {
-                high1 = (high1 < prev.High1 || prev.Close > prev.High1) ? high1 : prev.High1;
-                high2 = (high2 < prev.High2 || prev.Close > prev.High1) ? high2 : prev.High2;
-                high3 = (high3 < prev.High3 || prev.Close > prev.High1) ? high3 : prev.High3;
+                high = (high < prev.High || prev.Close > prev.High) ? high : prev.High;
 
-                low1 = (low1 > prev.Low1 || prev.Close < prev.Low1) ? low1 : prev.Low1;
-                low2 = (low2 > prev.Low2 || prev.Close < prev.Low1) ? low2 : prev.Low2;
-                low3 = (low3 > prev.Low3 || prev.Close < prev.Low1) ? low3 : prev.Low3;
+                low = (low > prev.Low || prev.Close < prev.Low) ? low : prev.Low;
 
-                if (item.ClosePrice >= prev.High1)
+                if (item.ClosePrice >= prev.High)
                 {
                     direction = SuperTrendDirection.Up;
                 }
-                else if (item.ClosePrice <= prev.Low1)
+                else if (item.ClosePrice <= prev.Low)
                 {
                     direction = SuperTrendDirection.Down;
                 }
@@ -82,12 +63,8 @@ public static class SuperTrendExtensions
                 OpenTime = item.OpenTime,
                 CloseTime = item.CloseTime,
                 Direction = direction,
-                High1 = high1,
-                High2 = high2,
-                High3 = high3,
-                Low1 = low1,
-                Low2 = low2,
-                Low3 = low3,
+                High = high,
+                Low = low,
                 Midpoint = average,
                 Close = item.ClosePrice,
                 Atr = atr

@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Outcompute.Trader.Core.Time;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Algorithms.Positions;
@@ -12,13 +11,11 @@ public partial class PortfolioAlgo : Algo
 {
     private readonly IOptionsMonitor<PortfolioAlgoOptions> _monitor;
     private readonly ILogger _logger;
-    private readonly ISystemClock _clock;
 
-    public PortfolioAlgo(IOptionsMonitor<PortfolioAlgoOptions> monitor, ILogger<PortfolioAlgo> logger, ISystemClock clock)
+    public PortfolioAlgo(IOptionsMonitor<PortfolioAlgoOptions> monitor, ILogger<PortfolioAlgo> logger)
     {
         _monitor = monitor;
         _logger = logger;
-        _clock = clock;
     }
 
     private const string TypeName = nameof(PortfolioAlgo);
@@ -285,7 +282,8 @@ public partial class PortfolioAlgo : Algo
         }
 
         // calculate the trend for the symbol
-        var trend = item.Klines.SuperTrend().Last();
+        var trends = item.Klines.SuperTrend().ToList();
+        var trend = trends[^1];
 
         // the symbol must have a direction or the trend lines will be too far away
         if (trend.Direction == SuperTrendDirection.None)
@@ -296,20 +294,31 @@ public partial class PortfolioAlgo : Algo
         // define a default stop loss using the trend
         var stopPrice = item.Symbol.LowerPriceToTickSize(trend.Low1);
 
-        // raise the stop loss to the third high band as a trailing stop loss
-        var trigger3 = item.Symbol.LowerPriceToTickSize(trend.High3);
-        if (item.Ticker.ClosePrice > trigger3)
+        // raise to the entry amplitude if found
+        if (trend.Direction == SuperTrendDirection.Up)
         {
-            var raise = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * (1 - _options.Selling.StopLossRate));
-            stopPrice = Math.Max(stopPrice, raise);
-        }
+            var after = trend;
 
-        // raise to the take profit rate as a trailing stop loss
-        var takePrice = item.Symbol.LowerPriceToTickSize(lots[0].AvgPrice * (1 + _options.Selling.TakeProfitRate));
-        if (item.Ticker.ClosePrice >= takePrice)
-        {
-            var raise = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * (1 - _options.Selling.StopLossRate));
-            stopPrice = Math.Max(stopPrice, raise);
+            for (var i = trends.Count - 2; i >= 0; i--)
+            {
+                var before = trends[i];
+
+                if (before.Direction != SuperTrendDirection.Up)
+                {
+                    var amplitude = Math.Abs(before.High1 - after.Low1) * 2.5M;
+                    var target = item.Symbol.RaisePriceToTickSize(trend.Low1 + amplitude);
+
+                    if (item.Ticker.ClosePrice >= target)
+                    {
+                        var raise = item.Symbol.RaisePriceToTickSize(item.Ticker.ClosePrice * (1 - _options.Selling.StopLossRate));
+                        stopPrice = Math.Max(stopPrice, raise);
+                    }
+
+                    break;
+                }
+
+                after = before;
+            }
         }
 
         // define the sell window from the stop price
@@ -344,6 +353,9 @@ public partial class PortfolioAlgo : Algo
 
         electedQuantity = 0M;
 
+        // calculate the price under which there will be some minimum profit
+        var profitPrice = sellPrice;
+
         foreach (var lot in lots)
         {
             // keep adding everything up so we get a average from the end
@@ -363,10 +375,10 @@ public partial class PortfolioAlgo : Algo
                 continue;
             }
 
-            // the average cost price must fit under the sell price
+            // the average cost price must fit under the profit price
             var avgPrice = buyNotional / quantity;
             avgPrice = item.Symbol.RaisePriceToTickSize(avgPrice);
-            if (avgPrice > sellPrice)
+            if (avgPrice > profitPrice)
             {
                 continue;
             }

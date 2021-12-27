@@ -10,7 +10,7 @@ public enum SuperTrendDirection
 }
 
 [StructLayout(LayoutKind.Auto)]
-public readonly record struct SuperTrendValue
+public record SuperTrendValue
 {
     public DateTime OpenTime { get; init; }
     public DateTime CloseTime { get; init; }
@@ -57,21 +57,21 @@ public static class SuperTrendExtensions
             var low2 = average - spread2;
             var low3 = average - spread3;
 
-            if (prev.HasValue)
+            if (prev is not null)
             {
-                high1 = (high1 < prev.Value.High1 || prev.Value.Close > prev.Value.High1) ? high1 : prev.Value.High1;
-                high2 = (high2 < prev.Value.High2 || prev.Value.Close > prev.Value.High1) ? high2 : prev.Value.High2;
-                high3 = (high3 < prev.Value.High3 || prev.Value.Close > prev.Value.High1) ? high3 : prev.Value.High3;
+                high1 = (high1 < prev.High1 || prev.Close > prev.High1) ? high1 : prev.High1;
+                high2 = (high2 < prev.High2 || prev.Close > prev.High1) ? high2 : prev.High2;
+                high3 = (high3 < prev.High3 || prev.Close > prev.High1) ? high3 : prev.High3;
 
-                low1 = (low1 > prev.Value.Low1 || prev.Value.Close < prev.Value.Low1) ? low1 : prev.Value.Low1;
-                low2 = (low2 > prev.Value.Low2 || prev.Value.Close < prev.Value.Low1) ? low2 : prev.Value.Low2;
-                low3 = (low3 > prev.Value.Low3 || prev.Value.Close < prev.Value.Low1) ? low3 : prev.Value.Low3;
+                low1 = (low1 > prev.Low1 || prev.Close < prev.Low1) ? low1 : prev.Low1;
+                low2 = (low2 > prev.Low2 || prev.Close < prev.Low1) ? low2 : prev.Low2;
+                low3 = (low3 > prev.Low3 || prev.Close < prev.Low1) ? low3 : prev.Low3;
 
-                if (item.ClosePrice >= prev.Value.High1)
+                if (item.ClosePrice >= prev.High1)
                 {
                     direction = SuperTrendDirection.Up;
                 }
-                else if (item.ClosePrice <= prev.Value.Low1)
+                else if (item.ClosePrice <= prev.Low1)
                 {
                     direction = SuperTrendDirection.Down;
                 }
@@ -93,7 +93,7 @@ public static class SuperTrendExtensions
                 Atr = atr
             };
 
-            yield return prev.Value;
+            yield return prev;
         }
     }
 }

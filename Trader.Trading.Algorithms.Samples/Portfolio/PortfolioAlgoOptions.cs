@@ -122,7 +122,7 @@ public class PortfolioSellingAlgoOptions
     /// The minimum profit rate for the assets elected for selling.
     /// </summary>
     [Required, Range(0, 1)]
-    public decimal MinProfitRate { get; set; } = 0.10M;
+    public decimal MinProfitRate { get; set; } = 0.01M;
 
     /// <summary>
     /// Rate at which to take profit.

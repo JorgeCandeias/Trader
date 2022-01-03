@@ -1,39 +1,54 @@
-﻿using AutoMapper;
-using Microsoft.Extensions.Options;
-using Outcompute.Trader.Models;
+﻿using Microsoft.Extensions.Options;
+using Orleans.Runtime;
 using System.Buffers;
 using System.Net.WebSockets;
-using static System.String;
 
 namespace Outcompute.Trader.Trading.Binance.Providers.MarketData;
 
-internal sealed class BinanceMarketDataStreamWssClient : IMarketDataStreamClient
+internal sealed partial class BinanceMarketDataStreamWssClient : IMarketDataStreamClient
 {
+    private readonly ILogger _logger;
     private readonly IReadOnlyCollection<string> _streams;
     private readonly BinanceOptions _options;
     private readonly IMapper _mapper;
 
-    public BinanceMarketDataStreamWssClient(IReadOnlyCollection<string> streams, IOptions<BinanceOptions> options, IMapper mapper)
+    public BinanceMarketDataStreamWssClient(ILogger<BinanceMarketDataStreamWssClient> logger, IReadOnlyCollection<string> streams, IOptions<BinanceOptions> options, IMapper mapper)
     {
-        _streams = streams ?? throw new ArgumentNullException(nameof(streams));
-        _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
-        _mapper = mapper ?? throw new ArgumentNullException(nameof(mapper));
-
-        if (streams.Count is 0) throw new ArgumentOutOfRangeException(nameof(streams));
+        _logger = logger;
+        _streams = streams;
+        _options = options.Value;
+        _mapper = mapper;
 
         _client.Options.KeepAliveInterval = _options.MarketDataStreamKeepAliveInterval;
     }
+
+    private const string TypeName = nameof(BinanceMarketDataStreamWssClient);
 
     private readonly ClientWebSocket _client = new();
 
     public Task ConnectAsync(CancellationToken cancellationToken = default)
     {
-        return _client.ConnectAsync(new Uri(_options.BaseWssAddress, $"/stream?streams={Join('/', _streams)}"), cancellationToken);
+        return _client.ConnectAsync(new Uri(_options.BaseWssAddress, $"/stream{(_streams.Count > 0 ? $"?streams={Join('/', _streams)}" : "")}"), cancellationToken);
     }
 
     public Task CloseAsync(CancellationToken cancellationToken = default)
     {
         return _client.CloseAsync(WebSocketCloseStatus.NormalClosure, null, cancellationToken);
+    }
+
+    public async Task SubscribeAsync(long id, IEnumerable<string> streams, CancellationToken cancellationToken = default)
+    {
+        Guard.IsNotNull(streams, nameof(streams));
+
+        foreach (var batch in streams.BatchIEnumerable(10))
+        {
+            LogSubscribingToStreams(TypeName, batch);
+
+            var model = new MarketDataStreamRequest("SUBSCRIBE", batch.ToArray(), id);
+            var json = _mapper.Map<byte[]>(model);
+
+            await _client.SendAsync(json, WebSocketMessageType.Text, true, cancellationToken);
+        }
     }
 
     public async Task<MarketDataStreamMessage> ReceiveAsync(CancellationToken cancellationToken = default)
@@ -52,10 +67,16 @@ internal sealed class BinanceMarketDataStreamWssClient : IMarketDataStreamClient
                 total += result.Count;
 
                 // break if we got the entire message
-                if (result.EndOfMessage) break;
+                if (result.EndOfMessage)
+                {
+                    break;
+                }
 
                 // throw if we ran out of buffer
-                if (total >= buffer.Memory.Length) throw new InvalidOperationException($"Could not load web socket message into a buffer of length '{buffer.Memory.Length}'.");
+                if (total >= buffer.Memory.Length)
+                {
+                    throw new InvalidOperationException($"Could not load web socket message into a buffer of length '{buffer.Memory.Length}'.");
+                }
             }
             else if (result.MessageType == WebSocketMessageType.Binary)
             {
@@ -68,11 +89,11 @@ internal sealed class BinanceMarketDataStreamWssClient : IMarketDataStreamClient
             }
             else
             {
-                throw new InvalidOperationException($"Unknown {nameof(WebSocketMessageType)} '{result.MessageType}'");
+                LogUnknownMessageType(nameof(BinanceMarketDataStreamWssClient), result.MessageType);
             }
         }
 
-        return _mapper.Map<MarketDataStreamMessage>(buffer.Memory.Slice(0, total));
+        return _mapper.Map<MarketDataStreamMessage>(buffer.Memory[..total]);
     }
 
     #region Disposable
@@ -103,4 +124,14 @@ internal sealed class BinanceMarketDataStreamWssClient : IMarketDataStreamClient
     }
 
     #endregion Disposable
+
+    #region Logging
+
+    [LoggerMessage(1, LogLevel.Error, "{Type} received unknown message '{MessageType}'")]
+    private partial void LogUnknownMessageType(string type, WebSocketMessageType messageType);
+
+    [LoggerMessage(2, LogLevel.Information, "{Type} subscribing to streams {Streams}")]
+    private partial void LogSubscribingToStreams(string type, IEnumerable<string> streams);
+
+    #endregion Logging
 }

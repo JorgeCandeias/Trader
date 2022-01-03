@@ -1,11 +1,8 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Orleans;
 using Outcompute.Trader.Core.Time;
-using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms;
-using System.Collections.Immutable;
 using System.Diagnostics;
 
 namespace Outcompute.Trader.Trading.Providers.Savings;
@@ -40,6 +37,8 @@ internal class SavingsGrain : Grain, ISavingsGrain
     private readonly Dictionary<string, SavingsBalance> _balances = new();
 
     private readonly Dictionary<string, SavingsQuota> _quotas = new();
+
+    private readonly Dictionary<string, DateTime> _cooldowns = new();
 
     private readonly CancellationTokenSource _cancellation = new();
 
@@ -147,6 +146,16 @@ internal class SavingsGrain : Grain, ISavingsGrain
 
     public async ValueTask<RedeemSavingsEvent> RedeemAsync(string asset, decimal amount)
     {
+        // stop if the asset is on cooldown
+        if (_cooldowns.TryGetValue(asset, out var cooldown) && cooldown >= _clock.UtcNow)
+        {
+            _logger.LogWarning(
+                "{Type} cannot redeem savings for asset {Asset} because the asset is on cooldown until {Cooldown}",
+                TypeName, asset, cooldown);
+
+            return new RedeemSavingsEvent(false, 0);
+        }
+
         // get the current savings for the asset
         if (!_balances.TryGetValue(asset, out var position))
         {
@@ -223,6 +232,8 @@ internal class SavingsGrain : Grain, ISavingsGrain
         _logger.LogInformation(
             "{Type} redeemed {Quantity} {Asset} from savings",
             TypeName, amount, asset);
+
+        _cooldowns[asset] = _clock.UtcNow.Add(_options.AssetCooldown);
 
         return new RedeemSavingsEvent(true, amount);
     }

@@ -20,6 +20,7 @@ public partial class PortfolioAlgo : Algo
 
     private const string TypeName = nameof(PortfolioAlgo);
     private const string SellTag = "Sell";
+    private const string TrailingTag = "Trailing";
     private const string BuyTag = "Buy";
 
     private PortfolioAlgoOptions _options = null!;
@@ -177,37 +178,33 @@ public partial class PortfolioAlgo : Algo
 
     private IAlgoCommand Buy(SymbolData item, IList<PositionLot> lots)
     {
+        IAlgoCommand Clear() => CancelOpenOrders(item.Symbol, OrderSide.Buy, _options.Buying.ActivationRate, BuyTag);
+
         // buying must be enabled
         if (!_options.Buying.Enabled)
         {
-            return Noop();
+            return Clear();
         }
 
         // if the symbol is on the opening exclusion list then it must have positions
         if (lots.Count == 0 && _options.Buying.Opening.ExcludeSymbols.Contains(item.Symbol.Name))
         {
-            return Noop();
+            return Clear();
         }
 
         // skip if the symbol is on buy cooldown
         if (lots.Count > 0 && lots[0].Time.Add(_options.Buying.Cooldown) >= Context.TickTime)
         {
-            return Noop();
+            return Clear();
         }
 
-        // calculate the trend for the symbol up the previous kline
-        var trend = item.Klines.SkipLast(1).SuperTrend().Last();
+        // calculate the current trend for the symbol
+        var trend = item.Klines.SuperTrend().Last();
 
         // the symbol must be on a downtrend to prepare for the reversal
         if (trend.Direction != SuperTrendDirection.Down)
         {
-            return Noop();
-        }
-
-        // the ticker must be under the first high
-        if (item.Ticker.ClosePrice > trend.High)
-        {
-            return Noop();
+            return Clear();
         }
 
         // the ticker must be close enough to the high to justify reserving funds
@@ -217,8 +214,15 @@ public partial class PortfolioAlgo : Algo
             return Noop();
         }
 
+        // the ticker must be under the first high
+        var high = item.Symbol.LowerPriceToTickSize(trend.High);
+        if (item.Ticker.ClosePrice >= high)
+        {
+            return Noop();
+        }
+
         // define a stop buy at the high trend
-        var stopPrice = item.Symbol.LowerPriceToTickSize(trend.High);
+        var stopPrice = high;
 
         // apply the sma rule
         if (_options.Sma.Enabled)
@@ -261,24 +265,29 @@ public partial class PortfolioAlgo : Algo
 
     private IAlgoCommand Sell(SymbolData item, IList<PositionLot> lots, PositionStats stats)
     {
+        IAlgoCommand Clear() => Sequence(
+            CancelOpenOrders(item.Symbol, OrderSide.Sell, _options.Selling.SellWindowRate, SellTag),
+            CancelOpenOrders(item.Symbol, OrderSide.Sell, _options.Selling.SellWindowRate, TrailingTag));
+
+        // default tag for the order
+        var tag = SellTag;
+
         // selling must be enabled
         if (!_options.Selling.Enabled)
         {
-            LogRecoverySellDisabled(TypeName, Context.Name, item.Symbol.Name);
-            return Noop();
+            return Clear();
         }
 
         // symbol must not be on the selling exclusion set
         if (_options.Selling.ExcludeSymbols.Contains(item.Symbol.Name))
         {
-            LogRecoverySellSkippedSymbolOnExclusionSet(TypeName, Context.Name, item.Symbol.Name);
-            return Noop();
+            return Clear();
         }
 
         // there must be something to sell
         if (stats.TotalQuantity == 0)
         {
-            return Noop();
+            return Clear();
         }
 
         // calculate the trend for the symbol
@@ -288,7 +297,7 @@ public partial class PortfolioAlgo : Algo
         // the symbol must have a direction or the trend lines will be too far away
         if (trend.Direction == SuperTrendDirection.None)
         {
-            return Noop();
+            return Clear();
         }
 
         // define a default stop loss using the trend
@@ -305,13 +314,13 @@ public partial class PortfolioAlgo : Algo
 
                 if (before.Direction != SuperTrendDirection.Up)
                 {
-                    var amplitude = Math.Abs(before.High - after.Low) * 2.5M;
+                    var amplitude = Math.Abs(before.High - after.Low) * 2M;
                     var target = item.Symbol.RaisePriceToTickSize(trend.Low + amplitude);
 
                     if (item.Ticker.ClosePrice >= target)
                     {
-                        var raise = item.Symbol.RaisePriceToTickSize(item.Ticker.ClosePrice * (1 - _options.Selling.StopLossRate));
-                        stopPrice = Math.Max(stopPrice, raise);
+                        stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * (1 - _options.Selling.StopLossRate)));
+                        tag = TrailingTag;
                     }
 
                     break;
@@ -321,16 +330,22 @@ public partial class PortfolioAlgo : Algo
             }
         }
 
+        // if the stop loss is already a trailing stop then keep it that way
+        if (item.Orders.Open.Any(x => x.Side == OrderSide.Sell && x.ClientOrderId == TrailingTag))
+        {
+            stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice - trend.Atr));
+            tag = TrailingTag;
+        }
+
         // define the sell window from the stop price
         var sellPrice = item.Symbol.LowerPriceToTickSize(stopPrice * (1 - _options.Selling.SellWindowRate));
 
         // skip if there is already a stop at a higher price
-        if (item.Orders.Open.Any(x => x.Side == OrderSide.Sell && x.StopPrice >= stopPrice))
+        if (item.Orders.Open.Any(x => x.Side == OrderSide.Sell && x.StopPrice >= stopPrice && item.Ticker.ClosePrice >= stopPrice))
         {
             return Noop();
         }
 
-        // get the sellable quantity at the target price
         if (!TryGetElectedQuantity(item, lots, sellPrice, out var electedQuantity))
         {
             return Noop();
@@ -339,12 +354,19 @@ public partial class PortfolioAlgo : Algo
         // take any current sell orders into account for spot balance release
         var locked = item.Orders.Open.Where(x => x.Side == OrderSide.Sell).Sum(x => x.OriginalQuantity);
         var required = Math.Max(electedQuantity - locked, 0);
-        return Sequence(
-            EnsureSpotBalance(item.Symbol.BaseAsset, required, _options.UseSavings, _options.UseSwapPools),
-            EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, electedQuantity, null, sellPrice, stopPrice, SellTag));
+
+        // create the command sequence for the exchange
+        var commands = EnsureSpotBalance(item.Symbol.BaseAsset, required, _options.UseSavings, _options.UseSwapPools);
+        if (tag == TrailingTag)
+        {
+            commands = commands.Then(CancelOpenOrders(item.Symbol, OrderSide.Sell, null, SellTag));
+        }
+        commands = commands.Then(EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, electedQuantity, null, sellPrice, stopPrice, tag));
+
+        return commands;
     }
 
-    private static bool TryGetElectedQuantity(SymbolData item, IEnumerable<PositionLot> lots, decimal sellPrice, out decimal electedQuantity)
+    private bool TryGetElectedQuantity(SymbolData item, IEnumerable<PositionLot> lots, decimal sellPrice, out decimal electedQuantity)
     {
         // gather the all the lots that fit under the sell price
         var quantity = 0M;
@@ -354,7 +376,7 @@ public partial class PortfolioAlgo : Algo
         electedQuantity = 0M;
 
         // calculate the price under which there will be some minimum profit
-        var profitPrice = sellPrice;
+        var profitPrice = item.Symbol.LowerPriceToTickSize(sellPrice * (1 - _options.Selling.MinProfitRate));
 
         foreach (var lot in lots)
         {

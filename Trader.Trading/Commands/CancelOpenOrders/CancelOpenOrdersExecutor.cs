@@ -51,6 +51,10 @@ internal class CancelOpenOrdersExecutor : IAlgoCommandExecutor<CancelOpenOrdersC
             await _orders
                 .SetOrderAsync(cancelled, cancellationToken)
                 .ConfigureAwait(false);
+
+            // update the context spot amounts to allow other commands to execute immediately
+            
+
         }
     }
 }

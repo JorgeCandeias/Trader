@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Timers;
 using Outcompute.Trader.Trading.Algorithms;
@@ -102,11 +100,18 @@ internal partial class BinanceMarketDataGrain : Grain, IBinanceMarketDataGrain
         // start streaming in the background while we sync from the api
         var streamTask = Task.Run(() => _streamer.StreamAsync(_dependencies.Symbols, _dependencies.Klines.Keys, linkedCancellation.Token), linkedCancellation.Token);
 
-        // sync tickers from the api
-        await _tickerSynchronizer.SyncAsync(_dependencies.Symbols, linkedCancellation.Token);
+        // sync from the api
+        var syncTask = Task.Run(async () =>
+        {
+            // sync tickers from the api
+            await _tickerSynchronizer.SyncAsync(_dependencies.Symbols, linkedCancellation.Token).ConfigureAwait(false);
 
-        // sync klines from the api
-        await _klineSynchronizer.SyncAsync(_dependencies.Klines.Select(x => (x.Key.Symbol, x.Key.Interval, x.Value)), linkedCancellation.Token);
+            // sync klines from the api
+            await _klineSynchronizer.SyncAsync(_dependencies.Klines.Select(x => (x.Key.Symbol, x.Key.Interval, x.Value)), linkedCancellation.Token).ConfigureAwait(false);
+        });
+
+        // wait for the first to complete successfully - this will be sync task unless there is an error
+        await Task.WhenAny(streamTask, syncTask).Unwrap().ConfigureAwait(false);
 
         // signal the ready state to allow algos to execute
         _ready = true;

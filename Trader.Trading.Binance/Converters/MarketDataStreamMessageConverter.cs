@@ -1,9 +1,8 @@
-﻿using AutoMapper;
-using Outcompute.Trader.Models;
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace Outcompute.Trader.Trading.Binance.Converters;
 
+// todo: optimize this class using the new json code generator
 internal class MarketDataStreamMessageConverter : ITypeConverter<Memory<byte>, MarketDataStreamMessage>
 {
     public MarketDataStreamMessage Convert(Memory<byte> source, MarketDataStreamMessage destination, ResolutionContext context)
@@ -16,7 +15,15 @@ internal class MarketDataStreamMessageConverter : ITypeConverter<Memory<byte>, M
         {
             var error = new ExternalError(codeValue, messageProperty.GetRequiredString());
 
-            return new MarketDataStreamMessage(error, null, null);
+            return new MarketDataStreamMessage(error, null, null, null);
+        }
+
+        // attempt to parse a command response message
+        if (document.RootElement.TryGetProperty("result", out var resultProperty))
+        {
+            var result = document.RootElement.Deserialize(BinanceApiJsonContext.Default.MarketDataStreamResult);
+
+            return new MarketDataStreamMessage(null, null, null, result);
         }
 
         // see if we got a composite stream message
@@ -34,7 +41,10 @@ internal class MarketDataStreamMessageConverter : ITypeConverter<Memory<byte>, M
     private static MarketDataStreamMessage ConvertSingleMessage(JsonElement element, ResolutionContext context)
     {
         // attempt to parse regular messages
-        if (!element.TryGetProperty("e", out var eventTypeProperty)) throw new AutoMapperMappingException($"Unknow Message '{element}'");
+        if (!element.TryGetProperty("e", out var eventTypeProperty))
+        {
+            throw new AutoMapperMappingException($"Unknow Message '{element}'");
+        }
 
         // attempt to parse a 24h mini ticker message
         if (eventTypeProperty.ValueEquals("24hrMiniTicker"))
@@ -49,7 +59,7 @@ internal class MarketDataStreamMessageConverter : ITypeConverter<Memory<byte>, M
                 element.GetProperty("v").GetRequiredDecimalFromString(),
                 element.GetProperty("q").GetRequiredDecimalFromString());
 
-            return new MarketDataStreamMessage(null, ticker, null);
+            return new MarketDataStreamMessage(null, ticker, null, null);
         }
 
         // attempt to parse a kline message
@@ -76,7 +86,7 @@ internal class MarketDataStreamMessageConverter : ITypeConverter<Memory<byte>, M
                 k.GetProperty("V").GetRequiredDecimalFromString(),
                 k.GetProperty("Q").GetRequiredDecimalFromString());
 
-            return new MarketDataStreamMessage(null, null, kline);
+            return new MarketDataStreamMessage(null, null, kline, null);
         }
 
         // return an empty message if we cant detect the message type

@@ -97,6 +97,7 @@ public static class BinanceSiloBuilderExtensions
                     .AddSingleton<SavingsStatusConverter>()
                     .AddSingleton<SavingsFeaturedConverter>()
                     .AddSingleton<SwapPoolLiquidityTypeConverter>()
+                    .AddSingleton<MarketDataStreamRequestConverter>()
 
                     // add watchdog entries
                     .AddWatchdogEntry((sp, ct) => sp.GetRequiredService<IGrainFactory>().GetBinanceMarketDataGrain().PingAsync())

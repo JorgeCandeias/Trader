@@ -1,10 +1,8 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Logging.Abstractions;
-using Moq;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Binance.Providers.MarketData;
 using Outcompute.Trader.Trading.Providers;
-using Xunit;
 
 namespace Outcompute.Trader.Trading.Binance.Tests
 {
@@ -26,9 +24,9 @@ namespace Outcompute.Trader.Trading.Binance.Tests
             var client = Mock.Of<IMarketDataStreamClient>();
             Mock.Get(client)
                 .SetupSequence(x => x.ReceiveAsync(cancellation.Token))
-                .Returns(Task.FromResult(new MarketDataStreamMessage(null, ticker, null)))
-                .Returns(Task.FromResult(new MarketDataStreamMessage(null, null, kline)))
-                .Returns(Task.Delay(Timeout.InfiniteTimeSpan, cancellation.Token).ContinueWith(x => new MarketDataStreamMessage(null, null, null), cancellation.Token, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Default));
+                .Returns(Task.FromResult(new MarketDataStreamMessage(null, ticker, null, null)))
+                .Returns(Task.FromResult(new MarketDataStreamMessage(null, null, kline, null)))
+                .Returns(Task.Delay(Timeout.InfiniteTimeSpan, cancellation.Token).ContinueWith(x => MarketDataStreamMessage.Empty, cancellation.Token, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Default));
 
             var factory = Mock.Of<IMarketDataStreamClientFactory>();
             Mock.Get(factory)

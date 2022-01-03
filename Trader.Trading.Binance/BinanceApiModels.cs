@@ -504,3 +504,21 @@ internal record GetSwapPoolQuoteResponse(
     decimal Price,
     decimal Slippage,
     decimal Fee);
+
+internal record MarketDataStreamMessage(
+    ExternalError? Error,
+    MiniTicker? MiniTicker,
+    Kline? Kline,
+    MarketDataStreamResult? Result)
+{
+    public static MarketDataStreamMessage Empty { get; } = new MarketDataStreamMessage(null, null, null, null);
+}
+
+internal record MarketDataStreamRequest(
+    string Method,
+    string[] Params,
+    long Id);
+
+internal record MarketDataStreamResult(
+    string Result,
+    long Id);

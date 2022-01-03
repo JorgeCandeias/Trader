@@ -1,7 +1,4 @@
-﻿using AutoMapper;
-using Outcompute.Trader.Models;
-using Outcompute.Trader.Trading.Binance.Converters;
-using System.Diagnostics.CodeAnalysis;
+﻿using Outcompute.Trader.Trading.Binance.Converters;
 using System.Text.Json;
 
 namespace Outcompute.Trader.Trading.Binance;
@@ -54,6 +51,7 @@ internal class BinanceAutoMapperProfile : Profile
         CreateMap<SavingsStatus, string>().ConvertUsing<SavingsStatusConverter>();
         CreateMap<SavingsFeatured, string>().ConvertUsing<SavingsFeaturedConverter>();
         CreateMap<SwapPoolLiquidityType, string>().ConvertUsing<SwapPoolLiquidityTypeConverter>();
+        CreateMap<MarketDataStreamRequest, byte[]>().ConvertUsing<MarketDataStreamRequestConverter>();
 
         // simple model mappings
         CreateMap<ApiExchangeInfo, ExchangeInfo>();

@@ -28,6 +28,7 @@
 
 	<ItemGroup>
 	  <PackageReference Include="AutoMapper" Version="10.1.1" />
+	  <PackageReference Include="CommunityToolkit.HighPerformance" Version="7.1.2" />
 	  <PackageReference Include="FastMember" Version="1.5.0" />
 	  <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="6.0.0">
 	    <PrivateAssets>all</PrivateAssets>
@@ -47,6 +48,7 @@
 	    <PrivateAssets>all</PrivateAssets>
 	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	  </PackageReference>
+	  <PackageReference Include="System.Text.Json" Version="6.0.1" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Outcompute.Trader.Trading;
 using Outcompute.Trader.Trading.InMemory;
-using Outcompute.Trader.Trading.InMemory.MarketData;
 using Outcompute.Trader.Trading.InMemory.UserData;
 
 namespace Orleans.Hosting;
@@ -17,8 +16,6 @@ public static class InMemoryTradingServiceSiloBuilderExtensions
                     .AddSingleton<InMemoryTradingService>()
                     .AddSingleton<IInMemoryTradingService>(sp => sp.GetRequiredService<InMemoryTradingService>())
                     .AddSingleton<ITradingService>(sp => sp.GetRequiredService<InMemoryTradingService>())
-                    .AddSingleton<IMarketDataStreamClientFactory, InMemoryMarketDataStreamClientFactory>()
-                    .AddSingleton<IInMemoryMarketDataStreamSender, InMemoryMarketDataStreamSender>()
                     .AddSingleton<IUserDataStreamClientFactory, InMemoryUserDataStreamClientFactory>()
                     .AddSingleton<IInMemoryUserDataStreamSender, InMemoryUserDataStreamSender>();
             })

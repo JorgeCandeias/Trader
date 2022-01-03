@@ -83,7 +83,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             entryPrice = item.Symbol.LowerPriceToTickSize(entryPrice);
 
             // calculate the notional to use for buying
-            var notional = _options.Notional.AdjustTotalUpToMinNotional(item.Symbol);
+            var notional = item.Symbol.RaiseTotalUpToMinNotional(_options.Notional);
 
             // top up with the fee
             notional *= (1 + (2 * _options.FeeRate));
@@ -97,8 +97,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
 
             // calculate the exact quantity for the stop loss limit as it does not accept notional
             var quantity = notional / entryPrice;
-            quantity = quantity.AdjustQuantityUpToMinLotSizeQuantity(item.Symbol);
-            quantity = quantity.AdjustQuantityUpToLotStepSize(item.Symbol);
+            quantity = item.Symbol.RaiseQuantityToMinLotSize(quantity);
+            quantity = item.Symbol.RaiseQuantityToLotStepSize(quantity);
 
             command = Sequence(
                 EnsureSpotBalance(item.Symbol.QuoteAsset, quantity * entryPrice, true, true),

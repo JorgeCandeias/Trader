@@ -27,6 +27,21 @@ public class PortfolioAlgoOptions
 
     [Required]
     public PortfolioSmaAlgoOptions Sma { get; } = new();
+
+    [Required]
+    public PortfolioSuperTrendOptions SuperTrend { get; } = new();
+}
+
+/// <summary>
+/// Options related to the super trend indicator.
+/// </summary>
+public class PortfolioSuperTrendOptions
+{
+    [Required, Range(0, int.MaxValue)]
+    public int Periods { get; set; } = 10;
+
+    [Required, Range(0, int.MaxValue)]
+    public decimal Multipler { get; set; } = 3M;
 }
 
 /// <summary>

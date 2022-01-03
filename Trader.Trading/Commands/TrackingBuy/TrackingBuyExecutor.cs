@@ -51,13 +51,13 @@ internal class TrackingBuyExecutor : IAlgoCommandExecutor<TrackingBuyCommand>
         }
 
         // bump it to the minimum notional if needed
-        total = total.AdjustTotalUpToMinNotional(command.Symbol);
+        total = command.Symbol.RaiseTotalUpToMinNotional(total);
 
         // calculate the appropriate quantity to buy
         var quantity = total / lowBuyPrice;
 
         // round it up to the lot size step
-        quantity = quantity.AdjustQuantityUpToLotStepSize(command.Symbol);
+        quantity = command.Symbol.RaiseQuantityToLotStepSize(quantity);
 
         // calculate the true notional after adjustments
         total = quantity * lowBuyPrice;

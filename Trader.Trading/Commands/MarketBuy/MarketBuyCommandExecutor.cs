@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 
@@ -35,12 +34,12 @@ internal partial class MarketBuyCommandExecutor : IAlgoCommandExecutor<MarketBuy
         {
             if (command.RaiseToMin)
             {
-                quantity = quantity.Value.AdjustQuantityUpToMinLotSizeQuantity(command.Symbol);
+                quantity = command.Symbol.RaiseQuantityToMinLotSize(quantity.Value);
             }
 
             if (command.RaiseToStepSize)
             {
-                quantity = quantity.Value.AdjustQuantityUpToLotStepSize(command.Symbol);
+                quantity = command.Symbol.RaiseQuantityToLotStepSize(quantity.Value);
             }
         }
 
@@ -50,7 +49,7 @@ internal partial class MarketBuyCommandExecutor : IAlgoCommandExecutor<MarketBuy
         {
             if (command.RaiseToMin)
             {
-                notional = notional.Value.AdjustTotalUpToMinNotional(command.Symbol);
+                notional = command.Symbol.RaiseTotalUpToMinNotional(notional.Value);
             }
 
             if (command.RaiseToStepSize)

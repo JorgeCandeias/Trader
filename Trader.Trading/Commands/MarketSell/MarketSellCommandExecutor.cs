@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Commands.CreateOrder;
 
@@ -33,7 +32,7 @@ internal partial class MarketSellCommandExecutor : IAlgoCommandExecutor<MarketSe
         }
 
         // adjust the quantity down by the step size to make a valid order
-        var quantity = command.Quantity.AdjustQuantityDownToLotStepSize(command.Symbol);
+        var quantity = command.Symbol.LowerQuantityToLotStepSize(command.Quantity);
         LogAdjustedQuantity(TypeName, command.Symbol.Name, command.Quantity, command.Symbol.BaseAsset, quantity, command.Symbol.Filters.LotSize.StepSize);
 
         // if the quantity becomes lower than the minimum lot size then we cant sell

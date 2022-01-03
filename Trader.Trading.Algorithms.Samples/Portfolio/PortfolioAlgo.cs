@@ -199,7 +199,7 @@ public partial class PortfolioAlgo : Algo
         }
 
         // calculate the current trend for the symbol
-        var trend = item.Klines.SuperTrend().Last();
+        var trend = item.Klines.SuperTrend(_options.SuperTrend.Periods, _options.SuperTrend.Multipler).Last();
 
         // the symbol must be on a downtrend to prepare for the reversal
         if (trend.Direction != SuperTrendDirection.Down)
@@ -291,7 +291,7 @@ public partial class PortfolioAlgo : Algo
         }
 
         // calculate the trend for the symbol
-        var trends = item.Klines.SuperTrend().ToList();
+        var trends = item.Klines.SuperTrend(_options.SuperTrend.Periods, _options.SuperTrend.Multipler).ToList();
         var trend = trends[^1];
 
         // the symbol must have a direction or the trend lines will be too far away
@@ -385,8 +385,11 @@ public partial class PortfolioAlgo : Algo
             buyNotional += lot.Quantity * lot.AvgPrice;
             sellNotional += lot.Quantity * sellPrice;
 
+            // adjust the tested quantity to the asset precision
+            var adjustedQuantity = item.Symbol.LowerToBaseAssetPrecision(quantity);
+
             // continue until the quantity is sellable
-            if (quantity < item.Symbol.Filters.LotSize.MinQuantity)
+            if (adjustedQuantity < item.Symbol.Filters.LotSize.MinQuantity)
             {
                 continue;
             }
@@ -398,7 +401,7 @@ public partial class PortfolioAlgo : Algo
             }
 
             // the average cost price must fit under the profit price
-            var avgPrice = buyNotional / quantity;
+            var avgPrice = buyNotional / adjustedQuantity;
             avgPrice = item.Symbol.RaisePriceToTickSize(avgPrice);
             if (avgPrice > profitPrice)
             {
@@ -406,7 +409,7 @@ public partial class PortfolioAlgo : Algo
             }
 
             // keep the candidate quantity and continue looking for more
-            electedQuantity = quantity;
+            electedQuantity = adjustedQuantity;
         }
 
         return electedQuantity > 0;
@@ -422,7 +425,7 @@ public partial class PortfolioAlgo : Algo
         notional *= balanceRate;
 
         // raise to a valid number
-        notional = notional.AdjustTotalUpToMinNotional(item.Symbol);
+        notional = item.Symbol.RaiseTotalUpToMinNotional(notional);
         notional = item.Symbol.RaisePriceToTickSize(notional);
 
         // pad the order with the fee
@@ -435,8 +438,8 @@ public partial class PortfolioAlgo : Algo
         var quantity = notional / price;
 
         // raise the quantity to a valid number
-        quantity = quantity.AdjustQuantityUpToMinLotSizeQuantity(item.Symbol);
-        quantity = quantity.AdjustQuantityUpToLotStepSize(item.Symbol);
+        quantity = item.Symbol.RaiseQuantityToMinLotSize(quantity);
+        quantity = item.Symbol.RaiseQuantityToLotStepSize(quantity);
 
         return quantity;
     }

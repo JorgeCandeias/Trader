@@ -47,6 +47,9 @@ internal partial class TradeSynchronizer : ITradeSynchronizer
 
             // keep track for logging
             count += trades.Count;
+
+            // break if we got a partial page
+            if (trades.Count < 900) break;
         }
 
         LogPulledTrades(TypeName, symbol, count, tradeId, watch.ElapsedMilliseconds);

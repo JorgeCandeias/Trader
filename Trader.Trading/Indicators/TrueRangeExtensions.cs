@@ -1,8 +1,8 @@
 ﻿namespace System.Collections.Generic;
 
-internal static class TrueRangeExtensions
+public static class TrueRangeExtensions
 {
-    public static IEnumerable<decimal> TrueRange(this IEnumerable<Kline> source)
+    public static IEnumerable<decimal> TrueRanges(this IEnumerable<Kline> source)
     {
         Guard.IsNotNull(source, nameof(source));
 

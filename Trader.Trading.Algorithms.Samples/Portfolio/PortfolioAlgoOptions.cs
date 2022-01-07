@@ -76,13 +76,13 @@ public class PortfolioBuyingAlgoOptions
     /// The distance from buy side stop loss price to use to calculate the buy price.
     /// </summary>
     [Required, Range(0, 1)]
-    public decimal BuyWindowRate { get; set; } = 0.001M;
+    public decimal BuyWindowRate { get; set; } = 0.01M;
 
     /// <summary>
     /// Distance from the target stop loss rate at which funds will be reserved.
     /// </summary>
     [Required, Range(0, 1)]
-    public decimal ActivationRate { get; set; } = 0.01M;
+    public decimal ActivationRate { get; set; } = 0.05M;
 
     /// <summary>
     /// The cooldown period between consecutive buys.
@@ -125,7 +125,7 @@ public class PortfolioSellingAlgoOptions
     /// The distance from the sell side stop loss price to use to calculate the sell price.
     /// </summary>
     [Required, Range(0, 1)]
-    public decimal SellWindowRate { get; set; } = 0.001M;
+    public decimal SellWindowRate { get; set; } = 0.01M;
 
     /// <summary>
     /// The default trailing stop loss rate.
@@ -144,6 +144,12 @@ public class PortfolioSellingAlgoOptions
     /// </summary>
     [Required, Range(0, 1000)]
     public decimal TakeProfitRate { get; set; } = 0.10M;
+
+    /// <summary>
+    /// Distance from the target stop loss rate at which funds will be reserved.
+    /// </summary>
+    [Required, Range(0, 1)]
+    public decimal ActivationRate { get; set; } = 0.10M;
 
     /// <summary>
     /// Symbols which will never be sold.

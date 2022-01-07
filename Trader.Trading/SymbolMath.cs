@@ -37,11 +37,11 @@ public static class SymbolMath
         return Math.Max(quantity, symbol.Filters.LotSize.MinQuantity);
     }
 
-    public static decimal RaiseTotalUpToMinNotional(this Symbol symbol, decimal total)
+    public static decimal RaiseTotalUpToMinNotional(this Symbol symbol, decimal total, decimal multiplier = 1M)
     {
         Guard.IsNotNull(symbol, nameof(symbol));
 
-        return Math.Max(total, symbol.Filters.MinNotional.MinNotional);
+        return Math.Max(total, symbol.Filters.MinNotional.MinNotional * multiplier);
     }
 
     public static decimal LowerToBaseAssetPrecision(this Symbol symbol, decimal value)

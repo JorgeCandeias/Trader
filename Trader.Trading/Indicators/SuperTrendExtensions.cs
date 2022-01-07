@@ -26,7 +26,7 @@ public static class SuperTrendExtensions
         Guard.IsNotNull(source, nameof(source));
 
         using var sourceEnumerator = source.GetEnumerator();
-        using var atrEnumerator = source.AverageTrueRange(periods).GetEnumerator();
+        using var atrEnumerator = source.AverageTrueRanges(periods).GetEnumerator();
 
         var direction = SuperTrendDirection.None;
         SuperTrendValue? prev = null;

@@ -47,7 +47,7 @@ internal partial class DiscoveryAlgo : Algo
 
         // identify all symbols with savings
         var withSavings = symbols
-            .Where(x => savings.Contains(x.QuoteAsset) && savings.Contains(x.BaseAsset))
+            .Where(x => savings.Contains(x.BaseAsset))
             .Select(x => x.Name)
             .ToHashSet();
 

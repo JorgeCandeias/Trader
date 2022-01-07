@@ -101,6 +101,14 @@ public partial class PortfolioAlgo : Algo
                 rpnl,
                 pv - cost + rpnl);
 
+            // every unsellable symbol with opening disabled
+            foreach (var item in stats
+                .Where(x => x.Stats.TotalQuantity < x.Symbol.Filters.LotSize.MinQuantity)
+                .Where(x => _options.Buying.Opening.ExcludeSymbols.Contains(x.Symbol.Name)))
+            {
+                LogClosedSymbol(TypeName, Context.Name, item.Symbol.Name, item.Stats.TotalQuantity, item.Symbol.BaseAsset, item.Stats.PresentValue, item.Symbol.QuoteAsset);
+            }
+
             // every non zero symbol by relative pnl
             foreach (var item in stats
                 .Where(x => x.Stats.TotalQuantity > 0)
@@ -178,7 +186,7 @@ public partial class PortfolioAlgo : Algo
 
     private IAlgoCommand Buy(SymbolData item, IList<PositionLot> lots)
     {
-        IAlgoCommand Clear() => CancelOpenOrders(item.Symbol, OrderSide.Buy, _options.Buying.ActivationRate, BuyTag);
+        IAlgoCommand Clear() => CancelOpenOrders(item.Symbol, OrderSide.Buy, null, BuyTag);
 
         // buying must be enabled
         if (!_options.Buying.Enabled)
@@ -189,6 +197,7 @@ public partial class PortfolioAlgo : Algo
         // if the symbol is on the opening exclusion list then it must have positions
         if (lots.Count == 0 && _options.Buying.Opening.ExcludeSymbols.Contains(item.Symbol.Name))
         {
+            LogBuySkippedSymbolOnOpeningExclusionSet(TypeName, Context.Name, item.Symbol.Name);
             return Clear();
         }
 
@@ -198,53 +207,56 @@ public partial class PortfolioAlgo : Algo
             return Clear();
         }
 
-        // calculate the current trend for the symbol
-        var trend = item.Klines.SuperTrend(_options.SuperTrend.Periods, _options.SuperTrend.Multipler).Last();
+        var stopPrice = decimal.MaxValue;
 
-        // the symbol must be on a downtrend to prepare for the reversal
-        if (trend.Direction != SuperTrendDirection.Down)
+        // place the default buy at the super trend high
+        var trend = item.Klines.SuperTrend().Last();
+        if (trend.Direction == SuperTrendDirection.Down)
         {
-            return Clear();
+            stopPrice = Math.Min(stopPrice, item.Symbol.RaisePriceToTickSize(trend.High));
         }
 
-        // the ticker must be close enough to the high to justify reserving funds
-        var distance = Math.Abs((item.Ticker.ClosePrice - trend.High) / trend.High);
+        // attempt to identify the price needed for upwards cross
+        if (item.Klines.TryGetMacdForUpcross(x => x.ClosePrice, out var cross))
+        {
+            stopPrice = Math.Min(stopPrice, item.Symbol.RaisePriceToTickSize(cross.Price));
+        }
+
+        // handle a sudden macd reversal
+        var macds = item.Klines.Macd(x => x.ClosePrice).TakeLast(2).ToArray();
+        if (macds[0].IsUptrend && macds[1].IsDowntrend && item.Klines.TryGetMacdForUpcross(x => x.ClosePrice, out var reversal))
+        {
+            stopPrice = Math.Min(stopPrice, item.Symbol.RaisePriceToTickSize(reversal.Price * 1.01M));
+        }
+
+        // lower to an extreme outlier of opportunity
+        var band = item.Klines.BollingerBands(x => x.ClosePrice, 20, 5).Last();
+        if (item.Ticker.LowPrice <= band.Low)
+        {
+            stopPrice = Math.Min(stopPrice, item.Symbol.RaisePriceToTickSize(item.Ticker.ClosePrice * 1.01M));
+        }
+
+        // skip if no stop buy can be calculated
+        if (stopPrice == decimal.MaxValue)
+        {
+            return Noop();
+        }
+
+        // skip if there is already a buy a lower price
+        if (item.Orders.Open.Any(x => x.Side == OrderSide.Buy && x.StopPrice < stopPrice))
+        {
+            return Noop();
+        }
+
+        // only bother reserving funds if the ticker is close enough
+        var distance = Math.Abs((stopPrice - item.Ticker.ClosePrice) / item.Ticker.ClosePrice);
         if (distance > _options.Buying.ActivationRate)
         {
             return Noop();
         }
 
-        // the ticker must be under the first high
-        var high = item.Symbol.LowerPriceToTickSize(trend.High);
-        if (item.Ticker.ClosePrice >= high)
-        {
-            return Noop();
-        }
-
-        // define a stop buy at the high trend
-        var stopPrice = high;
-
-        // apply the sma rule
-        if (_options.Sma.Enabled)
-        {
-            // calculate the long sma for the symbol
-            var sma = item.Klines.Sma(x => x.ClosePrice, _options.Sma.LongPeriods).Last();
-
-            // that stop price must be above the long sma
-            if (stopPrice < sma)
-            {
-                return Noop();
-            }
-        }
-
-        // skip if there is already a buy placed at a lower price
-        if (item.Orders.Open.Any(x => x.Side == OrderSide.Buy && x.StopPrice <= stopPrice))
-        {
-            return Noop();
-        }
-
-        // define the buy window
-        var buyPrice = stopPrice;
+        // calculate the buy price window from the stop
+        var buyPrice = item.Symbol.RaisePriceToTickSize(stopPrice * (1 + _options.Buying.BuyWindowRate));
 
         // define the quantity to buy
         var quantity = CalculateBuyQuantity(item, buyPrice, _options.Buying.BalanceRate);
@@ -259,18 +271,14 @@ public partial class PortfolioAlgo : Algo
         // place the order
         return Sequence(
             EnsureSpotBalance(item.Symbol.QuoteAsset, required, _options.UseSavings, _options.UseSwapPools),
-            CancelOpenOrders(item.Symbol, OrderSide.Buy, null, BuyTag),
-            CreateOrder(item.Symbol, OrderType.StopLossLimit, OrderSide.Buy, TimeInForce.GoodTillCanceled, quantity, null, buyPrice, stopPrice, BuyTag));
+            EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, quantity, null, buyPrice, stopPrice, BuyTag));
     }
 
-    private IAlgoCommand Sell(SymbolData item, IList<PositionLot> lots, PositionStats stats)
+    private IAlgoCommand Sell(SymbolData item, IEnumerable<PositionLot> lots, PositionStats stats)
     {
         IAlgoCommand Clear() => Sequence(
             CancelOpenOrders(item.Symbol, OrderSide.Sell, _options.Selling.SellWindowRate, SellTag),
             CancelOpenOrders(item.Symbol, OrderSide.Sell, _options.Selling.SellWindowRate, TrailingTag));
-
-        // default tag for the order
-        var tag = SellTag;
 
         // selling must be enabled
         if (!_options.Selling.Enabled)
@@ -290,83 +298,74 @@ public partial class PortfolioAlgo : Algo
             return Clear();
         }
 
-        // calculate the trend for the symbol
-        var trends = item.Klines.SuperTrend(_options.SuperTrend.Periods, _options.SuperTrend.Multipler).ToList();
-        var trend = trends[^1];
-
-        // the symbol must have a direction or the trend lines will be too far away
-        if (trend.Direction == SuperTrendDirection.None)
-        {
-            return Clear();
-        }
-
-        // define a default stop loss using the trend
-        var stopPrice = item.Symbol.LowerPriceToTickSize(trend.Low);
-
-        // raise to the entry amplitude if found
+        // place the default stop loss at the trend low band if possible
+        var stopPrice = 0M;
+        var market = false;
+        var trend = item.Klines.SkipLast(1).SuperTrend().Last();
         if (trend.Direction == SuperTrendDirection.Up)
         {
-            var after = trend;
-
-            for (var i = trends.Count - 2; i >= 0; i--)
-            {
-                var before = trends[i];
-
-                if (before.Direction != SuperTrendDirection.Up)
-                {
-                    var amplitude = Math.Abs(before.High - after.Low) * 2M;
-                    var target = item.Symbol.RaisePriceToTickSize(trend.Low + amplitude);
-
-                    if (item.Ticker.ClosePrice >= target)
-                    {
-                        stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * (1 - _options.Selling.StopLossRate)));
-                        tag = TrailingTag;
-                    }
-
-                    break;
-                }
-
-                after = before;
-            }
+            stopPrice = item.Symbol.LowerPriceToTickSize(trend.Low);
         }
 
-        // if the stop loss is already a trailing stop then keep it that way
-        if (item.Orders.Open.Any(x => x.Side == OrderSide.Sell && x.ClientOrderId == TrailingTag))
+        // attempt to identify the price needed for downwards cross on the current period
+        // only apply this rule if we dont have buys in the same period to avoid order twitching
+        if (item.Klines.SkipLast(1).TryGetMacdForDowncross(x => x.ClosePrice, out var cross))
         {
-            stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice - trend.Atr));
-            tag = TrailingTag;
+            // raise the stop loss price to the cross price so we exit earlier
+            stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(cross.Price));
         }
 
-        // define the sell window from the stop price
-        var sellPrice = item.Symbol.LowerPriceToTickSize(stopPrice * (1 - _options.Selling.SellWindowRate));
-
-        // skip if there is already a stop at a higher price
-        if (item.Orders.Open.Any(x => x.Side == OrderSide.Sell && x.StopPrice >= stopPrice && item.Ticker.ClosePrice >= stopPrice))
+        // raise to a higher trailing stop for extreme outliers
+        var band = item.Klines.BollingerBands(x => x.ClosePrice, 20, 4).Last();
+        if (item.Ticker.ClosePrice >= band.High)
         {
+            stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M));
+        }
+
+        // raise to a loose trailing stop loss
+        stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.9M));
+
+        // skip if we cant calculate the stop loss at all
+        if (stopPrice <= 0)
+        {
+            LogCannotCalculateStopLoss(TypeName, Context.Name, item.Symbol.Name);
             return Noop();
         }
 
-        if (!TryGetElectedQuantity(item, lots, sellPrice, out var electedQuantity))
+        // set the sell window price
+        var quantity = item.Symbol.LowerQuantityToLotStepSize(stats.TotalQuantity);
+        var sellPrice = item.Symbol.LowerPriceToTickSize(stopPrice * (1 - _options.Selling.SellWindowRate));
+        var notional = item.Symbol.LowerPriceToTickSize(quantity * sellPrice);
+
+        if (quantity < item.Symbol.Filters.LotSize.MinQuantity)
+        {
+            LogCannotPlaceSellOrderWithQuantityUnderMin(TypeName, Context.Name, item.Symbol.Name, quantity, item.Symbol.BaseAsset, item.Symbol.Filters.LotSize.MinQuantity);
+            return Noop();
+        }
+
+        if (notional < item.Symbol.Filters.MinNotional.MinNotional)
+        {
+            LogCannotPlaceSellOrderWithNotionalUnderMin(TypeName, Context.Name, item.Symbol.Name, notional, item.Symbol.QuoteAsset, item.Symbol.Filters.MinNotional.MinNotional);
+            return Noop();
+        }
+
+        // skip if there is already a stop at a higher price
+        if (item.Orders.Open.Any(x => x.Side == OrderSide.Sell && x.StopPrice > stopPrice))
         {
             return Noop();
         }
 
         // take any current sell orders into account for spot balance release
         var locked = item.Orders.Open.Where(x => x.Side == OrderSide.Sell).Sum(x => x.OriginalQuantity);
-        var required = Math.Max(electedQuantity - locked, 0);
+        var required = Math.Max(quantity - locked, 0);
 
         // create the command sequence for the exchange
-        var commands = EnsureSpotBalance(item.Symbol.BaseAsset, required, _options.UseSavings, _options.UseSwapPools);
-        if (tag == TrailingTag)
-        {
-            commands = commands.Then(CancelOpenOrders(item.Symbol, OrderSide.Sell, null, SellTag));
-        }
-        commands = commands.Then(EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, electedQuantity, null, sellPrice, stopPrice, tag));
-
-        return commands;
+        return Sequence(
+            EnsureSpotBalance(item.Symbol.BaseAsset, required, _options.UseSavings, _options.UseSwapPools),
+            EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, quantity, null, sellPrice, stopPrice, SellTag));
     }
 
-    private bool TryGetElectedQuantity(SymbolData item, IEnumerable<PositionLot> lots, decimal sellPrice, out decimal electedQuantity)
+    private static bool TryGetElectedQuantity(SymbolData item, IEnumerable<PositionLot> lots, decimal sellPrice, out decimal electedQuantity)
     {
         // gather the all the lots that fit under the sell price
         var quantity = 0M;
@@ -374,9 +373,6 @@ public partial class PortfolioAlgo : Algo
         var sellNotional = 0M;
 
         electedQuantity = 0M;
-
-        // calculate the price under which there will be some minimum profit
-        var profitPrice = item.Symbol.LowerPriceToTickSize(sellPrice * (1 - _options.Selling.MinProfitRate));
 
         foreach (var lot in lots)
         {
@@ -386,10 +382,13 @@ public partial class PortfolioAlgo : Algo
             sellNotional += lot.Quantity * sellPrice;
 
             // adjust the tested quantity to the asset precision
-            var adjustedQuantity = item.Symbol.LowerToBaseAssetPrecision(quantity);
+            //var adjustedQuantity = item.Symbol.LowerToBaseAssetPrecision(quantity);
+            //var leftoverQuantity = quantity - adjustedQuantity;
+            //var adjustedBuyNotional = item.Symbol.LowerPriceToTickSize(buyNotional - leftoverQuantity * lot.AvgPrice);
+            //var adjustedSellNotional = item.Symbol.LowerPriceToTickSize(sellNotional - leftoverQuantity * sellPrice);
 
             // continue until the quantity is sellable
-            if (adjustedQuantity < item.Symbol.Filters.LotSize.MinQuantity)
+            if (quantity < item.Symbol.Filters.LotSize.MinQuantity)
             {
                 continue;
             }
@@ -401,15 +400,15 @@ public partial class PortfolioAlgo : Algo
             }
 
             // the average cost price must fit under the profit price
-            var avgPrice = buyNotional / adjustedQuantity;
+            var avgPrice = buyNotional / quantity;
             avgPrice = item.Symbol.RaisePriceToTickSize(avgPrice);
-            if (avgPrice > profitPrice)
+            if (avgPrice > sellPrice)
             {
                 continue;
             }
 
             // keep the candidate quantity and continue looking for more
-            electedQuantity = adjustedQuantity;
+            electedQuantity = quantity;
         }
 
         return electedQuantity > 0;
@@ -425,13 +424,7 @@ public partial class PortfolioAlgo : Algo
         notional *= balanceRate;
 
         // raise to a valid number
-        notional = item.Symbol.RaiseTotalUpToMinNotional(notional);
-        notional = item.Symbol.RaisePriceToTickSize(notional);
-
-        // pad the order with the fee
-        notional *= 1 + (2 * _options.FeeRate);
-
-        // raise again to a valid number
+        notional = item.Symbol.RaiseTotalUpToMinNotional(notional, 2);
         notional = item.Symbol.RaisePriceToTickSize(notional);
 
         // calculate the quantity for the limit order
@@ -727,6 +720,18 @@ public partial class PortfolioAlgo : Algo
 
     [LoggerMessage(91, LogLevel.Information, "{Type} {Name} {Symbol} stop loss sell elected symbol for market sell at ticker {Ticker:F8} {Quote}")]
     private partial void LogStopLossSellElectedSymbolForMarketSell(string type, string name, string symbol, decimal ticker, string quote);
+
+    [LoggerMessage(92, LogLevel.Information, "{Type} {Name} reports closed symbol {Symbol} with leftover quantity {Quantity:F8} {Asset} worth {PV:F8} {Quote}")]
+    private partial void LogClosedSymbol(string type, string name, string symbol, decimal quantity, string asset, decimal pv, string quote);
+
+    [LoggerMessage(93, LogLevel.Warning, "{Type} {Name} {Symbol} cannot place sell order with quantity of {Quantity:F8} {Asset} under min of {MinQuantity:F8} {Asset}")]
+    private partial void LogCannotPlaceSellOrderWithQuantityUnderMin(string type, string name, string symbol, decimal quantity, string asset, decimal minQuantity);
+
+    [LoggerMessage(94, LogLevel.Warning, "{Type} {Name} {Symbol} cannot place sell order with notional of {Notional:F8} {Quote} under min of {MinNotional:F8} {Quote}")]
+    private partial void LogCannotPlaceSellOrderWithNotionalUnderMin(string type, string name, string symbol, decimal notional, string quote, decimal minNotional);
+
+    [LoggerMessage(95, LogLevel.Warning, "{Type} {Name} {Symbol} cannot calculate stop loss with current rules")]
+    private partial void LogCannotCalculateStopLoss(string type, string name, string symbol);
 
     #endregion Logging
 }

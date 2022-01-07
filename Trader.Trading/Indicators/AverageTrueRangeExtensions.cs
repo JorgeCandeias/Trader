@@ -1,13 +1,13 @@
 ﻿namespace System.Collections.Generic;
 
-internal static class AverageTrueRangeExtensions
+public static class AverageTrueRangeExtensions
 {
-    public static IEnumerable<decimal> AverageTrueRange(this IEnumerable<Kline> source, int periods)
+    public static IEnumerable<decimal> AverageTrueRanges(this IEnumerable<Kline> source, int periods)
     {
         Guard.IsNotNull(source, nameof(source));
         Guard.IsGreaterThan(periods, 0, nameof(periods));
 
-        var enumerator = source.TrueRange().GetEnumerator();
+        var enumerator = source.TrueRanges().GetEnumerator();
 
         // calculate the first period
         if (enumerator.MoveNext())

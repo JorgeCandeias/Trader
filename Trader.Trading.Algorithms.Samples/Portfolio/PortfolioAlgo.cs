@@ -4,6 +4,7 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Algorithms.Positions;
 using Outcompute.Trader.Trading.Commands;
+using static System.Collections.Generic.KdjExtensions;
 
 namespace Outcompute.Trader.Trading.Algorithms.Samples.Portfolio;
 
@@ -207,27 +208,49 @@ public partial class PortfolioAlgo : Algo
             return Clear();
         }
 
+        // guard - rsi set must be high enough to risk funds
+        var shortRsi = item.Klines.Rsi(x => x.ClosePrice, 6).Last();
+        var medRsi = item.Klines.Rsi(x => x.ClosePrice, 12).Last();
+        var longRsi = item.Klines.Rsi(x => x.ClosePrice, 24).Last();
+        var rsiOK = shortRsi >= 20 && medRsi >= 20 && longRsi >= 20;
+        if (!rsiOK)
+        {
+            return Noop();
+        }
+
         var stopPrice = decimal.MaxValue;
 
+        // detect a kdj cross
+        var kdj = item.Klines.Kdj().TakeLast(2).ToArray();
+        if (kdj[0].Side == KdjSide.Down && kdj[1].Side == KdjSide.Up)
+        {
+            return CreateMarketBuy(item);
+        }
+
+        /*
         // place the default buy at the super trend high
         var trend = item.Klines.SuperTrend().Last();
         if (trend.Direction == SuperTrendDirection.Down)
         {
             stopPrice = Math.Min(stopPrice, item.Symbol.RaisePriceToTickSize(trend.High));
-        }
+        }*/
 
+        /*
         // attempt to identify the price needed for upwards cross
         if (item.Klines.TryGetMacdForUpcross(x => x.ClosePrice, out var cross))
         {
             stopPrice = Math.Min(stopPrice, item.Symbol.RaisePriceToTickSize(cross.Price));
         }
+        */
 
+        /*
         // handle a sudden macd reversal
         var macds = item.Klines.Macd(x => x.ClosePrice).TakeLast(2).ToArray();
         if (macds[0].IsUptrend && macds[1].IsDowntrend && item.Klines.TryGetMacdForUpcross(x => x.ClosePrice, out var reversal))
         {
             stopPrice = Math.Min(stopPrice, item.Symbol.RaisePriceToTickSize(reversal.Price * 1.01M));
         }
+        */
 
         // lower to an extreme outlier of opportunity
         var band = item.Klines.BollingerBands(x => x.ClosePrice, 20, 5).Last();
@@ -274,6 +297,25 @@ public partial class PortfolioAlgo : Algo
             EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, quantity, null, buyPrice, stopPrice, BuyTag));
     }
 
+    private IAlgoCommand CreateMarketBuy(SymbolData item)
+    {
+        // define the quantity to buy
+        var quantity = CalculateBuyQuantity(item, item.Ticker.ClosePrice, _options.Buying.BalanceRate);
+
+        // define the notional to lock
+        var notional = quantity * item.Ticker.ClosePrice;
+
+        // define the notional to free
+        var locked = item.Orders.Open.Where(x => x.Side == OrderSide.Sell).Sum(x => x.OriginalQuantity);
+        var required = Math.Max(notional - locked, 0);
+
+        // place the order
+        return Sequence(
+            EnsureSpotBalance(item.Symbol.QuoteAsset, required, _options.UseSavings, _options.UseSwapPools),
+            CancelOpenOrders(item.Symbol, OrderSide.Buy, null, BuyTag),
+            EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Market, null, quantity, null, null, null, BuyTag));
+    }
+
     private IAlgoCommand Sell(SymbolData item, IEnumerable<PositionLot> lots, PositionStats stats)
     {
         IAlgoCommand Clear() => Sequence(
@@ -298,15 +340,33 @@ public partial class PortfolioAlgo : Algo
             return Clear();
         }
 
+        // apply kdj rules
+        var kdj = item.Klines.Kdj().TakeLast(2).ToArray();
+
+        // detect a kdj peak cross
+        if (kdj[0].Side == KdjSide.Up && kdj[1].Side == KdjSide.Up &&
+            kdj[0].J > 100 && kdj[1].J < 100)
+        {
+            return CreateMarketSell(item, stats, lots);
+        }
+
+        // detect a kdj normal cross
+        if (kdj[0].Side == KdjSide.Up && kdj[1].Side == KdjSide.Down)
+        {
+            return CreateMarketSell(item, stats, lots);
+        }
+
+        /*
         // place the default stop loss at the trend low band if possible
         var stopPrice = 0M;
-        var market = false;
         var trend = item.Klines.SkipLast(1).SuperTrend().Last();
         if (trend.Direction == SuperTrendDirection.Up)
         {
             stopPrice = item.Symbol.LowerPriceToTickSize(trend.Low);
         }
+        */
 
+        /*
         // attempt to identify the price needed for downwards cross on the current period
         // only apply this rule if we dont have buys in the same period to avoid order twitching
         if (item.Klines.SkipLast(1).TryGetMacdForDowncross(x => x.ClosePrice, out var cross))
@@ -314,21 +374,29 @@ public partial class PortfolioAlgo : Algo
             // raise the stop loss price to the cross price so we exit earlier
             stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(cross.Price));
         }
+        */
 
         // raise to a higher trailing stop for extreme outliers
-        var band = item.Klines.BollingerBands(x => x.ClosePrice, 20, 4).Last();
+        var stopPrice = 0M;
+        var band = item.Klines.BollingerBands(x => x.ClosePrice, 20, 3).Last();
         if (item.Ticker.ClosePrice >= band.High)
         {
             stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M));
         }
 
+        // raise to a safety stop loss for reversals
+        var maxSafetyStop = item.Symbol.LowerPriceToTickSize(stats.AvgPrice * 1.01M);
+        var currentSafetyStop = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M);
+        var safetyStop = Math.Min(maxSafetyStop, currentSafetyStop);
+        stopPrice = Math.Max(stopPrice, safetyStop);
+
         // raise to a loose trailing stop loss
-        stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.9M));
+        //stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.9M));
 
         // skip if we cant calculate the stop loss at all
         if (stopPrice <= 0)
         {
-            LogCannotCalculateStopLoss(TypeName, Context.Name, item.Symbol.Name);
+            //LogCannotCalculateStopLoss(TypeName, Context.Name, item.Symbol.Name);
             return Noop();
         }
 
@@ -363,6 +431,43 @@ public partial class PortfolioAlgo : Algo
         return Sequence(
             EnsureSpotBalance(item.Symbol.BaseAsset, required, _options.UseSavings, _options.UseSwapPools),
             EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, quantity, null, sellPrice, stopPrice, SellTag));
+    }
+
+    private IAlgoCommand CreateMarketSell(SymbolData item, PositionStats stats, IEnumerable<PositionLot> lots)
+    {
+        // set the sell window price
+        var quantity = item.Symbol.LowerQuantityToLotStepSize(stats.TotalQuantity);
+        /*
+        if (!TryGetElectedQuantity(item, lots, item.Ticker.ClosePrice, out var quantity))
+        {
+            return Noop();
+        }
+        */
+
+        var sellPrice = item.Ticker.ClosePrice;
+        var notional = item.Symbol.LowerPriceToTickSize(quantity * sellPrice);
+
+        if (quantity < item.Symbol.Filters.LotSize.MinQuantity)
+        {
+            LogCannotPlaceSellOrderWithQuantityUnderMin(TypeName, Context.Name, item.Symbol.Name, quantity, item.Symbol.BaseAsset, item.Symbol.Filters.LotSize.MinQuantity);
+            return Noop();
+        }
+
+        if (notional < item.Symbol.Filters.MinNotional.MinNotional)
+        {
+            LogCannotPlaceSellOrderWithNotionalUnderMin(TypeName, Context.Name, item.Symbol.Name, notional, item.Symbol.QuoteAsset, item.Symbol.Filters.MinNotional.MinNotional);
+            return Noop();
+        }
+
+        // take any current sell orders into account for spot balance release
+        var locked = item.Orders.Open.Where(x => x.Side == OrderSide.Sell).Sum(x => x.OriginalQuantity);
+        var required = Math.Max(quantity - locked, 0);
+
+        // create the command sequence for the exchange
+        return Sequence(
+            EnsureSpotBalance(item.Symbol.BaseAsset, required, _options.UseSavings, _options.UseSwapPools),
+            CancelOpenOrders(item.Symbol, OrderSide.Sell, null, SellTag),
+            EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.Market, null, quantity, null, null, null, SellTag));
     }
 
     private static bool TryGetElectedQuantity(SymbolData item, IEnumerable<PositionLot> lots, decimal sellPrice, out decimal electedQuantity)

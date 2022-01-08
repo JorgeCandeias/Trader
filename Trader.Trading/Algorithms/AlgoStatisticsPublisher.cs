@@ -1,6 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using Orleans;
-using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Positions;
 using Outcompute.Trader.Trading.Providers;
 

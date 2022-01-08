@@ -1,5 +1,4 @@
 ﻿using Orleans.Concurrency;
-using Outcompute.Trader.Models;
 
 namespace Outcompute.Trader.Trading.Algorithms.Positions;
 

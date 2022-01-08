@@ -101,7 +101,37 @@ internal partial class AutoPositionResolver : IAutoPositionResolver
                 x.Key.Time))
             .OrderBy(x => x.Symbol)
             .ThenBy(x => x.OrderId)
-            .ToPositionCollection();
+            .ToList();
+
+        // apply balance corrections
+        if (_options.BalanceCorrections.TryGetValue(symbol.Name, out var correction))
+        {
+            positions.Reverse();
+
+            while (correction < 0 && positions.Count > 0)
+            {
+                var position = positions[^1];
+                var take = Math.Min(position.Quantity, Math.Abs(correction));
+
+                if (take >= position.Quantity)
+                {
+                    positions.RemoveAt(positions.Count - 1);
+                }
+                else
+                {
+                    positions[^1] = position with { Quantity = position.Quantity - take };
+                }
+
+                correction += take;
+            }
+
+            if (correction > 0)
+            {
+                // noop for now
+            }
+
+            positions.Reverse();
+        }
 
         watch.Stop();
         if (watch.Elapsed >= _options.ElapsedTimeWarningThreshold)
@@ -112,7 +142,7 @@ internal partial class AutoPositionResolver : IAutoPositionResolver
         return new AutoPosition
         {
             Symbol = symbol,
-            Positions = positions,
+            Positions = positions.ToPositionCollection(),
             ProfitEvents = profits.ToImmutable(),
             CommissionEvents = commissions
         };

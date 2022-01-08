@@ -218,46 +218,41 @@ public partial class PortfolioAlgo : Algo
             return Noop();
         }
 
+        // guard - macd signal must be negative and decelerating to a reversal
+        /*
+        var macds = item.Klines.Macd(x => x.ClosePrice).TakeLast(3).ToArray();
+        if (macds.Length != 3)
+        {
+            return Noop();
+        }
+        var macNegative = macds[0].Histogram < 0 && macds[1].Histogram < 0 && macds[2].Histogram < 0;
+        var macDecreasing = macds[0].Histogram > macds[1].Histogram && macds[1].Histogram > macds[2].Histogram;
+        var macDiff1 = Math.Abs(macds[1].Histogram - macds[0].Histogram);
+        var macDiff2 = Math.Abs(macds[2].Histogram - macds[1].Histogram);
+        var macDecelerating = macDiff2 < macDiff1;
+        var macdOK = macNegative && macDecreasing && macDecelerating;
+        if (!macdOK)
+        {
+            return Noop();
+        }
+        */
+
         var stopPrice = decimal.MaxValue;
 
+        // predict the next cross
+        if (item.Klines.SkipLast(1).TryGetKdjForUpcross(item.Klines.Last(), out var cross))
+        {
+            stopPrice = item.Symbol.RaisePriceToTickSize(cross.Price);
+        }
+
+        /*
         // detect a kdj cross
         var kdj = item.Klines.Kdj().TakeLast(2).ToArray();
-        if (kdj[0].Side == KdjSide.Down && kdj[1].Side == KdjSide.Up)
+        if (kdj.Length == 2 && kdj[0].Side == KdjSide.Down && kdj[1].Side == KdjSide.Up)
         {
             return CreateMarketBuy(item);
         }
-
-        /*
-        // place the default buy at the super trend high
-        var trend = item.Klines.SuperTrend().Last();
-        if (trend.Direction == SuperTrendDirection.Down)
-        {
-            stopPrice = Math.Min(stopPrice, item.Symbol.RaisePriceToTickSize(trend.High));
-        }*/
-
-        /*
-        // attempt to identify the price needed for upwards cross
-        if (item.Klines.TryGetMacdForUpcross(x => x.ClosePrice, out var cross))
-        {
-            stopPrice = Math.Min(stopPrice, item.Symbol.RaisePriceToTickSize(cross.Price));
-        }
         */
-
-        /*
-        // handle a sudden macd reversal
-        var macds = item.Klines.Macd(x => x.ClosePrice).TakeLast(2).ToArray();
-        if (macds[0].IsUptrend && macds[1].IsDowntrend && item.Klines.TryGetMacdForUpcross(x => x.ClosePrice, out var reversal))
-        {
-            stopPrice = Math.Min(stopPrice, item.Symbol.RaisePriceToTickSize(reversal.Price * 1.01M));
-        }
-        */
-
-        // lower to an extreme outlier of opportunity
-        var band = item.Klines.BollingerBands(x => x.ClosePrice, 20, 5).Last();
-        if (item.Ticker.LowPrice <= band.Low)
-        {
-            stopPrice = Math.Min(stopPrice, item.Symbol.RaisePriceToTickSize(item.Ticker.ClosePrice * 1.01M));
-        }
 
         // skip if no stop buy can be calculated
         if (stopPrice == decimal.MaxValue)
@@ -376,19 +371,24 @@ public partial class PortfolioAlgo : Algo
         }
         */
 
-        // raise to a higher trailing stop for extreme outliers
+        // set stop losse
         var stopPrice = 0M;
-        var band = item.Klines.BollingerBands(x => x.ClosePrice, 20, 3).Last();
-        if (item.Ticker.ClosePrice >= band.High)
+
+        // raise to a loose trailing stop
+        stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.90M));
+
+        // raise to a higher trailing stop for extreme outliers
+        var band3 = item.Klines.BollingerBands(x => x.ClosePrice, 20, 3).Last();
+        if (item.Ticker.ClosePrice >= band3.High)
         {
             stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M));
         }
 
         // raise to a safety stop loss for reversals
-        var maxSafetyStop = item.Symbol.LowerPriceToTickSize(stats.AvgPrice * 1.01M);
-        var currentSafetyStop = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M);
-        var safetyStop = Math.Min(maxSafetyStop, currentSafetyStop);
-        stopPrice = Math.Max(stopPrice, safetyStop);
+        //var maxSafetyStop = item.Symbol.LowerPriceToTickSize(stats.AvgPrice * 1.01M);
+        //var currentSafetyStop = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M);
+        //var safetyStop = Math.Min(maxSafetyStop, currentSafetyStop);
+        //stopPrice = Math.Max(stopPrice, maxSafetyStop);
 
         // raise to a loose trailing stop loss
         //stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.9M));
@@ -401,8 +401,13 @@ public partial class PortfolioAlgo : Algo
         }
 
         // set the sell window price
-        var quantity = item.Symbol.LowerQuantityToLotStepSize(stats.TotalQuantity);
+        //var quantity = item.Symbol.LowerQuantityToLotStepSize(stats.TotalQuantity);
+
         var sellPrice = item.Symbol.LowerPriceToTickSize(stopPrice * (1 - _options.Selling.SellWindowRate));
+        if (!TryGetElectedQuantity(item, lots, sellPrice, out var quantity))
+        {
+            return Noop();
+        }
         var notional = item.Symbol.LowerPriceToTickSize(quantity * sellPrice);
 
         if (quantity < item.Symbol.Filters.LotSize.MinQuantity)
@@ -436,13 +441,11 @@ public partial class PortfolioAlgo : Algo
     private IAlgoCommand CreateMarketSell(SymbolData item, PositionStats stats, IEnumerable<PositionLot> lots)
     {
         // set the sell window price
-        var quantity = item.Symbol.LowerQuantityToLotStepSize(stats.TotalQuantity);
-        /*
+        //var quantity = item.Symbol.LowerQuantityToLotStepSize(stats.TotalQuantity);
         if (!TryGetElectedQuantity(item, lots, item.Ticker.ClosePrice, out var quantity))
         {
             return Noop();
         }
-        */
 
         var sellPrice = item.Ticker.ClosePrice;
         var notional = item.Symbol.LowerPriceToTickSize(quantity * sellPrice);

@@ -1,5 +1,4 @@
-﻿using Outcompute.Trader.Models;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Outcompute.Trader.Trading.Algorithms;
 

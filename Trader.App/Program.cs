@@ -6,6 +6,7 @@ using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
 using Orleans.Statistics;
+using Outcompute.Trader.Trading.Algorithms.Positions;
 using Serilog;
 using Serilog.Events;
 using System.Diagnostics.CodeAnalysis;
@@ -126,6 +127,10 @@ namespace Outcompute.Trader.App
                                 .AddDiscoveryAlgoType()
                                 .AddOscillatorAlgoType()
                                 .AddPortfolioAlgoType();
+                        })
+                        .Configure<AutoPositionResolverOptions>(options =>
+                        {
+                            context.Configuration.Bind("Trader:AutoPositionResolver", options);
                         });
                 })
                 .RunConsoleAsync();

@@ -335,6 +335,7 @@ public partial class PortfolioAlgo : Algo
             return Clear();
         }
 
+        /*
         // apply kdj rules
         var kdj = item.Klines.Kdj().TakeLast(2).ToArray();
 
@@ -350,6 +351,7 @@ public partial class PortfolioAlgo : Algo
         {
             return CreateMarketSell(item, stats, lots);
         }
+        */
 
         /*
         // place the default stop loss at the trend low band if possible
@@ -374,15 +376,32 @@ public partial class PortfolioAlgo : Algo
         // set stop losse
         var stopPrice = 0M;
 
+        // predict the next cross
+        var kline = item.Klines.Last();
+        if (item.Klines.SkipLast(1).TryGetKdjForDowncross(kline, out var cross))
+        {
+            stopPrice = item.Symbol.LowerPriceToTickSize(cross.Price);
+        }
+
         // raise to a loose trailing stop
         stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.90M));
 
-        // raise to a higher trailing stop for extreme outliers
+        // raise to a higher trailing stop for extreme band outliers
         var band3 = item.Klines.BollingerBands(x => x.ClosePrice, 20, 3).Last();
         if (item.Ticker.ClosePrice >= band3.High)
         {
             stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M));
         }
+
+        // raise to a higher trailing stop for extreme atr outliers
+        /*
+        var atr = item.Klines.AverageTrueRanges(14).Last() * 2;
+        var amplitude = kline.HighPrice - kline.LowPrice;
+        if (amplitude >= atr)
+        {
+            stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M));
+        }
+        */
 
         // raise to a safety stop loss for reversals
         //var maxSafetyStop = item.Symbol.LowerPriceToTickSize(stats.AvgPrice * 1.01M);

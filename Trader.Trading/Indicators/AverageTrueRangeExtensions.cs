@@ -2,7 +2,7 @@
 
 public static class AverageTrueRangeExtensions
 {
-    public static IEnumerable<decimal> AverageTrueRanges(this IEnumerable<Kline> source, int periods)
+    public static IEnumerable<decimal> AverageTrueRanges(this IEnumerable<Kline> source, int periods = 14)
     {
         Guard.IsNotNull(source, nameof(source));
         Guard.IsGreaterThan(periods, 0, nameof(periods));

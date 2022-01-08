@@ -222,4 +222,61 @@ public static class KdjExtensions
 
         return value != KdjValue.Empty;
     }
+
+    public static bool TryGetKdjForDowncross(this IEnumerable<Kline> source, Kline template, out KdjValue value, int periods = 9, int ma1 = 3, int ma2 = 3, int iterations = 100)
+    {
+        Guard.IsNotNull(source, nameof(source));
+        Guard.IsNotNull(template, nameof(template));
+
+        value = KdjValue.Empty;
+
+        // the last kdj must be in uptrend
+        var last = source.Kdj(periods, ma1, ma2).Last();
+        if (last.Side != KdjSide.Up)
+        {
+            return false;
+        }
+
+        // define the initial search range
+        var high = source.Max(x => x.ClosePrice) * 2M;
+        var low = source.Min(x => x.ClosePrice) / 2M;
+
+        for (var i = 0; i < iterations; i++)
+        {
+            var candidatePrice = (low + high) / 2;
+
+            var candidateKline = template with
+            {
+                ClosePrice = candidatePrice,
+                HighPrice = Math.Max(template.HighPrice, candidatePrice),
+                LowPrice = Math.Min(template.LowPrice, candidatePrice)
+            };
+
+            // probe halfway between the range
+            var candidateKdj = source.Append(candidateKline).Kdj(periods, ma1, ma2).Last();
+
+            // keep the best candidate so far
+            if (candidateKdj.Side == KdjSide.Down)
+            {
+                value = candidateKdj;
+            }
+
+            // adjust ranges to search for a better candidate
+            if (candidateKdj.Side == KdjSide.Up)
+            {
+                high = candidatePrice;
+            }
+            else if (candidateKdj.Side == KdjSide.Down)
+            {
+                low = candidatePrice;
+            }
+            else
+            {
+                value = candidateKdj;
+                return true;
+            }
+        }
+
+        return value != KdjValue.Empty;
+    }
 }

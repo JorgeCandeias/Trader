@@ -276,7 +276,8 @@ public partial class PortfolioAlgo : Algo
         }
 
         // calculate the buy price window from the stop
-        var buyPrice = item.Symbol.RaisePriceToTickSize(stopPrice * (1 + _options.Buying.BuyWindowRate));
+        //var buyPrice = item.Symbol.RaisePriceToTickSize(stopPrice * (1 + _options.Buying.BuyWindowRate));
+        var buyPrice = stopPrice;
 
         // define the quantity to buy
         var quantity = CalculateBuyQuantity(item, buyPrice, _options.Buying.BalanceRate);
@@ -313,7 +314,7 @@ public partial class PortfolioAlgo : Algo
             EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Market, null, quantity, null, null, null, BuyTag));
     }
 
-    private IAlgoCommand Sell(SymbolData item, IEnumerable<PositionLot> lots, PositionStats stats)
+    private IAlgoCommand Sell(SymbolData item, IList<PositionLot> lots, PositionStats stats)
     {
         IAlgoCommand Clear() => Sequence(
             CancelOpenOrders(item.Symbol, OrderSide.Sell, _options.Selling.SellWindowRate, SellTag),
@@ -405,19 +406,17 @@ public partial class PortfolioAlgo : Algo
         }
         */
 
-        // raise to a safety stop loss for reversals
-        //var maxSafetyStop = item.Symbol.LowerPriceToTickSize(stats.AvgPrice * 1.01M);
-        //var currentSafetyStop = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M);
-        //var safetyStop = Math.Min(maxSafetyStop, currentSafetyStop);
-        //stopPrice = Math.Max(stopPrice, maxSafetyStop);
-
-        // raise to a loose trailing stop loss
-        //stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.9M));
+        // raise to a safety stop loss for pump reversals
+        /*
+        var maxSafetyStop = item.Symbol.LowerPriceToTickSize(lots[0].AvgPrice * 1.01M);
+        var currentSafetyStop = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M);
+        var safetyStop = Math.Min(maxSafetyStop, currentSafetyStop);
+        stopPrice = Math.Max(stopPrice, safetyStop);
+        */
 
         // skip if we cant calculate the stop loss at all
         if (stopPrice <= 0)
         {
-            //LogCannotCalculateStopLoss(TypeName, Context.Name, item.Symbol.Name);
             return Noop();
         }
 

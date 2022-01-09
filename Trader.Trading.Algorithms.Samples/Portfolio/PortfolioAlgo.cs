@@ -218,6 +218,17 @@ public partial class PortfolioAlgo : Algo
             return Noop();
         }
 
+        // guard - must not have a sale on the same period to avoid indicator twitching on rebound
+        if (item.Trades.Count > 0)
+        {
+            var lastTrade = item.Trades[^1];
+            if (lastTrade.Time.AdjustToPrevious(Context.KlineInterval) == Context.TickTime.AdjustToPrevious(Context.KlineInterval)
+                && !lastTrade.IsBuyer)
+            {
+                return Noop();
+            }
+        }
+
         // guard - macd signal must be negative and decelerating to a reversal
         /*
         var macds = item.Klines.Macd(x => x.ClosePrice).TakeLast(3).ToArray();
@@ -239,12 +250,29 @@ public partial class PortfolioAlgo : Algo
 
         var stopPrice = decimal.MaxValue;
 
-        // predict the next cross
+        // get the current kdj to avoid late entry calculations
+        var kdj = item.Klines.Kdj().Last();
+
+        // predict the next extreme upcross
         var current = item.Klines[^1];
         var prev = item.Klines[^2];
-        if (item.Klines.SkipLast(1).TryGetKdjForUpcross(current, out var cross))
+        if (kdj.J < 0 && item.Klines.SkipLast(1).TryGetKdjForDivergenceUpcross(current, out var cross))
         {
-            stopPrice = item.Symbol.RaisePriceToTickSize(cross.Price);
+            stopPrice = Math.Min(stopPrice, item.Symbol.RaisePriceToTickSize(cross.Price));
+        }
+
+        // predict the next regular upcross
+        if (kdj.Side == KdjSide.Down && item.Klines.SkipLast(1).TryGetKdjForUpcross(current, out cross))
+        {
+            stopPrice = Math.Min(stopPrice, item.Symbol.RaisePriceToTickSize(cross.Price));
+
+            // guard - cross must be within the atr to prevent twitch buying at the top of a sudden pump
+            var atr = item.Klines.SkipLast(1).AverageTrueRanges().Last();
+            var diff = Math.Abs(prev.ClosePrice - cross.Price);
+            if (diff > atr)
+            {
+                return Noop();
+            }
         }
 
         /*
@@ -379,11 +407,17 @@ public partial class PortfolioAlgo : Algo
         // set stop loss
         var stopPrice = 0M;
 
-        // predict the next cross
+        // predict the next extreme cross
         var kline = item.Klines.Last();
-        if (item.Klines.SkipLast(1).TryGetKdjForDowncross(kline, out var cross))
+        if (item.Klines.SkipLast(1).TryGetKdjForDivergenceDowncross(kline, out var cross))
         {
-            stopPrice = item.Symbol.LowerPriceToTickSize(cross.Price);
+            stopPrice = Math.Max(stopPrice, item.Symbol.RaisePriceToTickSize(cross.Price));
+        }
+
+        // predict the next regular cross
+        else if (item.Klines.SkipLast(1).TryGetKdjForDowncross(kline, out cross))
+        {
+            stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(cross.Price));
         }
 
         // raise to a loose trailing stop

@@ -240,7 +240,9 @@ public partial class PortfolioAlgo : Algo
         var stopPrice = decimal.MaxValue;
 
         // predict the next cross
-        if (item.Klines.SkipLast(1).TryGetKdjForUpcross(item.Klines.Last(), out var cross))
+        var current = item.Klines[^1];
+        var prev = item.Klines[^2];
+        if (item.Klines.SkipLast(1).TryGetKdjForUpcross(current, out var cross))
         {
             stopPrice = item.Symbol.RaisePriceToTickSize(cross.Price);
         }
@@ -373,7 +375,7 @@ public partial class PortfolioAlgo : Algo
         }
         */
 
-        // set stop losse
+        // set stop loss
         var stopPrice = 0M;
 
         // predict the next cross

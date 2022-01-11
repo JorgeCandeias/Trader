@@ -207,33 +207,35 @@ public partial class PortfolioAlgo : Algo
         {
             return Clear();
         }
+
         // get the last klines
         var current = item.Klines[^1];
         var prev = item.Klines[^2];
 
         // guard - symbol must be trading above the average volume line to risk funds
+        /*
         var avl = item.Klines.VolumeWeightedAveragePrice().Last();
         if (current.LowPrice <= avl || prev.LowPrice <= avl || item.Ticker.LowPrice <= avl)
         {
             LogSymbolTradingUnderAvl(TypeName, Context.Name, item.Symbol.Name, avl, item.Symbol.QuoteAsset);
             return Clear();
         }
+        */
 
-        // guard - rsi set must be high enough to risk funds
+        // guard - super trend must be going upwards
+        var trends = item.Klines.SuperTrend().TakeLast(2).ToArray();
+        if (trends[0].Direction != SuperTrendDirection.Up || trends[1].Direction != SuperTrendDirection.Up)
+        {
+            return Clear();
+        }
+
+        // guard - rsi set must be high enough
+        /*
         var shortRsi = item.Klines.SkipLast(1).Rsi(x => x.ClosePrice, 6).Last();
         var medRsi = item.Klines.SkipLast(1).Rsi(x => x.ClosePrice, 12).Last();
         var longRsi = item.Klines.SkipLast(1).Rsi(x => x.ClosePrice, 24).Last();
         var rsiOK = shortRsi >= 20 && medRsi >= 20 && longRsi >= 20;
         if (!rsiOK)
-        {
-            return Clear();
-        }
-
-        /*
-        // guard - macd must be increasing
-        var macds = item.Klines.SkipLast(1).Macd(x => x.ClosePrice).TakeLast(2).ToArray();
-        var macdOK = macds[1].Histogram > macds[0].Histogram;
-        if (!macdOK)
         {
             return Clear();
         }
@@ -299,12 +301,14 @@ public partial class PortfolioAlgo : Algo
             return Noop();
         }
 
+        /*
         // only bother reserving funds if the ticker is close enough
         var distance = Math.Abs((stopPrice - item.Ticker.ClosePrice) / item.Ticker.ClosePrice);
         if (distance > _options.Buying.ActivationRate)
         {
             return Noop();
         }
+        */
 
         // calculate the buy price window from the stop
         //var buyPrice = item.Symbol.RaisePriceToTickSize(stopPrice * (1 + _options.Buying.BuyWindowRate));
@@ -374,6 +378,8 @@ public partial class PortfolioAlgo : Algo
 
         // predict the next regular cross only if on take profit
         var kline = item.Klines.Last();
+
+        /*
         if (item.Klines.SkipLast(1).TryGetKdjForDowncross(kline, out var cross))
         {
             var crossStop = item.Symbol.RaisePriceToTickSize(cross.Price);
@@ -385,18 +391,23 @@ public partial class PortfolioAlgo : Algo
                 stopPrice = Math.Max(stopPrice, targetStop);
             }
         }
+        */
 
         // raise to a loose trailing stop based on the atr
+        /*
         var atr = item.Klines.AverageTrueRanges().Last();
         var limit = atr * 2;
         stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice - limit));
+        */
 
         // raise to a higher trailing stop if we have reached take profit
+        /*
         var take = item.Symbol.RaisePriceToTickSize(stats.AvgPrice * 2);
         if (item.Ticker.ClosePrice >= take)
         {
             stopPrice = Math.Max(stopPrice, take);
         }
+        */
 
         /*
         // raise to a tight safety trailing stop up to the cost price only
@@ -407,43 +418,111 @@ public partial class PortfolioAlgo : Algo
         */
 
         // raise to a higher trailing stop for extreme band outliers
+        /*
         var band3 = item.Klines.BollingerBands(x => x.ClosePrice, 20, 3).Last();
         if (item.Ticker.ClosePrice >= band3.High)
         {
             stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M));
         }
+        */
 
         // raise to a higher trailing stop for extreme atr outliers
+        /*
         var amplitude = kline.HighPrice - kline.LowPrice;
         if (amplitude / atr >= 3 && item.Ticker.ClosePrice > stats.AvgPrice)
         {
             stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M));
         }
+        */
 
+        /*
         // raise to a higher trailing stop loss for high fixed bars
         var relativeAmplitude = kline.HighPrice / kline.LowPrice;
         if (relativeAmplitude >= 1.2M && item.Ticker.ClosePrice > stats.AvgPrice)
         {
             stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M));
         }
+        */
 
         // raise to the average value line as the ultimate stop loss
+        /*
         var avl = item.Klines.VolumeWeightedAveragePrice().Last();
         var maxAvlStop = item.Symbol.LowerPriceToTickSize(avl);
         var currentAvlStop = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M);
         var avlStop = Math.Min(maxAvlStop, currentAvlStop);
         stopPrice = Math.Max(stopPrice, avlStop);
+        */
+
+        // raise to a defensive stop on the super trend
+        /*
+        var trend = item.Klines.SkipLast(1).SuperTrend().Last();
+        if (trend.Direction == SuperTrendDirection.Up)
+        {
+            var lowTrendStop = item.Symbol.LowerPriceToTickSize(trend.Low);
+            stopPrice = Math.Max(stopPrice, lowTrendStop);
+        }
+        */
+
+        // raise to a climax trailing stop based on the super trend
+        /*
+        if (trend.Direction == SuperTrendDirection.Up)
+        {
+            var highTrendStop = item.Symbol.LowerPriceToTickSize(trend.Low * 2M);
+            if (item.Ticker.ClosePrice > highTrendStop)
+            {
+                stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M));
+            }
+        }
+        */
 
         // skip if we cant calculate the stop loss at all
+        /*
         if (stopPrice <= 0)
         {
             return Noop();
         }
+        */
 
         // set the sell window price
         var quantity = item.Symbol.LowerQuantityToLotStepSize(stats.TotalQuantity);
+        var trends = item.Klines.SuperTrend().TakeLast(2).ToArray();
+        var sellPrice = 0M;
 
-        var sellPrice = item.Symbol.LowerPriceToTickSize(stopPrice * (1 - _options.Selling.SellWindowRate));
+        // guard - if the super trend reversed then exit immediately
+        if (trends[0].Direction == SuperTrendDirection.Down)
+        {
+            //var breakPrice = item.Symbol.RaisePriceToTickSize(stats.AvgPrice);
+            //sellPrice = Math.Max(breakPrice, item.Ticker.ClosePrice);
+
+            return Sequence(
+                CancelOpenOrders(item.Symbol, OrderSide.Sell),
+                MarketSell(item.Symbol, quantity, SellTag));
+        }
+        else
+        {
+            // heuristic - find top 10 historical peaks within the last relevant periods and keep the lowest one
+            var spread = item.Klines
+                .Zip(item.Klines.SuperTrend())
+                .TakeLast(365)
+                .Where(x => x.Second.Direction == SuperTrendDirection.Up)
+                .Select(x => x.First.HighPrice / x.Second.Low)
+                .OrderByDescending(x => x)
+                .Take(10)
+                .DefaultIfEmpty(0)
+                .Last();
+
+            // use a default if we cant find a heuristic
+            // this should never happen as buys only happen after uptrend break
+            if (spread <= 0)
+            {
+                spread = trends[1].Low * 2;
+            }
+
+            // otherwise place the target sell based on the current super trend
+            sellPrice = item.Symbol.LowerPriceToTickSize(trends[1].Low * spread);
+        }
+
+        //var sellPrice = item.Symbol.LowerPriceToTickSize(stopPrice * (1 - _options.Selling.SellWindowRate));
         /*
         if (!TryGetElectedQuantity(item, lots, sellPrice, out var quantity))
         {
@@ -477,7 +556,8 @@ public partial class PortfolioAlgo : Algo
         // create the command sequence for the exchange
         return Sequence(
             EnsureSpotBalance(item.Symbol.BaseAsset, required, _options.UseSavings, _options.UseSwapPools),
-            EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, quantity, null, sellPrice, stopPrice, SellTag));
+            //EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, quantity, null, sellPrice, stopPrice, SellTag)),
+            EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, sellPrice, null, SellTag));
     }
 
     private IAlgoCommand CreateMarketSell(SymbolData item, PositionStats stats, IEnumerable<PositionLot> lots)

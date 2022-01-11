@@ -207,82 +207,85 @@ public partial class PortfolioAlgo : Algo
         {
             return Clear();
         }
+        // get the last klines
+        var current = item.Klines[^1];
+        var prev = item.Klines[^2];
+
+        // guard - symbol must be trading above the average volume line to risk funds
+        var avl = item.Klines.VolumeWeightedAveragePrice().Last();
+        if (current.LowPrice <= avl || prev.LowPrice <= avl || item.Ticker.LowPrice <= avl)
+        {
+            LogSymbolTradingUnderAvl(TypeName, Context.Name, item.Symbol.Name, avl, item.Symbol.QuoteAsset);
+            return Clear();
+        }
 
         // guard - rsi set must be high enough to risk funds
-        var shortRsi = item.Klines.Rsi(x => x.ClosePrice, 6).Last();
-        var medRsi = item.Klines.Rsi(x => x.ClosePrice, 12).Last();
-        var longRsi = item.Klines.Rsi(x => x.ClosePrice, 24).Last();
+        var shortRsi = item.Klines.SkipLast(1).Rsi(x => x.ClosePrice, 6).Last();
+        var medRsi = item.Klines.SkipLast(1).Rsi(x => x.ClosePrice, 12).Last();
+        var longRsi = item.Klines.SkipLast(1).Rsi(x => x.ClosePrice, 24).Last();
         var rsiOK = shortRsi >= 20 && medRsi >= 20 && longRsi >= 20;
         if (!rsiOK)
         {
-            return Noop();
+            return Clear();
         }
 
-        // guard - must not have a sale on the same period to avoid indicator twitching on rebound
-        if (item.Trades.Count > 0)
-        {
-            var lastTrade = item.Trades[^1];
-            if (lastTrade.Time.AdjustToPrevious(Context.KlineInterval) == Context.TickTime.AdjustToPrevious(Context.KlineInterval)
-                && !lastTrade.IsBuyer)
-            {
-                return Noop();
-            }
-        }
-
-        // guard - macd signal must be negative and decelerating to a reversal
         /*
-        var macds = item.Klines.Macd(x => x.ClosePrice).TakeLast(3).ToArray();
-        if (macds.Length != 3)
-        {
-            return Noop();
-        }
-        var macNegative = macds[0].Histogram < 0 && macds[1].Histogram < 0 && macds[2].Histogram < 0;
-        var macDecreasing = macds[0].Histogram > macds[1].Histogram && macds[1].Histogram > macds[2].Histogram;
-        var macDiff1 = Math.Abs(macds[1].Histogram - macds[0].Histogram);
-        var macDiff2 = Math.Abs(macds[2].Histogram - macds[1].Histogram);
-        var macDecelerating = macDiff2 < macDiff1;
-        var macdOK = macNegative && macDecreasing && macDecelerating;
+        // guard - macd must be increasing
+        var macds = item.Klines.SkipLast(1).Macd(x => x.ClosePrice).TakeLast(2).ToArray();
+        var macdOK = macds[1].Histogram > macds[0].Histogram;
         if (!macdOK)
         {
-            return Noop();
+            return Clear();
         }
         */
 
         var stopPrice = decimal.MaxValue;
 
-        // get the current kdj to avoid late entry calculations
-        var kdj = item.Klines.Kdj().Last();
-
-        // predict the next extreme upcross
-        var current = item.Klines[^1];
-        var prev = item.Klines[^2];
-        if (kdj.J < 0 && item.Klines.SkipLast(1).TryGetKdjForDivergenceUpcross(current, out var cross))
+        // guard - kdj must have gone through an oversold state
+        var oversold = item.Klines.SkipLast(1).Kdj().Reverse().TakeWhile(x => x.Side == KdjSide.Down).Any(x => x.J <= 20);
+        if (!oversold)
         {
-            stopPrice = Math.Min(stopPrice, item.Symbol.RaisePriceToTickSize(cross.Price));
+            return Clear();
         }
 
-        // predict the next regular upcross
-        if (kdj.Side == KdjSide.Down && item.Klines.SkipLast(1).TryGetKdjForUpcross(current, out cross))
+        /*
+        // predict the next extreme upcross
+        if (kdj.J < 0 && item.Klines.SkipLast(1).TryGetKdjForDivergenceUpcross(current, out var cross))
         {
-            stopPrice = Math.Min(stopPrice, item.Symbol.RaisePriceToTickSize(cross.Price));
+            var target = item.Symbol.RaisePriceToTickSize(cross.Price);
+            if (item.Ticker.ClosePrice < target)
+            {
+                stopPrice = Math.Min(stopPrice, target);
+            }
 
             // guard - cross must be within the atr to prevent twitch buying at the top of a sudden pump
-            var atr = item.Klines.SkipLast(1).AverageTrueRanges().Last();
+            var atr = item.Klines.SkipLast(1).AverageTrueRanges().Last() / 2;
             var diff = Math.Abs(prev.ClosePrice - cross.Price);
             if (diff > atr)
             {
                 return Noop();
             }
         }
-
-        /*
-        // detect a kdj cross
-        var kdj = item.Klines.Kdj().TakeLast(2).ToArray();
-        if (kdj.Length == 2 && kdj[0].Side == KdjSide.Down && kdj[1].Side == KdjSide.Up)
-        {
-            return CreateMarketBuy(item);
-        }
         */
+
+        // predict the next regular upcross
+        var kdj = item.Klines.Kdj().Last();
+        if (kdj.Side == KdjSide.Down && item.Klines.SkipLast(1).TryGetKdjForUpcross(current, out var cross))
+        {
+            var target = item.Symbol.RaisePriceToTickSize(cross.Price);
+            if (item.Ticker.ClosePrice < target)
+            {
+                stopPrice = Math.Min(stopPrice, target);
+            }
+
+            // guard - cross must be within the atr to prevent twitch buying at the top of a sudden pump
+            var atr = item.Klines.SkipLast(1).AverageTrueRanges().Last() / 2;
+            var diff = Math.Abs(prev.ClosePrice - cross.Price);
+            if (diff > atr)
+            {
+                return Noop();
+            }
+        }
 
         // skip if no stop buy can be calculated
         if (stopPrice == decimal.MaxValue)
@@ -366,62 +369,42 @@ public partial class PortfolioAlgo : Algo
             return Clear();
         }
 
-        /*
-        // apply kdj rules
-        var kdj = item.Klines.Kdj().TakeLast(2).ToArray();
-
-        // detect a kdj peak cross
-        if (kdj[0].Side == KdjSide.Up && kdj[1].Side == KdjSide.Up &&
-            kdj[0].J > 100 && kdj[1].J < 100)
-        {
-            return CreateMarketSell(item, stats, lots);
-        }
-
-        // detect a kdj normal cross
-        if (kdj[0].Side == KdjSide.Up && kdj[1].Side == KdjSide.Down)
-        {
-            return CreateMarketSell(item, stats, lots);
-        }
-        */
-
-        /*
-        // place the default stop loss at the trend low band if possible
-        var stopPrice = 0M;
-        var trend = item.Klines.SkipLast(1).SuperTrend().Last();
-        if (trend.Direction == SuperTrendDirection.Up)
-        {
-            stopPrice = item.Symbol.LowerPriceToTickSize(trend.Low);
-        }
-        */
-
-        /*
-        // attempt to identify the price needed for downwards cross on the current period
-        // only apply this rule if we dont have buys in the same period to avoid order twitching
-        if (item.Klines.SkipLast(1).TryGetMacdForDowncross(x => x.ClosePrice, out var cross))
-        {
-            // raise the stop loss price to the cross price so we exit earlier
-            stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(cross.Price));
-        }
-        */
-
         // set stop loss
         var stopPrice = 0M;
 
-        // predict the next extreme cross
+        // predict the next regular cross only if on take profit
         var kline = item.Klines.Last();
-        if (item.Klines.SkipLast(1).TryGetKdjForDivergenceDowncross(kline, out var cross))
+        if (item.Klines.SkipLast(1).TryGetKdjForDowncross(kline, out var cross))
         {
-            stopPrice = Math.Max(stopPrice, item.Symbol.RaisePriceToTickSize(cross.Price));
+            var crossStop = item.Symbol.RaisePriceToTickSize(cross.Price);
+            var takeStop = item.Symbol.RaisePriceToTickSize(stats.AvgPrice * 2);
+            var targetStop = Math.Max(crossStop, takeStop);
+
+            if (item.Ticker.ClosePrice > targetStop)
+            {
+                stopPrice = Math.Max(stopPrice, targetStop);
+            }
         }
 
-        // predict the next regular cross
-        else if (item.Klines.SkipLast(1).TryGetKdjForDowncross(kline, out cross))
+        // raise to a loose trailing stop based on the atr
+        var atr = item.Klines.AverageTrueRanges().Last();
+        var limit = atr * 2;
+        stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice - limit));
+
+        // raise to a higher trailing stop if we have reached take profit
+        var take = item.Symbol.RaisePriceToTickSize(stats.AvgPrice * 2);
+        if (item.Ticker.ClosePrice >= take)
         {
-            stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(cross.Price));
+            stopPrice = Math.Max(stopPrice, take);
         }
 
-        // raise to a loose trailing stop
-        stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.90M));
+        /*
+        // raise to a tight safety trailing stop up to the cost price only
+        var maxSafetyStop = item.Symbol.LowerPriceToTickSize(stats.AvgPrice * 1.02M);
+        var currentSafetyStop = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M);
+        var safetyStop = Math.Min(maxSafetyStop, currentSafetyStop);
+        stopPrice = Math.Max(stopPrice, safetyStop);
+        */
 
         // raise to a higher trailing stop for extreme band outliers
         var band3 = item.Klines.BollingerBands(x => x.ClosePrice, 20, 3).Last();
@@ -431,22 +414,25 @@ public partial class PortfolioAlgo : Algo
         }
 
         // raise to a higher trailing stop for extreme atr outliers
-        /*
-        var atr = item.Klines.AverageTrueRanges(14).Last() * 2;
         var amplitude = kline.HighPrice - kline.LowPrice;
-        if (amplitude >= atr)
+        if (amplitude / atr >= 3 && item.Ticker.ClosePrice > stats.AvgPrice)
         {
             stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M));
         }
-        */
 
-        // raise to a safety stop loss for pump reversals
-        /*
-        var maxSafetyStop = item.Symbol.LowerPriceToTickSize(lots[0].AvgPrice * 1.01M);
-        var currentSafetyStop = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M);
-        var safetyStop = Math.Min(maxSafetyStop, currentSafetyStop);
-        stopPrice = Math.Max(stopPrice, safetyStop);
-        */
+        // raise to a higher trailing stop loss for high fixed bars
+        var relativeAmplitude = kline.HighPrice / kline.LowPrice;
+        if (relativeAmplitude >= 1.2M && item.Ticker.ClosePrice > stats.AvgPrice)
+        {
+            stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M));
+        }
+
+        // raise to the average value line as the ultimate stop loss
+        var avl = item.Klines.VolumeWeightedAveragePrice().Last();
+        var maxAvlStop = item.Symbol.LowerPriceToTickSize(avl);
+        var currentAvlStop = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M);
+        var avlStop = Math.Min(maxAvlStop, currentAvlStop);
+        stopPrice = Math.Max(stopPrice, avlStop);
 
         // skip if we cant calculate the stop loss at all
         if (stopPrice <= 0)
@@ -455,13 +441,15 @@ public partial class PortfolioAlgo : Algo
         }
 
         // set the sell window price
-        //var quantity = item.Symbol.LowerQuantityToLotStepSize(stats.TotalQuantity);
+        var quantity = item.Symbol.LowerQuantityToLotStepSize(stats.TotalQuantity);
 
         var sellPrice = item.Symbol.LowerPriceToTickSize(stopPrice * (1 - _options.Selling.SellWindowRate));
+        /*
         if (!TryGetElectedQuantity(item, lots, sellPrice, out var quantity))
         {
             return Noop();
         }
+        */
         var notional = item.Symbol.LowerPriceToTickSize(quantity * sellPrice);
 
         if (quantity < item.Symbol.Filters.LotSize.MinQuantity)
@@ -894,6 +882,9 @@ public partial class PortfolioAlgo : Algo
 
     [LoggerMessage(95, LogLevel.Warning, "{Type} {Name} {Symbol} cannot calculate stop loss with current rules")]
     private partial void LogCannotCalculateStopLoss(string type, string name, string symbol);
+
+    [LoggerMessage(96, LogLevel.Warning, "{Type} {Name} {Symbol} not buying asset trading below the AVL of {AVL:F8} {Quote}")]
+    private partial void LogSymbolTradingUnderAvl(string type, string name, string symbol, decimal avl, string quote);
 
     #endregion Logging
 }

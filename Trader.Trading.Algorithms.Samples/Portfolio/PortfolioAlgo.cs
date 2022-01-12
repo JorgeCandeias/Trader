@@ -296,7 +296,7 @@ public partial class PortfolioAlgo : Algo
         }
 
         // skip if there is already a buy a lower price
-        if (item.Orders.Open.Any(x => x.Side == OrderSide.Buy && x.StopPrice < stopPrice))
+        if (item.Orders.Open.Any(x => x.Side == OrderSide.Buy && x.StopPrice <= stopPrice))
         {
             return Noop();
         }
@@ -321,7 +321,7 @@ public partial class PortfolioAlgo : Algo
         var notional = quantity * buyPrice;
 
         // define the notional to free
-        var locked = item.Orders.Open.Where(x => x.Side == OrderSide.Sell).Sum(x => x.OriginalQuantity);
+        var locked = item.Orders.Open.Where(x => x.Side == OrderSide.Buy).Sum(x => x.OriginalQuantity);
         var required = Math.Max(notional - locked, 0);
 
         // place the order
@@ -372,12 +372,6 @@ public partial class PortfolioAlgo : Algo
         {
             return Clear();
         }
-
-        // set stop loss
-        var stopPrice = 0M;
-
-        // predict the next regular cross only if on take profit
-        var kline = item.Klines.Last();
 
         /*
         if (item.Klines.SkipLast(1).TryGetKdjForDowncross(kline, out var cross))
@@ -483,44 +477,74 @@ public partial class PortfolioAlgo : Algo
         }
         */
 
-        // set the sell window price
+        // set a default sell price
+        var notional = 0M;
+        var sellPrice = item.Symbol.RaisePriceToTickSize(stats.AvgPrice * 1.10M);
         var quantity = item.Symbol.LowerQuantityToLotStepSize(stats.TotalQuantity);
-        var trends = item.Klines.SuperTrend().TakeLast(2).ToArray();
-        var sellPrice = 0M;
 
-        // guard - if the super trend reversed then exit immediately
+        // take any current sell orders into account for spot balance release
+        var locked = item.Orders.Open.Where(x => x.Side == OrderSide.Sell).Sum(x => x.OriginalQuantity);
+        var required = Math.Max(quantity - locked, 0);
+
+        var trends = item.Klines.SuperTrend().TakeLast(2).ToArray();
+
+        // guard - if the super trend reversed then place a tight trailing stop loss to mitigate losses by allowing for bump the day after
         if (trends[0].Direction == SuperTrendDirection.Down)
         {
-            //var breakPrice = item.Symbol.RaisePriceToTickSize(stats.AvgPrice);
-            //sellPrice = Math.Max(breakPrice, item.Ticker.ClosePrice);
+            var stopPrice = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M);
 
-            return Sequence(
-                CancelOpenOrders(item.Symbol, OrderSide.Sell),
-                MarketSell(item.Symbol, quantity, SellTag));
-        }
-        else
-        {
-            // heuristic - find top 10 historical peaks within the last relevant periods and keep the lowest one
-            var spread = item.Klines
-                .Zip(item.Klines.SuperTrend())
-                .TakeLast(365)
-                .Where(x => x.Second.Direction == SuperTrendDirection.Up)
-                .Select(x => x.First.HighPrice / x.Second.Low)
-                .OrderByDescending(x => x)
-                .Take(10)
-                .DefaultIfEmpty(0)
-                .Last();
+            sellPrice = item.Symbol.LowerPriceToTickSize(stopPrice * 0.99M);
+            notional = item.Symbol.LowerPriceToTickSize(quantity * sellPrice);
 
-            // use a default if we cant find a heuristic
-            // this should never happen as buys only happen after uptrend break
-            if (spread <= 0)
+            if (quantity < item.Symbol.Filters.LotSize.MinQuantity)
             {
-                spread = trends[1].Low * 2;
+                LogCannotPlaceSellOrderWithQuantityUnderMin(TypeName, Context.Name, item.Symbol.Name, quantity, item.Symbol.BaseAsset, item.Symbol.Filters.LotSize.MinQuantity);
+                return Noop();
             }
 
-            // otherwise place the target sell based on the current super trend
-            sellPrice = item.Symbol.LowerPriceToTickSize(trends[1].Low * spread);
+            if (notional < item.Symbol.Filters.MinNotional.MinNotional)
+            {
+                LogCannotPlaceSellOrderWithNotionalUnderMin(TypeName, Context.Name, item.Symbol.Name, notional, item.Symbol.QuoteAsset, item.Symbol.Filters.MinNotional.MinNotional);
+                return Noop();
+            }
+
+            if (item.Orders.Open.Any(x => x.Side == OrderSide.Sell && x.Type == OrderType.StopLossLimit && x.StopPrice >= stopPrice && x.Price <= item.Ticker.ClosePrice))
+            {
+                return Noop();
+            }
+
+            return Sequence(
+                EnsureSpotBalance(item.Symbol.BaseAsset, required, _options.UseSavings, _options.UseSwapPools),
+                EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, quantity, null, sellPrice, stopPrice, SellTag));
         }
+
+        // heuristic - find top 10 historical peaks within the last relevant periods and keep the lowest one
+        var spread = item.Klines
+            .Skip(1)
+            .Zip(item.Klines.SuperTrend())
+            .TakeLast(365)
+            .Where(x => x.Second.Direction == SuperTrendDirection.Up)
+            .Select(x => x.First.HighPrice / x.Second.Low)
+            .OrderByDescending(x => x)
+            .Take(10)
+            .DefaultIfEmpty(0)
+            .Last();
+
+        // use a default spread if we cant find a heuristic
+        // this should never happen as buys only happen after uptrend break
+        if (spread <= 0)
+        {
+            spread = 2M;
+        }
+
+        // clamp the spread
+        else
+        {
+            spread = Math.Min(spread, 2M);
+        }
+
+        // otherwise place the target sell based on the current super trend
+        sellPrice = Math.Max(sellPrice, item.Symbol.RaisePriceToTickSize(trends[0].Low * spread));
 
         //var sellPrice = item.Symbol.LowerPriceToTickSize(stopPrice * (1 - _options.Selling.SellWindowRate));
         /*
@@ -529,7 +553,7 @@ public partial class PortfolioAlgo : Algo
             return Noop();
         }
         */
-        var notional = item.Symbol.LowerPriceToTickSize(quantity * sellPrice);
+        notional = item.Symbol.LowerPriceToTickSize(quantity * sellPrice);
 
         if (quantity < item.Symbol.Filters.LotSize.MinQuantity)
         {
@@ -543,15 +567,13 @@ public partial class PortfolioAlgo : Algo
             return Noop();
         }
 
-        // skip if there is already a stop at a higher price
+        // skip if there is already an order at the same price
+        /*
         if (item.Orders.Open.Any(x => x.Side == OrderSide.Sell && x.StopPrice > stopPrice))
         {
             return Noop();
         }
-
-        // take any current sell orders into account for spot balance release
-        var locked = item.Orders.Open.Where(x => x.Side == OrderSide.Sell).Sum(x => x.OriginalQuantity);
-        var required = Math.Max(quantity - locked, 0);
+        */
 
         // create the command sequence for the exchange
         return Sequence(

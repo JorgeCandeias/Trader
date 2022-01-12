@@ -81,13 +81,13 @@ internal partial class CreateOrderExecutor : IAlgoCommandExecutor<CreateOrderCom
 
         if (free < required)
         {
-            LogCannotPlaceOrderWithoutFreeQuantity(TypeName, context.Name, command.Type, command.Side, required, asset, free);
+            LogCannotPlaceOrderWithoutFreeQuantity(TypeName, context.Name, command.Symbol.Name, command.Type, command.Side, required, asset, free);
             return;
         }
 
         var watch = Stopwatch.StartNew();
 
-        LogPlacingOrder(TypeName, command.Symbol.Name, command.Type, command.Side, command.Quantity, command.Notional, command.Symbol.BaseAsset, command.Price, command.Symbol.QuoteAsset, command.Notional.HasValue ? command.Notional : command.Quantity * command.Price);
+        LogPlacingOrder(TypeName, context.Name, command.Symbol.Name, command.Type, command.Side, command.Quantity, command.Notional, command.Symbol.BaseAsset, command.Price, command.Symbol.QuoteAsset, command.Notional.HasValue ? command.Notional : command.Quantity * command.Price);
 
         OrderResult created;
         try
@@ -98,7 +98,7 @@ internal partial class CreateOrderExecutor : IAlgoCommandExecutor<CreateOrderCom
         }
         catch (TraderException ex)
         {
-            LogFailedToCreateOrder(ex, TypeName, context.Name);
+            LogFailedToCreateOrder(ex, TypeName, context.Name, command.Symbol.Name);
             return;
         }
 
@@ -106,22 +106,22 @@ internal partial class CreateOrderExecutor : IAlgoCommandExecutor<CreateOrderCom
             .SetOrderAsync(created, command.StopPrice.GetValueOrDefault(0), 0m, command.Notional.GetValueOrDefault(0), cancellationToken)
             .ConfigureAwait(false);
 
-        LogPlacedOrder(TypeName, command.Symbol.Name, command.Type, command.Side, command.Quantity, command.Notional, command.Symbol.BaseAsset, command.Price, command.Symbol.QuoteAsset, command.Notional.HasValue ? command.Notional : command.Quantity * command.Price, watch.ElapsedMilliseconds);
+        LogPlacedOrder(TypeName, context.Name, command.Symbol.Name, command.Type, command.Side, command.Quantity, command.Notional, command.Symbol.BaseAsset, command.Price, command.Symbol.QuoteAsset, command.Notional.HasValue ? command.Notional : command.Quantity * command.Price, watch.ElapsedMilliseconds);
     }
 
     #region Logging
 
-    [LoggerMessage(1, LogLevel.Information, "{Type} {Name} placing {OrderType} {OrderSide} order with (Quantity: {Quantity:F8} {Asset}, Notional: {Notional:F8} {Quote}, Price: {Price:F8} {Quote}, Total: {Total:F8} {Quote})")]
-    private partial void LogPlacingOrder(string type, string name, OrderType orderType, OrderSide orderSide, decimal? quantity, decimal? notional, string asset, decimal? price, string quote, decimal? total);
+    [LoggerMessage(1, LogLevel.Information, "{Type} {Name} {Symbol} placing {OrderType} {OrderSide} order with (Quantity: {Quantity:F8} {Asset}, Notional: {Notional:F8} {Quote}, Price: {Price:F8} {Quote}, Total: {Total:F8} {Quote})")]
+    private partial void LogPlacingOrder(string type, string name, string symbol, OrderType orderType, OrderSide orderSide, decimal? quantity, decimal? notional, string asset, decimal? price, string quote, decimal? total);
 
-    [LoggerMessage(2, LogLevel.Information, "{Type} {Name} placed {OrderType} {OrderSide} order with (Quantity: {Quantity:F8} {Asset}, Notional: {Notional:F8} {Quote}, Price: {Price:F8} {Quote}, Total: {Total:F8} {Quote}) in {ElapsedMs}ms")]
-    private partial void LogPlacedOrder(string type, string name, OrderType orderType, OrderSide orderSide, decimal? quantity, decimal? notional, string asset, decimal? price, string quote, decimal? total, long elapsedMs);
+    [LoggerMessage(2, LogLevel.Information, "{Type} {Name} {Symbol} placed {OrderType} {OrderSide} order with (Quantity: {Quantity:F8} {Asset}, Notional: {Notional:F8} {Quote}, Price: {Price:F8} {Quote}, Total: {Total:F8} {Quote}) in {ElapsedMs}ms")]
+    private partial void LogPlacedOrder(string type, string name, string symbol, OrderType orderType, OrderSide orderSide, decimal? quantity, decimal? notional, string asset, decimal? price, string quote, decimal? total, long elapsedMs);
 
-    [LoggerMessage(3, LogLevel.Error, "{Type} {Name} cannot place {OrderType} {OrderSide} order requiring {Quantity:F8} {Asset} because there is only {Free:F8} {Asset} free")]
-    private partial void LogCannotPlaceOrderWithoutFreeQuantity(string type, string name, OrderType orderType, OrderSide orderSide, decimal quantity, string asset, decimal free);
+    [LoggerMessage(3, LogLevel.Error, "{Type} {Name} {Symbol} cannot place {OrderType} {OrderSide} order requiring {Quantity:F8} {Asset} because there is only {Free:F8} {Asset} free")]
+    private partial void LogCannotPlaceOrderWithoutFreeQuantity(string type, string name, string symbol, OrderType orderType, OrderSide orderSide, decimal quantity, string asset, decimal free);
 
-    [LoggerMessage(4, LogLevel.Error, "{Type} {Name} failed to create order")]
-    private partial void LogFailedToCreateOrder(Exception ex, string type, string name);
+    [LoggerMessage(4, LogLevel.Error, "{Type} {Name} {Symbol} failed to create order")]
+    private partial void LogFailedToCreateOrder(Exception ex, string type, string name, string symbol);
 
     #endregion Logging
 }

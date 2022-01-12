@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
 
 namespace Outcompute.Trader.Trading.Commands.CreateOrder;
@@ -21,6 +20,7 @@ public class CreateOrderCommand : IAlgoCommand
     internal CreateOrderCommand(Symbol symbol, OrderType type, OrderSide side, TimeInForce? timeInForce, decimal? quantity, decimal? notional, decimal? price, decimal? stopPrice, string? tag)
     {
         Guard.IsNotNull(symbol, nameof(symbol));
+        Guard.IsNotNullOrEmpty(symbol.Name, nameof(symbol));
 
         switch (type)
         {

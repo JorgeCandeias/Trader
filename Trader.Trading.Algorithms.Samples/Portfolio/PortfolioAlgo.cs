@@ -218,17 +218,17 @@ public partial class PortfolioAlgo : Algo
 
         // rmi must not be maxed
         var rmi = item.Klines.Rmi(x => x.ClosePrice).TakeLast(2).ToList();
-        if (rmi[^2] >= 70)
+        if (rmi[^2] >= 30)
         {
             return Clear();
         }
-        if (rmi[^1] >= 70)
+        if (rmi[^1] >= 30)
         {
             return Noop();
         }
 
         // predict the next rmi entry
-        if (item.Klines.TryGetPriceForRmi(x => x.ClosePrice, 70, out var price))
+        if (item.Klines.TryGetPriceForRmi(x => x.ClosePrice, 30, out var price))
         {
             var rmiStop = item.Symbol.LowerPriceToTickSize(price);
 
@@ -389,13 +389,13 @@ public partial class PortfolioAlgo : Algo
         {
             return Noop();
         }
+        */
 
         // skip if there is already a buy a lower price
         if (item.Orders.Open.Any(x => x.Side == OrderSide.Buy && x.StopPrice <= stopPrice))
         {
             return Noop();
         }
-        */
 
         // calculate the buy price window from the stop
         //var buyPrice = item.Symbol.RaisePriceToTickSize(stopPrice * (1 + _options.Buying.BuyWindowRate));

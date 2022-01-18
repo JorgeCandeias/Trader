@@ -214,18 +214,126 @@ public partial class PortfolioAlgo : Algo
             return Clear();
         }
 
-        // guard - detect sideways market
-        var bol = item.Klines.BollingerBands(x => x.ClosePrice).Last();
-        var diff = (bol.High - bol.Low) / bol.High;
+        var stopPrice = decimal.MaxValue;
 
-        // guard - super trend must be going upwards
+        // rmi must not be maxed
+        var rmi = item.Klines.Rmi(x => x.ClosePrice).TakeLast(2).ToList();
+        if (rmi[^2] >= 70)
+        {
+            return Clear();
+        }
+        if (rmi[^1] >= 70)
+        {
+            return Noop();
+        }
+
+        // predict the next rmi entry
+        if (item.Klines.TryGetPriceForRmi(x => x.ClosePrice, 70, out var price))
+        {
+            var rmiStop = item.Symbol.LowerPriceToTickSize(price);
+
+            // guard - ensure jump is within the atr
+            var atr = item.Klines.AverageTrueRanges().Last();
+            var prev = item.Klines[^2];
+            if (prev.ClosePrice + atr < rmiStop)
+            {
+                return Noop();
+            }
+
+            // guard - ensure the ticker is not above the rmi
+            if (item.Ticker.ClosePrice >= rmiStop)
+            {
+                return Noop();
+            }
+
+            stopPrice = Math.Min(stopPrice, rmiStop);
+        }
+
+        // guard - rmi must not be negative
         /*
-        var trend = item.Klines.SkipLast(1).SuperTrend().Last();
-        if (trend.Direction != SuperTrendDirection.Up)
+        var rmi = item.Klines.Rmi(x => x.ClosePrice).Last();
+        if (rmi <= 30)
         {
             return Clear();
         }
         */
+
+        // predict the next upcross
+        /*
+        var current = item.Klines[^1];
+        if (item.Klines.SkipLast(1).TryGetKdjForUpcross(current, out var cross))
+        {
+            var target = item.Symbol.LowerPriceToTickSize(cross.Price);
+            if (item.Ticker.ClosePrice < target)
+            {
+                stopPrice = Math.Min(stopPrice, target);
+            }
+
+            // guard - cross must happen on the oversold band
+            if (cross.K > 20 || cross.D > 20 || cross.J > 20)
+            {
+                return Clear();
+            }
+        }
+        */
+
+        // stop if no stop can be discovered
+        if (stopPrice == decimal.MaxValue)
+        {
+            return Noop();
+        }
+
+        // guard - price must under the bollinger band
+        /*
+        var boll = item.Klines.BollingerBands(x => x.ClosePrice).Last();
+        if (item.Ticker.ClosePrice >= boll.Low)
+        {
+            return Clear();
+        }
+        */
+
+        // calculate the trailing stop
+        //var stopPrice = item.Symbol.RaisePriceToTickSize(item.Ticker.ClosePrice * 1.01M);
+
+        // skip if there is already a stop at a lower price
+        /*
+        if (item.Orders.Open.Any(x => x.Side == OrderSide.Buy && x.Type == OrderType.StopLossLimit && x.StopPrice < stopPrice))
+        {
+            return Noop();
+        }
+        */
+
+        // guard - sar must be positive
+        /*
+        var sar = item.Klines.SkipLast(1).ParabolicStopAndReverse().Last();
+        if (sar.Direction != PsarDirection.Long)
+        {
+            return Clear();
+        }
+        */
+
+        // guard - super trend must be going upwards
+        /*
+        var trends = item.Klines.SuperTrend().ToList();
+        if (trends[^2].Direction != SuperTrendDirection.Up)
+        {
+            return Clear();
+        }
+        */
+
+        // guard - must not have a kdj entry since start of super trend
+        /*
+        var kdjs = item.Klines.Kdj().ToList();
+        var trendLag = trends.AsEnumerable().Reverse().Skip(1).TakeWhile(x => x.Direction == SuperTrendDirection.Up).Count();
+        var kdjLag = kdjs.AsEnumerable().Reverse().Skip(1).TakeWhile(x => x.Cross != KdjCross.Up).Count();
+        if (kdjLag < trendLag)
+        {
+            return Clear();
+        }
+        */
+
+        // guard - detect sideways market
+        //var roc = item.Klines.PriceRateOfChange();
 
         // guard - parabolic sars must be long
         /*
@@ -236,56 +344,46 @@ public partial class PortfolioAlgo : Algo
         }
         */
 
-        var stopPrice = decimal.MaxValue;
-
         // guard - get the last kdj lower wave
-        var kdjs = item.Klines.Kdj().Reverse().TakeWhile(x => x.Side == KdjSide.Down).Reverse().ToList();
-        if (kdjs.Count < 2)
+        /*
+        var wave = item.Klines.Kdj().Reverse().TakeWhile(x => x.Side == KdjSide.Down).Reverse().ToList();
+        if (wave.Count < 2)
         {
             return Clear();
         }
+        */
 
+        /*
         // guard - kdj must have gone through enough divergence
         var extreme2 = kdjs.SkipLast(1).Any(x => x.K - x.J > 10);
         if (!extreme2)
         {
             return Clear();
         }
+        */
 
         // guard - current kdj must be down
-        if (kdjs[^1].Side != KdjSide.Down)
+        /*
+        var kdj = item.Klines.Kdj().Last();
+        if (kdj.Side != KdjSide.Down)
         {
             return Noop();
         }
 
-        // predict the next upcross
-        var current = item.Klines[^1];
-        var prev = item.Klines[^2];
-        if (item.Klines.SkipLast(1).TryGetKdjForUpcross(current, out var cross))
-        {
-            var target = item.Symbol.RaisePriceToTickSize(cross.Price);
-            if (item.Ticker.ClosePrice < target)
-            {
-                stopPrice = Math.Min(stopPrice, target);
-            }
-
-            // guard - cross must happen on the oversold band
-            if (cross.K > 20 || cross.D > 20 || cross.J > 20)
-            {
-                return Noop();
-            }
-
-            // guard - cross must be within the atr to prevent twitch buying at the top of a sudden pump
-            /*
-            var atr = item.Klines.SkipLast(1).AverageTrueRanges().Last() / 2;
-            var diff = Math.Abs(prev.ClosePrice - cross.Price);
-            if (diff > atr)
-            {
-                return Noop();
-            }
             */
-        }
 
+        // guard - cross must be within the atr to prevent twitch buying at the top of a sudden pump
+        /*
+        var atr = item.Klines.SkipLast(1).AverageTrueRanges().Last() / 2;
+        var diff = Math.Abs(prev.ClosePrice - cross.Price);
+        if (diff > atr)
+        {
+            return Noop();
+        }
+        */
+        //}
+
+        /*
         // skip if no stop buy can be calculated
         if (stopPrice == decimal.MaxValue)
         {
@@ -297,6 +395,7 @@ public partial class PortfolioAlgo : Algo
         {
             return Noop();
         }
+        */
 
         // calculate the buy price window from the stop
         //var buyPrice = item.Symbol.RaisePriceToTickSize(stopPrice * (1 + _options.Buying.BuyWindowRate));
@@ -310,6 +409,7 @@ public partial class PortfolioAlgo : Algo
 
         // define the notional to free
         var locked = item.Orders.Open.Where(x => x.Side == OrderSide.Buy).Sum(x => x.OriginalQuantity);
+
         var required = Math.Max(notional - locked, 0);
 
         // place the order
@@ -384,18 +484,40 @@ public partial class PortfolioAlgo : Algo
         }
         */
 
-        var stopPrice = 0M;
+        var stop = 0M;
+
+        // raise to a sar support stop
+        /*
+        var sar = item.Klines.ParabolicStopAndReverse().Last();
+        if (sar.Direction == PsarDirection.Long)
+        {
+            var sarStop = item.Symbol.RaisePriceToTickSize(sar.Value);
+            stop = Math.Max(stop, sarStop);
+        }
+        */
+
+        // reference tracking stop
+        var trackingStop = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M);
 
         // raise to a guard stop
         var guardStop = item.Symbol.LowerPriceToTickSize(stats.AvgPrice * 1.02M);
-        var trackingStop = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M);
-        stopPrice = Math.Max(stopPrice, Math.Min(guardStop, trackingStop));
+        stop = Math.Max(stop, Math.Min(guardStop, trackingStop));
 
-        // raise to a take profit stop
+        // raise to a bollinger guard stop
+        var boll = item.Klines.BollingerBands(x => x.ClosePrice).Last();
+        var bollStop = item.Symbol.LowerPriceToTickSize(boll.Low);
+        if (trackingStop > bollStop)
+        {
+            stop = Math.Max(stop, bollStop);
+        }
+
+        // raise to a bollinger sell stop
+
+        // raise to a low take profit stop
         var takeStop = item.Symbol.LowerPriceToTickSize(stats.AvgPrice * (1 + _options.Selling.TakeProfitRate));
         if (trackingStop >= takeStop)
         {
-            stopPrice = Math.Max(stopPrice, takeStop);
+            stop = Math.Max(stop, takeStop);
         }
 
         // raise to the lower trend line if on an uptrend
@@ -403,34 +525,34 @@ public partial class PortfolioAlgo : Algo
         var trend = trends.Last();
         if (trend.Direction == SuperTrendDirection.Up)
         {
-            stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(trend.Low));
+            stop = Math.Max(stop, item.Symbol.LowerPriceToTickSize(trend.Low));
         }
 
         // raise to a tracking stop if on a downtrend
         if (trend.Direction == SuperTrendDirection.Down)
         {
-            stopPrice = Math.Max(stopPrice, trackingStop);
+            stop = Math.Max(stop, trackingStop);
         }
 
         // raise to the kdj downcross after enough divergence
         var diverges = item.Klines.SkipLast(1).Kdj().Reverse().TakeWhile(x => x.Side == KdjSide.Up).Any(x => x.J - x.K > 10);
         if (diverges && item.Klines.SkipLast(1).TryGetKdjForDowncross(item.Klines[^1], out var cross) && item.Ticker.ClosePrice > cross.Price)
         {
-            stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(cross.Price));
+            stop = Math.Max(stop, item.Symbol.LowerPriceToTickSize(cross.Price));
         }
 
         // raise to a kdj outlier
         var kdj = item.Klines.Kdj().Last();
         if (kdj.J >= 100)
         {
-            stopPrice = Math.Max(stopPrice, trackingStop);
+            stop = Math.Max(stop, trackingStop);
         }
 
         // raise to a tracking stop if on a atr outlier
         var atrs = item.Klines.AverageTrueRanges().TakeLast(2).ToArray();
         if (item.Klines[^1].ClosePrice > item.Klines[^2].ClosePrice && atrs[1] / atrs[0] >= 1.10M)
         {
-            stopPrice = Math.Max(stopPrice, trackingStop);
+            stop = Math.Max(stop, trackingStop);
         }
 
         // set a default sell price
@@ -446,7 +568,7 @@ public partial class PortfolioAlgo : Algo
 
         //var stopPrice = item.Symbol.LowerPriceToTickSize(cross.Price);
 
-        var sellPrice = item.Symbol.LowerPriceToTickSize(stopPrice * (1 - _options.Selling.SellWindowRate));
+        var sellPrice = item.Symbol.LowerPriceToTickSize(stop * (1 - _options.Selling.SellWindowRate));
         if (!TryGetElectedQuantity(item, lots, sellPrice, out var quantity))
         {
             return Noop();
@@ -470,7 +592,7 @@ public partial class PortfolioAlgo : Algo
         }
 
         // skip if there is already an order at a higher stop price
-        if (item.Orders.Open.Any(x => x.Side == OrderSide.Sell && x.StopPrice > stopPrice))
+        if (item.Orders.Open.Any(x => x.Side == OrderSide.Sell && x.StopPrice > stop))
         {
             return Noop();
         }
@@ -478,7 +600,7 @@ public partial class PortfolioAlgo : Algo
         // create the command sequence for the exchange
         return Sequence(
             EnsureSpotBalance(item.Symbol.BaseAsset, required, _options.UseSavings, _options.UseSwapPools),
-            EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, quantity, null, sellPrice, stopPrice, SellTag));
+            EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, quantity, null, sellPrice, stop, SellTag));
         //EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, sellPrice, null, SellTag));
     }
 

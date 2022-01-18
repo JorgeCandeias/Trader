@@ -2,12 +2,12 @@
 
 public static class BollingerBandsExtensions
 {
-    public static IEnumerable<BollingerBandValue> BollingerBands(this IEnumerable<Kline> source, Func<Kline, decimal> selector, int periods = 20, decimal multiplier = 2)
+    public static IEnumerable<BollingerBandValue> BollingerBands(this IEnumerable<Kline> source, Func<Kline, decimal> selector, int periods = 21, decimal multiplier = 2)
     {
         return source.Select(selector).BollingerBands(periods, multiplier);
     }
 
-    public static IEnumerable<BollingerBandValue> BollingerBands(this IEnumerable<decimal> source, int periods = 20, decimal multiplier = 2)
+    public static IEnumerable<BollingerBandValue> BollingerBands(this IEnumerable<decimal> source, int periods = 21, decimal multiplier = 2)
     {
         Guard.IsNotNull(source, nameof(source));
         Guard.IsGreaterThanOrEqualTo(periods, 2, nameof(periods));

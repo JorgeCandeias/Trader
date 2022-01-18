@@ -9,6 +9,13 @@ public static class KdjExtensions
         Down
     }
 
+    public enum KdjCross
+    {
+        None,
+        Up,
+        Down
+    }
+
     public record struct KdjValue
     {
         public decimal Price { get; init; }
@@ -16,6 +23,8 @@ public static class KdjExtensions
         public decimal K { get; init; }
         public decimal D { get; init; }
         public decimal J { get; init; }
+
+        public KdjCross Cross { get; init; }
 
         public KdjSide Side
         {
@@ -55,6 +64,7 @@ public static class KdjExtensions
 
             prev = new KdjValue
             {
+                Cross = KdjCross.None,
                 Price = item.ClosePrice,
                 K = a,
                 D = b,
@@ -75,8 +85,19 @@ public static class KdjExtensions
                 b = (a + (ma2 - 1) * prev.D) / ma2;
                 e = (3 * a) - (2 * b);
 
+                var cross = KdjCross.None;
+                if (prev.K < prev.D && a > b)
+                {
+                    cross = KdjCross.Up;
+                }
+                else if (prev.K > prev.D && a < b)
+                {
+                    cross = KdjCross.Down;
+                }
+
                 prev = new KdjValue
                 {
+                    Cross = cross,
                     Price = item.ClosePrice,
                     K = a,
                     D = b,

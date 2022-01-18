@@ -208,18 +208,33 @@ public partial class PortfolioAlgo : Algo
         }
 
         // guard - price must be above the avl
-        var avl = item.Klines.VolumeWeightedAveragePrice().Last();
+        var avl = item.Klines.SkipLast(1).VolumeWeightedAveragePrice().Last();
         if (item.Ticker.ClosePrice < avl)
         {
             return Clear();
         }
 
+        // guard - detect sideways market
+        var bol = item.Klines.BollingerBands(x => x.ClosePrice).Last();
+        var diff = (bol.High - bol.Low) / bol.High;
+
         // guard - super trend must be going upwards
-        var trends = item.Klines.SuperTrend().TakeLast(2).ToArray();
-        if (trends[0].Direction != SuperTrendDirection.Up)
+        /*
+        var trend = item.Klines.SkipLast(1).SuperTrend().Last();
+        if (trend.Direction != SuperTrendDirection.Up)
         {
             return Clear();
         }
+        */
+
+        // guard - parabolic sars must be long
+        /*
+        var psar = item.Klines.ParabolicStopAndReverse().TakeLast(2).ToArray();
+        if (psar[^1].Direction != PsarDirection.Long || psar[^2].Direction != PsarDirection.Long)
+        {
+            return Clear();
+        }
+        */
 
         var stopPrice = decimal.MaxValue;
 
@@ -252,6 +267,12 @@ public partial class PortfolioAlgo : Algo
             if (item.Ticker.ClosePrice < target)
             {
                 stopPrice = Math.Min(stopPrice, target);
+            }
+
+            // guard - cross must happen on the oversold band
+            if (cross.K > 20 || cross.D > 20 || cross.J > 20)
+            {
+                return Noop();
             }
 
             // guard - cross must be within the atr to prevent twitch buying at the top of a sudden pump

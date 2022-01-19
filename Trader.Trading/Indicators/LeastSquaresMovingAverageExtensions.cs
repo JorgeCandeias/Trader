@@ -5,6 +5,7 @@ namespace System.Collections.Generic;
 
 public record struct LsmaValue
 {
+    public bool IsReady { get; init; }
     public decimal Intercept { get; init; }
     public decimal Slope { get; init; }
     public decimal Value { get; init; }
@@ -28,17 +29,31 @@ public static class LeastSquaresMovingAverageExtensions
             }
             queue.Enqueue((double)item.ClosePrice);
 
-            var result = Fit.Line(time, queue.ToArray());
-            var intercept = (decimal)result.Item1;
-            var slope = (decimal)result.Item2;
-            var value = intercept + slope * periods;
-
-            yield return new LsmaValue
+            if (queue.Count < periods)
             {
-                Intercept = intercept,
-                Slope = slope,
-                Value = value
-            };
+                yield return new LsmaValue
+                {
+                    IsReady = false,
+                    Intercept = 0,
+                    Slope = 0,
+                    Value = item.ClosePrice
+                };
+            }
+            else
+            {
+                var result = Fit.Line(time, queue.ToArray());
+                var intercept = (decimal)result.Item1;
+                var slope = (decimal)result.Item2;
+                var value = intercept + slope * periods;
+
+                yield return new LsmaValue
+                {
+                    IsReady = true,
+                    Intercept = intercept,
+                    Slope = slope,
+                    Value = value
+                };
+            }
         }
     }
 }

@@ -1,21 +1,21 @@
 ﻿namespace System.Collections.Generic;
 
+public enum KdjSide
+{
+    None,
+    Up,
+    Down
+}
+
+public enum KdjCross
+{
+    None,
+    Up,
+    Down
+}
+
 public static class KdjExtensions
 {
-    public enum KdjSide
-    {
-        None,
-        Up,
-        Down
-    }
-
-    public enum KdjCross
-    {
-        None,
-        Up,
-        Down
-    }
-
     public record struct KdjValue
     {
         public decimal Price { get; init; }
@@ -80,7 +80,8 @@ public static class KdjExtensions
                 min = mins.Current;
                 max = maxes.Current;
 
-                rsv = (item.ClosePrice - min) / (max - min) * 100M;
+                var amp = max - min;
+                rsv = amp == 0 ? 0 : (item.ClosePrice - min) / amp * 100M;
                 a = (rsv + (ma1 - 1) * prev.K) / ma1;
                 b = (a + (ma2 - 1) * prev.D) / ma2;
                 e = (3 * a) - (2 * b);

@@ -4,6 +4,7 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Algorithms.Positions;
 using Outcompute.Trader.Trading.Commands;
+using static System.Collections.Generic.KdjExtensions;
 
 namespace Outcompute.Trader.Trading.Algorithms.Samples.Portfolio;
 
@@ -25,6 +26,8 @@ public partial class PortfolioAlgo : Algo
 
     private PortfolioAlgoOptions _options = null!;
 
+    private readonly Dictionary<string, int> _kdjScan = new();
+
     protected override IAlgoCommand OnExecute()
     {
         // always get the latest options so the user can change them in real-time
@@ -35,6 +38,11 @@ public partial class PortfolioAlgo : Algo
 
         foreach (var item in Context.Data)
         {
+            if (!_kdjScan.ContainsKey(item.Symbol.Name))
+            {
+                _kdjScan[item.Symbol.Name] = GetOptimizeKdjPeriods(item);
+            }
+
             if (item.Symbol.Filters.LotSize.StepSize <= 0)
             {
                 LogSkippedSymbolWithInvalidLotStepSize(TypeName, Context.Name, item.Symbol.Name, item.Symbol.Filters.LotSize.StepSize, item.Symbol.BaseAsset);
@@ -183,6 +191,62 @@ public partial class PortfolioAlgo : Algo
         }
     }
 
+    private int GetOptimizeKdjPeriods(SymbolData item)
+    {
+        var electedTotal = 0M;
+        var electedPeriods = 0;
+        var electedTrades = 0;
+
+        for (var periods = 1; periods < 100; periods++)
+        {
+            var total = 0M;
+            var accNumerator = 0M;
+            var accQuantity = 0M;
+            var buys = 0;
+            var sells = 0;
+            var prev = KdjValue.Empty;
+
+            foreach (var kdj in item.Klines.TakeLast(1000).Kdj(periods))
+            {
+                if (kdj.Cross == KdjCross.Up && prev.D <= 30)
+                {
+                    var money = 1M;
+                    var quantity = money / kdj.Price;
+
+                    accNumerator += kdj.Price * quantity;
+                    accQuantity += quantity;
+
+                    buys += 1;
+                }
+                else if (kdj.Cross == KdjCross.Down && accNumerator > 0 && prev.D >= 70)
+                {
+                    var sell = kdj.Price * accQuantity;
+                    var profit = sell - accNumerator;
+
+                    sells += 1;
+                    total += profit;
+
+                    accNumerator = 0;
+                    accQuantity = 0;
+                }
+
+                prev = kdj;
+            }
+
+            if (total > electedTotal)
+            {
+                electedTotal = total;
+                electedPeriods = periods;
+            }
+
+            LogTestedKdjPeriods(TypeName, Context.Name, item.Symbol.Name, periods, total, buys, sells);
+        }
+
+        LogOptimalKdjPeriods(TypeName, Context.Name, item.Symbol.Name, electedPeriods, electedTotal, electedTrades);
+
+        return electedPeriods;
+    }
+
     private IAlgoCommand Buy(SymbolData item, IList<PositionLot> lots)
     {
         IAlgoCommand Clear() => CancelOpenOrders(item.Symbol, OrderSide.Buy, null, BuyTag);
@@ -215,67 +279,31 @@ public partial class PortfolioAlgo : Algo
 
         var stopPrice = decimal.MaxValue;
 
-        // regress over the last periods
-        var regression1 = item.Klines.LinearRegressionChannel(100, 1).Last();
-        var regression2 = item.Klines.LinearRegressionChannel(100, 2).Last();
-
-        // ensure the regressions are ready
-        if (!regression1.IsReady || !regression2.IsReady)
+        // predict the next kdj cross from oversold
+        var oversold = item.Klines.SkipLast(1).Kdj().Reverse().TakeWhile(x => x.Side == KdjSide.Down).Any(x => x.J <= 20);
+        if (oversold && item.Klines.SkipLast(1).TryGetKdjForUpcross(item.Klines[^1], out var cross))
         {
-            return Clear();
+            var target = item.Symbol.LowerPriceToTickSize(cross.Price);
+            if (item.Ticker.ClosePrice < target)
+            {
+                stopPrice = Math.Min(stopPrice, target);
+            }
         }
 
-        // ensure the ticker is under the first lower dev to avoid locking funds
-        if (item.Ticker.ClosePrice >= regression1.Lower)
-        {
-            return Clear();
-        }
-
-        /*
-        // ensure the ticker is between the lower deviations
-        var zone = item.Ticker.ClosePrice < regression1[^1].Lower && item.Ticker.ClosePrice > regression2[^2].Lower;
-        if (!zone)
-        {
-            return Noop();
-        }
-        */
-
-        // ensure the ticker is above the second lower deviation
-        if (item.Ticker.ClosePrice <= regression2.Lower)
-        {
-            return Noop();
-        }
-
-        /*
-        // ensure the wave hit the second lower deviation since the last mean cross
-        if (item.Klines.Zip(regression2)
-            .Reverse()
-            .Where(x => x.Second.IsReady)
-            .TakeWhile(x => x.First.ClosePrice <= x.Second.Value)
-            .Any(x => x.First.ClosePrice <= x.Second.Lower))
-        {
-            // set the entry at the first lower deviation
-            stopPrice = item.Symbol.LowerPriceToTickSize(regression1[^1].Lower);
-        }
-        */
-
-        // place a stop at the second lower deviation
-        stopPrice = item.Symbol.LowerPriceToTickSize(regression2.Lower);
-
-        // stop if no stop can be discovered
+        // skip if no stop can be discovered
         if (stopPrice == decimal.MaxValue)
-        {
-            return Noop();
-        }
-
-        // skip if there is already a buy a lower price
-        if (item.Orders.Open.Any(x => x.Side == OrderSide.Buy && x.StopPrice <= stopPrice))
         {
             return Noop();
         }
 
         // calculate the buy price window from the stop
         var buyPrice = stopPrice;
+
+        // skip if there is already a buy a lower price
+        if (item.Orders.Open.Any(x => x.Side == OrderSide.Buy && x.StopPrice <= stopPrice))
+        {
+            return Noop();
+        }
 
         // define the quantity to buy
         var quantity = CalculateBuyQuantity(item, buyPrice, _options.Buying.BalanceRate);
@@ -291,27 +319,7 @@ public partial class PortfolioAlgo : Algo
         // place the order
         return Sequence(
             EnsureSpotBalance(item.Symbol.QuoteAsset, required, _options.UseSavings, _options.UseSwapPools),
-            //EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, quantity, null, buyPrice, stopPrice, BuyTag));
-            EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, buyPrice, null, BuyTag));
-    }
-
-    private IAlgoCommand CreateMarketBuy(SymbolData item)
-    {
-        // define the quantity to buy
-        var quantity = CalculateBuyQuantity(item, item.Ticker.ClosePrice, _options.Buying.BalanceRate);
-
-        // define the notional to lock
-        var notional = quantity * item.Ticker.ClosePrice;
-
-        // define the notional to free
-        var locked = item.Orders.Open.Where(x => x.Side == OrderSide.Sell).Sum(x => x.OriginalQuantity);
-        var required = Math.Max(notional - locked, 0);
-
-        // place the order
-        return Sequence(
-            EnsureSpotBalance(item.Symbol.QuoteAsset, required, _options.UseSavings, _options.UseSwapPools),
-            CancelOpenOrders(item.Symbol, OrderSide.Buy, null, BuyTag),
-            EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.Market, null, quantity, null, null, null, BuyTag));
+            EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, quantity, null, buyPrice, stopPrice, BuyTag));
     }
 
     private IAlgoCommand Sell(SymbolData item, IList<PositionLot> lots, PositionStats stats)
@@ -338,78 +346,47 @@ public partial class PortfolioAlgo : Algo
             return Clear();
         }
 
-        var stop = 0M;
+        var stopPrice = 0M;
 
-        // regress over the last periods
-        var regression2 = item.Klines.LinearRegressionChannel(100, 2).Last();
-
-        // ensure the regressions are ready
-        if (!regression2.IsReady)
+        // raise to a guard stop
+        var guardStop = item.Symbol.LowerPriceToTickSize(stats.AvgPrice * 0.99M);
+        if (item.Ticker.ClosePrice > guardStop)
         {
-            return Clear();
+            stopPrice = Math.Max(stopPrice, guardStop);
         }
 
-        /*
-        // place the default stop at the lower third deviation
-        if (item.Ticker.ClosePrice > regression3[^1].Lower)
+        // raise to the super trend if any
+        var trend = item.Klines.SuperTrend().Last();
+        if (trend.Direction == SuperTrendDirection.Up)
         {
-            stop = Math.Max(stop, item.Symbol.LowerPriceToTickSize(regression3[^1].Lower));
+            var target = item.Symbol.LowerPriceToTickSize(trend.Low);
+            if (item.Ticker.ClosePrice > target)
+            {
+                stopPrice = Math.Max(stopPrice, target);
+            }
         }
 
-        // if the ticker hit the first lower deviation then raise the stop to the second lower deviation
-        if (item.Ticker.ClosePrice > regression1[^1].Lower)
+        // raise to a kdj divergence cross if the trend does not protect the last buy or if there is no trend at all
+        var overbought = item.Klines.SkipLast(1).Kdj().Reverse().TakeWhile(x => x.Side == KdjSide.Up).Any(x => x.J >= 80);
+        if (overbought &&
+            item.Klines.SkipLast(1).TryGetKdjForDivergenceDowncross(item.Klines[^1], out var cross) &&
+            stopPrice <= lots[0].AvgPrice)
         {
-            stop = Math.Max(stop, item.Symbol.LowerPriceToTickSize(regression2[^1].Lower));
+            var target = item.Symbol.LowerPriceToTickSize(cross.Price);
+            if (item.Ticker.ClosePrice > target)
+            {
+                stopPrice = Math.Max(stopPrice, target);
+            }
         }
 
-        // if the ticker hit the mean then place the stop at the first lower deviation
-        if (item.Ticker.ClosePrice > regression1[^1].Value)
-        {
-            stop = Math.Max(stop, item.Symbol.LowerPriceToTickSize(regression1[^1].Lower));
-        }
+        // calculate sell window
+        var sellPrice = item.Symbol.LowerPriceToTickSize(stopPrice * (1 - _options.Selling.SellWindowRate));
 
-        // if the ticker hit the first deviation then raise the stop the mean
-        if (item.Ticker.ClosePrice > regression1[^1].Upper)
-        {
-            stop = Math.Max(stop, item.Symbol.LowerPriceToTickSize(regression1[^1].Value));
-        }
-
-        // if the ticker hit the second deviation then raise the stop the first deviation
-        if (item.Ticker.ClosePrice > regression2[^2].Upper)
-        {
-            stop = Math.Max(stop, item.Symbol.LowerPriceToTickSize(regression1[^1].Upper));
-        }
-
-        // if the ticker hit the third deviation then raise to a tracking atr stop loss
-        if (item.Ticker.ClosePrice > regression3[^2].Upper)
-        {
-            var atr = item.Klines.AverageTrueRanges().Last();
-            var track = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice - atr);
-            stop = Math.Max(stop, track);
-        }
-        */
-
-        /*
-        var atr = item.Klines.AverageTrueRanges().Last();
-        var track = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice - atr);
-        var max = item.Symbol.LowerPriceToTickSize(stats.AvgPrice * 1.01M);
-        var capped = Math.Min(track, max);
-        stop = Math.Max(stop, capped);
-        */
-
-        // check the slope
-
-
-        // place the sell at the second high band
-        stop = item.Symbol.LowerPriceToTickSize(regression2.Upper);
-        var sellPrice = item.Symbol.LowerPriceToTickSize(stop * (1 - _options.Selling.SellWindowRate));
-        var quantity = stats.TotalQuantity;
-        /*
+        // calculate quantity
         if (!TryGetElectedQuantity(item, lots, sellPrice, out var quantity))
         {
             return Noop();
         }
-        */
 
         // take any current sell orders into account for spot balance release
         var locked = item.Orders.Open.Where(x => x.Side == OrderSide.Sell).Sum(x => x.OriginalQuantity);
@@ -428,8 +405,8 @@ public partial class PortfolioAlgo : Algo
             return Noop();
         }
 
-        // skip if there is already an order at a higher stop price
-        if (item.Orders.Open.Any(x => x.Side == OrderSide.Sell && x.StopPrice >= stop))
+        // skip if there is already an order at a higher price
+        if (item.Orders.Open.Any(x => x.Side == OrderSide.Sell && x.StopPrice >= stopPrice))
         {
             return Noop();
         }
@@ -437,8 +414,8 @@ public partial class PortfolioAlgo : Algo
         // create the command sequence for the exchange
         return Sequence(
             EnsureSpotBalance(item.Symbol.BaseAsset, required, _options.UseSavings, _options.UseSwapPools),
-            //EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, quantity, null, sellPrice, stop, SellTag));
-            EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, sellPrice, null, SellTag));
+            EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, quantity, null, sellPrice, stopPrice, SellTag));
+        //EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.Limit, TimeInForce.GoodTillCanceled, quantity, null, sellPrice, null, SellTag));
     }
 
     private IAlgoCommand CreateMarketSell(SymbolData item, PositionStats stats, IEnumerable<PositionLot> lots)
@@ -846,6 +823,12 @@ public partial class PortfolioAlgo : Algo
 
     [LoggerMessage(96, LogLevel.Warning, "{Type} {Name} {Symbol} not buying asset trading below the AVL of {AVL:F8} {Quote}")]
     private partial void LogSymbolTradingUnderAvl(string type, string name, string symbol, decimal avl, string quote);
+
+    [LoggerMessage(97, LogLevel.Information, "{Type} {Name} {Symbol} evalued KDJ periods {Periods} with reference profit {Profit:F8} with {Buys} buys and {Sells} sells")]
+    private partial void LogTestedKdjPeriods(string type, string name, string symbol, int periods, decimal profit, int buys, int sells);
+
+    [LoggerMessage(97, LogLevel.Information, "{Type} {Name} {Symbol} elected KDJ optimal periods {Periods} with reference profit {Profit:F8} from {Trades} trades")]
+    private partial void LogOptimalKdjPeriods(string type, string name, string symbol, int periods, decimal profit, int trades);
 
     #endregion Logging
 }

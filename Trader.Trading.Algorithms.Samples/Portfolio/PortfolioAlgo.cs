@@ -270,6 +270,9 @@ public partial class PortfolioAlgo : Algo
             return Clear();
         }
 
+        // get the atr
+        var atr = item.Klines.AverageTrueRanges().Last();
+
         // guard - price must be above the avl
         var avl = item.Klines.SkipLast(1).VolumeWeightedAveragePrice().Last();
         if (item.Ticker.ClosePrice < avl)
@@ -287,6 +290,13 @@ public partial class PortfolioAlgo : Algo
 
             // guard - never average down
             if (lots.Count > 0 && lots[0].AvgPrice > target)
+            {
+                return Clear();
+            }
+
+            // guard - cross must be within the atr to avoid chasing peaks
+            var diff = target - item.Klines[^2].ClosePrice;
+            if (diff > atr)
             {
                 return Clear();
             }
@@ -424,6 +434,19 @@ public partial class PortfolioAlgo : Algo
             if (diff / atr > 3)
             {
                 stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M));
+            }
+        }
+
+        // take - raise to an atr kline outlier
+        var kline = item.Klines[^1];
+        var amplitude = kline.HighPrice - kline.LowPrice;
+        if (amplitude / atr > 1.10M)
+        {
+            var target = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M);
+            var bottom = item.Symbol.LowerPriceToTickSize(target * 0.99M);
+            if (bottom >= stats.AvgPrice)
+            {
+                stopPrice = Math.Max(stopPrice, target);
             }
         }
 

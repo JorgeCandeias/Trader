@@ -270,14 +270,32 @@ public partial class PortfolioAlgo : Algo
             return Clear();
         }
 
+        // get the trix
+        var roc = item.Klines.RateOfChange().TakeLast(10).ToList();
+        var rocp = item.Klines.RateOfChangePercent().TakeLast(10).ToList();
+        var trix = item.Klines.Trix().TakeLast(10).ToList();
+
         // get the atr
         var atr = item.Klines.AverageTrueRanges().Last();
 
         // guard - price must be above the avl
         var avl = item.Klines.SkipLast(1).VolumeWeightedAveragePrice().Last();
-        if (item.Ticker.ClosePrice < avl)
+        if (item.Symbol.Name != "BTCBUSD" && item.Symbol.Name != "ETHBUSD" && item.Symbol.Name != "BNBBUSD")
         {
-            return Clear();
+            if (item.Ticker.ClosePrice < avl)
+            {
+                return Clear();
+            }
+        }
+
+        // guard - for hourly super trend must be positive
+        if (Context.KlineInterval == KlineInterval.Hours1)
+        {
+            var trend = item.Klines.SkipLast(1).SuperTrend().Last();
+            if (trend.Direction != SuperTrendDirection.Up)
+            {
+                return Clear();
+            }
         }
 
         var stopPrice = decimal.MaxValue;
@@ -295,7 +313,7 @@ public partial class PortfolioAlgo : Algo
             }
 
             // guard - cross must be within the atr to avoid chasing peaks
-            var diff = target - item.Klines[^2].ClosePrice;
+            var diff = Math.Abs(target - item.Klines[^2].ClosePrice);
             if (diff > atr)
             {
                 return Clear();
@@ -369,26 +387,26 @@ public partial class PortfolioAlgo : Algo
         var atr = item.Klines.AverageTrueRanges().Last();
 
         // guard - raise to a trailing guard stop
-        var guardStop = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice - atr * 3);
-        stopPrice = Math.Max(stopPrice, guardStop);
+        var atrStop = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice - atr * 3);
+        stopPrice = Math.Max(stopPrice, atrStop);
 
-        /*
-        var trailingStop = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M);
-        var maxStop = item.Symbol.LowerPriceToTickSize(stats.AvgPrice * 1.02M);
-        var minStop = item.Symbol.LowerPriceToTickSize(stats.AvgPrice * 0.99M);
-        var guardStop = Math.Max(Math.Min(trailingStop, maxStop), minStop);
-        if (item.Ticker.ClosePrice > guardStop)
+        // guard - raise to an aggressive defensive stop if the ticker is out of range enough
+        if (item.Ticker.ClosePrice >= stats.AvgPrice * 1.10M)
         {
-            stopPrice = Math.Max(stopPrice, guardStop);
+            var guardStop = item.Symbol.LowerPriceToTickSize(stats.AvgPrice * 1.03M);
+            if (item.Ticker.ClosePrice > guardStop)
+            {
+                stopPrice = Math.Max(stopPrice, guardStop);
+            }
         }
-        */
 
         // guard - raise to the super trend if any
         var trend = item.Klines.SuperTrend().Last();
         if (trend.Direction == SuperTrendDirection.Up)
         {
             var target = item.Symbol.LowerPriceToTickSize(trend.Low);
-            if (item.Ticker.ClosePrice > target)
+            var distance = Math.Abs(target - lots[0].AvgPrice);
+            if (item.Ticker.ClosePrice > target && distance > atr)
             {
                 stopPrice = Math.Max(stopPrice, target);
             }
@@ -406,6 +424,7 @@ public partial class PortfolioAlgo : Algo
             }
         }
 
+        /*
         // take - raise to a kdj divergence cross if the last lot is not guarded already
         var overbought = item.Klines.SkipLast(1).Kdj().Reverse().TakeWhile(x => x.Side == KdjSide.Up).Any(x => x.J >= 80);
         if (overbought &&
@@ -418,6 +437,7 @@ public partial class PortfolioAlgo : Algo
                 stopPrice = Math.Max(stopPrice, target);
             }
         }
+        */
 
         // take - raise to a bollinger extreme if the last lot is not guarded already
         var boll = item.Klines.BollingerBands(x => x.ClosePrice, 21, 3).Last();
@@ -438,6 +458,7 @@ public partial class PortfolioAlgo : Algo
         }
 
         // take - raise to an atr kline outlier
+        /*
         var kline = item.Klines[^1];
         var amplitude = kline.HighPrice - kline.LowPrice;
         if (amplitude / atr > 1.10M)
@@ -449,6 +470,7 @@ public partial class PortfolioAlgo : Algo
                 stopPrice = Math.Max(stopPrice, target);
             }
         }
+        */
 
         // only place order if the ticker is above the stop
         if (item.Ticker.ClosePrice <= stopPrice)

@@ -359,7 +359,7 @@ public static class KdjExtensions
         return value != KdjValue.Empty;
     }
 
-    public static bool TryGetKdjForDivergenceDowncross(this IEnumerable<Kline> source, Kline template, out KdjValue value, int periods = 9, int ma1 = 3, int ma2 = 3, int iterations = 100)
+    public static bool TryGetKdjForDivergenceDowncross(this IEnumerable<Kline> source, Kline template, out KdjValue value, int periods = 9, decimal j = 80, int ma1 = 3, int ma2 = 3, int iterations = 100)
     {
         Guard.IsNotNull(source, nameof(source));
         Guard.IsNotNull(template, nameof(template));
@@ -368,7 +368,7 @@ public static class KdjExtensions
 
         // the last kdj divergence must be extreme
         var last = source.Kdj(periods, ma1, ma2).Last();
-        if (last.J <= 100)
+        if (last.J <= j)
         {
             return false;
         }
@@ -392,17 +392,17 @@ public static class KdjExtensions
             var candidateKdj = source.Append(candidateKline).Kdj(periods, ma1, ma2).Last();
 
             // keep the best candidate so far
-            if (candidateKdj.J < 100)
+            if (candidateKdj.J < j)
             {
                 value = candidateKdj;
             }
 
             // adjust ranges to search for a better candidate
-            if (candidateKdj.J > 100)
+            if (candidateKdj.J > j)
             {
                 high = candidatePrice;
             }
-            else if (candidateKdj.J < 100)
+            else if (candidateKdj.J < j)
             {
                 low = candidatePrice;
             }

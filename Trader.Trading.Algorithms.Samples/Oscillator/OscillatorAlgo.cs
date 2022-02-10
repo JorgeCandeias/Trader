@@ -25,6 +25,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
         protected override IAlgoCommand OnExecute()
         {
             var result = Noop();
+            var lookup = new Dictionary<string, PositionStats>();
 
             foreach (var item in Context.Data)
             {
@@ -48,7 +49,12 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
                 {
                     result = result.Then(exit);
                 }
+
+                // cache for the reporting method
+                lookup[item.Symbol.Name] = stats;
             }
+
+            ReportAggregateStats(lookup);
 
             return result;
         }
@@ -96,9 +102,10 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
 
             // predict the next kdj cross from oversold
             var oversold = item.Klines.SkipLast(1).Kdj().Reverse().TakeWhile(x => x.Side == KdjSide.Down).Any(x => x.J <= 20);
+            var low = item.Klines.SkipLast(1).Kdj().Reverse().TakeWhile(x => x.Side == KdjSide.Down).Any(x => x.J <= 50);
             var safe1 = item.Klines.SkipLast(1).ParabolicStopAndReverse().Last().Direction == PsarDirection.Long;
             var safe2 = item.Klines.SkipLast(1).Macd(x => x.ClosePrice).Last().IsUptrend;
-            if ((oversold || safe1 || safe2) && item.Klines.SkipLast(1).TryGetKdjForUpcross(item.Klines[^1], out var cross))
+            if ((oversold || (low && (safe1 || safe2))) && item.Klines.SkipLast(1).TryGetKdjForUpcross(item.Klines[^1], out var cross))
             {
                 var target = item.Symbol.LowerPriceToTickSize(cross.Price);
 
@@ -152,6 +159,13 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
 
             var stopPrice = 0M;
 
+            // calculate the latest atr
+            var atr = item.Klines.SkipLast(1).AverageTrueRanges().Last();
+
+            // guard - raise to a trailing guard stop
+            var atrStop = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice - atr * 3);
+            stopPrice = Math.Max(stopPrice, atrStop);
+
             // predict the next kdj cross from overbought
             var overbought = item.Klines.SkipLast(1).Kdj().Reverse().TakeWhile(x => x.Side == KdjSide.Up).Any(x => x.J >= 80);
             if (overbought && item.Klines.SkipLast(1).TryGetKdjForDowncross(item.Klines[^1], out var cross))
@@ -181,12 +195,10 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             }
 
             // skip if there is already an order at a higher price
-            /*
             if (item.Orders.Open.Any(x => x.Side == OrderSide.Sell && x.StopPrice >= stopPrice))
             {
                 return false;
             }
-            */
 
             // calculate sell window
             var sellPrice = item.Symbol.LowerPriceToTickSize(stopPrice * (1 - 0.01M));
@@ -216,6 +228,129 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
                 EnsureSingleOrder(item.Symbol, OrderSide.Sell, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, quantity, null, sellPrice, stopPrice, ExitSellTag));
 
             return true;
+        }
+
+        private void ReportAggregateStats(Dictionary<string, PositionStats> lookup)
+        {
+            var reportable = Context.Data.Where(x => x.IsValid);
+
+            var grouped = reportable
+                .GroupBy(x => x.Symbol.QuoteAsset);
+
+            // report on total portfolio value for each quote
+            foreach (var quote in grouped)
+            {
+                // get stats for every sellable symbol
+                var stats = quote.Select(x => (x.Symbol, Stats: lookup[x.Symbol.Name]));
+
+                var (cost, pv, rpnl) = quote
+                    .Select(x =>
+                    (
+                        Unrealized: x.AutoPosition.Positions.GetStats(x.Ticker.ClosePrice),
+                        Realized: x.AutoPosition.ProfitEvents.Sum(x => x.Profit)
+                    ))
+                    .Aggregate(
+                        (Cost: 0M, PV: 0M, RPNL: 0M),
+                        (agg, item) => (agg.Cost + item.Unrealized.TotalCost, agg.PV + item.Unrealized.PresentValue, agg.RPNL + item.Realized));
+
+                LogAssetInfo(
+                    TypeName,
+                    Context.Name,
+                    quote.Key,
+                    cost,
+                    pv,
+                    cost == 0M ? 0M : (pv - cost) / cost,
+                    pv - cost,
+                    rpnl,
+                    pv - cost + rpnl);
+
+                // every unsellable symbol with opening disabled
+                /*
+                foreach (var item in stats
+                    .Where(x => x.Stats.TotalQuantity < x.Symbol.Filters.LotSize.MinQuantity)
+                    .Where(x => _options.Buying.Opening.ExcludeSymbols.Contains(x.Symbol.Name)))
+                {
+                    LogClosedSymbol(TypeName, Context.Name, item.Symbol.Name, item.Stats.TotalQuantity, item.Symbol.BaseAsset, item.Stats.PresentValue, item.Symbol.QuoteAsset);
+                }
+                */
+
+                // every non zero symbol by relative pnl
+                foreach (var item in stats
+                    .Where(x => x.Stats.TotalQuantity > 0)
+                    .OrderBy(x => x.Stats.RelativePnL))
+                {
+                    LogSymbolPv(TypeName, Context.Name, item.Symbol.Name, item.Stats.RelativePnL, item.Stats.AbsolutePnL, item.Symbol.QuoteAsset, item.Stats.PresentValue);
+                }
+
+                // report on the absolute loser
+                var absLoser = stats
+                    .OrderBy(x => x.Stats.AbsolutePnL)
+                    .FirstOrDefault();
+
+                if (!IsNullOrEmpty(absLoser.Symbol?.Name))
+                {
+                    LogSymbolWithLowestAbsolutePnl(TypeName, Context.Name, absLoser.Symbol.Name, absLoser.Stats.AbsolutePnL);
+                }
+
+                // report on the relative loser
+                var relLoser = stats
+                    .OrderBy(x => x.Stats.RelativePnL)
+                    .FirstOrDefault();
+
+                if (!IsNullOrEmpty(relLoser.Symbol?.Name))
+                {
+                    LogSymbolWithLowestRelativePnl(TypeName, Context.Name, relLoser.Symbol.Name, relLoser.Stats.RelativePnL);
+                }
+
+                // report on the absolute winner
+                var absWinner = stats
+                    .OrderByDescending(x => x.Stats.AbsolutePnL)
+                    .FirstOrDefault();
+
+                if (!IsNullOrEmpty(absWinner.Symbol?.Name))
+                {
+                    LogSymbolWithHighestAbsolutePnl(TypeName, Context.Name, absWinner.Symbol.Name, absWinner.Stats.AbsolutePnL);
+                }
+
+                // report on the relative loser
+                var relWinner = stats
+                    .OrderByDescending(x => x.Stats.RelativePnL)
+                    .FirstOrDefault();
+
+                if (!IsNullOrEmpty(relWinner.Symbol?.Name))
+                {
+                    LogSymbolWithHighestRelativePnl(TypeName, Context.Name, relWinner.Symbol.Name, relWinner.Stats.RelativePnL);
+                }
+
+                // report on the highest sellable pv
+                /*
+                var highPv = stats
+                    .Where(x => x.Stats.TotalQuantity > 0)
+                    .Where(x => !_options.Selling.ExcludeSymbols.Contains(x.Symbol.Name))
+                    .OrderByDescending(x => x.Stats.PresentValue)
+                    .FirstOrDefault();
+
+                if (!IsNullOrEmpty(highPv.Symbol?.Name))
+                {
+                    LogSymbolWithHighestPresentValue(TypeName, Context.Name, highPv.Symbol.Name, highPv.Stats.PresentValue, highPv.Symbol.QuoteAsset);
+                }
+                */
+
+                // report on sellable pv
+                /*
+                var highPvBreakEven = stats
+                    .Where(x => !_options.Selling.ExcludeSymbols.Contains(x.Symbol.Name))
+                    .Where(x => x.Stats.TotalQuantity > 0)
+                    .Where(x => x.Stats.RelativePnL >= 0)
+                    .OrderByDescending(x => x.Stats.PresentValue)
+                    .FirstOrDefault();
+
+                if (!IsNullOrEmpty(highPvBreakEven.Symbol?.Name))
+                {
+                    LogSymbolWithHighestPresentValueAboveBreakEven(TypeName, Context.Name, highPvBreakEven.Symbol.Name, highPvBreakEven.Stats.PresentValue, highPvBreakEven.Symbol.QuoteAsset);
+                }
+                */
+            }
         }
 
         #region Logging
@@ -258,6 +393,24 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
 
         [LoggerMessage(13, LogLevel.Warning, "{Type} {Name} {Symbol} cannot place sell order with notional of {Notional:F8} {Quote} under min of {MinNotional:F8} {Quote}")]
         private partial void LogCannotPlaceSellOrderWithNotionalUnderMin(string type, string name, string symbol, decimal notional, string quote, decimal minNotional);
+
+        [LoggerMessage(14, LogLevel.Information, "{Type} {Name} reports {Quote} asset info (U-Cost: {UCost:F8}, U-PV: {UPV:F8}: U-RPnL: {URPNL:P2}, U-AbsPnL: {UAPNL:F8}, R-AbsPnL: {RAPNL:F8}, T-AbsPnL:{TAPNL:F8})")]
+        private partial void LogAssetInfo(string type, string name, string quote, decimal ucost, decimal upv, decimal urpnl, decimal uapnl, decimal rapnl, decimal tapnl);
+
+        [LoggerMessage(15, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} with (PnL: {UnrealizedPnl:P2}, Unrealized: {UnrealizedAbsPnl:F8} {Quote}, PV: {PV:F8} {Quote}")]
+        private partial void LogSymbolPv(string type, string name, string symbol, decimal unrealizedPnl, decimal unrealizedAbsPnl, string quote, decimal pv);
+
+        [LoggerMessage(16, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} with lowest unrealized absolute pnl {UnrealizedAbsolutePnl:F8}")]
+        private partial void LogSymbolWithLowestAbsolutePnl(string type, string name, string symbol, decimal unrealizedAbsolutePnl);
+
+        [LoggerMessage(17, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} with lowest unrealized relative pnl {UnrealizedRelativePnl:P2}")]
+        private partial void LogSymbolWithLowestRelativePnl(string type, string name, string symbol, decimal unrealizedRelativePnl);
+
+        [LoggerMessage(18, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} with highest unrealized absolute pnl {UnrealizedAbsolutePnl:F8}")]
+        private partial void LogSymbolWithHighestAbsolutePnl(string type, string name, string symbol, decimal unrealizedAbsolutePnl);
+
+        [LoggerMessage(19, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} with highest unrealized relative pnl {UnrealizedRelativePnl:P2}")]
+        private partial void LogSymbolWithHighestRelativePnl(string type, string name, string symbol, decimal unrealizedRelativePnl);
 
         #endregion Logging
     }

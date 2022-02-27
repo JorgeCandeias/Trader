@@ -8,5 +8,6 @@ public enum Permission
     None,
     Spot,
     Margin,
-    Leveraged
+    Leveraged,
+    TrdGrp003
 }

@@ -9,4 +9,7 @@ public class OscillatorAlgoOptions
 
     [Required]
     public bool UseProfits { get; set; } = false;
+
+    [Required]
+    public ISet<string> ExcludeFromOpening { get; } = new HashSet<string>();
 }

@@ -4,6 +4,13 @@ namespace System.Collections.Generic;
 
 public static class MacdExtensions
 {
+    public static IEnumerable<MacdValue> Macd(this IEnumerable<Kline> source, int fastLength = 12, int slowLength = 26, int signalStrength = 9)
+    {
+        Guard.IsNotNull(source, nameof(source));
+
+        return source.Select(x => x.ClosePrice).Macd(fastLength, slowLength, signalStrength);
+    }
+
     public static IEnumerable<MacdValue> Macd<T>(this IEnumerable<T> source, Func<T, decimal> selector, int fastLength = 12, int slowLength = 26, int signalStrength = 9)
     {
         Guard.IsNotNull(source, nameof(source));

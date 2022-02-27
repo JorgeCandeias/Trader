@@ -57,7 +57,8 @@ public static class KdjExtensions
             var min = mins.Current;
             var max = maxes.Current;
 
-            var rsv = (item.ClosePrice - min) / (max - min) * 100M;
+            var diff = max - min;
+            var rsv = diff == 0 ? 50 : (item.ClosePrice - min) / diff * 100M;
             var a = rsv;
             var b = a;
             var e = (3M * a) - (2M * b);
@@ -302,7 +303,7 @@ public static class KdjExtensions
         return value != KdjValue.Empty;
     }
 
-    public static bool TryGetKdjForDivergenceUpcross(this IEnumerable<Kline> source, Kline template, out KdjValue value, int periods = 9, int ma1 = 3, int ma2 = 3, int iterations = 100)
+    public static bool TryGetKdjForDivergenceUpcross(this IEnumerable<Kline> source, Kline template, out KdjValue value, decimal j = 0, int periods = 9, int ma1 = 3, int ma2 = 3, int iterations = 100)
     {
         Guard.IsNotNull(source, nameof(source));
         Guard.IsNotNull(template, nameof(template));
@@ -311,7 +312,7 @@ public static class KdjExtensions
 
         // the last kdj divergence must be negative
         var last = source.Kdj(periods, ma1, ma2).Last();
-        if (last.J >= 0)
+        if (last.J >= j)
         {
             return false;
         }
@@ -335,17 +336,17 @@ public static class KdjExtensions
             var candidateKdj = source.Append(candidateKline).Kdj(periods, ma1, ma2).Last();
 
             // keep the best candidate so far
-            if (candidateKdj.J >= 0)
+            if (candidateKdj.J >= j)
             {
                 value = candidateKdj;
             }
 
             // adjust ranges to search for a better candidate
-            if (candidateKdj.J > 0)
+            if (candidateKdj.J > j)
             {
                 high = candidatePrice;
             }
-            else if (candidateKdj.J < 0)
+            else if (candidateKdj.J < j)
             {
                 low = candidatePrice;
             }

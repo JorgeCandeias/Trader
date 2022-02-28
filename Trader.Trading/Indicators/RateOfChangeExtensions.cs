@@ -24,8 +24,9 @@ public static class RateOfChangeExtensions
         {
             var current = enumerator.Current;
             var previous = queue.Dequeue();
+            var roc = previous == 0 ? 0 : (current - previous) / previous;
 
-            yield return (current - previous) / previous;
+            yield return roc;
 
             queue.Enqueue(current);
         }

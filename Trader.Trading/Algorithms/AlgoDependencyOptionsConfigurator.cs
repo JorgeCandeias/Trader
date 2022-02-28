@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Options;
-using Outcompute.Trader.Models;
 
 namespace Outcompute.Trader.Trading.Algorithms;
 
@@ -39,6 +38,36 @@ internal class AlgoDependencyOptionsConfigurator : IConfigureOptions<AlgoDepende
                     && (!options.Klines.TryGetValue((symbol, algo.Value.KlineInterval), out var periods) || periods < algo.Value.KlinePeriods))
                 {
                     options.Klines[(symbol, algo.Value.KlineInterval)] = algo.Value.KlinePeriods;
+                }
+            }
+
+            // configure from dependencies
+            foreach (var dependency in algo.Value.DependsOn.Klines)
+            {
+                if (IsNullOrEmpty(dependency.Symbol))
+                {
+                    foreach (var symbol in symbols)
+                    {
+                        if (options.Klines.TryGetValue((symbol, dependency.Interval), out var current))
+                        {
+                            options.Klines[(symbol, dependency.Interval)] = Math.Max(current, dependency.Periods);
+                        }
+                        else
+                        {
+                            options.Klines[(symbol, dependency.Interval)] = dependency.Periods;
+                        }
+                    }
+                }
+                else
+                {
+                    if (options.Klines.TryGetValue((dependency.Symbol, dependency.Interval), out var current))
+                    {
+                        options.Klines[(dependency.Symbol, dependency.Interval)] = Math.Max(current, dependency.Periods);
+                    }
+                    else
+                    {
+                        options.Klines[(dependency.Symbol, dependency.Interval)] = dependency.Periods;
+                    }
                 }
             }
         }

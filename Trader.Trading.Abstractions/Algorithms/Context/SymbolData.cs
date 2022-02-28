@@ -23,6 +23,8 @@ public class SymbolData
     private ImmutableSortedSet<AccountTrade> _trades = ImmutableSortedSet<AccountTrade>.Empty;
     private ImmutableSortedSet<Kline> _klines = ImmutableSortedSet<Kline>.Empty;
 
+    private IDictionary<(string Symbol, KlineInterval Interval), ImmutableSortedSet<Kline>> _klineDependencies = new Dictionary<(string Symbol, KlineInterval Interval), ImmutableSortedSet<Kline>>();
+
     /// <summary>
     /// The name of the symbol.
     /// </summary>
@@ -153,7 +155,7 @@ public class SymbolData
     }
 
     /// <summary>
-    /// The kline history of the current symbol.
+    /// The default kline history of the current symbol.
     /// </summary>
     public ImmutableSortedSet<Kline> Klines
     {
@@ -165,6 +167,15 @@ public class SymbolData
         set
         {
             _klines = value;
+        }
+    }
+
+    public IDictionary<(string Symbol, KlineInterval Interval), ImmutableSortedSet<Kline>> KlineDependencies
+    {
+        get
+        {
+            ThrowOnInvalid();
+            return _klineDependencies;
         }
     }
 

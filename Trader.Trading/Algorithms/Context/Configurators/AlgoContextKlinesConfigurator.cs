@@ -32,5 +32,25 @@ internal class AlgoContextKlinesConfigurator : IAlgoContextConfigurator<AlgoCont
                     .ConfigureAwait(false);
             }
         }
+
+        // get kline for dependencies
+        foreach (var dependency in options.DependsOn.Klines)
+        {
+            if (IsNullOrEmpty(dependency.Symbol))
+            {
+                foreach (var symbol in options.Symbols)
+                {
+                    context.Data.GetOrAdd(symbol).KlineDependencies[(symbol, dependency.Interval)] = await _klines
+                        .GetKlinesAsync(symbol, dependency.Interval, context.TickTime, context.KlinePeriods, cancellationToken)
+                        .ConfigureAwait(false);
+                }
+            }
+            else
+            {
+                context.Data.GetOrAdd(dependency.Symbol).KlineDependencies[(dependency.Symbol, dependency.Interval)] = await _klines
+                    .GetKlinesAsync(dependency.Symbol, dependency.Interval, context.TickTime, context.KlinePeriods, cancellationToken)
+                    .ConfigureAwait(false);
+            }
+        }
     }
 }

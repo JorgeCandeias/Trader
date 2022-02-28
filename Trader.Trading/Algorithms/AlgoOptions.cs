@@ -68,4 +68,22 @@ public class AlgoOptions
     /// </summary>
     [Required]
     public DateTime StartTime { get; set; } = DateTime.MinValue;
+
+    public AlgoOptionsDependsOn DependsOn { get; } = new();
+}
+
+public class AlgoOptionsDependsOn
+{
+    public IList<AlgoOptionsDependsOnKlines> Klines { get; } = new List<AlgoOptionsDependsOnKlines>();
+}
+
+public class AlgoOptionsDependsOnKlines
+{
+    public string Symbol { get; set; } = Empty;
+
+    [Required]
+    public KlineInterval Interval { get; set; } = KlineInterval.None;
+
+    [Required]
+    public int Periods { get; set; }
 }

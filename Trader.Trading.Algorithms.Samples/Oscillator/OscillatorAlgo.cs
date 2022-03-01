@@ -228,7 +228,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             var atrp = item.Klines.SkipLast(1).AverageTrueRanges(9).Last();
             var start = lots[^1].Time;
             var ceiling = item.Klines.Where(x => x.CloseTime >= start).Max(x => x.HighPrice);
-            var chandelierStop = item.Symbol.RaisePriceToTickSize(ceiling - atrp * 4);
+            var chandelierStop = item.Symbol.RaisePriceToTickSize(ceiling - atrp * 3);
             if (item.Ticker.ClosePrice > chandelierStop)
             {
                 stopPrice = Math.Max(stopPrice, chandelierStop);

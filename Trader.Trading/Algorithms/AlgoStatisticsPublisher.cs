@@ -81,7 +81,7 @@ internal partial class AlgoStatisticsPublisher : IAlgoStatisticsPublisher
     [LoggerMessage(0, LogLevel.Information, "{Type} {Name} reports Ticker = {Ticker:F8}")]
     private partial void LogTicker(string type, string name, decimal ticker);
 
-    [LoggerMessage(1, LogLevel.Information, "{Type} {Name} reports Q = {Quantity:F8}, T = {Total:F8}, AVG = {AveragePrice:F8}, PV = {PV:F8}, UPNL = {UPNL:F8} ({UPNLRatio:P8}), RPNL = {RPNL:F8}, PPNL = {PPNL:F8}, QC = {QuoteCommissions:F8}, APNL = {APNL:F8}")]
+    [LoggerMessage(1, LogLevel.Information, "{Type} {Name} reports Q: {Quantity:F8}, T: {Total:F8}, AVG: {AveragePrice:F8}, PV: {PV:F8}, UPNL: {UPNL:F8} ({UPNLRatio:P2}), RPNL: {RPNL:F8}, PPNL: {PPNL:F8}, QC: {QuoteCommissions:F8}, APNL: {APNL:F8}")]
     private partial void LogStatistics(string type, string name, decimal quantity, decimal total, decimal averagePrice, decimal pv, decimal upnl, decimal upnlRatio, decimal rpnl, decimal ppnl, decimal quoteCommissions, decimal apnl);
 
     [LoggerMessage(2, LogLevel.Information, "{Type} {Name} reports Asset Quantity = {Quantity:F8}")]

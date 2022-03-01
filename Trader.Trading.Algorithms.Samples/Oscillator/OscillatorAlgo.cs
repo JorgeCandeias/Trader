@@ -60,7 +60,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
         private decimal CalculateBuyQuantity(SymbolData item, PositionStats stats, decimal price)
         {
             // calculate the notional to use for buying
-            var notional = item.Symbol.RaiseTotalUpToMinNotional(_options.Notional);
+            var balance = item.Spot.QuoteAsset.Free + item.Savings.QuoteAsset.FreeAmount + item.SwapPools.QuoteAsset.Total;
+            var notional = balance * _options.EntryNotionalRate;
 
             // top up with past realized profits for the first buy only
             if (_options.UseProfits && stats.TotalQuantity == 0)
@@ -115,9 +116,27 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             var trixSafe = trix[1].RoC > trix[0].RoC;
 
             // clear any open orders if we dont have a setup
+            /*
             if (!(dayTrixSafe && trixSafe))
             {
                 return Clear();
+            }
+            */
+
+            if (!dayTrixSafe)
+            {
+                return Noop();
+            }
+
+            // predict the next entry point using the trix
+            if (item.Klines.SkipLast(1).TryGetTrixUpSwing(out var trixUp))
+            {
+                var targetStop = item.Symbol.LowerPriceToTickSize(trixUp.Price);
+
+                if (item.Ticker.ClosePrice < targetStop)
+                {
+                    stopPrice = Math.Min(stopPrice, targetStop);
+                }
             }
 
             // identify the kdj wave
@@ -127,7 +146,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             var oversold = wave.Any(x => x.J <= 30);
 
             // predict the next kdj cross from oversold
-            if (oversold && item.Klines.SkipLast(1).TryGetKdjForUpcross(item.Klines[^1], out var cross))
+            if (trixSafe && oversold && item.Klines.SkipLast(1).TryGetKdjForUpcross(item.Klines[^1], out var cross))
             {
                 var targetStop = item.Symbol.LowerPriceToTickSize(cross.Price);
 
@@ -138,6 +157,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             }
 
             // place a top up buy above the last trade
+            /*
             if (lots.Count > 0)
             {
                 for (var multiplier = 7; multiplier < 99; multiplier++)
@@ -151,6 +171,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
                     }
                 }
             }
+            */
 
             // ignore if we cant predict yet - the price may be jumping around the target
             if (stopPrice == decimal.MaxValue)
@@ -158,18 +179,18 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
                 return Noop();
             }
 
+            // define the quantity to buy
+            var quantity = CalculateBuyQuantity(item, stats, stopPrice);
+
             // skip if there is already an open buy order open at the same stop price
-            if (item.Orders.Open.Any(x => x.Side == OrderSide.Buy && x.StopPrice == stopPrice))
+            if (item.Orders.Open.Any(x => x.Side == OrderSide.Buy && x.StopPrice <= stopPrice))
             {
                 return Noop();
             }
 
             // calculate the buy price window from the stop
-            //var buyPrice = item.Symbol.LowerPriceToTickSize(stopPrice * (1 + window));
-            var buyPrice = stopPrice;
-
-            // define the quantity to buy
-            var quantity = CalculateBuyQuantity(item, stats, stopPrice);
+            var buyPrice = item.Symbol.LowerPriceToTickSize(stopPrice / (1 - window));
+            //var buyPrice = stopPrice;
 
             return Sequence(
                 EnsureSpotBalance(item.Symbol.QuoteAsset, item.Symbol.RaisePriceToTickSize(quantity * buyPrice), true, true),
@@ -188,63 +209,11 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
 
             var stopPrice = 0M;
 
-            // keep the last buy price for reference
-            var last = lots.Count > 0 ? lots[^1].AvgPrice : 0M;
-
             // this will be the sell price window
             var sellWindow = 0.01M;
 
-            // calculate the kdj history for reuse
-            var kdj = item.Klines.SkipLast(1).Kdj().ToList();
-
-            // calculate the previous kdj exit for comparison
-            KdjValue? lastExit = null;
-            for (var i = kdj.Count - 1; i >= 0; i--)
-            {
-                // look for the last cross down
-                if (kdj[i].Cross != KdjCross.Down)
-                {
-                    continue;
-                }
-
-                // ensure this was an overbought cross down
-                for (var j = i - 1; j >= 0; j--)
-                {
-                    // stop scanning if we went past the cross up
-                    if (kdj[j].Side == KdjSide.Down)
-                    {
-                        break;
-                    }
-
-                    // identify the exit price for this overbought cross down
-                    if (kdj[j].J >= 80)
-                    {
-                        lastExit = kdj[i];
-                        break;
-                    }
-                }
-
-                if (lastExit.HasValue)
-                {
-                    break;
-                }
-            }
-
-            // calculate the tracking stop for reuse
-            var trackingStop = item.Symbol.RaisePriceToTickSize(item.Ticker.ClosePrice * (1 - sellWindow));
-
-            // calculate the previous atr for reuse
-            var atrp = item.Klines.SkipLast(1).AverageTrueRanges(9).Last();
-
-            // guard - rise to the tracking stop
-            /*
-            if (item.Ticker.ClosePrice > trackingStop)
-            {
-                stopPrice = Math.Max(stopPrice, trackingStop);
-            }
-            */
-
             // guard - raise to a break even when safe
+            /*
             var safe = Math.Min(lots[^1].AvgPrice, stats.AvgPrice);
             var breakEvenPrice = item.Symbol.RaisePriceToTickSize(safe);
             var breakEvenStop = item.Symbol.RaisePriceToTickSize(breakEvenPrice / (1 - sellWindow));
@@ -253,62 +222,19 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             {
                 stopPrice = Math.Max(stopPrice, breakEvenStop);
             }
-
-            // raise to a fixed target
-            var minimum = lots.Min(x => x.AvgPrice);
-            var targetPrice = item.Symbol.RaisePriceToTickSize(minimum * 1.10M);
-            var targetStop = item.Symbol.RaisePriceToTickSize(targetPrice / (1 - sellWindow));
-            var targetTrigger = item.Symbol.RaisePriceToTickSize(targetStop / (1 - sellWindow));
-            if (item.Ticker.ClosePrice >= targetTrigger)
-            {
-                stopPrice = Math.Max(stopPrice, trackingStop);
-            }
+            */
 
             // raise to a chandelier stop
+            var atrp = item.Klines.SkipLast(1).AverageTrueRanges(9).Last();
             var start = lots[^1].Time;
             var ceiling = item.Klines.Where(x => x.CloseTime >= start).Max(x => x.HighPrice);
-            var chandelierStop = item.Symbol.RaisePriceToTickSize(ceiling - atrp * 3);
+            var chandelierStop = item.Symbol.RaisePriceToTickSize(ceiling - atrp * 4);
             if (item.Ticker.ClosePrice > chandelierStop)
             {
                 stopPrice = Math.Max(stopPrice, chandelierStop);
             }
 
             /*
-            // guard - raise to the super trend
-            var trend = item.Klines.SkipLast(1).SuperTrend().Last();
-            var trendStop = item.Symbol.RaisePriceToTickSize(trend.Low);
-            stopPrice = Math.Max(stopPrice, trendStop);
-            */
-
-            // guard - raise to the sar is possible
-            /*
-            var sar = item.Klines.ParabolicStopAndReverse().Last();
-            if (sar.Direction == PsarDirection.Long)
-            {
-                var target = item.Symbol.RaisePriceToTickSize(sar.Value);
-                stopPrice = Math.Max(stopPrice, target);
-            }
-            */
-
-            // take - raise to a take profit for atr outliers
-            /*
-            var atrOutlierPrice = item.Symbol.RaisePriceToTickSize(lots[^1].AvgPrice + (atr * 6));
-            var atrOutlierStop = item.Symbol.RaisePriceToTickSize(atrOutlierPrice / (1 - sellWindow));
-            var atrOutlierTrigger = item.Symbol.RaisePriceToTickSize(atrOutlierStop / (1 - sellWindow));
-            if (item.Ticker.ClosePrice >= atrOutlierTrigger && trackingStop >= atrOutlierStop)
-            {
-                stopPrice = Math.Max(stopPrice, trackingStop);
-            }
-            */
-
-            // take - raise to a take profit for bollinger outliers
-            var boll = item.Klines.BollingerBands().Last();
-            var bollOutlierStop = item.Symbol.RaisePriceToTickSize(boll.High);
-            if (item.Ticker.ClosePrice > bollOutlierStop)
-            {
-                stopPrice = Math.Max(stopPrice, trackingStop);
-            }
-
             // detect the overbough wave
             var overbought = item.Klines.SkipLast(1).Kdj().Reverse().TakeWhile(x => x.Side == KdjSide.Up).Any(x => x.J >= 80);
 
@@ -323,20 +249,53 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
                     stopPrice = Math.Max(stopPrice, kdjStop);
                 }
             }
+            */
+
+            /*
+            if (item.Klines.SkipLast(1).TryGetTrixDownSwing(out var trixDown))
+            {
+                var trixStop = item.Symbol.RaisePriceToTickSize(trixDown.Price);
+
+                if (item.Ticker.ClosePrice > trixStop)
+                {
+                    stopPrice = Math.Max(stopPrice, trixStop);
+                }
+            }
+            */
+
+            // guard - raise to the underlying trend reversal price
+            if (item.KlineDependencies[(item.Symbol.Name, KlineInterval.Days1)].SkipLast(1).TryGetTrixDownSwing(out var trixDown))
+            {
+                var trixStop = item.Symbol.RaisePriceToTickSize(trixDown.Price);
+
+                if (item.Ticker.ClosePrice > trixStop)
+                {
+                    stopPrice = Math.Max(stopPrice, trixStop);
+                }
+            }
 
             if (stopPrice == 0M)
             {
                 return false;
             }
 
-            // calculate sell window
+            // optimize the sell window
             var sellPrice = item.Symbol.LowerPriceToTickSize(stopPrice * (1 - sellWindow));
-
-            // attempt to average out if possible
-            if (!TryGetElectedQuantity(item, lots, sellPrice, out var quantity))
+            var quantity = 0M;
+            if (_options.LossEnabled)
             {
-                //quantity = stats.TotalQuantity;
-                return false;
+                quantity = stats.TotalQuantity;
+            }
+            else
+            {
+                while (sellPrice <= stopPrice && !TryGetElectedQuantity(item, lots, sellPrice, out quantity))
+                {
+                    sellPrice += item.Symbol.Filters.Price.TickSize;
+                }
+                if (sellPrice > stopPrice)
+                {
+                    return false;
+                }
             }
 
             // skip if there is already an order at a higher price for a greater quantity

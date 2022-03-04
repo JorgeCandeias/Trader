@@ -14,5 +14,16 @@ public class OscillatorAlgoOptions
     public bool LossEnabled { get; set; } = false;
 
     [Required]
+    public bool LocalSellEnabled { get; set; } = false;
+
+    [Required, Range(1, 100)]
+    public decimal AtrMultiplier { get; set; } = 3;
+
+    [Required]
+    public bool TrackingStopEnabled { get; set; } = false;
+
+    public decimal TargetProfitRate { get; set; } = 0.10M;
+
+    [Required]
     public ISet<string> ExcludeFromOpening { get; } = new HashSet<string>();
 }

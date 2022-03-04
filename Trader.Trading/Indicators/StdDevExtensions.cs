@@ -1,6 +1,6 @@
 ﻿namespace System.Collections.Generic;
 
-internal static class StdDevExtensions
+public static class StdDevExtensions
 {
     public static IEnumerable<decimal> StdDev(this IEnumerable<decimal> source, int periods)
     {

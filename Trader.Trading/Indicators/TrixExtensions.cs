@@ -2,16 +2,35 @@
 
 public record TrixValue
 {
+    /// <summary>
+    /// The price from the underlying source sequence.
+    /// </summary>
     public decimal Price { get; init; }
-    public decimal Value { get; init; }
-    public decimal Log { get; init; }
+
+    /// <summary>
+    /// The triple exponential moving average from the underlying source.
+    /// </summary>
+    public decimal Ema3 { get; init; }
+
+    /// <summary>
+    /// The triple exponential moving average from the natural logarithm of the underlying source.
+    /// </summary>
     public decimal LogEma3 { get; init; }
-    public decimal RoC { get; init; }
-    public decimal RoC2 { get; init; }
-    public bool IsRoCUp { get; init; }
-    public bool IsRoCDown { get; init; }
-    public bool IsRoC2Up { get; init; }
-    public bool IsRoC2Down { get; init; }
+
+    /// <summary>
+    /// The rate of change of <see cref="LogEma3"/>, first derivative of <see cref="LogEma3"/>.
+    /// </summary>
+    public decimal Velocity { get; init; }
+
+    /// <summary>
+    /// The rate of change of <see cref="Velocity"/>, second derivative of <see cref="LogEma3"/>.
+    /// </summary>
+    public decimal Acceleration { get; init; }
+
+    /// <summary>
+    /// The rate of change of <see cref="Acceleration"/>, third derivative of <see cref="LogEma3"/>.
+    /// </summary>
+    public decimal Jerk { get; init; }
 
     public static TrixValue Empty { get; } = new TrixValue();
 }
@@ -40,34 +59,24 @@ public static class TrixExtensions
         Guard.IsGreaterThan(periods, 0, nameof(periods));
         Guard.IsNotNull(selector, nameof(selector));
 
-        var sourceEnumerator = source.Select(selector).GetEnumerator();
-        var valueEnumerator = source.Select(selector).Ema(periods).Ema(periods).Ema(periods).GetEnumerator();
-        var logEnumerator = source.Select(selector).Log().GetEnumerator();
+        var priceEnumerator = source.Select(selector).GetEnumerator();
+        var trixEnumerator = source.Select(selector).Ema(periods).Ema(periods).Ema(periods).GetEnumerator();
         var emaEnumerator = source.Select(selector).Log().Ema(periods).Ema(periods).Ema(periods).GetEnumerator();
-        var rocEnumerator = source.Select(selector).Log().Ema(periods).Ema(periods).Ema(periods).Change().Select(x => x * 10000).GetEnumerator();
-        var roc2Enumerator = source.Select(selector).Log().Ema(periods).Ema(periods).Ema(periods).Change().Select(x => x * 10000).Change().GetEnumerator();
+        var velocityEnumerator = source.Select(selector).Log().Ema(periods).Ema(periods).Ema(periods).Change().GetEnumerator();
+        var accelerationEnumerator = source.Select(selector).Log().Ema(periods).Ema(periods).Ema(periods).Change().Change().GetEnumerator();
+        var jerkEnumerator = source.Select(selector).Log().Ema(periods).Ema(periods).Ema(periods).Change().Change().Change().GetEnumerator();
 
-        TrixValue? prev = null;
-
-        while (sourceEnumerator.MoveNext() && valueEnumerator.MoveNext() && logEnumerator.MoveNext() && emaEnumerator.MoveNext() && rocEnumerator.MoveNext() && roc2Enumerator.MoveNext())
+        while (priceEnumerator.MoveNext() && trixEnumerator.MoveNext() && emaEnumerator.MoveNext() && velocityEnumerator.MoveNext() && accelerationEnumerator.MoveNext() && jerkEnumerator.MoveNext())
         {
-            var value = new TrixValue
+            yield return new TrixValue
             {
-                Price = sourceEnumerator.Current,
-                Value = valueEnumerator.Current,
-                Log = logEnumerator.Current,
+                Price = priceEnumerator.Current,
+                Ema3 = trixEnumerator.Current,
                 LogEma3 = emaEnumerator.Current,
-                RoC = rocEnumerator.Current,
-                RoC2 = roc2Enumerator.Current,
-                IsRoCUp = rocEnumerator.Current > prev?.RoC,
-                IsRoCDown = rocEnumerator.Current < prev?.RoC,
-                IsRoC2Up = roc2Enumerator.Current > prev?.RoC2,
-                IsRoC2Down = roc2Enumerator.Current < prev?.RoC2
+                Velocity = velocityEnumerator.Current,
+                Acceleration = accelerationEnumerator.Current,
+                Jerk = jerkEnumerator.Current
             };
-
-            yield return value;
-
-            prev = value;
         }
     }
 
@@ -94,7 +103,7 @@ public static class TrixExtensions
 
         // the last value must be in downtrend
         var last = source.Trix(periods).Last();
-        if (!last.IsRoCDown)
+        if (last.Acceleration >= 0)
         {
             return false;
         }
@@ -110,18 +119,13 @@ public static class TrixExtensions
             // probe halfway between the range
             var candidateTrix = source.Append(candidatePrice).Trix(periods).Last();
 
-            // keep the best candidate so far
-            if (candidateTrix.IsRoCUp)
+            // adjust ranges to search for a better candidate
+            if (candidateTrix.Acceleration > 0)
             {
                 value = candidateTrix;
-            }
-
-            // adjust ranges to search for a better candidate
-            if (candidateTrix.IsRoCUp)
-            {
                 high = candidatePrice;
             }
-            else if (candidateTrix.IsRoCDown)
+            else if (candidateTrix.Acceleration < 0)
             {
                 low = candidatePrice;
             }
@@ -158,7 +162,7 @@ public static class TrixExtensions
 
         // the last value must be in downtrend
         var last = source.Trix(periods).Last();
-        if (!last.IsRoCUp)
+        if (last.Acceleration <= 0)
         {
             return false;
         }
@@ -174,19 +178,14 @@ public static class TrixExtensions
             // probe halfway between the range
             var candidateTrix = source.Append(candidatePrice).Trix(periods).Last();
 
-            // keep the best candidate so far
-            if (candidateTrix.IsRoCDown)
-            {
-                value = candidateTrix;
-            }
-
             // adjust ranges to search for a better candidate
-            if (candidateTrix.IsRoCUp)
+            if (candidateTrix.Acceleration > 0)
             {
                 high = candidatePrice;
             }
-            else if (candidateTrix.IsRoCDown)
+            else if (candidateTrix.Acceleration < 0)
             {
+                value = candidateTrix;
                 low = candidatePrice;
             }
             else
@@ -222,7 +221,7 @@ public static class TrixExtensions
 
         // the last value must not be in uptrend
         var last = source.Trix(periods).Last();
-        if (last.IsRoC2Up)
+        if (last.Jerk >= 0)
         {
             return false;
         }
@@ -239,17 +238,17 @@ public static class TrixExtensions
             var candidateTrix = source.Append(candidatePrice).Trix(periods).Last();
 
             // keep the best candidate so far
-            if (candidateTrix.IsRoC2Up)
+            if (candidateTrix.Jerk > 0)
             {
                 value = candidateTrix;
             }
 
             // adjust ranges to search for a better candidate
-            if (candidateTrix.IsRoC2Up)
+            if (candidateTrix.Jerk > 0)
             {
                 high = candidatePrice;
             }
-            else if (candidateTrix.IsRoC2Down)
+            else if (candidateTrix.Jerk < 0)
             {
                 low = candidatePrice;
             }
@@ -286,7 +285,7 @@ public static class TrixExtensions
 
         // the last value must not be in downtrend
         var last = source.Trix(periods).Last();
-        if (last.IsRoC2Down)
+        if (last.Jerk <= 0)
         {
             return false;
         }
@@ -303,17 +302,17 @@ public static class TrixExtensions
             var candidateTrix = source.Append(candidatePrice).Trix(periods).Last();
 
             // keep the best candidate so far
-            if (candidateTrix.IsRoC2Down)
+            if (candidateTrix.Jerk <= 0)
             {
                 value = candidateTrix;
             }
 
             // adjust ranges to search for a better candidate
-            if (candidateTrix.IsRoC2Up)
+            if (candidateTrix.Jerk > 0)
             {
                 high = candidatePrice;
             }
-            else if (candidateTrix.IsRoC2Down)
+            else if (candidateTrix.Jerk < 0)
             {
                 low = candidatePrice;
             }

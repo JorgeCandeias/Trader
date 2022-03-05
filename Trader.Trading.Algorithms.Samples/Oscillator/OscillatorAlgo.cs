@@ -113,7 +113,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             var atrp = item.Klines.SkipLast(1).AverageTrueRanges(9).Last();
 
             // predict the next higher time frame entry point using the trix based on acceleration
-            if (yesterdayTrix.IsRoCDown && item.KlineDependencies[(item.Symbol.Name, KlineInterval.Days1)].SkipLast(1).TryGetTrixUpAcceleration(out var htfTrixUpAcc))
+            if (/*yesterdayTrix.Acceleration < 0 && */ item.KlineDependencies[(item.Symbol.Name, KlineInterval.Days1)].SkipLast(1).TryGetTrixUpAcceleration(out var htfTrixUpAcc))
             {
                 var targetPrice = item.Symbol.LowerPriceToTickSize(htfTrixUpAcc.Price);
                 var targetStop = item.Symbol.LowerPriceToTickSize(targetPrice * (1 - window));
@@ -127,7 +127,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
 
             // predict the next local entry point using the trix based on acceleration
             var prevTrix = item.Klines.SkipLast(1).Trix().Last();
-            if (todayTrix.IsRoC2Up && prevTrix.RoC2 < 0 && item.Klines.SkipLast(1).TryGetTrixUpAcceleration(out var trixUpAcc))
+            if (todayTrix.Jerk > 0 /*&& prevTrix.Acceleration < 0*/ && item.Klines.SkipLast(1).TryGetTrixUpAcceleration(out var trixUpAcc))
             {
                 var targetPrice = item.Symbol.LowerPriceToTickSize(trixUpAcc.Price);
                 var targetStop = item.Symbol.LowerPriceToTickSize(targetPrice * (1 - window));
@@ -151,7 +151,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             // define the quantity to buy
             var quantity = CalculateBuyQuantity(item, stats, stopPrice);
 
-            // ignore if the stop is higher than the last lot - only average down so lot recovery works
+            // only allow averaging down from the last lot
             if (lots.Count > 0 && buyPrice >= lots[^1].AvgPrice)
             {
                 return Noop();
@@ -259,7 +259,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
 
             // guard - raise to a tracking stop upon loss of higher time frame acceleration
             var dayTrix = item.KlineDependencies[(item.Symbol.Name, KlineInterval.Days1)].Trix().Last();
-            if (dayTrix.IsRoC2Down)
+            if (dayTrix.Jerk <= 0)
             {
                 sellPrice = Math.Max(sellPrice, trackingPrice);
                 stopPrice = Math.Max(stopPrice, trackingStop);
@@ -269,7 +269,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             if (_options.LocalSellEnabled)
             {
                 var trix = item.Klines.Trix().Last();
-                if (trix.IsRoC2Down)
+                if (trix.Jerk <= 0)
                 {
                     sellPrice = Math.Max(sellPrice, trackingPrice);
                     stopPrice = Math.Max(stopPrice, trackingStop);

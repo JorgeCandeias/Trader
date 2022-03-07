@@ -62,6 +62,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             var balance = item.Spot.QuoteAsset.Free + item.Savings.QuoteAsset.FreeAmount + item.SwapPools.QuoteAsset.Total;
             var notional = balance * _options.EntryNotionalRate;
 
+            // raise to the user min notional
+            notional = Math.Max(notional, _options.MinNotional);
+
             // top up with past realized profits for the first buy only
             if (_options.UseProfits && stats.TotalQuantity == 0)
             {
@@ -88,7 +91,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             IAlgoCommand Clear() => CancelOpenOrders(item.Symbol, OrderSide.Buy);
 
             // skip if the symbol is on buy cooldown
-            if (lots.Count > 0 && lots[^1].Time.AddHours(1) >= Context.TickTime)
+            if (lots.Count > 0 && lots[^1].Time.Add(_options.BuyCooldown) >= Context.TickTime)
             {
                 return Clear();
             }
@@ -103,17 +106,20 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             var window = 0.01M;
             var stopPrice = decimal.MaxValue;
             var buyPrice = decimal.MaxValue;
+            var htf = item.KlineDependencies[(item.Symbol.Name, _options.HigherTimeFrame)];
+
+            // calculate the super trend to modify the buying tolerance
+            var globalTrend = htf.SkipLast(1).SuperTrend(9, 3).Last();
+            var localTrend = item.Klines.SkipLast(1).SuperTrend(9, 3).Last();
 
             // calculate the tail trix values for reuse
-            var dayTrixes = item.KlineDependencies[(item.Symbol.Name, KlineInterval.Days1)].Trix().TakeLast(2).ToList();
+            var dayTrixes = htf.Trix().TakeLast(2).ToList();
             var yesterdayTrix = dayTrixes[0];
             var todayTrix = dayTrixes[1];
 
-            // calculate the previous atr for reuse
-            var atrp = item.Klines.SkipLast(1).AverageTrueRanges(9).Last();
-
             // predict the next higher time frame entry point using the trix based on acceleration
-            if (/*yesterdayTrix.Acceleration < 0 && */ item.KlineDependencies[(item.Symbol.Name, KlineInterval.Days1)].SkipLast(1).TryGetTrixUpAcceleration(out var htfTrixUpAcc))
+            /*
+            if (globalTrend.Direction == SuperTrendDirection.Up && yesterdayTrix.Acceleration < 0 && htf.SkipLast(1).TryGetTrixUpAcceleration(out var htfTrixUpAcc))
             {
                 var targetPrice = item.Symbol.LowerPriceToTickSize(htfTrixUpAcc.Price);
                 var targetStop = item.Symbol.LowerPriceToTickSize(targetPrice * (1 - window));
@@ -124,18 +130,30 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
                     stopPrice = Math.Min(stopPrice, targetStop);
                 }
             }
+            */
 
             // predict the next local entry point using the trix based on acceleration
-            var prevTrix = item.Klines.SkipLast(1).Trix().Last();
-            if (todayTrix.Jerk > 0 /*&& prevTrix.Acceleration < 0*/ && item.Klines.SkipLast(1).TryGetTrixUpAcceleration(out var trixUpAcc))
+            var localTrix = item.Klines.SkipLast(1).Trix().Last();
+            if (todayTrix.Jerk > 0 && localTrix.Acceleration < 0 && item.Klines.SkipLast(1).TryGetTrixUpAcceleration(out var trixUpAcc, _options.TrixPeriods))
             {
-                var targetPrice = item.Symbol.LowerPriceToTickSize(trixUpAcc.Price);
-                var targetStop = item.Symbol.LowerPriceToTickSize(targetPrice * (1 - window));
+                var targetStop = item.Symbol.LowerPriceToTickSize(trixUpAcc.Price);
+                var targetPrice = item.Symbol.LowerPriceToTickSize(targetStop * (1 + window));
 
+                //var targetPrice = item.Symbol.LowerPriceToTickSize(trixUpAcc.Price);
+                //var targetStop = item.Symbol.LowerPriceToTickSize(targetPrice * (1 - window));
+
+                /*
                 // guard - entry point must be within half the atr
                 var diff = Math.Abs(item.Klines[^2].ClosePrice - targetPrice);
                 var tolerance = atrp / 2;
                 if (diff < tolerance && item.Ticker.ClosePrice < targetStop)
+                {
+                    buyPrice = Math.Min(buyPrice, targetPrice);
+                    stopPrice = Math.Min(stopPrice, targetStop);
+                }
+                */
+
+                if (item.Ticker.ClosePrice < targetStop)
                 {
                     buyPrice = Math.Min(buyPrice, targetPrice);
                     stopPrice = Math.Min(stopPrice, targetStop);
@@ -156,18 +174,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             {
                 return Noop();
             }
-
-            // only allow buying if it brings the total average down
-            /*
-            if (lots.Count > 0)
-            {
-                var candidateAverage = ((stats.TotalQuantity * stats.AvgPrice) + (quantity * buyPrice)) / (stats.TotalQuantity + quantity);
-                if (candidateAverage >= stats.AvgPrice)
-                {
-                    return Noop();
-                }
-            }
-            */
 
             // skip if there is already an executable open buy order open at the same stop price
             if (item.Orders.Open.Any(x => x.Side == OrderSide.Buy && x.StopPrice <= stopPrice && x.Price >= item.Ticker.ClosePrice))
@@ -192,21 +198,30 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
 
             var stopPrice = 0M;
             var sellPrice = 0M;
+            var htf = item.KlineDependencies[(item.Symbol.Name, _options.HigherTimeFrame)];
 
             // this will be the sell price window
             var sellWindow = 0.01M;
 
-            // guard - raise to a tracking if configured
+            // calculate the super trend to modify the selling tolerance
+            var trend = htf.SkipLast(1).SuperTrend(9, 3).Last();
+
+            // calculate the tail trix values for reuse
+            var dayTrixes = htf.Trix().TakeLast(2).ToList();
+            var yesterdayTrix = dayTrixes[0];
+            var todayTrix = dayTrixes[1];
+
+            // guard - raise to a tracking stop if configured, or upon loss of global acceleration
             var trackingStop = item.Symbol.RaisePriceToTickSize(item.Ticker.ClosePrice * (1 - sellWindow));
             var trackingPrice = item.Symbol.RaisePriceToTickSize(trackingStop * (1 - sellWindow));
-            if (_options.TrackingStopEnabled)
+            if (_options.TrackingStopEnabled || htf.Trix().Last().Jerk <= 0)
             {
                 stopPrice = Math.Max(stopPrice, trackingStop);
                 sellPrice = Math.Max(sellPrice, trackingPrice);
             }
 
             // guard - raise to the higher time frame trix deceleration break
-            if (item.KlineDependencies[(item.Symbol.Name, KlineInterval.Days1)].SkipLast(1).TryGetTrixDownAcceleration(out var trixDownAccHtf))
+            if (yesterdayTrix.Acceleration > 0 && htf.SkipLast(1).TryGetTrixDownAcceleration(out var trixDownAccHtf))
             {
                 var targetPrice = item.Symbol.RaisePriceToTickSize(trixDownAccHtf.Price);
                 var targetStop = item.Symbol.RaisePriceToTickSize(targetPrice * (1 + sellWindow));
@@ -218,24 +233,12 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
                 }
             }
 
-            // guard - raise to the higher time frame trix velocity break
-            if (item.KlineDependencies[(item.Symbol.Name, KlineInterval.Days1)].SkipLast(1).TryGetTrixDownSwing(out var trixDownVelHtf))
-            {
-                var trixPrice = item.Symbol.RaisePriceToTickSize(trixDownVelHtf.Price);
-                var trixStop = item.Symbol.RaisePriceToTickSize(trixPrice * (1 + sellWindow));
-
-                if (item.Ticker.ClosePrice > trixPrice)
-                {
-                    sellPrice = Math.Max(sellPrice, trixPrice);
-                    stopPrice = Math.Max(stopPrice, trixStop);
-                }
-            }
-
             // guard - raise to the local time frame trix deceleration break
-            if (_options.LocalSellEnabled && item.Klines.SkipLast(1).TryGetTrixDownAcceleration(out var trixDownAcc))
+            var localTrix = item.Klines.SkipLast(1).Trix().Last();
+            if ((_options.LocalSellEnabled || trend.Direction == SuperTrendDirection.Down) && localTrix.Acceleration > 0 && item.Klines.SkipLast(1).TryGetTrixDownAcceleration(out var trixDownAcc))
             {
-                var targetPrice = item.Symbol.RaisePriceToTickSize(trixDownAcc.Price);
-                var targetStop = item.Symbol.RaisePriceToTickSize(targetPrice * (1 + sellWindow));
+                var targetStop = item.Symbol.RaisePriceToTickSize(trixDownAcc.Price);
+                var targetPrice = item.Symbol.RaisePriceToTickSize(targetStop * (1 - sellWindow));
 
                 if (item.Ticker.ClosePrice > targetStop)
                 {
@@ -244,29 +247,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
                 }
             }
 
-            // guard - raise to the local trix velocity break
-            if (_options.LocalSellEnabled && item.KlineDependencies[(item.Symbol.Name, KlineInterval.Days1)].SkipLast(1).TryGetTrixDownSwing(out var trixDownVel))
-            {
-                var trixPrice = item.Symbol.RaisePriceToTickSize(trixDownVel.Price);
-                var trixStop = item.Symbol.RaisePriceToTickSize(trixPrice * (1 + sellWindow));
-
-                if (item.Ticker.ClosePrice > trixPrice)
-                {
-                    sellPrice = Math.Max(sellPrice, trixPrice);
-                    stopPrice = Math.Max(stopPrice, trixStop);
-                }
-            }
-
-            // guard - raise to a tracking stop upon loss of higher time frame acceleration
-            var dayTrix = item.KlineDependencies[(item.Symbol.Name, KlineInterval.Days1)].Trix().Last();
-            if (dayTrix.Jerk <= 0)
-            {
-                sellPrice = Math.Max(sellPrice, trackingPrice);
-                stopPrice = Math.Max(stopPrice, trackingStop);
-            }
-
             // guard - raise to a tracking stop upon loss of local acceleration
-            if (_options.LocalSellEnabled)
+            if (_options.LocalSellEnabled || trend.Direction == SuperTrendDirection.Down)
             {
                 var trix = item.Klines.Trix().Last();
                 if (trix.Jerk <= 0)
@@ -276,23 +258,13 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
                 }
             }
 
-            // take - raise to an extreme bollinger outlier on the higher trend
-            var globalBoll = item.KlineDependencies[(item.Symbol.Name, KlineInterval.Days1)].SkipLast(1).BollingerBands(9, 3).Last();
-            if (item.Ticker.ClosePrice > globalBoll.High)
+            // take - raise to an extreme atr outlier
+            var atr = htf.SkipLast(1).AverageTrueRanges(_options.TrixPeriods).Last();
+            var diff = htf[^1].ClosePrice - htf[^1].OpenPrice;
+            if (diff >= atr * 5)
             {
                 sellPrice = Math.Max(sellPrice, trackingPrice);
                 stopPrice = Math.Max(stopPrice, trackingStop);
-            }
-
-            if (_options.LocalSellEnabled)
-            {
-                // take - raise to a local extreme bollinger outlier
-                var boll = item.Klines.SkipLast(1).BollingerBands(9, 3).Last();
-                if (item.Ticker.ClosePrice > boll.High)
-                {
-                    sellPrice = Math.Max(sellPrice, trackingPrice);
-                    stopPrice = Math.Max(stopPrice, trackingStop);
-                }
             }
 
             if (stopPrice == 0M)

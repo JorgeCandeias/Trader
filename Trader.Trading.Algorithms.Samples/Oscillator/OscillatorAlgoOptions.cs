@@ -1,5 +1,4 @@
-﻿using Outcompute.Trader.Models;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator;
 
@@ -19,9 +18,6 @@ public class OscillatorAlgoOptions
     [Required]
     public bool LossEnabled { get; set; } = false;
 
-    [Required]
-    public bool LocalSellEnabled { get; set; } = false;
-
     [Required, Range(1, 100)]
     public decimal AtrMultiplier { get; set; } = 3;
 
@@ -30,9 +26,6 @@ public class OscillatorAlgoOptions
 
     [Required]
     public int TrixPeriods { get; set; } = 9;
-
-    [Required]
-    public KlineInterval HigherTimeFrame { get; set; } = KlineInterval.Days1;
 
     [Required]
     public ISet<string> ExcludeFromOpening { get; } = new HashSet<string>();

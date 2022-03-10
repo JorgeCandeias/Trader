@@ -1,12 +1,30 @@
 ﻿namespace System.Collections.Generic;
 
+public enum AtrSmoothing
+{
+    Sma,
+    Rma,
+    Ema
+}
+
 public static class AverageTrueRangeExtensions
 {
-    public static IEnumerable<decimal> AverageTrueRanges(this IEnumerable<Kline> source, int periods = 14)
+    public static IEnumerable<decimal> AverageTrueRanges(this IEnumerable<Kline> source, AtrSmoothing smoothing = AtrSmoothing.Rma, int periods = 14)
     {
         Guard.IsNotNull(source, nameof(source));
         Guard.IsGreaterThan(periods, 0, nameof(periods));
 
+        var ranges = source.TrueRanges();
+
+        return (smoothing) switch
+        {
+            AtrSmoothing.Sma => ranges.Sma(periods),
+            AtrSmoothing.Rma => ranges.Rma(periods),
+            AtrSmoothing.Ema => ranges.Ema(periods),
+            _ => throw new ArgumentOutOfRangeException(nameof(smoothing))
+        };
+
+        /*
         var enumerator = source.TrueRanges().GetEnumerator();
 
         // calculate the first period
@@ -26,5 +44,6 @@ public static class AverageTrueRangeExtensions
                 prev = atr;
             }
         }
+        */
     }
 }

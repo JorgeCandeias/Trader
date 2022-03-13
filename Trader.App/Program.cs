@@ -126,7 +126,8 @@ namespace Outcompute.Trader.App
                                 })
                                 .AddDiscoveryAlgoType()
                                 .AddOscillatorAlgoType()
-                                .AddPortfolioAlgoType();
+                                .AddPortfolioAlgoType()
+                                .AddPusherAlgoType();
                         })
                         .Configure<AutoPositionResolverOptions>(options =>
                         {

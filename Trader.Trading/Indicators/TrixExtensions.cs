@@ -66,9 +66,9 @@ public static class TrixExtensions
             {
                 Price = priceEnumerator.Current,
                 Ema3 = trixEnumerator.Current,
-                Velocity = velocityEnumerator.Current,
-                Acceleration = accelerationEnumerator.Current,
-                Jerk = jerkEnumerator.Current
+                Velocity = velocityEnumerator.Current ?? 0M,
+                Acceleration = accelerationEnumerator.Current ?? 0M,
+                Jerk = jerkEnumerator.Current ?? 0M
             };
         }
     }

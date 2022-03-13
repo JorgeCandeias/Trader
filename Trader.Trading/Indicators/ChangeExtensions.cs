@@ -1,24 +1,41 @@
-﻿using Outcompute.Trader.Trading.Indicators;
-
-namespace System.Collections.Generic;
+﻿namespace System.Collections.Generic;
 
 public static class ChangeExtensions
 {
-    /// <summary>
-    /// Calculates the change between the current value and the previous value over the specified source.
-    /// </summary>
-    /// <param name="source">The source for change calculation.</param>
-    public static IEnumerable<decimal> Change(this IEnumerable<decimal> source)
+    public static IEnumerable<decimal?> Change(this IEnumerable<decimal> source, int periods = 1)
     {
-        return new ChangeIterator(source);
+        Guard.IsNotNull(source, nameof(source));
+        Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
+
+        return source.Select(x => (decimal?)x).Change(periods);
     }
 
-    /// <inheritdoc cref="Change(IEnumerable{decimal})"/>
-    /// <param name="selector">A transform function to apply to each element.</param>
-    public static IEnumerable<decimal> Change<T>(this IEnumerable<T> source, Func<T, decimal> selector)
+    public static IEnumerable<decimal?> Change(this IEnumerable<decimal?> source, int periods = 1)
     {
-        var transformed = source.Select(selector);
+        Guard.IsNotNull(source, nameof(source));
+        Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
-        return transformed.Change();
+        var enumerator = source.GetEnumerator();
+        var queue = new Queue<decimal?>();
+
+        for (var i = 0; i < periods; i++)
+        {
+            if (!enumerator.MoveNext())
+            {
+                yield break;
+            }
+
+            queue.Enqueue(enumerator.Current);
+        }
+
+        while (enumerator.MoveNext())
+        {
+            var prev = queue.Dequeue();
+            var current = enumerator.Current;
+
+            yield return current - prev;
+
+            queue.Enqueue(current);
+        }
     }
 }

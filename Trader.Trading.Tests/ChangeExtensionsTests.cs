@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using Outcompute.Trader.Trading.Indicators;
 using System.Linq;
 using Xunit;
 

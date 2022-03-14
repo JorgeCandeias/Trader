@@ -4,6 +4,7 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Algorithms.Positions;
 using Outcompute.Trader.Trading.Commands;
+using Outcompute.Trader.Trading.Indicators;
 using static System.Collections.Generic.KdjExtensions;
 
 namespace Outcompute.Trader.Trading.Algorithms.Samples.Portfolio;

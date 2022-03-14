@@ -1,6 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using System.Buffers;
 using System.Diagnostics;
 
 namespace Outcompute.Trader.Trading.Algorithms.Positions;
@@ -35,23 +34,23 @@ internal partial class AutoPositionResolver : IAutoPositionResolver
         var (mapping, commissions) = Combine(symbol, orders.Where(x => x.Time >= startTime), trades.Where(x => x.Time >= startTime));
 
         // now prune the significant trades to account interim sales
-        using var subjects = ArrayPool<Map>.Shared.RentSegmentWith(mapping);
+        var subjects = mapping.ToList();
 
         // keep track of profit
         var profits = ImmutableList.CreateBuilder<ProfitEvent>();
 
         // now match sale leftovers using lifo
         // the sales may not fill completely using the buys due to selling from savings and buy market orders to help fix bugs
-        for (var i = 0; i < subjects.Segment.Count; ++i)
+        for (var i = 0; i < subjects.Count; ++i)
         {
             // loop through sales forward
-            var sell = subjects.Segment[i];
+            var sell = subjects[i];
             if (sell.Order.Side == OrderSide.Sell && sell.RemainingExecutedQuantity > 0m)
             {
                 // loop through buys in lifo order to find matching buys
                 for (var j = i - 1; j >= 0; --j)
                 {
-                    var buy = subjects.Segment[j];
+                    var buy = subjects[j];
                     if (buy.Order.Side == OrderSide.Buy && buy.RemainingExecutedQuantity > 0m)
                     {
                         // remove as much as possible from the buy to satisfy the sale
@@ -90,7 +89,7 @@ internal partial class AutoPositionResolver : IAutoPositionResolver
         }
 
         // keep only buy orders with some quantity left to sell
-        var positions = subjects.Segment
+        var positions = subjects
             .Where(x => x.Order.Side == OrderSide.Buy && x.RemainingExecutedQuantity > 0m)
             .GroupBy(x => x.Order)
             .Select(x => new Position(

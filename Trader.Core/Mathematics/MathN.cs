@@ -11,6 +11,17 @@
     /// </summary>
     public static class MathN
     {
+        /// <inheritdoc cref="Math.Abs(decimal)"/>
+        public static decimal? Abs(decimal? value)
+        {
+            if (value.HasValue)
+            {
+                return Math.Abs(value.Value);
+            }
+
+            return null;
+        }
+
         /// <inheritdoc cref="Math.Max(decimal, decimal)"/>
         public static decimal? Max(decimal? val1, decimal? val2, MinMaxBehavior behavior = MinMaxBehavior.NullWins)
         {

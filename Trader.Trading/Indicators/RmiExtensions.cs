@@ -1,6 +1,4 @@
-﻿using Outcompute.Trader.Trading.Indicators;
-
-namespace System.Collections.Generic;
+﻿namespace System.Collections.Generic;
 
 public static class RmiExtensions
 {
@@ -10,13 +8,14 @@ public static class RmiExtensions
     /// <param name="source">The source to calculate the RMI over.</param>
     /// <param name="momentumPeriods">The number of periods to use for momentum comparisons.</param>
     /// <param name="rmaPeriods">The number of periods to use for the Running Moving Average over the momentum mins and maxes.</param>
-    public static IEnumerable<decimal?> Rmi(this IEnumerable<decimal?> source, int momentumPeriods = 3, int rmaPeriods = 14)
+    public static IEnumerable<decimal?> Rmi<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int momentumPeriods = 3, int rmaPeriods = 14)
     {
         Guard.IsNotNull(source, nameof(source));
+        Guard.IsNotNull(selector, nameof(selector));
         Guard.IsGreaterThanOrEqualTo(momentumPeriods, 1, nameof(momentumPeriods));
         Guard.IsGreaterThanOrEqualTo(rmaPeriods, 1, nameof(rmaPeriods));
 
-        var momentum = source.Momentum(momentumPeriods);
+        var momentum = source.Momentum(selector, momentumPeriods);
         var ups = momentum.Maximums(0).RunningMovingAverage(rmaPeriods).GetEnumerator();
         var downs = momentum.Minimums(0).Opposites().RunningMovingAverage(rmaPeriods).GetEnumerator();
 
@@ -45,6 +44,6 @@ public static class RmiExtensions
     {
         Guard.IsNotNull(source, nameof(source));
 
-        return source.Close().Rmi(momentumPeriods, rmaPeriods);
+        return source.Rmi(x => x.ClosePrice, momentumPeriods, rmaPeriods);
     }
 }

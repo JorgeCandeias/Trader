@@ -1,4 +1,6 @@
-﻿namespace Outcompute.Trader.Trading.Tests
+﻿using Outcompute.Trader.Trading.Indicators;
+
+namespace Outcompute.Trader.Trading.Tests
 {
     public class SmaIteratorTests
     {

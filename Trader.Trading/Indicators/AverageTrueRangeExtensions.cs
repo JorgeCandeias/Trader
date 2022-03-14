@@ -1,6 +1,6 @@
-﻿namespace System.Collections.Generic;
+﻿namespace Outcompute.Trader.Trading.Indicators;
 
-public enum AtrSmoothing
+public enum AtrMethod
 {
     Sma,
     Rma,
@@ -10,20 +10,28 @@ public enum AtrSmoothing
 
 public static class AverageTrueRangeExtensions
 {
-    public static IEnumerable<decimal?> AverageTrueRanges(this IEnumerable<Kline> source, AtrSmoothing smoothing = AtrSmoothing.Rma, int periods = 14)
+    public static IEnumerable<decimal?> AverageTrueRanges<T>(this IEnumerable<T> source, Func<T, decimal?> highSelector, Func<T, decimal?> lowSelector, Func<T, decimal?> closeSelector, int periods = 14, AtrMethod method = AtrMethod.Rma)
     {
         Guard.IsNotNull(source, nameof(source));
-        Guard.IsGreaterThan(periods, 0, nameof(periods));
+        Guard.IsNotNull(highSelector, nameof(highSelector));
+        Guard.IsNotNull(lowSelector, nameof(lowSelector));
+        Guard.IsNotNull(closeSelector, nameof(closeSelector));
+        Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
-        var ranges = source.TrueRanges();
+        var ranges = source.TrueRanges(highSelector, lowSelector, closeSelector);
 
-        return smoothing switch
+        return method switch
         {
-            AtrSmoothing.Sma => ranges.SimpleMovingAverage(periods),
-            AtrSmoothing.Rma => ranges.RunningMovingAverage(periods),
-            AtrSmoothing.Ema => ranges.ExponentialMovingAverage(periods),
-            AtrSmoothing.Hma => ranges.HullMovingAverage(periods),
-            _ => throw new ArgumentOutOfRangeException(nameof(smoothing))
+            AtrMethod.Sma => ranges.SimpleMovingAverage(periods),
+            AtrMethod.Rma => ranges.RunningMovingAverage(periods),
+            AtrMethod.Ema => ranges.ExponentialMovingAverage(periods),
+            AtrMethod.Hma => ranges.HullMovingAverage(periods),
+            _ => throw new ArgumentOutOfRangeException(nameof(method))
         };
+    }
+
+    public static IEnumerable<decimal?> AverageTrueRanges(this IEnumerable<Kline> source, int periods = 14, AtrMethod method = AtrMethod.Rma)
+    {
+        return source.AverageTrueRanges(x => x.HighPrice, x => x.LowPrice, x => x.ClosePrice, periods, method);
     }
 }

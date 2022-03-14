@@ -87,7 +87,7 @@ public class RmiExtensionsTests
             /* 22:00 */ (37866.56M, 43.29M)
         };
 
-        var result = data.Select(x => (decimal?)x.Item1).Rmi(3, 14).ToArray();
+        var result = data.Rmi(x => x.Item1, 3, 14).ToArray();
 
         for (var i = 14; i < data.Length; i++)
         {

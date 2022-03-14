@@ -113,6 +113,10 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             var srsi = item.Klines.StochasticRelativeStrengthIndex().ToList();
             var uo = item.Klines.UltimateOscillator().ToList();
             var imc = item.Klines.IchimokuCloud().ToList();
+            var vwma = item.Klines.VolumeWeightedMovingAverage().ToList();
+            var dev = item.Klines.SimpleMovingAverageDeviation(10).ToList();
+            var cci = item.Klines.CommodityChannelIndex(20).ToList();
+            var adx = item.Klines.AverageDirectionalIndex().ToList();
 
             if (item.Klines.SkipLast(1).TryGetHullMovingAverageVelocityUp(out var cross, _options.TrixPeriods))
             {

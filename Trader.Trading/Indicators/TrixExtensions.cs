@@ -1,4 +1,6 @@
-﻿namespace System.Collections.Generic;
+﻿using Outcompute.Trader.Trading.Indicators;
+
+namespace System.Collections.Generic;
 
 public record TrixValue
 {

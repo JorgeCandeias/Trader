@@ -1,4 +1,6 @@
-﻿namespace Outcompute.Trader.Trading.Indicators;
+﻿using Outcompute.Trader.Core.Mathematics;
+
+namespace Outcompute.Trader.Trading.Indicators;
 
 public static class AbsExtensions
 {
@@ -8,7 +10,7 @@ public static class AbsExtensions
 
         foreach (var value in source)
         {
-            yield return value.HasValue ? Math.Abs(value.Value) : null;
+            yield return MathN.Abs(value);
         }
     }
 }

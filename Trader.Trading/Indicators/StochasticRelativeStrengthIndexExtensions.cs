@@ -8,15 +8,16 @@ public static class StochasticRelativeStrengthIndexExtensions
         public decimal? D { get; init; }
     }
 
-    public static IEnumerable<StochasticRelativeStrengthValue> StochasticRelativeStrengthIndex(this IEnumerable<decimal?> source, int smoothK = 3, int smoothD = 3, int lengthRsi = 14, int lengthStoch = 14)
+    public static IEnumerable<StochasticRelativeStrengthValue> StochasticRelativeStrengthIndex<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int smoothK = 3, int smoothD = 3, int lengthRsi = 14, int lengthStoch = 14)
     {
         Guard.IsNotNull(source, nameof(source));
+        Guard.IsNotNull(selector, nameof(selector));
         Guard.IsGreaterThanOrEqualTo(smoothK, 1, nameof(smoothK));
         Guard.IsGreaterThanOrEqualTo(smoothD, 1, nameof(smoothD));
         Guard.IsGreaterThanOrEqualTo(lengthRsi, 1, nameof(lengthRsi));
         Guard.IsGreaterThanOrEqualTo(lengthStoch, 1, nameof(lengthStoch));
 
-        var kf = source.RelativeStrengthIndex(lengthRsi).StochasticFunction(x => x, x => x, x => x, lengthStoch).SimpleMovingAverage(smoothK);
+        var kf = source.Select(selector).RelativeStrengthIndex(lengthRsi).StochasticFunction(x => x, x => x, x => x, lengthStoch).SimpleMovingAverage(smoothK);
         var df = kf.SimpleMovingAverage(smoothD);
 
         var ke = kf.GetEnumerator();
@@ -30,11 +31,6 @@ public static class StochasticRelativeStrengthIndexExtensions
                 D = de.Current
             };
         }
-    }
-
-    public static IEnumerable<StochasticRelativeStrengthValue> StochasticRelativeStrengthIndex<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int smoothK = 3, int smoothD = 3, int lengthRsi = 14, int lengthStoch = 14)
-    {
-        return source.Select(x => selector(x)).StochasticRelativeStrengthIndex(smoothK, smoothD, lengthRsi, lengthStoch);
     }
 
     public static IEnumerable<StochasticRelativeStrengthValue> StochasticRelativeStrengthIndex(this IEnumerable<Kline> source, int smoothK = 3, int smoothD = 3, int lengthRsi = 14, int lengthStoch = 14)

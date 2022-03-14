@@ -1,4 +1,6 @@
-﻿namespace System.Collections.Generic;
+﻿using Outcompute.Trader.Trading.Indicators;
+
+namespace System.Collections.Generic;
 
 public enum SuperTrendDirection
 {
@@ -26,7 +28,7 @@ public static class SuperTrendExtensions
         Guard.IsNotNull(source, nameof(source));
 
         using var sourceEnumerator = source.GetEnumerator();
-        using var atrEnumerator = source.AverageTrueRanges(AtrSmoothing.Rma, periods).GetEnumerator();
+        using var atrEnumerator = source.AverageTrueRanges(periods, AtrMethod.Rma).GetEnumerator();
 
         var direction = SuperTrendDirection.None;
         SuperTrendValue? prev = null;

@@ -1,6 +1,6 @@
-﻿namespace System.Collections.Generic;
+﻿namespace Outcompute.Trader.Trading.Indicators;
 
-public static class SmaExtensions
+public static class SimpleMovingAverageExtensions
 {
     public static IEnumerable<decimal?> SimpleMovingAverage(this IEnumerable<decimal?> source, int periods)
     {

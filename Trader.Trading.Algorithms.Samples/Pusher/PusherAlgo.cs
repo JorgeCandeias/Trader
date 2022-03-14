@@ -4,6 +4,7 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Algorithms.Positions;
 using Outcompute.Trader.Trading.Commands;
+using Outcompute.Trader.Trading.Indicators;
 
 namespace Outcompute.Trader.Trading.Algorithms.Samples.Pusher
 {

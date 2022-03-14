@@ -1,20 +1,16 @@
 ﻿using Outcompute.Trader.Core.Pooling;
 
-namespace System.Collections.Generic;
+namespace Outcompute.Trader.Trading.Indicators;
 
 public static class ChangeExtensions
 {
-    public static IEnumerable<decimal?> Change(this IEnumerable<decimal> source, int periods = 1)
+    /// <summary>
+    /// Yields the difference between the current value and the previous value from <paramref name="periods"/> ago.
+    /// </summary>
+    public static IEnumerable<decimal?> Change<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = 1)
     {
         Guard.IsNotNull(source, nameof(source));
-        Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
-
-        return source.Select(x => (decimal?)x).Change(periods);
-    }
-
-    public static IEnumerable<decimal?> Change(this IEnumerable<decimal?> source, int periods = 1)
-    {
-        Guard.IsNotNull(source, nameof(source));
+        Guard.IsNotNull(selector, nameof(selector));
         Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
         var enumerator = source.GetEnumerator();
@@ -29,13 +25,13 @@ public static class ChangeExtensions
                     yield break;
                 }
 
-                queue.Enqueue(enumerator.Current);
+                queue.Enqueue(selector(enumerator.Current));
             }
 
             while (enumerator.MoveNext())
             {
                 var prev = queue.Dequeue();
-                var current = enumerator.Current;
+                var current = selector(enumerator.Current);
 
                 yield return current - prev;
 
@@ -46,5 +42,17 @@ public static class ChangeExtensions
         {
             QueuePool<decimal?>.Shared.Return(queue);
         }
+    }
+
+    /// <inheritdoc cref="Change{T}(IEnumerable{T}, Func{T, decimal?}, int)"/>
+    public static IEnumerable<decimal?> Change(this IEnumerable<decimal?> source, int periods = 1)
+    {
+        return source.Change(x => x, periods);
+    }
+
+    /// <inheritdoc cref="Change{T}(IEnumerable{T}, Func{T, decimal?}, int)"/>
+    public static IEnumerable<decimal?> Change(this IEnumerable<decimal> source, int periods = 1)
+    {
+        return source.Change(x => x, periods);
     }
 }

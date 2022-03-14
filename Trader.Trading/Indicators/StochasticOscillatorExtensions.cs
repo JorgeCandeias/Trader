@@ -1,13 +1,13 @@
 ﻿namespace Outcompute.Trader.Trading.Indicators;
 
+public record struct StochasticOscillatorValue
+{
+    public decimal? K { get; init; }
+    public decimal? D { get; init; }
+}
+
 public static class StochasticOscillatorExtensions
 {
-    public record struct StochasticOscillatorValue
-    {
-        public decimal? K { get; init; }
-        public decimal? D { get; init; }
-    }
-
     public static IEnumerable<StochasticOscillatorValue> StochasticOscillator(this IEnumerable<(decimal? Value, decimal? High, decimal? Low)> source, int periodsK = 14, int smoothK = 1, int periodsD = 3)
     {
         Guard.IsNotNull(source, nameof(source));

@@ -2,10 +2,10 @@
 
 namespace Outcompute.Trader.Trading.Indicators;
 
+public record struct WithPreviousValue<T>(T Current, T? Previous);
+
 public static class WithPreviousExtensions
 {
-    public record struct WithPreviousValue<T>(T Current, T? Previous);
-
     public static IEnumerable<WithPreviousValue<T>> WithPrevious<T>(this IEnumerable<T> source, int length = 1)
     {
         Guard.IsNotNull(source, nameof(source));

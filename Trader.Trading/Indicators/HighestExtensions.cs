@@ -8,9 +8,10 @@ public static class HighestExtensions
     /// <summary>
     /// Yields the highest value in <paramref name="source"/> within <paramref name="periods"/> ago.
     /// </summary>
-    public static IEnumerable<decimal?> Highest(this IEnumerable<decimal?> source, int periods = 1)
+    public static IEnumerable<decimal?> Highest<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = 1)
     {
         Guard.IsNotNull(source, nameof(source));
+        Guard.IsNotNull(selector, nameof(selector));
         Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
         var queue = QueuePool<decimal?>.Shared.Get();
@@ -27,7 +28,7 @@ public static class HighestExtensions
                     yield break;
                 }
 
-                queue.Enqueue(enumerator.Current);
+                queue.Enqueue(selector(enumerator.Current));
 
                 yield return null;
             }
@@ -35,7 +36,7 @@ public static class HighestExtensions
             // yielding phase
             while (enumerator.MoveNext())
             {
-                queue.Enqueue(enumerator.Current);
+                queue.Enqueue(selector(enumerator.Current));
 
                 decimal? highest = null;
 
@@ -55,8 +56,8 @@ public static class HighestExtensions
         }
     }
 
-    public static IEnumerable<decimal?> Highest<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = 1)
+    public static IEnumerable<decimal?> Highest(this IEnumerable<Kline> source, int periods = 1)
     {
-        return source.Select(selector).Highest(periods);
+        return source.Highest(x => x.HighPrice, periods);
     }
 }

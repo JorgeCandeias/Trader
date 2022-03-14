@@ -1,4 +1,4 @@
-﻿namespace Outcompute.Trader.Core.Enumerables;
+﻿namespace System.Linq;
 
 public static class EnumerableZipExtensions
 {

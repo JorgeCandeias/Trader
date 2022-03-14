@@ -26,6 +26,8 @@ public static class ChangeExtensions
                 }
 
                 queue.Enqueue(selector(enumerator.Current));
+
+                yield return null;
             }
 
             while (enumerator.MoveNext())

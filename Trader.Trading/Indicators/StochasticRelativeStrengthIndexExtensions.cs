@@ -1,13 +1,13 @@
 ﻿namespace Outcompute.Trader.Trading.Indicators;
 
+public record struct StochasticRelativeStrengthValue
+{
+    public decimal? K { get; init; }
+    public decimal? D { get; init; }
+}
+
 public static class StochasticRelativeStrengthIndexExtensions
 {
-    public record struct StochasticRelativeStrengthValue
-    {
-        public decimal? K { get; init; }
-        public decimal? D { get; init; }
-    }
-
     public static IEnumerable<StochasticRelativeStrengthValue> StochasticRelativeStrengthIndex<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int smoothK = 3, int smoothD = 3, int lengthRsi = 14, int lengthStoch = 14)
     {
         Guard.IsNotNull(source, nameof(source));

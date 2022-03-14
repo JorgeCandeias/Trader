@@ -3,17 +3,17 @@ using Outcompute.Trader.Core.Pooling;
 
 namespace Outcompute.Trader.Trading.Indicators;
 
-public record struct LowestHighestValue(decimal? Lowest, decimal? Highest)
+public record struct HighestLowest(decimal? Lowest, decimal? Highest)
 {
-    public static LowestHighestValue Empty { get; } = new LowestHighestValue();
+    public static HighestLowest Empty { get; } = new HighestLowest();
 }
 
-public static class LowestHighestExtensions
+public static class HighestLowestExtensions
 {
     /// <summary>
     /// Yields both the lowest and highest value in <paramref name="source"/> within <paramref name="periods"/> ago.
     /// </summary>
-    public static IEnumerable<LowestHighestValue> LowestHighest<T>(this IEnumerable<T> source, Func<T, decimal?> lowSelector, Func<T, decimal?> highSelector, int periods = 1)
+    public static IEnumerable<HighestLowest> HighestLowest<T>(this IEnumerable<T> source, Func<T, decimal?> highSelector, Func<T, decimal?> lowSelector, int periods = 1)
     {
         Guard.IsNotNull(source, nameof(source));
         Guard.IsNotNull(lowSelector, nameof(lowSelector));
@@ -40,7 +40,7 @@ public static class LowestHighestExtensions
 
                 queue.Enqueue((low, high));
 
-                yield return LowestHighestValue.Empty;
+                yield return Indicators.HighestLowest.Empty;
             }
 
             // yielding phase
@@ -61,7 +61,7 @@ public static class LowestHighestExtensions
                     highest = MathN.Max(highest, highCandidate, MinMaxBehavior.NonNullWins);
                 }
 
-                yield return new LowestHighestValue(lowest, highest);
+                yield return new HighestLowest(lowest, highest);
 
                 queue.Dequeue();
             }
@@ -70,5 +70,10 @@ public static class LowestHighestExtensions
         {
             QueuePool<(decimal? Low, decimal? High)>.Shared.Return(queue);
         }
+    }
+
+    public static IEnumerable<HighestLowest> HighestLowest(this IEnumerable<Kline> source, int periods = 1)
+    {
+        return source.HighestLowest(x => x.HighPrice, x => x.LowPrice, periods);
     }
 }

@@ -9,42 +9,46 @@ public static class MovingSumExtensions
     /// </summary>
     /// <param name="source">The source for moving sum calculation.</param>
     /// <param name="periods">The number of periods for moving sum calculation.</param>
-    public static IEnumerable<decimal?> MovingSum(this IEnumerable<decimal?> source, int periods = 1)
+    public static IEnumerable<decimal?> MovingSum<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = 1)
     {
         Guard.IsNotNull(source, nameof(source));
+        Guard.IsNotNull(selector, nameof(selector));
         Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
         var queue = QueuePool<decimal?>.Shared.Get();
 
         try
         {
-            var enumerator = source.GetEnumerator();
-            var sum = 0M;
+            decimal? sum = null;
 
-            // seeding phase
-            for (var i = 0; i < periods; i++)
+            foreach (var item in source)
             {
-                if (!enumerator.MoveNext())
+                var current = selector(item);
+
+                if (current.HasValue)
                 {
-                    yield break;
+                    if (sum.HasValue)
+                    {
+                        sum += current;
+                    }
+                    else
+                    {
+                        sum = current;
+                    }
                 }
 
-                var current = enumerator.Current;
-
-                sum += current.GetValueOrDefault(0);
-                queue.Enqueue(enumerator.Current);
-
-                yield return null;
-            }
-
-            // yielding phase
-            while (enumerator.MoveNext())
-            {
-                var current = enumerator.Current;
-
-                sum += current.GetValueOrDefault(0);
                 queue.Enqueue(current);
-                sum -= queue.Dequeue().GetValueOrDefault(0);
+
+                if (queue.Count > periods)
+                {
+                    var old = queue.Dequeue();
+                    if (old.HasValue && sum.HasValue)
+                    {
+                        sum -= old;
+                    }
+                }
+
+                yield return sum!;
             }
         }
         finally
@@ -53,8 +57,8 @@ public static class MovingSumExtensions
         }
     }
 
-    public static IEnumerable<decimal?> MovingSum<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods)
+    public static IEnumerable<decimal?> MovingSum(this IEnumerable<decimal?> source, int periods)
     {
-        return source.Select(selector).MovingSum(periods);
+        return source.MovingSum(x => x, periods);
     }
 }

@@ -7,7 +7,7 @@ public static class MovingWindowExtensions
     /// <summary>
     /// Yields a moving window over <paramref name="source"/> of size <paramref name="length"/>.
     /// </summary>
-    public static IEnumerable<IEnumerable<T>> MovingWindow<T>(this IEnumerable<T> source, int length = 0)
+    public static IEnumerable<IList<T>> MovingWindow<T>(this IEnumerable<T> source, int length = 0)
     {
         Guard.IsNotNull(source, nameof(source));
         Guard.IsGreaterThanOrEqualTo(length, 0, nameof(length));

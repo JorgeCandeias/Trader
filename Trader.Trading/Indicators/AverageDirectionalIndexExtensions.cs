@@ -1,10 +1,10 @@
-﻿using Outcompute.Trader.Trading.Indicators;
+﻿namespace Outcompute.Trader.Trading.Indicators;
 
-namespace System.Collections.Generic;
+public record struct AverageDirectionalIndex(decimal? Adx, decimal? Plus, decimal? Minus);
 
 public static class AverageDirectionalIndexExtensions
 {
-    public static IEnumerable<decimal?> AverageDirectionalIndex<T>(this IEnumerable<T> source, Func<T, decimal?> highSelector, Func<T, decimal?> lowSelector, Func<T, decimal?> closeSelector, int adxLength = 14, int diLength = 14)
+    public static IEnumerable<AverageDirectionalIndex> AverageDirectionalIndex<T>(this IEnumerable<T> source, Func<T, decimal?> highSelector, Func<T, decimal?> lowSelector, Func<T, decimal?> closeSelector, int adxLength = 14, int diLength = 14)
     {
         Guard.IsNotNull(source, nameof(source));
         Guard.IsNotNull(highSelector, nameof(highSelector));
@@ -49,14 +49,12 @@ public static class AverageDirectionalIndexExtensions
 
         var absDiff = plus.Zip(minus, (p, m) => p - m).Abs();
         var safeSum = plus.Zip(minus, (p, m) => p + m).Select(x => x == 0 ? 1 : x);
+        var adx = absDiff.Zip(safeSum, (d, s) => d / s).RunningMovingAverage(adxLength).Select(x => x * 100).ToList();
 
-        return absDiff
-            .Zip(safeSum, (d, s) => d / s)
-            .RunningMovingAverage(adxLength)
-            .Select(x => x * 100);
+        return adx.Zip(plus, minus, (a, p, m) => new AverageDirectionalIndex(a, p, m));
     }
 
-    public static IEnumerable<decimal?> AverageDirectionalIndex(this IEnumerable<Kline> source, int adxLength = 14, int diLength = 14)
+    public static IEnumerable<AverageDirectionalIndex> AverageDirectionalIndex(this IEnumerable<Kline> source, int adxLength = 14, int diLength = 14)
     {
         return source.AverageDirectionalIndex(x => x.HighPrice, x => x.LowPrice, x => x.ClosePrice, adxLength, diLength);
     }

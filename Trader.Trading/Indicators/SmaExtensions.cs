@@ -1,35 +1,60 @@
-﻿using Outcompute.Trader.Trading.Indicators;
-
-namespace System.Collections.Generic;
+﻿namespace System.Collections.Generic;
 
 public static class SmaExtensions
 {
-    /// <summary>
-    /// Calculates the Simple Moving Average over the specified source.
-    /// </summary>
-    /// <param name="source">The source for SMA calculation.</param>
-    /// <param name="periods">The number of periods for SMA calculation.</param>
-    public static IEnumerable<decimal> Sma(this IEnumerable<decimal> source, int periods)
+    public static IEnumerable<decimal?> SimpleMovingAverage(this IEnumerable<decimal?> source, int periods)
     {
-        return new SmaIterator(source, periods);
+        Guard.IsNotNull(source, nameof(source));
+        Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
+
+        var enumerator = source.GetEnumerator();
+        var queue = new Queue<decimal?>(periods);
+
+        for (var i = 0; i < periods - 1; i++)
+        {
+            if (!enumerator.MoveNext())
+            {
+                yield break;
+            }
+
+            queue.Enqueue(enumerator.Current);
+
+            yield return null;
+        }
+
+        while (enumerator.MoveNext())
+        {
+            queue.Enqueue(enumerator.Current);
+
+            var sum = 0M;
+            var count = 0;
+
+            foreach (var item in queue)
+            {
+                if (item.HasValue)
+                {
+                    sum += item.Value;
+                    count++;
+                }
+            }
+
+            if (count > 0)
+            {
+                yield return sum / count;
+            }
+            else
+            {
+                yield return null;
+            }
+
+            queue.Dequeue();
+        }
     }
 
-    /// <inheritdoc cref="Sma(IEnumerable{decimal}, int)"/>
-    /// <param name="selector">A transform function to apply to each element.</param>
-    public static IEnumerable<decimal> Sma<T>(this IEnumerable<T> source, Func<T, decimal> selector, int periods)
+    public static IEnumerable<decimal?> SimpleMovingAverage(this IEnumerable<Kline> source, int periods)
     {
-        var transformed = source.Select(selector);
-
-        return transformed.Sma(periods);
-    }
-
-    public static decimal LastSma(this IEnumerable<decimal> source, int periods)
-    {
-        return source.Sma(periods).Last();
-    }
-
-    public static decimal LastSma<T>(this IEnumerable<T> source, Func<T, decimal> selector, int periods)
-    {
-        return source.Sma(selector, periods).Last();
+        return source
+            .Select(x => (decimal?)x.ClosePrice)
+            .SimpleMovingAverage(periods);
     }
 }

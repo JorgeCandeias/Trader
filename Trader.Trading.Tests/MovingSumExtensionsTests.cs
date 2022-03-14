@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Xunit;
+﻿using Outcompute.Trader.Trading.Indicators;
 
 namespace Outcompute.Trader.Trading.Tests
 {
@@ -10,7 +8,7 @@ namespace Outcompute.Trader.Trading.Tests
         public void YieldsEmptyOutput()
         {
             // arrange
-            var input = Enumerable.Empty<decimal>();
+            var input = Enumerable.Empty<decimal?>();
 
             // act
             var output = input.MovingSum(3);
@@ -23,7 +21,7 @@ namespace Outcompute.Trader.Trading.Tests
         public void YieldsMovingSum()
         {
             // arrange
-            var input = new decimal[] { 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144 };
+            var input = new decimal?[] { 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144 };
 
             // act
             var output = input.MovingSum(3);

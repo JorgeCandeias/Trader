@@ -4,7 +4,7 @@ public class MomentumTests
 {
     [Theory]
     [MemberData(nameof(TestData))]
-    public void Evaluates(decimal[] source, decimal[] expected, int periods)
+    public void Evaluates(decimal?[] source, decimal?[] expected, int periods)
     {
         var momentum = source.Momentum(periods).ToArray();
 
@@ -15,22 +15,22 @@ public class MomentumTests
     }
 
     public static readonly IEnumerable<object[]> TestData = new object[][]{
-        new object[] { new decimal[] { 1, 1, 1, 1, 1, 1 }, new decimal[] { 0, 0, 0, 0, 0, 0 }, 1 },
-        new object[] { new decimal[] { 1, 2, 3, 4, 5, 6 }, new decimal[] { 0, 1, 1, 1, 1, 1 }, 1 },
-        new object[] { new decimal[] { 1, 2, 3, 5, 8, 13 }, new decimal[] { 0, 1, 1, 2, 3, 5 }, 1 },
+        new object[] { new decimal?[] { 1, 1, 1, 1, 1, 1 }, new decimal?[] { 0, 0, 0, 0, 0, 0 }, 1 },
+        new object[] { new decimal?[] { 1, 2, 3, 4, 5, 6 }, new decimal?[] { 0, 1, 1, 1, 1, 1 }, 1 },
+        new object[] { new decimal?[] { 1, 2, 3, 5, 8, 13 }, new decimal?[] { 0, 1, 1, 2, 3, 5 }, 1 },
 
-        new object[] { new decimal[] { 1, 3, 2, 13, 8, 5 }, new decimal[] { 0, 2, -1, 11, -5, -3 }, 1 },
+        new object[] { new decimal?[] { 1, 3, 2, 13, 8, 5 }, new decimal?[] { 0, 2, -1, 11, -5, -3 }, 1 },
 
-        new object[] { new decimal[] { 1, 1, 1, 1, 1, 1 }, new decimal[] { 0, 0, 0, 0, 0, 0 }, 2 },
-        new object[] { new decimal[] { 1, 2, 3, 4, 5, 6 }, new decimal[] { 0, 0, 2, 2, 2, 2 }, 2 },
-        new object[] { new decimal[] { 1, 2, 3, 5, 8, 13 }, new decimal[] { 0, 0, 2, 3, 5, 8 }, 2 },
+        new object[] { new decimal?[] { 1, 1, 1, 1, 1, 1 }, new decimal?[] { 0, 0, 0, 0, 0, 0 }, 2 },
+        new object[] { new decimal?[] { 1, 2, 3, 4, 5, 6 }, new decimal?[] { 0, 0, 2, 2, 2, 2 }, 2 },
+        new object[] { new decimal?[] { 1, 2, 3, 5, 8, 13 }, new decimal?[] { 0, 0, 2, 3, 5, 8 }, 2 },
 
-        new object[] { new decimal[] { 1, 3, 2, 13, 8, 5 }, new decimal[] { 0, 0, 1, 10, 6, -8 }, 2 },
+        new object[] { new decimal?[] { 1, 3, 2, 13, 8, 5 }, new decimal?[] { 0, 0, 1, 10, 6, -8 }, 2 },
 
-        new object[] { new decimal[] { 1, 1, 1, 1, 1, 1 }, new decimal[] { 0, 0, 0, 0, 0, 0 }, 3 },
-        new object[] { new decimal[] { 1, 2, 3, 4, 5, 6 }, new decimal[] { 0, 0, 0, 3, 3, 3 }, 3 },
-        new object[] { new decimal[] { 1, 2, 3, 5, 8, 13 }, new decimal[] { 0, 0, 0, 4, 6, 10 }, 3 },
+        new object[] { new decimal?[] { 1, 1, 1, 1, 1, 1 }, new decimal?[] { 0, 0, 0, 0, 0, 0 }, 3 },
+        new object[] { new decimal?[] { 1, 2, 3, 4, 5, 6 }, new decimal?[] { 0, 0, 0, 3, 3, 3 }, 3 },
+        new object[] { new decimal?[] { 1, 2, 3, 5, 8, 13 }, new decimal?[] { 0, 0, 0, 4, 6, 10 }, 3 },
 
-        new object[] { new decimal[] { 1, 3, 2, 13, 8, 5 }, new decimal[] { 0, 0, 0, 12, 5, 3 }, 3 },
+        new object[] { new decimal?[] { 1, 3, 2, 13, 8, 5 }, new decimal?[] { 0, 0, 0, 12, 5, 3 }, 3 },
     };
 }

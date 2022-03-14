@@ -12,11 +12,11 @@ public record SuperTrendValue
     public DateTime OpenTime { get; init; }
     public DateTime CloseTime { get; init; }
     public SuperTrendDirection Direction { get; init; }
-    public decimal High { get; init; }
-    public decimal Low { get; init; }
-    public decimal Midpoint { get; init; }
-    public decimal Close { get; init; }
-    public decimal Atr { get; init; }
+    public decimal? High { get; init; }
+    public decimal? Low { get; init; }
+    public decimal? Midpoint { get; init; }
+    public decimal? Close { get; init; }
+    public decimal? Atr { get; init; }
 }
 
 public static class SuperTrendExtensions

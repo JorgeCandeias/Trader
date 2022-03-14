@@ -1,6 +1,6 @@
-﻿using Outcompute.Trader.Trading.Indicators;
+﻿using Outcompute.Trader.Core.Pooling;
 
-namespace System.Collections.Generic;
+namespace Outcompute.Trader.Trading.Indicators;
 
 public static class MovingSumExtensions
 {
@@ -9,17 +9,52 @@ public static class MovingSumExtensions
     /// </summary>
     /// <param name="source">The source for moving sum calculation.</param>
     /// <param name="periods">The number of periods for moving sum calculation.</param>
-    public static IEnumerable<decimal> MovingSum(this IEnumerable<decimal> source, int periods)
+    public static IEnumerable<decimal?> MovingSum(this IEnumerable<decimal?> source, int periods = 1)
     {
-        return new MovingSumIterator(source, periods);
+        Guard.IsNotNull(source, nameof(source));
+        Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
+
+        var queue = QueuePool<decimal?>.Shared.Get();
+
+        try
+        {
+            var enumerator = source.GetEnumerator();
+            var sum = 0M;
+
+            // seeding phase
+            for (var i = 0; i < periods; i++)
+            {
+                if (!enumerator.MoveNext())
+                {
+                    yield break;
+                }
+
+                var current = enumerator.Current;
+
+                sum += current.GetValueOrDefault(0);
+                queue.Enqueue(enumerator.Current);
+
+                yield return null;
+            }
+
+            // yielding phase
+            while (enumerator.MoveNext())
+            {
+                var current = enumerator.Current;
+
+                sum += current.GetValueOrDefault(0);
+                queue.Enqueue(current);
+                sum -= queue.Dequeue().GetValueOrDefault(0);
+            }
+        }
+        finally
+        {
+            QueuePool<decimal?>.Shared.Return(queue);
+        }
     }
 
-    /// <inheritdoc cref="MovingSum(IEnumerable{decimal}, int)"/>
-    /// <param name="selector">A transform function to apply to each element.</param>
-    public static IEnumerable<decimal> MovingSum<T>(this IEnumerable<T> source, Func<T, decimal> selector, int periods)
+    public static IEnumerable<decimal?> MovingSum<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods)
     {
-        var transformed = source.Select(selector);
-
-        return transformed.MovingSum(periods);
+        return source.Select(selector).MovingSum(periods);
     }
 }

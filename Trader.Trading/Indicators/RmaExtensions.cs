@@ -1,25 +1,42 @@
-﻿using Outcompute.Trader.Trading.Indicators;
-
-namespace System.Collections.Generic;
+﻿namespace System.Collections.Generic;
 
 public static class RmaExtensions
 {
-    /// <summary>
-    /// Calculates the Running Moving Average over the specified source.
-    /// </summary>
-    /// <param name="source">The source for RMA calculation.</param>
-    /// <param name="periods">The number of periods for RMA calculation.</param>
-    public static IEnumerable<decimal> Rma(this IEnumerable<decimal> source, int periods)
+    public static IEnumerable<decimal?> RunningMovingAverage(this IEnumerable<decimal?> source, int periods)
     {
-        return new RmaIterator(source, periods);
+        Guard.IsNotNull(source, nameof(source));
+        Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
+
+        var enumerator = source.GetEnumerator();
+
+        if (enumerator.MoveNext())
+        {
+            var current = enumerator.Current;
+
+            yield return current;
+
+            while (enumerator.MoveNext())
+            {
+                var next = enumerator.Current;
+
+                if (current.HasValue && next.HasValue)
+                {
+                    current = (((periods - 1) * current) + next) / periods;
+                }
+                else
+                {
+                    current = next;
+                }
+
+                yield return current;
+            }
+        }
     }
 
-    /// <inheritdoc cref="Rma(IEnumerable{decimal}, int)"/>
-    /// <param name="selector">A transform function to apply to each element.</param>
-    public static IEnumerable<decimal> Rma<T>(this IEnumerable<T> source, Func<T, decimal> selector, int periods)
+    public static IEnumerable<decimal?> RunningMovingAverage(this IEnumerable<Kline> source, int periods)
     {
-        var transformed = source.Select(selector);
-
-        return transformed.Rma(periods);
+        return source
+            .Select(x => (decimal?)x.ClosePrice)
+            .RunningMovingAverage(periods);
     }
 }

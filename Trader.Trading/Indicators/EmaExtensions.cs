@@ -2,18 +2,14 @@
 
 public static class EmaExtensions
 {
-    /// <summary>
-    /// Calculates the Exponential Moving Average over the specified source.
-    /// </summary>
-    /// <param name="source">The source for EMA calculation.</param>
-    /// <param name="periods">The number of periods for EMA calculation.</param>
-    public static IEnumerable<decimal> Ema(this IEnumerable<decimal> source, int periods)
+    public static IEnumerable<decimal?> ExponentialMovingAverage(this IEnumerable<decimal?> source, int periods)
     {
         Guard.IsNotNull(source, nameof(source));
+        Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
         using var enumerator = source.GetEnumerator();
 
-        var ema = 0M;
+        decimal? ema = null;
         var k = 2M / (periods + 1M);
 
         // handle the first value
@@ -25,26 +21,26 @@ public static class EmaExtensions
             // handle the remaining value
             while (enumerator.MoveNext())
             {
-                var value = enumerator.Current;
+                var next = enumerator.Current;
 
-                ema = (value * k) + (ema * (1 - k));
+                if (ema.HasValue && next.HasValue)
+                {
+                    ema = (next * k) + (ema * (1 - k));
+                }
+                else
+                {
+                    ema = next;
+                }
+
                 yield return ema;
             }
         }
     }
 
-    public static IEnumerable<decimal> Ema<T>(this IEnumerable<T> source, Func<T, decimal> selector, int periods)
+    public static IEnumerable<decimal?> ExponentialMovingAverage(this IEnumerable<Kline> source, int periods)
     {
-        Guard.IsNotNull(source, nameof(source));
-        Guard.IsNotNull(selector, nameof(selector));
-
-        return source.Select(selector).Ema(periods);
-    }
-
-    public static IEnumerable<decimal> Ema(this IEnumerable<Kline> source, int periods)
-    {
-        Guard.IsNotNull(source, nameof(source));
-
-        return source.Select(x => x.ClosePrice).Ema(periods);
+        return source
+            .Select(x => (decimal?)x.ClosePrice)
+            .ExponentialMovingAverage(periods);
     }
 }

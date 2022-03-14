@@ -4,7 +4,7 @@ public class OppositesExtensionsTests
 {
     [Theory]
     [MemberData(nameof(TestCases))]
-    public void Enumerates(decimal[] source, decimal[] expected)
+    public void Enumerates(decimal?[] source, decimal?[] expected)
     {
         var result = source.Opposites().ToArray();
 
@@ -16,9 +16,9 @@ public class OppositesExtensionsTests
 
     [Theory]
     [MemberData(nameof(TestCases))]
-    public void EnumeratesWithSelector(decimal[] source, decimal[] expected)
+    public void EnumeratesWithSelector(decimal?[] source, decimal?[] expected)
     {
-        var result = source.Opposites(x => x).ToArray();
+        var result = source.Opposites().ToArray();
 
         for (var i = 0; i < source.Length; i++)
         {
@@ -28,6 +28,6 @@ public class OppositesExtensionsTests
 
     public static readonly IEnumerable<object[]> TestCases = new object[][]
     {
-        new object[] { new decimal[] { -3, -2, -1, 0, 1, 2, 3 }, new decimal[] { 3, 2, 1, 0, -1, -2, -3 } },
+        new object[] { new decimal?[] { -3, -2, -1, 0, 1, 2, 3 }, new decimal?[] { 3, 2, 1, 0, -1, -2, -3 } },
     };
 }

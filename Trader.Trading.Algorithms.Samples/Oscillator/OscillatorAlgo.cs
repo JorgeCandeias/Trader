@@ -4,6 +4,7 @@ using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Algorithms.Positions;
 using Outcompute.Trader.Trading.Commands;
+using Outcompute.Trader.Trading.Indicators;
 
 namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
 {
@@ -107,14 +108,11 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             var stopPrice = decimal.MaxValue;
             var buyPrice = decimal.MaxValue;
 
-            /*
-            // guard - never buy under the long hull average
-            var hma200 = item.Klines.SkipLast(1).HullMovingAverage(200).Last();
-            if (item.Ticker.ClosePrice < hma200)
-            {
-                return Noop();
-            }
-            */
+            var so = item.Klines.StochasticOscillator().ToList();
+            var sf = item.Klines.StochasticFunction().ToList();
+            var srsi = item.Klines.StochasticRelativeStrengthIndex().ToList();
+            var uo = item.Klines.UltimateOscillator().ToList();
+            var imc = item.Klines.IchimokuCloud().ToList();
 
             if (item.Klines.SkipLast(1).TryGetHullMovingAverageVelocityUp(out var cross, _options.TrixPeriods))
             {
@@ -136,11 +134,11 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
 
             // guard - only allow an entry at enough distance since the last entry
             var atrp = item.Klines.SkipLast(1).AverageTrueRanges().Last();
-            if (lots.Count > 0)
+            if (lots.Count > 0 && atrp.HasValue)
             {
                 var lastEntryPrice = lots[^1].AvgPrice;
-                var lowerPrice = item.Symbol.LowerPriceToTickSize(lastEntryPrice - atrp * 3);
-                var upperPrice = item.Symbol.LowerPriceToTickSize(lastEntryPrice + atrp * 3);
+                var lowerPrice = item.Symbol.LowerPriceToTickSize(lastEntryPrice - atrp.Value * 3);
+                var upperPrice = item.Symbol.LowerPriceToTickSize(lastEntryPrice + atrp.Value * 3);
                 if (buyPrice > lowerPrice && buyPrice < upperPrice)
                 {
                     return Noop();
@@ -194,14 +192,17 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
 
             // guard - attempt to raise to a chandellier stop from the last lot
             var atrp = item.Klines.SkipLast(1).AverageTrueRanges().Last();
-            var chandellierOpen = lots[^1].Time;
-            var chandellierHigh = item.Klines.Reverse().TakeWhile(x => x.CloseTime >= chandellierOpen).Max(x => x.HighPrice);
-            var chandellierStop = item.Symbol.RaisePriceToTickSize(chandellierHigh - (atrp * _options.AtrMultiplier));
-            var chandellierPrice = item.Symbol.RaisePriceToTickSize(chandellierStop * (1 - window));
-            if (item.Ticker.ClosePrice > chandellierStop)
+            if (atrp.HasValue)
             {
-                stopPrice = Math.Max(stopPrice, chandellierStop);
-                sellPrice = Math.Max(sellPrice, chandellierPrice);
+                var chandellierOpen = lots[^1].Time;
+                var chandellierHigh = item.Klines.Reverse().TakeWhile(x => x.CloseTime >= chandellierOpen).Max(x => x.HighPrice);
+                var chandellierStop = item.Symbol.RaisePriceToTickSize(chandellierHigh - (atrp.Value * _options.AtrMultiplier));
+                var chandellierPrice = item.Symbol.RaisePriceToTickSize(chandellierStop * (1 - window));
+                if (item.Ticker.ClosePrice > chandellierStop)
+                {
+                    stopPrice = Math.Max(stopPrice, chandellierStop);
+                    sellPrice = Math.Max(sellPrice, chandellierPrice);
+                }
             }
 
             /*

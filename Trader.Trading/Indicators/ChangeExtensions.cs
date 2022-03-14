@@ -1,4 +1,6 @@
-﻿namespace System.Collections.Generic;
+﻿using Outcompute.Trader.Core.Pooling;
+
+namespace System.Collections.Generic;
 
 public static class ChangeExtensions
 {
@@ -16,26 +18,33 @@ public static class ChangeExtensions
         Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
         var enumerator = source.GetEnumerator();
-        var queue = new Queue<decimal?>();
+        var queue = QueuePool<decimal?>.Shared.Get();
 
-        for (var i = 0; i < periods; i++)
+        try
         {
-            if (!enumerator.MoveNext())
+            for (var i = 0; i < periods; i++)
             {
-                yield break;
+                if (!enumerator.MoveNext())
+                {
+                    yield break;
+                }
+
+                queue.Enqueue(enumerator.Current);
             }
 
-            queue.Enqueue(enumerator.Current);
+            while (enumerator.MoveNext())
+            {
+                var prev = queue.Dequeue();
+                var current = enumerator.Current;
+
+                yield return current - prev;
+
+                queue.Enqueue(current);
+            }
         }
-
-        while (enumerator.MoveNext())
+        finally
         {
-            var prev = queue.Dequeue();
-            var current = enumerator.Current;
-
-            yield return current - prev;
-
-            queue.Enqueue(current);
+            QueuePool<decimal?>.Shared.Return(queue);
         }
     }
 }

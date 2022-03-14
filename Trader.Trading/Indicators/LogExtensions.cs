@@ -2,21 +2,20 @@
 
 public static class LogExtensions
 {
-    public static IEnumerable<decimal> Log(this IEnumerable<decimal> source)
+    public static IEnumerable<decimal?> Log(this IEnumerable<decimal?> source)
     {
         Guard.IsNotNull(source, nameof(source));
 
         foreach (var value in source)
         {
-            yield return (decimal)Math.Log((double)value);
+            if (value.HasValue)
+            {
+                yield return (decimal)Math.Log((double)value.Value);
+            }
+            else
+            {
+                yield return null;
+            }
         }
-    }
-
-    public static IEnumerable<decimal> Log<T>(this IEnumerable<T> source, Func<T, decimal> selector)
-    {
-        Guard.IsNotNull(source, nameof(source));
-        Guard.IsNotNull(selector, nameof(selector));
-
-        return source.Select(selector).Log();
     }
 }

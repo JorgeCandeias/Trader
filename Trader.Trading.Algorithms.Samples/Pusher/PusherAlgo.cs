@@ -112,14 +112,17 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Pusher
             if (lastSell is not null)
             {
                 var atrp = item.Klines.SkipLast(1).AverageTrueRanges().Last();
-                var chandellierOpen = lastSell.Time;
-                var chandellierLow = item.Klines.Reverse().TakeWhile(x => x.CloseTime >= chandellierOpen).Min(x => x.LowPrice);
-                var chandellierStop = item.Symbol.RaisePriceToTickSize(chandellierLow + atrp * _options.AtrMultiplier);
-                var chandellierPrice = item.Symbol.RaisePriceToTickSize(chandellierStop * (1 + window));
-                if (item.Ticker.ClosePrice < chandellierStop)
+                if (atrp.HasValue)
                 {
-                    stopPrice = Math.Min(stopPrice, chandellierStop);
-                    buyPrice = Math.Min(buyPrice, chandellierPrice);
+                    var chandellierOpen = lastSell.Time;
+                    var chandellierLow = item.Klines.Reverse().TakeWhile(x => x.CloseTime >= chandellierOpen).Min(x => x.LowPrice);
+                    var chandellierStop = item.Symbol.RaisePriceToTickSize(chandellierLow + atrp.Value * _options.AtrMultiplier);
+                    var chandellierPrice = item.Symbol.RaisePriceToTickSize(chandellierStop * (1 + window));
+                    if (item.Ticker.ClosePrice < chandellierStop)
+                    {
+                        stopPrice = Math.Min(stopPrice, chandellierStop);
+                        buyPrice = Math.Min(buyPrice, chandellierPrice);
+                    }
                 }
             }
 
@@ -177,14 +180,17 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Pusher
             if (lastBuy is not null)
             {
                 var atrp = item.Klines.SkipLast(1).AverageTrueRanges().Last();
-                var chandellierOpen = lastBuy.Time;
-                var chandellierHigh = item.Klines.Reverse().TakeWhile(x => x.CloseTime >= chandellierOpen).Max(x => x.HighPrice);
-                var chandellierStop = item.Symbol.RaisePriceToTickSize(chandellierHigh - atrp * _options.AtrMultiplier);
-                var chandellierPrice = item.Symbol.RaisePriceToTickSize(chandellierStop * (1 - window));
-                if (item.Ticker.ClosePrice > chandellierStop)
+                if (atrp.HasValue)
                 {
-                    stopPrice = Math.Max(stopPrice, chandellierStop);
-                    sellPrice = Math.Max(sellPrice, chandellierPrice);
+                    var chandellierOpen = lastBuy.Time;
+                    var chandellierHigh = item.Klines.Reverse().TakeWhile(x => x.CloseTime >= chandellierOpen).Max(x => x.HighPrice);
+                    var chandellierStop = item.Symbol.RaisePriceToTickSize(chandellierHigh - atrp.Value * _options.AtrMultiplier);
+                    var chandellierPrice = item.Symbol.RaisePriceToTickSize(chandellierStop * (1 - window));
+                    if (item.Ticker.ClosePrice > chandellierStop)
+                    {
+                        stopPrice = Math.Max(stopPrice, chandellierStop);
+                        sellPrice = Math.Max(sellPrice, chandellierPrice);
+                    }
                 }
             }
 

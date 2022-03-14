@@ -1,9 +1,4 @@
-﻿using Outcompute.Trader.Trading.Indicators;
-using System;
-using System.Linq;
-using Xunit;
-
-namespace Outcompute.Trader.Trading.Tests
+﻿namespace Outcompute.Trader.Trading.Tests
 {
     public class RmaIteratorTests
     {
@@ -11,7 +6,7 @@ namespace Outcompute.Trader.Trading.Tests
         public void ThrowsOnNullSource()
         {
             // act
-            static RmaIterator Test() => new(null!, 14);
+            static void Test() => ((decimal?[])null!).RunningMovingAverage(14);
 
             // assert
             Assert.Throws<ArgumentNullException>("source", Test);
@@ -21,7 +16,7 @@ namespace Outcompute.Trader.Trading.Tests
         public void ThrowsOnLowPeriods()
         {
             // act
-            static RmaIterator Test() => new(Enumerable.Empty<decimal>(), 0);
+            static void Test() => Enumerable.Empty<decimal?>().RunningMovingAverage(0);
 
             // assert
             Assert.Throws<ArgumentOutOfRangeException>("periods", Test);
@@ -31,12 +26,10 @@ namespace Outcompute.Trader.Trading.Tests
         public void EnumeratesEmpty()
         {
             // arrange
-            var source = Enumerable.Empty<decimal>();
-            var periods = 14;
-            using var rma = new RmaIterator(source, periods);
+            var source = Enumerable.Empty<decimal?>();
 
             // act
-            var result = rma.ToList();
+            var result = source.RunningMovingAverage(14).ToList();
 
             // assert
             Assert.Empty(result);
@@ -47,20 +40,18 @@ namespace Outcompute.Trader.Trading.Tests
         {
             // arrange
             var periods = 14;
-            var source = new decimal[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
+            var source = new decimal?[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
 
             // calculate rmas one by one
-            var expected = new decimal[20];
+            var expected = new decimal?[20];
             expected[0] = source[0];
             for (var i = 1; i < source.Length; i++)
             {
                 expected[i] = ((expected[i - 1] * (periods - 1)) + source[i]) / periods;
             }
 
-            using var rma = new RmaIterator(source, periods);
-
             // act
-            var result = rma.ToList();
+            var result = source.RunningMovingAverage(periods).ToList();
 
             // assert
             Assert.Equal(source.Length, result.Count);

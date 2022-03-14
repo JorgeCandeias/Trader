@@ -1,32 +1,37 @@
-﻿using Outcompute.Trader.Trading.Indicators;
+﻿namespace System.Collections.Generic;
 
-namespace System.Collections.Generic;
+public record struct MacdValue
+{
+    public decimal? Price { get; init; }
+    public decimal? Fast { get; init; }
+    public decimal? Slow { get; init; }
+    public decimal? Macd { get; init; }
+    public decimal? Signal { get; init; }
+    public decimal? Histogram { get; init; }
+
+    public bool IsUptrend { get; init; }
+    public bool IsDowntrend { get; init; }
+    public bool IsNeutral { get; init; }
+
+    public bool IsUpcross { get; init; }
+    public bool IsDowncross { get; init; }
+
+    public static MacdValue Empty => new MacdValue();
+}
 
 public static class MacdExtensions
 {
-    public static IEnumerable<MacdValue> Macd(this IEnumerable<Kline> source, int fastLength = 12, int slowLength = 26, int signalStrength = 9)
+    public static IEnumerable<MacdValue> Macd(this IEnumerable<decimal?> source, int fastLength = 12, int slowLength = 26, int signalStrength = 9)
     {
         Guard.IsNotNull(source, nameof(source));
+        Guard.IsGreaterThanOrEqualTo(fastLength, 1, nameof(fastLength));
+        Guard.IsGreaterThanOrEqualTo(slowLength, 1, nameof(slowLength));
+        Guard.IsGreaterThanOrEqualTo(signalStrength, 1, nameof(signalStrength));
 
-        return source.Select(x => x.ClosePrice).Macd(fastLength, slowLength, signalStrength);
-    }
-
-    public static IEnumerable<MacdValue> Macd<T>(this IEnumerable<T> source, Func<T, decimal> selector, int fastLength = 12, int slowLength = 26, int signalStrength = 9)
-    {
-        Guard.IsNotNull(source, nameof(source));
-        Guard.IsNotNull(selector, nameof(selector));
-
-        return source.Select(selector).Macd(fastLength, slowLength, signalStrength);
-    }
-
-    public static IEnumerable<MacdValue> Macd(this IEnumerable<decimal> source, int fastLength = 12, int slowLength = 26, int signalStrength = 9)
-    {
-        Guard.IsNotNull(source, nameof(source));
-
-        var fastEmas = source.Ema(fastLength);
-        var slowEmas = source.Ema(slowLength);
+        var fastEmas = source.ExponentialMovingAverage(fastLength);
+        var slowEmas = source.ExponentialMovingAverage(slowLength);
         var macds = fastEmas.Zip(slowEmas).Select(zip => zip.First - zip.Second);
-        var signals = macds.Ema(signalStrength);
+        var signals = macds.ExponentialMovingAverage(signalStrength);
 
         using var sourceEnumerator = source.GetEnumerator();
         using var fastEnumerator = fastEmas.GetEnumerator();
@@ -71,17 +76,19 @@ public static class MacdExtensions
         }
     }
 
-    public static bool TryGetMacdForUpcross<T>(this IEnumerable<T> source, Func<T, decimal> selector, out MacdValue value, int fastLength = 12, int slowLength = 26, int signalStrength = 9, int iterations = 100)
+    public static IEnumerable<MacdValue> Macd(this IEnumerable<Kline> source, int fastLength = 12, int slowLength = 26, int signalStrength = 9)
     {
-        Guard.IsNotNull(source, nameof(source));
-        Guard.IsNotNull(selector, nameof(selector));
-
-        return source.Select(selector).TryGetMacdForUpcross(out value, fastLength, slowLength, signalStrength, iterations);
+        return source
+            .Select(x => (decimal?)x.ClosePrice)
+            .Macd(fastLength, slowLength, signalStrength);
     }
 
-    public static bool TryGetMacdForUpcross(this IEnumerable<decimal> source, out MacdValue value, int fastLength = 12, int slowLength = 26, int signalStrength = 9, int iterations = 100)
+    public static bool TryGetMacdForUpcross(this IEnumerable<decimal?> source, out MacdValue value, int fastLength = 12, int slowLength = 26, int signalStrength = 9, int iterations = 100)
     {
         Guard.IsNotNull(source, nameof(source));
+        Guard.IsGreaterThanOrEqualTo(fastLength, 1, nameof(fastLength));
+        Guard.IsGreaterThanOrEqualTo(slowLength, 1, nameof(slowLength));
+        Guard.IsGreaterThanOrEqualTo(signalStrength, 1, nameof(signalStrength));
 
         value = MacdValue.Empty;
 
@@ -126,15 +133,14 @@ public static class MacdExtensions
         return value != MacdValue.Empty;
     }
 
-    public static bool TryGetMacdForDowncross<T>(this IEnumerable<T> source, Func<T, decimal> selector, out MacdValue value, int fastLength = 12, int slowLength = 26, int signalStrength = 9, int iterations = 100)
+    public static bool TryGetMacdForUpcross(this IEnumerable<Kline> source, out MacdValue value, int fastLength = 12, int slowLength = 26, int signalStrength = 9, int iterations = 100)
     {
-        Guard.IsNotNull(source, nameof(source));
-        Guard.IsNotNull(selector, nameof(selector));
-
-        return source.Select(selector).TryGetMacdForDowncross(out value, fastLength, slowLength, signalStrength, iterations);
+        return source
+            .Select(x => (decimal?)x.ClosePrice)
+            .TryGetMacdForUpcross(out value, fastLength, slowLength, signalStrength, iterations);
     }
 
-    public static bool TryGetMacdForDowncross(this IEnumerable<decimal> source, out MacdValue value, int fastLength = 12, int slowLength = 26, int signalStrength = 9, int iterations = 100)
+    public static bool TryGetMacdForDowncross(this IEnumerable<decimal?> source, out MacdValue value, int fastLength = 12, int slowLength = 26, int signalStrength = 9, int iterations = 100)
     {
         Guard.IsNotNull(source, nameof(source));
 
@@ -179,5 +185,12 @@ public static class MacdExtensions
         }
 
         return value != MacdValue.Empty;
+    }
+
+    public static bool TryGetMacdForDowncross(this IEnumerable<Kline> source, out MacdValue value, int fastLength = 12, int slowLength = 26, int signalStrength = 9, int iterations = 100)
+    {
+        return source
+            .Select(x => (decimal?)x.ClosePrice)
+            .TryGetMacdForDowncross(out value, fastLength, slowLength, signalStrength, iterations);
     }
 }

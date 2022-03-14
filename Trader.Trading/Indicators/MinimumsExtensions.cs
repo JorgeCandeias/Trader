@@ -5,22 +5,26 @@ public static class MinimumsExtensions
     /// <summary>
     /// Compares each source value with <paramref name="other"/> and yields the min of either.
     /// </summary>
-    public static IEnumerable<decimal> Minimums(this IEnumerable<decimal> source, decimal other)
+    public static IEnumerable<decimal?> Minimums(this IEnumerable<decimal?> source, decimal? other)
     {
         Guard.IsNotNull(source, nameof(source));
 
-        foreach (var value in source)
+        if (other.HasValue)
         {
-            yield return Math.Min(value, other);
+            foreach (var value in source)
+            {
+                if (value.HasValue)
+                {
+                    yield return Math.Min(value.Value, other.Value);
+                }
+            }
         }
-    }
-
-    /// <inheritdoc cref="Minimums(IEnumerable{decimal}, decimal)"/>
-    public static IEnumerable<decimal> Minimums<T>(this IEnumerable<T> source, Func<T, decimal> selector, decimal other)
-    {
-        Guard.IsNotNull(source, nameof(source));
-        Guard.IsNotNull(selector, nameof(selector));
-
-        return source.Select(selector).Minimums(other);
+        else
+        {
+            foreach (var _ in source)
+            {
+                yield return null;
+            }
+        }
     }
 }

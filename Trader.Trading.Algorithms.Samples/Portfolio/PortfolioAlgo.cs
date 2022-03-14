@@ -387,8 +387,11 @@ public partial class PortfolioAlgo : Algo
         var atr = item.Klines.AverageTrueRanges().Last();
 
         // guard - raise to a trailing guard stop
-        var atrStop = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice - atr * 3);
-        stopPrice = Math.Max(stopPrice, atrStop);
+        if (atr.HasValue)
+        {
+            var atrStop = item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice - atr.Value * 3);
+            stopPrice = Math.Max(stopPrice, atrStop);
+        }
 
         // guard - raise to an aggressive defensive stop if the ticker is out of range enough
         if (item.Ticker.ClosePrice >= stats.AvgPrice * 1.10M)
@@ -402,9 +405,9 @@ public partial class PortfolioAlgo : Algo
 
         // guard - raise to the super trend if any
         var trend = item.Klines.SuperTrend().Last();
-        if (trend.Direction == SuperTrendDirection.Up)
+        if (trend.Direction == SuperTrendDirection.Up && trend.Low.HasValue)
         {
-            var target = item.Symbol.LowerPriceToTickSize(trend.Low);
+            var target = item.Symbol.LowerPriceToTickSize(trend.Low.Value);
             var distance = Math.Abs(target - lots[0].AvgPrice);
             if (item.Ticker.ClosePrice > target && distance > atr)
             {
@@ -440,11 +443,14 @@ public partial class PortfolioAlgo : Algo
         */
 
         // take - raise to a bollinger extreme if the last lot is not guarded already
-        var boll = item.Klines.BollingerBands(x => x.ClosePrice, 21, 3).Last();
-        var bollStop = item.Symbol.LowerPriceToTickSize(boll.High);
-        if (item.Ticker.ClosePrice > bollStop && stopPrice < lots[0].AvgPrice)
+        var boll = item.Klines.BollingerBands(21, 3).Last();
+        if (boll.High.HasValue)
         {
-            stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M));
+            var bollStop = item.Symbol.LowerPriceToTickSize(boll.High.Value);
+            if (item.Ticker.ClosePrice > bollStop && stopPrice < lots[0].AvgPrice)
+            {
+                stopPrice = Math.Max(stopPrice, item.Symbol.LowerPriceToTickSize(item.Ticker.ClosePrice * 0.99M));
+            }
         }
 
         // take - raise to a sar divergence to take peaks

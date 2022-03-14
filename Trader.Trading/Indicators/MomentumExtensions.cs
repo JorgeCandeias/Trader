@@ -4,47 +4,52 @@ namespace System.Collections.Generic;
 
 internal static class MomentumExtensions
 {
-    public static IEnumerable<decimal> Momentum(this IEnumerable<decimal> source, int periods)
+    public static IEnumerable<decimal?> Momentum(this IEnumerable<decimal?> source, int periods)
     {
         Guard.IsNotNull(source, nameof(source));
+        Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
         var enumerator = source.GetEnumerator();
-        var queue = QueuePool<decimal>.Shared.Get();
+        var queue = QueuePool<decimal?>.Shared.Get();
 
-        // advance the first n periods
-        for (var i = 0; i < periods; i++)
+        try
         {
-            if (enumerator.MoveNext())
+            // advance the first n periods
+            for (var i = 0; i < periods; i++)
             {
-                queue.Enqueue(enumerator.Current);
-                yield return 0;
+                if (enumerator.MoveNext())
+                {
+                    queue.Enqueue(enumerator.Current);
+
+                    yield return null;
+                }
+                else
+                {
+                    yield break;
+                }
             }
-            else
+
+            // return differences for the rest of the enumeration
+            while (enumerator.MoveNext())
             {
-                QueuePool<decimal>.Shared.Return(queue);
-                yield break;
+                var current = enumerator.Current;
+                var comparand = queue.Dequeue();
+
+                yield return current - comparand;
+
+                queue.Enqueue(current);
             }
         }
-
-        // return differences for the rest of the enumeration
-        while (enumerator.MoveNext())
+        finally
         {
-            var current = enumerator.Current;
-
-            var comparand = queue.Dequeue();
-            queue.Enqueue(current);
-
-            yield return current - comparand;
+            QueuePool<decimal?>.Shared.Return(queue);
         }
-
-        QueuePool<decimal>.Shared.Return(queue);
     }
 
-    public static IEnumerable<decimal> Momentum<T>(this IEnumerable<T> source, Func<T, decimal> selector, int periods)
+    public static IEnumerable<decimal?> Momentum(this IEnumerable<Kline> source, int periods)
     {
-        Guard.IsNotNull(source, nameof(source));
-        Guard.IsNotNull(selector, nameof(selector));
-
-        return source.Select(selector).Momentum(periods);
+        return source
+            .Select(x => (decimal?)x.ClosePrice)
+            .Momentum(periods);
     }
 }

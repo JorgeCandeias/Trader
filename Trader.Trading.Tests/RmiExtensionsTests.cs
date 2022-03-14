@@ -87,11 +87,11 @@ public class RmiExtensionsTests
             /* 22:00 */ (37866.56M, 43.29M)
         };
 
-        var result = data.Select(x => x.Item1).Rmi(3, 14).ToArray();
+        var result = data.Select(x => (decimal?)x.Item1).Rmi(3, 14).ToArray();
 
         for (var i = 14; i < data.Length; i++)
         {
-            if (Math.Abs(data[i].Item2 - result[i]) >= 10M)
+            if (Math.Abs(data[i].Item2 - result[i].GetValueOrDefault(0)) >= 10M)
             {
                 Assert.Equal(data[i].Item2, result[i]);
             }

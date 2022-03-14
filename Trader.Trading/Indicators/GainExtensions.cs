@@ -1,25 +1,38 @@
-﻿using Outcompute.Trader.Trading.Indicators;
-
-namespace System.Collections.Generic;
+﻿namespace System.Collections.Generic;
 
 public static class GainExtensions
 {
     /// <summary>
     /// Calculates the gain between the current value and the previous value over the specified source.
-    /// Evaluates to zero if there is no gain.
     /// </summary>
     /// <param name="source">The source for gain calculation.</param>
-    public static IEnumerable<decimal> Gain(this IEnumerable<decimal> source)
+    public static IEnumerable<decimal?> Gain(this IEnumerable<decimal?> source)
     {
-        return new GainIterator(source);
-    }
+        Guard.IsNotNull(source, nameof(source));
 
-    /// <inheritdoc cref="Gain(IEnumerable{decimal})"/>
-    /// <param name="selector">A transform function to apply to each element.</param>
-    public static IEnumerable<decimal> Gain<T>(this IEnumerable<T> source, Func<T, decimal> selector)
-    {
-        var transformed = source.Select(selector);
+        var enumerator = source.GetEnumerator();
 
-        return transformed.Gain();
+        if (enumerator.MoveNext())
+        {
+            var prev = enumerator.Current;
+
+            yield return null;
+
+            while (enumerator.MoveNext())
+            {
+                var value = enumerator.Current;
+
+                if (value.HasValue && prev.HasValue)
+                {
+                    yield return Math.Max(value.Value - prev.Value, 0m);
+                }
+                else
+                {
+                    yield return null;
+                }
+
+                prev = value;
+            }
+        }
     }
 }

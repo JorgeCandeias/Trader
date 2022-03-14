@@ -2,14 +2,21 @@
 
 public static class StdDevExtensions
 {
-    public static IEnumerable<decimal> StdDev(this IEnumerable<decimal> source, int periods)
+    public static IEnumerable<decimal?> StandardDeviations(this IEnumerable<decimal?> source, int periods)
     {
         Guard.IsNotNull(source, nameof(source));
         Guard.IsGreaterThanOrEqualTo(periods, 2, nameof(periods));
 
-        foreach (var value in source.Variance(periods))
+        foreach (var value in source.Variances(periods))
         {
-            yield return (decimal)Math.Sqrt((double)value);
+            if (value.HasValue)
+            {
+                yield return (decimal?)Math.Sqrt((double)value.Value);
+            }
+            else
+            {
+                yield return null;
+            }
         }
     }
 }

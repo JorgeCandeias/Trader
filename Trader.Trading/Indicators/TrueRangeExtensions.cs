@@ -1,4 +1,24 @@
-﻿namespace System.Collections.Generic;
+﻿using Outcompute.Trader.Core.Mathematics;
+
+namespace Outcompute.Trader.Trading.Indicators;
+
+public class TrueRangeIndicator : IndicatorBase<(decimal? High, decimal? Low, decimal? Close), decimal?>
+{
+    protected override decimal? Calculate(int index)
+    {
+        if (index == 0)
+        {
+            return Source[0].High - Source[0].Low;
+        }
+
+        var highLow = Source[^1].High - Source[^1].Low;
+        var highClose = MathN.Abs(Source[^1].High - Source[^2].Close);
+        var lowClose = MathN.Abs(Source[^1].Low - Source[^2].Close);
+        var trueRange = MathN.Max(highLow, MathN.Max(highClose, lowClose));
+
+        return trueRange;
+    }
+}
 
 public static class TrueRangeExtensions
 {
@@ -6,30 +26,13 @@ public static class TrueRangeExtensions
     {
         Guard.IsNotNull(source, nameof(source));
 
-        var enumerator = source.GetEnumerator();
+        var indicator = new TrueRangeIndicator();
 
-        // calculate the first period
-        if (enumerator.MoveNext())
+        foreach (var (high, low, close) in source)
         {
-            var value = enumerator.Current;
-            var prev = value;
+            indicator.Add((high, low, close));
 
-            yield return value.High - value.Low;
-
-            // calculate the remaining periods
-            while (enumerator.MoveNext())
-            {
-                value = enumerator.Current;
-
-                var highLow = value.High - value.Low;
-                var highClose = value.High.HasValue && prev.Close.HasValue ? (decimal?)Math.Abs(value.High.Value - prev.Close.Value) : null;
-                var lowClose = value.Low.HasValue && prev.Close.HasValue ? (decimal?)Math.Abs(value.Low.Value - prev.Close.Value) : null;
-                var trueRange = highLow.HasValue && highClose.HasValue && lowClose.HasValue ? (decimal?)Math.Max(highLow.Value, Math.Max(highClose.Value, lowClose.Value)) : null;
-
-                yield return trueRange;
-
-                prev = value;
-            }
+            yield return indicator[^1];
         }
     }
 

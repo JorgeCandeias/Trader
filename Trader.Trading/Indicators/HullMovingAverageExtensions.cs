@@ -38,10 +38,10 @@ public static class HullMovingAverageExtensions
         Guard.IsGreaterThan(periods, 2, nameof(periods));
         Guard.IsGreaterThanOrEqualTo(iterations, 1, nameof(iterations));
 
-        return source.Select(x => (decimal?)x.ClosePrice).TryGetHullMovingaverageVelocityUp(out price, periods, velocity, iterations);
+        return source.Select(x => (decimal?)x.ClosePrice).TryGetHullMovingAverageVelocityUp(out price, periods, velocity, iterations);
     }
 
-    public static bool TryGetHullMovingaverageVelocityUp(this IEnumerable<decimal?> source, out decimal price, int periods = 9, decimal velocity = 0, int iterations = 100)
+    public static bool TryGetHullMovingAverageVelocityUp(this IEnumerable<decimal?> source, out decimal price, int periods = 9, decimal velocity = 0, int iterations = 100)
     {
         Guard.IsNotNull(source, nameof(source));
         Guard.IsGreaterThan(periods, 2, nameof(periods));

@@ -14,11 +14,20 @@ public enum TechnicalRatingAction
 
 public record TechnicalRatingDetail(string Indicator, decimal? Value, TechnicalRatingAction Status);
 
-public record TechnicalRatingSignals(int Sell, int Neutral, int Buy);
+public record TechnicalRatingSignals(int Sell, int Neutral, int Buy)
+{
+    public static TechnicalRatingSignals Empty { get; } = new TechnicalRatingSignals(0, 0, 0);
+}
 
-public record TechnicalRatingTotals(decimal Rating, TechnicalRatingAction Action, TechnicalRatingSignals Signals);
+public record TechnicalRatingTotals(decimal Rating, TechnicalRatingAction Action, TechnicalRatingSignals Signals)
+{
+    public static TechnicalRatingTotals Empty { get; } = new TechnicalRatingTotals(0, TechnicalRatingAction.Unknown, TechnicalRatingSignals.Empty);
+}
 
-public record TechnicalRatingSummary(TechnicalRatingTotals Summary, TechnicalRatingTotals MovingAverages, TechnicalRatingTotals Oscillators, ImmutableList<TechnicalRatingDetail> Details);
+public record TechnicalRatingSummary(Kline Item, TechnicalRatingTotals Summary, TechnicalRatingTotals MovingAverages, TechnicalRatingTotals Oscillators, ImmutableList<TechnicalRatingDetail> Details)
+{
+    public static TechnicalRatingSummary Empty { get; } = new TechnicalRatingSummary(Kline.Empty, TechnicalRatingTotals.Empty, TechnicalRatingTotals.Empty, TechnicalRatingTotals.Empty, ImmutableList<TechnicalRatingDetail>.Empty);
+}
 
 public static class TechnicalRatingsExtensions
 {
@@ -27,7 +36,10 @@ public static class TechnicalRatingsExtensions
 
     public static IEnumerable<TechnicalRatingSummary> TechnicalRatingsSummary(this IEnumerable<Kline> klines)
     {
-        /* moving averages */
+        // source
+        var items = klines.GetEnumerator();
+
+        // moving averages
         var sma10 = klines.SimpleMovingAverage(10).GetEnumerator();
         var sma20 = klines.SimpleMovingAverage(20).GetEnumerator();
         var sma30 = klines.SimpleMovingAverage(30).GetEnumerator();
@@ -64,7 +76,7 @@ public static class TechnicalRatingsExtensions
         var close = klines.Select(x => x.ClosePrice).GetEnumerator();
         var prev = klines.Select(x => (decimal?)x.ClosePrice).Prepend(null).SkipLast(1).GetEnumerator();
 
-        while (close.MoveNext() && prev.MoveNext() && downTrend.MoveNext() && upTrend.MoveNext()
+        while (items.MoveNext() && close.MoveNext() && prev.MoveNext() && downTrend.MoveNext() && upTrend.MoveNext()
             && sma10.MoveNext() && sma20.MoveNext() && sma30.MoveNext() && sma50.MoveNext() && sma100.MoveNext() && sma200.MoveNext()
             && ema10.MoveNext() && ema20.MoveNext() && ema30.MoveNext() && ema50.MoveNext() && ema100.MoveNext() && ema200.MoveNext()
             && hma9.MoveNext() && vwma20.MoveNext() && ichimoku.MoveNext()
@@ -240,6 +252,7 @@ public static class TechnicalRatingsExtensions
 
             // return the indicator
             yield return new TechnicalRatingSummary(
+                items.Current,
                 new TechnicalRatingTotals(summaryRating, GetRatingStatus(summaryRating), new TechnicalRatingSignals(summarySellSignals, summaryNeutralSignals, summaryBuySignals)),
                 new TechnicalRatingTotals(averagesRating, GetRatingStatus(averagesRating), new TechnicalRatingSignals(averagesSellSignals, averagesNeutralSignals, averagesBuySignals)),
                 new TechnicalRatingTotals(oscillatorsRating, GetRatingStatus(oscillatorsRating), new TechnicalRatingSignals(oscillatorsSellSignals, oscillatorsNeutralSignals, oscillatorsBuySignals)),
@@ -530,5 +543,147 @@ public static class TechnicalRatingsExtensions
         }
 
         return TechnicalRatingAction.Unknown;
+    }
+
+    public static bool TryGetTechnicalRatingsSummaryUp(this IEnumerable<Kline> source, out TechnicalRatingSummary result, TechnicalRatingAction target = TechnicalRatingAction.Buy, int iterations = 100)
+    {
+        Guard.IsNotNull(source, nameof(source));
+        Guard.IsGreaterThanOrEqualTo(iterations, 1, nameof(iterations));
+
+        result = TechnicalRatingSummary.Empty;
+
+        // the last summary must not be in buy action already
+        var last = source.TechnicalRatingsSummary().Last();
+        if (last.Summary.Action >= target)
+        {
+            return false;
+        }
+
+        // define the upper search range
+        var high = source.Max(x => x.HighPrice) * 2M;
+        if (high <= 0)
+        {
+            return false;
+        }
+
+        // define the lower search range
+        var low = source.Min(x => x.LowPrice) / 2M;
+        if (low <= 0)
+        {
+            return false;
+        }
+
+        // use the last kline as a template for the future one
+        var kline = source.Last();
+        kline = kline with
+        {
+            OpenPrice = kline.ClosePrice,
+            HighPrice = kline.ClosePrice,
+            LowPrice = kline.ClosePrice
+        };
+
+        // perform binary search
+        for (var i = 0; i < iterations; i++)
+        {
+            var candidatePrice = (low + high) / 2;
+
+            // probe halfway between the range
+            var candidateKline = kline with
+            {
+                ClosePrice = candidatePrice,
+                HighPrice = Math.Max(kline.HighPrice, candidatePrice),
+                LowPrice = Math.Min(kline.LowPrice, candidatePrice)
+            };
+            var candidateSummary = source.Append(candidateKline).TechnicalRatingsSummary().Last();
+
+            // adjust ranges to search for a better candidate
+            if (candidateSummary.Summary.Action >= target)
+            {
+                result = candidateSummary;
+                high = candidatePrice;
+            }
+            else if (candidateSummary.Summary.Action < target)
+            {
+                low = candidatePrice;
+            }
+            else
+            {
+                result = candidateSummary;
+                return true;
+            }
+        }
+
+        return result != TechnicalRatingSummary.Empty;
+    }
+
+    public static bool TryGetTechnicalRatingsSummaryDown(this IEnumerable<Kline> source, out TechnicalRatingSummary result, TechnicalRatingAction target = TechnicalRatingAction.Sell, int iterations = 100)
+    {
+        Guard.IsNotNull(source, nameof(source));
+        Guard.IsGreaterThanOrEqualTo(iterations, 1, nameof(iterations));
+
+        result = TechnicalRatingSummary.Empty;
+
+        // the last summary must not be in sell action already
+        var last = source.TechnicalRatingsSummary().Last();
+        if (last.Summary.Action <= target)
+        {
+            return false;
+        }
+
+        // define the upper search range
+        var high = source.Max(x => x.HighPrice) * 2M;
+        if (high <= 0)
+        {
+            return false;
+        }
+
+        // define the lower search range
+        var low = source.Min(x => x.LowPrice) / 2M;
+        if (low <= 0)
+        {
+            return false;
+        }
+
+        // use the last kline as a template for the future one
+        var kline = source.Last();
+        kline = kline with
+        {
+            OpenPrice = kline.ClosePrice,
+            HighPrice = kline.ClosePrice,
+            LowPrice = kline.ClosePrice
+        };
+
+        // perform binary search
+        for (var i = 0; i < iterations; i++)
+        {
+            var candidatePrice = (low + high) / 2;
+
+            // probe halfway between the range
+            var candidateKline = kline with
+            {
+                ClosePrice = candidatePrice,
+                HighPrice = Math.Max(kline.HighPrice, candidatePrice),
+                LowPrice = Math.Min(kline.LowPrice, candidatePrice)
+            };
+            var candidateSummary = source.Append(candidateKline).TechnicalRatingsSummary().Last();
+
+            // adjust ranges to search for a better candidate
+            if (candidateSummary.Summary.Action > target)
+            {
+                high = candidatePrice;
+            }
+            else if (candidateSummary.Summary.Action <= target)
+            {
+                result = candidateSummary;
+                low = candidatePrice;
+            }
+            else
+            {
+                result = candidateSummary;
+                return true;
+            }
+        }
+
+        return result != TechnicalRatingSummary.Empty;
     }
 }

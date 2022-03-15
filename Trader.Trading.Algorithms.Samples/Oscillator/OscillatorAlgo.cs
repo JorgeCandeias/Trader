@@ -108,47 +108,20 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             var stopPrice = decimal.MaxValue;
             var buyPrice = decimal.MaxValue;
 
-            var technicals = item.Klines.TechnicalRatingsSummary().ToList();
+            var atr = item.Klines.SkipLast(1).AverageTrueRanges().Last();
 
-            if (item.Klines.SkipLast(1).TryGetHullMovingAverageVelocityUp(out var cross, _options.TrixPeriods))
+            if (item.Klines.SkipLast(1).TryGetTechnicalRatingsSummaryUp(out var summary, TechnicalRatingAction.Buy))
             {
-                var price = item.Symbol.LowerPriceToTickSize(cross);
-                var stop = item.Symbol.LowerPriceToTickSize(price * (1 - window));
-
-                /*
-                var atrp = item.Klines.SkipLast(1).AverageTrueRanges().Last();
-                var tolerance = atrp;
+                var stop = item.Symbol.LowerPriceToTickSize(summary.Item.ClosePrice);
+                var price = item.Symbol.LowerPriceToTickSize(stop * (1 + window));
                 var distance = Math.Abs(item.Klines[^1].ClosePrice - price);
-                */
 
-                if (item.Ticker.ClosePrice < stop /*&& distance < tolerance*/)
+                if (item.Ticker.ClosePrice < stop && distance < atr)
                 {
                     stopPrice = Math.Min(stopPrice, stop);
                     buyPrice = Math.Min(buyPrice, price);
                 }
             }
-
-            // guard - only allow an entry at enough distance since the last entry
-            var atrp = item.Klines.SkipLast(1).AverageTrueRanges().Last();
-            if (lots.Count > 0 && atrp.HasValue)
-            {
-                var lastEntryPrice = lots[^1].AvgPrice;
-                var lowerPrice = item.Symbol.LowerPriceToTickSize(lastEntryPrice - atrp.Value * 3);
-                var upperPrice = item.Symbol.LowerPriceToTickSize(lastEntryPrice + atrp.Value * 3);
-                if (buyPrice > lowerPrice && buyPrice < upperPrice)
-                {
-                    return Noop();
-                }
-            }
-
-            /*
-            // guard - entry must happen on the lower boll band
-            var boll = item.Klines.SkipLast(1).BollingerBands(20, 1).Last();
-            if (buyPrice > boll.Low)
-            {
-                return Noop();
-            }
-            */
 
             // ignore if we cant predict yet - the price may be jumping around the target
             if (stopPrice == decimal.MaxValue)
@@ -201,15 +174,10 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
                 }
             }
 
-            /*
-            if (item.Klines.SkipLast(1).TryGetHullMovingAverageVelocityDown(out var cross, _options.TrixPeriods))
+            if (item.Klines.SkipLast(1).TryGetTechnicalRatingsSummaryDown(out var summary, TechnicalRatingAction.Sell))
             {
-                var price = item.Symbol.RaisePriceToTickSize(cross);
-
-                // raise to at least break even of last lot
-                price = Math.Max(price, item.Symbol.RaisePriceToTickSize(lots[^1].AvgPrice));
-
-                var stop = item.Symbol.RaisePriceToTickSize(price * (1 + window));
+                var stop = item.Symbol.RaisePriceToTickSize(summary.Item.ClosePrice);
+                var price = item.Symbol.RaisePriceToTickSize(stop * (1 - window));
 
                 if (item.Ticker.ClosePrice > stop)
                 {
@@ -217,7 +185,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
                     sellPrice = Math.Max(sellPrice, price);
                 }
             }
-            */
 
             // calculate tracking stop for reuse
             var trailingStop = item.Symbol.RaisePriceToTickSize(item.Ticker.ClosePrice * (1 - window));

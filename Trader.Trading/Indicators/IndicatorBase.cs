@@ -12,6 +12,16 @@ public abstract class IndicatorBase<TSource, TResult> : IIndicator<TSource, TRes
 
     public int Count => Result.Count;
 
+    public void AddRange(IEnumerable<TSource> values)
+    {
+        Guard.IsNotNull(values, nameof(values));
+
+        foreach (var value in values)
+        {
+            Add(value);
+        }
+    }
+
     public void Add(TSource value)
     {
         Source.Add(value);

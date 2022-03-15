@@ -2,27 +2,13 @@
 
 namespace Outcompute.Trader.Trading.Tests
 {
-    public class SmaIteratorTests
+    public class SmaIndicatorTests
     {
         [Fact]
-        public void EnumeratesEmpty()
+        public void YieldsSma()
         {
             // arrange
-            var source = Enumerable.Empty<decimal?>();
-            var periods = 14;
-
-            // act
-            var result = source.SimpleMovingAverage(periods).ToList();
-
-            // assert
-            Assert.Empty(result);
-        }
-
-        [Fact]
-        public void CalculatesSma()
-        {
-            // arrange
-            var periods = 14;
+            var periods = 3;
             var source = new decimal?[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
 
             // calculate smas one by one
@@ -42,13 +28,18 @@ namespace Outcompute.Trader.Trading.Tests
             }
 
             // act
-            var result = source.SimpleMovingAverage(periods).ToList();
+            var indicator = new SmaIndicator(periods);
+            indicator.AddRange(source);
 
             // assert
-            Assert.Equal(source.Length, result.Count);
-            for (var i = 0; i < source.Length; i++)
+            Assert.Equal(source.Length, indicator.Count);
+            for (var i = 0; i < periods - 1; i++)
             {
-                Assert.Equal(expected[i], result[i]);
+                Assert.Null(indicator[i]);
+            }
+            for (var i = periods - 1; i < source.Length; i++)
+            {
+                Assert.Equal(expected[i], indicator[i]);
             }
         }
     }

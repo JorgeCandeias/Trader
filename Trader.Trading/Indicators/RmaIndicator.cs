@@ -1,13 +1,13 @@
 ﻿namespace Outcompute.Trader.Trading.Indicators;
 
-public class EmaIndicator : IndicatorBase<decimal?, decimal?>
+public class RmaIndicator : IndicatorBase<decimal?, decimal?>
 {
-    public EmaIndicator(int periods = 10)
+    public RmaIndicator(int periods = 10)
     {
         Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
         Periods = periods;
-        Alpha = 2M / (periods + 1M);
+        Alpha = 1M / Periods;
     }
 
     public int Periods { get; }
@@ -21,10 +21,10 @@ public class EmaIndicator : IndicatorBase<decimal?, decimal?>
             return null;
         }
 
-        var ema = Result[^2];
+        var rma = Result[^2];
 
         // start from the sma to avoid spikes
-        if (!ema.HasValue)
+        if (!rma.HasValue)
         {
             var sum = 0M;
             var count = 0;
@@ -49,11 +49,11 @@ public class EmaIndicator : IndicatorBase<decimal?, decimal?>
             }
         }
 
-        // calculate the next ema
+        // calculate the next rma
         var next = Source[^1];
         if (next.HasValue)
         {
-            return (Alpha * next) + (1 - Alpha) * ema;
+            return (Alpha * next) + (1 - Alpha) * rma;
         }
         else
         {
@@ -62,31 +62,27 @@ public class EmaIndicator : IndicatorBase<decimal?, decimal?>
     }
 }
 
-public static class EmaIndicatorEnumerableExtensions
+public static class RmaIndicatorEnumerableExtensions
 {
-    public static IEnumerable<decimal?> ExponentialMovingAverage<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = 10)
+    public static IEnumerable<decimal?> RunningMovingAverage(this IEnumerable<decimal?> source, int periods)
     {
         Guard.IsNotNull(source, nameof(source));
-        Guard.IsNotNull(selector, nameof(selector));
         Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
-        var indicator = new EmaIndicator(periods);
+        var indicator = new RmaIndicator(periods);
 
         foreach (var item in source)
         {
-            indicator.Add(selector(item));
+            indicator.Add(item);
 
             yield return indicator[^1];
         }
     }
 
-    public static IEnumerable<decimal?> ExponentialMovingAverage(this IEnumerable<Kline> source, int periods)
+    public static IEnumerable<decimal?> RunningMovingAverage(this IEnumerable<Kline> source, int periods)
     {
-        return source.ExponentialMovingAverage(x => x.ClosePrice, periods);
-    }
-
-    public static IEnumerable<decimal?> ExponentialMovingAverage(this IEnumerable<decimal?> source, int periods)
-    {
-        return source.ExponentialMovingAverage(x => x, periods);
+        return source
+            .Select(x => (decimal?)x.ClosePrice)
+            .RunningMovingAverage(periods);
     }
 }

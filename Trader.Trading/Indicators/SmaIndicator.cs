@@ -2,25 +2,25 @@
 
 public class SmaIndicator : IndicatorBase<decimal?, decimal?>
 {
-    public SmaIndicator(int length = 10)
+    public SmaIndicator(int periods = 10)
     {
-        Guard.IsGreaterThanOrEqualTo(length, 1, nameof(length));
+        Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
-        Length = length;
+        Periods = periods;
     }
 
-    public int Length { get; }
+    public int Periods { get; }
 
     protected override decimal? Calculate(int index)
     {
         // skip until the indicator is seeded
-        if (index < Length - 1)
+        if (index < Periods - 1)
         {
             return null;
         }
 
         // calculate the next sma
-        var start = Math.Max(index - Length + 1, 0);
+        var start = Math.Max(index - Periods + 1, 0);
         var end = index + 1;
         var sum = 0M;
         var count = 0;

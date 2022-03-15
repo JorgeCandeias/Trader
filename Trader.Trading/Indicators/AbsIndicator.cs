@@ -9,7 +9,7 @@ public class AbsIndicator : TransformIndicator<decimal?, decimal?>
     }
 }
 
-public static class AbsIndicatorExtensions
+public static class AbsIndicatorEnumerableExtensions
 {
     public static IEnumerable<decimal?> Abs(this IEnumerable<decimal?> source)
     {

@@ -1,8 +1,19 @@
-﻿using Outcompute.Trader.Core.Pooling;
+﻿namespace Outcompute.Trader.Trading.Indicators;
 
-namespace Outcompute.Trader.Trading.Indicators;
+public class ChangeIndicator : IndicatorBase<decimal?, decimal?>
+{
+    protected override decimal? Calculate(int index)
+    {
+        if (index < 1)
+        {
+            return null;
+        }
 
-public static class ChangeExtensions
+        return Source[^1] - Source[^2];
+    }
+}
+
+public static class ChangeIndicatorEnumerableExtensions
 {
     /// <summary>
     /// Yields the difference between the current value and the previous value from <paramref name="periods"/> ago.
@@ -13,36 +24,13 @@ public static class ChangeExtensions
         Guard.IsNotNull(selector, nameof(selector));
         Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
-        var enumerator = source.GetEnumerator();
-        var queue = QueuePool<decimal?>.Shared.Get();
+        var indicator = new ChangeIndicator();
 
-        try
+        foreach (var item in source)
         {
-            for (var i = 0; i < periods; i++)
-            {
-                if (!enumerator.MoveNext())
-                {
-                    yield break;
-                }
+            indicator.Add(selector(item));
 
-                queue.Enqueue(selector(enumerator.Current));
-
-                yield return null;
-            }
-
-            while (enumerator.MoveNext())
-            {
-                var prev = queue.Dequeue();
-                var current = selector(enumerator.Current);
-
-                yield return current - prev;
-
-                queue.Enqueue(current);
-            }
-        }
-        finally
-        {
-            QueuePool<decimal?>.Shared.Return(queue);
+            yield return indicator[^1];
         }
     }
 

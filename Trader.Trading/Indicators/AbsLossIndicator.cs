@@ -16,7 +16,7 @@ public class AbsLossIndicator : IndicatorBase<decimal?, decimal?>
     }
 }
 
-public static class AbsLossExtensions
+public static class AbsLossIndicatorEnumerableExtensions
 {
     /// <summary>
     /// Calculates the absolute loss between the current value and the previous value over the specified source.

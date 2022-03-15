@@ -107,6 +107,13 @@ namespace Outcompute.Trader.App
                         options.Port = 6001;
                     });
 
+                    orleans.Configure<SiloMessagingOptions>(options =>
+                    {
+                        // todo: remove this after refactoring the batch execution to handle long-running tasks
+                        options.ResponseTimeout = TimeSpan.FromMinutes(1);
+                        options.RequestProcessingWarningTime = TimeSpan.FromSeconds(30);
+                    });
+
                     orleans
                         .AddTrader()
                         .AddBinanceTradingService(options =>

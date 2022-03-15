@@ -20,7 +20,7 @@ public class TrueRangeIndicator : IndicatorBase<(decimal? High, decimal? Low, de
     }
 }
 
-public static class TrueRangeExtensions
+public static class TrueRangeIndicatorEnumerableExtensions
 {
     public static IEnumerable<decimal?> TrueRanges(this IEnumerable<(decimal? High, decimal? Low, decimal? Close)> source)
     {

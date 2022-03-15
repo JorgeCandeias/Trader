@@ -11,6 +11,17 @@
     /// </summary>
     public static class MathN
     {
+        /// <inheritdoc cref="Math.Round(decimal, int, MidpointRounding)"/>
+        public static decimal? Round(decimal? value, int decimals = 0, MidpointRounding mode = MidpointRounding.ToEven)
+        {
+            if (value.HasValue)
+            {
+                return Math.Round(value.Value, decimals, mode);
+            }
+
+            return null;
+        }
+
         /// <inheritdoc cref="Math.Abs(decimal)"/>
         public static decimal? Abs(decimal? value)
         {

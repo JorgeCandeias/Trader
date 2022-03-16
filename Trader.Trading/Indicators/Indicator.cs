@@ -25,7 +25,7 @@ public static class Indicator
 
     public static Subtract Subtract(IIndicatorResult<decimal?> first, IIndicatorResult<decimal?> second) => new(first, second);
 
-    public static Zip<TFirstSource, TSecondSource, TResult> Zip<TFirstSource, TSecondSource, TResult>(IIndicatorResult<TFirstSource> first, IIndicatorResult<TSecondSource> second, Func<TFirstSource, TSecondSource, TResult> transform) => new Zip<TFirstSource, TSecondSource, TResult>(first, second, transform);
+    public static Zip<TFirstSource, TSecondSource, TResult> Zip<TFirstSource, TSecondSource, TResult>(IIndicatorResult<TFirstSource> first, IIndicatorResult<TSecondSource> second, Func<TFirstSource, TSecondSource, TResult> transform) => new(first, second, transform);
 
     public static Zip<decimal?, decimal?, decimal?> Zip(IIndicatorResult<decimal?> first, IIndicatorResult<decimal?> second, Func<decimal?, decimal?, decimal?> transform) => Zip<decimal?, decimal?, decimal?>(first, second, transform);
 
@@ -40,4 +40,8 @@ public static class Indicator
     public static Sma Sma(int periods = Indicators.Sma.DefaultPeriods) => new(periods);
 
     public static Sma Sma(IIndicatorResult<decimal?> source, int periods = Indicators.Sma.DefaultPeriods) => new(source, periods);
+
+    public static Rma Rma(int periods = Indicators.Rma.DefaultPeriods) => new(periods);
+
+    public static Rma Rma(IIndicatorResult<decimal?> source, int periods = Indicators.Rma.DefaultPeriods) => new(source, periods);
 }

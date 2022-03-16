@@ -1,8 +1,10 @@
 ﻿namespace Outcompute.Trader.Trading.Indicators;
 
-public class RmaIndicator : IndicatorBase<decimal?, decimal?>
+public class Rma : IndicatorBase<decimal?, decimal?>
 {
-    public RmaIndicator(int periods = 10)
+    internal const int DefaultPeriods = 10;
+
+    public Rma(int periods = DefaultPeriods)
     {
         Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
@@ -10,7 +12,15 @@ public class RmaIndicator : IndicatorBase<decimal?, decimal?>
         Alpha = 1M / Periods;
     }
 
+    public Rma(IIndicatorResult<decimal?> source, int periods = DefaultPeriods) : this(periods)
+    {
+        Guard.IsNotNull(source, nameof(source));
+
+        LinkFrom(source);
+    }
+
     public int Periods { get; }
+
     public decimal Alpha { get; }
 
     protected override decimal? Calculate(int index)
@@ -21,7 +31,7 @@ public class RmaIndicator : IndicatorBase<decimal?, decimal?>
             return null;
         }
 
-        var rma = Result[^2];
+        var rma = Result[index - 1];
 
         // start from the sma to avoid spikes
         if (!rma.HasValue)
@@ -29,7 +39,7 @@ public class RmaIndicator : IndicatorBase<decimal?, decimal?>
             var sum = 0M;
             var count = 0;
 
-            for (var i = 0; i < Periods; i++)
+            for (var i = 0; i <= index; i++)
             {
                 var value = Source[i];
                 if (value.HasValue)
@@ -43,14 +53,12 @@ public class RmaIndicator : IndicatorBase<decimal?, decimal?>
             {
                 return sum / count;
             }
-            else
-            {
-                return null;
-            }
+
+            return null;
         }
 
         // calculate the next rma
-        var next = Source[^1];
+        var next = Source[index];
         if (next.HasValue)
         {
             return (Alpha * next) + (1 - Alpha) * rma;
@@ -62,27 +70,30 @@ public class RmaIndicator : IndicatorBase<decimal?, decimal?>
     }
 }
 
-public static class RmaIndicatorEnumerableExtensions
+public static class RmaEnumerableExtensions
 {
-    public static IEnumerable<decimal?> RunningMovingAverage(this IEnumerable<decimal?> source, int periods)
+    public static IEnumerable<decimal?> Rma<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = Indicators.Rma.DefaultPeriods)
     {
         Guard.IsNotNull(source, nameof(source));
-        Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
+        Guard.IsNotNull(selector, nameof(selector));
 
-        var indicator = new RmaIndicator(periods);
+        using var indicator = new Rma(periods);
 
         foreach (var item in source)
         {
-            indicator.Add(item);
+            indicator.Add(selector(item));
 
             yield return indicator[^1];
         }
     }
 
-    public static IEnumerable<decimal?> RunningMovingAverage(this IEnumerable<Kline> source, int periods)
+    public static IEnumerable<decimal?> Rma(this IEnumerable<Kline> source, int periods = Indicators.Rma.DefaultPeriods)
     {
-        return source
-            .Select(x => (decimal?)x.ClosePrice)
-            .RunningMovingAverage(periods);
+        return source.Rma(x => x.ClosePrice, periods);
+    }
+
+    public static IEnumerable<decimal?> Rma(this IEnumerable<decimal?> source, int periods = Indicators.Rma.DefaultPeriods)
+    {
+        return source.Rma(x => x, periods);
     }
 }

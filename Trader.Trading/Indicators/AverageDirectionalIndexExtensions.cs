@@ -28,7 +28,7 @@ public static class AverageDirectionalIndexExtensions
                 }
                 return null;
             })
-            .RunningMovingAverage(diLength)
+            .Rma(diLength)
             .Zip(atr, (x, y) => 100 * x / y)
             .FillNullableGaps()
             .ToList();
@@ -42,14 +42,14 @@ public static class AverageDirectionalIndexExtensions
                 }
                 return null;
             })
-            .RunningMovingAverage(diLength)
+            .Rma(diLength)
             .Zip(atr, (x, y) => 100 * x / y)
             .FillNullableGaps()
             .ToList();
 
         var absDiff = plus.Zip(minus, (p, m) => p - m).Abs();
         var safeSum = plus.Zip(minus, (p, m) => p + m).Select(x => x == 0 ? 1 : x);
-        var adx = absDiff.Zip(safeSum, (d, s) => d / s).RunningMovingAverage(adxLength).Select(x => x * 100).ToList();
+        var adx = absDiff.Zip(safeSum, (d, s) => d / s).Rma(adxLength).Select(x => x * 100).ToList();
 
         return adx.Zip(plus, minus, (a, p, m) => new AverageDirectionalIndex(a, p, m));
     }

@@ -12,8 +12,8 @@ public static class RelativeStrengthIndexExtensions
         Guard.IsNotNull(source, nameof(source));
         Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
-        using var avgGain = source.Gain().RunningMovingAverage(periods).GetEnumerator();
-        using var avgLoss = source.AbsLoss().RunningMovingAverage(periods).GetEnumerator();
+        using var avgGain = source.Gain().Rma(periods).GetEnumerator();
+        using var avgLoss = source.AbsLoss().Rma(periods).GetEnumerator();
 
         while (avgGain.MoveNext() && avgLoss.MoveNext())
         {

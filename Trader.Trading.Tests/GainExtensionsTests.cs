@@ -26,7 +26,7 @@
 
             // assert
             Assert.Collection(output,
-                x => Assert.Equal(0, x),
+                x => Assert.Null(x),
                 x => Assert.Equal(0, x),
                 x => Assert.Equal(1, x),
                 x => Assert.Equal(1, x),
@@ -51,7 +51,7 @@
 
             // assert
             Assert.Collection(output,
-                x => Assert.Equal(0, x),
+                x => Assert.Null(x),
                 x => Assert.Equal(0, x),
                 x => Assert.Equal(0, x),
                 x => Assert.Equal(0, x),
@@ -76,7 +76,7 @@
 
             // assert
             Assert.Collection(output,
-                x => Assert.Equal(0, x),
+                x => Assert.Null(x),
                 x => Assert.Equal(1, x),
                 x => Assert.Equal(0, x),
                 x => Assert.Equal(4, x),

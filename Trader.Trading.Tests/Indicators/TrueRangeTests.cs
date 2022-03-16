@@ -17,7 +17,7 @@ public class TrueRangeTests
 
         // assert
         Assert.Collection(indicator,
-            x => Assert.Equal(5, x),
+            x => Assert.Null(x),
             x => Assert.Equal(7, x),
             x => Assert.Equal(7, x));
     }

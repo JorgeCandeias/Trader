@@ -1,9 +1,52 @@
-﻿using Outcompute.Trader.Trading.Indicators;
+﻿namespace Outcompute.Trader.Trading.Indicators;
 
-namespace System.Collections.Generic;
+public class HmaIndicator : IndicatorBase<decimal?, decimal?>
+{
+    private readonly IIndicator<decimal?, decimal?> _source;
+    private readonly IIndicatorResult<decimal?> _indicator;
+
+    public HmaIndicator(int periods = 10)
+    {
+        Guard.IsGreaterThanOrEqualTo(periods, 2, nameof(periods));
+
+        _source = new Identity<decimal?>();
+        _indicator = new WmaIndicator(2M * new WmaIndicator(_source, periods / 2) - new WmaIndicator(_source, periods), (int)Math.Floor(Math.Sqrt(periods)));
+
+        Periods = periods;
+    }
+
+    public HmaIndicator(IIndicatorResult<decimal?> source, int periods = 10) : this(periods)
+    {
+        Guard.IsNotNull(source, nameof(source));
+
+        LinkFrom(source);
+    }
+
+    public int Periods { get; }
+
+    protected override decimal? Calculate(int index)
+    {
+        // update the core source and cascade
+        _source.Update(index, Source[index]);
+
+        // return the final result
+        return _indicator[index];
+    }
+}
 
 public static class HullMovingAverageExtensions
 {
+    public static IEnumerable<decimal?> HullMovingAverage(this IEnumerable<decimal?> source, int periods = 9)
+    {
+        Guard.IsNotNull(source, nameof(source));
+        Guard.IsGreaterThanOrEqualTo(periods, 2, nameof(periods));
+
+        var wma1 = source.WeightedMovingAverage(periods / 2);
+        var wma2 = source.WeightedMovingAverage(periods);
+
+        return wma1.Zip(wma2).Select(x => 2 * x.First - x.Second).WeightedMovingAverage((int)Math.Floor(Math.Sqrt(periods)));
+    }
+
     public static IEnumerable<decimal?> HullMovingAverage(this IEnumerable<Kline> source, int periods = 9)
     {
         Guard.IsNotNull(source, nameof(source));
@@ -19,17 +62,6 @@ public static class HullMovingAverageExtensions
         Guard.IsGreaterThanOrEqualTo(periods, 2, nameof(periods));
 
         return source.Select(selector).HullMovingAverage(periods);
-    }
-
-    public static IEnumerable<decimal?> HullMovingAverage(this IEnumerable<decimal?> source, int periods = 9)
-    {
-        Guard.IsNotNull(source, nameof(source));
-        Guard.IsGreaterThanOrEqualTo(periods, 2, nameof(periods));
-
-        var wma1 = source.WeightedMovingAverage(periods / 2);
-        var wma2 = source.WeightedMovingAverage(periods);
-
-        return wma1.Zip(wma2).Select(x => (2 * x.First) - x.Second).WeightedMovingAverage((int)Math.Floor(Math.Sqrt(periods)));
     }
 
     public static bool TryGetHullMovingAverageVelocityUp(this IEnumerable<Kline> source, out decimal price, int periods = 9, decimal velocity = 0, int iterations = 100)

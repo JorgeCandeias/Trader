@@ -9,6 +9,13 @@ public class WmaIndicator : IndicatorBase<decimal?, decimal?>
         Periods = periods;
     }
 
+    public WmaIndicator(IIndicatorResult<decimal?> source, int periods = 10) : this(periods)
+    {
+        Guard.IsNotNull(source, nameof(source));
+
+        LinkFrom(source);
+    }
+
     public int Periods { get; }
 
     protected override decimal? Calculate(int index)

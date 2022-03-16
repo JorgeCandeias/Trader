@@ -3,8 +3,25 @@ using Outcompute.Trader.Trading.Indicators;
 
 namespace System.Collections.Generic;
 
-public class AbsLossIndicator : IndicatorBase<decimal?, decimal?>
+public class AbsLoss : IndicatorBase<decimal?, decimal?>
 {
+    /// <summary>
+    /// Creates a new absolute loss indicator.
+    /// </summary>
+    public AbsLoss()
+    {
+    }
+
+    /// <summary>
+    /// Creates a new absolute loss indicator from the specified source indicator.
+    /// </summary>
+    public AbsLoss(IIndicatorResult<decimal?> source)
+    {
+        Guard.IsNotNull(source, nameof(source));
+
+        LinkFrom(source);
+    }
+
     protected override decimal? Calculate(int index)
     {
         if (index < 1)
@@ -16,7 +33,7 @@ public class AbsLossIndicator : IndicatorBase<decimal?, decimal?>
     }
 }
 
-public static class AbsLossIndicatorEnumerableExtensions
+public static class AbsLossEnumerableExtensions
 {
     /// <summary>
     /// Calculates the absolute loss between the current value and the previous value over the specified source.
@@ -26,7 +43,7 @@ public static class AbsLossIndicatorEnumerableExtensions
     {
         Guard.IsNotNull(source, nameof(source));
 
-        var indicator = new AbsLossIndicator();
+        var indicator = new AbsLoss();
 
         foreach (var item in source)
         {

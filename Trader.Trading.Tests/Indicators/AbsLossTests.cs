@@ -1,12 +1,12 @@
 ﻿namespace Outcompute.Trader.Trading.Tests
 {
-    public class AbsLossIndicatorTests
+    public class AbsLossTests
     {
         [Fact]
         public void YieldsEmptyResultOnEmptyInput()
         {
             // act
-            var indicator = new AbsLossIndicator();
+            using var indicator = new AbsLoss();
 
             // assert
             Assert.Empty(indicator);
@@ -16,7 +16,7 @@
         public void YieldsPositiveChanges()
         {
             // act
-            var indicator = new AbsLossIndicator
+            using var indicator = new AbsLoss
             {
                 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144
             };
@@ -29,7 +29,7 @@
         public void YieldsNegativeChanges()
         {
             // act
-            var indicator = new AbsLossIndicator
+            using var indicator = new AbsLoss
             {
                 144, 89, 55, 34, 21, 13, 8, 5, 3, 2, 1, 1
             };
@@ -42,7 +42,7 @@
         public void YieldsMixedChanges()
         {
             // act
-            var indicator = new AbsLossIndicator
+            using var indicator = new AbsLoss
             {
                 1, 2, 1, 5, 3, 13, 8, 34, 21, 89, 55, 144
             };

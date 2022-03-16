@@ -1,6 +1,6 @@
 ﻿namespace Outcompute.Trader.Trading.Indicators;
 
-public class IdentityIndicator<T> : IndicatorBase<T, T>
+public class Identity<T> : IndicatorBase<T, T>
 {
     protected override T Calculate(int index)
     {

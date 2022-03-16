@@ -70,4 +70,8 @@ public static class Indicator
     public static HL2 HL2() => new();
 
     public static HL2 HL2(IIndicatorResult<HL> source) => new(source);
+
+    public static AwesomeOscillator AwesomeOscillator(int fastPeriods = Indicators.AwesomeOscillator.DefaultFastPeriods, int slowPeriods = Indicators.AwesomeOscillator.DefaultSlowPeriods) => new(fastPeriods, slowPeriods);
+
+    public static AwesomeOscillator AwesomeOscillator(IIndicatorResult<HL> source, int fastPeriods = Indicators.AwesomeOscillator.DefaultFastPeriods, int slowPeriods = Indicators.AwesomeOscillator.DefaultSlowPeriods) => new(source, fastPeriods, slowPeriods);
 }

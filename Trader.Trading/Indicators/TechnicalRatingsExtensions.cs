@@ -52,7 +52,7 @@ public static class TechnicalRatingsExtensions
         var ema50 = klines.Ema(50).GetEnumerator();
         var ema100 = klines.Ema(100).GetEnumerator();
         var ema200 = klines.Ema(200).GetEnumerator();
-        var hma9 = klines.HullMovingAverage(9).GetEnumerator();
+        var hma9 = klines.Hma(9).GetEnumerator();
         var vwma20 = klines.VolumeWeightedMovingAverage(20).GetEnumerator();
         var ichimoku = klines.IchimokuCloud().GetEnumerator();
 

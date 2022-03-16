@@ -25,7 +25,7 @@ public static class AverageTrueRangeExtensions
             AtrMethod.Sma => ranges.Sma(periods),
             AtrMethod.Rma => ranges.Rma(periods),
             AtrMethod.Ema => ranges.Ema(periods),
-            AtrMethod.Hma => ranges.HullMovingAverage(periods),
+            AtrMethod.Hma => ranges.Hma(periods),
             _ => throw new ArgumentOutOfRangeException(nameof(method))
         };
     }

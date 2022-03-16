@@ -5,6 +5,8 @@
 /// </summary>
 public static class Indicator
 {
+    public static Identity<T> Identity<T>() => new();
+
     public static Abs Abs() => new();
 
     public static Abs Abs(IIndicatorResult<decimal?> source) => new(source);
@@ -56,4 +58,8 @@ public static class Indicator
     public static Wma Wma(int periods = Indicators.Wma.DefaultPeriods) => new(periods);
 
     public static Wma Wma(IIndicatorResult<decimal?> source, int periods = Indicators.Wma.DefaultPeriods) => new(source, periods);
+
+    public static Hma Hma(int periods = Indicators.Hma.DefaultPeriods) => new(periods);
+
+    public static Hma Hma(IIndicatorResult<decimal?> source, int periods = Indicators.Hma.DefaultPeriods) => new(source, periods);
 }

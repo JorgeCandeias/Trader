@@ -62,4 +62,8 @@ public static class Indicator
     public static Hma Hma(int periods = Indicators.Hma.DefaultPeriods) => new(periods);
 
     public static Hma Hma(IIndicatorResult<decimal?> source, int periods = Indicators.Hma.DefaultPeriods) => new(source, periods);
+
+    public static Atr Atr(int periods = Indicators.Atr.DefaultPeriods, AtrMethod method = Indicators.Atr.DefaultAtrMethod) => new(periods, method);
+
+    public static Atr Atr(IIndicatorResult<HLC> source, int periods = Indicators.Atr.DefaultPeriods, AtrMethod method = Indicators.Atr.DefaultAtrMethod) => new(source, periods, method);
 }

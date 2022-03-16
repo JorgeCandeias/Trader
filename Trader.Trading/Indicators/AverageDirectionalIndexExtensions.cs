@@ -17,7 +17,7 @@ public static class AverageDirectionalIndexExtensions
         var down = source.Select(lowSelector).Change().Select(x => -x);
         var updown = up.Zip(down, (x, y) => (Up: x, Down: y)).ToList();
 
-        var atr = source.AverageTrueRanges(highSelector, lowSelector, closeSelector, diLength, AtrMethod.Rma).ToList();
+        var atr = source.Atr(highSelector, lowSelector, closeSelector, diLength, AtrMethod.Rma).ToList();
 
         var plus = updown
             .Select(x =>

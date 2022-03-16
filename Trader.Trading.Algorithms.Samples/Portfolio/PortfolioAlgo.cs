@@ -277,7 +277,7 @@ public partial class PortfolioAlgo : Algo
         var trix = item.Klines.Trix().TakeLast(10).ToList();
 
         // get the atr
-        var atr = item.Klines.AverageTrueRanges().Last();
+        var atr = item.Klines.Atr().Last();
 
         // guard - price must be above the avl
         var avl = item.Klines.SkipLast(1).VolumeWeightedAveragePrice().Last();
@@ -385,7 +385,7 @@ public partial class PortfolioAlgo : Algo
         var stopPrice = 0M;
 
         // calculate the latest atr
-        var atr = item.Klines.AverageTrueRanges().Last();
+        var atr = item.Klines.Atr().Last();
 
         // guard - raise to a trailing guard stop
         if (atr.HasValue)

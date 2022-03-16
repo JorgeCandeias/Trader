@@ -1,16 +1,18 @@
 ﻿using Outcompute.Trader.Trading.Indicators;
 
-namespace Outcompute.Trader.Trading.Tests;
+namespace Outcompute.Trader.Trading.Tests.Indicators;
 
-public class TrueRangeIndicatorTests
+public class TrueRangeTests
 {
     [Fact]
     public void YieldsTrueRange()
     {
         // act
-        var indicator = new TrueRangeIndicator()
+        using var indicator = new TrueRange()
         {
-            (10, 5, 6), (11, 4, 8), (7, 1, 5)
+            new HLC(10, 5, 6),
+            new HLC(11, 4, 8),
+            new HLC(7, 1, 5)
         };
 
         // assert

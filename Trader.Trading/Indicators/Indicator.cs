@@ -48,4 +48,8 @@ public static class Indicator
     public static Ema Ema(int periods = Indicators.Ema.DefaultPeriods) => new(periods);
 
     public static Ema Ema(IIndicatorResult<decimal?> source, int periods = Indicators.Ema.DefaultPeriods) => new(source, periods);
+
+    public static TrueRange TrueRange() => new();
+
+    public static TrueRange TrueRange(IIndicatorResult<HLC> source) => new(source);
 }

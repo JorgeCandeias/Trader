@@ -18,7 +18,7 @@ public static class AverageTrueRangeExtensions
         Guard.IsNotNull(closeSelector, nameof(closeSelector));
         Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
-        var ranges = source.TrueRanges(highSelector, lowSelector, closeSelector);
+        var ranges = source.TrueRange(highSelector, lowSelector, closeSelector);
 
         return method switch
         {

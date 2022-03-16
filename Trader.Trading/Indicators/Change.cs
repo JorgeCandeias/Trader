@@ -1,19 +1,44 @@
 ﻿namespace Outcompute.Trader.Trading.Indicators;
 
-public class ChangeIndicator : IndicatorBase<decimal?, decimal?>
+/// <summary>
+/// Indicator that yields the change between the current value and the previous value.
+/// </summary>
+public class Change : IndicatorBase<decimal?, decimal?>
 {
+    /// <summary>
+    /// Creates a new change indicator.
+    /// </summary>
+    public Change(int periods = 1)
+    {
+        Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
+
+        Periods = periods;
+    }
+
+    /// <summary>
+    /// Creates a new change indicator from the specified source indicator.
+    /// </summary>
+    public Change(IIndicatorResult<decimal?> source, int periods = 1) : this(periods)
+    {
+        Guard.IsNotNull(source, nameof(source));
+
+        LinkFrom(source);
+    }
+
+    public int Periods { get; }
+
     protected override decimal? Calculate(int index)
     {
-        if (index < 1)
+        if (index < Periods)
         {
             return null;
         }
 
-        return Source[^1] - Source[^2];
+        return Source[index] - Source[index - Periods];
     }
 }
 
-public static class ChangeIndicatorEnumerableExtensions
+public static class ChangeEnumerableExtensions
 {
     /// <summary>
     /// Yields the difference between the current value and the previous value from <paramref name="periods"/> ago.
@@ -22,9 +47,8 @@ public static class ChangeIndicatorEnumerableExtensions
     {
         Guard.IsNotNull(source, nameof(source));
         Guard.IsNotNull(selector, nameof(selector));
-        Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
-        var indicator = new ChangeIndicator();
+        var indicator = new Change(periods);
 
         foreach (var item in source)
         {

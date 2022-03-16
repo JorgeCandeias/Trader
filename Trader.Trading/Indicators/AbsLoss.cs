@@ -2,6 +2,9 @@
 
 namespace Outcompute.Trader.Trading.Indicators;
 
+/// <summary>
+/// Indicator that yields the absolute loss between the current value and the previous value.
+/// </summary>
 public class AbsLoss : IndicatorBase<decimal?, decimal?>
 {
     /// <summary>

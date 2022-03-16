@@ -1,6 +1,6 @@
 ﻿using Outcompute.Trader.Trading.Indicators;
 
-namespace Outcompute.Trader.Trading.Tests
+namespace Outcompute.Trader.Trading.Tests.Indicators
 {
     public class AbsLossTests
     {

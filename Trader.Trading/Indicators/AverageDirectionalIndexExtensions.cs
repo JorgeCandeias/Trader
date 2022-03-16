@@ -30,7 +30,7 @@ public static class AverageDirectionalIndexExtensions
             })
             .Rma(diLength)
             .Zip(atr, (x, y) => 100 * x / y)
-            .FillNullableGaps()
+            .FillNull()
             .ToList();
 
         var minus = updown
@@ -44,7 +44,7 @@ public static class AverageDirectionalIndexExtensions
             })
             .Rma(diLength)
             .Zip(atr, (x, y) => 100 * x / y)
-            .FillNullableGaps()
+            .FillNull()
             .ToList();
 
         var absDiff = plus.Zip(minus, (p, m) => p - m).Abs();

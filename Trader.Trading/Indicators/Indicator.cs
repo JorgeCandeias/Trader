@@ -78,4 +78,8 @@ public static class Indicator
     public static Variance Variance(int periods = Indicators.Variance.DefaultPeriods) => new(periods);
 
     public static Variance Variance(IIndicatorResult<decimal?> source, int periods = Indicators.Variance.DefaultPeriods) => new(source, periods);
+
+    public static FillNull<T> FillNull<T>() => new();
+
+    public static FillNull<T> FillNull<T>(IIndicatorResult<T> source) => new(source);
 }

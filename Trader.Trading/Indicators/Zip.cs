@@ -21,11 +21,21 @@ public class Zip<TFirstSource, TSecondSource, TResult> : IndicatorBase<TResult, 
         var count = Math.Max(first.Count, second.Count);
         for (var i = 0; i < count; i++)
         {
-            Update(i, default!);
+            UpdateCore(i, default!);
         }
 
-        _firstCallback = _first.RegisterChangeCallback((index, _) => Update(index, default!));
-        _secondCallback = _second.RegisterChangeCallback((index, _) => Update(index, default!));
+        _firstCallback = _first.RegisterChangeCallback((index, _) => UpdateCore(index, default!));
+        _secondCallback = _second.RegisterChangeCallback((index, _) => UpdateCore(index, default!));
+    }
+
+    public override void Add(TResult value)
+    {
+        ThrowHelper.ThrowNotSupportedException();
+    }
+
+    public override void Update(int index, TResult value)
+    {
+        ThrowHelper.ThrowNotSupportedException();
     }
 
     protected override TResult Calculate(int index)

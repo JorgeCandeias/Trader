@@ -22,21 +22,15 @@ namespace Outcompute.Trader.Trading.Tests.Indicators
         }
 
         [Fact]
-        public static void IgnoresUpdatesInPlace()
+        public static void ThrowsOnInPlaceUpdate()
         {
             // arrange
             using var first = new Identity<decimal?> { 1, 2, 3 };
             using var second = new Identity<decimal?> { 2, 3, 4 };
             using var indicator = new Add(first, second);
 
-            // act
-            indicator.Update(2, -4);
-
             // assert
-            Assert.Collection(indicator,
-                x => Assert.Equal(3, x),
-                x => Assert.Equal(5, x),
-                x => Assert.Equal(7, x));
+            Assert.Throws<NotSupportedException>(() => indicator.Update(2, -4));
         }
 
         [Fact]

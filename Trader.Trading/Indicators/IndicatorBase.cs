@@ -13,15 +13,20 @@ public abstract class IndicatorBase<TSource, TResult> : IIndicator<TSource, TRes
 
     public int Count => Result.Count;
 
-    public void Add(TSource value)
+    public virtual void Add(TSource value)
     {
-        Update(Source.Count, value);
+        UpdateCore(Source.Count, value);
     }
 
-    public void Update(int index, TSource value)
+    public virtual void Update(int index, TSource value)
     {
         Guard.IsGreaterThanOrEqualTo(index, 0, nameof(index));
 
+        UpdateCore(index, value);
+    }
+
+    protected void UpdateCore(int index, TSource value)
+    {
         // allocate up to and including the target index
         var count = Source.Count;
         for (var i = count; i <= index; i++)

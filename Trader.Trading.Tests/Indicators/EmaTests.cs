@@ -8,11 +8,12 @@ public class EmaTests
     [Fact]
     public void YieldsEma()
     {
+        // arrange
+        var data = TestData.BtcBusdHistoricalData.Take(10).Select(x => x.Close).ToList();
+
         // act
-        using var indicator = new Ema(3)
-        {
-            10254.92M, 10171.06M, 9998.87M, 10010.53M, 9706.93M, 8499.75M, 8436.75M, 8067.78M, 8187.15M, 8206.39M
-        };
+        using var indicator = new Ema(3);
+        indicator.AddRange(data);
 
         // assert
         Assert.Collection(indicator,

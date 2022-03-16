@@ -314,5 +314,19 @@ public abstract class IndicatorBase<TSource, TResult> : IIndicator<TSource, TRes
 
     #endregion Divide
 
+    #region Negative
+
+    public static Transform<decimal?, decimal?> operator -(IndicatorBase<TSource, TResult> first)
+    {
+        if (typeof(TResult) == typeof(decimal?))
+        {
+            return new Transform<decimal?, decimal?>((IIndicatorResult<decimal?>)first, x => -x);
+        }
+
+        throw new NotSupportedException();
+    }
+
+    #endregion Negative
+
     #endregion Operators
 }

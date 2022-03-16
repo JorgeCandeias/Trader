@@ -9,8 +9,8 @@ public static class VolumeWeightedMovingAverageExtensions
         Guard.IsNotNull(source, nameof(source));
         Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
-        var numerator = source.Select(x => x.Close * x.Volume).SimpleMovingAverage(periods);
-        var denominator = source.Select(x => x.Volume).SimpleMovingAverage(periods);
+        var numerator = source.Select(x => x.Close * x.Volume).Sma(periods);
+        var denominator = source.Select(x => x.Volume).Sma(periods);
 
         return numerator.Zip(denominator, (x, y) => x / y);
     }

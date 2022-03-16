@@ -10,7 +10,7 @@ public static class CommodityChannelIndexExtensions
         Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
         var selected = source.Select(selector);
-        var ma = selected.SimpleMovingAverage(periods);
+        var ma = selected.Sma(periods);
         var dev = selected.SimpleMovingAverageDeviation(periods);
 
         return selected.Zip(ma, dev).Select(x => (x.First - x.Second) / (0.015M * x.Third));

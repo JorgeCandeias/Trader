@@ -13,8 +13,8 @@ public static class AwesomeOscillatorExtensions
         Guard.IsGreaterThanOrEqualTo(slowLength, 1, nameof(slowLength));
 
         var hl2 = source.HL2(highSelector, lowSelector);
-        var fast = hl2.SimpleMovingAverage(fastLength);
-        var slow = hl2.SimpleMovingAverage(slowLength);
+        var fast = hl2.Sma(fastLength);
+        var slow = hl2.Sma(slowLength);
 
         return fast.Zip(slow, (f, s) => f - s);
     }

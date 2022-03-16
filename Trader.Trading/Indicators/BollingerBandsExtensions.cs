@@ -17,7 +17,7 @@ public static class BollingerBandsExtensions
         Guard.IsGreaterThanOrEqualTo(periods, 2, nameof(periods));
 
         var prices = source.GetEnumerator();
-        var averages = source.SimpleMovingAverage(periods).GetEnumerator();
+        var averages = source.Sma(periods).GetEnumerator();
         var deviations = source.StandardDeviations(periods).GetEnumerator();
 
         while (prices.MoveNext() && averages.MoveNext() && deviations.MoveNext())

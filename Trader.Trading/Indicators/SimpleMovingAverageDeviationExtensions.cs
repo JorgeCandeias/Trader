@@ -16,7 +16,7 @@ public static class SimpleMovingAverageDeviationExtensions
         var queue = QueuePool<decimal?>.Shared.Get();
         try
         {
-            var mean = source.SimpleMovingAverage(periods).GetEnumerator();
+            var mean = source.Sma(periods).GetEnumerator();
             var window = source.MovingWindow(periods).GetEnumerator();
 
             while (mean.MoveNext() && window.MoveNext())

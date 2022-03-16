@@ -36,4 +36,8 @@ public static class Indicator
     public static Transform<TSource, TResult> Transform<TSource, TResult>(IIndicatorResult<TSource> source, Func<TSource, TResult> transform) => new(source, transform);
 
     public static Transform<decimal?, decimal?> Transform(IIndicatorResult<decimal?> source, Func<decimal?, decimal?> transform) => Transform<decimal?, decimal?>(source, transform);
+
+    public static Sma Sma(int periods = Indicators.Sma.DefaultPeriods) => new(periods);
+
+    public static Sma Sma(IIndicatorResult<decimal?> source, int periods = Indicators.Sma.DefaultPeriods) => new(source, periods);
 }

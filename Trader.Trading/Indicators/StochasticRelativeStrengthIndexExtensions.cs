@@ -17,8 +17,8 @@ public static class StochasticRelativeStrengthIndexExtensions
         Guard.IsGreaterThanOrEqualTo(lengthRsi, 1, nameof(lengthRsi));
         Guard.IsGreaterThanOrEqualTo(lengthStoch, 1, nameof(lengthStoch));
 
-        var kf = source.Select(selector).RelativeStrengthIndex(lengthRsi).StochasticFunction(x => x, x => x, x => x, lengthStoch).SimpleMovingAverage(smoothK);
-        var df = kf.SimpleMovingAverage(smoothD);
+        var kf = source.Select(selector).RelativeStrengthIndex(lengthRsi).StochasticFunction(x => x, x => x, x => x, lengthStoch).Sma(smoothK);
+        var df = kf.Sma(smoothD);
 
         var ke = kf.GetEnumerator();
         var de = df.GetEnumerator();

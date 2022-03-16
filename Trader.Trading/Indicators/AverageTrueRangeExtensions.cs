@@ -22,7 +22,7 @@ public static class AverageTrueRangeExtensions
 
         return method switch
         {
-            AtrMethod.Sma => ranges.SimpleMovingAverage(periods),
+            AtrMethod.Sma => ranges.Sma(periods),
             AtrMethod.Rma => ranges.RunningMovingAverage(periods),
             AtrMethod.Ema => ranges.ExponentialMovingAverage(periods),
             AtrMethod.Hma => ranges.HullMovingAverage(periods),

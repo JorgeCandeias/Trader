@@ -15,8 +15,8 @@ public static class StochasticOscillatorExtensions
         Guard.IsGreaterThanOrEqualTo(smoothK, 1, nameof(smoothK));
         Guard.IsGreaterThanOrEqualTo(periodsD, 1, nameof(periodsD));
 
-        var kf = source.StochasticFunction(periodsK).SimpleMovingAverage(smoothK);
-        var df = kf.SimpleMovingAverage(periodsD);
+        var kf = source.StochasticFunction(periodsK).Sma(smoothK);
+        var df = kf.Sma(periodsD);
 
         var ke = kf.GetEnumerator();
         var de = df.GetEnumerator();

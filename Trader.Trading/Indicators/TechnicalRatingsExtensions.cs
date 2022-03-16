@@ -40,12 +40,12 @@ public static class TechnicalRatingsExtensions
         var items = klines.GetEnumerator();
 
         // moving averages
-        var sma10 = klines.SimpleMovingAverage(10).GetEnumerator();
-        var sma20 = klines.SimpleMovingAverage(20).GetEnumerator();
-        var sma30 = klines.SimpleMovingAverage(30).GetEnumerator();
-        var sma50 = klines.SimpleMovingAverage(50).GetEnumerator();
-        var sma100 = klines.SimpleMovingAverage(100).GetEnumerator();
-        var sma200 = klines.SimpleMovingAverage(200).GetEnumerator();
+        var sma10 = klines.Sma(10).GetEnumerator();
+        var sma20 = klines.Sma(20).GetEnumerator();
+        var sma30 = klines.Sma(30).GetEnumerator();
+        var sma50 = klines.Sma(50).GetEnumerator();
+        var sma100 = klines.Sma(100).GetEnumerator();
+        var sma200 = klines.Sma(200).GetEnumerator();
         var ema10 = klines.ExponentialMovingAverage(10).GetEnumerator();
         var ema20 = klines.ExponentialMovingAverage(20).GetEnumerator();
         var ema30 = klines.ExponentialMovingAverage(30).GetEnumerator();

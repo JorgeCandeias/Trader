@@ -1,12 +1,21 @@
 ﻿namespace Outcompute.Trader.Trading.Indicators;
 
-public class SmaIndicator : IndicatorBase<decimal?, decimal?>
+public class Sma : IndicatorBase<decimal?, decimal?>
 {
-    public SmaIndicator(int periods = 10)
+    internal const int DefaultPeriods = 10;
+
+    public Sma(int periods = DefaultPeriods)
     {
         Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
         Periods = periods;
+    }
+
+    public Sma(IIndicatorResult<decimal?> source, int periods = DefaultPeriods) : this(periods)
+    {
+        Guard.IsNotNull(source, nameof(source));
+
+        LinkFrom(source);
     }
 
     public int Periods { get; }
@@ -44,27 +53,30 @@ public class SmaIndicator : IndicatorBase<decimal?, decimal?>
     }
 }
 
-public static class SmaIndicatorEnumerableExtensions
+public static class SmaEnumerableExtensions
 {
-    public static IEnumerable<decimal?> SimpleMovingAverage(this IEnumerable<decimal?> source, int length)
+    public static IEnumerable<decimal?> Sma<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = Indicators.Sma.DefaultPeriods)
     {
         Guard.IsNotNull(source, nameof(source));
-        Guard.IsGreaterThanOrEqualTo(length, 1, nameof(length));
+        Guard.IsNotNull(selector, nameof(selector));
 
-        var indicator = new SmaIndicator(length);
+        using var indicator = new Sma(periods);
 
         foreach (var item in source)
         {
-            indicator.Add(item);
+            indicator.Add(selector(item));
 
             yield return indicator[^1];
         }
     }
 
-    public static IEnumerable<decimal?> SimpleMovingAverage(this IEnumerable<Kline> source, int periods)
+    public static IEnumerable<decimal?> Sma(this IEnumerable<Kline> source, int periods = Indicators.Sma.DefaultPeriods)
     {
-        return source
-            .Select(x => (decimal?)x.ClosePrice)
-            .SimpleMovingAverage(periods);
+        return source.Sma(x => x.ClosePrice, periods);
+    }
+
+    public static IEnumerable<decimal?> Sma(this IEnumerable<decimal?> source, int periods = Indicators.Sma.DefaultPeriods)
+    {
+        return source.Sma(x => x, periods);
     }
 }

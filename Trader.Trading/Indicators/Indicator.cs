@@ -86,4 +86,8 @@ public static class Indicator
     public static FillNull<T> FillNull<T>() => new();
 
     public static FillNull<T> FillNull<T>(IIndicatorResult<T> source) => new(source);
+
+    public static Dmi Dmi(int adxPeriods = Indicators.Dmi.DefaultAdxPeriods, int diPeriods = Indicators.Dmi.DefaultDiPeriods) => new(adxPeriods, diPeriods);
+
+    public static Dmi Dmi(IIndicatorResult<HLC> source, int adxPeriods = Indicators.Dmi.DefaultAdxPeriods, int diPeriods = Indicators.Dmi.DefaultDiPeriods) => new(source, adxPeriods, diPeriods);
 }

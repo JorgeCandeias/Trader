@@ -20,6 +20,7 @@ public class Dmi : IndicatorBase<HLC, DMI>
     private readonly Identity<HLC> _source;
     private readonly IIndicatorResult<DMI> _indicator;
 
+    [SuppressMessage("Major Code Smell", "S3358:Ternary operators should not be nested", Justification = "N/A")]
     public Dmi(int adxPeriods = DefaultAdxPeriods, int diPeriods = DefaultDiPeriods)
     {
         Guard.IsGreaterThanOrEqualTo(adxPeriods, 1, nameof(adxPeriods));
@@ -66,60 +67,27 @@ public class Dmi : IndicatorBase<HLC, DMI>
     }
 }
 
-public static class AverageDirectionalIndexExtensions
+public static class DmiEnumerableExtensions
 {
-    public static IEnumerable<DMI> AverageDirectionalIndex<T>(this IEnumerable<T> source, Func<T, decimal?> highSelector, Func<T, decimal?> lowSelector, Func<T, decimal?> closeSelector, int adxLength = 14, int diLength = 14)
+    public static IEnumerable<DMI> Dmi<T>(this IEnumerable<T> source, Func<T, decimal?> highSelector, Func<T, decimal?> lowSelector, Func<T, decimal?> closeSelector, int adxPeriods = Indicators.Dmi.DefaultAdxPeriods, int diPeriods = Indicators.Dmi.DefaultDiPeriods)
     {
         Guard.IsNotNull(source, nameof(source));
         Guard.IsNotNull(highSelector, nameof(highSelector));
         Guard.IsNotNull(lowSelector, nameof(lowSelector));
         Guard.IsNotNull(closeSelector, nameof(closeSelector));
-        Guard.IsGreaterThanOrEqualTo(adxLength, 1, nameof(adxLength));
-        Guard.IsGreaterThanOrEqualTo(diLength, 1, nameof(diLength));
 
-        var up = source.Select(highSelector).Change();
-        var down = source.Select(lowSelector).Change().Select(x => -x);
-        var updown = up.Zip(down, (x, y) => (Up: x, Down: y)).ToList();
+        using var indicator = new Dmi(adxPeriods, diPeriods);
 
-        var atr = source.Atr(highSelector, lowSelector, closeSelector, diLength, AtrMethod.Rma).ToList();
+        foreach (var item in source)
+        {
+            indicator.Add(new HLC(highSelector(item), lowSelector(item), closeSelector(item)));
 
-        var plus = updown
-            .Select(x =>
-            {
-                if (x.Up.HasValue && x.Down.HasValue)
-                {
-                    return x.Up.Value > x.Down.Value && x.Up.Value > 0 ? x.Up : 0;
-                }
-                return null;
-            })
-            .Rma(diLength)
-            .Zip(atr, (x, y) => 100 * x / y)
-            .FillNull()
-            .ToList();
-
-        var minus = updown
-            .Select(x =>
-            {
-                if (x.Up.HasValue && x.Down.HasValue)
-                {
-                    return x.Down.Value > x.Up.Value && x.Down.Value > 0 ? x.Down : 0;
-                }
-                return null;
-            })
-            .Rma(diLength)
-            .Zip(atr, (x, y) => 100 * x / y)
-            .FillNull()
-            .ToList();
-
-        var absDiff = plus.Zip(minus, (p, m) => p - m).Abs();
-        var safeSum = plus.Zip(minus, (p, m) => p + m).Select(x => x == 0 ? 1 : x);
-        var adx = absDiff.Zip(safeSum, (d, s) => d / s).Rma(adxLength).Select(x => x * 100).ToList();
-
-        return adx.Zip(plus, minus, (a, p, m) => new DMI(a, p, m));
+            yield return indicator[^1];
+        }
     }
 
-    public static IEnumerable<DMI> AverageDirectionalIndex(this IEnumerable<Kline> source, int adxLength = 14, int diLength = 14)
+    public static IEnumerable<DMI> Dmi(this IEnumerable<Kline> source, int adxLength = Indicators.Dmi.DefaultAdxPeriods, int diLength = Indicators.Dmi.DefaultDiPeriods)
     {
-        return source.AverageDirectionalIndex(x => x.HighPrice, x => x.LowPrice, x => x.ClosePrice, adxLength, diLength);
+        return source.Dmi(x => x.HighPrice, x => x.LowPrice, x => x.ClosePrice, adxLength, diLength);
     }
 }

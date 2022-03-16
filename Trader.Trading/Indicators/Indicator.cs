@@ -74,4 +74,8 @@ public static class Indicator
     public static AwesomeOscillator AwesomeOscillator(int fastPeriods = Indicators.AwesomeOscillator.DefaultFastPeriods, int slowPeriods = Indicators.AwesomeOscillator.DefaultSlowPeriods) => new(fastPeriods, slowPeriods);
 
     public static AwesomeOscillator AwesomeOscillator(IIndicatorResult<HL> source, int fastPeriods = Indicators.AwesomeOscillator.DefaultFastPeriods, int slowPeriods = Indicators.AwesomeOscillator.DefaultSlowPeriods) => new(source, fastPeriods, slowPeriods);
+
+    public static Variance Variance(int periods = Indicators.Variance.DefaultPeriods) => new(periods);
+
+    public static Variance Variance(IIndicatorResult<decimal?> source, int periods = Indicators.Variance.DefaultPeriods) => new(source, periods);
 }

@@ -1,4 +1,6 @@
-﻿namespace System.Collections.Generic;
+﻿using Outcompute.Trader.Trading.Indicators;
+
+namespace System.Collections.Generic;
 
 public static class StdDevExtensions
 {
@@ -7,7 +9,7 @@ public static class StdDevExtensions
         Guard.IsNotNull(source, nameof(source));
         Guard.IsGreaterThanOrEqualTo(periods, 2, nameof(periods));
 
-        foreach (var value in source.Variances(periods))
+        foreach (var value in source.Variance(periods))
         {
             if (value.HasValue)
             {

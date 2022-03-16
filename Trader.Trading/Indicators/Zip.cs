@@ -60,3 +60,74 @@ public class Zip<TFirstSource, TSecondSource, TResult> : IndicatorBase<TResult, 
         base.Dispose(disposing);
     }
 }
+
+/// <summary>
+/// Indicator that zips two source indicators using the specified transform function.
+/// </summary>
+/// <remarks>
+/// This indicator does not support in-place updates.
+/// </remarks>
+public class Zip<TFirst, TSecond, TThird, TResult> : IndicatorBase<TResult, TResult>
+{
+    private readonly Func<TFirst, TSecond, TThird, TResult> _transform;
+    private readonly IIndicatorResult<TFirst> _first;
+    private readonly IIndicatorResult<TSecond> _second;
+    private readonly IIndicatorResult<TThird> _third;
+    private readonly IDisposable _firstCallback;
+    private readonly IDisposable _secondCallback;
+    private readonly IDisposable _thirdCallback;
+
+    public Zip(IIndicatorResult<TFirst> first, IIndicatorResult<TSecond> second, IIndicatorResult<TThird> third, Func<TFirst, TSecond, TThird, TResult> transform)
+    {
+        Guard.IsNotNull(first, nameof(first));
+        Guard.IsNotNull(second, nameof(second));
+        Guard.IsNotNull(third, nameof(third));
+        Guard.IsNotNull(transform, nameof(transform));
+
+        _transform = transform;
+        _first = first;
+        _second = second;
+        _third = third;
+
+        var count = Math.Max(first.Count, second.Count);
+        for (var i = 0; i < count; i++)
+        {
+            UpdateCore(i, default!);
+        }
+
+        _firstCallback = _first.RegisterChangeCallback((index, _) => UpdateCore(index, default!));
+        _secondCallback = _second.RegisterChangeCallback((index, _) => UpdateCore(index, default!));
+        _thirdCallback = _third.RegisterChangeCallback((index, _) => UpdateCore(index, default!));
+    }
+
+    public override void Add(TResult value)
+    {
+        ThrowHelper.ThrowNotSupportedException();
+    }
+
+    public override void Update(int index, TResult value)
+    {
+        ThrowHelper.ThrowNotSupportedException();
+    }
+
+    protected override TResult Calculate(int index)
+    {
+        var first = index < _first.Count ? _first[index] : default!;
+        var second = index < _second.Count ? _second[index] : default!;
+        var third = index < _third.Count ? _third[index] : default!;
+
+        return _transform(first, second, third);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _firstCallback.Dispose();
+            _secondCallback.Dispose();
+            _thirdCallback.Dispose();
+        }
+
+        base.Dispose(disposing);
+    }
+}

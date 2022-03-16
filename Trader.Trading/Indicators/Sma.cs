@@ -31,25 +31,15 @@ public class Sma : IndicatorBase<decimal?, decimal?>
         // calculate the next sma
         var start = Math.Max(index - Periods + 1, 0);
         var end = index + 1;
-        var sum = 0M;
+        decimal? sum = 0M;
         var count = 0;
         for (var i = start; i < end; i++)
         {
-            var value = Source[i];
-            if (value.HasValue)
-            {
-                sum += value.Value;
-                count++;
-            }
+            sum += Source[i];
+            count++;
         }
-        if (count > 0)
-        {
-            return sum / count;
-        }
-        else
-        {
-            return null;
-        }
+
+        return count > 0 ? sum / count : null;
     }
 }
 

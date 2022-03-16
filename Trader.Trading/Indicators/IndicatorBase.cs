@@ -137,9 +137,12 @@ public abstract class IndicatorBase<TSource, TResult> : IIndicator<TSource, TRes
 
     protected virtual void Dispose(bool disposing)
     {
-        foreach (var link in _links)
+        if (disposing)
         {
-            link.Dispose();
+            foreach (var link in _links)
+            {
+                link.Dispose();
+            }
         }
     }
 
@@ -161,16 +164,6 @@ public abstract class IndicatorBase<TSource, TResult> : IIndicator<TSource, TRes
     #region Add
 
     public static Add operator +(IndicatorBase<TSource, TResult> first, IIndicatorResult<TResult> second)
-    {
-        if (typeof(TResult) == typeof(decimal?))
-        {
-            return new Add((IIndicatorResult<decimal?>)first, (IIndicatorResult<decimal?>)second);
-        }
-
-        throw new NotSupportedException();
-    }
-
-    public static Add operator +(IIndicatorResult<TResult> first, IndicatorBase<TSource, TResult> second)
     {
         if (typeof(TResult) == typeof(decimal?))
         {
@@ -273,16 +266,6 @@ public abstract class IndicatorBase<TSource, TResult> : IIndicator<TSource, TRes
     #region Divide
 
     public static Divide operator /(IndicatorBase<TSource, TResult> first, IIndicatorResult<TResult> second)
-    {
-        if (typeof(TResult) == typeof(decimal?))
-        {
-            return new Divide((IIndicatorResult<decimal?>)first, (IIndicatorResult<decimal?>)second);
-        }
-
-        throw new NotSupportedException();
-    }
-
-    public static Divide operator /(IIndicatorResult<TResult> first, IndicatorBase<TSource, TResult> second)
     {
         if (typeof(TResult) == typeof(decimal?))
         {

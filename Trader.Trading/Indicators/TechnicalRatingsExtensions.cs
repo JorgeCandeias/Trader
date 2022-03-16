@@ -441,7 +441,7 @@ public static class TechnicalRatingsExtensions
         return null;
     }
 
-    private static int? GetAdxRating(WithPreviousValue<AverageDirectionalIndex> item)
+    private static int? GetAdxRating(WithPreviousValue<DMI> item)
     {
         var currAdx = item.Current.Adx;
         var currPlus = item.Current.Plus;

@@ -31,27 +31,18 @@ public class Wma : IndicatorBase<decimal?, decimal?>
         // calculate the next wma
         var factor = 0;
         var norm = 0M;
-        var sum = 0M;
+        decimal? sum = 0M;
 
         var start = Math.Max(index - Periods + 1, 0);
         var end = index + 1;
         for (var i = start; i < end; i++)
         {
-            var value = Source[i];
-            if (value.HasValue)
-            {
-                var weight = ++factor * Periods;
-                norm += weight;
-                sum += value.Value * weight;
-            }
+            var weight = ++factor * Periods;
+            norm += weight;
+            sum += Source[i] * weight;
         }
 
-        if (norm > 0)
-        {
-            return sum / norm;
-        }
-
-        return null;
+        return norm > 0 ? sum / norm : null;
     }
 }
 

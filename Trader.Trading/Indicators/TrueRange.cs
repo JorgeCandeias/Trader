@@ -17,9 +17,9 @@ public class TrueRange : IndicatorBase<HLC, decimal?>
 
     protected override decimal? Calculate(int index)
     {
-        if (index == 0)
+        if (index < 1)
         {
-            return Source[0].High - Source[0].Low;
+            return null;
         }
 
         var highLow = Source[index].High - Source[index].Low;

@@ -31,6 +31,10 @@ public static class Indicator
 
     public static Zip<decimal?, decimal?, decimal?> Zip(IIndicatorResult<decimal?> first, IIndicatorResult<decimal?> second, Func<decimal?, decimal?, decimal?> transform) => Zip<decimal?, decimal?, decimal?>(first, second, transform);
 
+    public static Zip<TFirst, TSecond, TThird, TResult> Zip<TFirst, TSecond, TThird, TResult>(IIndicatorResult<TFirst> first, IIndicatorResult<TSecond> second, IIndicatorResult<TThird> third, Func<TFirst, TSecond, TThird, TResult> transform) => new(first, second, third, transform);
+
+    public static Zip<decimal?, decimal?, decimal?, decimal?> Zip(IIndicatorResult<decimal?> first, IIndicatorResult<decimal?> second, IIndicatorResult<decimal?> third, Func<decimal?, decimal?, decimal?, decimal?> transform) => Zip<decimal?, decimal?, decimal?, decimal?>(first, second, third, transform);
+
     public static Transform<TSource, TResult> Transform<TSource, TResult>(Func<TSource, TResult> transform) => new(transform);
 
     public static Transform<decimal?, decimal?> Transform(Func<decimal?, decimal?> transform) => Transform<decimal?, decimal?>(transform);

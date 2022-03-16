@@ -52,4 +52,8 @@ public static class Indicator
     public static TrueRange TrueRange() => new();
 
     public static TrueRange TrueRange(IIndicatorResult<HLC> source) => new(source);
+
+    public static Wma Wma(int periods = Indicators.Wma.DefaultPeriods) => new(periods);
+
+    public static Wma Wma(IIndicatorResult<decimal?> source, int periods = Indicators.Wma.DefaultPeriods) => new(source, periods);
 }

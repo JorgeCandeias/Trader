@@ -1,15 +1,15 @@
 ﻿using Outcompute.Trader.Core.Mathematics;
 using Outcompute.Trader.Trading.Indicators;
 
-namespace Outcompute.Trader.Trading.Tests;
+namespace Outcompute.Trader.Trading.Tests.Indicators;
 
-public class WmaIndicatorTests
+public class WmaTests
 {
     [Fact]
     public void YieldsWma()
     {
         // act
-        var indicator = new WmaIndicator(3)
+        using var indicator = new Wma(3)
         {
             10254.92M, 10171.06M, 9998.87M, 10010.53M, 9706.93M, 8499.75M, 8436.75M, 8067.78M, 8187.15M, 8206.39M
         };

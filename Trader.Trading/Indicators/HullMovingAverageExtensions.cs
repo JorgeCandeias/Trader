@@ -10,7 +10,7 @@ public class HmaIndicator : IndicatorBase<decimal?, decimal?>
         Guard.IsGreaterThanOrEqualTo(periods, 2, nameof(periods));
 
         _source = new Identity<decimal?>();
-        _indicator = new WmaIndicator(2M * new WmaIndicator(_source, periods / 2) - new WmaIndicator(_source, periods), (int)Math.Floor(Math.Sqrt(periods)));
+        _indicator = new Wma(2M * new Wma(_source, periods / 2) - new Wma(_source, periods), (int)Math.Floor(Math.Sqrt(periods)));
 
         Periods = periods;
     }
@@ -41,10 +41,10 @@ public static class HullMovingAverageExtensions
         Guard.IsNotNull(source, nameof(source));
         Guard.IsGreaterThanOrEqualTo(periods, 2, nameof(periods));
 
-        var wma1 = source.WeightedMovingAverage(periods / 2);
-        var wma2 = source.WeightedMovingAverage(periods);
+        var wma1 = source.Wma(periods / 2);
+        var wma2 = source.Wma(periods);
 
-        return wma1.Zip(wma2).Select(x => 2 * x.First - x.Second).WeightedMovingAverage((int)Math.Floor(Math.Sqrt(periods)));
+        return wma1.Zip(wma2).Select(x => 2 * x.First - x.Second).Wma((int)Math.Floor(Math.Sqrt(periods)));
     }
 
     public static IEnumerable<decimal?> HullMovingAverage(this IEnumerable<Kline> source, int periods = 9)

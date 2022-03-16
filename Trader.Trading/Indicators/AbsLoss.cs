@@ -1,7 +1,6 @@
 ﻿using Outcompute.Trader.Core.Mathematics;
-using Outcompute.Trader.Trading.Indicators;
 
-namespace System.Collections.Generic;
+namespace Outcompute.Trader.Trading.Indicators;
 
 public class AbsLoss : IndicatorBase<decimal?, decimal?>
 {
@@ -29,7 +28,7 @@ public class AbsLoss : IndicatorBase<decimal?, decimal?>
             return null;
         }
 
-        return MathN.Abs(MathN.Min(Source[^1] - Source[^2], 0));
+        return MathN.Abs(MathN.Min(Source[index] - Source[index - 1], 0));
     }
 }
 

@@ -4,6 +4,8 @@ public record struct OHLCV(decimal? Open, decimal? High, decimal? Low, decimal? 
 
 public record struct HLC(decimal? High, decimal? Low, decimal? Close);
 
+public record struct HL(decimal? High, decimal? Low);
+
 public static class ModelConversionExtensions
 {
     public static HLC ToHLC(this OHLCV item) => new HLC(item.High, item.Low, item.Close);

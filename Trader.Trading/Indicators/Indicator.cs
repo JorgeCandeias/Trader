@@ -66,4 +66,8 @@ public static class Indicator
     public static Atr Atr(int periods = Indicators.Atr.DefaultPeriods, AtrMethod method = Indicators.Atr.DefaultAtrMethod) => new(periods, method);
 
     public static Atr Atr(IIndicatorResult<HLC> source, int periods = Indicators.Atr.DefaultPeriods, AtrMethod method = Indicators.Atr.DefaultAtrMethod) => new(source, periods, method);
+
+    public static HL2 HL2() => new();
+
+    public static HL2 HL2(IIndicatorResult<HL> source) => new(source);
 }

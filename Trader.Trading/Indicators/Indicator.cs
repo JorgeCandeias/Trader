@@ -44,4 +44,8 @@ public static class Indicator
     public static Rma Rma(int periods = Indicators.Rma.DefaultPeriods) => new(periods);
 
     public static Rma Rma(IIndicatorResult<decimal?> source, int periods = Indicators.Rma.DefaultPeriods) => new(source, periods);
+
+    public static Ema Ema(int periods = Indicators.Ema.DefaultPeriods) => new(periods);
+
+    public static Ema Ema(IIndicatorResult<decimal?> source, int periods = Indicators.Ema.DefaultPeriods) => new(source, periods);
 }

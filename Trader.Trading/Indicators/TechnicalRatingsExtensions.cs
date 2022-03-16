@@ -46,12 +46,12 @@ public static class TechnicalRatingsExtensions
         var sma50 = klines.Sma(50).GetEnumerator();
         var sma100 = klines.Sma(100).GetEnumerator();
         var sma200 = klines.Sma(200).GetEnumerator();
-        var ema10 = klines.ExponentialMovingAverage(10).GetEnumerator();
-        var ema20 = klines.ExponentialMovingAverage(20).GetEnumerator();
-        var ema30 = klines.ExponentialMovingAverage(30).GetEnumerator();
-        var ema50 = klines.ExponentialMovingAverage(50).GetEnumerator();
-        var ema100 = klines.ExponentialMovingAverage(100).GetEnumerator();
-        var ema200 = klines.ExponentialMovingAverage(200).GetEnumerator();
+        var ema10 = klines.Ema(10).GetEnumerator();
+        var ema20 = klines.Ema(20).GetEnumerator();
+        var ema30 = klines.Ema(30).GetEnumerator();
+        var ema50 = klines.Ema(50).GetEnumerator();
+        var ema100 = klines.Ema(100).GetEnumerator();
+        var ema200 = klines.Ema(200).GetEnumerator();
         var hma9 = klines.HullMovingAverage(9).GetEnumerator();
         var vwma20 = klines.VolumeWeightedMovingAverage(20).GetEnumerator();
         var ichimoku = klines.IchimokuCloud().GetEnumerator();
@@ -70,7 +70,7 @@ public static class TechnicalRatingsExtensions
         var uo = klines.UltimateOscillator(7, 14, 28).GetEnumerator();
 
         // recommendations
-        var priceAvg = klines.ExponentialMovingAverage(50);
+        var priceAvg = klines.Ema(50);
         var downTrend = klines.Select(x => x.ClosePrice).Zip(priceAvg, (c, a) => c < a).GetEnumerator();
         var upTrend = klines.Select(x => x.ClosePrice).Zip(priceAvg, (c, a) => c > a).GetEnumerator();
         var close = klines.Select(x => x.ClosePrice).GetEnumerator();

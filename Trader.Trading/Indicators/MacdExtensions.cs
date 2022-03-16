@@ -30,10 +30,10 @@ public static class MacdExtensions
         Guard.IsGreaterThanOrEqualTo(slowLength, 1, nameof(slowLength));
         Guard.IsGreaterThanOrEqualTo(signalStrength, 1, nameof(signalStrength));
 
-        var fastEmas = source.ExponentialMovingAverage(fastLength);
-        var slowEmas = source.ExponentialMovingAverage(slowLength);
+        var fastEmas = source.Ema(fastLength);
+        var slowEmas = source.Ema(slowLength);
         var macds = fastEmas.Zip(slowEmas).Select(zip => zip.First - zip.Second);
-        var signals = macds.ExponentialMovingAverage(signalStrength);
+        var signals = macds.Ema(signalStrength);
 
         using var sourceEnumerator = source.GetEnumerator();
         using var fastEnumerator = fastEmas.GetEnumerator();

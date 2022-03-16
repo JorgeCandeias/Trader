@@ -40,10 +40,10 @@ public static class TrixExtensions
         Guard.IsGreaterThan(periods, 0, nameof(periods));
 
         var priceEnumerator = source.GetEnumerator();
-        var trixEnumerator = source.ExponentialMovingAverage(periods).ExponentialMovingAverage(periods).ExponentialMovingAverage(periods).GetEnumerator();
-        var velocityEnumerator = source.Log().ExponentialMovingAverage(periods).ExponentialMovingAverage(periods).ExponentialMovingAverage(periods).Change().GetEnumerator();
-        var accelerationEnumerator = source.Log().ExponentialMovingAverage(periods).ExponentialMovingAverage(periods).ExponentialMovingAverage(periods).Change().Change().GetEnumerator();
-        var jerkEnumerator = source.Log().ExponentialMovingAverage(periods).ExponentialMovingAverage(periods).ExponentialMovingAverage(periods).Change().Change().Change().GetEnumerator();
+        var trixEnumerator = source.Ema(periods).Ema(periods).Ema(periods).GetEnumerator();
+        var velocityEnumerator = source.Log().Ema(periods).Ema(periods).Ema(periods).Change().GetEnumerator();
+        var accelerationEnumerator = source.Log().Ema(periods).Ema(periods).Ema(periods).Change().Change().GetEnumerator();
+        var jerkEnumerator = source.Log().Ema(periods).Ema(periods).Ema(periods).Change().Change().Change().GetEnumerator();
 
         while (priceEnumerator.MoveNext() && trixEnumerator.MoveNext() && velocityEnumerator.MoveNext() && accelerationEnumerator.MoveNext() && jerkEnumerator.MoveNext())
         {

@@ -39,7 +39,7 @@ public class Rma : IndicatorBase<decimal?, decimal?>
             var sum = 0M;
             var count = 0;
 
-            for (var i = 0; i <= index; i++)
+            for (var i = Math.Max(0, index - Periods + 1); i <= index; i++)
             {
                 var value = Source[i];
                 if (value.HasValue)

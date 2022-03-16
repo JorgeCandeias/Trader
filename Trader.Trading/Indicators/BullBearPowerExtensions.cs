@@ -15,7 +15,7 @@ public static class BullBearPowerExtensions
         var high = source.Select(highSelector);
         var low = source.Select(lowSelector);
         var close = source.Select(closeSelector);
-        var ema = close.ExponentialMovingAverage(length);
+        var ema = close.Ema(length);
 
         var bull = high.Zip(ema, (x, y) => x - y);
         var bear = low.Zip(ema, (x, y) => x - y);

@@ -1,8 +1,10 @@
 ﻿namespace Outcompute.Trader.Trading.Indicators;
 
-public class EmaIndicator : IndicatorBase<decimal?, decimal?>
+public class Ema : IndicatorBase<decimal?, decimal?>
 {
-    public EmaIndicator(int periods = 10)
+    internal const int DefaultPeriods = 10;
+
+    public Ema(int periods = DefaultPeriods)
     {
         Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
@@ -10,7 +12,15 @@ public class EmaIndicator : IndicatorBase<decimal?, decimal?>
         Alpha = 2M / (periods + 1M);
     }
 
+    public Ema(IIndicatorResult<decimal?> source, int periods = DefaultPeriods) : this(periods)
+    {
+        Guard.IsNotNull(source, nameof(source));
+
+        LinkFrom(source);
+    }
+
     public int Periods { get; }
+
     public decimal Alpha { get; }
 
     protected override decimal? Calculate(int index)
@@ -21,7 +31,7 @@ public class EmaIndicator : IndicatorBase<decimal?, decimal?>
             return null;
         }
 
-        var ema = Result[^2];
+        var ema = Result[index - 1];
 
         // start from the sma to avoid spikes
         if (!ema.HasValue)
@@ -29,7 +39,7 @@ public class EmaIndicator : IndicatorBase<decimal?, decimal?>
             var sum = 0M;
             var count = 0;
 
-            for (var i = 0; i < Periods; i++)
+            for (var i = Math.Max(0, index - Periods + 1); i <= index; i++)
             {
                 var value = Source[i];
                 if (value.HasValue)
@@ -50,7 +60,7 @@ public class EmaIndicator : IndicatorBase<decimal?, decimal?>
         }
 
         // calculate the next ema
-        var next = Source[^1];
+        var next = Source[index];
         if (next.HasValue)
         {
             return (Alpha * next) + (1 - Alpha) * ema;
@@ -64,13 +74,12 @@ public class EmaIndicator : IndicatorBase<decimal?, decimal?>
 
 public static class EmaIndicatorEnumerableExtensions
 {
-    public static IEnumerable<decimal?> ExponentialMovingAverage<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = 10)
+    public static IEnumerable<decimal?> Ema<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = Indicators.Ema.DefaultPeriods)
     {
         Guard.IsNotNull(source, nameof(source));
         Guard.IsNotNull(selector, nameof(selector));
-        Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
-        var indicator = new EmaIndicator(periods);
+        var indicator = new Ema(periods);
 
         foreach (var item in source)
         {
@@ -80,13 +89,13 @@ public static class EmaIndicatorEnumerableExtensions
         }
     }
 
-    public static IEnumerable<decimal?> ExponentialMovingAverage(this IEnumerable<Kline> source, int periods)
+    public static IEnumerable<decimal?> Ema(this IEnumerable<Kline> source, int periods = Indicators.Ema.DefaultPeriods)
     {
-        return source.ExponentialMovingAverage(x => x.ClosePrice, periods);
+        return source.Ema(x => x.ClosePrice, periods);
     }
 
-    public static IEnumerable<decimal?> ExponentialMovingAverage(this IEnumerable<decimal?> source, int periods)
+    public static IEnumerable<decimal?> Ema(this IEnumerable<decimal?> source, int periods = Indicators.Ema.DefaultPeriods)
     {
-        return source.ExponentialMovingAverage(x => x, periods);
+        return source.Ema(x => x, periods);
     }
 }

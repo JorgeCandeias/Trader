@@ -15,4 +15,8 @@ public static class ModelConversionExtensions
     public static IEnumerable<HL> ToHL(this IEnumerable<OHLCV> source) => source.Select(x => x.ToHL());
 
     public static IEnumerable<HLC> ToHLC(this IEnumerable<OHLCV> source) => source.Select(x => x.ToHLC());
+
+    public static IEnumerable<decimal?> ToHLC3(this IEnumerable<HLC> source) => source.Select(x => (x.High + x.Low + x.Close) / 3M);
+
+    public static IEnumerable<decimal?> ToHLC3(this IEnumerable<OHLCV> source) => source.Select(x => (x.High + x.Low + x.Close) / 3M);
 }

@@ -6,9 +6,9 @@ namespace Outcompute.Trader.Trading.Indicators;
 
 public abstract class IndicatorBase<TSource, TResult> : IIndicator<TSource, TResult>
 {
-    protected List<TSource> Source { get; } = new List<TSource>();
+    protected IList<TSource> Source { get; } = new List<TSource>();
 
-    protected List<TResult> Result { get; } = new List<TResult>();
+    protected IList<TResult> Result { get; } = new List<TResult>();
 
     public TResult this[int index] => Result[index];
 

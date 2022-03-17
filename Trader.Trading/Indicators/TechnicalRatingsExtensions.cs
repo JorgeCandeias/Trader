@@ -1,7 +1,5 @@
 ﻿namespace Outcompute.Trader.Trading.Indicators;
 
-public record struct TechnicalRatings();
-
 public enum TechnicalRatingAction
 {
     Unknown = 0,
@@ -27,6 +25,70 @@ public record TechnicalRatingTotals(decimal Rating, TechnicalRatingAction Action
 public record TechnicalRatingSummary(Kline Item, TechnicalRatingTotals Summary, TechnicalRatingTotals MovingAverages, TechnicalRatingTotals Oscillators, ImmutableList<TechnicalRatingDetail> Details)
 {
     public static TechnicalRatingSummary Empty { get; } = new TechnicalRatingSummary(Kline.Empty, TechnicalRatingTotals.Empty, TechnicalRatingTotals.Empty, TechnicalRatingTotals.Empty, ImmutableList<TechnicalRatingDetail>.Empty);
+}
+
+public class TechnicalRatings : IndicatorBase<OHLCV, TechnicalRatingSummary>
+{
+    private readonly Sma _sma10;
+    private readonly Sma _sma20;
+    private readonly Sma _sma30;
+    private readonly Sma _sma50;
+    private readonly Sma _sma100;
+    private readonly Sma _sma200;
+    private readonly Ema _ema10;
+    private readonly Ema _ema20;
+    private readonly Ema _ema30;
+    private readonly Ema _ema50;
+    private readonly Ema _ema100;
+    private readonly Ema _ema200;
+    private readonly Hma _hma9;
+
+    public TechnicalRatings()
+    {
+        // create moving averages
+        _sma10 = Indicator.Sma(10);
+        _sma20 = Indicator.Sma(20);
+        _sma30 = Indicator.Sma(30);
+        _sma50 = Indicator.Sma(50);
+        _sma100 = Indicator.Sma(100);
+        _sma200 = Indicator.Sma(200);
+        _ema10 = Indicator.Ema(10);
+        _ema20 = Indicator.Ema(20);
+        _ema30 = Indicator.Ema(30);
+        _ema50 = Indicator.Ema(50);
+        _ema100 = Indicator.Ema(100);
+        _ema200 = Indicator.Ema(200);
+        _hma9 = Indicator.Hma(9);
+    }
+
+    public TechnicalRatings(IIndicatorResult<OHLCV> source) : this()
+    {
+        Guard.IsNotNull(source, nameof(source));
+
+        LinkFrom(source);
+    }
+
+    protected override TechnicalRatingSummary Calculate(int index)
+    {
+        var value = Source[index];
+
+        // update moving averages
+        _sma10.Update(index, value.Close);
+        _sma20.Update(index, value.Close);
+        _sma30.Update(index, value.Close);
+        _sma50.Update(index, value.Close);
+        _sma100.Update(index, value.Close);
+        _sma200.Update(index, value.Close);
+        _ema10.Update(index, value.Close);
+        _ema20.Update(index, value.Close);
+        _ema30.Update(index, value.Close);
+        _ema50.Update(index, value.Close);
+        _ema100.Update(index, value.Close);
+        _ema200.Update(index, value.Close);
+        _hma9.Update(index, value.Close);
+
+        return TechnicalRatingSummary.Empty;
+    }
 }
 
 public static class TechnicalRatingsExtensions

@@ -1,6 +1,6 @@
 ﻿namespace Outcompute.Trader.Trading.Indicators;
 
-public record struct IchimokuCloud(decimal? ConversionLine, decimal? BaseLine, decimal? LeadLine1, decimal? LeadLine2, decimal? LaggingSpan, decimal? LeadingSpanA, decimal? LeadingSpanB);
+public record struct IchimokuCloud(decimal? ConversionLine, decimal? BaseLine, decimal? LeadLine1, decimal? LeadLine2);
 
 public static class IchimokuCloudExtensions
 {
@@ -21,18 +21,11 @@ public static class IchimokuCloudExtensions
         var leadLines1 = conversionLines.Zip(baseLines).Select(x => (x.First + x.Second) / 2).ToList();
         var leadLines2 = Donchian(laggingSpan2Periods).ToList();
 
-        var laggingSpans = source.Skip(displacement - 1).Select(x => x.Close).Concat(Enumerable.Repeat<decimal?>(null, displacement - 1));
-        var leadingSpanA = Enumerable.Repeat<decimal?>(null, displacement - 1).Concat(leadLines1);
-        var leadingSpanB = Enumerable.Repeat<decimal?>(null, displacement - 1).Concat(leadLines2);
-
         return conversionLines
             .Zip(baseLines, (x, y) => (ConversionLine: x, BaseLine: y))
             .Zip(leadLines1, (x, y) => (x.ConversionLine, x.BaseLine, LeadLine1: y))
             .Zip(leadLines2, (x, y) => (x.ConversionLine, x.BaseLine, x.LeadLine1, LeadLine2: y))
-            .Zip(laggingSpans, (x, y) => (x.ConversionLine, x.BaseLine, x.LeadLine1, x.LeadLine2, LaggingSpan: y))
-            .Zip(leadingSpanA, (x, y) => (x.ConversionLine, x.BaseLine, x.LeadLine1, x.LeadLine2, x.LaggingSpan, LeadingSpanA: y))
-            .Zip(leadingSpanB, (x, y) => (x.ConversionLine, x.BaseLine, x.LeadLine1, x.LeadLine2, x.LaggingSpan, x.LeadingSpanA, LeadingSpanB: y))
-            .Select(x => new IchimokuCloud(x.ConversionLine, x.BaseLine, x.LeadLine1, x.LeadLine2, x.LaggingSpan, x.LeadingSpanA, x.LeadingSpanB));
+            .Select(x => new IchimokuCloud(x.ConversionLine, x.BaseLine, x.LeadLine1, x.LeadLine2));
     }
 
     public static IEnumerable<IchimokuCloud> IchimokuCloud<T>(this IEnumerable<T> source, Func<T, decimal?> highSelector, Func<T, decimal?> lowSelector, Func<T, decimal?> closeSelector, int conversionPeriods = 9, int basePeriods = 26, int laggingSpan2Periods = 52, int displacement = 26)

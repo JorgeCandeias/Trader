@@ -367,7 +367,7 @@ public static class TechnicalRatingsExtensions
         return null;
     }
 
-    private static int? GetBullBearPowerRating(WithPreviousValue<BullBearPower> item, bool? uptrend, bool? downtrend)
+    private static int? GetBullBearPowerRating(WithPreviousValue<BBP> item, bool? uptrend, bool? downtrend)
     {
         var curr = item.Current;
         var prev = item.Previous;

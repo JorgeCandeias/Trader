@@ -43,6 +43,13 @@ public class Sma : IndicatorBase<decimal?, decimal?>
     }
 }
 
+public static partial class Indicator
+{
+    public static Sma Sma(int periods = Indicators.Sma.DefaultPeriods) => new(periods);
+
+    public static Sma Sma(IIndicatorResult<decimal?> source, int periods = Indicators.Sma.DefaultPeriods) => new(source, periods);
+}
+
 public static class SmaEnumerableExtensions
 {
     public static IEnumerable<decimal?> Sma<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = Indicators.Sma.DefaultPeriods)
@@ -50,7 +57,7 @@ public static class SmaEnumerableExtensions
         Guard.IsNotNull(source, nameof(source));
         Guard.IsNotNull(selector, nameof(selector));
 
-        using var indicator = new Sma(periods);
+        using var indicator = Indicator.Sma(periods);
 
         foreach (var item in source)
         {

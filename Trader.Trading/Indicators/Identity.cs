@@ -7,3 +7,8 @@ public class Identity<T> : IndicatorBase<T, T>
         return Source[index];
     }
 }
+
+public static partial class Indicator
+{
+    public static Identity<T> Identity<T>() => new();
+}

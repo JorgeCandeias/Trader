@@ -6,3 +6,8 @@ public sealed class Subtract : Zip<decimal?, decimal?, decimal?>
     {
     }
 }
+
+public static partial class Indicator
+{
+    public static Subtract Subtract(IIndicatorResult<decimal?> first, IIndicatorResult<decimal?> second) => new(first, second);
+}

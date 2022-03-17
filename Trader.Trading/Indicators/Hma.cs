@@ -36,6 +36,13 @@ public class Hma : IndicatorBase<decimal?, decimal?>
     }
 }
 
+public static partial class Indicator
+{
+    public static Hma Hma(int periods = Indicators.Hma.DefaultPeriods) => new(periods);
+
+    public static Hma Hma(IIndicatorResult<decimal?> source, int periods = Indicators.Hma.DefaultPeriods) => new(source, periods);
+}
+
 public static class HmaEnumerableExtensions
 {
     public static IEnumerable<decimal?> Hma<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = Indicators.Hma.DefaultPeriods)
@@ -43,7 +50,7 @@ public static class HmaEnumerableExtensions
         Guard.IsNotNull(source, nameof(source));
         Guard.IsNotNull(selector, nameof(selector));
 
-        using var indicator = new Hma(periods);
+        using var indicator = Indicator.Hma(periods);
 
         foreach (var item in source)
         {

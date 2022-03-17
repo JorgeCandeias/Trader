@@ -8,3 +8,8 @@ public sealed class Divide : Zip<decimal?, decimal?, decimal?>
     {
     }
 }
+
+public static partial class Indicator
+{
+    public static Divide Divide(IIndicatorResult<decimal?> first, IIndicatorResult<decimal?> second) => new(first, second);
+}

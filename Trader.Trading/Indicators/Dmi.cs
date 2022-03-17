@@ -67,6 +67,13 @@ public class Dmi : IndicatorBase<HLC, DMI>
     }
 }
 
+public static partial class Indicator
+{
+    public static Dmi Dmi(int adxPeriods = Indicators.Dmi.DefaultAdxPeriods, int diPeriods = Indicators.Dmi.DefaultDiPeriods) => new(adxPeriods, diPeriods);
+
+    public static Dmi Dmi(IIndicatorResult<HLC> source, int adxPeriods = Indicators.Dmi.DefaultAdxPeriods, int diPeriods = Indicators.Dmi.DefaultDiPeriods) => new(source, adxPeriods, diPeriods);
+}
+
 public static class DmiEnumerableExtensions
 {
     public static IEnumerable<DMI> Dmi<T>(this IEnumerable<T> source, Func<T, decimal?> highSelector, Func<T, decimal?> lowSelector, Func<T, decimal?> closeSelector, int adxPeriods = Indicators.Dmi.DefaultAdxPeriods, int diPeriods = Indicators.Dmi.DefaultDiPeriods)
@@ -76,7 +83,7 @@ public static class DmiEnumerableExtensions
         Guard.IsNotNull(lowSelector, nameof(lowSelector));
         Guard.IsNotNull(closeSelector, nameof(closeSelector));
 
-        using var indicator = new Dmi(adxPeriods, diPeriods);
+        using var indicator = Indicator.Dmi(adxPeriods, diPeriods);
 
         foreach (var item in source)
         {

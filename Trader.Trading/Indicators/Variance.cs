@@ -58,6 +58,13 @@ public class Variance : IndicatorBase<decimal?, decimal?>
     }
 }
 
+public static partial class Indicator
+{
+    public static Variance Variance(int periods = Indicators.Variance.DefaultPeriods) => new(periods);
+
+    public static Variance Variance(IIndicatorResult<decimal?> source, int periods = Indicators.Variance.DefaultPeriods) => new(source, periods);
+}
+
 internal static class VarianceEnumerableExtensions
 {
     public static IEnumerable<decimal?> Variance<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = Indicators.Variance.DefaultPeriods)
@@ -65,7 +72,7 @@ internal static class VarianceEnumerableExtensions
         Guard.IsNotNull(source, nameof(source));
         Guard.IsNotNull(selector, nameof(selector));
 
-        using var indicator = new Variance(periods);
+        using var indicator = Indicator.Variance(periods);
 
         foreach (var item in source)
         {

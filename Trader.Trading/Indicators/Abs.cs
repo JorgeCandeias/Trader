@@ -24,13 +24,20 @@ public class Abs : Transform<decimal?, decimal?>
     private static readonly Func<decimal?, decimal?> Transform = x => MathN.Abs(x);
 }
 
+public static partial class Indicator
+{
+    public static Abs Abs() => new();
+
+    public static Abs Abs(IIndicatorResult<decimal?> source) => new(source);
+}
+
 public static class AbsEnumerableExtensions
 {
     public static IEnumerable<decimal?> Abs(this IEnumerable<decimal?> source)
     {
         Guard.IsNotNull(source, nameof(source));
 
-        using var indicator = new Abs();
+        using var indicator = Indicator.Abs();
 
         foreach (var value in source)
         {

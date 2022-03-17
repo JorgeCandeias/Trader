@@ -55,6 +55,13 @@ public class Atr : IndicatorBase<HLC, decimal?>
     }
 }
 
+public static partial class Indicator
+{
+    public static Atr Atr(int periods = Indicators.Atr.DefaultPeriods, AtrMethod method = Indicators.Atr.DefaultAtrMethod) => new(periods, method);
+
+    public static Atr Atr(IIndicatorResult<HLC> source, int periods = Indicators.Atr.DefaultPeriods, AtrMethod method = Indicators.Atr.DefaultAtrMethod) => new(source, periods, method);
+}
+
 public static class AtrEnumerableExtensions
 {
     public static IEnumerable<decimal?> Atr<T>(this IEnumerable<T> source, Func<T, decimal?> highSelector, Func<T, decimal?> lowSelector, Func<T, decimal?> closeSelector, int periods = Indicators.Atr.DefaultPeriods, AtrMethod method = Indicators.Atr.DefaultAtrMethod)
@@ -64,7 +71,7 @@ public static class AtrEnumerableExtensions
         Guard.IsNotNull(lowSelector, nameof(lowSelector));
         Guard.IsNotNull(closeSelector, nameof(closeSelector));
 
-        using var indicator = new Atr(periods, method);
+        using var indicator = Indicator.Atr(periods, method);
 
         foreach (var item in source)
         {

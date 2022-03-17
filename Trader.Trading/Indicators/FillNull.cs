@@ -32,13 +32,20 @@ public class FillNull<T> : IndicatorBase<T, T>
     }
 }
 
+public static partial class Indicator
+{
+    public static FillNull<T> FillNull<T>() => new();
+
+    public static FillNull<T> FillNull<T>(IIndicatorResult<T> source) => new(source);
+}
+
 public static class FillNullEnumerableExtensions
 {
     public static IEnumerable<T?> FillNull<T>(this IEnumerable<T?> source)
     {
         Guard.IsNotNull(source, nameof(source));
 
-        using var indicator = new FillNull<T>();
+        using var indicator = Indicator.FillNull<T>();
 
         foreach (var item in source)
         {

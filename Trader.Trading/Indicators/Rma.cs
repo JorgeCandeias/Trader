@@ -61,6 +61,13 @@ public class Rma : IndicatorBase<decimal?, decimal?>
     }
 }
 
+public static partial class Indicator
+{
+    public static Rma Rma(int periods = Indicators.Rma.DefaultPeriods) => new(periods);
+
+    public static Rma Rma(IIndicatorResult<decimal?> source, int periods = Indicators.Rma.DefaultPeriods) => new(source, periods);
+}
+
 public static class RmaEnumerableExtensions
 {
     public static IEnumerable<decimal?> Rma<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = Indicators.Rma.DefaultPeriods)
@@ -68,7 +75,7 @@ public static class RmaEnumerableExtensions
         Guard.IsNotNull(source, nameof(source));
         Guard.IsNotNull(selector, nameof(selector));
 
-        using var indicator = new Rma(periods);
+        using var indicator = Indicator.Rma(periods);
 
         foreach (var item in source)
         {

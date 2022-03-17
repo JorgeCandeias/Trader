@@ -38,6 +38,13 @@ public class Change : IndicatorBase<decimal?, decimal?>
     }
 }
 
+public static partial class Indicator
+{
+    public static Change Change(int periods = 1) => new(periods);
+
+    public static Change Change(IIndicatorResult<decimal?> source, int periods = 1) => new(source, periods);
+}
+
 public static class ChangeEnumerableExtensions
 {
     /// <summary>
@@ -48,7 +55,7 @@ public static class ChangeEnumerableExtensions
         Guard.IsNotNull(source, nameof(source));
         Guard.IsNotNull(selector, nameof(selector));
 
-        var indicator = new Change(periods);
+        var indicator = Indicator.Change(periods);
 
         foreach (var item in source)
         {

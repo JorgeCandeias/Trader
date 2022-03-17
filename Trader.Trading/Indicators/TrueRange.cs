@@ -30,6 +30,13 @@ public class TrueRange : IndicatorBase<HLC, decimal?>
     }
 }
 
+public static partial class Indicator
+{
+    public static TrueRange TrueRange() => new();
+
+    public static TrueRange TrueRange(IIndicatorResult<HLC> source) => new(source);
+}
+
 public static class TrueRangeEnumerableExtensions
 {
     public static IEnumerable<decimal?> TrueRange<T>(this IEnumerable<T> source, Func<T, decimal?> highSelector, Func<T, decimal?> lowSelector, Func<T, decimal?> closeSelector)
@@ -39,7 +46,7 @@ public static class TrueRangeEnumerableExtensions
         Guard.IsNotNull(lowSelector, nameof(lowSelector));
         Guard.IsNotNull(closeSelector, nameof(closeSelector));
 
-        using var indicator = new TrueRange();
+        using var indicator = Indicator.TrueRange();
 
         foreach (var item in source)
         {

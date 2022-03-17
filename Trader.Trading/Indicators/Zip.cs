@@ -131,3 +131,14 @@ public class Zip<TFirst, TSecond, TThird, TResult> : IndicatorBase<TResult, TRes
         base.Dispose(disposing);
     }
 }
+
+public static partial class Indicator
+{
+    public static Zip<TFirstSource, TSecondSource, TResult> Zip<TFirstSource, TSecondSource, TResult>(IIndicatorResult<TFirstSource> first, IIndicatorResult<TSecondSource> second, Func<TFirstSource, TSecondSource, TResult> transform) => new(first, second, transform);
+
+    public static Zip<decimal?, decimal?, decimal?> Zip(IIndicatorResult<decimal?> first, IIndicatorResult<decimal?> second, Func<decimal?, decimal?, decimal?> transform) => Zip<decimal?, decimal?, decimal?>(first, second, transform);
+
+    public static Zip<TFirst, TSecond, TThird, TResult> Zip<TFirst, TSecond, TThird, TResult>(IIndicatorResult<TFirst> first, IIndicatorResult<TSecond> second, IIndicatorResult<TThird> third, Func<TFirst, TSecond, TThird, TResult> transform) => new(first, second, third, transform);
+
+    public static Zip<decimal?, decimal?, decimal?, decimal?> Zip(IIndicatorResult<decimal?> first, IIndicatorResult<decimal?> second, IIndicatorResult<decimal?> third, Func<decimal?, decimal?, decimal?, decimal?> transform) => Zip<decimal?, decimal?, decimal?, decimal?>(first, second, third, transform);
+}

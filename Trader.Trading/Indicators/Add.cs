@@ -6,3 +6,8 @@ public sealed class Add : Zip<decimal?, decimal?, decimal?>
     {
     }
 }
+
+public static partial class Indicator
+{
+    public static Add Add(IIndicatorResult<decimal?> first, IIndicatorResult<decimal?> second) => new(first, second);
+}

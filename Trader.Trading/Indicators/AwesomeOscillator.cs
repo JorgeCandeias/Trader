@@ -41,6 +41,13 @@ public class AwesomeOscillator : IndicatorBase<HL, decimal?>
     }
 }
 
+public static partial class Indicator
+{
+    public static AwesomeOscillator AwesomeOscillator(int fastPeriods = Indicators.AwesomeOscillator.DefaultFastPeriods, int slowPeriods = Indicators.AwesomeOscillator.DefaultSlowPeriods) => new(fastPeriods, slowPeriods);
+
+    public static AwesomeOscillator AwesomeOscillator(IIndicatorResult<HL> source, int fastPeriods = Indicators.AwesomeOscillator.DefaultFastPeriods, int slowPeriods = Indicators.AwesomeOscillator.DefaultSlowPeriods) => new(source, fastPeriods, slowPeriods);
+}
+
 public static class AwesomeOscillatorEnumerableExtensions
 {
     public static IEnumerable<decimal?> AwesomeOscillator<T>(this IEnumerable<T> source, Func<T, decimal?> highSelector, Func<T, decimal?> lowSelector, int fastPeriods = Indicators.AwesomeOscillator.DefaultFastPeriods, int slowPeriods = Indicators.AwesomeOscillator.DefaultSlowPeriods)
@@ -49,7 +56,7 @@ public static class AwesomeOscillatorEnumerableExtensions
         Guard.IsNotNull(highSelector, nameof(highSelector));
         Guard.IsNotNull(lowSelector, nameof(lowSelector));
 
-        using var indicator = new AwesomeOscillator(fastPeriods, slowPeriods);
+        using var indicator = Indicator.AwesomeOscillator(fastPeriods, slowPeriods);
 
         foreach (var item in source)
         {

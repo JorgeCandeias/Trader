@@ -46,6 +46,13 @@ public class Wma : IndicatorBase<decimal?, decimal?>
     }
 }
 
+public static partial class Indicator
+{
+    public static Wma Wma(int periods = Indicators.Wma.DefaultPeriods) => new(periods);
+
+    public static Wma Wma(IIndicatorResult<decimal?> source, int periods = Indicators.Wma.DefaultPeriods) => new(source, periods);
+}
+
 public static class WeightedMovingAverageExtensions
 {
     public static IEnumerable<decimal?> Wma<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = Indicators.Wma.DefaultPeriods)
@@ -53,7 +60,7 @@ public static class WeightedMovingAverageExtensions
         Guard.IsNotNull(source, nameof(source));
         Guard.IsNotNull(selector, nameof(selector));
 
-        var indicator = new Wma(periods);
+        var indicator = Indicator.Wma(periods);
 
         foreach (var item in source)
         {

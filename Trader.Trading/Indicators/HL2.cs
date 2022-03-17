@@ -24,6 +24,13 @@ public class HL2 : Transform<HL, decimal?>
     private static readonly Func<HL, decimal?> Transform = x => MathN.SafeDiv(x.High + x.Low, 2);
 }
 
+public static partial class Indicator
+{
+    public static HL2 HL2() => new();
+
+    public static HL2 HL2(IIndicatorResult<HL> source) => new(source);
+}
+
 public static class HL2EnumerableExtensions
 {
     public static IEnumerable<decimal?> HL2<T>(this IEnumerable<T> source, Func<T, decimal?> highSelector, Func<T, decimal?> lowSelector)
@@ -32,7 +39,7 @@ public static class HL2EnumerableExtensions
         Guard.IsNotNull(highSelector, nameof(highSelector));
         Guard.IsNotNull(lowSelector, nameof(lowSelector));
 
-        using var indicator = new HL2();
+        using var indicator = Indicator.HL2();
 
         foreach (var value in source)
         {

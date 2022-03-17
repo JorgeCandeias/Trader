@@ -35,6 +35,13 @@ public class AbsLoss : IndicatorBase<decimal?, decimal?>
     }
 }
 
+public static partial class Indicator
+{
+    public static AbsLoss AbsLoss() => new();
+
+    public static AbsLoss AbsLoss(IIndicatorResult<decimal?> source) => new(source);
+}
+
 public static class AbsLossEnumerableExtensions
 {
     /// <summary>
@@ -45,7 +52,7 @@ public static class AbsLossEnumerableExtensions
     {
         Guard.IsNotNull(source, nameof(source));
 
-        var indicator = new AbsLoss();
+        var indicator = Indicator.AbsLoss();
 
         foreach (var item in source)
         {

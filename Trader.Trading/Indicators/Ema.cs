@@ -61,6 +61,13 @@ public class Ema : IndicatorBase<decimal?, decimal?>
     }
 }
 
+public static partial class Indicator
+{
+    public static Ema Ema(int periods = Indicators.Ema.DefaultPeriods) => new(periods);
+
+    public static Ema Ema(IIndicatorResult<decimal?> source, int periods = Indicators.Ema.DefaultPeriods) => new(source, periods);
+}
+
 public static class EmaIndicatorEnumerableExtensions
 {
     public static IEnumerable<decimal?> Ema<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = Indicators.Ema.DefaultPeriods)
@@ -68,7 +75,7 @@ public static class EmaIndicatorEnumerableExtensions
         Guard.IsNotNull(source, nameof(source));
         Guard.IsNotNull(selector, nameof(selector));
 
-        var indicator = new Ema(periods);
+        var indicator = Indicator.Ema(periods);
 
         foreach (var item in source)
         {

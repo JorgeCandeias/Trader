@@ -42,6 +42,7 @@ public class TechnicalRatings : IndicatorBase<OHLCV, TechnicalRatingSummary>
     private readonly Ema _ema100;
     private readonly Ema _ema200;
     private readonly Hma _hma9;
+    private readonly Vwma _vwma20;
 
     public TechnicalRatings()
     {
@@ -59,6 +60,7 @@ public class TechnicalRatings : IndicatorBase<OHLCV, TechnicalRatingSummary>
         _ema100 = Indicator.Ema(100);
         _ema200 = Indicator.Ema(200);
         _hma9 = Indicator.Hma(9);
+        _vwma20 = Indicator.Vwma(20);
     }
 
     public TechnicalRatings(IIndicatorResult<OHLCV> source) : this()
@@ -86,8 +88,32 @@ public class TechnicalRatings : IndicatorBase<OHLCV, TechnicalRatingSummary>
         _ema100.Update(index, value.Close);
         _ema200.Update(index, value.Close);
         _hma9.Update(index, value.Close);
+        _vwma20.Update(index, value.ToCV());
 
         return TechnicalRatingSummary.Empty;
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _sma10.Dispose();
+            _sma20.Dispose();
+            _sma30.Dispose();
+            _sma50.Dispose();
+            _sma100.Dispose();
+            _sma200.Dispose();
+            _ema10.Dispose();
+            _ema20.Dispose();
+            _ema30.Dispose();
+            _ema50.Dispose();
+            _ema100.Dispose();
+            _ema200.Dispose();
+            _hma9.Dispose();
+            _vwma20.Dispose();
+        }
+
+        base.Dispose(disposing);
     }
 }
 

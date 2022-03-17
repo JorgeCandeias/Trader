@@ -1,9 +1,50 @@
 ﻿using Outcompute.Trader.Core.Mathematics;
-using Outcompute.Trader.Core.Pooling;
 
 namespace Outcompute.Trader.Trading.Indicators;
 
-public static class LowestExtensions
+public class Lowest : IndicatorBase<decimal?, decimal?>
+{
+    public Lowest(int periods = 1)
+    {
+        Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
+
+        Periods = periods;
+    }
+
+    public Lowest(IIndicatorResult<decimal?> source, int periods = 1) : this(periods)
+    {
+        Guard.IsNotNull(source, nameof(source));
+
+        LinkFrom(source);
+    }
+
+    public int Periods { get; }
+
+    protected override decimal? Calculate(int index)
+    {
+        if (index < Periods - 1)
+        {
+            return null;
+        }
+
+        decimal? highest = null;
+        for (var i = index - Periods + 1; i <= index; i++)
+        {
+            highest = MathN.Min(Source[i], highest, MinMaxBehavior.NonNullWins);
+        }
+
+        return highest;
+    }
+}
+
+public static partial class Indicator
+{
+    public static Lowest Lowest(int periods = 1) => new(periods);
+
+    public static Lowest Lowest(IIndicatorResult<decimal?> source, int periods = 1) => new(source, periods);
+}
+
+public static class LowestEnumerableExtensions
 {
     /// <summary>
     /// Yields the lowest value in <paramref name="source"/> within <paramref name="periods"/> ago.
@@ -12,47 +53,14 @@ public static class LowestExtensions
     {
         Guard.IsNotNull(source, nameof(source));
         Guard.IsNotNull(selector, nameof(selector));
-        Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
-        var queue = QueuePool<decimal?>.Shared.Get();
+        using var indicator = Indicator.Lowest(periods);
 
-        try
+        foreach (var item in source)
         {
-            var enumerator = source.GetEnumerator();
+            indicator.Add(selector(item));
 
-            // seeding phase
-            for (var i = 0; i < periods - 1; i++)
-            {
-                if (!enumerator.MoveNext())
-                {
-                    yield break;
-                }
-
-                queue.Enqueue(selector(enumerator.Current));
-
-                yield return null;
-            }
-
-            // yielding phase
-            while (enumerator.MoveNext())
-            {
-                queue.Enqueue(selector(enumerator.Current));
-
-                decimal? lowest = null;
-
-                foreach (var candidate in queue)
-                {
-                    lowest = MathN.Min(lowest, candidate, MinMaxBehavior.NonNullWins);
-                }
-
-                yield return lowest!;
-
-                queue.Dequeue();
-            }
-        }
-        finally
-        {
-            QueuePool<decimal?>.Shared.Return(queue);
+            yield return indicator[^1];
         }
     }
 

@@ -1,27 +1,16 @@
-﻿using Outcompute.Trader.Core.Mathematics;
+﻿namespace Outcompute.Trader.Trading.Indicators;
 
-namespace Outcompute.Trader.Trading.Indicators;
-
-/// <summary>
-/// Indicator that yields the absolute value of each source value.
-/// </summary>
 public class HL2 : Transform<HL, decimal?>
 {
-    /// <summary>
-    /// Creates a new absolute indicator.
-    /// </summary>
     public HL2() : base(Transform)
     {
     }
 
-    /// <summary>
-    /// Creates a new absolute indicator from the specified source indicator.
-    /// </summary>
     public HL2(IIndicatorResult<HL> source) : base(source, Transform)
     {
     }
 
-    private static readonly Func<HL, decimal?> Transform = x => MathN.SafeDiv(x.High + x.Low, 2);
+    private static readonly Func<HL, decimal?> Transform = x => (x.High + x.Low) / 2;
 }
 
 public static partial class Indicator

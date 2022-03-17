@@ -261,7 +261,7 @@ public static class TechnicalRatingsExtensions
                     new TechnicalRatingDetail("Stochastic %K (14, 3, 3)", stochastic.Current.Current.K, GetIndividualRatingStatus(stochRating)),
                     new TechnicalRatingDetail("Commodity Channel Index (20)", cci.Current.Current, GetIndividualRatingStatus(cciRating)),
                     new TechnicalRatingDetail("Average Directional Index (14)", adx.Current.Current.Adx, GetIndividualRatingStatus(adxRating)),
-                    new TechnicalRatingDetail("Awesome Oscillator", ao.Current[^1], GetIndividualRatingStatus(aoRating)),
+                    new TechnicalRatingDetail("Awesome Oscillator", ao.Current.Last(), GetIndividualRatingStatus(aoRating)),
                     new TechnicalRatingDetail("Momentum (10)", mom.Current.Current, GetIndividualRatingStatus(momRating)),
                     new TechnicalRatingDetail("MACD Level (12, 26)", macd.Current.Macd, GetIndividualRatingStatus(macdRating)),
                     new TechnicalRatingDetail("Stochastic RSI Fast (3, 3, 14, 14)", stochRsi.Current.Current.K, GetIndividualRatingStatus(stochRsiRating)),
@@ -459,13 +459,15 @@ public static class TechnicalRatingsExtensions
         return null;
     }
 
-    private static int? GetAwesomeOscilatorRating(IList<decimal?> window)
+    private static int? GetAwesomeOscilatorRating(IEnumerable<decimal?> window)
     {
-        if (window.Count == 3)
+        var list = window.ToList();
+
+        if (list.Count == 3)
         {
-            var old = window[0];
-            var prev = window[1];
-            var curr = window[2];
+            var old = list[0];
+            var prev = list[1];
+            var curr = list[2];
 
             if (curr.HasValue && prev.HasValue && old.HasValue)
             {

@@ -1,4 +1,4 @@
-﻿namespace System.Collections.Generic;
+﻿namespace Outcompute.Trader.Trading.Indicators;
 
 public enum KdjSide
 {
@@ -14,178 +14,143 @@ public enum KdjCross
     Down
 }
 
-public static class KdjExtensions
+public record struct KdjValue
 {
-    public record struct KdjValue
+    public decimal? Price { get; init; }
+
+    public decimal? K { get; init; }
+    public decimal? D { get; init; }
+    public decimal? J { get; init; }
+
+    public KdjCross Cross { get; init; }
+
+    public KdjSide Side
     {
-        public decimal Price { get; init; }
-
-        public decimal K { get; init; }
-        public decimal D { get; init; }
-        public decimal J { get; init; }
-
-        public KdjCross Cross { get; init; }
-
-        public KdjSide Side
+        get
         {
-            get
-            {
-                if (K > D && J > K) return KdjSide.Up;
-                if (K < D && J < K) return KdjSide.Down;
-                return KdjSide.None;
-            }
+            if (K > D && J > K) return KdjSide.Up;
+            if (K < D && J < K) return KdjSide.Down;
+            return KdjSide.None;
         }
-
-        public static KdjValue Empty => new();
     }
 
-    public static IEnumerable<KdjValue> Kdj(this IEnumerable<Kline> source, int periods = 9, int ma1 = 3, int ma2 = 3)
+    public static KdjValue Empty => new();
+}
+
+public class Kdj : IndicatorBase<HLC, KdjValue>
+{
+    internal const int DefaultPeriods = 9;
+    internal const int DefaultMa1 = 3;
+    internal const int DefaultMa2 = 3;
+
+    private readonly Highest _highest;
+    private readonly Lowest _lowest;
+
+    public Kdj(int periods = DefaultPeriods, int ma1 = DefaultMa1, int ma2 = DefaultMa2)
+    {
+        Guard.IsGreaterThanOrEqualTo(periods, 2, nameof(periods));
+        Guard.IsGreaterThanOrEqualTo(ma1, 1, nameof(ma1));
+        Guard.IsGreaterThanOrEqualTo(ma2, 1, nameof(ma2));
+
+        // keep useful series on-hand
+        _highest = Indicator.Highest(periods, true);
+        _lowest = Indicator.Lowest(periods, true);
+
+        Periods = periods;
+        Ma1 = ma1;
+        Ma2 = ma2;
+    }
+
+    public Kdj(IIndicatorResult<HLC> source, int periods = DefaultPeriods, int ma1 = DefaultMa1, int ma2 = DefaultMa2) : this(periods, ma1, ma2)
     {
         Guard.IsNotNull(source, nameof(source));
 
-        var items = source.GetEnumerator();
-        var mins = source.Select(x => x.LowPrice).MovingMin(periods).GetEnumerator();
-        var maxes = source.Select(x => x.HighPrice).MovingMax(periods).GetEnumerator();
+        LinkFrom(source);
+    }
 
-        // keep track of the previous value
-        KdjValue prev;
+    public int Periods { get; }
+    public int Ma1 { get; }
+    public int Ma2 { get; }
+
+    protected override KdjValue Calculate(int index)
+    {
+        // update the helper series
+        _highest.Update(index, Source[index].High);
+        _lowest.Update(index, Source[index].Low);
+
+        // take helper values
+        var close = Source[index].Close;
+        var max = _highest[index];
+        var min = _lowest[index];
 
         // calculate the first output
-        if (items.MoveNext() && mins.MoveNext() && maxes.MoveNext())
+        if (index < 1)
         {
-            var item = items.Current;
-            var min = mins.Current;
-            var max = maxes.Current;
-
             var diff = max - min;
-            var rsv = diff == 0 ? 50 : (item.ClosePrice - min) / diff * 100M;
+            var rsv = diff == 0 ? 50 : (close - min) / diff * 100M;
             var a = rsv;
             var b = a;
-            var e = (3M * a) - (2M * b);
+            var e = 3M * a - 2M * b;
 
-            prev = new KdjValue
+            return new KdjValue
             {
                 Cross = KdjCross.None,
-                Price = item.ClosePrice,
+                Price = close,
                 K = a,
                 D = b,
                 J = e
             };
+        }
+        else
+        {
+            var amp = max - min;
+            var rsv = amp == 0 ? 0 : (close - min) / amp * 100M;
+            var a = (rsv + (Ma1 - 1) * Result[index - 1].K) / Ma1;
+            var b = (a + (Ma2 - 1) * Result[index - 1].D) / Ma2;
+            var e = 3 * a - 2 * b;
 
-            yield return prev;
-
-            // calculate the remaining outputs
-            while (items.MoveNext() && mins.MoveNext() && maxes.MoveNext())
+            var cross = KdjCross.None;
+            if (Result[index - 1].K < Result[index - 1].D && a > b)
             {
-                item = items.Current;
-                min = mins.Current;
-                max = maxes.Current;
-
-                var amp = max - min;
-                rsv = amp == 0 ? 0 : (item.ClosePrice - min) / amp * 100M;
-                a = (rsv + (ma1 - 1) * prev.K) / ma1;
-                b = (a + (ma2 - 1) * prev.D) / ma2;
-                e = (3 * a) - (2 * b);
-
-                var cross = KdjCross.None;
-                if (prev.K < prev.D && a > b)
-                {
-                    cross = KdjCross.Up;
-                }
-                else if (prev.K > prev.D && a < b)
-                {
-                    cross = KdjCross.Down;
-                }
-
-                prev = new KdjValue
-                {
-                    Cross = cross,
-                    Price = item.ClosePrice,
-                    K = a,
-                    D = b,
-                    J = e
-                };
-
-                yield return prev;
+                cross = KdjCross.Up;
             }
+            else if (Result[index - 1].K > Result[index - 1].D && a < b)
+            {
+                cross = KdjCross.Down;
+            }
+
+            return new KdjValue
+            {
+                Cross = cross,
+                Price = close,
+                K = a,
+                D = b,
+                J = e
+            };
         }
     }
+}
 
-    public static IEnumerable<decimal> MovingMin(this IEnumerable<decimal> source, int periods)
+public static partial class Indicator
+{
+    public static Kdj Kdj(int periods = Indicators.Kdj.DefaultPeriods, int ma1 = Indicators.Kdj.DefaultMa1, int ma2 = Indicators.Kdj.DefaultMa2) => new(periods, ma1, ma2);
+
+    public static Kdj Kdj(IIndicatorResult<HLC> source, int periods = Indicators.Kdj.DefaultPeriods, int ma1 = Indicators.Kdj.DefaultMa1, int ma2 = Indicators.Kdj.DefaultMa2) => new(source, periods, ma1, ma2);
+}
+
+public static class KdjEnumerableExtensions
+{
+    public static IEnumerable<KdjValue> Kdj(this IEnumerable<Kline> source, int periods = Indicators.Kdj.DefaultPeriods, int ma1 = Indicators.Kdj.DefaultMa1, int ma2 = Indicators.Kdj.DefaultMa2)
     {
         Guard.IsNotNull(source, nameof(source));
 
-        var queue = new Queue<decimal>();
-        var counts = new Dictionary<decimal, int>();
-        var set = new SortedSet<decimal>();
+        using var indicator = Indicator.Kdj(periods, ma1, ma2);
 
         foreach (var item in source)
         {
-            // remove the oldest item
-            if (queue.Count >= periods)
-            {
-                var old = queue.Dequeue();
-                if (--counts[old] == 0)
-                {
-                    set.Remove(old);
-                }
-            }
+            indicator.Add(new HLC(item.HighPrice, item.LowPrice, item.ClosePrice));
 
-            // track the new item
-            queue.Enqueue(item);
-
-            if (counts.TryGetValue(item, out var count))
-            {
-                counts[item] = count + 1;
-            }
-            else
-            {
-                counts[item] = 1;
-            }
-
-            set.Add(item);
-
-            // emit the minimum trakced item
-            yield return set.Min;
-        }
-    }
-
-    public static IEnumerable<decimal> MovingMax(this IEnumerable<decimal> source, int periods)
-    {
-        Guard.IsNotNull(source, nameof(source));
-
-        var queue = new Queue<decimal>();
-        var counts = new Dictionary<decimal, int>();
-        var set = new SortedSet<decimal>();
-
-        foreach (var item in source)
-        {
-            // remove the oldest item
-            if (queue.Count >= periods)
-            {
-                var old = queue.Dequeue();
-                if (--counts[old] == 0)
-                {
-                    set.Remove(old);
-                }
-            }
-
-            // track the new item
-            queue.Enqueue(item);
-
-            if (counts.TryGetValue(item, out var count))
-            {
-                counts[item] = count + 1;
-            }
-            else
-            {
-                counts[item] = 1;
-            }
-
-            set.Add(item);
-
-            // emit the minimum trakced item
-            yield return set.Max;
+            yield return indicator[^1];
         }
     }
 

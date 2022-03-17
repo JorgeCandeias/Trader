@@ -5,7 +5,6 @@ using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Algorithms.Positions;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Indicators;
-using static System.Collections.Generic.KdjExtensions;
 
 namespace Outcompute.Trader.Trading.Algorithms.Samples.Portfolio;
 
@@ -194,15 +193,15 @@ public partial class PortfolioAlgo : Algo
 
     private int GetOptimizeKdjPeriods(SymbolData item)
     {
-        var electedTotal = 0M;
+        decimal? electedTotal = 0M;
         var electedPeriods = 0;
         var electedTrades = 0;
 
         for (var periods = 1; periods < 100; periods++)
         {
-            var total = 0M;
-            var accNumerator = 0M;
-            var accQuantity = 0M;
+            decimal? total = 0M;
+            decimal? accNumerator = 0M;
+            decimal? accQuantity = 0M;
             var buys = 0;
             var sells = 0;
             var prev = KdjValue.Empty;
@@ -303,9 +302,9 @@ public partial class PortfolioAlgo : Algo
 
         // predict the next kdj cross from oversold
         var oversold = item.Klines.SkipLast(1).Kdj().Reverse().TakeWhile(x => x.Side == KdjSide.Down).Any(x => x.J <= 20);
-        if (oversold && item.Klines.SkipLast(1).TryGetKdjForUpcross(item.Klines[^1], out var cross))
+        if (oversold && item.Klines.SkipLast(1).TryGetKdjForUpcross(item.Klines[^1], out var cross) && cross.Price.HasValue)
         {
-            var target = item.Symbol.LowerPriceToTickSize(cross.Price);
+            var target = item.Symbol.LowerPriceToTickSize(cross.Price.Value);
 
             // guard - never average down
             if (lots.Count > 0 && lots[0].AvgPrice > target)
@@ -898,10 +897,10 @@ public partial class PortfolioAlgo : Algo
     private partial void LogSymbolTradingUnderAvl(string type, string name, string symbol, decimal avl, string quote);
 
     [LoggerMessage(97, LogLevel.Information, "{Type} {Name} {Symbol} evalued KDJ periods {Periods} with reference profit {Profit:F8} with {Buys} buys and {Sells} sells")]
-    private partial void LogTestedKdjPeriods(string type, string name, string symbol, int periods, decimal profit, int buys, int sells);
+    private partial void LogTestedKdjPeriods(string type, string name, string symbol, int periods, decimal? profit, int buys, int sells);
 
     [LoggerMessage(97, LogLevel.Information, "{Type} {Name} {Symbol} elected KDJ optimal periods {Periods} with reference profit {Profit:F8} from {Trades} trades")]
-    private partial void LogOptimalKdjPeriods(string type, string name, string symbol, int periods, decimal profit, int trades);
+    private partial void LogOptimalKdjPeriods(string type, string name, string symbol, int periods, decimal? profit, int trades);
 
     #endregion Logging
 }

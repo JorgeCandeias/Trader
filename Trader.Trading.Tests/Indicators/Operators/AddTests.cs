@@ -1,6 +1,7 @@
 ﻿using Outcompute.Trader.Trading.Indicators;
+using Outcompute.Trader.Trading.Indicators.Operators;
 
-namespace Outcompute.Trader.Trading.Tests.Indicators
+namespace Outcompute.Trader.Trading.Tests.Indicators.Operators
 {
     public static class AddTests
     {

@@ -1,6 +1,6 @@
 ﻿using Outcompute.Trader.Core.Mathematics;
 
-namespace Outcompute.Trader.Trading.Indicators;
+namespace Outcompute.Trader.Trading.Indicators.Operators;
 
 public sealed class Divide : Zip<decimal?, decimal?, decimal?>
 {

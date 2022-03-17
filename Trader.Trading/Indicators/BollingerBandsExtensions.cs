@@ -18,7 +18,7 @@ public static class BollingerBandsExtensions
 
         var prices = source.GetEnumerator();
         var averages = source.Sma(periods).GetEnumerator();
-        var deviations = source.StandardDeviations(periods).GetEnumerator();
+        var deviations = source.StDev(periods).GetEnumerator();
 
         while (prices.MoveNext() && averages.MoveNext() && deviations.MoveNext())
         {

@@ -3,7 +3,7 @@
 /// <summary>
 /// Provides easy access and discovery for composable indicators.
 /// </summary>
-public static class Indicator
+public static partial class Indicator
 {
     public static Identity<T> Identity<T>() => new();
 

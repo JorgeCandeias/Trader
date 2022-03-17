@@ -114,5 +114,15 @@
 
             return null;
         }
+
+        public static decimal? Sqrt(decimal? d)
+        {
+            if (d.HasValue)
+            {
+                return (decimal?)Math.Sqrt((double)d.Value);
+            }
+
+            return null;
+        }
     }
 }

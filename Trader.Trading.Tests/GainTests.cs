@@ -1,31 +1,20 @@
-﻿namespace Outcompute.Trader.Trading.Tests
+﻿using Outcompute.Trader.Trading.Indicators;
+
+namespace Outcompute.Trader.Trading.Tests
 {
-    public class GainExtensionsTests
+    public class GainTests
     {
-        [Fact]
-        public void YieldsEmptyResultOnEmptyInput()
-        {
-            // arrange
-            var input = Enumerable.Empty<decimal?>();
-
-            // act
-            var output = input.Gain();
-
-            // assert
-            Assert.Empty(output);
-        }
-
         [Fact]
         public void YieldsPositiveChanges()
         {
             // arrange
-            var input = new decimal?[] { 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144 };
+            using var indicator = Indicator.Gain();
 
             // act
-            var output = input.Gain();
+            indicator.AddRange(new decimal?[] { 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144 });
 
             // assert
-            Assert.Collection(output,
+            Assert.Collection(indicator,
                 x => Assert.Null(x),
                 x => Assert.Equal(0, x),
                 x => Assert.Equal(1, x),
@@ -44,13 +33,13 @@
         public void YieldsNegativeChanges()
         {
             // arrange
-            var input = new decimal?[] { 144, 89, 55, 34, 21, 13, 8, 5, 3, 2, 1, 1 };
+            using var indicator = Indicator.Gain();
 
             // act
-            var output = input.Gain();
+            indicator.AddRange(new decimal?[] { 144, 89, 55, 34, 21, 13, 8, 5, 3, 2, 1, 1 });
 
             // assert
-            Assert.Collection(output,
+            Assert.Collection(indicator,
                 x => Assert.Null(x),
                 x => Assert.Equal(0, x),
                 x => Assert.Equal(0, x),
@@ -69,13 +58,13 @@
         public void YieldsMixedChanges()
         {
             // arrange
-            var input = new decimal?[] { 1, 2, 1, 5, 3, 13, 8, 34, 21, 89, 55, 144 };
+            using var indicator = Indicator.Gain();
 
             // act
-            var output = input.Gain();
+            indicator.AddRange(new decimal?[] { 1, 2, 1, 5, 3, 13, 8, 34, 21, 89, 55, 144 });
 
             // assert
-            Assert.Collection(output,
+            Assert.Collection(indicator,
                 x => Assert.Null(x),
                 x => Assert.Equal(1, x),
                 x => Assert.Equal(0, x),

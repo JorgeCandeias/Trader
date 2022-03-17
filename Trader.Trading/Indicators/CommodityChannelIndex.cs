@@ -9,7 +9,7 @@ public static class CommodityChannelIndexExtensions
 
         var selected = source.Select(selector);
         var ma = selected.Sma(periods);
-        var dev = selected.SimpleMovingAverageDeviation(periods);
+        var dev = selected.SmaDev(periods);
 
         return selected.Zip(ma, dev).Select(x => (x.First - x.Second) / (0.015M * x.Third));
     }

@@ -43,6 +43,7 @@ public class TechnicalRatings : IndicatorBase<OHLCV, TechnicalRatingSummary>
     private readonly Ema _ema200;
     private readonly Hma _hma9;
     private readonly Vwma _vwma20;
+    private readonly IchimokuCloud _im;
 
     public TechnicalRatings()
     {
@@ -61,6 +62,7 @@ public class TechnicalRatings : IndicatorBase<OHLCV, TechnicalRatingSummary>
         _ema200 = Indicator.Ema(200);
         _hma9 = Indicator.Hma(9);
         _vwma20 = Indicator.Vwma(20);
+        _im = Indicator.IchimokuCloud(9, 26, 52, 26);
     }
 
     public TechnicalRatings(IIndicatorResult<OHLCV> source) : this()
@@ -89,6 +91,7 @@ public class TechnicalRatings : IndicatorBase<OHLCV, TechnicalRatingSummary>
         _ema200.Update(index, value.Close);
         _hma9.Update(index, value.Close);
         _vwma20.Update(index, value.ToCV());
+        _im.Update(index, value.ToHL());
 
         return TechnicalRatingSummary.Empty;
     }
@@ -111,6 +114,7 @@ public class TechnicalRatings : IndicatorBase<OHLCV, TechnicalRatingSummary>
             _ema200.Dispose();
             _hma9.Dispose();
             _vwma20.Dispose();
+            _im.Dispose();
         }
 
         base.Dispose(disposing);

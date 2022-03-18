@@ -27,8 +27,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="AutoMapper" Version="10.1.1" />
-		<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="8.1.1" />
+		<PackageReference Include="AutoMapper" Version="11.0.1" />
+		<PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="11.0.0" />
 		<PackageReference Include="FastMember" Version="1.5.0" />
 		<PackageReference Include="MathNet.Numerics" Version="4.15.0" />
 		<PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="6.0.0">
@@ -38,18 +38,18 @@
 		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="6.0.0" />
-		<PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" Version="3.5.1">
+		<PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" Version="3.6.0">
 		  <PrivateAssets>all</PrivateAssets>
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.Orleans.Core.Abstractions" Version="3.5.1" />
-		<PackageReference Include="Microsoft.Orleans.OrleansRuntime" Version="3.5.1" />
+		<PackageReference Include="Microsoft.Orleans.Core.Abstractions" Version="3.6.0" />
+		<PackageReference Include="Microsoft.Orleans.OrleansRuntime" Version="3.6.0" />
 		<PackageReference Include="OrleansDashboard.Core" Version="3.6.1" />
-		<PackageReference Include="Polly" Version="7.2.2" />
-		<PackageReference Include="SonarAnalyzer.CSharp" Version="8.33.0.40503">
+		<PackageReference Include="Polly" Version="7.2.3" />
+		<PackageReference Include="SonarAnalyzer.CSharp" Version="8.36.1.44192">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>

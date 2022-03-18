@@ -45,6 +45,8 @@ public static partial class Indicator
 
     public static Lowest Lowest(IIndicatorResult<decimal?> source, int periods = 1, bool outputWarmup = false) => new(source, periods, outputWarmup);
 
+    public static Lowest Lowest(IIndicatorResult<HL> source, int periods = 1, bool outputWarmup = false) => new(Transform(source, x => x.Low), periods, outputWarmup);
+
     public static Lowest Lowest(IIndicatorResult<HLC> source, int periods = 1, bool outputWarmup = false) => new(Transform(source, x => x.Low), periods, outputWarmup);
 }
 

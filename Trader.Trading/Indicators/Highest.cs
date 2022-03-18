@@ -45,6 +45,8 @@ public static partial class Indicator
 
     public static Highest Highest(IIndicatorResult<decimal?> source, int periods = 1, bool outputWarmup = false) => new(source, periods, outputWarmup);
 
+    public static Highest Highest(IIndicatorResult<HL> source, int periods = 1, bool outputWarmup = false) => new(Transform(source, x => x.High), periods, outputWarmup);
+
     public static Highest Highest(IIndicatorResult<HLC> source, int periods = 1, bool outputWarmup = false) => new(Transform(source, x => x.High), periods, outputWarmup);
 }
 

@@ -374,7 +374,7 @@ public static class TechnicalRatingsExtensions
         }
     }
 
-    private static int? GetIchimokuCloudRating(IchimokuCloud item, decimal? close, decimal? prev)
+    private static int? GetIchimokuCloudRating(IchimokuCloudResult item, decimal? close, decimal? prev)
     {
         if (item.ConversionLine.HasValue && item.BaseLine.HasValue && item.LeadLine1.HasValue && item.LeadLine2.HasValue && close.HasValue && prev.HasValue)
         {

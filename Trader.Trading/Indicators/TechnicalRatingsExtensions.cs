@@ -149,7 +149,7 @@ public static class TechnicalRatingsExtensions
         var ichimoku = klines.IchimokuCloud().GetEnumerator();
 
         // other
-        var rsi14 = klines.RelativeStrengthIndex(14).WithPrevious().GetEnumerator();
+        var rsi14 = klines.Rsi(14).WithPrevious().GetEnumerator();
         var stochastic = klines.StochasticOscillator(14, 3, 3).WithPrevious().GetEnumerator();
         var cci = klines.Select(x => x.ClosePrice).Cci(x => x, 20).WithPrevious().GetEnumerator();
         var adx = klines.Dmi(14, 14).WithPrevious().GetEnumerator();

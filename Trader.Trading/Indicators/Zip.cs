@@ -3,10 +3,7 @@
 /// <summary>
 /// Indicator that zips two source indicators using the specified transform function.
 /// </summary>
-/// <remarks>
-/// This indicator does not support in-place updates.
-/// </remarks>
-public class Zip<TFirstSource, TSecondSource, TResult> : IndicatorBase<TResult, TResult>
+public class Zip<TFirstSource, TSecondSource, TResult> : IndicatorRootBase<TResult>
 {
     private readonly Func<TFirstSource, TSecondSource, TResult> _transform;
     private readonly IIndicatorResult<TFirstSource> _first;
@@ -20,42 +17,36 @@ public class Zip<TFirstSource, TSecondSource, TResult> : IndicatorBase<TResult, 
         Guard.IsNotNull(second, nameof(second));
         Guard.IsNotNull(transform, nameof(transform));
 
-        _transform = transform;
         _first = first;
         _second = second;
+        _transform = transform;
 
         var count = Math.Max(first.Count, second.Count);
         for (var i = 0; i < count; i++)
         {
-            UpdateCore(i, default!);
+            Update(i);
         }
 
-        _firstCallback = _first.RegisterChangeCallback((index, _) => UpdateCore(index, default!));
-        _secondCallback = _second.RegisterChangeCallback((index, _) => UpdateCore(index, default!));
+        _firstCallback = _first.RegisterChangeCallback(Update);
+        _secondCallback = _second.RegisterChangeCallback(Update);
     }
 
-    public override void Add(TResult value)
-    {
-        ThrowHelper.ThrowNotSupportedException();
-    }
-
-    public override void Update(int index, TResult value)
-    {
-        ThrowHelper.ThrowNotSupportedException();
-    }
-
-    protected override TResult Calculate(int index)
+    private void Update(int index)
     {
         var first = index < _first.Count ? _first[index] : default!;
         var second = index < _second.Count ? _second[index] : default!;
+        var result = _transform(first, second);
 
-        return _transform(first, second);
+        Set(index, result);
     }
 
     protected override void Dispose(bool disposing)
     {
-        _firstCallback.Dispose();
-        _secondCallback.Dispose();
+        if (disposing)
+        {
+            _firstCallback.Dispose();
+            _secondCallback.Dispose();
+        }
 
         base.Dispose(disposing);
     }
@@ -67,7 +58,7 @@ public class Zip<TFirstSource, TSecondSource, TResult> : IndicatorBase<TResult, 
 /// <remarks>
 /// This indicator does not support in-place updates.
 /// </remarks>
-public class Zip<TFirst, TSecond, TThird, TResult> : IndicatorBase<TResult, TResult>
+public class Zip<TFirst, TSecond, TThird, TResult> : IndicatorRootBase<TResult>
 {
     private readonly Func<TFirst, TSecond, TThird, TResult> _transform;
     private readonly IIndicatorResult<TFirst> _first;
@@ -84,39 +75,30 @@ public class Zip<TFirst, TSecond, TThird, TResult> : IndicatorBase<TResult, TRes
         Guard.IsNotNull(third, nameof(third));
         Guard.IsNotNull(transform, nameof(transform));
 
-        _transform = transform;
         _first = first;
         _second = second;
         _third = third;
+        _transform = transform;
 
-        var count = Math.Max(first.Count, second.Count);
+        var count = Math.Max(Math.Max(first.Count, second.Count), third.Count);
         for (var i = 0; i < count; i++)
         {
-            UpdateCore(i, default!);
+            Update(i);
         }
 
-        _firstCallback = _first.RegisterChangeCallback((index, _) => UpdateCore(index, default!));
-        _secondCallback = _second.RegisterChangeCallback((index, _) => UpdateCore(index, default!));
-        _thirdCallback = _third.RegisterChangeCallback((index, _) => UpdateCore(index, default!));
+        _firstCallback = _first.RegisterChangeCallback(Update);
+        _secondCallback = _second.RegisterChangeCallback(Update);
+        _thirdCallback = _third.RegisterChangeCallback(Update);
     }
 
-    public override void Add(TResult value)
-    {
-        ThrowHelper.ThrowNotSupportedException();
-    }
-
-    public override void Update(int index, TResult value)
-    {
-        ThrowHelper.ThrowNotSupportedException();
-    }
-
-    protected override TResult Calculate(int index)
+    private void Update(int index)
     {
         var first = index < _first.Count ? _first[index] : default!;
         var second = index < _second.Count ? _second[index] : default!;
         var third = index < _third.Count ? _third[index] : default!;
+        var result = _transform(first, second, third);
 
-        return _transform(first, second, third);
+        Set(index, result);
     }
 
     protected override void Dispose(bool disposing)
@@ -138,7 +120,7 @@ public class Zip<TFirst, TSecond, TThird, TResult> : IndicatorBase<TResult, TRes
 /// <remarks>
 /// This indicator does not support in-place updates.
 /// </remarks>
-public class Zip<TFirst, TSecond, TThird, TFourth, TResult> : IndicatorBase<TResult, TResult>
+public class Zip<TFirst, TSecond, TThird, TFourth, TResult> : IndicatorRootBase<TResult>
 {
     private readonly Func<TFirst, TSecond, TThird, TFourth, TResult> _transform;
     private readonly IIndicatorResult<TFirst> _first;
@@ -158,42 +140,33 @@ public class Zip<TFirst, TSecond, TThird, TFourth, TResult> : IndicatorBase<TRes
         Guard.IsNotNull(fourth, nameof(fourth));
         Guard.IsNotNull(transform, nameof(transform));
 
-        _transform = transform;
         _first = first;
         _second = second;
         _third = third;
         _fourth = fourth;
+        _transform = transform;
 
-        var count = Math.Max(first.Count, second.Count);
+        var count = Math.Max(Math.Max(Math.Max(first.Count, second.Count), third.Count), fourth.Count);
         for (var i = 0; i < count; i++)
         {
-            UpdateCore(i, default!);
+            Update(i);
         }
 
-        _firstCallback = _first.RegisterChangeCallback((index, _) => UpdateCore(index, default!));
-        _secondCallback = _second.RegisterChangeCallback((index, _) => UpdateCore(index, default!));
-        _thirdCallback = _third.RegisterChangeCallback((index, _) => UpdateCore(index, default!));
-        _fourthCallback = _fourth.RegisterChangeCallback((index, _) => UpdateCore(index, default!));
+        _firstCallback = _first.RegisterChangeCallback(Update);
+        _secondCallback = _second.RegisterChangeCallback(Update);
+        _thirdCallback = _third.RegisterChangeCallback(Update);
+        _fourthCallback = _fourth.RegisterChangeCallback(Update);
     }
 
-    public override void Add(TResult value)
-    {
-        ThrowHelper.ThrowNotSupportedException();
-    }
-
-    public override void Update(int index, TResult value)
-    {
-        ThrowHelper.ThrowNotSupportedException();
-    }
-
-    protected override TResult Calculate(int index)
+    private void Update(int index)
     {
         var first = index < _first.Count ? _first[index] : default!;
         var second = index < _second.Count ? _second[index] : default!;
         var third = index < _third.Count ? _third[index] : default!;
         var fourth = index < _fourth.Count ? _fourth[index] : default!;
+        var result = _transform(first, second, third, fourth);
 
-        return _transform(first, second, third, fourth);
+        Set(index, result);
     }
 
     protected override void Dispose(bool disposing)

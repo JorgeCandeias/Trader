@@ -112,7 +112,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Pusher
             var lastSell = item.Trades.LastOrDefault(x => !x.IsBuyer);
             if (lastSell is not null)
             {
-                var atrp = item.Klines.SkipLast(1).Atr().Last();
+                var atrp = item.Klines.SkipLast(1).ToAtr().Last();
                 if (atrp.HasValue)
                 {
                     var chandellierOpen = lastSell.Time;
@@ -180,7 +180,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Pusher
             var lastBuy = item.Trades.LastOrDefault(x => x.IsBuyer);
             if (lastBuy is not null)
             {
-                var atrp = item.Klines.SkipLast(1).Atr().Last();
+                var atrp = item.Klines.SkipLast(1).ToAtr().Last();
                 if (atrp.HasValue)
                 {
                     var chandellierOpen = lastBuy.Time;

@@ -4,19 +4,14 @@ public class Ema : IndicatorBase<decimal?, decimal?>
 {
     internal const int DefaultPeriods = 10;
 
-    public Ema(int periods = DefaultPeriods)
+    public Ema(IndicatorResult<decimal?> source, int periods = DefaultPeriods) : base(source, true)
     {
         Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
         Periods = periods;
         Alpha = 2M / (periods + 1M);
-    }
 
-    public Ema(IIndicatorResult<decimal?> source, int periods = DefaultPeriods) : this(periods)
-    {
-        Guard.IsNotNull(source, nameof(source));
-
-        LinkFrom(source);
+        Ready();
     }
 
     public int Periods { get; }
@@ -63,35 +58,15 @@ public class Ema : IndicatorBase<decimal?, decimal?>
 
 public static partial class Indicator
 {
-    public static Ema Ema(int periods = Indicators.Ema.DefaultPeriods) => new(periods);
+    public static Ema Ema(this IndicatorResult<decimal?> source, int periods = Indicators.Ema.DefaultPeriods)
+        => new(source, periods);
 
-    public static Ema Ema(IIndicatorResult<decimal?> source, int periods = Indicators.Ema.DefaultPeriods) => new(source, periods);
-}
+    public static IEnumerable<decimal?> ToEma<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = Indicators.Ema.DefaultPeriods)
+        => source.Select(selector).Identity().Ema(periods);
 
-public static class EmaIndicatorEnumerableExtensions
-{
-    public static IEnumerable<decimal?> Ema<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = Indicators.Ema.DefaultPeriods)
-    {
-        Guard.IsNotNull(source, nameof(source));
-        Guard.IsNotNull(selector, nameof(selector));
+    public static IEnumerable<decimal?> ToEma(this IEnumerable<Kline> source, int periods = Indicators.Ema.DefaultPeriods)
+        => source.ToEma(x => x.ClosePrice, periods);
 
-        var indicator = Indicator.Ema(periods);
-
-        foreach (var item in source)
-        {
-            indicator.Add(selector(item));
-
-            yield return indicator[^1];
-        }
-    }
-
-    public static IEnumerable<decimal?> Ema(this IEnumerable<Kline> source, int periods = Indicators.Ema.DefaultPeriods)
-    {
-        return source.Ema(x => x.ClosePrice, periods);
-    }
-
-    public static IEnumerable<decimal?> Ema(this IEnumerable<decimal?> source, int periods = Indicators.Ema.DefaultPeriods)
-    {
-        return source.Ema(x => x, periods);
-    }
+    public static IEnumerable<decimal?> ToEma(this IEnumerable<decimal?> source, int periods = Indicators.Ema.DefaultPeriods)
+        => source.ToEma(x => x, periods);
 }

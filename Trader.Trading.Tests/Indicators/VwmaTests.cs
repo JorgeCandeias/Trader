@@ -12,8 +12,7 @@ public class VwmaTests
         var data = TestData.BtcBusdHistoricalData.Take(10).ToCV().ToList();
 
         // act
-        using var indicator = new Vwma(3);
-        indicator.AddRange(data);
+        using var indicator = data.Identity().Vwma(3);
 
         // assert
         Assert.Collection(indicator,

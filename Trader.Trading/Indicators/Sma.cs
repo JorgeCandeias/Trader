@@ -4,18 +4,14 @@ public class Sma : IndicatorBase<decimal?, decimal?>
 {
     internal const int DefaultPeriods = 10;
 
-    public Sma(int periods = DefaultPeriods)
+    public Sma(IndicatorResult<decimal?> source, int periods = DefaultPeriods)
+        : base(source, true)
     {
         Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
         Periods = periods;
-    }
 
-    public Sma(IIndicatorResult<decimal?> source, int periods = DefaultPeriods) : this(periods)
-    {
-        Guard.IsNotNull(source, nameof(source));
-
-        LinkFrom(source);
+        Ready();
     }
 
     public int Periods { get; }
@@ -45,35 +41,15 @@ public class Sma : IndicatorBase<decimal?, decimal?>
 
 public static partial class Indicator
 {
-    public static Sma Sma(int periods = Indicators.Sma.DefaultPeriods) => new(periods);
+    public static Sma Sma(this IndicatorResult<decimal?> source, int periods = Indicators.Sma.DefaultPeriods)
+        => new(source, periods);
 
-    public static Sma Sma(IIndicatorResult<decimal?> source, int periods = Indicators.Sma.DefaultPeriods) => new(source, periods);
-}
+    public static IEnumerable<decimal?> ToSma<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = Indicators.Sma.DefaultPeriods)
+        => source.Select(selector).Identity().Sma(periods);
 
-public static class SmaEnumerableExtensions
-{
-    public static IEnumerable<decimal?> Sma<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = Indicators.Sma.DefaultPeriods)
-    {
-        Guard.IsNotNull(source, nameof(source));
-        Guard.IsNotNull(selector, nameof(selector));
+    public static IEnumerable<decimal?> ToSma(this IEnumerable<Kline> source, int periods = Indicators.Sma.DefaultPeriods)
+        => source.ToSma(x => x.ClosePrice, periods);
 
-        using var indicator = Indicator.Sma(periods);
-
-        foreach (var item in source)
-        {
-            indicator.Add(selector(item));
-
-            yield return indicator[^1];
-        }
-    }
-
-    public static IEnumerable<decimal?> Sma(this IEnumerable<Kline> source, int periods = Indicators.Sma.DefaultPeriods)
-    {
-        return source.Sma(x => x.ClosePrice, periods);
-    }
-
-    public static IEnumerable<decimal?> Sma(this IEnumerable<decimal?> source, int periods = Indicators.Sma.DefaultPeriods)
-    {
-        return source.Sma(x => x, periods);
-    }
+    public static IEnumerable<decimal?> ToSma(this IEnumerable<decimal?> source, int periods = Indicators.Sma.DefaultPeriods)
+        => source.ToSma(x => x, periods);
 }

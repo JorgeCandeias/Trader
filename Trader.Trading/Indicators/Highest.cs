@@ -4,22 +4,19 @@ namespace Outcompute.Trader.Trading.Indicators;
 
 public class Highest : IndicatorBase<decimal?, decimal?>
 {
-    public Highest(int periods = 1, bool outputWarmup = false)
+    public Highest(IndicatorResult<decimal?> source, int periods = 1, bool outputWarmup = false)
+        : base(source, true)
     {
         Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
         Periods = periods;
         OutputWarmup = outputWarmup;
-    }
 
-    public Highest(IIndicatorResult<decimal?> source, int periods = 1, bool outputWarmup = false) : this(periods, outputWarmup)
-    {
-        Guard.IsNotNull(source, nameof(source));
-
-        LinkFrom(source);
+        Ready();
     }
 
     public int Periods { get; }
+
     public bool OutputWarmup { get; }
 
     protected override decimal? Calculate(int index)
@@ -41,39 +38,21 @@ public class Highest : IndicatorBase<decimal?, decimal?>
 
 public static partial class Indicator
 {
-    public static Highest Highest(int periods = 1, bool outputWarmup = false) => new(periods, outputWarmup);
+    public static Highest Highest(this IndicatorResult<decimal?> source, int periods = 1, bool outputWarmup = false)
+        => new(source, periods, outputWarmup);
 
-    public static Highest Highest(IIndicatorResult<decimal?> source, int periods = 1, bool outputWarmup = false) => new(source, periods, outputWarmup);
+    public static Highest Highest(this IndicatorResult<HL> source, int periods = 1, bool outputWarmup = false)
+        => new(Transform(source, x => x.High), periods, outputWarmup);
 
-    public static Highest Highest(IIndicatorResult<HL> source, int periods = 1, bool outputWarmup = false) => new(Transform(source, x => x.High), periods, outputWarmup);
+    public static Highest Highest(this IndicatorResult<HLC> source, int periods = 1, bool outputWarmup = false)
+        => new(Transform(source, x => x.High), periods, outputWarmup);
 
-    public static Highest Highest(IIndicatorResult<HLC> source, int periods = 1, bool outputWarmup = false) => new(Transform(source, x => x.High), periods, outputWarmup);
-}
+    public static IEnumerable<decimal?> ToHighest<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = 1, bool outputWarmup = false)
+        => source.Select(selector).Identity().Highest(periods, outputWarmup);
 
-public static class HighestEnumerableExtensions
-{
-    public static IEnumerable<decimal?> Highest<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = 1, bool outputWarmup = false)
-    {
-        Guard.IsNotNull(source, nameof(source));
-        Guard.IsNotNull(selector, nameof(selector));
+    public static IEnumerable<decimal?> ToHighest(this IEnumerable<Kline> source, int periods = 1, bool outputWarmup = false)
+        => source.ToHighest(x => x.HighPrice, periods, outputWarmup);
 
-        using var indicator = Indicator.Highest(periods, outputWarmup);
-
-        foreach (var item in source)
-        {
-            indicator.Add(selector(item));
-
-            yield return indicator[^1];
-        }
-    }
-
-    public static IEnumerable<decimal?> Highest(this IEnumerable<Kline> source, int periods = 1, bool outputWarmup = false)
-    {
-        return source.Highest(x => x.HighPrice, periods, outputWarmup);
-    }
-
-    public static IEnumerable<decimal?> Highest(this IEnumerable<decimal?> source, int periods = 1, bool outputWarmup = false)
-    {
-        return source.Highest(x => x, periods, outputWarmup);
-    }
+    public static IEnumerable<decimal?> ToHighest(this IEnumerable<decimal?> source, int periods = 1, bool outputWarmup = false)
+        => source.ToHighest(x => x, periods, outputWarmup);
 }

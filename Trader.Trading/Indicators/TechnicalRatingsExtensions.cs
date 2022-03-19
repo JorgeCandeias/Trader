@@ -1,4 +1,6 @@
-﻿namespace Outcompute.Trader.Trading.Indicators;
+﻿using static Outcompute.Trader.Trading.Indicators.Indicator;
+
+namespace Outcompute.Trader.Trading.Indicators;
 
 public enum TechnicalRatingAction
 {
@@ -29,6 +31,8 @@ public record TechnicalRatingSummary(Kline Item, TechnicalRatingTotals Summary, 
 
 public class TechnicalRatings : IndicatorBase<OHLCV, TechnicalRatingSummary>
 {
+    #region Moving Averages
+
     private readonly Sma _sma10;
     private readonly Sma _sma20;
     private readonly Sma _sma30;
@@ -44,61 +48,46 @@ public class TechnicalRatings : IndicatorBase<OHLCV, TechnicalRatingSummary>
     private readonly Hma _hma9;
     private readonly Vwma _vwma20;
     private readonly IchimokuCloud _im;
+
+    #endregion Moving Averages
+
+    #region Oscillators
+
     private readonly Rsi _rsi;
 
-    public TechnicalRatings()
+    #endregion Oscillators
+
+    public TechnicalRatings(IndicatorResult<OHLCV> source)
+        : base(source, true)
     {
-        // create moving averages
-        _sma10 = Indicator.Sma(10);
-        _sma20 = Indicator.Sma(20);
-        _sma30 = Indicator.Sma(30);
-        _sma50 = Indicator.Sma(50);
-        _sma100 = Indicator.Sma(100);
-        _sma200 = Indicator.Sma(200);
-        _ema10 = Indicator.Ema(10);
-        _ema20 = Indicator.Ema(20);
-        _ema30 = Indicator.Ema(30);
-        _ema50 = Indicator.Ema(50);
-        _ema100 = Indicator.Ema(100);
-        _ema200 = Indicator.Ema(200);
-        _hma9 = Indicator.Hma(9);
-        _vwma20 = Indicator.Vwma(20);
-        _im = Indicator.IchimokuCloud(9, 26, 52, 26);
+        var close = source.Transform(x => x.Close);
+        var cv = source.Transform(x => x.ToCV());
+        var hl = source.Transform(x => x.ToHL());
 
-        // create oscillators
-        _rsi = Indicator.Rsi(14);
-    }
+        _sma10 = close.Sma(10);
+        _sma20 = close.Sma(20);
+        _sma30 = close.Sma(30);
+        _sma50 = close.Sma(50);
+        _sma100 = close.Sma(100);
+        _sma200 = close.Sma(200);
+        _ema10 = close.Ema(10);
+        _ema20 = close.Ema(20);
+        _ema30 = close.Ema(30);
+        _ema50 = close.Ema(50);
+        _ema100 = close.Ema(100);
+        _ema200 = close.Ema(200);
+        _hma9 = close.Hma(9);
+        _vwma20 = cv.Vwma(20);
+        _im = hl.IchimokuCloud(9, 26, 52, 26);
 
-    public TechnicalRatings(IIndicatorResult<OHLCV> source) : this()
-    {
-        Guard.IsNotNull(source, nameof(source));
+        _rsi = close.Rsi(14);
 
-        LinkFrom(source);
+        Ready();
     }
 
     protected override TechnicalRatingSummary Calculate(int index)
     {
         var value = Source[index];
-
-        // update moving averages
-        _sma10.Update(index, value.Close);
-        _sma20.Update(index, value.Close);
-        _sma30.Update(index, value.Close);
-        _sma50.Update(index, value.Close);
-        _sma100.Update(index, value.Close);
-        _sma200.Update(index, value.Close);
-        _ema10.Update(index, value.Close);
-        _ema20.Update(index, value.Close);
-        _ema30.Update(index, value.Close);
-        _ema50.Update(index, value.Close);
-        _ema100.Update(index, value.Close);
-        _ema200.Update(index, value.Close);
-        _hma9.Update(index, value.Close);
-        _vwma20.Update(index, value.ToCV());
-        _im.Update(index, value.ToHL());
-
-        // update oscillators
-        _rsi.Update(index, value.Close);
 
         return TechnicalRatingSummary.Empty;
     }
@@ -140,37 +129,37 @@ public static class TechnicalRatingsExtensions
         var items = klines.GetEnumerator();
 
         // moving averages
-        var sma10 = klines.Sma(10).GetEnumerator();
-        var sma20 = klines.Sma(20).GetEnumerator();
-        var sma30 = klines.Sma(30).GetEnumerator();
-        var sma50 = klines.Sma(50).GetEnumerator();
-        var sma100 = klines.Sma(100).GetEnumerator();
-        var sma200 = klines.Sma(200).GetEnumerator();
-        var ema10 = klines.Ema(10).GetEnumerator();
-        var ema20 = klines.Ema(20).GetEnumerator();
-        var ema30 = klines.Ema(30).GetEnumerator();
-        var ema50 = klines.Ema(50).GetEnumerator();
-        var ema100 = klines.Ema(100).GetEnumerator();
-        var ema200 = klines.Ema(200).GetEnumerator();
-        var hma9 = klines.Hma(9).GetEnumerator();
-        var vwma20 = klines.VolumeWeightedMovingAverage(20).GetEnumerator();
-        var ichimoku = klines.IchimokuCloud().GetEnumerator();
+        var sma10 = klines.ToSma(10).GetEnumerator();
+        var sma20 = klines.ToSma(20).GetEnumerator();
+        var sma30 = klines.ToSma(30).GetEnumerator();
+        var sma50 = klines.ToSma(50).GetEnumerator();
+        var sma100 = klines.ToSma(100).GetEnumerator();
+        var sma200 = klines.ToSma(200).GetEnumerator();
+        var ema10 = klines.ToEma(10).GetEnumerator();
+        var ema20 = klines.ToEma(20).GetEnumerator();
+        var ema30 = klines.ToEma(30).GetEnumerator();
+        var ema50 = klines.ToEma(50).GetEnumerator();
+        var ema100 = klines.ToEma(100).GetEnumerator();
+        var ema200 = klines.ToEma(200).GetEnumerator();
+        var hma9 = klines.ToHma(9).GetEnumerator();
+        var vwma20 = klines.ToVwma(20).GetEnumerator();
+        var ichimoku = klines.ToIchimokuCloud().GetEnumerator();
 
         // other
-        var rsi14 = klines.Rsi(14).WithPrevious().GetEnumerator();
+        var rsi14 = klines.ToRsi(14).WithPrevious().GetEnumerator();
         var stochastic = klines.StochasticOscillator(14, 3, 3).WithPrevious().GetEnumerator();
-        var cci = klines.Select(x => x.ClosePrice).Cci(x => x, 20).WithPrevious().GetEnumerator();
-        var adx = klines.Dmi(14, 14).WithPrevious().GetEnumerator();
-        var ao = klines.AwesomeOscillator(5, 34).MovingWindow(3).GetEnumerator();
+        var cci = klines.Select(x => x.ClosePrice).ToCci(x => x, 20).WithPrevious().GetEnumerator();
+        var adx = klines.ToDmi(14, 14).WithPrevious().GetEnumerator();
+        var ao = klines.ToAwesomeOscillator(5, 34).ToMovingWindow(3).GetEnumerator();
         var mom = klines.Momentum(10).WithPrevious().GetEnumerator();
         var macd = klines.Macd(12, 26, 19).GetEnumerator();
         var stochRsi = klines.StochasticRelativeStrengthIndex(3, 3, 14, 14).WithPrevious().GetEnumerator();
         var wpr = klines.WilliamsPercentRange(14).WithPrevious().GetEnumerator();
-        var bbp = klines.BullBearPower(13).WithPrevious().GetEnumerator();
+        var bbp = klines.ToBullBearPower(13).WithPrevious().GetEnumerator();
         var uo = klines.UltimateOscillator(7, 14, 28).GetEnumerator();
 
         // recommendations
-        var priceAvg = klines.Ema(50);
+        var priceAvg = klines.ToEma(50);
         var downTrend = klines.Select(x => x.ClosePrice).Zip(priceAvg, (c, a) => c < a).GetEnumerator();
         var upTrend = klines.Select(x => x.ClosePrice).Zip(priceAvg, (c, a) => c > a).GetEnumerator();
         var close = klines.Select(x => x.ClosePrice).GetEnumerator();
@@ -423,7 +412,7 @@ public static class TechnicalRatingsExtensions
         return null;
     }
 
-    private static int? GetStochasticRating(WithPreviousValue<StochasticOscillatorValue> item)
+    private static int? GetStochasticRating(WithPreviousValue<StochasticOscillatorResult> item)
     {
         var currK = item.Current.K;
         var currD = item.Current.D;

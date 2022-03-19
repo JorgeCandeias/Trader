@@ -40,10 +40,10 @@ public static class TrixExtensions
         Guard.IsGreaterThan(periods, 0, nameof(periods));
 
         var priceEnumerator = source.GetEnumerator();
-        var trixEnumerator = source.Ema(periods).Ema(periods).Ema(periods).GetEnumerator();
-        var velocityEnumerator = source.Log().Ema(periods).Ema(periods).Ema(periods).Change().GetEnumerator();
-        var accelerationEnumerator = source.Log().Ema(periods).Ema(periods).Ema(periods).Change().Change().GetEnumerator();
-        var jerkEnumerator = source.Log().Ema(periods).Ema(periods).Ema(periods).Change().Change().Change().GetEnumerator();
+        var trixEnumerator = source.ToEma(periods).ToEma(periods).ToEma(periods).GetEnumerator();
+        var velocityEnumerator = source.ToLog().ToEma(periods).ToEma(periods).ToEma(periods).ToChange().GetEnumerator();
+        var accelerationEnumerator = source.ToLog().ToEma(periods).ToEma(periods).ToEma(periods).ToChange().ToChange().GetEnumerator();
+        var jerkEnumerator = source.ToLog().ToEma(periods).ToEma(periods).ToEma(periods).ToChange().ToChange().ToChange().GetEnumerator();
 
         while (priceEnumerator.MoveNext() && trixEnumerator.MoveNext() && velocityEnumerator.MoveNext() && accelerationEnumerator.MoveNext() && jerkEnumerator.MoveNext())
         {

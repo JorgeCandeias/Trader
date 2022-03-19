@@ -22,18 +22,6 @@ namespace Outcompute.Trader.Trading.Tests.Indicators
         }
 
         [Fact]
-        public static void ThrowsOnInPlaceUpdate()
-        {
-            // arrange
-            using var first = new Identity<decimal?> { 1, 2, 3 };
-            using var second = new Identity<decimal?> { 2, 3, 4 };
-            using var indicator = Indicator.Zip(first, second, (x, y) => x + y);
-
-            // assert
-            Assert.Throws<NotSupportedException>(() => indicator.Update(2, -4));
-        }
-
-        [Fact]
         public static void UpdatesFromSource()
         {
             // arrange

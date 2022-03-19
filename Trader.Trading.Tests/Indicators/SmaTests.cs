@@ -34,35 +34,7 @@ namespace Outcompute.Trader.Trading.Tests.Indicators
             var expected = CalculateSma(source, periods);
 
             // act
-            using var indicator = new Sma(periods);
-            indicator.AddRange(source);
-
-            // assert
-            Assert.Equal(source.Length, indicator.Count);
-            for (var i = 0; i < periods - 1; i++)
-            {
-                Assert.Null(indicator[i]);
-            }
-            for (var i = periods - 1; i < source.Length; i++)
-            {
-                Assert.Equal(expected[i], indicator[i]);
-            }
-        }
-
-        [Fact]
-        public void UpdatesInPlace()
-        {
-            // arrange
-            var periods = 3;
-            var source = new decimal?[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
-            using var indicator = new Sma(periods);
-            indicator.AddRange(source);
-
-            source[10] = 100;
-            var expected = CalculateSma(source, periods);
-
-            // act
-            indicator.Update(10, 100);
+            using var indicator = source.Identity().Sma(periods);
 
             // assert
             Assert.Equal(source.Length, indicator.Count);

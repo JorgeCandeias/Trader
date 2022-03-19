@@ -24,8 +24,7 @@ public class KdjTests
         var data = TestData.BtcBusdHistoricalData.Take(10).ToHLC().ToList();
 
         // act
-        using var indicator = new Kdj(9, 3, 3);
-        indicator.AddRange(data);
+        using var indicator = data.Identity().Kdj(9, 3, 3);
 
         // assert
         /*

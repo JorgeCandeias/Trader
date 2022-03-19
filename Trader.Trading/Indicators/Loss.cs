@@ -7,15 +7,9 @@ namespace Outcompute.Trader.Trading.Indicators;
 /// </summary>
 public class Loss : IndicatorBase<decimal?, decimal?>
 {
-    public Loss()
+    public Loss(IndicatorResult<decimal?> source) : base(source, true)
     {
-    }
-
-    public Loss(IIndicatorResult<decimal?> source) : this()
-    {
-        Guard.IsNotNull(source, nameof(source));
-
-        LinkFrom(source);
+        Ready();
     }
 
     protected override decimal? Calculate(int index)
@@ -31,30 +25,11 @@ public class Loss : IndicatorBase<decimal?, decimal?>
 
 public static partial class Indicator
 {
-    public static Loss Loss() => new();
+    public static Loss Loss(this IndicatorResult<decimal?> source) => new(source);
 
-    public static Loss Loss(IIndicatorResult<decimal?> source) => new(source);
-}
-
-public static class LossEnumerableExtensions
-{
-    public static IEnumerable<decimal?> Loss(this IEnumerable<decimal?> source)
-    {
-        return source.Loss(x => x);
-    }
+    public static IEnumerable<decimal?> ToLoss(this IEnumerable<decimal?> source)
+        => source.Identity().Loss();
 
     public static IEnumerable<decimal?> Loss<T>(this IEnumerable<T> source, Func<T, decimal?> selector)
-    {
-        Guard.IsNotNull(source, nameof(source));
-        Guard.IsNotNull(selector, nameof(selector));
-
-        using var indicator = Indicator.Loss();
-
-        foreach (var item in source)
-        {
-            indicator.Add(selector(item));
-
-            yield return indicator[^1];
-        }
-    }
+        => source.Select(selector).Identity().Loss();
 }

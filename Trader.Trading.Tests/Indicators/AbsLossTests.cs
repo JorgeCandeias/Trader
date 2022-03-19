@@ -8,10 +8,7 @@ public class AbsLossTests
     public void YieldsPositiveChanges()
     {
         // act
-        using var indicator = new AbsLoss
-        {
-            1, 1, 2, 3, 5
-        };
+        using var indicator = Indicator.Identity<decimal?>(1, 1, 2, 3, 5).AbsLoss();
 
         // assert
         Assert.Collection(indicator,
@@ -26,10 +23,7 @@ public class AbsLossTests
     public void YieldsNegativeChanges()
     {
         // act
-        using var indicator = new AbsLoss
-        {
-            144, 89, 55, 34, 21
-        };
+        using var indicator = Indicator.Identity<decimal?>(144, 89, 55, 34, 21).AbsLoss();
 
         // assert
         Assert.Collection(indicator,
@@ -44,10 +38,7 @@ public class AbsLossTests
     public void YieldsMixedChanges()
     {
         // act
-        using var indicator = new AbsLoss
-        {
-            1, 2, 1, 5, 3
-        };
+        using var indicator = Indicator.Identity<decimal?>(1, 2, 1, 5, 3).AbsLoss();
 
         // assert
         Assert.Collection(indicator,
@@ -59,35 +50,11 @@ public class AbsLossTests
     }
 
     [Fact]
-    public void UpdatesInPlace()
-    {
-        // arrange
-        using var indicator = new AbsLoss
-        {
-            1, 2, 1, 5, 3
-        };
-
-        // act
-        indicator.Update(2, 0);
-
-        // assert
-        Assert.Collection(indicator,
-            x => Assert.Null(x),
-            x => Assert.Equal(0, x),
-            x => Assert.Equal(2, x),
-            x => Assert.Equal(0, x),
-            x => Assert.Equal(2, x));
-    }
-
-    [Fact]
     public void UpdatesFromSource()
     {
         // arrange
-        using var source = new Identity<decimal?>
-        {
-            1, 2, 1, 5, 3
-        };
-        using var indicator = new AbsLoss(source);
+        using var source = Indicator.Identity<decimal?>(1, 2, 1, 5, 3);
+        using var indicator = source.AbsLoss();
 
         // act
         source.Update(2, 0);

@@ -12,8 +12,7 @@ public class StochasticTests
         var data = TestData.BtcBusdHistoricalData.Take(10).ToHLC().ToList();
 
         // act
-        using var indicator = Indicator.Stochastic(3);
-        indicator.AddRange(data);
+        using var indicator = data.Identity().Stochastic(3);
 
         // assert
         Assert.Collection(indicator,

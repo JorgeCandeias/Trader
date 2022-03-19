@@ -4,120 +4,39 @@ using System.Collections;
 
 namespace Outcompute.Trader.Trading.Indicators;
 
-public abstract class IndicatorBase<TSource, TResult> : IIndicator<TSource, TResult>
+public abstract class IndicatorResult<TResult> : IIndicatorResult<TResult>
 {
-    protected IList<TSource> Source { get; } = new List<TSource>();
+    public abstract TResult this[int index] { get; }
 
-    protected IList<TResult> Result { get; } = new List<TResult>();
+    public abstract int Count { get; }
 
-    public TResult this[int index] => Result[index];
+    public abstract IEnumerator<TResult> GetEnumerator();
 
-    public int Count => Result.Count;
-
-    public virtual void Add(TSource value)
-    {
-        UpdateCore(Source.Count, value);
-    }
-
-    public virtual void Update(int index, TSource value)
-    {
-        Guard.IsGreaterThanOrEqualTo(index, 0, nameof(index));
-
-        UpdateCore(index, value);
-    }
-
-    protected void UpdateCore(int index, TSource value)
-    {
-        // allocate up to and including the target index
-        var count = Source.Count;
-        for (var i = count; i <= index; i++)
-        {
-            Source.Add(default!);
-            Result.Add(default!);
-        }
-
-        // assign the source value
-        Source[index] = value;
-
-        // calculate forward since the first affected index
-        for (var i = Math.Min(count, index); i < Source.Count; i++)
-        {
-            Result[i] = Calculate(i);
-
-            // notify downstream
-            for (var j = 0; j < _registrations.Count; j++)
-            {
-                _registrations[j].RaiseCallback(i, Result[i]);
-            }
-        }
-    }
-
-    protected abstract TResult Calculate(int index);
-
-    public IEnumerator<TResult> GetEnumerator() => Result.GetEnumerator();
-
-    IEnumerator IEnumerable.GetEnumerator() => Result.GetEnumerator();
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     #region Callbacks
 
-    /// <summary>
-    /// Links that a downstream target maintains to an upstream source.
-    /// </summary>
-    private readonly List<IDisposable> _links = new();
-
-    /// <summary>
-    /// Links that an upstream source maintains about a dowstream target.
-    /// </summary>
-    private readonly List<ChangeCallbackRegistration> _registrations = new();
-
-    /// <summary>
-    /// Links this downstream target to an upstream source.
-    /// </summary>
-    protected void LinkFrom(IIndicatorResult<TSource> source)
-    {
-        Guard.IsNotNull(source, nameof(source));
-
-        for (var i = 0; i < source.Count; i++)
-        {
-            Update(i, source[i]);
-        }
-
-        _links.Add(source.RegisterChangeCallback(Update));
-    }
-
-    /// <summary>
-    /// Links this upstream to a dowstream target.
-    /// </summary>
-    public IDisposable RegisterChangeCallback(Action<int, TResult> action)
-    {
-        Guard.IsNotNull(action, nameof(action));
-
-        var registration = new ChangeCallbackRegistration(this, action);
-
-        _registrations.Add(registration);
-
-        return registration;
-    }
+    private readonly List<ChangeCallbackRegistration> _callbacks = new();
 
     private sealed class ChangeCallbackRegistration : IDisposable
     {
-        private readonly IndicatorBase<TSource, TResult> _owner;
-        private readonly Action<int, TResult> _action;
+        private readonly IndicatorResult<TResult> _owner;
+        private readonly Action<int> _action;
 
-        public ChangeCallbackRegistration(IndicatorBase<TSource, TResult> owner, Action<int, TResult> action)
+        public ChangeCallbackRegistration(IndicatorResult<TResult> owner, Action<int> action)
         {
             _owner = owner;
             _action = action;
         }
 
-        public void RaiseCallback(int index, TResult value)
+        public void RaiseCallback(int index)
         {
-            _action(index, value);
+            _action(index);
         }
 
         private void DisposeCore()
         {
-            _owner._registrations.Remove(this);
+            _owner._callbacks.Remove(this);
         }
 
         public void Dispose()
@@ -132,18 +51,39 @@ public abstract class IndicatorBase<TSource, TResult> : IIndicator<TSource, TRes
         }
     }
 
+    public IDisposable RegisterChangeCallback(Action<int> action)
+    {
+        var callback = new ChangeCallbackRegistration(this, action);
+
+        _callbacks.Add(callback);
+
+        return callback;
+    }
+
+    protected void RaiseCallback(int i)
+    {
+        for (var j = 0; j < _callbacks.Count; j++)
+        {
+            _callbacks[j].RaiseCallback(i);
+        }
+    }
+
     #endregion Callbacks
 
     #region Disposable
 
+    private bool _disposed;
+
     protected virtual void Dispose(bool disposing)
     {
-        if (disposing)
+        if (!_disposed)
         {
-            foreach (var link in _links)
+            if (disposing)
             {
-                link.Dispose();
+                // noop
             }
+
+            _disposed = true;
         }
     }
 
@@ -153,42 +93,37 @@ public abstract class IndicatorBase<TSource, TResult> : IIndicator<TSource, TRes
         GC.SuppressFinalize(this);
     }
 
-    ~IndicatorBase()
-    {
-        Dispose(false);
-    }
-
     #endregion Disposable
 
     #region Operators
 
     #region Add
 
-    public static Add operator +(IndicatorBase<TSource, TResult> first, IIndicatorResult<TResult> second)
+    public static Add operator +(IndicatorResult<TResult> left, IndicatorResult<TResult> right)
     {
-        if (typeof(TResult) == typeof(decimal?))
+        if (left is IndicatorResult<decimal?> leftCast && right is IndicatorResult<decimal?> rightCast)
         {
-            return new Add((IIndicatorResult<decimal?>)first, (IIndicatorResult<decimal?>)second);
+            return new Add(leftCast, rightCast);
         }
 
         throw new NotSupportedException();
     }
 
-    public static Transform<decimal?, decimal?> operator +(IndicatorBase<TSource, TResult> first, decimal? second)
+    public static Transform<decimal?, decimal?> operator +(IndicatorResult<TResult> left, decimal? right)
     {
-        if (typeof(TResult) == typeof(decimal?))
+        if (left is IndicatorResult<decimal?> cast)
         {
-            return new Transform<decimal?, decimal?>((IIndicatorResult<decimal?>)first, x => x + second);
+            return new Transform<decimal?, decimal?>(cast, x => x + right);
         }
 
         throw new NotSupportedException();
     }
 
-    public static Transform<decimal?, decimal?> operator +(decimal? first, IndicatorBase<TSource, TResult> second)
+    public static Transform<decimal?, decimal?> operator +(decimal? first, IndicatorResult<TResult> right)
     {
-        if (typeof(TResult) == typeof(decimal?))
+        if (right is IndicatorResult<decimal?> cast)
         {
-            return new Transform<decimal?, decimal?>((IIndicatorResult<decimal?>)second, x => x + first);
+            return new Transform<decimal?, decimal?>(cast, x => x + first);
         }
 
         throw new NotSupportedException();
@@ -198,31 +133,31 @@ public abstract class IndicatorBase<TSource, TResult> : IIndicator<TSource, TRes
 
     #region Subtract
 
-    public static Subtract operator -(IndicatorBase<TSource, TResult> first, IIndicatorResult<TResult> second)
+    public static Subtract operator -(IndicatorResult<TResult> left, IndicatorResult<TResult> right)
     {
-        if (typeof(TResult) == typeof(decimal?))
+        if (left is IndicatorResult<decimal?> leftCast && right is IndicatorResult<decimal?> rightCast)
         {
-            return new Subtract((IIndicatorResult<decimal?>)first, (IIndicatorResult<decimal?>)second);
+            return new Subtract(leftCast, rightCast);
         }
 
         throw new NotSupportedException();
     }
 
-    public static Transform<decimal?, decimal?> operator -(IndicatorBase<TSource, TResult> first, decimal? second)
+    public static Transform<decimal?, decimal?> operator -(IndicatorResult<TResult> left, decimal? right)
     {
-        if (typeof(TResult) == typeof(decimal?))
+        if (left is IndicatorResult<decimal?> cast)
         {
-            return new Transform<decimal?, decimal?>((IIndicatorResult<decimal?>)first, x => x - second);
+            return new Transform<decimal?, decimal?>(cast, x => x - right);
         }
 
         throw new NotSupportedException();
     }
 
-    public static Transform<decimal?, decimal?> operator -(decimal? first, IndicatorBase<TSource, TResult> second)
+    public static Transform<decimal?, decimal?> operator -(decimal? left, IndicatorResult<TResult> right)
     {
-        if (typeof(TResult) == typeof(decimal?))
+        if (right is IndicatorResult<decimal?> cast)
         {
-            return new Transform<decimal?, decimal?>((IIndicatorResult<decimal?>)second, x => first - x);
+            return new Transform<decimal?, decimal?>(cast, x => left - x);
         }
 
         throw new NotSupportedException();
@@ -232,31 +167,31 @@ public abstract class IndicatorBase<TSource, TResult> : IIndicator<TSource, TRes
 
     #region Multiply
 
-    public static Multiply operator *(IndicatorBase<TSource, TResult> first, IIndicatorResult<TResult> second)
+    public static Multiply operator *(IndicatorResult<TResult> left, IndicatorResult<TResult> right)
     {
-        if (typeof(TResult) == typeof(decimal?))
+        if (left is IndicatorResult<decimal?> leftCast && right is IndicatorResult<decimal?> rightCast)
         {
-            return new Multiply((IIndicatorResult<decimal?>)first, (IIndicatorResult<decimal?>)second);
+            return new Multiply(leftCast, rightCast);
         }
 
         throw new NotSupportedException();
     }
 
-    public static Transform<decimal?, decimal?> operator *(IndicatorBase<TSource, TResult> first, decimal? second)
+    public static Transform<decimal?, decimal?> operator *(IndicatorResult<TResult> left, decimal? right)
     {
-        if (typeof(TResult) == typeof(decimal?))
+        if (left is IndicatorResult<decimal?> cast)
         {
-            return new Transform<decimal?, decimal?>((IIndicatorResult<decimal?>)first, x => x * second);
+            return new Transform<decimal?, decimal?>(cast, x => x * right);
         }
 
         throw new NotSupportedException();
     }
 
-    public static Transform<decimal?, decimal?> operator *(decimal? first, IndicatorBase<TSource, TResult> second)
+    public static Transform<decimal?, decimal?> operator *(decimal? left, IndicatorResult<TResult> right)
     {
-        if (typeof(TResult) == typeof(decimal?))
+        if (right is IndicatorResult<decimal?> cast)
         {
-            return new Transform<decimal?, decimal?>((IIndicatorResult<decimal?>)second, x => first * x);
+            return new Transform<decimal?, decimal?>(cast, x => left * x);
         }
 
         throw new NotSupportedException();
@@ -266,31 +201,31 @@ public abstract class IndicatorBase<TSource, TResult> : IIndicator<TSource, TRes
 
     #region Divide
 
-    public static Divide operator /(IndicatorBase<TSource, TResult> first, IIndicatorResult<TResult> second)
+    public static Divide operator /(IndicatorResult<TResult> left, IndicatorResult<TResult> right)
     {
-        if (typeof(TResult) == typeof(decimal?))
+        if (left is IndicatorResult<decimal?> leftCast && right is IndicatorResult<decimal?> rightCast)
         {
-            return new Divide((IIndicatorResult<decimal?>)first, (IIndicatorResult<decimal?>)second);
+            return new Divide(leftCast, rightCast);
         }
 
         throw new NotSupportedException();
     }
 
-    public static Transform<decimal?, decimal?> operator /(IndicatorBase<TSource, TResult> first, decimal? second)
+    public static Transform<decimal?, decimal?> operator /(IndicatorResult<TResult> left, decimal? right)
     {
-        if (typeof(TResult) == typeof(decimal?))
+        if (left is IndicatorResult<decimal?> cast)
         {
-            return new Transform<decimal?, decimal?>((IIndicatorResult<decimal?>)first, x => MathN.SafeDiv(x, second));
+            return new Transform<decimal?, decimal?>(cast, x => MathN.SafeDiv(x, right));
         }
 
         throw new NotSupportedException();
     }
 
-    public static Transform<decimal?, decimal?> operator /(decimal? first, IndicatorBase<TSource, TResult> second)
+    public static IndicatorResult<decimal?> operator /(decimal? left, IndicatorResult<TResult> right)
     {
-        if (typeof(TResult) == typeof(decimal?))
+        if (right is IndicatorResult<decimal?> cast)
         {
-            return new Transform<decimal?, decimal?>((IIndicatorResult<decimal?>)second, x => MathN.SafeDiv(first, x));
+            return new Transform<decimal?, decimal?>(cast, x => MathN.SafeDiv(left, x));
         }
 
         throw new NotSupportedException();
@@ -300,11 +235,11 @@ public abstract class IndicatorBase<TSource, TResult> : IIndicator<TSource, TRes
 
     #region Negative
 
-    public static Transform<decimal?, decimal?> operator -(IndicatorBase<TSource, TResult> first)
+    public static IndicatorResult<decimal?> operator -(IndicatorResult<TResult> self)
     {
-        if (typeof(TResult) == typeof(decimal?))
+        if (self is IndicatorResult<decimal?> cast)
         {
-            return new Transform<decimal?, decimal?>((IIndicatorResult<decimal?>)first, x => -x);
+            return new Transform<decimal?, decimal?>(cast, x => -x);
         }
 
         throw new NotSupportedException();
@@ -313,4 +248,230 @@ public abstract class IndicatorBase<TSource, TResult> : IIndicator<TSource, TRes
     #endregion Negative
 
     #endregion Operators
+}
+
+public class IndicatorRootBase<TResult> : IndicatorResult<TResult>
+{
+    private readonly List<TResult> _result = new();
+
+    public override TResult this[int index] => _result[index];
+
+    public override int Count => _result.Count;
+
+    protected void Set(int index, TResult value)
+    {
+        Guard.IsGreaterThanOrEqualTo(index, 0, nameof(index));
+
+        // if the value is in range then update it
+        if (index < _result.Count)
+        {
+            _result[index] = value;
+            RaiseCallback(index);
+            return;
+        }
+
+        // add all gaps up to the new value
+        for (var i = _result.Count; i < index; i++)
+        {
+            _result.Add(default!);
+            RaiseCallback(index);
+        }
+
+        // add the new value at the end
+        _result.Add(value);
+        RaiseCallback(index);
+    }
+
+    public override IEnumerator<TResult> GetEnumerator() => _result.GetEnumerator();
+}
+
+public sealed class Identity<TResult> : IndicatorRootBase<TResult>, IIndicatorSource<TResult>
+{
+    public void Add(TResult value)
+    {
+        Set(Count, value);
+    }
+
+    public void Update(int index, TResult value)
+    {
+        Set(index, value);
+    }
+}
+
+public static partial class Indicator
+{
+    public static Identity<T> Identity<T>() => new();
+
+    public static Identity<T> Identity<T>(params T[] array)
+    {
+        var identity = new Identity<T>();
+
+        foreach (var item in array)
+        {
+            identity.Add(item);
+        }
+
+        return identity;
+    }
+
+    public static Identity<T> Identity<T>(this IEnumerable<T> source)
+    {
+        var identity = new Identity<T>();
+
+        foreach (var item in source)
+        {
+            identity.Add(item);
+        }
+
+        return identity;
+    }
+}
+
+public class CompositeIndicator<TSource, TResult> : IndicatorResult<TResult>
+{
+    private readonly IndicatorResult<TResult> _result;
+
+    protected CompositeIndicator(IndicatorResult<TSource> source, Func<IndicatorResult<TSource>, IndicatorResult<TResult>> compose)
+    {
+        Guard.IsNotNull(source, nameof(source));
+        Guard.IsNotNull(compose, nameof(compose));
+
+        _result = compose(source);
+    }
+
+    public override TResult this[int index] => _result[index];
+
+    public override int Count => _result.Count;
+
+    public override IEnumerator<TResult> GetEnumerator() => _result.GetEnumerator();
+}
+
+public abstract class IndicatorBase<TSource, TResult> : IndicatorResult<TResult>
+{
+    private readonly Identity<TResult> _result = new();
+    private readonly bool _updateForward;
+    private bool _ready;
+
+    /// <summary>
+    /// Attaches this series to a source series and configures behaviour.
+    /// </summary>
+    /// <param name="source">The source to attach this series to.</param>
+    /// <param name="updateForward">
+    /// Whether to update the series forward on every source index change.
+    /// Use true for series where the later values depend on earlier values, such as moving averages.
+    /// Use false for series where each value is independant from others, to improve performance.
+    /// </param>
+    protected IndicatorBase(IndicatorResult<TSource> source, bool updateForward)
+    {
+        Guard.IsNotNull(source, nameof(source));
+
+        Source = source;
+
+        _updateForward = updateForward;
+    }
+
+    protected IndicatorResult<TSource> Source { get; }
+
+    protected IndicatorResult<TResult> Result
+    {
+        get
+        {
+            EnsureReady();
+            return _result;
+        }
+    }
+
+    public override TResult this[int index]
+    {
+        get
+        {
+            EnsureReady();
+            return Result[index];
+        }
+    }
+
+    public override IEnumerator<TResult> GetEnumerator()
+    {
+        EnsureReady();
+        return Result.GetEnumerator();
+    }
+
+    public override int Count
+    {
+        get
+        {
+            EnsureReady();
+            return Result.Count;
+        }
+    }
+
+    private void Consume(int index)
+    {
+        // update the target value
+        ConsumeCore(index);
+
+        // if this series must update forward then update all following values too
+        if (_updateForward)
+        {
+            for (var i = index + 1; i < Count; i++)
+            {
+                ConsumeCore(i);
+            }
+        }
+    }
+
+    private void ConsumeCore(int index)
+    {
+        _result.Update(index, default!);
+        _result.Update(index, Calculate(index));
+    }
+
+    protected abstract TResult Calculate(int index);
+
+    protected void Ready()
+    {
+        _ready = true;
+
+        for (var i = 0; i < Source.Count; i++)
+        {
+            ConsumeCore(i);
+        }
+
+        _links.Add(Source.RegisterChangeCallback(Consume));
+    }
+
+    private void EnsureReady()
+    {
+        if (!_ready)
+        {
+            ThrowHelper.ThrowInvalidOperationException(
+                $"{nameof(IndicatorBase<TSource, TResult>)} is not ready. Call {nameof(Ready)}() in the derived class constructor after any derived logic is configured.");
+        }
+    }
+
+    #region Result Callbacks
+
+    /// <summary>
+    /// Links that a downstream target maintains to an upstream source.
+    /// </summary>
+    private readonly List<IDisposable> _links = new();
+
+    #endregion Result Callbacks
+
+    #region Disposable
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            foreach (var link in _links)
+            {
+                link.Dispose();
+            }
+        }
+
+        base.Dispose(disposing);
+    }
+
+    #endregion Disposable
 }

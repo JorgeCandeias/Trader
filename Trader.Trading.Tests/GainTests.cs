@@ -8,10 +8,8 @@ namespace Outcompute.Trader.Trading.Tests
         public void YieldsPositiveChanges()
         {
             // arrange
-            using var indicator = Indicator.Gain();
-
-            // act
-            indicator.AddRange(new decimal?[] { 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144 });
+            using var identity = Indicator.Identity<decimal?>(1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144);
+            using var indicator = Indicator.Gain(identity);
 
             // assert
             Assert.Collection(indicator,
@@ -33,10 +31,8 @@ namespace Outcompute.Trader.Trading.Tests
         public void YieldsNegativeChanges()
         {
             // arrange
-            using var indicator = Indicator.Gain();
-
-            // act
-            indicator.AddRange(new decimal?[] { 144, 89, 55, 34, 21, 13, 8, 5, 3, 2, 1, 1 });
+            using var identity = Indicator.Identity<decimal?>(144, 89, 55, 34, 21, 13, 8, 5, 3, 2, 1, 1);
+            using var indicator = Indicator.Gain(identity);
 
             // assert
             Assert.Collection(indicator,
@@ -58,10 +54,8 @@ namespace Outcompute.Trader.Trading.Tests
         public void YieldsMixedChanges()
         {
             // arrange
-            using var indicator = Indicator.Gain();
-
-            // act
-            indicator.AddRange(new decimal?[] { 1, 2, 1, 5, 3, 13, 8, 34, 21, 89, 55, 144 });
+            using var identity = Indicator.Identity<decimal?>(1, 2, 1, 5, 3, 13, 8, 34, 21, 89, 55, 144);
+            using var indicator = Indicator.Gain(identity);
 
             // assert
             Assert.Collection(indicator,

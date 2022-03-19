@@ -206,7 +206,7 @@ public partial class PortfolioAlgo : Algo
             var sells = 0;
             var prev = KdjValue.Empty;
 
-            foreach (var kdj in item.Klines.TakeLast(1000).Kdj(periods))
+            foreach (var kdj in item.Klines.TakeLast(1000).ToKdj(periods))
             {
                 if (kdj.Cross == KdjCross.Up && prev.D <= 30)
                 {
@@ -276,7 +276,7 @@ public partial class PortfolioAlgo : Algo
         var trix = item.Klines.Trix().TakeLast(10).ToList();
 
         // get the atr
-        var atr = item.Klines.Atr().Last();
+        var atr = item.Klines.ToAtr().Last();
 
         // guard - price must be above the avl
         var avl = item.Klines.SkipLast(1).VolumeWeightedAveragePrice().Last();
@@ -301,7 +301,7 @@ public partial class PortfolioAlgo : Algo
         var stopPrice = decimal.MaxValue;
 
         // predict the next kdj cross from oversold
-        var oversold = item.Klines.SkipLast(1).Kdj().Reverse().TakeWhile(x => x.Side == KdjSide.Down).Any(x => x.J <= 20);
+        var oversold = item.Klines.SkipLast(1).ToKdj().Reverse().TakeWhile(x => x.Side == KdjSide.Down).Any(x => x.J <= 20);
         if (oversold && item.Klines.SkipLast(1).TryGetKdjForUpcross(item.Klines[^1], out var cross) && cross.Price.HasValue)
         {
             var target = item.Symbol.LowerPriceToTickSize(cross.Price.Value);
@@ -384,7 +384,7 @@ public partial class PortfolioAlgo : Algo
         var stopPrice = 0M;
 
         // calculate the latest atr
-        var atr = item.Klines.Atr().Last();
+        var atr = item.Klines.ToAtr().Last();
 
         // guard - raise to a trailing guard stop
         if (atr.HasValue)
@@ -443,7 +443,7 @@ public partial class PortfolioAlgo : Algo
         */
 
         // take - raise to a bollinger extreme if the last lot is not guarded already
-        var boll = item.Klines.BollingerBands(21, 3).Last();
+        var boll = item.Klines.ToBollingerBands(21, 3).Last();
         if (boll.High.HasValue)
         {
             var bollStop = item.Symbol.LowerPriceToTickSize(boll.High.Value);

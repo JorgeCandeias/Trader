@@ -4,18 +4,14 @@ public class MovingWindow<T> : IndicatorBase<T, IEnumerable<T>>
 {
     internal const int DefaultPeriods = 1;
 
-    public MovingWindow(int periods = DefaultPeriods)
+    public MovingWindow(IndicatorResult<T> source, int periods = DefaultPeriods)
+        : base(source, true)
     {
         Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
         Periods = periods;
-    }
 
-    public MovingWindow(IIndicatorResult<T> source, int periods = DefaultPeriods) : this(periods)
-    {
-        Guard.IsNotNull(source, nameof(source));
-
-        LinkFrom(source);
+        Ready();
     }
 
     public int Periods { get; }
@@ -34,27 +30,9 @@ public class MovingWindow<T> : IndicatorBase<T, IEnumerable<T>>
 
 public static partial class Indicator
 {
-    public static MovingWindow<T> MovingWindow<T>(int periods = Indicators.MovingWindow<T>.DefaultPeriods) => new(periods);
+    public static MovingWindow<T> MovingWindow<T>(this IndicatorResult<T> source, int periods = Indicators.MovingWindow<T>.DefaultPeriods)
+        => new(source, periods);
 
-    public static MovingWindow<T> MovingWindow<T>(IIndicatorResult<T> source, int periods = Indicators.MovingWindow<T>.DefaultPeriods) => new(source, periods);
-}
-
-public static class MovingWindowEnumerableExtensions
-{
-    /// <summary>
-    /// Yields a moving window over <paramref name="source"/> of size <paramref name="length"/>.
-    /// </summary>
-    public static IEnumerable<IEnumerable<T>> MovingWindow<T>(this IEnumerable<T> source, int periods = Indicators.MovingWindow<T>.DefaultPeriods)
-    {
-        Guard.IsNotNull(source, nameof(source));
-
-        using var indicator = Indicator.MovingWindow<T>(periods);
-
-        foreach (var item in source)
-        {
-            indicator.Add(item);
-
-            yield return indicator[^1];
-        }
-    }
+    public static IEnumerable<IEnumerable<T>> ToMovingWindow<T>(this IEnumerable<T> source, int periods = Indicators.MovingWindow<T>.DefaultPeriods)
+        => source.Identity().MovingWindow(periods);
 }

@@ -9,12 +9,13 @@ public static class HLC3Tests
     public static void YieldsOutput()
     {
         // arrange
-        using var indicator = new HLC3()
+        using var identity = new Identity<HLC>
         {
             new HLC(10, 20, 30),
             new HLC(10, 20, 20),
             new HLC(20, 20, 30)
         };
+        using var indicator = new HLC3(identity);
 
         // assert
         Assert.Collection(indicator,

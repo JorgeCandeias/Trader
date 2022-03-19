@@ -12,8 +12,7 @@ public class RsiTests
         var data = TestData.BtcBusdHistoricalData.Take(10).Select(x => x.Close).ToList();
 
         // act
-        using var indicator = new Rsi(3);
-        indicator.AddRange(data);
+        using var indicator = data.Identity().Rsi(3);
 
         // assert
         Assert.Collection(indicator,

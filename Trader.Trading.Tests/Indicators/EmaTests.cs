@@ -12,8 +12,7 @@ public class EmaTests
         var data = TestData.BtcBusdHistoricalData.Take(10).Select(x => x.Close).ToList();
 
         // act
-        using var indicator = new Ema(3);
-        indicator.AddRange(data);
+        using var indicator = data.Identity().Ema(3);
 
         // assert
         Assert.Collection(indicator,

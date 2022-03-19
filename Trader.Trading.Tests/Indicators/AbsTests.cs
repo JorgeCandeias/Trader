@@ -5,45 +5,6 @@ namespace Outcompute.Trader.Trading.Tests.Indicators;
 public static class AbsTests
 {
     [Fact]
-    public static void YieldsEmptyOutput()
-    {
-        // act
-        using var indicator = new Abs();
-
-        // assert
-        Assert.Empty(indicator);
-    }
-
-    [Fact]
-    public static void YieldsAbsoluteOutput()
-    {
-        // act
-        using var indicator = new Abs
-        {
-            1, -1, 2, -3, 5, -8, 13, -21, 34, -55, 89, -144
-        };
-
-        // assert
-        Assert.True(indicator.SequenceEqual(new decimal?[] { 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144 }));
-    }
-
-    [Fact]
-    public static void UpdatesInPlace()
-    {
-        // arrange
-        using var indicator = new Abs
-        {
-            1, -1, 2, -3, 5
-        };
-
-        // act
-        indicator.Update(3, -4);
-
-        // assert
-        Assert.True(indicator.SequenceEqual(new decimal?[] { 1, 1, 2, 4, 5 }));
-    }
-
-    [Fact]
     public static void HandlesSource()
     {
         // arrange
@@ -53,10 +14,15 @@ public static class AbsTests
         };
 
         // act
-        using var indicator = new Abs(source);
+        using var indicator = Indicator.Abs(source);
 
         // assert
-        Assert.True(indicator.SequenceEqual(new decimal?[] { 1, 1, 2, 3, 5 }));
+        Assert.Collection(indicator,
+            x => Assert.Equal(1, x),
+            x => Assert.Equal(1, x),
+            x => Assert.Equal(2, x),
+            x => Assert.Equal(3, x),
+            x => Assert.Equal(5, x));
     }
 
     [Fact]
@@ -67,7 +33,7 @@ public static class AbsTests
         {
             1, -1, 2, -3, 5
         };
-        using var indicator = new Abs(source);
+        using var indicator = Indicator.Abs(source);
 
         // act
         source.Update(3, -4);

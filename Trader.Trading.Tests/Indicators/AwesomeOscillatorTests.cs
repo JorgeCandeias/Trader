@@ -8,11 +8,8 @@ public class AwesomeOscillatorTests
     [Fact]
     public void CalculatesAwesomeOscillator()
     {
-        var data = TestData.BtcBusdHistoricalData.Take(10).ToHL().ToList();
-
         // act
-        using var indicator = new AwesomeOscillator(3, 5);
-        indicator.AddRange(data);
+        using var indicator = TestData.BtcBusdHistoricalData.Take(10).ToHL().Identity().AwesomeOscillator(3, 5);
 
         // assert
         Assert.Collection(indicator,

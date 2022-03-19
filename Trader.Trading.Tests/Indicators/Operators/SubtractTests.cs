@@ -25,18 +25,6 @@ namespace Outcompute.Trader.Trading.Tests.Indicators.Operators
         }
 
         [Fact]
-        public static void ThrowsOnInPlaceUpdate()
-        {
-            // arrange
-            using var first = new Identity<decimal?> { 2, 3, 4, 1, null };
-            using var second = new Identity<decimal?> { 4, 3, 2, null, 1 };
-            using var indicator = new Subtract(first, second);
-
-            // assert
-            Assert.Throws<NotSupportedException>(() => indicator.Update(2, -4));
-        }
-
-        [Fact]
         public static void UpdatesFromSource()
         {
             // arrange

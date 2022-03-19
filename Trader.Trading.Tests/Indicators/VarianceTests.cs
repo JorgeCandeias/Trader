@@ -12,8 +12,7 @@ public class VarianceTests
         var data = TestData.BtcBusdHistoricalData.Take(10).Select(x => x.Close).ToList();
 
         // act
-        using var indicator = new Variance(3);
-        indicator.AddRange(data);
+        using var indicator = data.Identity().Variance(3);
 
         // assert
         Assert.Collection(indicator,

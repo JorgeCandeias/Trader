@@ -7,15 +7,9 @@ namespace Outcompute.Trader.Trading.Indicators;
 /// </summary>
 public class Gain : IndicatorBase<decimal?, decimal?>
 {
-    public Gain()
+    public Gain(IndicatorResult<decimal?> source) : base(source, true)
     {
-    }
-
-    public Gain(IIndicatorResult<decimal?> source) : this()
-    {
-        Guard.IsNotNull(source, nameof(source));
-
-        LinkFrom(source);
+        Ready();
     }
 
     protected override decimal? Calculate(int index)
@@ -31,30 +25,12 @@ public class Gain : IndicatorBase<decimal?, decimal?>
 
 public static partial class Indicator
 {
-    public static Gain Gain() => new();
+    public static Gain Gain(this IndicatorResult<decimal?> source)
+        => new(source);
 
-    public static Gain Gain(IIndicatorResult<decimal?> source) => new(source);
-}
+    public static IEnumerable<decimal?> ToGain<T>(this IEnumerable<T> source, Func<T, decimal?> selector)
+        => source.Select(selector).Identity().Gain();
 
-public static class GainEnumerableExtensions
-{
-    public static IEnumerable<decimal?> Gain<T>(this IEnumerable<T> source, Func<T, decimal?> selector)
-    {
-        Guard.IsNotNull(source, nameof(source));
-        Guard.IsNotNull(selector, nameof(selector));
-
-        using var indicator = Indicator.Gain();
-
-        foreach (var item in source)
-        {
-            indicator.Add(selector(item));
-
-            yield return indicator[^1];
-        }
-    }
-
-    public static IEnumerable<decimal?> Gain(this IEnumerable<decimal?> source)
-    {
-        return source.Gain(x => x);
-    }
+    public static IEnumerable<decimal?> ToGain(this IEnumerable<decimal?> source)
+        => source.ToGain(x => x);
 }

@@ -9,80 +9,39 @@ public enum AtrMethod
     Hma
 }
 
-public class Atr : IndicatorBase<HLC, decimal?>
+public class Atr : CompositeIndicator<HLC, decimal?>
 {
     internal const int DefaultPeriods = 10;
     internal const AtrMethod DefaultAtrMethod = AtrMethod.Rma;
 
-    private readonly Identity<HLC> _source;
-    private readonly IIndicatorResult<decimal?> _indicator;
-
-    public Atr(int periods = DefaultPeriods, AtrMethod method = DefaultAtrMethod)
+    private static IndicatorResult<decimal?> Create(IndicatorResult<HLC> source, int periods, AtrMethod method)
     {
         Guard.IsGreaterThanOrEqualTo(periods, 2, nameof(periods));
 
-        _source = Indicator.Identity<HLC>();
-
-        _indicator = method switch
+        return method switch
         {
-            AtrMethod.Rma => Indicator.Rma(Indicator.TrueRange(_source), periods),
-            AtrMethod.Sma => Indicator.Sma(Indicator.TrueRange(_source), periods),
-            AtrMethod.Ema => Indicator.Ema(Indicator.TrueRange(_source), periods),
-            AtrMethod.Wma => Indicator.Wma(Indicator.TrueRange(_source), periods),
-            AtrMethod.Hma => Indicator.Hma(Indicator.TrueRange(_source), periods),
+            AtrMethod.Rma => source.TrueRange(true).Rma(periods),
+            AtrMethod.Sma => source.TrueRange(true).Sma(periods),
+            AtrMethod.Ema => source.TrueRange(true).Ema(periods),
+            AtrMethod.Wma => source.TrueRange(true).Wma(periods),
+            AtrMethod.Hma => source.TrueRange(true).Hma(periods),
             _ => throw new ArgumentOutOfRangeException(nameof(method))
         };
-
-        Periods = periods;
     }
 
-    public Atr(IIndicatorResult<HLC> source, int periods = DefaultPeriods, AtrMethod method = DefaultAtrMethod) : this(periods, method)
+    public Atr(IndicatorResult<HLC> source, int periods = DefaultPeriods, AtrMethod method = DefaultAtrMethod)
+        : base(source, x => Create(x, periods, method))
     {
-        Guard.IsNotNull(source, nameof(source));
-
-        LinkFrom(source);
-    }
-
-    public int Periods { get; }
-
-    protected override decimal? Calculate(int index)
-    {
-        // update the core source and cascade
-        _source.Update(index, Source[index]);
-
-        // return the final result
-        return _indicator[index];
     }
 }
 
 public static partial class Indicator
 {
-    public static Atr Atr(int periods = Indicators.Atr.DefaultPeriods, AtrMethod method = Indicators.Atr.DefaultAtrMethod) => new(periods, method);
+    public static Atr Atr(this IndicatorResult<HLC> source, int periods = Indicators.Atr.DefaultPeriods, AtrMethod method = Indicators.Atr.DefaultAtrMethod) => new(source, periods, method);
 
-    public static Atr Atr(IIndicatorResult<HLC> source, int periods = Indicators.Atr.DefaultPeriods, AtrMethod method = Indicators.Atr.DefaultAtrMethod) => new(source, periods, method);
-}
+    public static IEnumerable<decimal?> ToAtr<T>(this IEnumerable<T> source, Func<T, decimal?> highSelector, Func<T, decimal?> lowSelector, Func<T, decimal?> closeSelector, int periods = Indicators.Atr.DefaultPeriods, AtrMethod method = Indicators.Atr.DefaultAtrMethod)
+        => source.Select(x => new HLC(highSelector(x), lowSelector(x), closeSelector(x))).Identity().Atr(periods, method);
 
-public static class AtrEnumerableExtensions
-{
-    public static IEnumerable<decimal?> Atr<T>(this IEnumerable<T> source, Func<T, decimal?> highSelector, Func<T, decimal?> lowSelector, Func<T, decimal?> closeSelector, int periods = Indicators.Atr.DefaultPeriods, AtrMethod method = Indicators.Atr.DefaultAtrMethod)
-    {
-        Guard.IsNotNull(source, nameof(source));
-        Guard.IsNotNull(highSelector, nameof(highSelector));
-        Guard.IsNotNull(lowSelector, nameof(lowSelector));
-        Guard.IsNotNull(closeSelector, nameof(closeSelector));
-
-        using var indicator = Indicator.Atr(periods, method);
-
-        foreach (var item in source)
-        {
-            indicator.Add(new HLC(highSelector(item), lowSelector(item), closeSelector(item)));
-
-            yield return indicator[^1];
-        }
-    }
-
-    public static IEnumerable<decimal?> Atr(this IEnumerable<Kline> source, int periods = Indicators.Atr.DefaultPeriods, AtrMethod method = Indicators.Atr.DefaultAtrMethod)
-    {
-        return source.Atr(x => x.HighPrice, x => x.LowPrice, x => x.ClosePrice, periods, method);
-    }
+    public static IEnumerable<decimal?> ToAtr(this IEnumerable<Kline> source, int periods = Indicators.Atr.DefaultPeriods, AtrMethod method = Indicators.Atr.DefaultAtrMethod)
+        => source.ToAtr(x => x.HighPrice, x => x.LowPrice, x => x.ClosePrice, periods, method);
 }

@@ -8,10 +8,9 @@ public static class FillNullTests
     public static void YieldsOutput()
     {
         // act
-        using var indicator = new FillNull<decimal?>
-        {
-            null, 2, 3, null, 4, 5, null, null, 8, 9, null
-        };
+        using var indicator = Indicator
+            .Identity<decimal?>(null, 2, 3, null, 4, 5, null, null, 8, 9, null)
+            .FillNull();
 
         // assert
         Assert.Collection(indicator,

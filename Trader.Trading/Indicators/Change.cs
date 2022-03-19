@@ -5,75 +5,42 @@
 /// </summary>
 public class Change : IndicatorBase<decimal?, decimal?>
 {
-    /// <summary>
-    /// Creates a new change indicator.
-    /// </summary>
-    public Change(int periods = 1)
-    {
-        Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
-
-        Periods = periods;
-    }
+    private readonly int _periods;
 
     /// <summary>
     /// Creates a new change indicator from the specified source indicator.
     /// </summary>
-    public Change(IIndicatorResult<decimal?> source, int periods = 1) : this(periods)
+    public Change(IndicatorResult<decimal?> source, int periods = 1) : base(source, true)
     {
-        Guard.IsNotNull(source, nameof(source));
+        Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
-        LinkFrom(source);
+        _periods = periods;
+
+        Ready();
     }
-
-    public int Periods { get; }
 
     protected override decimal? Calculate(int index)
     {
-        if (index < Periods)
+        if (index < _periods)
         {
             return null;
         }
 
-        return Source[index] - Source[index - Periods];
+        return Source[index] - Source[index - _periods];
     }
 }
 
 public static partial class Indicator
 {
-    public static Change Change(int periods = 1) => new(periods);
+    public static Change Change(this IndicatorResult<decimal?> source, int periods = 1)
+        => new(source, periods);
 
-    public static Change Change(IIndicatorResult<decimal?> source, int periods = 1) => new(source, periods);
-}
+    public static IEnumerable<decimal?> ToChange<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = 1)
+        => source.Select(selector).Identity().Change(periods);
 
-public static class ChangeEnumerableExtensions
-{
-    /// <summary>
-    /// Yields the difference between the current value and the previous value from <paramref name="periods"/> ago.
-    /// </summary>
-    public static IEnumerable<decimal?> Change<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = 1)
-    {
-        Guard.IsNotNull(source, nameof(source));
-        Guard.IsNotNull(selector, nameof(selector));
+    public static IEnumerable<decimal?> ToChange(this IEnumerable<decimal?> source, int periods = 1)
+        => source.ToChange(x => x, periods);
 
-        var indicator = Indicator.Change(periods);
-
-        foreach (var item in source)
-        {
-            indicator.Add(selector(item));
-
-            yield return indicator[^1];
-        }
-    }
-
-    /// <inheritdoc cref="Change{T}(IEnumerable{T}, Func{T, decimal?}, int)"/>
-    public static IEnumerable<decimal?> Change(this IEnumerable<decimal?> source, int periods = 1)
-    {
-        return source.Change(x => x, periods);
-    }
-
-    /// <inheritdoc cref="Change{T}(IEnumerable{T}, Func{T, decimal?}, int)"/>
-    public static IEnumerable<decimal?> Change(this IEnumerable<decimal> source, int periods = 1)
-    {
-        return source.Change(x => x, periods);
-    }
+    public static IEnumerable<decimal?> ToChange(this IEnumerable<decimal> source, int periods = 1)
+        => source.ToChange(x => x, periods);
 }

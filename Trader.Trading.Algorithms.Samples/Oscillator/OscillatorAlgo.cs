@@ -108,7 +108,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             var stopPrice = decimal.MaxValue;
             var buyPrice = decimal.MaxValue;
 
-            var atr = item.Klines.SkipLast(1).Atr().Last();
+            var atr = item.Klines.SkipLast(1).ToAtr().Last();
 
             if (item.Klines.SkipLast(1).TryGetTechnicalRatingsSummaryUp(out var summary, TechnicalRatingAction.Buy))
             {
@@ -160,7 +160,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             var window = 0.01M;
 
             // guard - attempt to raise to a chandellier stop from the last lot
-            var atrp = item.Klines.SkipLast(1).Atr().Last();
+            var atrp = item.Klines.SkipLast(1).ToAtr().Last();
             if (atrp.HasValue)
             {
                 var chandellierOpen = lots[^1].Time;

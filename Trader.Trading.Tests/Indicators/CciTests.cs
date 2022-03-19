@@ -12,8 +12,7 @@ public class CciTests
         var data = TestData.BtcBusdHistoricalData.Take(10).ToHLC3().ToList();
 
         // act
-        using var indicator = new Cci(3);
-        indicator.AddRange(data);
+        using var indicator = data.Identity().Cci(3);
 
         // assert
         Assert.Collection(indicator,

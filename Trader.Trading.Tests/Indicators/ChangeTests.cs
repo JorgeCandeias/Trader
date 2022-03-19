@@ -8,7 +8,9 @@ namespace Outcompute.Trader.Trading.Tests.Indicators
         public void YieldsPositiveChanges()
         {
             // act
-            using var indicator = new Change(2) { 1, 1, 2, 3, 5 };
+            using var indicator = Indicator
+                .Identity<decimal?>(1, 1, 2, 3, 5)
+                .Change(2);
 
             // assert
             Assert.Collection(indicator,
@@ -23,7 +25,9 @@ namespace Outcompute.Trader.Trading.Tests.Indicators
         public void YieldsNegativeChanges()
         {
             // act
-            using var indicator = new Change(2) { 144, 89, 55, 34, 21 };
+            using var indicator = Indicator
+                .Identity<decimal?>(144, 89, 55, 34, 21)
+                .Change(2);
 
             // assert
             Assert.Collection(indicator,
@@ -38,7 +42,9 @@ namespace Outcompute.Trader.Trading.Tests.Indicators
         public void YieldsMixedChanges()
         {
             // act
-            using var indicator = new Change(2) { 1, 9, 1, 5, 3 };
+            using var indicator = Indicator
+                .Identity<decimal?>(1, 9, 1, 5, 3)
+                .Change(2);
 
             // assert
             Assert.Collection(indicator,
@@ -47,24 +53,6 @@ namespace Outcompute.Trader.Trading.Tests.Indicators
                 x => Assert.Equal(0, x),
                 x => Assert.Equal(-4, x),
                 x => Assert.Equal(2, x));
-        }
-
-        [Fact]
-        public void UpdatesInPlace()
-        {
-            // arrange
-            using var indicator = new Change(2) { 1, 9, 1, 5, 3 };
-
-            // act
-            indicator.Update(2, 2);
-
-            // assert
-            Assert.Collection(indicator,
-                x => Assert.Null(x),
-                x => Assert.Null(x),
-                x => Assert.Equal(1, x),
-                x => Assert.Equal(-4, x),
-                x => Assert.Equal(1, x));
         }
 
         [Fact]

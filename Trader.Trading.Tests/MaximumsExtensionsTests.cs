@@ -4,7 +4,7 @@ public class MaximumsExtensionsTests
 {
     [Theory]
     [MemberData(nameof(TestCases))]
-    public void Enumerates(decimal?[] source, decimal? other, decimal?[] expected)
+    public void Enumerates(decimal?[] source, int other, decimal?[] expected)
     {
         var result = source.Maximums(other).ToArray();
 

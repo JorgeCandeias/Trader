@@ -8,10 +8,9 @@ public static class HighestTests
     public static void YieldsOutput()
     {
         // arrange
-        using var indicator = new Highest(3);
-
-        // act
-        indicator.AddRange(new decimal?[] { 1, 2, 3, 2, 3, 4, 5, 4, 5, 6, 7 });
+        using var indicator = Indicator
+            .Identity<decimal?>(1, 2, 3, 2, 3, 4, 5, 4, 5, 6, 7)
+            .Highest(3);
 
         // arrange
         Assert.Collection(indicator,

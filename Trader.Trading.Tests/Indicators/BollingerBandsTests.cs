@@ -17,8 +17,7 @@ public class BollingerBandsTests
         var data = TestData.BtcBusdHistoricalData.Take(10).Select(x => x.Close).ToList();
 
         // act
-        using var indicator = Indicator.BollingerBands(3, 2);
-        indicator.AddRange(data);
+        using var indicator = data.Identity().BollingerBands(3, 2);
 
         // assert
         Assert.Collection(indicator,

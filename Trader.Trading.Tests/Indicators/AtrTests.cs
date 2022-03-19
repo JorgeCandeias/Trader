@@ -24,14 +24,13 @@ public class AtrTests
         };
 
         // act
-        using var indicator = new Atr(3, AtrMethod.Rma);
-        indicator.AddRange(history.ToHLC());
+        using var indicator = history.ToHLC().Identity().Atr(3, AtrMethod.Rma);
 
         // assert
         Assert.Collection(indicator,
             x => Assert.Null(x),
             x => Assert.Null(x),
-            x => Assert.Null(x),
+            x => Assert.Equal(294.60M, MathN.Round(x, 2)),
             x => Assert.Equal(255.00M, MathN.Round(x, 2)),
             x => Assert.Equal(311.65M, MathN.Round(x, 2)),
             x => Assert.Equal(2868.80M, MathN.Round(x, 2)),

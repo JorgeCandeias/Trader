@@ -4,64 +4,47 @@ namespace Outcompute.Trader.Trading.Indicators;
 
 public class TrueRange : IndicatorBase<HLC, decimal?>
 {
-    public TrueRange()
-    {
-    }
+    private readonly bool _fallback;
 
-    public TrueRange(IIndicatorResult<HLC> source) : this()
+    public TrueRange(IndicatorResult<HLC> source, bool fallback = false)
+        : base(source, true)
     {
-        Guard.IsNotNull(source, nameof(source));
+        _fallback = fallback;
 
-        LinkFrom(source);
+        Ready();
     }
 
     protected override decimal? Calculate(int index)
     {
-        if (index < 1)
+        var highLow = Source[index].High - Source[index].Low;
+
+        var fallback = _fallback && (index < 1 || Source[index - 1].Close is null);
+        if (fallback)
+        {
+            return highLow;
+        }
+        else if (index >= 1)
+        {
+            var highClose = MathN.Abs(Source[index].High - Source[index - 1].Close);
+            var lowClose = MathN.Abs(Source[index].Low - Source[index - 1].Close);
+
+            return MathN.Max(highLow, MathN.Max(highClose, lowClose));
+        }
+        else
         {
             return null;
         }
-
-        var highLow = Source[index].High - Source[index].Low;
-        var highClose = MathN.Abs(Source[index].High - Source[index - 1].Close);
-        var lowClose = MathN.Abs(Source[index].Low - Source[index - 1].Close);
-
-        return MathN.Max(highLow, MathN.Max(highClose, lowClose));
     }
 }
 
 public static partial class Indicator
 {
-    public static TrueRange TrueRange() => new();
+    public static TrueRange TrueRange(this IndicatorResult<HLC> source, bool fallback = false)
+        => new(source, fallback);
 
-    public static TrueRange TrueRange(IIndicatorResult<HLC> source) => new(source);
-}
+    public static IEnumerable<decimal?> ToTrueRange<T>(this IEnumerable<T> source, Func<T, decimal?> highSelector, Func<T, decimal?> lowSelector, Func<T, decimal?> closeSelector, bool fallback = false)
+        => source.Select(x => new HLC(highSelector(x), lowSelector(x), closeSelector(x))).Identity().TrueRange(fallback);
 
-public static class TrueRangeEnumerableExtensions
-{
-    public static IEnumerable<decimal?> TrueRange<T>(this IEnumerable<T> source, Func<T, decimal?> highSelector, Func<T, decimal?> lowSelector, Func<T, decimal?> closeSelector)
-    {
-        Guard.IsNotNull(source, nameof(source));
-        Guard.IsNotNull(highSelector, nameof(highSelector));
-        Guard.IsNotNull(lowSelector, nameof(lowSelector));
-        Guard.IsNotNull(closeSelector, nameof(closeSelector));
-
-        using var indicator = Indicator.TrueRange();
-
-        foreach (var item in source)
-        {
-            var high = highSelector(item);
-            var low = lowSelector(item);
-            var close = closeSelector(item);
-
-            indicator.Add(new HLC(high, low, close));
-
-            yield return indicator[^1];
-        }
-    }
-
-    public static IEnumerable<decimal?> TrueRange(this IEnumerable<Kline> source)
-    {
-        return source.TrueRange(x => x.HighPrice, x => x.LowPrice, x => x.ClosePrice);
-    }
+    public static IEnumerable<decimal?> ToTrueRange(this IEnumerable<Kline> source, bool fallback = false)
+        => source.ToTrueRange(x => x.HighPrice, x => x.LowPrice, x => x.ClosePrice, fallback);
 }

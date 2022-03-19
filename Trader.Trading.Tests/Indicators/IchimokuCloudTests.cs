@@ -17,8 +17,7 @@ public class IchimokuCloudTests
         var data = TestData.BtcBusdHistoricalData.Take(10).ToHL().ToList();
 
         // act
-        using var indicator = Indicator.IchimokuCloud(3, 4, 5, 6);
-        indicator.AddRange(data);
+        using var indicator = data.Identity().IchimokuCloud(3, 4, 5, 6);
 
         // assert
         Assert.Collection(indicator,

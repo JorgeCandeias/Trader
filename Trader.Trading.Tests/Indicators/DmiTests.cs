@@ -17,8 +17,7 @@ public class DmiTests
         var data = TestData.BtcBusdHistoricalData.Take(10).ToHLC().ToList();
 
         // act
-        using var indicator = new Dmi(3, 3);
-        indicator.AddRange(data);
+        using var indicator = data.Identity().Dmi(3, 3);
 
         // assert
         Assert.Collection(indicator,

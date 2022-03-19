@@ -2,15 +2,9 @@
 
 public class FillNull<T> : IndicatorBase<T, T>
 {
-    public FillNull()
+    public FillNull(IndicatorResult<T> source) : base(source, true)
     {
-    }
-
-    public FillNull(IIndicatorResult<T> source) : this()
-    {
-        Guard.IsNotNull(source, nameof(source));
-
-        LinkFrom(source);
+        Ready();
     }
 
     protected override T Calculate(int index)
@@ -34,24 +28,9 @@ public class FillNull<T> : IndicatorBase<T, T>
 
 public static partial class Indicator
 {
-    public static FillNull<T> FillNull<T>() => new();
+    public static FillNull<T> FillNull<T>(this IndicatorResult<T> source)
+        => new(source);
 
-    public static FillNull<T> FillNull<T>(IIndicatorResult<T> source) => new(source);
-}
-
-public static class FillNullEnumerableExtensions
-{
-    public static IEnumerable<T?> FillNull<T>(this IEnumerable<T?> source)
-    {
-        Guard.IsNotNull(source, nameof(source));
-
-        using var indicator = Indicator.FillNull<T>();
-
-        foreach (var item in source)
-        {
-            indicator.Add(item!);
-
-            yield return indicator[^1];
-        }
-    }
+    public static IEnumerable<T?> ToFillNull<T>(this IEnumerable<T?> source)
+        => source.Identity().FillNull();
 }

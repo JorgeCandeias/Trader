@@ -17,8 +17,7 @@ public class BullBearPowerTests
         var data = TestData.BtcBusdHistoricalData.Take(10).ToHLC().ToList();
 
         // act
-        using var indicator = Indicator.BullBearPower(3);
-        indicator.AddRange(data);
+        using var indicator = data.Identity().BullBearPower(3);
 
         // assert
         Assert.Collection(indicator,

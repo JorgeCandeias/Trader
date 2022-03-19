@@ -10,8 +10,8 @@ public static class WilliamsPercentRangeExtensions
         Guard.IsNotNull(closeSelector, nameof(closeSelector));
         Guard.IsGreaterThanOrEqualTo(length, 1, nameof(length));
 
-        var max = source.Highest(highSelector, length);
-        var min = source.Lowest(lowSelector, length);
+        var max = source.ToHighest(highSelector, length);
+        var min = source.ToLowest(lowSelector, length);
 
         var numerator = source.Select(closeSelector).Zip(max, (x, y) => x - y);
         var denominator = max.Zip(min, (x, y) => x - y);

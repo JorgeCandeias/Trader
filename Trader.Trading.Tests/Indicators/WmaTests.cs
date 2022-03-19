@@ -12,8 +12,7 @@ public class WmaTests
         var data = TestData.BtcBusdHistoricalData.Take(10).Select(x => x.Close).ToList();
 
         // act
-        using var indicator = new Wma(3);
-        indicator.AddRange(data);
+        using var indicator = data.Identity().Wma(3);
 
         // assert
         Assert.Collection(indicator,

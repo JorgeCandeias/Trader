@@ -4,18 +4,14 @@ public class Wma : IndicatorBase<decimal?, decimal?>
 {
     internal const int DefaultPeriods = 10;
 
-    public Wma(int periods = DefaultPeriods)
+    public Wma(IndicatorResult<decimal?> source, int periods = DefaultPeriods)
+        : base(source, true)
     {
         Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
         Periods = periods;
-    }
 
-    public Wma(IIndicatorResult<decimal?> source, int periods = DefaultPeriods) : this(periods)
-    {
-        Guard.IsNotNull(source, nameof(source));
-
-        LinkFrom(source);
+        Ready();
     }
 
     public int Periods { get; }
@@ -48,35 +44,15 @@ public class Wma : IndicatorBase<decimal?, decimal?>
 
 public static partial class Indicator
 {
-    public static Wma Wma(int periods = Indicators.Wma.DefaultPeriods) => new(periods);
+    public static Wma Wma(this IndicatorResult<decimal?> source, int periods = Indicators.Wma.DefaultPeriods)
+        => new(source, periods);
 
-    public static Wma Wma(IIndicatorResult<decimal?> source, int periods = Indicators.Wma.DefaultPeriods) => new(source, periods);
-}
+    public static IEnumerable<decimal?> ToWma<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = Indicators.Wma.DefaultPeriods)
+        => source.Select(selector).Identity().Wma(periods);
 
-public static class WeightedMovingAverageExtensions
-{
-    public static IEnumerable<decimal?> Wma<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = Indicators.Wma.DefaultPeriods)
-    {
-        Guard.IsNotNull(source, nameof(source));
-        Guard.IsNotNull(selector, nameof(selector));
+    public static IEnumerable<decimal?> ToWma(this IEnumerable<Kline> source, int periods = Indicators.Wma.DefaultPeriods)
+        => source.ToWma(x => x.ClosePrice, periods);
 
-        var indicator = Indicator.Wma(periods);
-
-        foreach (var item in source)
-        {
-            indicator.Add(selector(item));
-
-            yield return indicator[^1];
-        }
-    }
-
-    public static IEnumerable<decimal?> Wma(this IEnumerable<Kline> source, int periods = Indicators.Wma.DefaultPeriods)
-    {
-        return source.Wma(x => x.ClosePrice, periods);
-    }
-
-    public static IEnumerable<decimal?> Wma(this IEnumerable<decimal?> source, int periods = Indicators.Wma.DefaultPeriods)
-    {
-        return source.Wma(x => x, periods);
-    }
+    public static IEnumerable<decimal?> ToWma(this IEnumerable<decimal?> source, int periods = Indicators.Wma.DefaultPeriods)
+        => source.ToWma(x => x, periods);
 }

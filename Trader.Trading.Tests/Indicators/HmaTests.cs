@@ -12,8 +12,7 @@ public class HmaTests
         var data = TestData.BtcBusdHistoricalData.Take(10).Select(x => x.Close).ToList();
 
         // act
-        using var indicator = new Hma(3);
-        indicator.AddRange(data);
+        using var indicator = data.Identity().Hma(3);
 
         // assert
         Assert.Collection(indicator,

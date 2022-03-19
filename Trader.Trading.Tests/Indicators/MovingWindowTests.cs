@@ -11,8 +11,7 @@ public class MovingWindowTests
         var data = new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 
         // act
-        using var indicator = new MovingWindow<int>(3);
-        indicator.AddRange(data);
+        using var indicator = data.Identity().MovingWindow<int>(3);
 
         // assert
         Assert.Collection(indicator,

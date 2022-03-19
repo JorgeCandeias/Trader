@@ -4,19 +4,15 @@ public class Rma : IndicatorBase<decimal?, decimal?>
 {
     internal const int DefaultPeriods = 10;
 
-    public Rma(int periods = DefaultPeriods)
+    public Rma(IndicatorResult<decimal?> source, int periods = DefaultPeriods)
+        : base(source, true)
     {
         Guard.IsGreaterThanOrEqualTo(periods, 1, nameof(periods));
 
         Periods = periods;
         Alpha = 1M / Periods;
-    }
 
-    public Rma(IIndicatorResult<decimal?> source, int periods = DefaultPeriods) : this(periods)
-    {
-        Guard.IsNotNull(source, nameof(source));
-
-        LinkFrom(source);
+        Ready();
     }
 
     public int Periods { get; }
@@ -63,35 +59,15 @@ public class Rma : IndicatorBase<decimal?, decimal?>
 
 public static partial class Indicator
 {
-    public static Rma Rma(int periods = Indicators.Rma.DefaultPeriods) => new(periods);
+    public static Rma Rma(this IndicatorResult<decimal?> source, int periods = Indicators.Rma.DefaultPeriods)
+        => new(source, periods);
 
-    public static Rma Rma(IIndicatorResult<decimal?> source, int periods = Indicators.Rma.DefaultPeriods) => new(source, periods);
-}
+    public static IEnumerable<decimal?> ToRma<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = Indicators.Rma.DefaultPeriods)
+        => source.Select(selector).Identity().Rma(periods);
 
-public static class RmaEnumerableExtensions
-{
-    public static IEnumerable<decimal?> Rma<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = Indicators.Rma.DefaultPeriods)
-    {
-        Guard.IsNotNull(source, nameof(source));
-        Guard.IsNotNull(selector, nameof(selector));
+    public static IEnumerable<decimal?> ToRma(this IEnumerable<Kline> source, int periods = Indicators.Rma.DefaultPeriods)
+        => source.ToRma(x => x.ClosePrice, periods);
 
-        using var indicator = Indicator.Rma(periods);
-
-        foreach (var item in source)
-        {
-            indicator.Add(selector(item));
-
-            yield return indicator[^1];
-        }
-    }
-
-    public static IEnumerable<decimal?> Rma(this IEnumerable<Kline> source, int periods = Indicators.Rma.DefaultPeriods)
-    {
-        return source.Rma(x => x.ClosePrice, periods);
-    }
-
-    public static IEnumerable<decimal?> Rma(this IEnumerable<decimal?> source, int periods = Indicators.Rma.DefaultPeriods)
-    {
-        return source.Rma(x => x, periods);
-    }
+    public static IEnumerable<decimal?> ToRma(this IEnumerable<decimal?> source, int periods = Indicators.Rma.DefaultPeriods)
+        => source.ToRma(x => x, periods);
 }

@@ -4,18 +4,14 @@ public class Variance : IndicatorBase<decimal?, decimal?>
 {
     internal const int DefaultPeriods = 10;
 
-    public Variance(int periods = DefaultPeriods)
+    public Variance(IndicatorResult<decimal?> source, int periods = DefaultPeriods)
+        : base(source, true)
     {
         Guard.IsGreaterThanOrEqualTo(periods, 2, nameof(periods));
 
         Periods = periods;
-    }
 
-    public Variance(IIndicatorResult<decimal?> source, int periods = DefaultPeriods) : this(periods)
-    {
-        Guard.IsNotNull(source, nameof(source));
-
-        LinkFrom(source);
+        Ready();
     }
 
     public int Periods { get; }
@@ -60,30 +56,12 @@ public class Variance : IndicatorBase<decimal?, decimal?>
 
 public static partial class Indicator
 {
-    public static Variance Variance(int periods = Indicators.Variance.DefaultPeriods) => new(periods);
+    public static Variance Variance(this IndicatorResult<decimal?> source, int periods = Indicators.Variance.DefaultPeriods)
+        => new(source, periods);
 
-    public static Variance Variance(IIndicatorResult<decimal?> source, int periods = Indicators.Variance.DefaultPeriods) => new(source, periods);
-}
+    public static IEnumerable<decimal?> ToVariance<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = Indicators.Variance.DefaultPeriods)
+        => source.Select(selector).Identity().Variance(periods);
 
-internal static class VarianceEnumerableExtensions
-{
-    public static IEnumerable<decimal?> Variance<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int periods = Indicators.Variance.DefaultPeriods)
-    {
-        Guard.IsNotNull(source, nameof(source));
-        Guard.IsNotNull(selector, nameof(selector));
-
-        using var indicator = Indicator.Variance(periods);
-
-        foreach (var item in source)
-        {
-            indicator.Add(selector(item));
-
-            yield return indicator[^1];
-        }
-    }
-
-    public static IEnumerable<decimal?> Variance(this IEnumerable<decimal?> source, int periods = Indicators.Variance.DefaultPeriods)
-    {
-        return source.Variance(x => x, periods);
-    }
+    public static IEnumerable<decimal?> ToVariance(this IEnumerable<decimal?> source, int periods = Indicators.Variance.DefaultPeriods)
+        => source.ToVariance(x => x, periods);
 }

@@ -110,9 +110,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
 
             var atr = item.Klines.SkipLast(1).ToAtr().Last();
 
-            if (item.Klines.SkipLast(1).TryGetTechnicalRatingsSummaryUp(out var summary, TechnicalRatingAction.Buy))
+            if (item.Klines.SkipLast(1).TryGetTechnicalRatingsSummaryUp(out var summary, TechnicalRatingAction.Buy) && summary.Item.Close.HasValue)
             {
-                var stop = item.Symbol.LowerPriceToTickSize(summary.Item.ClosePrice);
+                var stop = item.Symbol.LowerPriceToTickSize(summary.Item.Close.Value);
                 var price = item.Symbol.LowerPriceToTickSize(stop * (1 + window));
                 var distance = Math.Abs(item.Klines[^1].ClosePrice - price);
 
@@ -174,9 +174,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
                 }
             }
 
-            if (item.Klines.SkipLast(1).TryGetTechnicalRatingsSummaryDown(out var summary, TechnicalRatingAction.Sell))
+            if (item.Klines.SkipLast(1).TryGetTechnicalRatingsSummaryDown(out var summary, TechnicalRatingAction.Sell) && summary.Item.Close.HasValue)
             {
-                var stop = item.Symbol.RaisePriceToTickSize(summary.Item.ClosePrice);
+                var stop = item.Symbol.RaisePriceToTickSize(summary.Item.Close.Value);
                 var price = item.Symbol.RaisePriceToTickSize(stop * (1 - window));
 
                 if (item.Ticker.ClosePrice > stop)

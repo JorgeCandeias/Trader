@@ -2,6 +2,8 @@
 
 public record struct OHLCV(decimal? Open, decimal? High, decimal? Low, decimal? Close, decimal? Volume)
 {
+    public static OHLCV Empty { get; } = new();
+
     public static implicit operator HLC(OHLCV value) => new(value.High, value.Low, value.Close);
 
     public static implicit operator HL(OHLCV value) => new(value.High, value.Low);

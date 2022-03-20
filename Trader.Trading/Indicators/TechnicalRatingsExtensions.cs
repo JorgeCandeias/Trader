@@ -57,6 +57,7 @@ public class TechnicalRatings : IndicatorBase<OHLCV, TechnicalRatingSummary>
     private readonly Dmi _dmi;
     private readonly AwesomeOscillator _ao;
     private readonly Momentum _mom;
+    private readonly Macd _macd;
 
     #endregion Oscillators
 
@@ -90,6 +91,7 @@ public class TechnicalRatings : IndicatorBase<OHLCV, TechnicalRatingSummary>
         _dmi = Indicator.Dmi(hlc, 14, 14);
         _ao = Indicator.AwesomeOscillator(hl, 5, 34);
         _mom = Indicator.Momentum(close, 10);
+        _macd = Indicator.Macd(close, 12, 26, 9);
 
         Ready();
     }
@@ -126,6 +128,7 @@ public class TechnicalRatings : IndicatorBase<OHLCV, TechnicalRatingSummary>
             _dmi.Dispose();
             _ao.Dispose();
             _mom.Dispose();
+            _macd.Dispose();
         }
 
         base.Dispose(disposing);
@@ -166,7 +169,7 @@ public static class TechnicalRatingsExtensions
         var adx = klines.ToDmi(14, 14).WithPrevious().GetEnumerator();
         var ao = klines.ToAwesomeOscillator(5, 34).ToMovingWindow(3).GetEnumerator();
         var mom = klines.ToMomentum(10).WithPrevious().GetEnumerator();
-        var macd = klines.ToMacd(12, 26, 19).GetEnumerator();
+        var macd = klines.ToMacd(12, 26, 9).GetEnumerator();
         var stochRsi = klines.StochasticRelativeStrengthIndex(3, 3, 14, 14).WithPrevious().GetEnumerator();
         var wpr = klines.WilliamsPercentRange(14).WithPrevious().GetEnumerator();
         var bbp = klines.ToBullBearPower(13).WithPrevious().GetEnumerator();

@@ -174,7 +174,7 @@ public static class TechnicalRatingsExtensions
         var mom = klines.ToMomentum(10).WithPrevious().GetEnumerator();
         var macd = klines.ToMacd(12, 26, 9).GetEnumerator();
         var stochRsi = klines.ToStochasticRsi(3, 3, 14, 14).WithPrevious().GetEnumerator();
-        var wpr = klines.WilliamsPercentRange(14).WithPrevious().GetEnumerator();
+        var wpr = klines.ToWilliamsPercentRange(14).WithPrevious().GetEnumerator();
         var bbp = klines.ToBullBearPower(13).WithPrevious().GetEnumerator();
         var uo = klines.UltimateOscillator(7, 14, 28).GetEnumerator();
 

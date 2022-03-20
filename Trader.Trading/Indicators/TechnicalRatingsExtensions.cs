@@ -162,7 +162,7 @@ public static class TechnicalRatingsExtensions
         var cci = klines.Select(x => x.ClosePrice).ToCci(x => x, 20).WithPrevious().GetEnumerator();
         var adx = klines.ToDmi(14, 14).WithPrevious().GetEnumerator();
         var ao = klines.ToAwesomeOscillator(5, 34).ToMovingWindow(3).GetEnumerator();
-        var mom = klines.Momentum(10).WithPrevious().GetEnumerator();
+        var mom = klines.ToMomentum(10).WithPrevious().GetEnumerator();
         var macd = klines.Macd(12, 26, 19).GetEnumerator();
         var stochRsi = klines.StochasticRelativeStrengthIndex(3, 3, 14, 14).WithPrevious().GetEnumerator();
         var wpr = klines.WilliamsPercentRange(14).WithPrevious().GetEnumerator();

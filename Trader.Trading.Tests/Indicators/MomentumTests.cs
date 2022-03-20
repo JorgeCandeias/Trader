@@ -1,4 +1,6 @@
-﻿namespace Outcompute.Trader.Trading.Tests;
+﻿using Outcompute.Trader.Trading.Indicators;
+
+namespace Outcompute.Trader.Trading.Tests.Indicators;
 
 public class MomentumTests
 {
@@ -6,7 +8,7 @@ public class MomentumTests
     [MemberData(nameof(TestData))]
     public void Evaluates(decimal?[] source, decimal?[] expected, int periods)
     {
-        var momentum = source.Momentum(periods).ToArray();
+        var momentum = source.Identity().Momentum(periods);
 
         for (var i = 0; i < expected.Length; i++)
         {

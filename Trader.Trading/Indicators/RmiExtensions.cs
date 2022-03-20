@@ -17,7 +17,7 @@ public static class RmiExtensions
         Guard.IsGreaterThanOrEqualTo(momentumPeriods, 1, nameof(momentumPeriods));
         Guard.IsGreaterThanOrEqualTo(rmaPeriods, 1, nameof(rmaPeriods));
 
-        var momentum = source.Momentum(selector, momentumPeriods);
+        var momentum = source.ToMomentum(selector, momentumPeriods);
         var ups = momentum.Maximums(0).ToRma(rmaPeriods).GetEnumerator();
         var downs = momentum.Minimums(0).Opposites().ToRma(rmaPeriods).GetEnumerator();
 

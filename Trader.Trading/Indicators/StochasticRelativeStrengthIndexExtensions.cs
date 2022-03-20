@@ -1,40 +1,42 @@
 ﻿namespace Outcompute.Trader.Trading.Indicators;
 
-public record struct StochasticRelativeStrengthValue
+public record struct StochasticRsiResult(decimal? K, decimal? D)
 {
-    public decimal? K { get; init; }
-    public decimal? D { get; init; }
+    public static StochasticRsiResult Empty { get; } = new();
 }
 
-public static class StochasticRelativeStrengthIndexExtensions
+public class StochasticRsi : CompositeIndicator<decimal?, StochasticRsiResult>
 {
-    public static IEnumerable<StochasticRelativeStrengthValue> StochasticRelativeStrengthIndex<T>(this IEnumerable<T> source, Func<T, decimal?> selector, int smoothK = 3, int smoothD = 3, int lengthRsi = 14, int lengthStoch = 14)
-    {
-        Guard.IsNotNull(source, nameof(source));
-        Guard.IsNotNull(selector, nameof(selector));
-        Guard.IsGreaterThanOrEqualTo(smoothK, 1, nameof(smoothK));
-        Guard.IsGreaterThanOrEqualTo(smoothD, 1, nameof(smoothD));
-        Guard.IsGreaterThanOrEqualTo(lengthRsi, 1, nameof(lengthRsi));
-        Guard.IsGreaterThanOrEqualTo(lengthStoch, 1, nameof(lengthStoch));
+    internal const int DefaultSmoothK = 3;
+    internal const int DefaultSmoothD = 3;
+    internal const int DefaultPeriodsRsi = 14;
+    internal const int DefaultPeriodsStoch = 14;
 
-        var kf = source.Select(selector).ToRsi(lengthRsi).ToStochastic(x => x, x => x, x => x, lengthStoch).ToSma(smoothK);
-        var df = kf.ToSma(smoothD);
-
-        var ke = kf.GetEnumerator();
-        var de = df.GetEnumerator();
-
-        while (ke.MoveNext() && de.MoveNext())
+    public StochasticRsi(IndicatorResult<decimal?> source, int smoothK = DefaultSmoothK, int smoothD = DefaultSmoothD, int periodsRsi = DefaultPeriodsRsi, int periodsStoch = DefaultPeriodsStoch)
+        : base(source, x =>
         {
-            yield return new StochasticRelativeStrengthValue
-            {
-                K = ke.Current,
-                D = de.Current
-            };
-        }
-    }
+            Guard.IsNotNull(source, nameof(source));
+            Guard.IsGreaterThanOrEqualTo(smoothK, 1, nameof(smoothK));
+            Guard.IsGreaterThanOrEqualTo(smoothD, 1, nameof(smoothD));
+            Guard.IsGreaterThanOrEqualTo(periodsRsi, 1, nameof(periodsRsi));
+            Guard.IsGreaterThanOrEqualTo(periodsStoch, 1, nameof(periodsStoch));
 
-    public static IEnumerable<StochasticRelativeStrengthValue> StochasticRelativeStrengthIndex(this IEnumerable<Kline> source, int smoothK = 3, int smoothD = 3, int lengthRsi = 14, int lengthStoch = 14)
+            var rsi = Indicator.Rsi(source, periodsRsi);
+            var hlc = Indicator.Transform(rsi, x => new HLC(x, x, x));
+            var k = Indicator.Sma(Indicator.Stochastic(hlc, periodsStoch), smoothK);
+            var d = Indicator.Sma(k, smoothD);
+
+            return Indicator.Zip(k, d, (x, y) => new StochasticRsiResult(x, y));
+        })
     {
-        return source.StochasticRelativeStrengthIndex(x => x.ClosePrice, smoothK, smoothD, lengthRsi, lengthStoch);
     }
+}
+
+public static partial class Indicator
+{
+    public static StochasticRsi StochasticRsi(this IndicatorResult<decimal?> source, int smoothK = Indicators.StochasticRsi.DefaultSmoothK, int smoothD = Indicators.StochasticRsi.DefaultSmoothD, int periodsRsi = Indicators.StochasticRsi.DefaultPeriodsRsi, int periodsStoch = Indicators.StochasticRsi.DefaultPeriodsStoch)
+        => new(source, smoothK, smoothD, periodsRsi, periodsStoch);
+
+    public static IEnumerable<StochasticRsiResult> ToStochasticRsi(this IEnumerable<Kline> source, int smoothK = Indicators.StochasticRsi.DefaultSmoothK, int smoothD = Indicators.StochasticRsi.DefaultSmoothD, int periodsRsi = Indicators.StochasticRsi.DefaultPeriodsRsi, int periodsStoch = Indicators.StochasticRsi.DefaultPeriodsStoch)
+        => source.Select(x => (decimal?)x.ClosePrice).Identity().StochasticRsi(smoothK, smoothD, periodsRsi, periodsStoch);
 }

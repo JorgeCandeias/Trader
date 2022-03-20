@@ -27,7 +27,7 @@ public class Rma : IndicatorBase<decimal?, decimal?>
             return null;
         }
 
-        var rma = Result[index - 1];
+        var rma = index < 1 ? null : Result[index - 1];
 
         // start from the sma to avoid spikes
         if (!rma.HasValue)

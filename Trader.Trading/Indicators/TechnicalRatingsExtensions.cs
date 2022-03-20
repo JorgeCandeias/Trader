@@ -170,7 +170,7 @@ public static class TechnicalRatingsExtensions
         var ao = klines.ToAwesomeOscillator(5, 34).ToMovingWindow(3).GetEnumerator();
         var mom = klines.ToMomentum(10).WithPrevious().GetEnumerator();
         var macd = klines.ToMacd(12, 26, 9).GetEnumerator();
-        var stochRsi = klines.StochasticRelativeStrengthIndex(3, 3, 14, 14).WithPrevious().GetEnumerator();
+        var stochRsi = klines.ToStochasticRsi(3, 3, 14, 14).WithPrevious().GetEnumerator();
         var wpr = klines.WilliamsPercentRange(14).WithPrevious().GetEnumerator();
         var bbp = klines.ToBullBearPower(13).WithPrevious().GetEnumerator();
         var uo = klines.UltimateOscillator(7, 14, 28).GetEnumerator();
@@ -503,7 +503,7 @@ public static class TechnicalRatingsExtensions
         return null;
     }
 
-    private static int? GetStochRsiRating(WithPreviousValue<StochasticRelativeStrengthValue> item, bool? uptrend, bool? downtrend)
+    private static int? GetStochRsiRating(WithPreviousValue<StochasticRsiResult> item, bool? uptrend, bool? downtrend)
     {
         var currK = item.Current.K;
         var currD = item.Current.D;

@@ -182,7 +182,7 @@ public static class TechnicalRatingsExtensions
         var stochRsi = klines.ToStochasticRsi(3, 3, 14, 14).WithPrevious().GetEnumerator();
         var wpr = klines.ToWilliamsPercentRange(14).WithPrevious().GetEnumerator();
         var bbp = klines.ToBullBearPower(13).WithPrevious().GetEnumerator();
-        var uo = klines.UltimateOscillator(7, 14, 28).GetEnumerator();
+        var uo = klines.ToUltimateOscillator(7, 14, 28).GetEnumerator();
 
         // recommendations
         var priceAvg = klines.ToEma(50);

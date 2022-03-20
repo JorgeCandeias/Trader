@@ -27,6 +27,12 @@ public record TechnicalRatingSummary(OHLCV Item, TechnicalRatingTotals Summary, 
     public static TechnicalRatingSummary Empty { get; } = new TechnicalRatingSummary(OHLCV.Empty, TechnicalRatingTotals.Empty, TechnicalRatingTotals.Empty, TechnicalRatingTotals.Empty, ImmutableList<TechnicalRatingDetail>.Empty);
 }
 
+public static partial class Indicator
+{
+    public static TechnicalRatings TechnicalRatings(this IndicatorResult<OHLCV> source)
+        => new(source);
+}
+
 public class TechnicalRatings : IndicatorBase<OHLCV, TechnicalRatingSummary>
 {
     private const decimal StrongBound = 0.5M;
@@ -129,6 +135,11 @@ public class TechnicalRatings : IndicatorBase<OHLCV, TechnicalRatingSummary>
 
     protected override TechnicalRatingSummary Calculate(int index)
     {
+        if (index < 1)
+        {
+            return TechnicalRatingSummary.Empty;
+        }
+
         // moving averages
         var averagesRating = 0M;
         var averagesRatingsCount = 0;

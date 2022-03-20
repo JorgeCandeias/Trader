@@ -1,6 +1,4 @@
-﻿using static Outcompute.Trader.Trading.Indicators.Indicator;
-
-namespace Outcompute.Trader.Trading.Indicators;
+﻿namespace Outcompute.Trader.Trading.Indicators;
 
 public enum TechnicalRatingAction
 {
@@ -54,6 +52,10 @@ public class TechnicalRatings : IndicatorBase<OHLCV, TechnicalRatingSummary>
     #region Oscillators
 
     private readonly Rsi _rsi;
+    private readonly StochasticOscillator _stoch;
+    private readonly Cci _cci;
+    private readonly Dmi _dmi;
+    private readonly AwesomeOscillator _ao;
 
     #endregion Oscillators
 
@@ -63,6 +65,7 @@ public class TechnicalRatings : IndicatorBase<OHLCV, TechnicalRatingSummary>
         var close = source.Transform(x => x.Close);
         var cv = source.Transform(x => x.ToCV());
         var hl = source.Transform(x => x.ToHL());
+        var hlc = source.Transform(x => x.ToHLC());
 
         _sma10 = close.Sma(10);
         _sma20 = close.Sma(20);
@@ -81,6 +84,10 @@ public class TechnicalRatings : IndicatorBase<OHLCV, TechnicalRatingSummary>
         _im = hl.IchimokuCloud(9, 26, 52, 26);
 
         _rsi = close.Rsi(14);
+        _stoch = hlc.StochasticOscillator(14, 3, 3);
+        _cci = close.Cci(20);
+        _dmi = Indicator.Dmi(hlc, 14, 14);
+        _ao = Indicator.AwesomeOscillator(hl, 5, 34);
 
         Ready();
     }
@@ -112,6 +119,10 @@ public class TechnicalRatings : IndicatorBase<OHLCV, TechnicalRatingSummary>
             _vwma20.Dispose();
             _im.Dispose();
             _rsi.Dispose();
+            _stoch.Dispose();
+            _cci.Dispose();
+            _dmi.Dispose();
+            _ao.Dispose();
         }
 
         base.Dispose(disposing);

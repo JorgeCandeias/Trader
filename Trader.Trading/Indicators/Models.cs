@@ -1,8 +1,18 @@
 ﻿namespace Outcompute.Trader.Trading.Indicators;
 
-public record struct OHLCV(decimal? Open, decimal? High, decimal? Low, decimal? Close, decimal? Volume);
+public record struct OHLCV(decimal? Open, decimal? High, decimal? Low, decimal? Close, decimal? Volume)
+{
+    public static implicit operator HLC(OHLCV value) => new(value.High, value.Low, value.Close);
 
-public record struct HLC(decimal? High, decimal? Low, decimal? Close);
+    public static implicit operator HL(OHLCV value) => new(value.High, value.Low);
+
+    public static implicit operator CV(OHLCV value) => new(value.Close, value.Volume);
+}
+
+public record struct HLC(decimal? High, decimal? Low, decimal? Close)
+{
+    public static implicit operator HL(HLC value) => new(value.High, value.Low);
+}
 
 public record struct HL(decimal? High, decimal? Low);
 

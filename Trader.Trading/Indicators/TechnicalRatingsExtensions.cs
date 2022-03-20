@@ -58,6 +58,7 @@ public class TechnicalRatings : IndicatorBase<OHLCV, TechnicalRatingSummary>
     private readonly AwesomeOscillator _ao;
     private readonly Momentum _mom;
     private readonly Macd _macd;
+    private readonly StochasticRsi _srsi;
 
     #endregion Oscillators
 
@@ -92,6 +93,7 @@ public class TechnicalRatings : IndicatorBase<OHLCV, TechnicalRatingSummary>
         _ao = Indicator.AwesomeOscillator(hl, 5, 34);
         _mom = Indicator.Momentum(close, 10);
         _macd = Indicator.Macd(close, 12, 26, 9);
+        _srsi = Indicator.StochasticRsi(close, 3, 3, 14, 14);
 
         Ready();
     }
@@ -129,6 +131,7 @@ public class TechnicalRatings : IndicatorBase<OHLCV, TechnicalRatingSummary>
             _ao.Dispose();
             _mom.Dispose();
             _macd.Dispose();
+            _srsi.Dispose();
         }
 
         base.Dispose(disposing);

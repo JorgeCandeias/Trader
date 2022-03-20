@@ -215,7 +215,7 @@ public class TechnicalRatings : IndicatorBase<OHLCV, TechnicalRatingSummary>
         var vwma20Rating = GetMovingAverageRating(_vwma20[index], _close[index]);
         ApplyMovingAveragesRating(vwma20Rating);
 
-        var ichimokuRating = GetIchimokuCloudRating(_ichimoku[index], _close[index], _prev[index]);
+        var ichimokuRating = GetIchimokuCloudRating(index);
         ApplyMovingAveragesRating(ichimokuRating);
 
         // average out the rating
@@ -346,8 +346,12 @@ public class TechnicalRatings : IndicatorBase<OHLCV, TechnicalRatingSummary>
                 new TechnicalRatingDetail("Hull Moving Average (9)", _hma9[index], GetIndividualRatingStatus(hma9Rating))));
     }
 
-    private static int? GetIchimokuCloudRating(IchimokuCloudResult item, decimal? close, decimal? prev)
+    private int? GetIchimokuCloudRating(int index)
     {
+        var item = _ichimoku[index];
+        var close = _close[index];
+        var prev = _prev[index];
+
         if (item.ConversionLine.HasValue && item.BaseLine.HasValue && item.LeadLine1.HasValue && item.LeadLine2.HasValue && close.HasValue && prev.HasValue)
         {
             var buy = item.LeadLine1 > item.LeadLine2

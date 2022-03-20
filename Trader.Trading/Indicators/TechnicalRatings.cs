@@ -1,4 +1,6 @@
-﻿namespace Outcompute.Trader.Trading.Indicators;
+﻿using Outcompute.Trader.Core.Mathematics;
+
+namespace Outcompute.Trader.Trading.Indicators;
 
 public enum TechnicalRatingAction
 {
@@ -654,9 +656,6 @@ public class TechnicalRatings : IndicatorBase<OHLCV, TechnicalRatingSummary>
 
 public static class TechnicalRatingsEnumerableExtensions
 {
-    private const decimal StrongBound = 0.5M;
-    private const decimal WeakBound = 0.1M;
-
     public static bool TryGetTechnicalRatingsSummaryUp(this IEnumerable<Kline> source, out TechnicalRatingSummary result, TechnicalRatingAction target = TechnicalRatingAction.Buy, int iterations = 100)
     {
         Guard.IsNotNull(source, nameof(source));
@@ -664,9 +663,18 @@ public static class TechnicalRatingsEnumerableExtensions
 
         result = TechnicalRatingSummary.Empty;
 
+        var root = source.ToOHLCV().Identity();
+
+        // ensure there is enough data
+        if (root.Count < 1)
+        {
+            return false;
+        }
+
+        var indicator = Indicator.TechnicalRatings(root);
+
         // the last summary must not be in buy action already
-        var last = source.ToTechnicalRatingsSummary().Last();
-        if (last.Summary.Action >= target)
+        if (indicator[^1].Summary.Action >= target)
         {
             return false;
         }
@@ -685,14 +693,8 @@ public static class TechnicalRatingsEnumerableExtensions
             return false;
         }
 
-        // use the last kline as a template for the future one
-        var kline = source.Last();
-        kline = kline with
-        {
-            OpenPrice = kline.ClosePrice,
-            HighPrice = kline.ClosePrice,
-            LowPrice = kline.ClosePrice
-        };
+        // keep the last original data point as a template
+        var template = root[^1];
 
         // perform binary search
         for (var i = 0; i < iterations; i++)
@@ -700,13 +702,18 @@ public static class TechnicalRatingsEnumerableExtensions
             var candidatePrice = (low + high) / 2;
 
             // probe halfway between the range
-            var candidateKline = kline with
+            var candidateKline = template with
             {
-                ClosePrice = candidatePrice,
-                HighPrice = Math.Max(kline.HighPrice, candidatePrice),
-                LowPrice = Math.Min(kline.LowPrice, candidatePrice)
+                Close = candidatePrice,
+                High = MathN.Max(template.High, candidatePrice),
+                Low = MathN.Min(template.Low, candidatePrice)
             };
-            var candidateSummary = source.Append(candidateKline).ToTechnicalRatingsSummary().Last();
+
+            // apply to the root
+            root.Update(root.Count - 1, candidateKline);
+
+            // get the updated indicator
+            var candidateSummary = indicator[^1];
 
             // adjust ranges to search for a better candidate
             if (candidateSummary.Summary.Action >= target)
@@ -728,16 +735,25 @@ public static class TechnicalRatingsEnumerableExtensions
         return result != TechnicalRatingSummary.Empty;
     }
 
-    public static bool TryGetTechnicalRatingsSummaryDown(this IEnumerable<Kline> source, out TechnicalRatingSummary result, TechnicalRatingAction target = TechnicalRatingAction.Sell, int iterations = 100)
+    public static bool TryGetTechnicalRatingsSummaryDown(this IEnumerable<Kline> source, out TechnicalRatingSummary result, TechnicalRatingAction target = TechnicalRatingAction.Buy, int iterations = 100)
     {
         Guard.IsNotNull(source, nameof(source));
         Guard.IsGreaterThanOrEqualTo(iterations, 1, nameof(iterations));
 
         result = TechnicalRatingSummary.Empty;
 
+        var root = source.ToOHLCV().Identity();
+
+        // ensure there is enough data
+        if (root.Count < 1)
+        {
+            return false;
+        }
+
+        var indicator = Indicator.TechnicalRatings(root);
+
         // the last summary must not be in sell action already
-        var last = source.ToTechnicalRatingsSummary().Last();
-        if (last.Summary.Action <= target)
+        if (indicator[^1].Summary.Action <= target)
         {
             return false;
         }
@@ -756,14 +772,8 @@ public static class TechnicalRatingsEnumerableExtensions
             return false;
         }
 
-        // use the last kline as a template for the future one
-        var kline = source.Last();
-        kline = kline with
-        {
-            OpenPrice = kline.ClosePrice,
-            HighPrice = kline.ClosePrice,
-            LowPrice = kline.ClosePrice
-        };
+        // keep the last original data point as a template
+        var template = root[^1];
 
         // perform binary search
         for (var i = 0; i < iterations; i++)
@@ -771,13 +781,18 @@ public static class TechnicalRatingsEnumerableExtensions
             var candidatePrice = (low + high) / 2;
 
             // probe halfway between the range
-            var candidateKline = kline with
+            var candidateKline = template with
             {
-                ClosePrice = candidatePrice,
-                HighPrice = Math.Max(kline.HighPrice, candidatePrice),
-                LowPrice = Math.Min(kline.LowPrice, candidatePrice)
+                Close = candidatePrice,
+                High = MathN.Max(template.High, candidatePrice),
+                Low = MathN.Min(template.Low, candidatePrice)
             };
-            var candidateSummary = source.Append(candidateKline).ToTechnicalRatingsSummary().Last();
+
+            // apply to the root
+            root.Update(root.Count - 1, candidateKline);
+
+            // get the updated indicator
+            var candidateSummary = indicator[^1];
 
             // adjust ranges to search for a better candidate
             if (candidateSummary.Summary.Action > target)

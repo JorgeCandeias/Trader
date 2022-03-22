@@ -104,17 +104,29 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
                 return Clear();
             }
 
-            var window = 0.01M;
+            // calculate the atr for reuse
+            var atr = item.Klines.SkipLast(1).ToAtr().Last();
+            if (!atr.HasValue)
+            {
+                return Clear();
+            }
+
+            // cleanup any existing orders outside the atr
+            var maxPrice = item.Symbol.LowerPriceToTickSize(item.Klines[^2].ClosePrice + atr.Value);
+            if (item.Orders.Open.Any(x => x.Side == OrderSide.Buy && x.StopPrice > maxPrice))
+            {
+                return Clear();
+            }
+
+            var window = 0.001M;
             var stopPrice = decimal.MaxValue;
             var buyPrice = decimal.MaxValue;
-
-            var atr = item.Klines.SkipLast(1).ToAtr().Last();
 
             if (item.Klines.SkipLast(1).TryGetTechnicalRatingsSummaryUp(out var summary, TechnicalRatingAction.Buy) && summary.Item.Close.HasValue)
             {
                 var stop = item.Symbol.LowerPriceToTickSize(summary.Item.Close.Value);
                 var price = item.Symbol.LowerPriceToTickSize(stop * (1 + window));
-                var distance = Math.Abs(item.Klines[^1].ClosePrice - price);
+                var distance = item.Symbol.LowerPriceToTickSize(Math.Abs(item.Klines[^2].ClosePrice - price));
 
                 if (item.Ticker.ClosePrice < stop && distance < atr)
                 {
@@ -194,6 +206,14 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             var profitPrice = item.Symbol.RaisePriceToTickSize(lots.Min(x => x.AvgPrice) * 1.5M);
             var profitStop = item.Symbol.RaisePriceToTickSize(profitPrice * (1 + window));
             if (item.Ticker.ClosePrice > profitStop && profitStop >= trailingStop)
+            {
+                sellPrice = Math.Max(sellPrice, trailingPrice);
+                stopPrice = Math.Max(stopPrice, trailingStop);
+            }
+
+            // take - raise on atr spikes
+            var range = item.Klines[^1].HighPrice - item.Klines[^1].LowPrice;
+            if (range >= atrp * 3)
             {
                 sellPrice = Math.Max(sellPrice, trailingPrice);
                 stopPrice = Math.Max(stopPrice, trailingStop);

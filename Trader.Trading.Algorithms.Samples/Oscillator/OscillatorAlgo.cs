@@ -122,7 +122,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             var stopPrice = decimal.MaxValue;
             var buyPrice = decimal.MaxValue;
 
-            if (item.Klines.SkipLast(1).TryGetTechnicalRatingsSummaryUp(out var summary, TechnicalRatingAction.Buy) && summary.Item.Close.HasValue)
+            if (item.Klines.SkipLast(1).TryGetTechnicalRatingsSummaryWeakUp(out var summary) && summary.Item.Close.HasValue)
             {
                 var stop = item.Symbol.LowerPriceToTickSize(summary.Item.Close.Value);
                 var price = item.Symbol.LowerPriceToTickSize(stop * (1 + window));
@@ -169,7 +169,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             var sellPrice = 0M;
 
             // this will be the sell price window
-            var window = 0.01M;
+            var window = 0.00M;
 
             // guard - attempt to raise to a chandellier stop from the last lot
             var atrp = item.Klines.SkipLast(1).ToAtr().Last();
@@ -186,7 +186,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
                 }
             }
 
-            if (item.Klines.SkipLast(1).TryGetTechnicalRatingsSummaryDown(out var summary, TechnicalRatingAction.Sell) && summary.Item.Close.HasValue)
+            if (item.Klines.SkipLast(1).TryGetTechnicalRatingsSummaryNeutralDown(out var summary) && summary.Item.Close.HasValue)
             {
                 var stop = item.Symbol.RaisePriceToTickSize(summary.Item.Close.Value);
                 var price = item.Symbol.RaisePriceToTickSize(stop * (1 - window));

@@ -25,8 +25,5 @@ public class OscillatorAlgoOptions
     public bool TrackingStopEnabled { get; set; } = false;
 
     [Required]
-    public int TrixPeriods { get; set; } = 9;
-
-    [Required]
     public ISet<string> ExcludeFromOpening { get; } = new HashSet<string>();
 }

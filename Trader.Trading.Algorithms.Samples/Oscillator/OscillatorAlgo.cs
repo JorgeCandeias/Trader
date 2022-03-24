@@ -41,9 +41,12 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
                 var lots = item.AutoPosition.Positions.Reverse().EnumerateLots(item.Symbol.Filters.LotSize.StepSize).Reverse().ToList();
                 var stats = lots.GetStats(item.Ticker.ClosePrice);
 
+                // calculate current technical ratings for this asset
+                var ratings = item.Klines.ToTechnicalRatingsSummary().Last();
+
                 result = result.Then(TryEnter(item, lots, stats));
 
-                if (TryExit(item, lots, stats, out var exit))
+                if (TryExit(item, lots, stats, ratings, out var exit))
                 {
                     result = result.Then(exit);
                 }
@@ -122,7 +125,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             var stopPrice = decimal.MaxValue;
             var buyPrice = decimal.MaxValue;
 
-            if (item.Klines.SkipLast(1).TryGetTechnicalRatingsSummaryWeakUp(out var summary) && summary.Item.Close.HasValue)
+            if (item.Klines.TryGetTechnicalRatingsSummaryWeakUp(out var summary) && summary.Item.Close.HasValue)
             {
                 var stop = item.Symbol.LowerPriceToTickSize(summary.Item.Close.Value);
                 var price = item.Symbol.LowerPriceToTickSize(stop * (1 + window));
@@ -155,7 +158,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
                 EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, quantity, null, buyPrice, stopPrice, EntryBuyTag));
         }
 
-        private bool TryExit(SymbolData item, IReadOnlyList<PositionLot> lots, PositionStats stats, out IAlgoCommand command)
+        private bool TryExit(SymbolData item, IReadOnlyList<PositionLot> lots, PositionStats stats, TechnicalRatingSummary ratings, out IAlgoCommand command)
         {
             command = Noop();
 
@@ -169,7 +172,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             var sellPrice = 0M;
 
             // this will be the sell price window
-            var window = 0.00M;
+            var window = 0.01M;
 
             // guard - attempt to raise to a chandellier stop from the last lot
             var atrp = item.Klines.SkipLast(1).ToAtr().Last();
@@ -186,7 +189,23 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
                 }
             }
 
-            if (item.Klines.SkipLast(1).TryGetTechnicalRatingsSummaryNeutralDown(out var summary) && summary.Item.Close.HasValue)
+            // define a trailing take target
+            var target = ratings.Summary.Rating - TechnicalRatings.WeakBound;
+
+            // raise the target up to zero if possible
+            if (ratings.Summary.Rating > 0)
+            {
+                target = Math.Max(target, 0);
+            }
+
+            // limit the target down to the weak threshold if possible
+            if (ratings.Summary.Rating > TechnicalRatings.WeakBound)
+            {
+                target = Math.Min(target, TechnicalRatings.WeakBound);
+            }
+
+            // guard - raise to the price that makes ratings go down to neutral
+            if (item.Klines.TryGetTechnicalRatingsSummaryDown(out var summary, target) && summary.Item.Close.HasValue)
             {
                 var stop = item.Symbol.RaisePriceToTickSize(summary.Item.Close.Value);
                 var price = item.Symbol.RaisePriceToTickSize(stop * (1 - window));

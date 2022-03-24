@@ -739,7 +739,7 @@ public static class TechnicalRatingsEnumerableExtensions
         return result != TechnicalRatingSummary.Empty;
     }
 
-    public static bool TryGetTechnicalRatingsSummaryNeutralDown(this IEnumerable<Kline> source, out TechnicalRatingSummary result, int iterations = 100)
+    public static bool TryGetTechnicalRatingsSummaryDown(this IEnumerable<Kline> source, out TechnicalRatingSummary result, decimal target = 0, int iterations = 100)
     {
         Guard.IsNotNull(source, nameof(source));
         Guard.IsGreaterThanOrEqualTo(iterations, 1, nameof(iterations));
@@ -756,8 +756,8 @@ public static class TechnicalRatingsEnumerableExtensions
 
         var indicator = Indicator.TechnicalRatings(root);
 
-        // the last summary must not be in sell action already
-        if (indicator[^1].Summary.Rating <= 0)
+        // the last summary must be above target
+        if (indicator[^1].Summary.Rating <= target)
         {
             return false;
         }
@@ -799,11 +799,11 @@ public static class TechnicalRatingsEnumerableExtensions
             var candidateSummary = indicator[^1];
 
             // adjust ranges to search for a better candidate
-            if (candidateSummary.Summary.Rating > 0)
+            if (candidateSummary.Summary.Rating > target)
             {
                 high = candidatePrice;
             }
-            else if (candidateSummary.Summary.Rating <= 0)
+            else if (candidateSummary.Summary.Rating <= target)
             {
                 result = candidateSummary;
                 low = candidatePrice;

@@ -31,7 +31,7 @@ public class CancelOpenOrdersExecutorTests
         var context = new AlgoContext(symbol.Name, NullServiceProvider.Instance);
         context.Data.GetOrAdd(symbol.Name).Orders.Open = ImmutableSortedSet.Create(OrderQueryResult.KeyComparer, order);
 
-        var executor = new CancelOpenOrdersExecutor(trader, orders);
+        var executor = new CancelOpenOrdersExecutor(NullLogger<CancelOpenOrdersExecutor>.Instance, trader, orders);
         var command = new CancelOpenOrdersCommand(symbol, side);
 
         // act

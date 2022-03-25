@@ -44,7 +44,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
                 // calculate current technical ratings for this asset
                 var ratings = item.Klines.ToTechnicalRatingsSummary().Last();
 
-                result = result.Then(TryEnter(item, lots, stats));
+                result = result.Then(TryEnter(item, lots, stats, ratings));
 
                 if (TryExit(item, lots, stats, ratings, out var exit))
                 {
@@ -90,7 +90,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             return quantity;
         }
 
-        private IAlgoCommand TryEnter(SymbolData item, IList<PositionLot> lots, PositionStats stats)
+        private IAlgoCommand TryEnter(SymbolData item, IList<PositionLot> lots, PositionStats stats, TechnicalRatingSummary ratings)
         {
             IAlgoCommand Clear() => CancelOpenOrders(item.Symbol, OrderSide.Buy);
 
@@ -125,7 +125,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             var stopPrice = decimal.MaxValue;
             var buyPrice = decimal.MaxValue;
 
-            if (item.Klines.TryGetTechnicalRatingsSummaryWeakUp(out var summary) && summary.Item.Close.HasValue)
+            if (ratings.Summary.Rating <= 0 && item.Klines.TryGetTechnicalRatingsSummaryWeakUp(out var summary) && summary.Item.Close.HasValue)
             {
                 var stop = item.Symbol.LowerPriceToTickSize(summary.Item.Close.Value);
                 var price = item.Symbol.LowerPriceToTickSize(stop * (1 + window));
@@ -176,6 +176,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
 
             // guard - attempt to raise to a chandellier stop from the last lot
             var atrp = item.Klines.SkipLast(1).ToAtr().Last();
+
+            /*
             if (atrp.HasValue)
             {
                 var chandellierOpen = lots[^1].Time;
@@ -188,6 +190,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
                     sellPrice = Math.Max(sellPrice, chandellierPrice);
                 }
             }
+            */
 
             // define a trailing take target
             var target = ratings.Summary.Rating - TechnicalRatings.WeakBound;

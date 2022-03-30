@@ -4,8 +4,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator;
 
 public class OscillatorAlgoOptions
 {
-    [Required, Range(typeof(TimeSpan), "0.00:00:00.000", "0.01:00:00.000")]
-    public TimeSpan BuyCooldown { get; set; } = TimeSpan.FromHours(1);
+    [Required, Range(typeof(TimeSpan), "0.00:00:00.000", "99.00:00:00.000")]
+    public TimeSpan BuyCooldown { get; set; } = TimeSpan.FromDays(1);
 
     [Required, Range(0, double.MaxValue)]
     public decimal EntryNotionalRate { get; set; } = 0.01M;

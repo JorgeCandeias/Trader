@@ -1,13 +1,17 @@
-﻿using AutoMapper;
-using Outcompute.Trader.Models;
-
-namespace Outcompute.Trader.Trading.Binance.Converters;
+﻿namespace Outcompute.Trader.Trading.Binance.Converters;
 
 /// <summary>
 /// Converts a source symbol filter api collection into the specialized symbol filter business model lookup.
 /// </summary>
-internal class ApiSymbolFiltersConverter : ITypeConverter<IEnumerable<ApiSymbolFilter>, SymbolFilters>
+internal partial class ApiSymbolFiltersConverter : ITypeConverter<IEnumerable<ApiSymbolFilter>, SymbolFilters>
 {
+    private readonly ILogger _logger;
+
+    public ApiSymbolFiltersConverter(ILogger<ApiSymbolFiltersConverter> logger)
+    {
+        _logger = logger;
+    }
+
     public SymbolFilters Convert(IEnumerable<ApiSymbolFilter> source, SymbolFilters destination, ResolutionContext context)
     {
         if (source is null) return SymbolFilters.Empty;
@@ -69,7 +73,9 @@ internal class ApiSymbolFiltersConverter : ITypeConverter<IEnumerable<ApiSymbolF
                     maxPosition = sf10;
                     break;
 
-                default: throw new ArgumentOutOfRangeException(nameof(source), $"Cannot map source symbol filter of type '{model.GetType().FullName}'");
+                default:
+                    LogCannotMapFilter(model.GetType().FullName);
+                    break;
             }
         }
 
@@ -85,4 +91,7 @@ internal class ApiSymbolFiltersConverter : ITypeConverter<IEnumerable<ApiSymbolF
             maxNumberOfIcebergOrders ?? MaxNumberOfIcebergOrdersSymbolFilter.Empty,
             maxPosition ?? MaxPositionSymbolFilter.Empty);
     }
+
+    [LoggerMessage(1, LogLevel.Warning, "Cannot map source symbol filter of type {TypeName}")]
+    private partial void LogCannotMapFilter(string? typeName);
 }

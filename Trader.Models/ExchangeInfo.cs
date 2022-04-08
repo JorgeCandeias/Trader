@@ -1,5 +1,4 @@
 ﻿using Orleans.Concurrency;
-using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 
 namespace Outcompute.Trader.Models;
@@ -127,6 +126,12 @@ public record SymbolFilters(
 
 [Immutable]
 public record SymbolFilter;
+
+[Immutable]
+public record UnknownSymbolFilter : SymbolFilter
+{
+    public static UnknownSymbolFilter Empty { get; } = new UnknownSymbolFilter();
+}
 
 [Immutable]
 public record PriceSymbolFilter(decimal MinPrice, decimal MaxPrice, decimal TickSize) : SymbolFilter

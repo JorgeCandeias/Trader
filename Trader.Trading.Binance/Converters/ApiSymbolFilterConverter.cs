@@ -1,13 +1,17 @@
-﻿using AutoMapper;
-using Outcompute.Trader.Models;
+﻿namespace Outcompute.Trader.Trading.Binance.Converters;
 
-namespace Outcompute.Trader.Trading.Binance.Converters;
-
-internal class ApiSymbolFilterConverter : ITypeConverter<ApiSymbolFilter, SymbolFilter>
+internal partial class ApiSymbolFilterConverter : ITypeConverter<ApiSymbolFilter, SymbolFilter>
 {
+    private readonly ILogger<ApiSymbolFilterConverter> _logger;
+
+    public ApiSymbolFilterConverter(ILogger<ApiSymbolFilterConverter> logger)
+    {
+        _logger = logger;
+    }
+
     public SymbolFilter Convert(ApiSymbolFilter source, SymbolFilter destination, ResolutionContext context)
     {
-        return source.FilterType switch
+        SymbolFilter result = source.FilterType switch
         {
             null => null!,
 
@@ -22,7 +26,17 @@ internal class ApiSymbolFilterConverter : ITypeConverter<ApiSymbolFilter, Symbol
             "MAX_NUM_ICEBERG_ORDERS" => new MaxNumberOfIcebergOrdersSymbolFilter(source.MaxNumIcebergOrders),
             "MAX_POSITION" => new MaxPositionSymbolFilter(source.MaxPosition),
 
-            _ => throw new AutoMapperMappingException($"Unknown {nameof(source.FilterType)} '{source.FilterType}'")
+            _ => UnknownSymbolFilter.Empty
         };
+
+        if (result is UnknownSymbolFilter)
+        {
+            LogUnknownSymbolFilter(source);
+        }
+
+        return result;
     }
+
+    [LoggerMessage(1, LogLevel.Warning, "Unknown filter {Source}")]
+    private partial void LogUnknownSymbolFilter(ApiSymbolFilter source);
 }

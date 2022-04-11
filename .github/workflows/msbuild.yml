@@ -39,12 +39,6 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 1.11
-        
-    # - name: Add MSBuild to PATH
-    #  uses: microsoft/setup-msbuild@v1.0.2
-      
-    - name: setup-sqlpackage
-      uses: coreywebber/setup-sqlpackage@v1.0.3
       
     - name: Cache SonarCloud packages
       uses: actions/cache@v1
@@ -119,21 +113,26 @@ jobs:
     - name: Build Trader Database Project
       run: dotnet build Trader.Data.Sql.Database/Trader.Data.Sql.Database.sqlproj --no-restore /p:NetCoreBuild=true
       
-    - name: Deploy Orleans Test Database
-      uses: Azure/run-sqlpackage-action@v1.0.0
-      with:
-        action: Publish
-        sourcepath: Trader.Orleans.Database\bin\${{ env.BUILD_CONFIGURATION }}\Trader.Orleans.Database.dacpac
-        profile: Trader.Orleans.Database\bin\${{ env.BUILD_CONFIGURATION }}\Trader.Orleans.Database.LocalDB.publish.xml
-        database-name: TraderTest
+    - name: Deploy Orleans Database Project
+      working-directory: Trader.Orleans.Database\bin\${{ env.BUILD_CONFIGURATION }}
+      run: |
+        "C:\Program Files\Microsoft SQL Server\160\DAC\bin\sqlpackage.exe" /Action:Publish /Profile:Trader.Orleans.Database.LocalDB.publish.xml /SourceFile:Trader.Orleans.Database.dacpac /TargetDatabaseName:TraderTest
+      
+    #- name: Deploy Orleans Test Database
+    #  uses: Azure/run-sqlpackage-action@v1.0.0
+    #  with:
+    #    action: Publish
+    #    sourcepath: Trader.Orleans.Database\bin\${{ env.BUILD_CONFIGURATION }}\Trader.Orleans.Database.dacpac
+    #    profile: Trader.Orleans.Database\bin\${{ env.BUILD_CONFIGURATION }}\Trader.Orleans.Database.LocalDB.publish.xml
+    #    database-name: TraderTest
         
-    - name: Deploy Trader Test Database
-      uses: Azure/run-sqlpackage-action@v1.0.0
-      with:
-        action: Publish
-        sourcepath: Trader.Data.Sql.Database\bin\${{ env.BUILD_CONFIGURATION }}\Trader.Data.Sql.Database.dacpac
-        profile: Trader.Data.Sql.Database\bin\${{ env.BUILD_CONFIGURATION }}\Trader.Data.Sql.Database.LocalDB.publish.xml
-        database-name: TraderTest
+    #- name: Deploy Trader Test Database
+    #  uses: Azure/run-sqlpackage-action@v1.0.0
+    #  with:
+    #    action: Publish
+    #    sourcepath: Trader.Data.Sql.Database\bin\${{ env.BUILD_CONFIGURATION }}\Trader.Data.Sql.Database.dacpac
+    #    profile: Trader.Data.Sql.Database\bin\${{ env.BUILD_CONFIGURATION }}\Trader.Data.Sql.Database.LocalDB.publish.xml
+    #    database-name: TraderTest
       
     #- name: Build
     #  run: dotnet build --no-restore

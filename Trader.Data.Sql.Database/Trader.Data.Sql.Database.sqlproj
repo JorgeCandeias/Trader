@@ -1,108 +1,111 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
-  <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <Name>Trader.Data.Sql.Database</Name>
-    <SchemaVersion>2.0</SchemaVersion>
-    <ProjectVersion>4.1</ProjectVersion>
-    <ProjectGuid>{08ef872d-10fb-4998-8383-ae99f4c17192}</ProjectGuid>
-    <DSP>Microsoft.Data.Tools.Schema.Sql.Sql130DatabaseSchemaProvider</DSP>
-    <OutputType>Database</OutputType>
-    <RootPath />
-    <RootNamespace>Trader.Data.Sql.Database</RootNamespace>
-    <AssemblyName>Trader.Data.Sql.Database</AssemblyName>
-    <ModelCollation>1033, CI</ModelCollation>
-    <DefaultFileStructure>BySchemaAndSchemaType</DefaultFileStructure>
-    <DeployToDatabase>True</DeployToDatabase>
-    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-    <TargetLanguage>CS</TargetLanguage>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <SqlServerVerification>False</SqlServerVerification>
-    <IncludeCompositeObjects>True</IncludeCompositeObjects>
-    <TargetDatabaseSet>True</TargetDatabaseSet>
-    <QueryStoreDesiredState>ReadWrite</QueryStoreDesiredState>
-    <AllowSnapshotIsolation>True</AllowSnapshotIsolation>
-    <ReadCommittedSnapshot>True</ReadCommittedSnapshot>
-    <DacApplicationName>Trader.Data.Sql.Database</DacApplicationName>
-    <TargetFrameworkProfile />
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <OutputPath>bin\Release\</OutputPath>
-    <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
-    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <DefineDebug>false</DefineDebug>
-    <DefineTrace>true</DefineTrace>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <SqlTargetName>Trader.Data.Sql.Database</SqlTargetName>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <OutputPath>bin\Debug\</OutputPath>
-    <BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <DefineDebug>true</DefineDebug>
-    <DefineTrace>true</DefineTrace>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <RunSqlCodeAnalysis>True</RunSqlCodeAnalysis>
-    <SqlTargetName>Trader.Data.Sql.Database</SqlTargetName>
-  </PropertyGroup>
-  <PropertyGroup>
-    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">11.0</VisualStudioVersion>
-    <SSDTExists Condition="Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets')">True</SSDTExists>
-    <VisualStudioVersion Condition="'$(SSDTExists)' == ''">11.0</VisualStudioVersion>
-  </PropertyGroup>
-  <Import Condition="'$(SQLDBExtensionsRefPath)' != ''" Project="$(SQLDBExtensionsRefPath)\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
-  <Import Condition="'$(SQLDBExtensionsRefPath)' == ''" Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
-  <ItemGroup>
-    <Folder Include="Properties" />
-    <Folder Include="Tables" />
-    <Folder Include="Procedures" />
-    <Folder Include="Types" />
-    <Folder Include="Sequences" />
-    <Folder Include="Scripts" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Trader.Data.Sql.Database.LocalDB.publish.xml">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Build Include="Tables\Order.sql" />
-    <Build Include="Tables\Trade.sql" />
-    <Build Include="Procedures\GetOrders.sql" />
-    <Build Include="Procedures\GetTrades.sql" />
-    <Build Include="Procedures\SetOrders.sql" />
-    <Build Include="Types\OrderTableParameter.sql" />
-    <Build Include="Types\TradeTableParameter.sql" />
-    <Build Include="Procedures\SetTrades.sql" />
-    <Build Include="Tables\Balance.sql" />
-    <Build Include="Procedures\SetBalances.sql" />
-    <Build Include="Procedures\GetBalance.sql" />
-    <Build Include="Types\BalanceTableParameter.sql" />
-    <Build Include="Tables\Symbol.sql" />
-    <Build Include="Procedures\GetOrAddSymbol.sql" />
-    <Build Include="Sequences\SymbolSequence.sql" />
-    <Build Include="Sequences\OrderSequence.sql" />
-    <Build Include="Tables\Ticker.sql" />
-    <Build Include="Types\TickerTableParameter.sql" />
-    <Build Include="Procedures\GetTicker.sql" />
-    <Build Include="Tables\Kline.sql" />
-    <Build Include="Types\KlineTableParameter.sql" />
-    <Build Include="Procedures\SetKlines.sql" />
-    <Build Include="Procedures\GetKlines.sql" />
-    <Build Include="Procedures\SetKline.sql" />
-    <Build Include="Procedures\SetOrder.sql" />
-    <Build Include="Procedures\SetTicker.sql" />
-    <Build Include="Procedures\GetBalances.sql" />
-  </ItemGroup>
-  <ItemGroup>
-    <PostDeploy Include="Scripts\Script.PostDeployment.sql" />
-  </ItemGroup>
+	<Sdk Name="Microsoft.Build.Sql" Version="0.1.3-preview" />
+	<PropertyGroup>
+		<Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+		<Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+		<Name>Trader.Data.Sql.Database</Name>
+		<SchemaVersion>2.0</SchemaVersion>
+		<ProjectVersion>4.1</ProjectVersion>
+		<ProjectGuid>{08ef872d-10fb-4998-8383-ae99f4c17192}</ProjectGuid>
+		<DSP>Microsoft.Data.Tools.Schema.Sql.Sql130DatabaseSchemaProvider</DSP>
+		<OutputType>Database</OutputType>
+		<RootPath />
+		<RootNamespace>Trader.Data.Sql.Database</RootNamespace>
+		<AssemblyName>Trader.Data.Sql.Database</AssemblyName>
+		<ModelCollation>1033, CI</ModelCollation>
+		<DefaultFileStructure>BySchemaAndSchemaType</DefaultFileStructure>
+		<DeployToDatabase>True</DeployToDatabase>
+		<TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+		<TargetLanguage>CS</TargetLanguage>
+		<AppDesignerFolder>Properties</AppDesignerFolder>
+		<SqlServerVerification>False</SqlServerVerification>
+		<IncludeCompositeObjects>True</IncludeCompositeObjects>
+		<TargetDatabaseSet>True</TargetDatabaseSet>
+		<QueryStoreDesiredState>ReadWrite</QueryStoreDesiredState>
+		<AllowSnapshotIsolation>True</AllowSnapshotIsolation>
+		<ReadCommittedSnapshot>True</ReadCommittedSnapshot>
+		<DacApplicationName>Trader.Data.Sql.Database</DacApplicationName>
+		<TargetFrameworkProfile />
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+		<OutputPath>bin\Release\</OutputPath>
+		<BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
+		<TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+		<DebugType>pdbonly</DebugType>
+		<Optimize>true</Optimize>
+		<DefineDebug>false</DefineDebug>
+		<DefineTrace>true</DefineTrace>
+		<ErrorReport>prompt</ErrorReport>
+		<WarningLevel>4</WarningLevel>
+		<SqlTargetName>Trader.Data.Sql.Database</SqlTargetName>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+		<OutputPath>bin\Debug\</OutputPath>
+		<BuildScriptName>$(MSBuildProjectName).sql</BuildScriptName>
+		<TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+		<DebugSymbols>true</DebugSymbols>
+		<DebugType>full</DebugType>
+		<Optimize>false</Optimize>
+		<DefineDebug>true</DefineDebug>
+		<DefineTrace>true</DefineTrace>
+		<ErrorReport>prompt</ErrorReport>
+		<WarningLevel>4</WarningLevel>
+		<RunSqlCodeAnalysis>True</RunSqlCodeAnalysis>
+		<SqlTargetName>Trader.Data.Sql.Database</SqlTargetName>
+	</PropertyGroup>
+	<PropertyGroup>
+		<VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">11.0</VisualStudioVersion>
+		<SSDTExists Condition="Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets')">True</SSDTExists>
+		<VisualStudioVersion Condition="'$(SSDTExists)' == ''">11.0</VisualStudioVersion>
+	</PropertyGroup>
+	<!--
+	<Import Condition="'$(SQLDBExtensionsRefPath)' != ''" Project="$(SQLDBExtensionsRefPath)\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
+	<Import Condition="'$(SQLDBExtensionsRefPath)' == ''" Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
+	-->
+	<ItemGroup>
+		<Folder Include="Properties" />
+		<Folder Include="Tables" />
+		<Folder Include="Procedures" />
+		<Folder Include="Types" />
+		<Folder Include="Sequences" />
+		<Folder Include="Scripts" />
+	</ItemGroup>
+	<ItemGroup>
+		<None Include="Trader.Data.Sql.Database.LocalDB.publish.xml">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+	<ItemGroup>
+		<Build Include="Tables\Order.sql" />
+		<Build Include="Tables\Trade.sql" />
+		<Build Include="Procedures\GetOrders.sql" />
+		<Build Include="Procedures\GetTrades.sql" />
+		<Build Include="Procedures\SetOrders.sql" />
+		<Build Include="Types\OrderTableParameter.sql" />
+		<Build Include="Types\TradeTableParameter.sql" />
+		<Build Include="Procedures\SetTrades.sql" />
+		<Build Include="Tables\Balance.sql" />
+		<Build Include="Procedures\SetBalances.sql" />
+		<Build Include="Procedures\GetBalance.sql" />
+		<Build Include="Types\BalanceTableParameter.sql" />
+		<Build Include="Tables\Symbol.sql" />
+		<Build Include="Procedures\GetOrAddSymbol.sql" />
+		<Build Include="Sequences\SymbolSequence.sql" />
+		<Build Include="Sequences\OrderSequence.sql" />
+		<Build Include="Tables\Ticker.sql" />
+		<Build Include="Types\TickerTableParameter.sql" />
+		<Build Include="Procedures\GetTicker.sql" />
+		<Build Include="Tables\Kline.sql" />
+		<Build Include="Types\KlineTableParameter.sql" />
+		<Build Include="Procedures\SetKlines.sql" />
+		<Build Include="Procedures\GetKlines.sql" />
+		<Build Include="Procedures\SetKline.sql" />
+		<Build Include="Procedures\SetOrder.sql" />
+		<Build Include="Procedures\SetTicker.sql" />
+		<Build Include="Procedures\GetBalances.sql" />
+	</ItemGroup>
+	<ItemGroup>
+		<PostDeploy Include="Scripts\Script.PostDeployment.sql" />
+	</ItemGroup>
 </Project>

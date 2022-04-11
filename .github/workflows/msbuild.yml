@@ -66,47 +66,13 @@ jobs:
     #  run: |
     #    dotnet sln remove Trader.Data.Sql.Database/Trader.Data.Sql.Database.sqlproj
     #    dotnet sln remove Trader.Orleans.Database/Trader.Orleans.Database.sqlproj
-      
-    #- name: Build Database Projects
-    #  run: |
-    #    msbuild /m /t:Build /p:Configuration=${{ env.BUILD_CONFIGURATION }} Trader.Data.Sql.Database/Trader.Data.Sql.Database.sqlproj
-    #    msbuild /m /t:Build /p:Configuration=${{ env.BUILD_CONFIGURATION }} Trader.Orleans.Database/Trader.Orleans.Database.sqlproj    
-      
-    #- name: Deploy Trader Database Project
-    #  working-directory: Trader.Data.Sql.Database\bin\${{ env.BUILD_CONFIGURATION }}
-    #  run: |
-    #    sqlpackage /Action:Publish /Profile:Trader.Data.Sql.Database.LocalDB.publish.xml /SourceFile:Trader.Data.Sql.Database.dacpac /TargetDatabaseName:TraderTest
-        
-    #- name: Deploy Trader Database Project
-    #  uses: Azure/run-sqlpackage-action@v1.0.0
-    #  with:
-    #    action: Publish
-    #    sourcepath: Trader.Data.Sql.Database\bin\${{ env.BUILD_CONFIGURATION }}\Trader.Data.Sql.Database.dacpac
-    #    profile: Trader.Data.Sql.Database\bin\${{ env.BUILD_CONFIGURATION }}\Trader.Data.Sql.Database.LocalDB.publish.xml
-    #    database-name: TraderTest
-        
-    #- name: Deploy Orleans Database Project
-    #  working-directory: Trader.Orleans.Database\bin\${{ env.BUILD_CONFIGURATION }}
-    #  run: |
-    #    sqlpackage /Action:Publish /Profile:Trader.Orleans.Database.LocalDB.publish.xml /SourceFile:Trader.Orleans.Database.dacpac /TargetDatabaseName:TraderTest
-        
-    #- name: Deploy Orleans Database Project
-    #  uses: Azure/run-sqlpackage-action@v1.0.0
-    #  with:
-    #    action: Publish
-    #    sourcepath: Trader.Orleans.Database\bin\${{ env.BUILD_CONFIGURATION }}\Trader.Orleans.Database.dacpac
-    #    profile: Trader.Orleans.Database\bin\${{ env.BUILD_CONFIGURATION }}\Trader.Orleans.Database.LocalDB.publish.xml
-    #    database-name: TraderTest
-        
+    
     #- name: Delete Database Projects
     #  shell: cmd
     #  run: |
     #    RMDIR /S /Q Trader.Data.Sql.Database
     #    RMDIR /S /Q Trader.Orleans.Database
-      
-    - name: Restore dependencies
-      run: dotnet restore
-      
+            
     - name: Build Orleans Database Project
       run: dotnet build Trader.Orleans.Database/Trader.Orleans.Database.sqlproj --no-restore /p:NetCoreBuild=true
       
@@ -118,28 +84,15 @@ jobs:
       run: |
         $SqlPackage = "C:\Program Files\Microsoft SQL Server\160\DAC\bin\sqlpackage.exe"
         & $SqlPackage /Action:Publish /Profile:Trader.Orleans.Database.LocalDB.publish.xml /SourceFile:Trader.Orleans.Database.dacpac /TargetDatabaseName:TraderTest
-      
-    #- name: Deploy Orleans Test Database
-    #  uses: Azure/run-sqlpackage-action@v1.0.0
-    #  with:
-    #    action: Publish
-    #    sourcepath: Trader.Orleans.Database\bin\${{ env.BUILD_CONFIGURATION }}\Trader.Orleans.Database.dacpac
-    #    profile: Trader.Orleans.Database\bin\${{ env.BUILD_CONFIGURATION }}\Trader.Orleans.Database.LocalDB.publish.xml
-    #    database-name: TraderTest
         
-    #- name: Deploy Trader Test Database
-    #  uses: Azure/run-sqlpackage-action@v1.0.0
-    #  with:
-    #    action: Publish
-    #    sourcepath: Trader.Data.Sql.Database\bin\${{ env.BUILD_CONFIGURATION }}\Trader.Data.Sql.Database.dacpac
-    #    profile: Trader.Data.Sql.Database\bin\${{ env.BUILD_CONFIGURATION }}\Trader.Data.Sql.Database.LocalDB.publish.xml
-    #    database-name: TraderTest
+    - name: Deploy Trader Database Project
+      working-directory: Trader.Data.Sql.Database\bin\${{ env.BUILD_CONFIGURATION }}
+      run: |
+        $SqlPackage = "C:\Program Files\Microsoft SQL Server\160\DAC\bin\sqlpackage.exe"
+        & $SqlPackage /Action:Publish /Profile:Trader.Data.Sql.Database.LocalDB.publish.xml /SourceFile:Trader.Data.Sql.Database.dacpac /TargetDatabaseName:TraderTest
       
-    #- name: Build
-    #  run: dotnet build --no-restore
-      
-    #- name: Test
-    #  run: dotnet test --no-build
+    - name: Restore dependencies
+      run: dotnet restore
 
     - name: Build & Test & Analyze
       env:

@@ -5,7 +5,6 @@ using Orleans.Core;
 using Orleans.Runtime;
 using Outcompute.Trader.Core.Randomizers;
 using System.Buffers;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Outcompute.Trader.Trading.Watchdog;
 

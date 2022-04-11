@@ -1,7 +1,4 @@
-﻿using Orleans;
-using Outcompute.Trader.Models;
-
-namespace Outcompute.Trader.Trading.Providers.Swap;
+﻿namespace Outcompute.Trader.Trading.Providers.Swap;
 
 internal interface ISwapPoolGrain : IGrainWithGuidKey
 {

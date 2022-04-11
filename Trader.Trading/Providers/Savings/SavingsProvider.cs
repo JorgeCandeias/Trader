@@ -1,7 +1,4 @@
-﻿using Orleans;
-using Outcompute.Trader.Models;
-
-namespace Outcompute.Trader.Trading.Providers.Savings;
+﻿namespace Outcompute.Trader.Trading.Providers.Savings;
 
 internal class SavingsProvider : ISavingsProvider
 {

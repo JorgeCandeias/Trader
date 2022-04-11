@@ -1,10 +1,8 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using Orleans;
 using Orleans.Concurrency;
 using OrleansDashboard;
 using Outcompute.Trader.Data;
-using Outcompute.Trader.Models;
 
 namespace Outcompute.Trader.Trading.Providers.Tickers;
 

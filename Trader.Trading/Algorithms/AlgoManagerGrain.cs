@@ -1,10 +1,8 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Orleans;
 using Orleans.Core;
 using Orleans.Timers;
-using System.Collections.Immutable;
 
 namespace Outcompute.Trader.Trading.Algorithms;
 

@@ -1,6 +1,4 @@
-﻿using Orleans;
-
-namespace Outcompute.Trader.Trading.Providers.Exchange;
+﻿namespace Outcompute.Trader.Trading.Providers.Exchange;
 
 internal interface IExchangeInfoGrain : IGrainWithGuidKey
 {

@@ -1,7 +1,4 @@
-﻿using Orleans;
-using Outcompute.Trader.Models;
-
-namespace Outcompute.Trader.Trading.Providers.Klines;
+﻿namespace Outcompute.Trader.Trading.Providers.Klines;
 
 internal interface IKlineProviderGrain : IGrainWithStringKey
 {

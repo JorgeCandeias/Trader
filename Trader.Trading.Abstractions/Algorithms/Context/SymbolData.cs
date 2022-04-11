@@ -23,7 +23,7 @@ public class SymbolData
     private ImmutableSortedSet<AccountTrade> _trades = ImmutableSortedSet<AccountTrade>.Empty;
     private ImmutableSortedSet<Kline> _klines = ImmutableSortedSet<Kline>.Empty;
 
-    private IDictionary<(string Symbol, KlineInterval Interval), ImmutableSortedSet<Kline>> _klineDependencies = new Dictionary<(string Symbol, KlineInterval Interval), ImmutableSortedSet<Kline>>();
+    private readonly Dictionary<(string Symbol, KlineInterval Interval), ImmutableSortedSet<Kline>> _klineDependencies = new();
 
     /// <summary>
     /// The name of the symbol.

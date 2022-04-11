@@ -16,8 +16,8 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.Orleans.Core.Abstractions" Version="3.6.0" />
-		<PackageReference Include="SonarAnalyzer.CSharp" Version="8.36.1.44192">
+		<PackageReference Include="Microsoft.Orleans.Core.Abstractions" Version="3.6.1" />
+		<PackageReference Include="SonarAnalyzer.CSharp" Version="8.37.0.45539">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>

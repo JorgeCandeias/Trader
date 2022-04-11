@@ -32,7 +32,7 @@
 		<PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" Version="6.0.0" />
 		<PackageReference Include="Polly" Version="7.2.3" />
-		<PackageReference Include="SonarAnalyzer.CSharp" Version="8.36.1.44192">
+		<PackageReference Include="SonarAnalyzer.CSharp" Version="8.37.0.45539">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>

@@ -43,8 +43,8 @@ jobs:
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
       
-    - name: setup-sqlpackage
-      uses: coreywebber/setup-sqlpackage@v1.0.3
+    #- name: setup-sqlpackage
+    #  uses: coreywebber/setup-sqlpackage@v1.0.3
       
     - name: Cache SonarCloud packages
       uses: actions/cache@v1

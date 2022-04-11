@@ -116,7 +116,8 @@ jobs:
     - name: Deploy Orleans Database Project
       working-directory: Trader.Orleans.Database\bin\${{ env.BUILD_CONFIGURATION }}
       run: |
-        "C:\Program Files\Microsoft SQL Server\160\DAC\bin\sqlpackage.exe" /Action:Publish /Profile:Trader.Orleans.Database.LocalDB.publish.xml /SourceFile:Trader.Orleans.Database.dacpac /TargetDatabaseName:TraderTest
+        $SqlPackage = "C:\Program Files\Microsoft SQL Server\160\DAC\bin\sqlpackage.exe"
+        & $SqlPackage /Action:Publish /Profile:Trader.Orleans.Database.LocalDB.publish.xml /SourceFile:Trader.Orleans.Database.dacpac /TargetDatabaseName:TraderTest
       
     #- name: Deploy Orleans Test Database
     #  uses: Azure/run-sqlpackage-action@v1.0.0

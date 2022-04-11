@@ -70,8 +70,7 @@
 		<None Include="Scripts\Script.PostDeployment.Persistence.OrleansQuery.sql" />
 		<None Include="Scripts\Script.PostDeployment.Reminders.OrleansQuery.sql" />
 		<None Include="Scripts\Script.PostDeployment.Clustering.OrleansQuery.sql" />
-	</ItemGroup>
-	<ItemGroup>
+
 		<PostDeploy Include="Scripts\Script.PostDeployment.sql" />
 	</ItemGroup>
 	<ItemGroup>

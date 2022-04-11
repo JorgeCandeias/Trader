@@ -78,15 +78,31 @@ jobs:
         msbuild /m /t:Build /p:Configuration=${{ env.BUILD_CONFIGURATION }} Trader.Data.Sql.Database/Trader.Data.Sql.Database.sqlproj
         msbuild /m /t:Build /p:Configuration=${{ env.BUILD_CONFIGURATION }} Trader.Orleans.Database/Trader.Orleans.Database.sqlproj
       
+    #- name: Deploy Trader Database Project
+    #  working-directory: Trader.Data.Sql.Database\bin\${{ env.BUILD_CONFIGURATION }}
+    #  run: |
+    #    sqlpackage /Action:Publish /Profile:Trader.Data.Sql.Database.LocalDB.publish.xml /SourceFile:Trader.Data.Sql.Database.dacpac /TargetDatabaseName:TraderTest
+        
     - name: Deploy Trader Database Project
-      working-directory: Trader.Data.Sql.Database\bin\${{ env.BUILD_CONFIGURATION }}
-      run: |
-        sqlpackage /Action:Publish /Profile:Trader.Data.Sql.Database.LocalDB.publish.xml /SourceFile:Trader.Data.Sql.Database.dacpac /TargetDatabaseName:TraderTest
+      uses: Azure/run-sqlpackage-action@v1.0.0
+      with:
+        action: Publish
+        sourcepath: Trader.Data.Sql.Database\bin\${{ env.BUILD_CONFIGURATION }}\Trader.Data.Sql.Database.dacpac
+        profile: Trader.Data.Sql.Database\bin\${{ env.BUILD_CONFIGURATION }}\Trader.Data.Sql.Database.LocalDB.publish.xml
+        database-name: TraderTest
+        
+    #- name: Deploy Orleans Database Project
+    #  working-directory: Trader.Orleans.Database\bin\${{ env.BUILD_CONFIGURATION }}
+    #  run: |
+    #    sqlpackage /Action:Publish /Profile:Trader.Orleans.Database.LocalDB.publish.xml /SourceFile:Trader.Orleans.Database.dacpac /TargetDatabaseName:TraderTest
         
     - name: Deploy Orleans Database Project
-      working-directory: Trader.Orleans.Database\bin\${{ env.BUILD_CONFIGURATION }}
-      run: |
-        sqlpackage /Action:Publish /Profile:Trader.Orleans.Database.LocalDB.publish.xml /SourceFile:Trader.Orleans.Database.dacpac /TargetDatabaseName:TraderTest
+      uses: Azure/run-sqlpackage-action@v1.0.0
+      with:
+        action: Publish
+        sourcepath: Trader.Orleans.Database\bin\${{ env.BUILD_CONFIGURATION }}\Trader.Orleans.Database.dacpac
+        profile: Trader.Orleans.Database\bin\${{ env.BUILD_CONFIGURATION }}\Trader.Orleans.Database.LocalDB.publish.xml
+        database-name: TraderTest
         
     - name: Delete Database Projects
       shell: cmd

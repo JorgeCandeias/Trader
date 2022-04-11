@@ -113,6 +113,28 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
       
+    - name: Build Orleans Database Project
+      run: dotnet build Trader.Orleans.Database/Trader.Orleans.Database.sqlproj --no-restore /p:NetCoreBuild=true
+      
+    - name: Build Trader Database Project
+      run: dotnet build Trader.Data.Sql.Database/Trader.Data.Sql.Database.sqlproj --no-restore /p:NetCoreBuild=true
+      
+    - name: Deploy Orleans Test Database
+      uses: Azure/run-sqlpackage-action@v1.0.0
+      with:
+        action: Publish
+        sourcepath: Trader.Orleans.Database\bin\${{ env.BUILD_CONFIGURATION }}\Trader.Orleans.Database.dacpac
+        profile: Trader.Orleans.Database\bin\${{ env.BUILD_CONFIGURATION }}\Trader.Orleans.Database.LocalDB.publish.xml
+        database-name: TraderTest
+        
+    - name: Deploy Trader Test Database
+      uses: Azure/run-sqlpackage-action@v1.0.0
+      with:
+        action: Publish
+        sourcepath: Trader.Data.Sql.Database\bin\${{ env.BUILD_CONFIGURATION }}\Trader.Data.Sql.Database.dacpac
+        profile: Trader.Data.Sql.Database\bin\${{ env.BUILD_CONFIGURATION }}\Trader.Data.Sql.Database.LocalDB.publish.xml
+        database-name: TraderTest
+      
     #- name: Build
     #  run: dotnet build --no-restore
       

@@ -1,6 +1,6 @@
 # Trader
 
-[![.NET](https://github.com/JorgeCandeias/Trader/actions/workflows/msbuild.yml/badge.svg)](https://github.com/JorgeCandeias/Trader/actions/workflows/msbuild.yml)
+[![.NET](https://github.com/JorgeCandeias/Trader/actions/workflows/msbuild.yml/badge.svg)](https://github.com/JorgeCandeias/Trader/actions/workflows/build.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=JorgeCandeias_Trader&metric=alert_status)](https://sonarcloud.io/dashboard?id=JorgeCandeias_Trader)
 
 Outcompute Trader is a real-time algorithmic trading framework and execution host built on Microsoft Orleans.

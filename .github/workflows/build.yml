@@ -1,4 +1,4 @@
-name: MSBuild
+name: Build
 concurrency: ci-${{ github.ref }}
 
 on:

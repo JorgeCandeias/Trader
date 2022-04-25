@@ -1,9 +1,5 @@
 ﻿namespace Outcompute.Trader.Trading.Indicators;
 
-public interface IIndicator<TSource, TResult> : IIndicatorSource<TSource>, IIndicatorResult<TResult>
-{
-}
-
 public static class IIndicatorExtensions
 {
     /// <summary>

@@ -22,7 +22,7 @@ public interface IIndicatorResult<out TResult> : IReadOnlyList<TResult>, IDispos
     IDisposable RegisterChangeCallback(Action<int> action);
 }
 
-public interface IIndicator<TSource, TResult> : IIndicatorSource<TSource>, IIndicatorResult<TResult>, IDisposable
+public interface IIndicator<TSource, TResult> : IIndicatorSource<TSource>, IIndicatorResult<TResult>
 {
 }
 

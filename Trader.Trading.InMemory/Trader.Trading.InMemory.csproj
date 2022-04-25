@@ -23,13 +23,13 @@
 	    <PrivateAssets>all</PrivateAssets>
 	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	  </PackageReference>
-	  <PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" Version="3.6.1">
+	  <PackageReference Include="Microsoft.Orleans.CodeGenerator.MSBuild" Version="3.6.2">
 	    <PrivateAssets>all</PrivateAssets>
 	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	  </PackageReference>
-	  <PackageReference Include="Microsoft.Orleans.Core.Abstractions" Version="3.6.1" />
-	  <PackageReference Include="Microsoft.Orleans.Runtime.Abstractions" Version="3.6.1" />
-	  <PackageReference Include="SonarAnalyzer.CSharp" Version="8.37.0.45539">
+	  <PackageReference Include="Microsoft.Orleans.Core.Abstractions" Version="3.6.2" />
+	  <PackageReference Include="Microsoft.Orleans.Runtime.Abstractions" Version="3.6.2" />
+	  <PackageReference Include="SonarAnalyzer.CSharp" Version="8.38.0.46746">
 	    <PrivateAssets>all</PrivateAssets>
 	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 	  </PackageReference>

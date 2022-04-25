@@ -5,6 +5,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Description>Indicator library of Outcompute Trader, a real-time algorithmic trading framework.</Description>
+    <AssemblyName>Outcompute.Trader.Indicators</AssemblyName>
+    <RootNamespace>Outcompute.Trader.Indicators</RootNamespace>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Diagnostics" Version="7.1.2" />
+  </ItemGroup>
 
 </Project>

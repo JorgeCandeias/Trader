@@ -1,4 +1,4 @@
-﻿namespace Outcompute.Trader.Trading.Indicators;
+﻿namespace Outcompute.Trader.Indicators;
 
 public static class IIndicatorExtensions
 {

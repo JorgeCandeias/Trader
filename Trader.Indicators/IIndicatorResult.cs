@@ -1,4 +1,4 @@
-﻿namespace Trader.Indicators;
+﻿namespace Outcompute.Trader.Indicators;
 
 public interface IIndicatorResult<out TResult> : IReadOnlyList<TResult>, IDisposable
 {

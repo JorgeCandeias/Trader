@@ -1,4 +1,4 @@
-﻿using Outcompute.Trader.Trading.Indicators;
+﻿using Outcompute.Trader.Trading;
 
 namespace System.Collections.Generic;
 

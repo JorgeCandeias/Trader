@@ -1,5 +1,4 @@
-﻿using Outcompute.Trader.Trading.Indicators;
-using Outcompute.Trader.Trading.Indicators.Operators;
+﻿using Outcompute.Trader.Indicators;
 
 namespace Outcompute.Trader.Trading.Tests.Indicators.Operators
 {

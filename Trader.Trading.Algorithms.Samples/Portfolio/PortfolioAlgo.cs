@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Outcompute.Trader.Indicators;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Algorithms.Positions;
@@ -38,11 +39,6 @@ public partial class PortfolioAlgo : Algo
 
         foreach (var item in Context.Data)
         {
-            if (!_kdjScan.ContainsKey(item.Symbol.Name))
-            {
-                _kdjScan[item.Symbol.Name] = GetOptimizeKdjPeriods(item);
-            }
-
             if (item.Symbol.Filters.LotSize.StepSize <= 0)
             {
                 LogSkippedSymbolWithInvalidLotStepSize(TypeName, Context.Name, item.Symbol.Name, item.Symbol.Filters.LotSize.StepSize, item.Symbol.BaseAsset);
@@ -191,62 +187,6 @@ public partial class PortfolioAlgo : Algo
         }
     }
 
-    private int GetOptimizeKdjPeriods(SymbolData item)
-    {
-        decimal? electedTotal = 0M;
-        var electedPeriods = 0;
-        var electedTrades = 0;
-
-        for (var periods = 1; periods < 100; periods++)
-        {
-            decimal? total = 0M;
-            decimal? accNumerator = 0M;
-            decimal? accQuantity = 0M;
-            var buys = 0;
-            var sells = 0;
-            var prev = KdjValue.Empty;
-
-            foreach (var kdj in item.Klines.TakeLast(1000).ToKdj(periods))
-            {
-                if (kdj.Cross == KdjCross.Up && prev.D <= 30)
-                {
-                    var money = 1M;
-                    var quantity = money / kdj.Price;
-
-                    accNumerator += kdj.Price * quantity;
-                    accQuantity += quantity;
-
-                    buys += 1;
-                }
-                else if (kdj.Cross == KdjCross.Down && accNumerator > 0 && prev.D >= 70)
-                {
-                    var sell = kdj.Price * accQuantity;
-                    var profit = sell - accNumerator;
-
-                    sells += 1;
-                    total += profit;
-
-                    accNumerator = 0;
-                    accQuantity = 0;
-                }
-
-                prev = kdj;
-            }
-
-            if (total > electedTotal)
-            {
-                electedTotal = total;
-                electedPeriods = periods;
-            }
-
-            LogTestedKdjPeriods(TypeName, Context.Name, item.Symbol.Name, periods, total, buys, sells);
-        }
-
-        LogOptimalKdjPeriods(TypeName, Context.Name, item.Symbol.Name, electedPeriods, electedTotal, electedTrades);
-
-        return electedPeriods;
-    }
-
     private IAlgoCommand Buy(SymbolData item, IList<PositionLot> lots)
     {
         IAlgoCommand Clear() => CancelOpenOrders(item.Symbol, OrderSide.Buy, null, BuyTag);
@@ -302,7 +242,7 @@ public partial class PortfolioAlgo : Algo
 
         // predict the next kdj cross from oversold
         var oversold = item.Klines.SkipLast(1).ToKdj().Reverse().TakeWhile(x => x.Side == KdjSide.Down).Any(x => x.J <= 20);
-        if (oversold && item.Klines.SkipLast(1).TryGetKdjForUpcross(item.Klines[^1], out var cross) && cross.Price.HasValue)
+        if (oversold && item.Klines.ToHLC().TryGetKdjForUpcross(out var cross) && cross.Price.HasValue)
         {
             var target = item.Symbol.LowerPriceToTickSize(cross.Price.Value);
 

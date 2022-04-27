@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Outcompute.Trader.Indicators;
 using Outcompute.Trader.Models;
 using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Algorithms.Positions;
@@ -131,7 +132,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             var stopPrice = decimal.MaxValue;
             var buyPrice = decimal.MaxValue;
 
-            if (ratings.Summary.Rating <= 0 && item.Klines.TryGetTechnicalRatingsSummaryWeakUp(out var summary) && summary.Item.Close.HasValue)
+            if (ratings.Summary.Rating <= 0 && item.Klines.ToOHLCV().TryGetTechnicalRatingsSummaryWeakUp(out var summary) && summary.Item.Close.HasValue)
             {
                 var stop = item.Symbol.LowerPriceToTickSize(summary.Item.Close.Value);
                 var price = item.Symbol.LowerPriceToTickSize(stop * (1 + window));
@@ -202,7 +203,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             var target = ratings.Summary.Rating - TechnicalRatings.WeakBound;
 
             // guard - raise to the price that makes ratings go down to neutral
-            if (item.Klines.TryGetTechnicalRatingsSummaryDown(out var summary, target) && summary.Item.Close.HasValue)
+            if (item.Klines.ToOHLCV().TryGetTechnicalRatingsSummaryDown(out var summary, target) && summary.Item.Close.HasValue)
             {
                 var stop = item.Symbol.RaisePriceToTickSize(summary.Item.Close.Value);
                 var price = item.Symbol.RaisePriceToTickSize(stop * (1 - window));

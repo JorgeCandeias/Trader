@@ -1,5 +1,5 @@
 ﻿using Outcompute.Trader.Core.Mathematics;
-using Outcompute.Trader.Trading.Indicators;
+using Outcompute.Trader.Indicators;
 
 namespace Outcompute.Trader.Trading.Tests.Indicators;
 

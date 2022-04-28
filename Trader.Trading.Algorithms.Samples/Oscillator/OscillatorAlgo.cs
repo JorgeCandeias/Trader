@@ -6,6 +6,7 @@ using Outcompute.Trader.Trading.Algorithms.Context;
 using Outcompute.Trader.Trading.Algorithms.Positions;
 using Outcompute.Trader.Trading.Commands;
 using Outcompute.Trader.Trading.Indicators;
+using Indicator = Outcompute.Trader.Indicators.Indicator;
 
 namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
 {
@@ -43,11 +44,12 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
                 var stats = lots.GetStats(item.Ticker.ClosePrice);
 
                 // calculate current technical ratings for this asset
-                var ratings = item.Klines.ToTechnicalRatingsSummary().Last();
+                var source = item.Klines.ToOHLCV().Identity();
+                var ratings = Indicator.TechnicalRatings(source);
 
-                result = result.Then(TryEnter(item, lots, stats, ratings));
+                result = result.Then(TryEnter(item, lots, stats, source, ratings));
 
-                if (TryExit(item, lots, stats, ratings, out var exit))
+                if (TryExit(item, lots, stats, source, ratings, out var exit))
                 {
                     result = result.Then(exit);
                 }
@@ -91,7 +93,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             return quantity;
         }
 
-        private IAlgoCommand TryEnter(SymbolData item, IList<PositionLot> lots, PositionStats stats, TechnicalRatingSummary ratings)
+        private IAlgoCommand TryEnter(SymbolData item, IList<PositionLot> lots, PositionStats stats, Identity<OHLCV> source, TechnicalRatings ratings)
         {
             IAlgoCommand Clear() => CancelOpenOrders(item.Symbol, OrderSide.Buy);
 
@@ -116,7 +118,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             }
 
             // ratings must be close to the entry point to bother reserving funds
-            if (ratings.Summary.Rating < -TechnicalRatings.WeakBound)
+            if (ratings[^1].Summary.Rating < -TechnicalRatings.WeakBound)
             {
                 return Clear();
             }
@@ -132,7 +134,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             var stopPrice = decimal.MaxValue;
             var buyPrice = decimal.MaxValue;
 
-            if (ratings.Summary.Rating <= 0 && item.Klines.ToOHLCV().TryGetTechnicalRatingsSummaryWeakUp(out var summary) && summary.Item.Close.HasValue)
+            if (ratings[^1].Summary.Rating <= 0 && ratings.TryGetSourceForTarget(source, TechnicalRatings.WeakBound, Aproximate.Up, out var summary) && summary.Item.Close.HasValue)
             {
                 var stop = item.Symbol.LowerPriceToTickSize(summary.Item.Close.Value);
                 var price = item.Symbol.LowerPriceToTickSize(stop * (1 + window));
@@ -165,7 +167,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
                 EnsureSingleOrder(item.Symbol, OrderSide.Buy, OrderType.StopLossLimit, TimeInForce.GoodTillCanceled, quantity, null, buyPrice, stopPrice, EntryBuyTag));
         }
 
-        private bool TryExit(SymbolData item, IReadOnlyList<PositionLot> lots, PositionStats stats, TechnicalRatingSummary ratings, out IAlgoCommand command)
+        private bool TryExit(SymbolData item, IReadOnlyList<PositionLot> lots, PositionStats stats, Identity<OHLCV> source, TechnicalRatings ratings, out IAlgoCommand command)
         {
             command = Noop();
 
@@ -181,7 +183,6 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             // this will be the sell price window
             var window = 0.01M;
 
-            // guard - attempt to raise to a chandellier stop from the last lot
             var atrp = item.Klines.SkipLast(1).ToAtr().Last();
 
             /*
@@ -200,10 +201,10 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             */
 
             // define a trailing take target
-            var target = ratings.Summary.Rating - TechnicalRatings.WeakBound;
+            var target = ratings[^1].Summary.Rating - TechnicalRatings.WeakBound;
 
             // guard - raise to the price that makes ratings go down to neutral
-            if (item.Klines.ToOHLCV().TryGetTechnicalRatingsSummaryDown(out var summary, target) && summary.Item.Close.HasValue)
+            if (ratings.TryGetSourceForTarget(source, target, Aproximate.Up, out var summary) && summary.Item.Close.HasValue)
             {
                 var stop = item.Symbol.RaisePriceToTickSize(summary.Item.Close.Value);
                 var price = item.Symbol.RaisePriceToTickSize(stop * (1 - window));

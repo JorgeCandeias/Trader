@@ -7,6 +7,7 @@ public interface IIndicatorSource<in TSource>
     /// </summary>
     void Add(TSource value);
 
+    // todo: make this an index setter
     /// <summary>
     /// Updates the source value in the specific position of the indicator.
     /// </summary>

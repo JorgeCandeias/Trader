@@ -658,6 +658,104 @@ public class TechnicalRatings : IndicatorBase<OHLCV, TechnicalRatingSummary>
 
 public static class TechnicalRatingsEnumerableExtensions
 {
+    /// <summary>
+    /// Given the target rating, performs a binary search over the price space of the last rating to identify the source price required for it to become the target.
+    /// </summary>
+    /// <param name="indicator">The ratings history to use, including the last rating, which will be ignored.</param>
+    /// <param name="source">
+    /// The data source that affects the indicator.
+    /// The last item will be temporarily changed by the binary search operation and the reset before the method completes.
+    /// </param>
+    /// <param name="target">The target rating for which to discover the source price that would cause it.</param>
+    /// <param name="result">The rating candidate calculated, which includes the source price that caused it.</param>
+    /// <param name="iterations">The maximum number of iterations the binary search loop is allowed to execute.</param>
+    /// <param name="aproximate">Whether to select the closest candidate above or below the target.</param>
+    /// <returns>
+    /// <see cref="true"/> if a candidate was found, otherwise <see cref="false"/>.
+    /// </returns>
+    public static bool TryGetSourceForTarget(this TechnicalRatings indicator, Identity<OHLCV> source, decimal target, Aproximate aproximate, out TechnicalRatingSummary result, int iterations = 100)
+    {
+        Guard.IsNotNull(source, nameof(source));
+        Guard.IsGreaterThanOrEqualTo(iterations, 1, nameof(iterations));
+
+        result = TechnicalRatingSummary.Empty;
+
+        // ensure there is enough data
+        if (source.Count < 1)
+        {
+            return false;
+        }
+
+        // define the upper search range
+        var high = source.Max(x => x.High) * 2M;
+        if (high <= 0)
+        {
+            return false;
+        }
+
+        // define the lower search range
+        var low = source.Min(x => x.Low) / 2M;
+        if (low <= 0)
+        {
+            return false;
+        }
+
+        // keep the last original data point
+        var original = source[^1];
+
+        // use the last data point as a template
+        var template = source[^1];
+
+        // perform binary search
+        for (var i = 0; i < iterations; i++)
+        {
+            var candidatePrice = (low + high) / 2;
+
+            // probe halfway between the range
+            var candidateSource = template with
+            {
+                Close = candidatePrice,
+                High = MathN.Max(template.High, candidatePrice),
+                Low = MathN.Min(template.Low, candidatePrice)
+            };
+
+            // apply to the root
+            source.Update(source.Count - 1, candidateSource);
+
+            // get the updated indicator
+            var candidateResult = indicator[^1];
+
+            // adjust ranges to search for a better candidate
+            if (candidateResult.Summary.Rating > target)
+            {
+                if (aproximate == Aproximate.Up)
+                {
+                    result = candidateResult;
+                }
+                high = candidatePrice;
+            }
+            else if (candidateResult.Summary.Rating < target)
+            {
+                if (aproximate == Aproximate.Down)
+                {
+                    result = candidateResult;
+                }
+                low = candidatePrice;
+            }
+            else
+            {
+                // complete early on lucky exact match
+                result = candidateResult;
+                break;
+            }
+        }
+
+        // reset the source to its original state
+        source.Update(source.Count - 1, original);
+
+        return result != TechnicalRatingSummary.Empty;
+    }
+
     public static bool TryGetTechnicalRatingsSummaryWeakUp(this IEnumerable<OHLCV> source, out TechnicalRatingSummary result, int iterations = 100)
     {
         Guard.IsNotNull(source, nameof(source));

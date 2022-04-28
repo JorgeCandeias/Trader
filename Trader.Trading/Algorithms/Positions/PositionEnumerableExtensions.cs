@@ -19,7 +19,7 @@ namespace System.Collections.Generic
 
             return GetStatsCore(source, price);
         }
-
+        
         /// <summary>
         /// Calculate relative profit and loss statistics in one pass vs the specified price.
         /// </summary>

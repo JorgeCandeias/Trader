@@ -25,6 +25,7 @@ internal partial class ApiSymbolFilterConverter : ITypeConverter<ApiSymbolFilter
             "MAX_NUM_ALGO_ORDERS" => new MaxNumberOfAlgoOrdersSymbolFilter(source.MaxNumAlgoOrders),
             "MAX_NUM_ICEBERG_ORDERS" => new MaxNumberOfIcebergOrdersSymbolFilter(source.MaxNumIcebergOrders),
             "MAX_POSITION" => new MaxPositionSymbolFilter(source.MaxPosition),
+            "TRAILING_DELTA" => new TrailingDeltaSymbolFilter(source.MinTrailingAboveDelta, source.MaxTrailingAboveDelta, source.MinTrailingBelowDelta, source.MaxTrailingBelowDelta),
 
             _ => UnknownSymbolFilter.Empty
         };

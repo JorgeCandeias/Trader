@@ -27,9 +27,13 @@ internal record ApiSymbolFilter(
     int MaxNumOrders,
     int MaxNumAlgoOrders,
     int MaxNumIcebergOrders,
+    int MinTrailingAboveDelta,
+    int MaxTrailingAboveDelta,
+    int MinTrailingBelowDelta,
+    int MaxTrailingBelowDelta,
     decimal MaxPosition)
 {
-    public static ApiSymbolFilter Empty { get; } = new ApiSymbolFilter(string.Empty, 0, 0, 0, 0, 0, 0, 0, 0, 0, false, 0, 0, 0, 0, 0, 0);
+    public static ApiSymbolFilter Empty { get; } = new ApiSymbolFilter(string.Empty, 0, 0, 0, 0, 0, 0, 0, 0, 0, false, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
 }
 
 internal record ApiSymbol(

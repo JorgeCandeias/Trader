@@ -673,7 +673,7 @@ public static class TechnicalRatingsEnumerableExtensions
     /// <returns>
     /// <see cref="true"/> if a candidate was found, otherwise <see cref="false"/>.
     /// </returns>
-    public static bool TryGetSourceForTarget(this TechnicalRatings indicator, Identity<OHLCV> source, decimal target, Aproximate aproximate, out TechnicalRatingSummary result, int iterations = 100)
+    public static bool TryPredict(this TechnicalRatings indicator, Identity<OHLCV> source, decimal target, Aproximate aproximate, out TechnicalRatingSummary result, int iterations = 100)
     {
         Guard.IsNotNull(source, nameof(source));
         Guard.IsGreaterThanOrEqualTo(iterations, 1, nameof(iterations));

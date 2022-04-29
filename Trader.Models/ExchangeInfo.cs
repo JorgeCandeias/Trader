@@ -192,3 +192,9 @@ public record MaxPositionSymbolFilter(decimal MaxPosition) : SymbolFilter
 {
     public static MaxPositionSymbolFilter Empty { get; } = new MaxPositionSymbolFilter(0m);
 }
+
+[Immutable]
+public record TrailingDeltaSymbolFilter(int MinTrailingAboveDelta, int MaxTrailingAboveDelta, int MinTrailingBelowDelta, int MaxTrailingBelowDelta) : SymbolFilter
+{
+    public static TrailingDeltaSymbolFilter Empty { get; } = new TrailingDeltaSymbolFilter(0, 0, 0, 0);
+}

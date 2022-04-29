@@ -32,30 +32,38 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
 
             foreach (var item in Context.Data)
             {
-                // skip invalidated symbol
-                if (!item.IsValid)
+                try
                 {
-                    LogSkippedInvalidatedSymbol(TypeName, Context.Name, item.Symbol.Name);
-                    continue;
+                    // skip invalidated symbol
+                    if (!item.IsValid)
+                    {
+                        LogSkippedInvalidatedSymbol(TypeName, Context.Name, item.Symbol.Name);
+                        continue;
+                    }
+
+                    // get pv stats over sellable positions from the last
+                    var lots = item.AutoPosition.Positions.Reverse().EnumerateLots(item.Symbol.Filters.LotSize.StepSize).Reverse().ToList();
+                    var stats = lots.GetStats(item.Ticker.ClosePrice);
+
+                    // calculate current technical ratings for this asset
+                    var source = item.Klines.ToOHLCV().Identity();
+                    var ratings = Indicator.TechnicalRatings(source);
+
+                    result = result.Then(TryEnter(item, lots, stats, source, ratings));
+
+                    if (TryExit(item, lots, stats, source, ratings, out var exit))
+                    {
+                        result = result.Then(exit);
+                    }
+
+                    // cache for the reporting method
+                    lookup[item.Symbol.Name] = stats;
                 }
-
-                // get pv stats over sellable positions from the last
-                var lots = item.AutoPosition.Positions.Reverse().EnumerateLots(item.Symbol.Filters.LotSize.StepSize).Reverse().ToList();
-                var stats = lots.GetStats(item.Ticker.ClosePrice);
-
-                // calculate current technical ratings for this asset
-                var source = item.Klines.ToOHLCV().Identity();
-                var ratings = Indicator.TechnicalRatings(source);
-
-                result = result.Then(TryEnter(item, lots, stats, source, ratings));
-
-                if (TryExit(item, lots, stats, source, ratings, out var exit))
+                catch (Exception ex)
                 {
-                    result = result.Then(exit);
+                    LogFailedToProcessSymbol(TypeName, Context.Name, item.Symbol.Name, ex);
+                    throw;
                 }
-
-                // cache for the reporting method
-                lookup[item.Symbol.Name] = stats;
             }
 
             ReportAggregateStats(lookup);
@@ -111,8 +119,9 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             }
 
             // calculate the atr for reuse
-            var atr = item.Klines.SkipLast(1).ToAtr().Last();
-            if (!atr.HasValue)
+            var atr = Indicator.Atr(Indicator.Transform(source, x => x.ToHLC()));
+            var prevAtr = atr.Count > 2 ? atr[^2] : null;
+            if (!prevAtr.HasValue)
             {
                 return Clear();
             }
@@ -124,23 +133,32 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             }
 
             // cleanup any existing orders outside the atr
-            var maxPrice = item.Symbol.LowerPriceToTickSize(item.Klines[^2].ClosePrice + atr.Value);
+            var maxPrice = item.Symbol.LowerPriceToTickSize(item.Klines[^2].ClosePrice + prevAtr.Value);
             if (item.Orders.Open.Any(x => x.Side == OrderSide.Buy && x.StopPrice > maxPrice))
             {
                 return Clear();
+            }
+
+            // the few past ratings must be negative to make a wave
+            for (var i = ratings.Count - 2; i >= ratings.Count - 5 && i >= 0; i--)
+            {
+                if (ratings[i].Summary.Rating >= 0)
+                {
+                    return Clear();
+                }
             }
 
             var window = 0.001M;
             var stopPrice = decimal.MaxValue;
             var buyPrice = decimal.MaxValue;
 
-            if (ratings[^1].Summary.Rating <= 0 && ratings.TryGetSourceForTarget(source, TechnicalRatings.WeakBound, Aproximate.Up, out var summary) && summary.Item.Close.HasValue)
+            if (ratings[^1].Summary.Rating < 0 && ratings.TryPredict(source, 0, Aproximate.Up, out var summary) && summary.Item.Close.HasValue)
             {
                 var stop = item.Symbol.LowerPriceToTickSize(summary.Item.Close.Value);
                 var price = item.Symbol.LowerPriceToTickSize(stop * (1 + window));
                 var distance = item.Symbol.LowerPriceToTickSize(Math.Abs(item.Klines[^2].ClosePrice - price));
 
-                if (item.Ticker.ClosePrice < stop && distance < atr)
+                if (item.Ticker.ClosePrice < stop && distance < prevAtr.Value / 2M)
                 {
                     stopPrice = Math.Min(stopPrice, stop);
                     buyPrice = Math.Min(buyPrice, price);
@@ -204,7 +222,7 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             var target = ratings[^1].Summary.Rating - TechnicalRatings.WeakBound;
 
             // guard - raise to the price that makes ratings go down to neutral
-            if (ratings.TryGetSourceForTarget(source, target, Aproximate.Up, out var summary) && summary.Item.Close.HasValue)
+            if (ratings.TryPredict(source, target, Aproximate.Up, out var summary) && summary.Item.Close.HasValue)
             {
                 var stop = item.Symbol.RaisePriceToTickSize(summary.Item.Close.Value);
                 var price = item.Symbol.RaisePriceToTickSize(stop * (1 - window));
@@ -506,6 +524,12 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
 
         [LoggerMessage(20, LogLevel.Information, "{Type} {Name} reports symbol {Symbol} trading is now closed")]
         private partial void LogSymbolClosed(string type, string name, string symbol);
+
+        [LoggerMessage(21, LogLevel.Information, "{Type} {Name} processing symbol {Symbol}...")]
+        private partial void LogProcessingSymbol(string type, string name, string symbol);
+
+        [LoggerMessage(22, LogLevel.Error, "{Type} {Name} failed to process symbol")]
+        private partial void LogFailedToProcessSymbol(string type, string name, string symbol, Exception ex);
 
         #endregion Logging
     }

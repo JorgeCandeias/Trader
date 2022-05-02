@@ -238,8 +238,8 @@ namespace Outcompute.Trader.Trading.Algorithms.Samples.Oscillator
             var trailingStop = item.Symbol.RaisePriceToTickSize(item.Ticker.ClosePrice * (1 - window));
             var trailingPrice = item.Symbol.RaisePriceToTickSize(trailingStop * (1 - window));
 
-            // take - raise to the profit target from the min entry
-            var profitPrice = item.Symbol.RaisePriceToTickSize(lots.Min(x => x.AvgPrice) * 1.5M);
+            // take - raise to the profit target from the last entry
+            var profitPrice = item.Symbol.RaisePriceToTickSize(lots[^1].AvgPrice * 1.1M);
             var profitStop = item.Symbol.RaisePriceToTickSize(profitPrice * (1 + window));
             if (item.Ticker.ClosePrice > profitStop && profitStop >= trailingStop)
             {

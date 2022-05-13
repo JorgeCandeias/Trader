@@ -11,6 +11,7 @@ internal partial class MarketDataStreamer : IMarketDataStreamer
     private readonly IMarketDataStreamClientFactory _streams;
     private readonly ITickerProvider _tickers;
     private readonly IKlineProvider _klines;
+    private readonly IMarketDataStreamClient _client;
 
     public MarketDataStreamer(ILogger<MarketDataStreamer> logger, IMapper mapper, IMarketDataStreamClientFactory factory, ITickerProvider tickers, IKlineProvider klines)
     {
@@ -19,88 +20,106 @@ internal partial class MarketDataStreamer : IMarketDataStreamer
         _streams = factory;
         _tickers = tickers;
         _klines = klines;
+
+        _client = _streams.Create(Array.Empty<string>());
     }
 
     private static string TypeName => nameof(MarketDataStreamer);
 
+    private TaskCompletionSource _completion = new();
+
+    public Task Completion => _completion.Task;
+
     [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "N/A")]
-    public async Task StreamAsync(IEnumerable<string> tickers, IEnumerable<(string Symbol, KlineInterval Interval)> klines, CancellationToken cancellationToken = default)
+    public async Task StartAsync(IEnumerable<string> tickers, IEnumerable<(string Symbol, KlineInterval Interval)> klines, CancellationToken cancellationToken = default)
     {
         Guard.IsNotNull(tickers, nameof(tickers));
         Guard.IsNotNull(klines, nameof(klines));
 
-        var tickerLookup = tickers.ToHashSet();
-        var klineLookup = klines.ToHashSet();
+        // clear the old completion and issue a new one
+        _completion.TrySetCanceled(CancellationToken.None);
+        _completion = new();
 
-        // create a client for the streams we want
-        var streams = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        streams.UnionWith(tickerLookup.Select(x => $"{x.ToLowerInvariant()}@miniTicker"));
-        streams.UnionWith(klineLookup.Select(x => $"{x.Symbol.ToLowerInvariant()}@kline_{_mapper.Map<string>(x.Interval)}"));
-
-        LogConnectingToStreams(TypeName, streams);
-
-        using var client = _streams.Create(Array.Empty<string>());
-
-        // connect to the socket
-        await client
-            .ConnectAsync(cancellationToken)
-            .ConfigureAwait(false);
-
-        // keeps track of command completion status so we dont overwhelm the exchange with commands
-        var results = new ConcurrentDictionary<long, TaskCompletionSource>();
-
-        // ensure we are receiving messages before subscribing to exchange streams
-        var work = Task.Run(async () =>
-            {
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    var message = await client
-                        .ReceiveAsync(cancellationToken)
-                        .ConfigureAwait(false);
-
-                    if (message.Error is not null)
-                    {
-                        throw new BinanceCodeException(message.Error.Code, message.Error.Message, 0);
-                    }
-
-                    if (message.MiniTicker is not null && tickerLookup.Contains(message.MiniTicker.Symbol))
-                    {
-                        await _tickers.ConflateTickerAsync(message.MiniTicker, cancellationToken).ConfigureAwait(false);
-                    }
-
-                    if (message.Kline is not null && klineLookup.Contains((message.Kline.Symbol, message.Kline.Interval)))
-                    {
-                        await _klines.ConflateKlineAsync(message.Kline, cancellationToken).ConfigureAwait(false);
-                    }
-
-                    if (message.Result is not null)
-                    {
-                        LogCommandResult(TypeName, message.Result.Id, message.Result.Result);
-
-                        results[message.Result.Id].SetResult();
-                    }
-                }
-            }, cancellationToken);
-
-        // subscribe to the exchange streams
-        var id = 0;
-        foreach (var batch in streams.BatchIEnumerable(10))
+        // attempt to start streaming
+        try
         {
-            LogSubscribingToStreams(TypeName, batch);
+            var tickerLookup = tickers.ToHashSet();
+            var klineLookup = klines.ToHashSet();
 
-            var completion = results[++id] = new();
+            // create a client for the streams we want
+            var streams = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            streams.UnionWith(tickerLookup.Select(x => $"{x.ToLowerInvariant()}@miniTicker"));
+            streams.UnionWith(klineLookup.Select(x => $"{x.Symbol.ToLowerInvariant()}@kline_{_mapper.Map<string>(x.Interval)}"));
 
-            await client
-                .SubscribeAsync(id, batch, cancellationToken)
+            LogConnectingToStreams(TypeName, streams);
+
+            // connect to the socket
+            await _client
+                .ConnectAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            await completion.Task.WaitAsync(TimeSpan.FromSeconds(10), cancellationToken).ConfigureAwait(false);
+            // keeps track of command completion status so we dont overwhelm the exchange with commands
+            var results = new ConcurrentDictionary<long, TaskCompletionSource>();
 
-            LogSubscribedToStreams(TypeName, batch);
+            // ensure we are receiving messages before subscribing to exchange streams
+            var work = Task.Run(async () =>
+                {
+                    while (!cancellationToken.IsCancellationRequested)
+                    {
+                        var message = await _client
+                            .ReceiveAsync(cancellationToken)
+                            .ConfigureAwait(false);
+
+                        if (message.Error is not null)
+                        {
+                            throw new BinanceCodeException(message.Error.Code, message.Error.Message, 0);
+                        }
+
+                        if (message.MiniTicker is not null && tickerLookup.Contains(message.MiniTicker.Symbol))
+                        {
+                            await _tickers.ConflateTickerAsync(message.MiniTicker, cancellationToken).ConfigureAwait(false);
+                        }
+
+                        if (message.Kline is not null && klineLookup.Contains((message.Kline.Symbol, message.Kline.Interval)))
+                        {
+                            await _klines.ConflateKlineAsync(message.Kline, cancellationToken).ConfigureAwait(false);
+                        }
+
+                        if (message.Result is not null)
+                        {
+                            LogCommandResult(TypeName, message.Result.Id, message.Result.Result);
+
+                            results[message.Result.Id].SetResult();
+                        }
+                    }
+                }, cancellationToken);
+
+            // subscribe to the exchange streams
+            var id = 0;
+            foreach (var batch in streams.BatchIEnumerable(10))
+            {
+                LogSubscribingToStreams(TypeName, batch);
+
+                var completion = results[++id] = new();
+
+                await _client
+                    .SubscribeAsync(id, batch, cancellationToken)
+                    .ConfigureAwait(false);
+
+                await completion.Task.WaitAsync(TimeSpan.FromSeconds(10), cancellationToken).ConfigureAwait(false);
+
+                LogSubscribedToStreams(TypeName, batch);
+            }
+
+            // link the background work to the completion exposed to the user
+            work.TryLinkTo(_completion);
         }
-
-        // keep streaming
-        await work.ConfigureAwait(false);
+        catch (Exception ex)
+        {
+            // any issue starting the stream also propagates to the completion
+            _completion.TrySetException(ex);
+            throw;
+        }
     }
 
     [LoggerMessage(1, LogLevel.Information, "{Type} connecting to streams {Streams}")]

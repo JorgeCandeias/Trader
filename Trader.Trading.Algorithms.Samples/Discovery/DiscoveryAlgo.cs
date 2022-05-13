@@ -30,92 +30,103 @@ internal partial class DiscoveryAlgo : Algo
         var options = _monitor.Get(Context.Name);
 
         // get the exchange info
-        var symbols = Context.Exchange.Symbols
+        var exchangeSymbols = Context.Exchange.Symbols
             .Where(x => x.Status == SymbolStatus.Trading)
             .Where(x => x.IsSpotTradingAllowed)
-            .Where(x => options.QuoteAssets.Contains(x.QuoteAsset))
-            .Where(x => !options.IgnoreSymbols.Contains(x.Name))
-            .ToHashSet();
+            .ToDictionary(x => x.Name);
+
+        var candidateSymbols = exchangeSymbols
+            .Where(x => options.QuoteAssets.Contains(x.Value.QuoteAsset))
+            .Where(x => !options.IgnoreSymbols.Contains(x.Key))
+            .ToDictionary(x => x.Key, x => x.Value);
 
         // get all usable savings assets
         var savings = (await _savings.GetProductsAsync(cancellationToken))
             .Select(x => x.Asset)
             .ToHashSet();
 
+        // get all savings positions
+        var savingsPositions = (await _savings.GetBalancesAsync(cancellationToken))
+            .ToDictionary(x => x.Asset);
+
         // get all usable swap pools
         var pools = await _swaps.GetSwapPoolsAsync(cancellationToken);
 
-        // identify all symbols with savings
-        var withSavings = symbols
-            .Where(x => savings.Contains(x.BaseAsset))
-            .Select(x => x.Name)
-            .ToHashSet();
-
-        // identify all symbols with swap pools
-        var withSwapPools = symbols
-            .Where(x => pools.Any(p => p.Assets.Contains(x.QuoteAsset) && p.Assets.Contains(x.BaseAsset)))
-            .Select(x => x.Name)
-            .ToHashSet();
-
-        // get all symbols in use
-        var used = _dependencies.Symbols
-            .Intersect(symbols.Select(x => x.Name))
-            .ToHashSet();
+        // identify used symbols
+        var usedSymbols = exchangeSymbols
+            .Where(x => _dependencies.Symbols.Contains(x.Key))
+            .ToDictionary(x => x.Key, x => x.Value);
 
         // identify unused symbols
-        var unused = symbols
-            .Select(x => x.Name)
-            .Except(used);
+        var unusedSymbols = candidateSymbols
+            .Where(x => !_dependencies.Symbols.Contains(x.Key))
+            .ToDictionary(x => x.Key, x => x.Value);
 
-        LogIdentifiedUnusedSymbols(TypeName, unused.OrderBy(x => x));
+        // identify used base assets
+        var usedBaseAssets = exchangeSymbols
+            .Select(x => x.Value.BaseAsset)
+            .ToHashSet();
+
+        LogIdentifiedUnusedSymbols(TypeName, unusedSymbols.Select(x => x.Key).OrderBy(x => x));
 
         // identify unused symbols with savings
         if (options.ReportSavings)
         {
-            var unusedWithSavings = withSavings
-                .Except(used);
+            var unusedWithSavings = candidateSymbols
+                .Where(x => !_dependencies.Symbols.Contains(x.Key))
+                .Where(x => savings.Contains(x.Value.BaseAsset))
+                .Select(x => x.Key)
+                .OrderBy(x => x);
 
-            LogIdentifiedUnusedSymbolsWithSavings(TypeName, unusedWithSavings.OrderBy(x => x));
+            LogIdentifiedUnusedSymbolsWithSavings(TypeName, unusedWithSavings);
         }
 
         // identify unused symbols with swap pools
         if (options.ReportSwapPools)
         {
-            var unusedWithSwapPools = withSwapPools
-                .Except(used);
+            var unusedWithSwapPools = candidateSymbols
+                .Where(x => !_dependencies.Symbols.Contains(x.Key))
+                .Where(x => pools.Any(p => p.Assets.Contains(x.Value.QuoteAsset) && p.Assets.Contains(x.Value.BaseAsset)))
+                .Select(x => x.Key)
+                .OrderBy(x => x);
 
-            LogIdentifiedUnusedSymbolsWithSwapPools(TypeName, unusedWithSwapPools.OrderBy(x => x));
+            LogIdentifiedUnusedSymbolsWithSwapPools(TypeName, unusedWithSwapPools);
         }
 
         // identify used symbols without savings
         if (options.ReportSavings)
         {
-            var usedWithoutSavings = used
-                .Except(options.IgnoreSymbols)
-                .Except(withSavings);
+            var usedWithoutSavings = exchangeSymbols
+                .Where(x => _dependencies.Symbols.Contains(x.Key))
+                .Where(x => !options.IgnoreSymbols.Contains(x.Key))
+                .Where(x => !savings.Contains(x.Value.BaseAsset))
+                .Select(x => x.Key)
+                .OrderBy(x => x);
 
-            LogIdentifiedUsedSymbolsWithoutSavings(TypeName, usedWithoutSavings.OrderBy(x => x));
+            LogIdentifiedUsedSymbolsWithoutSavings(TypeName, usedWithoutSavings);
         }
 
         // identify used symbols without swap pools
         if (options.ReportSwapPools)
         {
-            var usedWithoutSwapPools = used
-                .Except(options.IgnoreSymbols)
-                .Except(withSwapPools);
+            var usedWithoutSwapPools = exchangeSymbols
+                .Where(x => _dependencies.Symbols.Contains(x.Key))
+                .Where(x => !options.IgnoreSymbols.Contains(x.Key))
+                .Where(x => !(pools.Any(p => p.Assets.Contains(x.Value.QuoteAsset) && p.Assets.Contains(x.Value.BaseAsset))))
+                .Select(x => x.Key)
+                .OrderBy(x => x);
 
-            LogIdentifiedUsedSymbolsWithoutSwapPools(TypeName, usedWithoutSwapPools.OrderBy(x => x));
+            LogIdentifiedUsedSymbolsWithoutSwapPools(TypeName, usedWithoutSwapPools);
         }
 
-        // identify used symbols without savings or swap pools
-        if (options.ReportSavings && options.ReportSwapPools)
+        // identify savings positions with no active symbols
+        if (options.ReportSavings)
         {
-            var risky = used
-                .Except(options.IgnoreSymbols)
-                .Except(withSavings)
-                .Except(withSwapPools);
+            var leftovers = savingsPositions
+                .Keys
+                .Where(x => !usedBaseAssets.Contains(x));
 
-            LogIdentifiedUsedSymbolsWithoutSavingsOrSwapPools(TypeName, risky.OrderBy(x => x));
+            LogIdentifiedSavingsPositionsWithoutActiveSymbols(TypeName, leftovers.OrderBy(x => x));
         }
 
         return Noop();
@@ -140,6 +151,9 @@ internal partial class DiscoveryAlgo : Algo
 
     [LoggerMessage(5, LogLevel.Information, "{TypeName} identified unused symbols: {Symbols}")]
     private partial void LogIdentifiedUnusedSymbols(string typeName, IEnumerable<string> symbols);
+
+    [LoggerMessage(6, LogLevel.Information, "{TypeName} identified savings positions without used symbols: {Assets}")]
+    private partial void LogIdentifiedSavingsPositionsWithoutActiveSymbols(string typeName, IEnumerable<string> assets);
 
     #endregion Logging
 }

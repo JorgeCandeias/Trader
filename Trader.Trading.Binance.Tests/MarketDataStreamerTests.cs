@@ -59,7 +59,7 @@ namespace Outcompute.Trader.Trading.Binance.Tests
             var klines = new HashSet<(string, KlineInterval)>(new[] { (symbol, KlineInterval.Days1) });
 
             // act - start streaming
-            var task = streamer.StreamAsync(tickers, klines, cancellation.Token);
+            var task = streamer.StartAsync(tickers, klines, cancellation.Token);
             await receivedTicker.Task;
             await receivedKline.Task;
 

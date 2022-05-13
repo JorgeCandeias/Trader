@@ -6,6 +6,7 @@ public static class TraderTaskExtensions
     /// Creates a task that completes when the given task completes or a timeout is reached.
     /// If the timeout is reached, the created task return the given default value, otherwise it returns the
     /// </summary>
+    [Obsolete("Use WaitAsync in .NET6")]
     public static Task<TResult> WithDefaultOnTimeout<TResult>(this Task<TResult> task, TResult defaultValue, TimeSpan timeout, CancellationToken cancellationToken = default)
     {
         if (task == null) throw new ArgumentNullException(nameof(task));
@@ -29,5 +30,36 @@ public static class TraderTaskExtensions
     public static Task WhenAll(this IEnumerable<Task> tasks)
     {
         return Task.WhenAll(tasks);
+    }
+
+    /// <summary>
+    /// Links the result of the specified task to the target task completion source.
+    /// </summary>
+    public static void TryLinkTo(this Task task, TaskCompletionSource taskCompletionSource)
+    {
+        Guard.IsNotNull(task, nameof(task));
+        Guard.IsNotNull(taskCompletionSource, nameof(taskCompletionSource));
+
+        task.ContinueWith(x =>
+        {
+            switch (x.Status)
+            {
+                case TaskStatus.RanToCompletion:
+                    taskCompletionSource.TrySetResult();
+                    break;
+
+                case TaskStatus.Canceled:
+                    taskCompletionSource.TrySetCanceled();
+                    break;
+
+                case TaskStatus.Faulted:
+                    taskCompletionSource.TrySetException(x.Exception!);
+                    break;
+
+                default:
+                    taskCompletionSource.TrySetException(new InvalidOperationException($"Unexpected {nameof(TaskStatus)} '{x.Status}'"));
+                    break;
+            }
+        }, TaskScheduler.Default);
     }
 }

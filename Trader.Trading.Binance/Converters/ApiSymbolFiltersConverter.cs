@@ -74,7 +74,7 @@ internal partial class ApiSymbolFiltersConverter : ITypeConverter<IEnumerable<Ap
                     break;
 
                 default:
-                    LogCannotMapFilter(model.GetType().FullName);
+                    LogCannotMapFilter(model);
                     break;
             }
         }
@@ -92,6 +92,6 @@ internal partial class ApiSymbolFiltersConverter : ITypeConverter<IEnumerable<Ap
             maxPosition ?? MaxPositionSymbolFilter.Empty);
     }
 
-    [LoggerMessage(1, LogLevel.Warning, "Cannot map source symbol filter of type {TypeName}")]
-    private partial void LogCannotMapFilter(string? typeName);
+    [LoggerMessage(1, LogLevel.Warning, "Cannot map source symbol filter {Model}")]
+    private partial void LogCannotMapFilter(SymbolFilter model);
 }

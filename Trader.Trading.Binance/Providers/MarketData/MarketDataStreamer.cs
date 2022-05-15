@@ -11,7 +11,6 @@ internal partial class MarketDataStreamer : IMarketDataStreamer
     private readonly IMarketDataStreamClientFactory _streams;
     private readonly ITickerProvider _tickers;
     private readonly IKlineProvider _klines;
-    private readonly IMarketDataStreamClient _client;
 
     public MarketDataStreamer(ILogger<MarketDataStreamer> logger, IMapper mapper, IMarketDataStreamClientFactory factory, ITickerProvider tickers, IKlineProvider klines)
     {
@@ -20,11 +19,11 @@ internal partial class MarketDataStreamer : IMarketDataStreamer
         _streams = factory;
         _tickers = tickers;
         _klines = klines;
-
-        _client = _streams.Create(Array.Empty<string>());
     }
 
     private static string TypeName => nameof(MarketDataStreamer);
+
+    private IMarketDataStreamClient _client = null!;
 
     private TaskCompletionSource _completion = new();
 
@@ -54,6 +53,7 @@ internal partial class MarketDataStreamer : IMarketDataStreamer
             LogConnectingToStreams(TypeName, streams);
 
             // connect to the socket
+            _client = _streams.Create(Array.Empty<string>());
             await _client
                 .ConnectAsync(cancellationToken)
                 .ConfigureAwait(false);

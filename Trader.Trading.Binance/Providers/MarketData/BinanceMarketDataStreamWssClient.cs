@@ -26,9 +26,9 @@ internal sealed partial class BinanceMarketDataStreamWssClient : IMarketDataStre
 
     private readonly ClientWebSocket _client = new();
 
-    public Task ConnectAsync(CancellationToken cancellationToken = default)
+    public async Task ConnectAsync(CancellationToken cancellationToken = default)
     {
-        return _client.ConnectAsync(new Uri(_options.BaseWssAddress, $"/stream{(_streams.Count > 0 ? $"?streams={Join('/', _streams)}" : "")}"), cancellationToken);
+        await _client.ConnectAsync(new Uri(_options.BaseWssAddress, $"/stream{(_streams.Count > 0 ? $"?streams={Join('/', _streams)}" : "")}"), cancellationToken);
     }
 
     public Task CloseAsync(CancellationToken cancellationToken = default)
